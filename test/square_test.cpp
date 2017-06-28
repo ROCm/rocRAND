@@ -19,11 +19,13 @@
 // THE SOFTWARE.
 
 #include <stdio.h>
+#include <gtest/gtest.h>
+
 #include "square_hip.h"
 
-#define HIP_1D_KERNEL_LOOP(i, n)                                              \
-  for (int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;                          \
-       i < (n);                                                                \
+#define HIP_1D_KERNEL_LOOP(i, n)                               \
+  for (int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x; \
+       i < (n);                                                \
        i += hipBlockDim_x * hipGridDim_x)
 
 
@@ -51,7 +53,17 @@ __global__ void reduce(T *g_idata, T *g_odata, int n) {
     if (hipThreadIdx_x == 0) g_odata[hipBlockIdx_x] = sdata[0];
 }
 
-int main(int argc, char *argv[])
+TEST(SquareTest, hipRANDCall)
 {
-    test();
+    EXPECT_NO_THROW(
+        test(); // call hipRAND function
+    );
+}
+
+TEST(SquareTest, SimpleTest)
+{
+    int x = 1;
+    EXPECT_EQ(1, x);
+    x++;
+    EXPECT_EQ(2, x);
 }
