@@ -7,6 +7,9 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 
 # Options
 option(BUILD_SHARED_LIBS "Build libhiprand.so" ON)
+option(BUILD_TEST "Build tests (requires googletest)" ON)
+option(BUILD_BENCHMARK "Build benchmarks" OFF)
+
 # Include cmake scripts
 include(cmake/Summary.cmake)
 include(cmake/Dependencies.cmake)
@@ -20,3 +23,14 @@ print_configuration_summary()
 # hipRAND library
 # This adds library target hipRAND
 add_subdirectory(library)
+
+# Tests
+if (BUILD_TEST)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
+# Benchmarks
+if (BUILD_BENCHMARK)
+    add_subdirectory(benchmark)
+endif()
