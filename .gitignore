@@ -9,6 +9,11 @@
 ### build dir ###
 build/
 
+### docs dir ###
+doc/html/
+doc/xml/
+doc/hipRAND.tag
+
 ### C++ ###
 # Compiled Object files
 *.slo
