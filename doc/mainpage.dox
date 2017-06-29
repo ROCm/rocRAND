@@ -1,0 +1,22 @@
+/**
+@brief hipRAND main page.
+@author 
+@file
+*/
+
+/**
+@mainpage hipRAND Documentation
+ 
+@section overview Overview
+
+The hipRAND library provides functions that generate pseudo-random and quasi-random numbers.
+The library is implemented in the HIP
+programming language, optimised for AMD's latest discrete GPUs. It is designed to run on top
+of AMD's Radeon Open Compute ROCm runtime, but it also works
+on CUDA enabled GPUs.
+
+Additionally, hipRAND includes a small wrapper library which allows user to easily port CUDA
+applications that use cuRAND library to the HIP
+layer.
+
+*/
