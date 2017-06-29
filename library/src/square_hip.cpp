@@ -20,9 +20,16 @@
 
 #include "square_hip.h"
 
-/*
- * Square each element in the array A and write to array C.
- */
+/**
+    @ingroup device
+    @brief Squares element in array and writes to output array
+    
+    Template kernel that squares each element of input array and writes to output array
+			
+	@param C_d Output array
+	@param A_d Input array
+	@param N Length of array
+*/
 template <typename T>
 __global__ void
 vector_square(hipLaunchParm lp, T *C_d, const T *A_d, size_t N)
@@ -35,6 +42,12 @@ vector_square(hipLaunchParm lp, T *C_d, const T *A_d, size_t N)
     }
 }
 
+/**
+    @ingroup host
+    @brief Host function to call square kernel
+    
+    Sample function that demonstrates hip functions to allocate memory, read/write and to call the device kernel
+*/
 void test()
 {
     float *A_d, *C_d;
