@@ -18,25 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef RNG_ROCRAND_BASE_GENERATOR_H_
-#define RNG_ROCRAND_BASE_GENERATOR_H_
+#ifndef ROCRAND_KERNEL_H_
+#define ROCRAND_KERNEL_H_
 
-#include <hip/hip_runtime.h>
+#ifndef FQUALIFIERS
+#define FQUALIFIERS __device__
+#endif // FQUALIFIERS
+
 #include <rocrand.h>
+#include <rocrand_philox4x32_10.h>
+#include <rocrand_xorwow.h>
 
-struct rocrand_base_generator
-{
-    const rocrand_rng_type type;
-    // ordering type
-    size_t offset;
-    hipStream_t stream;
-
-    rocrand_base_generator(rocrand_rng_type type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
-                           hipStream_t stream = 0)
-        : type(type), offset(0), stream(stream)
-    {
-
-    }
-};
-
-#endif // RNG_ROCRAND_BASE_GENERATOR_H_
+#endif // ROCRAND_KERNEL_H_
