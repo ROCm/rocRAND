@@ -18,38 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
-#include <gtest/gtest.h>
+#ifndef ROCRAND_PHILOX4X32_10_H_
+#define ROCRAND_PHILOX4X32_10_H_
 
-#include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-#include <rng/base_generator.hpp>
+#ifndef FQUALIFIERS
+#define FQUALIFIERS __device__
+#endif // FQUALIFIERS
 
-TEST(rocrand_base_generator_tests, default_ctor_test)
+struct rocrand_state_philox4_32_10
 {
-    rocrand_base_generator bg;
-    EXPECT_EQ(bg.type, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
-    EXPECT_EQ(bg.offset, 0);
-    EXPECT_EQ(bg.stream, (hipStream_t)(0));
+    // TODO
+};
+
+FQUALIFIERS unsigned int rocrand(rocrand_state_philox4_32_10 * state)
+{
+    // TODO
+    return 43210;
 }
 
-TEST(rocrand_base_generator_tests, ctor_test)
-{
-    rocrand_base_generator bg(ROCRAND_RNG_PSEUDO_MRG32K3A);
-    EXPECT_EQ(bg.type, ROCRAND_RNG_PSEUDO_MRG32K3A);
-    EXPECT_EQ(bg.offset, 0);
-    EXPECT_EQ(bg.stream, (hipStream_t)(0));
-}
-
-TEST(rocrand_base_generator_tests, rocrand_generator_type)
-{
-    rocrand_generator g = NULL;
-    EXPECT_EQ(g, static_cast<rocrand_generator>(0));
-    g = new rocrand_base_generator;
-    EXPECT_NE(g, static_cast<rocrand_generator>(0));
-    EXPECT_EQ(g->type, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
-    EXPECT_EQ(g->offset, 0);
-    EXPECT_EQ(g->stream, (hipStream_t)(0));
-    delete(g);
-}
+#endif // ROCRAND_PHILOX4X32_10_H_

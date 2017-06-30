@@ -18,65 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef ROCRAND_GET_STATE_TYPE_H_
+#define ROCRAND_GET_STATE_TYPE_H_
+
 #include <hip/hip_runtime.h>
-#include "rng/generator.hpp"
 
 #include <rocrand.h>
-#include <new>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif /* __cplusplus */
+#include <rocrand_philox4x32_10.h>
+#include <rocrand_xorwow.h>
 
-rocrand_status ROCRANDAPI
-rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type)
+template<rocrand_rng_type>
+struct rocrand_get_state_type
 {
-    rocrand_status status = ROCRAND_STATUS_SUCCESS;
+    typedef void type;
+};
 
-    try
-    {
-        if(rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
-        {
-            *generator = new rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>();
-        }
-        else if(rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
-        {
-            *generator = new rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW>();
-        }
-        else
-        {
-            return ROCRAND_STATUS_TYPE_ERROR;
-        }
-    }
-    catch(const std::bad_alloc& e)
-    {
-        return ROCRAND_STATUS_INTERNAL_ERROR;
-    }
-    catch(rocrand_status status)
-    {
-        return status;
-    }
-
-    return status;
-}
-
-rocrand_status ROCRANDAPI
-rocrand_destroy_generator(rocrand_generator generator)
+template<>
+struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
-    rocrand_status status = ROCRAND_STATUS_SUCCESS;
+    typedef rocrand_state_philox4_32_10 type;
+};
 
-    try
-    {
-        delete(generator);
-    }
-    catch(rocrand_status status)
-    {
-        return status;
-    }
+template<>
+struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_XORWOW>
+{
+    typedef rocrand_state_xorwow type;
+};
 
-    return status;
-}
+#endif // ROCRAND_GET_STATE_TYPE_H_
 
-#if defined(__cplusplus)
-}
-#endif /* __cplusplus */
+
