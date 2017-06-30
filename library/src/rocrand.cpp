@@ -21,9 +21,50 @@
 #include <hip/hip_runtime.h>
 #include "rng/base_generator.hpp"
 #include <rocrand.h>
+#include <new>
 
-extern "C"
-int rocrand_remove_me(int _x)
+#if defined(__cplusplus)
+extern "C" {
+#endif /* __cplusplus */
+    
+rocrand_status ROCRANDAPI 
+rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type) 
 {
-    return _x + 1;
+    rocrand_status status = ROCRAND_STATUS_SUCCESS;
+    
+    try 
+    {
+        *generator = new rocrand_base_generator(rng_type);
+    }
+    catch(const std::bad_alloc& e)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+    catch(rocrand_status status)
+    {
+        return status;
+    }
+
+    return status;
 }
+
+rocrand_status ROCRANDAPI 
+rocrand_destroy_generator(rocrand_generator generator) 
+{
+    rocrand_status status = ROCRAND_STATUS_SUCCESS;
+    
+    try 
+    {
+        delete(generator);
+    }
+    catch(rocrand_status status)
+    {
+        return status;
+    }
+    
+    return status;
+}
+    
+#if defined(__cplusplus)
+}
+#endif /* __cplusplus */
