@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef SQUARE_HIP_H_
+#define SQUARE_HIP_H_
+
 #include <stdio.h>
 #include <hip/hip_runtime.h>
 
@@ -31,3 +34,5 @@
 }
 
 void test();
+
+#endif // SQUARE_HIP
