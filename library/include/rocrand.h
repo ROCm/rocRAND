@@ -34,7 +34,7 @@ extern "C" {
 /**
  * ROCRAND function call status types 
  */
-enum rocrandStatus {
+enum rocrand_status {
     ROCRAND_STATUS_SUCCESS = 0, ///< No errors
     ROCRAND_STATUS_VERSION_MISMATCH = 100, ///< Header file and linked library version do not match
     ROCRAND_STATUS_NOT_INITIALIZED = 101, ///< Generator not initialized
@@ -46,18 +46,18 @@ enum rocrandStatus {
     ROCRAND_STATUS_LAUNCH_FAILURE = 201, ///< Kernel launch failure
     ROCRAND_STATUS_PREEXISTING_FAILURE = 202, ///< Preexisting failure on library entry
     ROCRAND_STATUS_INTERNAL_ERROR = 999 ///< Internal library error
-};
+} rocrand_status;
     
 /**
  * ROCRAND generator types
  */
-enum rocrandRngType {
+enum rocrand_rngtype {
     ROCRAND_RNG_PSEUDO_XORWOW = 100, ///< XORWOW pseudorandom generator
     ROCRAND_RNG_PSEUDO_MRG32K3A = 200, ///< MRG32k3a pseudorandom generator
     ROCRAND_RNG_PSEUDO_MTGP32 = 300, ///< Mersenne Twister MTGP32 pseudorandom generator
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 400, ///< PHILOX-4x32-10 pseudorandom generator
     ROCRAND_RNG_QUASI_SOBOL32 = 500, ///< Sobol32 quasirandom generator
-};
+} rocrand_rngtype;
 
     
 #if defined(__cplusplus)
