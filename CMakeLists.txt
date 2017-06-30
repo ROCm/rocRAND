@@ -20,8 +20,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -fPIC -Wno-narrowing")
 # Print configuration summary
 print_configuration_summary()
 
-# hipRAND library
-# This adds library target hipRAND
+# rocRAND library
+# This adds library target rocRAND
 add_subdirectory(library)
 
 # Tests
