@@ -65,9 +65,47 @@ typedef enum rocrand_rng_type {
 
 // Host API function
 
-/// Example host API function, remove when you implement
-/// first host API function.
-int rocrand_remove_me(int);
+/**
+ * \brief Create new random number generator.
+ *
+ * Creates a new random number generator of type \p rng_type
+ * and returns it in \p *generator.
+ *
+ * Values for \p rng_type are:
+ * - ROCRAND_RNG_PSEUDO_XORWOW 
+ * - ROCRAND_RNG_PSEUDO_MRG32K3A
+ * - ROCRAND_RNG_PSEUDO_MTGP32
+ * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_QUASI_SOBOL32
+ *
+ * \param generator - Pointer to generator
+ * \param rng_type - Type of generator to create
+ *
+ * \return 
+ * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
+ * - ROCRAND_STATUS_INITIALIZATION_FAILED if there was a problem setting up the GPU \n
+ * - ROCRAND_STATUS_VERSION_MISMATCH if the header file version does not match the 
+ *   dynamically linked library version \n
+ * - ROCRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
+ * - ROCRAND_STATUS_SUCCESS if generator was created successfully \n
+ * 
+ */
+rocrand_status ROCRANDAPI 
+rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type);
+    
+/**
+ * \brief Destroy generator.
+ *
+ * Destroy generator and free all memory (state)
+ *
+ * \param generator - Generator to destroy
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_SUCCESS if generator was destroyed successfully \n
+ */
+rocrand_status ROCRANDAPI 
+rocrand_destroy_generator(rocrand_generator generator);
 
 #if defined(__cplusplus)
 }

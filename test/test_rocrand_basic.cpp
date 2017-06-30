@@ -30,9 +30,9 @@ TEST(rocrand_basic_tests, rocrand_generator_test)
     EXPECT_EQ(gen, static_cast<rocrand_generator>(0));
 }
 
-TEST(rocrand_basic_tests, rocrand_remove_me_test)
+TEST(rocrand_basic_tests, rocrand_create_destroy_generator_test)
 {
-    EXPECT_NE(rocrand_remove_me(1), 1);
-    EXPECT_EQ(rocrand_remove_me(1), 2);
-    EXPECT_EQ(rocrand_remove_me(2), 3);
+    rocrand_generator g = NULL;
+    EXPECT_EQ(rocrand_create_generator(&g, ROCRAND_RNG_PSEUDO_PHILOX4_32_10), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_destroy_generator(g), ROCRAND_STATUS_SUCCESS);
 }
