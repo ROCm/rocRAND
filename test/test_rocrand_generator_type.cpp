@@ -24,7 +24,7 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-#include <rng/generator.hpp>
+#include <rng/generator_type.hpp>
 
 TEST(rocrand_generator_type_tests, rocrand_generator)
 {
@@ -56,13 +56,15 @@ TEST(rocrand_generator_type_tests, ctor_test)
     EXPECT_EQ(g.stream, (hipStream_t)(0));
 }
 
+// TODO: Remove or move this test
+#include <rng/generators.hpp>
 TEST(rocrand_generator_type_tests, example_philox_rng_test)
 {
     constexpr size_t size = 10;
     unsigned int * data;
     hipMalloc(&data, sizeof(unsigned int) * size);
 
-    rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10> g;
+    rocrand_philox4x32_10 g;
     g.generate(data, size);
     hipDeviceSynchronize();
 

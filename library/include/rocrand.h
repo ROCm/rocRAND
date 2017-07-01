@@ -28,7 +28,7 @@
 #endif
 
 /// rocRAND random number generator (opaque)
-typedef struct rocrand_generator_type_base * rocrand_generator;
+typedef struct rocrand_generator_base_type * rocrand_generator;
 
 #if defined(__cplusplus)
 extern "C" {

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_GENERATOR_H_
-#define ROCRAND_RNG_GENERATOR_H_
+#ifndef ROCRAND_RNG_GENERATOR_TYPE_H_
+#define ROCRAND_RNG_GENERATOR_TYPE_H_
 
 #include <hip/hip_runtime.h>
 
@@ -28,54 +28,31 @@
 #endif // FQUALIFIERS
 
 #include <rocrand.h>
-#include <rocrand_kernel.h>
 
-#include "get_state_type.hpp"
+#include "get_state_type.hpp" // includes all states
 
-// Just an example
-// TODO: Implement
-template <class state_type>
-__global__ void generate_kernel(state_type * states, const size_t states_size,
-                                unsigned int * data, const size_t n)
-{
-    // Kernel in which we use device functions that are equivalents
-    // of curand_init(..), curand(..) etc. from curand_kernel.h
-    state_type state = states[0];
-    size_t id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
-    if(id < n)
-    {
-        data[id] = rocrand(&state);
-    }
-}
+struct rocrand_generator_base_type {};
 
-// Base class for rocrand_generator_type
-struct rocrand_generator_type_base { };
-
-// rocRAND random number generator class template
+// rocRAND random number generator base class
 template<rocrand_rng_type rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
-struct rocrand_generator_type : public rocrand_generator_type_base
+struct rocrand_generator_type : public rocrand_generator_base_type
 {
     typedef typename rocrand_get_state_type<rng_type>::type state_type;
 
     // ordering type
-    size_t offset;
+    unsigned long long offset;
     hipStream_t stream;
 
-    // PRNG states on device
-    state_type * states;
-    size_t states_size;
-
-    rocrand_generator_type(hipStream_t stream = 0)
-        : offset(0), stream(stream),
-          states(0), states_size(0)
+    rocrand_generator_type(unsigned long long offset = 0,
+                           hipStream_t stream = 0)
+        : offset(offset), stream(stream)
     {
-        states_size = 1; // for example philox needs one state
-        hipMalloc(&states, sizeof(state_type) * states_size);
+
     }
 
     ~rocrand_generator_type()
     {
-        hipFree(static_cast<void*>(states));
+
     }
 
     /// Return generator's type
@@ -83,19 +60,6 @@ struct rocrand_generator_type : public rocrand_generator_type_base
     {
         return rng_type;
     }
-
-    template<class T>
-    rocrand_status generate(T * data, size_t n)
-    {
-        // Just an example
-        // TODO: Implement
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(generate_kernel),
-            dim3(1), dim3(n), 0, stream,
-            states, states_size, data, n
-        );
-        return ROCRAND_STATUS_SUCCESS;
-    }
 };
 
-#endif // ROCRAND_GENERATOR_H_
+#endif // ROCRAND_RNG_GENERATOR_TYPE_H_

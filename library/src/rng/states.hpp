@@ -18,45 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_PHILOX4X32_10_H_
-#define ROCRAND_PHILOX4X32_10_H_
+#ifndef ROCRAND_RNG_STATES_H_
+#define ROCRAND_RNG_STATES_H_
 
-#include <rocrand.h>
+#include "philox4x32_10_state.hpp"
+#include "xorwow_state.hpp"
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __device__
-#endif // FQUALIFIERS
-
-struct rocrand_state_philox4x32_10
-{
-    uint4 counter;
-    uint4 output;
-    uint2 key;
-    unsigned int state;
-};
-
-FQUALIFIERS unsigned int rocrand(rocrand_state_philox4x32_10 * state)
-{
-    (void) *state;
-    return 43210;
-}
-
-FQUALIFIERS uint4 rocrand4(rocrand_state_philox4x32_10 * state)
-{
-    (void) *state;
-    return uint4{ 43210, 43210, 43210, 43210 };
-}
-
-FQUALIFIERS void skipahead(unsigned long long offset, rocrand_state_philox4x32_10 * state)
-{
-    (void) offset;
-    (void) *state;
-}
-
-FQUALIFIERS void skipahead_subsequence(unsigned long long offset, rocrand_state_philox4x32_10 * state)
-{
-    (void) offset;
-    (void) *state;
-}
-
-#endif // ROCRAND_PHILOX4X32_10_H_
+#endif // ROCRAND_RNG_STATES_H_
