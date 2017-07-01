@@ -18,15 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_GET_STATE_TYPE_H_
-#define ROCRAND_GET_STATE_TYPE_H_
+#ifndef ROCRAND_RNG_GET_STATE_TYPE_H_
+#define ROCRAND_RNG_GET_STATE_TYPE_H_
 
 #include <hip/hip_runtime.h>
 
 #include <rocrand.h>
-
-#include <rocrand_philox4x32_10.h>
-#include <rocrand_xorwow.h>
+#include "states.hpp"
 
 template<rocrand_rng_type>
 struct rocrand_get_state_type
@@ -37,15 +35,15 @@ struct rocrand_get_state_type
 template<>
 struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
-    typedef rocrand_state_philox4_32_10 type;
+    typedef rocrand_philox4_32_10_state type;
 };
 
 template<>
 struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_XORWOW>
 {
-    typedef rocrand_state_xorwow type;
+    typedef rocrand_xorwow_state type;
 };
 
-#endif // ROCRAND_GET_STATE_TYPE_H_
+#endif // ROCRAND_RNG_GET_STATE_TYPE_H_
 
 

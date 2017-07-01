@@ -19,7 +19,8 @@
 // THE SOFTWARE.
 
 #include <hip/hip_runtime.h>
-#include "rng/generator.hpp"
+
+#include "rng/generators.hpp"
 
 #include <rocrand.h>
 #include <new>
@@ -37,7 +38,7 @@ rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type
     {
         if(rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
         {
-            *generator = new rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>();
+            *generator = new rocrand_philox4x32_10();
         }
         else if(rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
         {
