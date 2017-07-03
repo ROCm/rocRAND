@@ -21,9 +21,6 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 #define ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 
-namespace detail
-{
-
 template<class T>
 struct uniform_distribution;
 
@@ -44,7 +41,5 @@ struct uniform_distribution<uint4>
         return x;
     }
 };
-
-} // end namespace detail
 
 #endif // ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
