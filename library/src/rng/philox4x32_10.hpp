@@ -34,36 +34,53 @@
 
 namespace detail
 {
-    template <class state_type>
+    template <
+        class StateType,
+        class GenerateFunction,
+        class DistributionFunctor
+    >
     __global__
-    void generate_uniform_kernel(state_type * states, const size_t states_size,
-                                 unsigned int * data, const size_t n);
-
-    typedef
-        ::rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>::state_type
-        rocrand_philox4x32_10_state_type;
-
-
-    __global__
-    void generate_uniform_kernel(rocrand_philox4x32_10_state_type * states,
-                                 const size_t states_size,
-                                 unsigned int * data,
-                                 const size_t n)
+    void generate_kernel(StateType * states, const size_t states_size,
+                         unsigned int * data, const size_t n,
+                         GenerateFunction gf,
+                         DistributionFunctor df)
     {
-        // rocrand_philox4x32_10_state_type state = states[0];
+        StateType state = states[0];
         size_t id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
         if(id < n)
         {
-            data[id] = 43210; // !!!!! HERE WE HAVE TO CALL DEVICE FUNCTIONS THAT
-            // TAKES POINTER TO rocrand_philox4x32_10::state_type AND RETURNS uint
+            data[id] = df(gf(&state));
         }
     }
+
+    // TODO: Move to separate file
+    struct uniform_distribution
+    {
+        __host__ __device__ unsigned int operator()(unsigned int x)
+        {
+            return x;
+        }
+
+        __host__ __device__ uint4 operator()(uint4 x)
+        {
+            return x;
+        }
+    };
 }
 
 struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
     typedef typename ::rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10> base_type;
     typedef typename base_type::state_type state_type;
+
+    struct generate_functor
+    {
+        __host__ __device__ unsigned int operator()(state_type * state)
+        {
+            (void) *state;
+            return 43210;
+        }
+    };
 
     rocrand_philox4x32_10(unsigned long long offset = 0, hipStream_t stream = 0)
         : base_type(offset, stream), m_states(NULL), m_states_size(0)
@@ -76,22 +93,27 @@ struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUD
 
     }
 
-    template<class T>
-    rocrand_status generate_uniform(T * data, size_t n)
+    template<class T, class DistributionFunctor = detail::uniform_distribution>
+    rocrand_status generate(T * data, size_t n, const DistributionFunctor& df = DistributionFunctor())
     {
+        // TODO: Test if functors are as fast as functions (they should be)
+        generate_functor gf;
+
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_uniform_kernel),
+            HIP_KERNEL_NAME(detail::generate_kernel),
             dim3(1), dim3(n), 0, stream,
             m_states, m_states_size,
-            data, n
+            data, n,
+            gf, df
         );
         return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T>
-    rocrand_status generate(T * data, size_t n)
+    rocrand_status generate_uniform(T * data, size_t n)
     {
-        return generate_uniform(data, n);
+        detail::uniform_distribution ud_functor;
+        return generate(data, n, ud_functor);
     }
 
 private:
