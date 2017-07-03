@@ -31,14 +31,42 @@ struct uniform_distribution<unsigned int>
     {
         return x;
     }
-};
 
-template<>
-struct uniform_distribution<uint4>
-{
     __host__ __device__ uint4 operator()(uint4 x)
     {
         return x;
+    }
+};
+
+template<>
+struct uniform_distribution<float>
+{
+    __host__ __device__ float operator()(unsigned int x)
+    {
+        // TODO: implement
+        return x;
+    }
+
+    __host__ __device__ float4 operator()(uint4 x)
+    {
+        // TODO: implement
+        return { float(x.x), float(x.y), float(x.z), float(x.w) };
+    }
+};
+
+template<>
+struct uniform_distribution<double>
+{
+    __host__ __device__ double operator()(unsigned int x)
+    {
+        // TODO: implement
+        return x;
+    }
+
+    __host__ __device__ double2 operator()(uint4 x)
+    {
+        // TODO: implement
+        return { double(x.x), double(x.y) };
     }
 };
 
