@@ -58,5 +58,5 @@ TEST(rocrand_philox_prng_tests, normal_philox_rng_test)
     hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
     for(size_t i = 0; i < size; i++)
-        EXPECT_FLOAT_EQ(0.00030325149, host_data[i]);
+        EXPECT_NEAR(0.0003, host_data[i], 0.0001);
 }
