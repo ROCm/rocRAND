@@ -18,25 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef RNG_ROCRAND_BASE_GENERATOR_H_
-#define RNG_ROCRAND_BASE_GENERATOR_H_
+#ifndef ROCRAND_RNG_GENERATOR_TYPE_H_
+#define ROCRAND_RNG_GENERATOR_TYPE_H_
 
 #include <hip/hip_runtime.h>
+
+#ifndef FQUALIFIERS
+#define FQUALIFIERS __host__ __device__
+#endif // FQUALIFIERS
+
 #include <rocrand.h>
 
-struct rocrand_base_generator
+#include "get_state_type.hpp" // includes all states
+
+struct rocrand_generator_base_type {};
+
+// rocRAND random number generator base class
+template<rocrand_rng_type rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
+struct rocrand_generator_type : public rocrand_generator_base_type
 {
-    const rocrand_rng_type type;
+    typedef typename rocrand_get_state_type<rng_type>::type state_type;
+
     // ordering type
-    size_t offset;
+    unsigned long long offset;
     hipStream_t stream;
 
-    rocrand_base_generator(rocrand_rng_type type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+    rocrand_generator_type(unsigned long long offset = 0,
                            hipStream_t stream = 0)
-        : type(type), offset(0), stream(stream)
+        : offset(offset), stream(stream)
     {
 
     }
+
+    ~rocrand_generator_type()
+    {
+
+    }
+
+    /// Return generator's type
+    constexpr rocrand_rng_type type() const
+    {
+        return rng_type;
+    }
 };
 
-#endif // RNG_ROCRAND_BASE_GENERATOR_H_
+#endif // ROCRAND_RNG_GENERATOR_TYPE_H_

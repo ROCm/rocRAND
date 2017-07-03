@@ -19,22 +19,35 @@
 // THE SOFTWARE.
 
 #include <hip/hip_runtime.h>
-#include "rng/base_generator.hpp"
+
+#include "rng/generators.hpp"
+
 #include <rocrand.h>
 #include <new>
 
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
-    
-rocrand_status ROCRANDAPI 
-rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type) 
+
+rocrand_status ROCRANDAPI
+rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type)
 {
     rocrand_status status = ROCRAND_STATUS_SUCCESS;
-    
-    try 
+
+    try
     {
-        *generator = new rocrand_base_generator(rng_type);
+        if(rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+        {
+            *generator = new rocrand_philox4x32_10();
+        }
+        else if(rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+        {
+            *generator = new rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW>();
+        }
+        else
+        {
+            return ROCRAND_STATUS_TYPE_ERROR;
+        }
     }
     catch(const std::bad_alloc& e)
     {
@@ -48,12 +61,12 @@ rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type
     return status;
 }
 
-rocrand_status ROCRANDAPI 
-rocrand_destroy_generator(rocrand_generator generator) 
+rocrand_status ROCRANDAPI
+rocrand_destroy_generator(rocrand_generator generator)
 {
     rocrand_status status = ROCRAND_STATUS_SUCCESS;
-    
-    try 
+
+    try
     {
         delete(generator);
     }
@@ -61,10 +74,10 @@ rocrand_destroy_generator(rocrand_generator generator)
     {
         return status;
     }
-    
+
     return status;
 }
-    
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
