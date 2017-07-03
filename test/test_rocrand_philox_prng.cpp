@@ -25,33 +25,21 @@
 #include <rocrand.h>
 
 #include <rng/generator_type.hpp>
+#include <rng/generators.hpp>
 
-TEST(rocrand_generator_type_tests, rocrand_generator)
+TEST(rocrand_philox_prng_tests, example_philox_rng_test)
 {
-    rocrand_generator g = NULL;
-    EXPECT_EQ(g, static_cast<rocrand_generator>(0));
+    constexpr size_t size = 10;
+    unsigned int * data;
+    hipMalloc(&data, sizeof(unsigned int) * size);
 
-    g = new rocrand_generator_type<>;
-    rocrand_generator_type<> * gg = static_cast<rocrand_generator_type<>* >(g);
-    EXPECT_NE(gg, static_cast<rocrand_generator>(0));
-    EXPECT_EQ(gg->type(), ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
-    EXPECT_EQ(gg->offset, 0);
-    EXPECT_EQ(gg->stream, (hipStream_t)(0));
-    delete(g);
-}
+    rocrand_philox4x32_10 g;
+    g.generate(data, size);
+    hipDeviceSynchronize();
 
-TEST(rocrand_generator_type_tests, default_ctor_test)
-{
-    rocrand_generator_type<> g;
-    EXPECT_EQ(g.type(), ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
-    EXPECT_EQ(g.offset, 0);
-    EXPECT_EQ(g.stream, (hipStream_t)(0));
-}
-
-TEST(rocrand_generator_type_tests, ctor_test)
-{
-    rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW> g;
-    EXPECT_EQ(g.type(), ROCRAND_RNG_PSEUDO_XORWOW);
-    EXPECT_EQ(g.offset, 0);
-    EXPECT_EQ(g.stream, (hipStream_t)(0));
+    unsigned int host_data[size];
+    hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+    for(size_t i = 0; i < size; i++)
+        EXPECT_EQ(43210, host_data[i]);
 }
