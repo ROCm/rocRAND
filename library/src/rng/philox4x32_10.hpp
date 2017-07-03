@@ -33,7 +33,7 @@
 #include "generator_type.hpp"
 #include "distributions.hpp"
 
-namespace detail
+namespace rocrand_philox4x32_10_detail
 {
     template <
         class StateType,
@@ -53,7 +53,7 @@ namespace detail
             data[id] = df(gf(&state));
         }
     }
-} // end namespace detail
+} // end namespace rocrand_philox4x32_10_detail
 
 struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
@@ -83,6 +83,7 @@ struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUD
     template<class T, class DistributionFunctor = uniform_distribution<T> >
     rocrand_status generate(T * data, size_t n, const DistributionFunctor& df = DistributionFunctor())
     {
+        namespace detail = rocrand_philox4x32_10_detail;
         // TODO: Test if functors are as fast as functions (they should be)
         generate_functor gf;
 
