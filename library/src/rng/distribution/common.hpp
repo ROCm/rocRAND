@@ -18,38 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
-#define ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
+#ifndef ROCRAND_RNG_DISTRIBUTION_COMMON_H_
+#define ROCRAND_RNG_DISTRIBUTION_COMMON_H_
 
-template<class T>
-struct normal_distribution;
+#define ROC_2POW32_INV (2.3283064e-10f)
+#define ROC_2POW32_INV_2PI (2.3283064e-10f * 6.2831855f)
+#define ROC_2POW53_INV_DOUBLE (1.1102230246251565e-16)
+#define ROC_PI_DOUBLE  (3.1415926535897932)
+#define ROC_2PI (6.2831855f)
 
-template<>
-struct normal_distribution<float>
-{
-    __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
-    {
-        float2 v = box_muller(x, y);
-        return v;
-    }
-
-    __host__ __device__ float4 operator()(uint4 x)
-    {
-        float2 v = box_muller(x.x, x.y);
-        float2 w = box_muller(x.z, x.w);
-        float4 u = { v.x, v.y, w.x, w.y };
-        return u;
-    }
-};
-
-template<>
-struct normal_distribution<double>
-{
-    __host__ __device__ double2 operator()(uint4 x)
-    {
-        double2 v = box_muller_double(x);
-        return v;
-    }
-};
-
-#endif // ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
+#endif // ROCRAND_RNG_DISTRIBUTION_COMMON_H_

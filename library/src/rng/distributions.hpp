@@ -21,6 +21,8 @@
 #ifndef ROCRAND_RNG_DISTRIBUTIONS_H_
 #define ROCRAND_RNG_DISTRIBUTIONS_H_
 
+#include "distribution/common.hpp"
+#include "distribution/normal_common.hpp"
 #include "distribution/uniform.hpp"
 #include "distribution/normal.hpp"
 
