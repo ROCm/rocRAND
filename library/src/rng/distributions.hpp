@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+ // Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,38 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
-#include <gtest/gtest.h>
+#ifndef ROCRAND_RNG_DISTRIBUTIONS_H_
+#define ROCRAND_RNG_DISTRIBUTIONS_H_
 
-#include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include "distribution/uniform.hpp"
 
-#include <rng/base_generator.hpp>
+#endif // ROCRAND_RNG_DISTRIBUTION_S_H_
 
-TEST(rocrand_base_generator_tests, default_ctor_test)
-{
-    rocrand_base_generator bg;
-    EXPECT_EQ(bg.type, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
-    EXPECT_EQ(bg.offset, 0);
-    EXPECT_EQ(bg.stream, (hipStream_t)(0));
-}
-
-TEST(rocrand_base_generator_tests, ctor_test)
-{
-    rocrand_base_generator bg(ROCRAND_RNG_PSEUDO_MRG32K3A);
-    EXPECT_EQ(bg.type, ROCRAND_RNG_PSEUDO_MRG32K3A);
-    EXPECT_EQ(bg.offset, 0);
-    EXPECT_EQ(bg.stream, (hipStream_t)(0));
-}
-
-TEST(rocrand_base_generator_tests, rocrand_generator_type)
-{
-    rocrand_generator g = NULL;
-    EXPECT_EQ(g, static_cast<rocrand_generator>(0));
-    g = new rocrand_base_generator;
-    EXPECT_NE(g, static_cast<rocrand_generator>(0));
-    EXPECT_EQ(g->type, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
-    EXPECT_EQ(g->offset, 0);
-    EXPECT_EQ(g->stream, (hipStream_t)(0));
-    delete(g);
-}

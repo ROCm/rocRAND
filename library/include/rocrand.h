@@ -27,8 +27,8 @@
 #define ROCRANDAPI
 #endif
 
-/// rocRAND random number generator type
-typedef struct rocrand_base_generator * rocrand_generator;
+/// rocRAND random number generator (opaque)
+typedef struct rocrand_generator_base_type * rocrand_generator;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -72,7 +72,7 @@ typedef enum rocrand_rng_type {
  * and returns it in \p *generator.
  *
  * Values for \p rng_type are:
- * - ROCRAND_RNG_PSEUDO_XORWOW 
+ * - ROCRAND_RNG_PSEUDO_XORWOW
  * - ROCRAND_RNG_PSEUDO_MRG32K3A
  * - ROCRAND_RNG_PSEUDO_MTGP32
  * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
@@ -81,18 +81,18 @@ typedef enum rocrand_rng_type {
  * \param generator - Pointer to generator
  * \param rng_type - Type of generator to create
  *
- * \return 
+ * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
  * - ROCRAND_STATUS_INITIALIZATION_FAILED if there was a problem setting up the GPU \n
- * - ROCRAND_STATUS_VERSION_MISMATCH if the header file version does not match the 
+ * - ROCRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
  *   dynamically linked library version \n
  * - ROCRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
  * - ROCRAND_STATUS_SUCCESS if generator was created successfully \n
- * 
+ *
  */
-rocrand_status ROCRANDAPI 
+rocrand_status ROCRANDAPI
 rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type);
-    
+
 /**
  * \brief Destroy generator.
  *
@@ -104,7 +104,7 @@ rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - ROCRAND_STATUS_SUCCESS if generator was destroyed successfully \n
  */
-rocrand_status ROCRANDAPI 
+rocrand_status ROCRANDAPI
 rocrand_destroy_generator(rocrand_generator generator);
 
 #if defined(__cplusplus)
