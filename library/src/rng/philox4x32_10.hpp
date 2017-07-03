@@ -53,7 +53,7 @@ namespace detail
             data[id] = df(gf(&state));
         }
     }
-}
+} // end namespace detail
 
 struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
@@ -80,7 +80,7 @@ struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUD
 
     }
 
-    template<class T, class DistributionFunctor = detail::uniform_distribution<T> >
+    template<class T, class DistributionFunctor = uniform_distribution<T> >
     rocrand_status generate(T * data, size_t n, const DistributionFunctor& df = DistributionFunctor())
     {
         // TODO: Test if functors are as fast as functions (they should be)
@@ -99,7 +99,7 @@ struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUD
     template<class T>
     rocrand_status generate_uniform(T * data, size_t n)
     {
-        detail::uniform_distribution<T> ud_functor;
+        uniform_distribution<T> ud_functor;
         return generate(data, n, ud_functor);
     }
 
