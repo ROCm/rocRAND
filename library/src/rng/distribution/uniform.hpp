@@ -21,52 +21,75 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 #define ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 
+#include <climits>
+
+#include "common.hpp"
+
 template<class T>
 struct uniform_distribution;
 
 template<>
 struct uniform_distribution<unsigned int>
 {
-    __host__ __device__ unsigned int operator()(unsigned int x)
+    __host__ __device__ unsigned int operator()(const unsigned int v) const
     {
-        return x;
+        return v;
     }
 
-    __host__ __device__ uint4 operator()(uint4 x)
+    __host__ __device__ uint4 operator()(const uint4 v) const
     {
-        return x;
+        return v;
     }
 };
 
+// For unsigned integer between 0 and UINT_MAX, returns value between
+// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
 template<>
 struct uniform_distribution<float>
 {
-    __host__ __device__ float operator()(unsigned int x)
+    __host__ __device__ float operator()(const unsigned int v) const
     {
-        // TODO: implement
-        return x;
+        return nextafter(v * ROC_2POW32_INV, 1.0f);
     }
 
-    __host__ __device__ float4 operator()(uint4 x)
+    __host__ __device__ float4 operator()(const uint4 v) const
     {
-        // TODO: implement
-        return { float(x.x), float(x.y), float(x.z), float(x.w) };
+        return {
+            (*this)(v.x),
+            (*this)(v.y),
+            (*this)(v.z),
+            (*this)(v.w)
+        };
     }
 };
 
+// For unsigned integer between 0 and UINT_MAX, returns value between
+// 0.0 and 1.0, excluding 0.0 and including 1.0.
 template<>
 struct uniform_distribution<double>
 {
-    __host__ __device__ double operator()(unsigned int x)
+    __host__ __device__ double operator()(const unsigned int v) const
     {
-        // TODO: implement
-        return x;
+        return nextafter(v * static_cast<double>(ROC_2POW32_INV), 1.0);
     }
 
-    __host__ __device__ double2 operator()(uint4 x)
+    __host__ __device__ double operator()(const unsigned long long v) const
     {
-        // TODO: implement
-        return { double(x.x), double(x.y) };
+        return nextafter(
+            // 2^53 is the biggest int that can be stored in double, such
+            // that it and all smaller integers can be stored in double
+            v * ROC_2POW53_INV_DOUBLE, 1.0
+        );
+    }
+
+    __host__ __device__ double4 operator()(const uint4 v) const
+    {
+        return {
+            (*this)(v.x),
+            (*this)(v.y),
+            (*this)(v.z),
+            (*this)(v.w)
+        };
     }
 };
 
