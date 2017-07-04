@@ -43,3 +43,20 @@ TEST(rocrand_philox_prng_tests, example_philox_rng_test)
     for(size_t i = 0; i < size; i++)
         EXPECT_EQ(43210, host_data[i]);
 }
+
+TEST(rocrand_philox_prng_tests, normal_philox_rng_test)
+{
+    constexpr size_t size = 10;
+    float * data;
+    hipMalloc(&data, sizeof(float) * size);
+
+    rocrand_philox4x32_10 g;
+    g.generate_normal(data, size);
+    hipDeviceSynchronize();
+
+    float host_data[size];
+    hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+    for(size_t i = 0; i < size; i++)
+        EXPECT_NEAR(0.0003, host_data[i], 0.0001);
+}

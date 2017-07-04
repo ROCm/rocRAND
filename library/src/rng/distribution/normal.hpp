@@ -18,13 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTIONS_H_
-#define ROCRAND_RNG_DISTRIBUTIONS_H_
+#ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
+#define ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
 
-#include "distribution/common.hpp"
-#include "distribution/normal_common.hpp"
-#include "distribution/uniform.hpp"
-#include "distribution/normal.hpp"
+template<class T>
+struct normal_distribution;
 
-#endif // ROCRAND_RNG_DISTRIBUTION_S_H_
+template<>
+struct normal_distribution<float>
+{
+    __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
+    {
+        float2 v = box_muller(x, y);
+        return v;
+    }
 
+    __host__ __device__ float4 operator()(uint4 x)
+    {
+        float2 v = box_muller(x.x, x.y);
+        float2 w = box_muller(x.z, x.w);
+        float4 u = { v.x, v.y, w.x, w.y };
+        return u;
+    }
+};
+
+template<>
+struct normal_distribution<double>
+{
+    __host__ __device__ double2 operator()(uint4 x)
+    {
+        double2 v = box_muller_double(x);
+        return v;
+    }
+};
+
+#endif // ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
