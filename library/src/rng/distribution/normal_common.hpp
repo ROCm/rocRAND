@@ -21,6 +21,43 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_COMMON_H_
 #define ROCRAND_RNG_DISTRIBUTION_NORMAL_COMMON_H_
 
+#include "common.hpp"
+
+inline __host__ __device__ float2 operator+(float b, float2 a)
+{
+    return make_float2(a.x + b, a.y + b);
+}
+    
+inline __host__ __device__ float2 operator*(float b, float2 a)
+{
+    return make_float2(a.x * b, a.y * b);
+}
+
+inline __host__ __device__ float2 expf(float2 a)
+{
+    return make_float2(expf(a.x), expf(a.y));
+}
+
+inline __host__ __device__ float4 make_float4(float2 a, float2 b)
+{
+    return make_float4(a.x, a.y, b.x, b.y);
+}
+    
+inline __host__ __device__ double2 operator+(double b, double2 a)
+{
+    return make_double2(a.x + b, a.y + b);
+}
+    
+inline __host__ __device__ double2 operator*(double b, double2 a)
+{
+    return make_double2(a.x * b, a.y * b);
+}
+
+inline __host__ __device__ double2 expf(double2 a)
+{
+    return make_double2(exp(a.x), exp(a.y));
+}
+
 __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
@@ -56,6 +93,36 @@ __host__ __device__ double2 box_muller_double(uint4 xy)
         result.x = sin(v * ROC_PI_DOUBLE) * s;
         result.y = cos(v * ROC_PI_DOUBLE) * s;
     #endif
+    return result;
+}
+
+// TODO: Improve implementation
+__host__ __device__ float2 marsaglia(unsigned int x, unsigned int y)
+{
+    float2 result;
+    float u = nextafter(x * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float v = nextafter(y * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float s = u * u + v * v;
+    float multiplier = sqrtf(-2.0f * logf(s) / s);
+    result.x = u * s;
+    result.y = v * s;
+    return result;
+}
+
+// TODO: Improve implementation
+__host__ __device__ double2 marsaglia_double(uint4 xy)
+{
+    double2 result;
+    unsigned long long zx = (unsigned long long)xy.x ^ 
+        ((unsigned long long)xy.y << (53 - 32));
+    double u = nextafter(zx * ROC_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
+    unsigned long long zy = (unsigned long long)xy.z ^ 
+        ((unsigned long long)xy.w << (53 - 32));
+    double v = nextafter(zy * ROC_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
+    double s = u * u + v * v;
+    double multiplier = sqrt(-2.0f * log(s) / s);
+    result.x = u * s;
+    result.y = v * s;
     return result;
 }
 

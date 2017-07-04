@@ -51,7 +51,7 @@ TEST(rocrand_philox_prng_tests, normal_philox_rng_test)
     hipMalloc(&data, sizeof(float) * size);
 
     rocrand_philox4x32_10 g;
-    g.generate_normal(data, size);
+    g.generate_normal(data, size, 1.0f, 0.0f);
     hipDeviceSynchronize();
 
     float host_data[size];
