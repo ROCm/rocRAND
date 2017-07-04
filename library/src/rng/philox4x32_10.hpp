@@ -69,7 +69,10 @@ namespace rocrand_philox4x32_10_detail
         size_t id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
         if(id < n)
         {
-            data[id] = df(gf(&state), gf(&state)).x;
+            if (id % 2 == 0)
+                data[id] = df(gf(&state), gf(&state)).x;
+            else
+                data[id] = df(gf(&state), gf(&state)).y;
         }
     }
     
@@ -88,7 +91,10 @@ namespace rocrand_philox4x32_10_detail
         size_t id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
         if(id < n)
         {
-            data[id] = df(gf(&state), gf(&state)).x;
+            if (id % 2 == 0)
+                data[id] = df(gf(&state), gf(&state)).x;
+            else
+                data[id] = df(gf(&state), gf(&state)).y;
         }
     }
 } // end namespace rocrand_philox4x32_10_detail
@@ -142,11 +148,11 @@ struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUD
         return generate(data, n, ud_functor);
     }
     
-    template<class T, class DistributionFunctor = normal_distribution<T> >
+    template<class T>
     rocrand_status generate_normal(T * data, size_t n, T stddev, T mean)
     {
         namespace detail = rocrand_philox4x32_10_detail;
-        const DistributionFunctor& df = DistributionFunctor(stddev, mean);
+        normal_distribution<T> df(mean, stddev);
         // TODO: Test if functors are as fast as functions (they should be)
         generate_functor gf;
 
@@ -160,11 +166,11 @@ struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUD
         return ROCRAND_STATUS_SUCCESS;
     }
     
-    template<class T, class DistributionFunctor = log_normal_distribution<T> >
+    template<class T>
     rocrand_status generate_log_normal(T * data, size_t n, T stddev, T mean)
     {
         namespace detail = rocrand_philox4x32_10_detail;
-        const DistributionFunctor& df = DistributionFunctor(stddev, mean);
+        log_normal_distribution<T> df(mean, stddev);
         // TODO: Test if functors are as fast as functions (they should be)
         generate_functor gf;
 

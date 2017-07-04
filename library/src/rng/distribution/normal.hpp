@@ -32,8 +32,8 @@ struct normal_distribution<float>
     float stddev;
     float mean;
     
-    normal_distribution<float>(float stddev, float mean) :
-                               stddev(stddev), mean(mean) {}
+    normal_distribution<float>(float mean, float stddev) :
+                               mean(mean), stddev(stddev) {}
     
     __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
     {
@@ -56,8 +56,8 @@ struct normal_distribution<double>
     double stddev;
     double mean;
     
-    normal_distribution<double>(double stddev, double mean) :
-                                stddev(stddev), mean(mean) {}
+    normal_distribution<double>(double mean, double stddev) :
+                                mean(mean), stddev(stddev) {}
     
     __host__ __device__ double2 operator()(uint4 x)
     {
