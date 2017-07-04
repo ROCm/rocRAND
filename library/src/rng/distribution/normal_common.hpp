@@ -53,7 +53,7 @@ inline __host__ __device__ double2 operator*(double b, double2 a)
     return make_double2(a.x * b, a.y * b);
 }
 
-inline __host__ __device__ double2 expf(double2 a)
+inline __host__ __device__ double2 exp(double2 a)
 {
     return make_double2(exp(a.x), exp(a.y));
 }
@@ -97,6 +97,22 @@ __host__ __device__ double2 box_muller_double(uint4 xy)
 }
 
 // TODO: Improve implementation
+/*
+    float2 result;
+    while (true)
+    {
+        float u = uniform(g);
+        float v = uniform(g);
+        float s = u * u + v * v;
+        if (s < 1)
+        {
+            float multiplier = sqrtf(-2.0f * logf(s) / s);
+            result.x = u * s;
+            result.y = v * s;
+            return result;
+        }
+    }
+*/
 __host__ __device__ float2 marsaglia(unsigned int x, unsigned int y)
 {
     float2 result;

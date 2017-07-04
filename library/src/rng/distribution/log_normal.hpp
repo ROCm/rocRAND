@@ -32,8 +32,8 @@ struct log_normal_distribution<float>
     float stddev;
     float mean;
     
-    log_normal_distribution<float>(float stddev, float mean) :
-                                   stddev(stddev), mean(mean) {}
+    log_normal_distribution<float>(float mean, float stddev) :
+                                   mean(mean), stddev(stddev) {}
          
     __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
     {
@@ -55,13 +55,13 @@ struct log_normal_distribution<double>
     double stddev;
     double mean;
     
-    log_normal_distribution<double>(double stddev, double mean) :
-                                    stddev(stddev), mean(mean) {}
+    log_normal_distribution<double>(double mean, double stddev) :
+                                    mean(mean), stddev(stddev) {}
                                 
     __host__ __device__ double2 operator()(uint4 x)
     {
         double2 v = box_muller_double(x);
-        return expf(mean + (stddev * v));
+        return exp(mean + (stddev * v));
     }
 };
 
