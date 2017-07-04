@@ -78,7 +78,7 @@ struct uniform_distribution<double>
         return nextafter(
             // 2^53 is the biggest int that can be stored in double, such
             // that it and all smaller integers can be stored in double
-            v * ROC_2POW53_INV_DOUBLE, 1.0
+            (v >> 11) * ROC_2POW53_INV_DOUBLE, 1.0
         );
     }
 
