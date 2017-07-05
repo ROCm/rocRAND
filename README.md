@@ -20,7 +20,7 @@ layer.
     * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
     * Latest CUDA SDK
 
-## Build and install
+## Build and Install
 
 ```
 git clone https://github.com/ROCmSoftwarePlatform/hipRAND.git
@@ -40,3 +40,8 @@ ctest
 # install
 sudo make install
 ```
+
+## Contributions and License
+
+Contributions of any kind are most welcome! More details are found
+at [CONTRIBUTING](./CONTRIBUTING.md) and [LICENSE](./LICENSE.txt).
