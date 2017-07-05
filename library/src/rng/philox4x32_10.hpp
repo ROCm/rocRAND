@@ -69,7 +69,32 @@ namespace rocrand_philox4x32_10_detail
         size_t id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
         if(id < n)
         {
-            data[id] = df(gf(&state), gf(&state)).x;
+            if (id % 2 == 0)
+                data[id] = df(gf(&state), gf(&state)).x;
+            else
+                data[id] = df(gf(&state), gf(&state)).y;
+        }
+    }
+    
+    template <
+        class StateType,
+        class GenerateFunction,
+        class DistributionFunctor
+    >
+    __global__
+    void generate_log_normal_kernel(StateType * states, const size_t states_size,
+                                float * data, const size_t n,
+                                GenerateFunction gf,
+                                DistributionFunctor df)
+    {
+        StateType state = states[0];
+        size_t id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
+        if(id < n)
+        {
+            if (id % 2 == 0)
+                data[id] = df(gf(&state), gf(&state)).x;
+            else
+                data[id] = df(gf(&state), gf(&state)).y;
         }
     }
 } // end namespace rocrand_philox4x32_10_detail
@@ -123,15 +148,34 @@ struct rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUD
         return generate(data, n, ud_functor);
     }
     
-    template<class T, class DistributionFunctor = normal_distribution<T> >
-    rocrand_status generate_normal(T * data, size_t n, const DistributionFunctor& df = DistributionFunctor())
+    template<class T>
+    rocrand_status generate_normal(T * data, size_t n, T stddev, T mean)
     {
         namespace detail = rocrand_philox4x32_10_detail;
+        normal_distribution<T> df(mean, stddev);
         // TODO: Test if functors are as fast as functions (they should be)
         generate_functor gf;
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(detail::generate_normal_kernel),
+            dim3(1), dim3(n), 0, stream,
+            m_states, m_states_size,
+            data, n,
+            gf, df
+        );
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    
+    template<class T>
+    rocrand_status generate_log_normal(T * data, size_t n, T stddev, T mean)
+    {
+        namespace detail = rocrand_philox4x32_10_detail;
+        log_normal_distribution<T> df(mean, stddev);
+        // TODO: Test if functors are as fast as functions (they should be)
+        generate_functor gf;
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(detail::generate_log_normal_kernel),
             dim3(1), dim3(n), 0, stream,
             m_states, m_states_size,
             data, n,

@@ -18,52 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
-#define ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
+#ifndef ROCRAND_RNG_DISTRIBUTION_LOG_NORMAL_H_
+#define ROCRAND_RNG_DISTRIBUTION_LOG_NORMAL_H_
 
 #include "normal_common.hpp"
 
 template<class T>
-struct normal_distribution;
+struct log_normal_distribution;
 
 template<>
-struct normal_distribution<float>
+struct log_normal_distribution<float>
 {
     float stddev;
     float mean;
     
-    normal_distribution<float>(float mean, float stddev) :
-                               mean(mean), stddev(stddev) {}
-    
+    log_normal_distribution<float>(float mean, float stddev) :
+                                   mean(mean), stddev(stddev) {}
+         
     __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
     {
         float2 v = box_muller(x, y);
-        return v;
+        return expf(mean + (stddev * v));
     }
 
     __host__ __device__ float4 operator()(uint4 x)
     {
         float2 v = box_muller(x.x, x.y);
         float2 w = box_muller(x.z, x.w);
-        float4 u = { v.x, v.y, w.x, w.y };
-        return u;
+        return make_float4(expf(mean + (stddev * v)), expf(mean + (stddev * w)));
     }
 };
 
 template<>
-struct normal_distribution<double>
+struct log_normal_distribution<double>
 {
     double stddev;
     double mean;
     
-    normal_distribution<double>(double mean, double stddev) :
-                                mean(mean), stddev(stddev) {}
-    
+    log_normal_distribution<double>(double mean, double stddev) :
+                                    mean(mean), stddev(stddev) {}
+                                
     __host__ __device__ double2 operator()(uint4 x)
     {
         double2 v = box_muller_double(x);
-        return v;
+        return exp(mean + (stddev * v));
     }
 };
 
-#endif // ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
+#endif // ROCRAND_RNG_DISTRIBUTION_LOG_NORMAL_H_
