@@ -31,13 +31,15 @@ struct normal_distribution<float>
 {
     float stddev;
     float mean;
-    
-    normal_distribution<float>(float mean, float stddev) :
+
+    normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
                                mean(mean), stddev(stddev) {}
-    
+
     __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
     {
         float2 v = box_muller(x, y);
+        v.x = mean + v.x * stddev;
+        v.y = mean + v.y * stddev;
         return v;
     }
 
@@ -45,8 +47,12 @@ struct normal_distribution<float>
     {
         float2 v = box_muller(x.x, x.y);
         float2 w = box_muller(x.z, x.w);
-        float4 u = { v.x, v.y, w.x, w.y };
-        return u;
+        return float4{
+            mean + v.x * stddev,
+            mean + v.y * stddev,
+            mean + w.x * stddev,
+            mean + w.y * stddev,
+        };
     }
 };
 
@@ -55,13 +61,15 @@ struct normal_distribution<double>
 {
     double stddev;
     double mean;
-    
-    normal_distribution<double>(double mean, double stddev) :
+
+    normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
                                 mean(mean), stddev(stddev) {}
-    
+
     __host__ __device__ double2 operator()(uint4 x)
     {
         double2 v = box_muller_double(x);
+        v.x = mean + v.x * stddev;
+        v.y = mean + v.y * stddev;
         return v;
     }
 };
