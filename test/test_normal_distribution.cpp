@@ -25,43 +25,74 @@
 
 #include <rng/distribution/normal.hpp>
 
+TEST(normal_distribution_tests, standard_normal_distribution_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    const size_t size = 4000;
+    float val[size];
+    normal_distribution<float> u; // mean = 0, stddev = 1
+
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=2)
+    {
+        unsigned int x = dis(gen);
+        unsigned int y = dis(gen);
+        float2 v = u(x, y);
+        val[i] = v.x;
+        val[i + 1] = v.y;
+        mean += v.x + v.y;
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(val[i] - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    EXPECT_NEAR(0.0f, mean, 0.2f);
+    EXPECT_NEAR(1.0f, std, 0.2f); // 20%
+}
+
 TEST(normal_distribution_tests, float_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
-    
-    float mean = 0.0f;
-    float std = 0.0f;
-    const size_t size = 200;
-    const size_t half = size / 2;
-    normal_distribution<float> u(0.0f, 1.0f);
+
+    const size_t size = 4000;
     float val[size];
-    size_t z = 0;
-    for(size_t i = 0; i < half; i++)
+    normal_distribution<float> u(2.0f, 5.0f);
+
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=2)
     {
         unsigned int x = dis(gen);
         unsigned int y = dis(gen);
         float2 v = u(x, y);
-        val[z] = v.x;
-        val[z + 1] = v.y;
+        val[i] = v.x;
+        val[i + 1] = v.y;
         mean += v.x + v.y;
-        z += 2;
     }
-       
     mean = mean / size;
-    z = 0;
-    
-    for(size_t i = 0; i < half; i++)
+
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
     {
-        std += powf(val[z] - mean, 2);
-        std += powf(val[z + 1] - mean, 2);
-        z += 2;
+        std += std::pow(val[i] - mean, 2);
     }
-    std = sqrtf(std / size);
-    
-    EXPECT_NEAR(0.0f, mean, 0.5f);
-    EXPECT_NEAR(1.0f, std, 0.5f);
+    std = std::sqrt(std / size);
+
+    EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
+    EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
 
 TEST(normal_distribution_tests, double_test)
@@ -69,39 +100,34 @@ TEST(normal_distribution_tests, double_test)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
-    
-    double mean = 0.0;
-    double std = 0.0;
-    const size_t size = 200;
-    const size_t half = size / 2;
-    normal_distribution<double> u(0.0, 1.0);
+
+    const size_t size = 4000;
     double val[size];
-    size_t z1 = 0;
-    for(size_t i = 0; i < half; i++)
+    normal_distribution<double> u(1.0, 2.0);
+
+    // Calculate mean
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i+=2)
     {
         unsigned int x = dis(gen);
         unsigned int y = dis(gen);
         unsigned int z = dis(gen);
         unsigned int w = dis(gen);
-        uint4 t = { x, y, z, w };
-        double2 v = u(t);
-        val[z1] = v.x;
-        val[z1 + 1] = v.y;
+        double2 v = u(uint4{x, y, z, w});
+        val[i] = v.x;
+        val[i + 1] = v.y;
         mean += v.x + v.y;
-        z1 += 2;
     }
-    
     mean = mean / size;
-    z1 = 0;
-    
-    for(size_t i = 0; i < half; i++)
-    {
-        std += pow(val[z1] - mean, 2);
-        std += pow(val[z1 + 1] - mean, 2);
-        z1 += 2;
-    }
-    std = sqrt(std / size);
 
-    EXPECT_NEAR(0.0, mean, 0.5);
-    EXPECT_NEAR(1.0, std, 0.5);
+    // Calculate stddev
+    double std = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(val[i] - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    EXPECT_NEAR(1.0f, mean, 0.2); // 20%
+    EXPECT_NEAR(2.0f, std, 0.4); // 20%
 }
