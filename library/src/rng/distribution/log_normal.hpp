@@ -21,6 +21,10 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_LOG_NORMAL_H_
 #define ROCRAND_RNG_DISTRIBUTION_LOG_NORMAL_H_
 
+#include <cmath>
+#include <hip/hip_runtime.h>
+
+#include "common.hpp"
 #include "normal_common.hpp"
 
 template<class T>
@@ -38,14 +42,21 @@ struct log_normal_distribution<float>
     __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
     {
         float2 v = box_muller(x, y);
-        return expf(mean + (stddev * v));
+        v.x = expf(mean + (stddev * v.x));
+        v.y = expf(mean + (stddev * v.y));
+        return v;
     }
 
     __host__ __device__ float4 operator()(uint4 x)
     {
         float2 v = box_muller(x.x, x.y);
         float2 w = box_muller(x.z, x.w);
-        return make_float4(expf(mean + (stddev * v)), expf(mean + (stddev * w)));
+        return float4 {
+            expf(mean + (stddev * v.x)),
+            expf(mean + (stddev * v.y)),
+            expf(mean + (stddev * w.x)),
+            expf(mean + (stddev * w.y))
+        };
     }
 };
 
@@ -61,7 +72,9 @@ struct log_normal_distribution<double>
     __host__ __device__ double2 operator()(uint4 x)
     {
         double2 v = box_muller_double(x);
-        return exp(mean + (stddev * v));
+        v.x = exp(mean + (stddev * v.x));
+        v.y = exp(mean + (stddev * v.y));
+        return v;
     }
 };
 
