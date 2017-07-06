@@ -18,12 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTIONS_H_
-#define ROCRAND_RNG_DISTRIBUTIONS_H_
+#include <stdio.h>
+#include <gtest/gtest.h>
 
-#include "distribution/uniform.hpp"
-#include "distribution/normal.hpp"
-#include "distribution/log_normal.hpp"
+#include <hip/hip_runtime.h>
+#include <rocrand.h>
 
-#endif // ROCRAND_RNG_DISTRIBUTION_S_H_
+TEST(rocrand_generate_tests, simple_test)
+{
+    rocrand_generator generator;
+    ASSERT_EQ(
+        rocrand_create_generator(
+            &generator,
+            ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+        ),
+        ROCRAND_STATUS_SUCCESS
+    );
 
+    const size_t size = 256;
+    unsigned int * data;
+    ASSERT_EQ(
+        hipMalloc((void **)&data, size * sizeof(unsigned int)),
+        hipSuccess
+    );
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    EXPECT_EQ(
+        rocrand_generate(generator, (unsigned int *) data, size),
+        ROCRAND_STATUS_SUCCESS
+    );
+
+    EXPECT_EQ(hipFree(data), hipSuccess);
+    EXPECT_EQ(
+        rocrand_destroy_generator(generator),
+        ROCRAND_STATUS_SUCCESS
+    );
+}
+
+TEST(rocrand_generate_tests, simple_neg_test)
+{
+    const size_t size = 256;
+    unsigned int * data = NULL;
+
+    rocrand_generator generator = NULL;
+    EXPECT_EQ(
+        rocrand_generate(generator, (unsigned int *) data, size),
+        ROCRAND_STATUS_NOT_INITIALIZED
+    );
+}

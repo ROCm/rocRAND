@@ -1,4 +1,4 @@
- // Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,10 @@ struct log_normal_distribution<float>
 {
     float stddev;
     float mean;
-    
+
     log_normal_distribution<float>(float mean, float stddev) :
                                    mean(mean), stddev(stddev) {}
-         
+
     __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
     {
         float2 v = box_muller(x, y);
@@ -54,10 +54,10 @@ struct log_normal_distribution<double>
 {
     double stddev;
     double mean;
-    
+
     log_normal_distribution<double>(double mean, double stddev) :
                                     mean(mean), stddev(stddev) {}
-                                
+
     __host__ __device__ double2 operator()(uint4 x)
     {
         double2 v = box_muller_double(x);

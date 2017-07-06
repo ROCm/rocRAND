@@ -31,13 +31,18 @@
 
 #include "get_state_type.hpp" // includes all states
 
-struct rocrand_generator_base_type {};
+struct rocrand_generator_base_type
+{
+    rocrand_rng_type rng_type;
+    rocrand_generator_base_type(rocrand_rng_type rng_type) : rng_type(rng_type) {}
+};
 
 // rocRAND random number generator base class
-template<rocrand_rng_type rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
+template<rocrand_rng_type GeneratorType = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 struct rocrand_generator_type : public rocrand_generator_base_type
 {
-    typedef typename rocrand_get_state_type<rng_type>::type state_type;
+    using base_type = rocrand_generator_base_type;
+    using state_type = typename rocrand_get_state_type<GeneratorType>::type;
 
     // ordering type
     unsigned long long offset;
@@ -45,7 +50,7 @@ struct rocrand_generator_type : public rocrand_generator_base_type
 
     rocrand_generator_type(unsigned long long offset = 0,
                            hipStream_t stream = 0)
-        : offset(offset), stream(stream)
+        : base_type(GeneratorType), offset(offset), stream(stream)
     {
 
     }
