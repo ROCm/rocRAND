@@ -107,6 +107,24 @@ rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type
 rocrand_status ROCRANDAPI
 rocrand_destroy_generator(rocrand_generator generator);
 
+/**
+ * \brief Generates uniformly distributed 32-bit unsigned integers.
+ *
+ * Generates \p n uniformly distributed 32-bit unsigned integers and
+ * saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of 32-bit unsigned integers to generate
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_generate(rocrand_generator generator, unsigned int * output_data, size_t n);
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
