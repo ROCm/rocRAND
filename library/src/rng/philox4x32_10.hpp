@@ -158,11 +158,11 @@ namespace rocrand_philox4x32_10_detail
 
 } // end namespace rocrand_philox4x32_10_detail
 
-class rocrand_philox4x32_10 : public ::rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
+class rocrand_philox4x32_10 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
 public:
-    typedef typename ::rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10> base_type;
-    typedef typename base_type::state_type state_type;
+    using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>;
+    using state_type = base_type::state_type;
 
     class philox4x32_10_generator
     {
