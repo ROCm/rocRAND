@@ -105,28 +105,31 @@ namespace rocrand_philox4x32_10_detail
                          Generator generator,
                          Distribution distribution)
     {
-        unsigned int id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x) * 4;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x * 4;
+        typedef decltype(distribution(generator(&init_state))) Type4;
+
+        unsigned int id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
         StateType state = init_state;
         generator.discard(&state, id);
-        while((id + 3) < n)
+
+        Type4 * data4 = (Type4 *)data;
+        auto result = distribution(generator(&state));
+        while(id < (n/4))
         {
-            auto result = distribution(generator(&state));
-            data[id + 0] = result.x;
-            data[id + 1] = result.y;
-            data[id + 2] = result.z;
-            data[id + 3] = result.w;
+            data4[id] = result;
             generator.discard(&state, stride);
+            result = distribution(generator(&state));
             id += stride;
         }
-        if(id < n)
+        // first work-item saves the tail when n is not a multiple of 4
+        auto tail_size = n % 4;
+        if(tail_size > 0 && hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x == 0)
         {
-            auto result = distribution(generator(&state));
-            data[id + 0] = result.x;
-            if((id + 1) < n) data[id + 1] = result.y;
-            if((id + 2) < n) data[id + 2] = result.z;
-            if((id + 3) < n) data[id + 3] = result.w;
+            result = distribution(generator(&state));
+            data[n - tail_size] = result.x;
+            if(tail_size > 1) data[n - tail_size + 1] = result.y;
+            if(tail_size > 2) data[n - tail_size + 2] = result.z;
         }
     }
 
@@ -336,18 +339,26 @@ public:
     rocrand_status generate(T * data, size_t n,
                             const Distribution& distribution = Distribution())
     {
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 1024;
+        const uint32_t max_blocks = 4096;
+        #else
         const uint32_t threads = 256;
-        const uint32_t block_size =
-            std::min<uint32_t>(16384, (n + threads - 1) / threads);
+        const uint32_t max_blocks = 1024;
+        #endif
+        const uint32_t blocks =
+            std::min<uint32_t>(max_blocks, (n + threads - 1) / threads);
 
         namespace detail = rocrand_philox4x32_10_detail;
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(detail::generate_kernel),
-            dim3(block_size), dim3(threads), 0, stream,
+            dim3(blocks), dim3(threads), 0, stream,
             m_state,
             data, n,
             m_generator, distribution
         );
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
         // Progress state
         m_generator.discard(&m_state, ((n + 3) / 4));
         return ROCRAND_STATUS_SUCCESS;
@@ -372,6 +383,8 @@ public:
             data, n,
             m_generator, ndistribution
         );
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -387,6 +400,8 @@ public:
             data, n,
             m_generator, lndistribution
         );
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
         return ROCRAND_STATUS_SUCCESS;
     }
 
