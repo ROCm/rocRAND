@@ -1,4 +1,4 @@
- // Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ inline __host__ __device__ float2 operator+(float b, float2 a)
 {
     return make_float2(a.x + b, a.y + b);
 }
-    
+
 inline __host__ __device__ float2 operator*(float b, float2 a)
 {
     return make_float2(a.x * b, a.y * b);
@@ -42,12 +42,12 @@ inline __host__ __device__ float4 make_float4(float2 a, float2 b)
 {
     return make_float4(a.x, a.y, b.x, b.y);
 }
-    
+
 inline __host__ __device__ double2 operator+(double b, double2 a)
 {
     return make_double2(a.x + b, a.y + b);
 }
-    
+
 inline __host__ __device__ double2 operator*(double b, double2 a)
 {
     return make_double2(a.x * b, a.y * b);
@@ -67,7 +67,7 @@ __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
         result.x *= s;
-        result.y *= s; 
+        result.y *= s;
     #else
         result.x = sinf(v) * s;
         result.y = cosf(v) * s;
@@ -78,10 +78,10 @@ __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
 __host__ __device__ double2 box_muller_double(uint4 xy)
 {
     double2 result;
-    unsigned long long zx = (unsigned long long)xy.x ^ 
+    unsigned long long zx = (unsigned long long)xy.x ^
         ((unsigned long long)xy.y << (53 - 32));
     double u = nextafter(zx * ROC_2POW53_INV_DOUBLE, 1.0);
-    unsigned long long zy = (unsigned long long)xy.z ^ 
+    unsigned long long zy = (unsigned long long)xy.z ^
         ((unsigned long long)xy.w << (53 - 32));
     double v = nextafter(zy * (ROC_2POW53_INV_DOUBLE * 2.0), 2.0);
     double s = sqrt(-2.0 * log(u));
@@ -129,10 +129,10 @@ __host__ __device__ float2 marsaglia(unsigned int x, unsigned int y)
 __host__ __device__ double2 marsaglia_double(uint4 xy)
 {
     double2 result;
-    unsigned long long zx = (unsigned long long)xy.x ^ 
+    unsigned long long zx = (unsigned long long)xy.x ^
         ((unsigned long long)xy.y << (53 - 32));
     double u = nextafter(zx * ROC_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
-    unsigned long long zy = (unsigned long long)xy.z ^ 
+    unsigned long long zy = (unsigned long long)xy.z ^
         ((unsigned long long)xy.w << (53 - 32));
     double v = nextafter(zy * ROC_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
     double s = u * u + v * v;
