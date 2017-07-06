@@ -21,7 +21,8 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 #define ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 
-#include <climits>
+#include <cmath>
+#include <hip/hip_runtime.h>
 
 #include "common.hpp"
 

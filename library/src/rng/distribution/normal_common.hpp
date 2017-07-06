@@ -21,42 +21,10 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_COMMON_H_
 #define ROCRAND_RNG_DISTRIBUTION_NORMAL_COMMON_H_
 
+#include <cmath>
+#include <hip/hip_runtime.h>
+
 #include "common.hpp"
-
-inline __host__ __device__ float2 operator+(float b, float2 a)
-{
-    return make_float2(a.x + b, a.y + b);
-}
-
-inline __host__ __device__ float2 operator*(float b, float2 a)
-{
-    return make_float2(a.x * b, a.y * b);
-}
-
-inline __host__ __device__ float2 expf(float2 a)
-{
-    return make_float2(expf(a.x), expf(a.y));
-}
-
-inline __host__ __device__ float4 make_float4(float2 a, float2 b)
-{
-    return make_float4(a.x, a.y, b.x, b.y);
-}
-
-inline __host__ __device__ double2 operator+(double b, double2 a)
-{
-    return make_double2(a.x + b, a.y + b);
-}
-
-inline __host__ __device__ double2 operator*(double b, double2 a)
-{
-    return make_double2(a.x * b, a.y * b);
-}
-
-inline __host__ __device__ double2 exp(double2 a)
-{
-    return make_double2(exp(a.x), exp(a.y));
-}
 
 __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
 {
