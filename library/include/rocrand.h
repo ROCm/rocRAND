@@ -124,6 +124,90 @@ rocrand_destroy_generator(rocrand_generator generator);
  */
 rocrand_status ROCRANDAPI
 rocrand_generate(rocrand_generator generator, unsigned int * output_data, size_t n);
+    
+/**
+ * \brief Generates normal distributed floats.
+ *
+ * Generates \p n normal distributed floats and
+ * saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of floats to generate
+ * \param mean - Mean value of normal distribution
+ * \param stddev - Standard deviation value of normal distribution
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ */
+rocrand_status ROCRANDAPI 
+rocrand_generate_normal(rocrand_generator generator, float *output_data, 
+                     size_t n, float mean, float stddev);
+    
+/**
+ * \brief Generates normal distributed doubles.
+ *
+ * Generates \p n normal distributed doubles and
+ * saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of doubles to generate
+ * \param mean - Mean value of normal distribution
+ * \param stddev - Standard deviation value of normal distribution
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ */
+rocrand_status ROCRANDAPI 
+rocrand_generate_normal_double(rocrand_generator generator, double *output_data, 
+                     size_t n, double mean, double stddev);
+    
+/**
+ * \brief Generates log-normal distributed floats.
+ *
+ * Generates \p n log-normal distributed floats and
+ * saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of floats to generate
+ * \param mean - Mean value of log normal distribution
+ * \param stddev - Standard deviation value of log normal distribution
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ */
+rocrand_status ROCRANDAPI 
+rocrand_generate_log_normal(rocrand_generator generator, float *output_data, 
+                     size_t n, float mean, float stddev);
+    
+/**
+ * \brief Generates log-normal distributed doubles.
+ *
+ * Generates \p n log-normal distributed doubles and
+ * saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of doubles to generate
+ * \param mean - Mean value of log normal distribution
+ * \param stddev - Standard deviation value of log normal distribution
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ */
+rocrand_status ROCRANDAPI 
+rocrand_generate_log_normal_double(rocrand_generator generator, double *output_data, 
+                     size_t n, double mean, double stddev);
 
 #if defined(__cplusplus)
 }
