@@ -21,7 +21,8 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 #define ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 
-#include <climits>
+#include <cmath>
+#include <hip/hip_runtime.h>
 
 #include "common.hpp"
 
@@ -49,7 +50,7 @@ struct uniform_distribution<float>
 {
     __host__ __device__ float operator()(const unsigned int v) const
     {
-        return nextafter(v * ROC_2POW32_INV, 1.0f);
+        return nextafterf(v * ROC_2POW32_INV, 1.0f);
     }
 
     __host__ __device__ float4 operator()(const uint4 v) const
