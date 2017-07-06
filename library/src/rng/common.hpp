@@ -18,15 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTION_COMMON_H_
-#define ROCRAND_RNG_DISTRIBUTION_COMMON_H_
+#ifndef ROCRAND_RNG_COMMON_H_
+#define ROCRAND_RNG_COMMON_H_
 
-#include "../common.hpp"
+#include <hip/hip_runtime.h>
 
-#define ROC_2POW32_INV (2.3283064e-10f)
-#define ROC_2POW32_INV_2PI (2.3283064e-10f * 6.2831855f)
-#define ROC_2POW53_INV_DOUBLE (1.1102230246251565e-16)
-#define ROC_PI_DOUBLE  (3.1415926535897932)
-#define ROC_2PI (6.2831855f)
+// nextafterf(float, float) is not implemented for device on HIP/HCC platform
+#if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
+inline __device__ float nextafterf(const float from, const float to)
+{
+    if(from == to) return to;
+    // (2.3283064e-10f) is float min value
+    return fmaxf(from + (2.3283064e-10f), to);
+}
+#endif // defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
 
-#endif // ROCRAND_RNG_DISTRIBUTION_COMMON_H_
+#endif // ROCRAND_RNG_COMMON_H_
