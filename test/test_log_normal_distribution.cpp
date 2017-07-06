@@ -30,10 +30,10 @@ TEST(log_normal_distribution_tests, float_test)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
-    
+
     float mean = 0.0f;
     float std = 0.0f;
-    const size_t size = 2000;
+    const size_t size = 4000;
     const size_t half = size / 2;
     log_normal_distribution<float> u(5.0f, 2.0f);
     float val[size];
@@ -48,10 +48,10 @@ TEST(log_normal_distribution_tests, float_test)
         mean += v.x + v.y;
         z += 2;
     }
-       
+
     mean = mean / size;
     z = 0;
-    
+
     for(size_t i = 0; i < half; i++)
     {
         std += powf(val[z] - mean, 2);
@@ -59,10 +59,10 @@ TEST(log_normal_distribution_tests, float_test)
         z += 2;
     }
     std = sqrtf(std / size);
-    
+
     float logmean = logf(mean * mean / sqrtf(std * std + mean * mean));
     float logstd = sqrtf(logf(std * std / mean / mean + 1.0f));
-    
+
     EXPECT_NEAR(5.0f, logmean, 1.0f);
     EXPECT_NEAR(2.0f, logstd, 1.0f);
 }
@@ -72,10 +72,10 @@ TEST(log_normal_distribution_tests, double_test)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
-    
+
     double mean = 0.0;
     double std = 0.0;
-    const size_t size = 200;
+    const size_t size = 4000;
     const size_t half = size / 2;
     log_normal_distribution<double> u(5.0, 2.0);
     double val[size];
@@ -93,10 +93,10 @@ TEST(log_normal_distribution_tests, double_test)
         mean += v.x + v.y;
         z1 += 2;
     }
-    
+
     mean = mean / size;
     z1 = 0;
-    
+
     for(size_t i = 0; i < half; i++)
     {
         std += pow(val[z1] - mean, 2);
@@ -104,7 +104,7 @@ TEST(log_normal_distribution_tests, double_test)
         z1 += 2;
     }
     std = sqrt(std / size);
-    
+
     double logmean = log(mean * mean / sqrt(std * std + mean * mean));
     double logstd = sqrt(log(std * std / mean / mean + 1.0));
 
