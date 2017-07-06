@@ -29,8 +29,8 @@
 __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafter(x * ROC_2POW32_INV, 1.0f);
-    float v = nextafter(y * ROC_2POW32_INV_2PI, ROC_2PI);
+    float u = nextafterf(x * ROC_2POW32_INV, 1.0f);
+    float v = nextafterf(y * ROC_2POW32_INV_2PI, ROC_2PI);
     float s = sqrtf(-2.0f * logf(u));
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
@@ -84,8 +84,8 @@ __host__ __device__ double2 box_muller_double(uint4 xy)
 __host__ __device__ float2 marsaglia(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafter(x * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
-    float v = nextafter(y * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float u = nextafterf(x * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float v = nextafterf(y * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
     float s = u * u + v * v;
     float multiplier = sqrtf(-2.0f * logf(s) / s);
     result.x = u * s;
