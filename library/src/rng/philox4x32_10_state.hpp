@@ -57,10 +57,11 @@ struct rocrand_philox4_32_10_state
     inline __host__ __device__
     void discard()
     {
-        if(++counter.x != 0) return;
-        if(++counter.y != 0) return;
-        if(++counter.z != 0) return;
-        counter.w++;
+        counter.x++;
+        uint add = counter.x == 0 ? 1 : 0;
+        counter.y += add; add = counter.y == 0 ? add : 0;
+        counter.z += add; add = counter.z == 0 ? add : 0;
+        counter.w += add;
     }
 
     inline __host__ __device__
