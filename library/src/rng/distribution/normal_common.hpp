@@ -21,48 +21,16 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_COMMON_H_
 #define ROCRAND_RNG_DISTRIBUTION_NORMAL_COMMON_H_
 
+#include <cmath>
+#include <hip/hip_runtime.h>
+
 #include "common.hpp"
-
-inline __host__ __device__ float2 operator+(float b, float2 a)
-{
-    return make_float2(a.x + b, a.y + b);
-}
-
-inline __host__ __device__ float2 operator*(float b, float2 a)
-{
-    return make_float2(a.x * b, a.y * b);
-}
-
-inline __host__ __device__ float2 expf(float2 a)
-{
-    return make_float2(expf(a.x), expf(a.y));
-}
-
-inline __host__ __device__ float4 make_float4(float2 a, float2 b)
-{
-    return make_float4(a.x, a.y, b.x, b.y);
-}
-
-inline __host__ __device__ double2 operator+(double b, double2 a)
-{
-    return make_double2(a.x + b, a.y + b);
-}
-
-inline __host__ __device__ double2 operator*(double b, double2 a)
-{
-    return make_double2(a.x * b, a.y * b);
-}
-
-inline __host__ __device__ double2 exp(double2 a)
-{
-    return make_double2(exp(a.x), exp(a.y));
-}
 
 __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafter(x * ROC_2POW32_INV, 1.0f);
-    float v = nextafter(y * ROC_2POW32_INV_2PI, ROC_2PI);
+    float u = nextafterf(x * ROC_2POW32_INV, 1.0f);
+    float v = nextafterf(y * ROC_2POW32_INV_2PI, ROC_2PI);
     float s = sqrtf(-2.0f * logf(u));
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
@@ -116,8 +84,8 @@ __host__ __device__ double2 box_muller_double(uint4 xy)
 __host__ __device__ float2 marsaglia(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafter(x * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
-    float v = nextafter(y * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float u = nextafterf(x * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float v = nextafterf(y * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
     float s = u * u + v * v;
     float multiplier = sqrtf(-2.0f * logf(s) / s);
     result.x = u * s;

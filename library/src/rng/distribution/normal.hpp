@@ -21,6 +21,10 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
 #define ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
 
+#include <cmath>
+#include <hip/hip_runtime.h>
+
+#include "common.hpp"
 #include "normal_common.hpp"
 
 template<class T>
