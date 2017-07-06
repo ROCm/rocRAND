@@ -18,3 +18,8 @@ if (BUILD_TEST)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 endif()
+
+if(BUILD_BENCHMARK)
+    set(BENCHMARK_BOOST_COMPONENTS program_options)
+    find_package(Boost 1.54 REQUIRED COMPONENTS ${BENCHMARK_BOOST_COMPONENTS})
+endif()
