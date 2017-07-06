@@ -90,6 +90,86 @@ rocrand_generate(rocrand_generator generator,
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
+    
+rocrand_status ROCRANDAPI
+rocrand_generate_normal(rocrand_generator generator,
+                 float * output_data, size_t n,
+                 float mean, float stddev)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_INITIALIZED;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_normal(output_data, n,
+                                                        stddev, mean);
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+    
+rocrand_status ROCRANDAPI
+rocrand_generate_normal_double(rocrand_generator generator,
+                 double * output_data, size_t n,
+                 double mean, double stddev)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_INITIALIZED;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_normal(output_data, n,
+                                                        stddev, mean);
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+    
+rocrand_status ROCRANDAPI
+rocrand_generate_log_normal(rocrand_generator generator,
+                 float * output_data, size_t n,
+                 float mean, float stddev)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_INITIALIZED;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_normal(output_data, n,
+                                                        stddev, mean);
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+    
+rocrand_status ROCRANDAPI
+rocrand_generate_log_normal_double(rocrand_generator generator,
+                 double * output_data, size_t n,
+                 double mean, double stddev)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_INITIALIZED;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_normal(output_data, n,
+                                                        stddev, mean);
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
 
 #if defined(__cplusplus)
 }
