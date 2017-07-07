@@ -36,6 +36,7 @@ struct normal_distribution<float>
     float stddev;
     float mean;
 
+    __host__ __device__
     normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
                                mean(mean), stddev(stddev) {}
 
@@ -66,6 +67,7 @@ struct normal_distribution<double>
     double stddev;
     double mean;
 
+    __host__ __device__
     normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
                                 mean(mean), stddev(stddev) {}
 
