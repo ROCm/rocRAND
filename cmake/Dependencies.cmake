@@ -7,6 +7,7 @@ include(cmake/HIP.cmake)
 
 # Test dependencies
 if (BUILD_TEST)
+    find_package(TestU01 REQUIRED)
     include(cmake/DownloadProject.cmake)
 
     # Download googletest library

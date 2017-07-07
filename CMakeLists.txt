@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 # Options
 option(BUILD_SHARED_LIBS "Build libhiprand.so" ON)
 option(BUILD_TEST "Build tests (requires googletest)" ON)
-option(BUILD_BENCHMARK "Build benchmarks" OFF)
+option(BUILD_BENCHMARK "Build benchmarks" ON)
 
 # Include cmake scripts
 include(cmake/Summary.cmake)
