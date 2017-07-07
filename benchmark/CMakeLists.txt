@@ -1,13 +1,22 @@
 # Benchmarks
 
 # Get sources
-file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_rocrand*.cpp)
 set(rocRAND_BENCHMARK_SRCS ${tmp})
+if(HIP_PLATFORM STREQUAL "nvcc")
+    file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_curand*.cpp)
+    set(rocRAND_BENCHMARK_SRCS ${rocRAND_BENCHMARK_SRCS} ${tmp})
+endif()
 set_source_files_properties(${rocRAND_BENCHMARK_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # Boost
 include_directories(${PROJECT_SOURCE_DIR}/library/include) # rocRAND
+
+set(CURAND_LIB)
+if(HIP_PLATFORM STREQUAL "nvcc")
+    set(CURAND_LIB -lcurand)
+endif()
 
 foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     get_filename_component(benchmark_name ${benchmark_src} NAME_WE)
@@ -20,6 +29,9 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
         $<TARGET_FILE:rocRAND> # rocRAND
         ${Boost_LIBRARIES} # Boost program_options
     )
+    if(HIP_PLATFORM STREQUAL "nvcc")
+        target_link_libraries( ${benchmark_name} "-lcurand")
+    endif()
     set_target_properties(
         ${benchmark_name}
         PROPERTIES
