@@ -42,11 +42,14 @@ struct rocrand_philox4_32_10_state
     }
 
     inline __host__ __device__
-    void discard(unsigned int n)
+    void discard(unsigned long long n)
     {
+        unsigned int lo = static_cast<unsigned int>(n);
+        unsigned int hi = static_cast<unsigned int>(n >> 32);
+
         uint4 temp = counter;
-        counter.x += n;
-        counter.y += (counter.x < temp.x ? 1 : 0);
+        counter.x += lo;
+        counter.y += hi + (counter.x < temp.x ? 1 : 0);
         counter.z += (counter.y < temp.y ? 1 : 0);
         counter.w += (counter.z < temp.z ? 1 : 0);
     }
@@ -58,6 +61,17 @@ struct rocrand_philox4_32_10_state
         if(++counter.y != 0) return;
         if(++counter.z != 0) return;
         counter.w++;
+    }
+
+    inline __host__ __device__
+    void discard_sequence(unsigned long long n)
+    {
+        unsigned int lo = static_cast<unsigned int>(n);
+        unsigned int hi = static_cast<unsigned int>(n >> 32);
+
+        unsigned int temp = counter.z;
+        counter.z += lo;
+        counter.w += hi + (counter.z < temp ? 1 : 0);
     }
 
     inline __host__

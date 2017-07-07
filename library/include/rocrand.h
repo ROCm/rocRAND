@@ -91,7 +91,7 @@ typedef enum rocrand_rng_type {
  *
  */
 rocrand_status ROCRANDAPI
-rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type);
+rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_type);
 
 /**
  * \brief Destroy generator.
@@ -120,11 +120,12 @@ rocrand_destroy_generator(rocrand_generator generator);
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
-rocrand_generate(rocrand_generator generator, unsigned int * output_data, size_t n);
-    
+rocrand_generate(rocrand_generator generator,
+                 unsigned int * output_data, size_t n);
+
 /**
  * \brief Generates normal distributed floats.
  *
@@ -140,12 +141,13 @@ rocrand_generate(rocrand_generator generator, unsigned int * output_data, size_t
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI 
-rocrand_generate_normal(rocrand_generator generator, float *output_data, 
-                     size_t n, float mean, float stddev);
-    
+rocrand_status ROCRANDAPI
+rocrand_generate_normal(rocrand_generator generator,
+                        float * output_data, size_t n,
+                        float mean, float stddev);
+
 /**
  * \brief Generates normal distributed doubles.
  *
@@ -161,12 +163,13 @@ rocrand_generate_normal(rocrand_generator generator, float *output_data,
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI 
-rocrand_generate_normal_double(rocrand_generator generator, double *output_data, 
-                     size_t n, double mean, double stddev);
-    
+rocrand_status ROCRANDAPI
+rocrand_generate_normal_double(rocrand_generator generator,
+                               double * output_data, size_t n,
+                               double mean, double stddev);
+
 /**
  * \brief Generates log-normal distributed floats.
  *
@@ -182,12 +185,13 @@ rocrand_generate_normal_double(rocrand_generator generator, double *output_data,
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI 
-rocrand_generate_log_normal(rocrand_generator generator, float *output_data, 
-                     size_t n, float mean, float stddev);
-    
+rocrand_status ROCRANDAPI
+rocrand_generate_log_normal(rocrand_generator generator,
+                            float * output_data, size_t n,
+                            float mean, float stddev);
+
 /**
  * \brief Generates log-normal distributed doubles.
  *
@@ -203,11 +207,34 @@ rocrand_generate_log_normal(rocrand_generator generator, float *output_data,
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - ROCRAND_STATUS_SUCCESS if random number were successfully generated \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI 
-rocrand_generate_log_normal_double(rocrand_generator generator, double *output_data, 
-                     size_t n, double mean, double stddev);
+rocrand_status ROCRANDAPI
+rocrand_generate_log_normal_double(rocrand_generator generator,
+                                   double * output_data, size_t n,
+                                   double mean, double stddev);
+
+/**
+ * \brief Generates Poisson-distributed 32-bit unsigned integers.
+ *
+ * Generates \p n Poisson-distributed 32-bit unsigned integers and
+ * saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of 32-bit unsigned integers to generate
+ * \param lambda - lambda for the Poisson distribution
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if lambda is non-positive
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_generate_poisson(rocrand_generator generator,
+                         unsigned int * output_data, size_t n,
+                         double lambda);
 
 #if defined(__cplusplus)
 }

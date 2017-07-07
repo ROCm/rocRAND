@@ -156,6 +156,59 @@ namespace rocrand_philox4x32_10_detail
         // TODO: implement
     }
 
+    // Returns 1 value (runs Philox generation per every 4 calls)
+    template<class Generator, class StateType>
+    struct single_value_generator
+    {
+        __host__ __device__
+        single_value_generator(Generator generator, StateType state)
+            : generator(generator), state(state), index(4) {}
+
+        __host__ __device__ unsigned int operator()()
+        {
+            if (index == 4)
+            {
+                value = generator(&state);
+                generator.discard(&state);
+                index = 0;
+            }
+            const unsigned int v = (&value.x)[index];
+            index++;
+            return v;
+        }
+
+        Generator generator;
+        StateType state;
+        int index;
+        uint4 value;
+    };
+
+    template <
+        class Type, class StateType,
+        class Generator, class Distribution
+    >
+    __global__
+    void generate_poisson_kernel(StateType init_state,
+                                 Type * data, const size_t n,
+                                 Generator generator,
+                                 Distribution distribution)
+    {
+        unsigned int id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        StateType state = init_state;
+        generator.discard_sequence(&state, id);
+
+        single_value_generator<Generator, StateType> gen(generator, state);
+
+        while(id < n)
+        {
+            auto result = distribution(gen);
+            data[id] = result;
+            id += stride;
+        }
+    }
+
 } // end namespace rocrand_philox4x32_10_detail
 
 class rocrand_philox4x32_10 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
@@ -191,6 +244,12 @@ public:
         void discard(state_type * state)
         {
             state->discard();
+        }
+
+        inline __host__ __device__
+        void discard_sequence(state_type * state, unsigned int n)
+        {
+            state->discard_sequence(n);
         }
 
     private:
@@ -263,9 +322,14 @@ public:
         return m_state;
     }
 
-    void discard(unsigned int n)
+    void discard(unsigned long long n)
     {
         m_state.discard(n);
+    }
+
+    void discard_sequence(unsigned long long n)
+    {
+        m_state.discard_sequence(n);
     }
 
     template<class T, class Distribution = uniform_distribution<T> >
@@ -323,6 +387,29 @@ public:
             data, n,
             m_generator, lndistribution
         );
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    template<class T>
+    rocrand_status generate_poisson(T * data, size_t n, double lambda)
+    {
+        poisson_distribution<T> distribution(lambda);
+
+        const uint32_t threads = 256;
+        const uint32_t block_size =
+            std::min<uint32_t>(16384, (n + threads - 1) / threads);
+
+        namespace detail = rocrand_philox4x32_10_detail;
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(detail::generate_poisson_kernel),
+            dim3(block_size), dim3(threads), 0, stream,
+            m_state,
+            data, n,
+            m_generator, distribution
+        );
+        // Progress state
+        // TODO Check how the counter should be changed
+        m_generator.discard(&m_state, static_cast<unsigned long long>((n + 3) / 4) << 8);
         return ROCRAND_STATUS_SUCCESS;
     }
 
