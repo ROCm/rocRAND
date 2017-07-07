@@ -298,6 +298,16 @@ public:
             return ret;
         }
 
+        // Get uint4 ignoring state's substate
+        inline __host__ __device__
+        uint4 unsafe_get4(state_type * state)
+        {
+            uint4 ret = state->result;
+            state->result = ten_rounds(state->counter, state->key);
+            discard(state);
+            return ret;
+        }
+
         inline __host__ __device__
         void init_state(state_type * state,
                         unsigned long long offset,
