@@ -30,7 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 rocrand_status ROCRANDAPI
-rocrand_create_generator(rocrand_generator *generator, rocrand_rng_type rng_type)
+rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_type)
 {
     try
     {
@@ -74,8 +74,7 @@ rocrand_destroy_generator(rocrand_generator generator)
 
 rocrand_status ROCRANDAPI
 rocrand_generate(rocrand_generator generator,
-                 unsigned int * output_data,
-                 size_t n)
+                 unsigned int * output_data, size_t n)
 {
     if(generator == NULL)
     {
@@ -90,11 +89,11 @@ rocrand_generate(rocrand_generator generator,
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
-    
+
 rocrand_status ROCRANDAPI
 rocrand_generate_normal(rocrand_generator generator,
-                 float * output_data, size_t n,
-                 float mean, float stddev)
+                        float * output_data, size_t n,
+                        float mean, float stddev)
 {
     if(generator == NULL)
     {
@@ -110,7 +109,7 @@ rocrand_generate_normal(rocrand_generator generator,
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
-    
+
 rocrand_status ROCRANDAPI
 rocrand_generate_normal_double(rocrand_generator generator,
                  double * output_data, size_t n,
@@ -130,11 +129,11 @@ rocrand_generate_normal_double(rocrand_generator generator,
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
-    
+
 rocrand_status ROCRANDAPI
 rocrand_generate_log_normal(rocrand_generator generator,
-                 float * output_data, size_t n,
-                 float mean, float stddev)
+                            float * output_data, size_t n,
+                            float mean, float stddev)
 {
     if(generator == NULL)
     {
@@ -145,16 +144,16 @@ rocrand_generate_log_normal(rocrand_generator generator,
     {
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
-        return philox4x32_10_generator->generate_normal(output_data, n,
-                                                        stddev, mean);
+        return philox4x32_10_generator->generate_log_normal(output_data, n,
+                                                            stddev, mean);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
-    
+
 rocrand_status ROCRANDAPI
 rocrand_generate_log_normal_double(rocrand_generator generator,
-                 double * output_data, size_t n,
-                 double mean, double stddev)
+                                   double * output_data, size_t n,
+                                   double mean, double stddev)
 {
     if(generator == NULL)
     {
@@ -165,8 +164,32 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
     {
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
-        return philox4x32_10_generator->generate_normal(output_data, n,
-                                                        stddev, mean);
+        return philox4x32_10_generator->generate_log_normal(output_data, n,
+                                                            stddev, mean);
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
+rocrand_generate_poisson(rocrand_generator generator,
+                         unsigned int * output_data, size_t n,
+                         double lambda)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_INITIALIZED;
+    }
+    if (lambda <= 0.0)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_poisson(output_data, n,
+                                                         lambda);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }

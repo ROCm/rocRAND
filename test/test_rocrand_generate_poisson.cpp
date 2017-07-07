@@ -24,7 +24,7 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-TEST(rocrand_generate_log_normal_tests, float_test)
+TEST(rocrand_generate_poisson_tests, uint_test)
 {
     rocrand_generator generator;
     ASSERT_EQ(
@@ -36,17 +36,16 @@ TEST(rocrand_generate_log_normal_tests, float_test)
     );
 
     const size_t size = 256;
-    float mean = 5.0f;
-    float stddev = 2.0f;
-    float * data;
+    double lambda = 100.0;
+    unsigned int * data;
     ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(float)),
+        hipMalloc((void **)&data, size * sizeof(unsigned int)),
         hipSuccess
     );
     ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
 
     EXPECT_EQ(
-        rocrand_generate_log_normal(generator, (float *) data, size, mean, stddev),
+        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
         ROCRAND_STATUS_SUCCESS
     );
 
@@ -57,49 +56,47 @@ TEST(rocrand_generate_log_normal_tests, float_test)
     );
 }
 
-TEST(rocrand_generate_log_normal_tests, double_test)
-{
-    rocrand_generator generator;
-    ASSERT_EQ(
-        rocrand_create_generator(
-            &generator,
-            ROCRAND_RNG_PSEUDO_PHILOX4_32_10
-        ),
-        ROCRAND_STATUS_SUCCESS
-    );
-
-    const size_t size = 256;
-    double mean = 5.0;
-    double stddev = 2.0;
-    double * data;
-    ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(double)),
-        hipSuccess
-    );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
-
-    EXPECT_EQ(
-        rocrand_generate_log_normal_double(generator, (double *) data, size, mean, stddev),
-        ROCRAND_STATUS_SUCCESS
-    );
-
-    EXPECT_EQ(hipFree(data), hipSuccess);
-    EXPECT_EQ(
-        rocrand_destroy_generator(generator),
-        ROCRAND_STATUS_SUCCESS
-    );
-}
-
-TEST(rocrand_generate_log_normal_tests, neg_test)
+TEST(rocrand_generate_poisson_tests, neg_test)
 {
     const size_t size = 256;
-    float mean = 5.0;
-    float stddev = 2.0;
-    float * data = NULL;
+    double lambda = 100.0;
+    unsigned int * data = NULL;
 
     rocrand_generator generator = NULL;
     EXPECT_EQ(
-        rocrand_generate_log_normal(generator, (float *) data, size, mean, stddev),
+        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
         ROCRAND_STATUS_NOT_INITIALIZED
+    );
+}
+
+TEST(rocrand_generate_poisson_tests, out_of_range_test)
+{
+    rocrand_generator generator;
+    ASSERT_EQ(
+        rocrand_create_generator(
+            &generator,
+            ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+        ),
+        ROCRAND_STATUS_SUCCESS
+    );
+
+    const size_t size = 256;
+    double lambda = 0.0;
+    unsigned int * data;
+    ASSERT_EQ(
+        hipMalloc((void **)&data, size * sizeof(unsigned int)),
+        hipSuccess
+    );
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    EXPECT_EQ(
+        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
+        ROCRAND_STATUS_OUT_OF_RANGE
+    );
+
+    EXPECT_EQ(hipFree(data), hipSuccess);
+    EXPECT_EQ(
+        rocrand_destroy_generator(generator),
+        ROCRAND_STATUS_SUCCESS
     );
 }
