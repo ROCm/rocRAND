@@ -314,4 +314,57 @@ TEST(rocrand_philox_prng_state_tests, discard_test)
     EXPECT_EQ(state.counter.y, 456);
     EXPECT_EQ(state.counter.z, 789);
     EXPECT_EQ(state.counter.w, 999);
+
+    state.counter.x = UINT_MAX - 1;
+    state.counter.y = 2;
+    state.counter.z = 3;
+    state.counter.w = 4;
+    state.discard((1ull << 32) + 2ull);
+    EXPECT_EQ(state.counter.x, 0);
+    EXPECT_EQ(state.counter.y, 4);
+    EXPECT_EQ(state.counter.z, 3);
+    EXPECT_EQ(state.counter.w, 4);
+}
+
+TEST(rocrand_philox_prng_state_tests, discard_sequence_test)
+{
+    rocrand_philox4_32_10_state state;
+
+    state.discard_sequence(UINT_MAX);
+    EXPECT_EQ(state.counter.x, 0);
+    EXPECT_EQ(state.counter.y, 0);
+    EXPECT_EQ(state.counter.z, UINT_MAX);
+    EXPECT_EQ(state.counter.w, 0);
+
+    state.discard_sequence(UINT_MAX);
+    EXPECT_EQ(state.counter.x, 0);
+    EXPECT_EQ(state.counter.y, 0);
+    EXPECT_EQ(state.counter.z, UINT_MAX - 1);
+    EXPECT_EQ(state.counter.w, 1);
+
+    state.discard_sequence(2);
+    EXPECT_EQ(state.counter.x, 0);
+    EXPECT_EQ(state.counter.y, 0);
+    EXPECT_EQ(state.counter.z, 0);
+    EXPECT_EQ(state.counter.w, 2);
+
+    state.counter.x = 123;
+    state.counter.y = 456;
+    state.counter.z = 789;
+    state.counter.w = 999;
+    state.discard_sequence(1);
+    EXPECT_EQ(state.counter.x, 123);
+    EXPECT_EQ(state.counter.y, 456);
+    EXPECT_EQ(state.counter.z, 790);
+    EXPECT_EQ(state.counter.w, 999);
+
+    state.counter.x = 1;
+    state.counter.y = 2;
+    state.counter.z = UINT_MAX - 1;
+    state.counter.w = 4;
+    state.discard_sequence((1ull << 32) + 2ull);
+    EXPECT_EQ(state.counter.x, 1);
+    EXPECT_EQ(state.counter.y, 2);
+    EXPECT_EQ(state.counter.z, 0);
+    EXPECT_EQ(state.counter.w, 6);
 }
