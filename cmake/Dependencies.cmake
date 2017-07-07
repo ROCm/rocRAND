@@ -20,6 +20,10 @@ if (BUILD_TEST)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 endif()
 
+if (BUILD_CRUSH_TEST)
+    find_package(TestU01 REQUIRED)
+endif()
+
 if(BUILD_BENCHMARK)
     set(BENCHMARK_BOOST_COMPONENTS program_options)
     find_package(Boost 1.54 REQUIRED COMPONENTS ${BENCHMARK_BOOST_COMPONENTS})
