@@ -25,57 +25,37 @@
 
 #include <boost/program_options.hpp>
 
-#include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <cuda_runtime.h>
+#include <curand.h>
 
-#define HIP_CHECK(condition)         \
-  {                                  \
-    hipError_t error = condition;    \
-    if(error != hipSuccess){         \
-        std::cout << error << std::endl; \
-        exit(error); \
-    } \
-  }
-
-#define ROCRAND_CHECK(condition)                 \
-  {                                              \
-    rocrand_status status = condition;           \
-    if(status != ROCRAND_STATUS_SUCCESS) {       \
-        std::cout << status << std::endl; \
-        exit(status); \
-    } \
-  }
+#define CUDA_CALL(x) do { if((x)!=cudaSuccess) { \
+    printf("Error at %s:%d\n",__FILE__,__LINE__);\
+    return exit(EXIT_FAILURE);}} while(0)
+#define CURAND_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
+    printf("Error at %s:%d\n",__FILE__,__LINE__);\
+    return exit(EXIT_FAILURE);}} while(0)
 
 #ifndef DEFAULT_RAND_N
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 #endif
 
-void run_benchmark(const size_t size, const size_t trials, const rocrand_rng_type rng_type)
+void run_benchmark(const size_t size, const size_t trials, const curandRngType rng_type)
 {
     unsigned int * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
+    CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(unsigned int)));
 
-    rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
-    // Make sure memory is allocated
-    HIP_CHECK(hipDeviceSynchronize());
+    curandGenerator_t generator;
+    CURAND_CALL(curandCreateGenerator(&generator, rng_type));
+    CUDA_CALL(cudaDeviceSynchronize());
 
-    // Warm-up
-    for (size_t i = 0; i < 5; i++)
-    {
-        ROCRAND_CHECK(rocrand_generate(generator, (unsigned int *) data, size));
-    }
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Measurement
     auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < trials; i++)
     {
-        ROCRAND_CHECK(rocrand_generate(generator, (unsigned int *) data, size));
+        CURAND_CALL(curandGenerate(generator, (unsigned int *) data, size));
     }
-    HIP_CHECK(hipDeviceSynchronize());
+    CUDA_CALL(cudaDeviceSynchronize());
     auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::nano> elapsed = end - start;
+    std::chrono::duration<double, std::nano> elapsed = end-start;
 
     std::cout << "Throughput = "
               << trials * size * sizeof(unsigned int) / (elapsed.count()
@@ -87,8 +67,8 @@ void run_benchmark(const size_t size, const size_t trials, const rocrand_rng_typ
               << ", Size = " << size
               << std::endl;
 
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
-    HIP_CHECK(hipFree(data));
+    CURAND_CALL(curandDestroyGenerator(generator));
+    CUDA_CALL(cudaFree(data));
 }
 
 int main(int argc, char *argv[])
@@ -114,10 +94,10 @@ int main(int argc, char *argv[])
     const size_t trials = vm["trials"].as<size_t>();
     const std::string& engine = vm["engine"].as<std::string>();
 
-    std::cout << "rocRAND:" << std::endl;
+    std::cout << "cuRAND:" << std::endl;
     if(engine == "philox" || engine == "all"){
         std::cout << "philox4x32_10:" << std::endl;
-        run_benchmark(size, trials, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
+        run_benchmark(size, trials, CURAND_RNG_PSEUDO_PHILOX4_32_10);
         return 0;
     }
     std::cerr << "Error: unknown random number engine '" << engine << "'" << std::endl;
