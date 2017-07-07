@@ -35,6 +35,7 @@ class poisson_distribution<unsigned int>
 {
 public:
 
+    __host__ __device__
     poisson_distribution(double lambda)
         : lambda(lambda) {}
 
@@ -69,14 +70,15 @@ private:
     {
         // Knuth's method
 
-        const float limit = expf(-lambda);
+        const double limit = exp(-lambda);
         unsigned int k = 0;
-        float product = 1.0f;
+        double product = 1.0;
 
+        uniform_distribution<double> uniform;
         do
         {
             k++;
-            product *= uniform_distribution<float>()(g());
+            product *= uniform(g());
         }
         while (product > limit);
 
@@ -95,7 +97,7 @@ private:
         const double k = log(c) - lambda - log(beta);
         const double log_lambda = log(lambda);
 
-        uniform_distribution<float> uniform;
+        uniform_distribution<double> uniform;
         while (true)
         {
             const double u = uniform(g());
@@ -123,7 +125,7 @@ private:
     {
         // Approximate Poisson distribution with normal distribution
 
-        normal_distribution<double> normal(0.0, 1.0);
+        normal_distribution<double> normal;
         const double n = normal(make_uint4(g(), g(), g(), g())).x;
         return static_cast<unsigned int>(round(sqrt(lambda) * n + lambda));
     }
