@@ -315,6 +315,16 @@ TEST(rocrand_philox_prng_state_tests, discard_test)
     EXPECT_EQ(state.counter.z, 789);
     EXPECT_EQ(state.counter.w, 999);
 
+    state.counter.x = 123;
+    state.counter.y = 0;
+    state.counter.z = 0;
+    state.counter.w = 0;
+    state.discard();
+    EXPECT_EQ(state.counter.x, 124);
+    EXPECT_EQ(state.counter.y, 0);
+    EXPECT_EQ(state.counter.z, 0);
+    EXPECT_EQ(state.counter.w, 0);
+
     state.counter.x = UINT_MAX - 1;
     state.counter.y = 2;
     state.counter.z = 3;
