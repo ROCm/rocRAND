@@ -29,8 +29,8 @@
 __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafterf(x * ROC_2POW32_INV, 1.0f);
-    float v = nextafterf(y * ROC_2POW32_INV_2PI, ROC_2PI);
+    float u = nextafterf(x * ROCRAND_2POW32_INV, 1.0f);
+    float v = nextafterf(y * ROCRAND_2POW32_INV_2PI, ROCRAND_2PI);
     float s = sqrtf(-2.0f * logf(u));
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
@@ -48,18 +48,18 @@ __host__ __device__ double2 box_muller_double(uint4 xy)
     double2 result;
     unsigned long long zx = (unsigned long long)xy.x ^
         ((unsigned long long)xy.y << (53 - 32));
-    double u = nextafter(zx * ROC_2POW53_INV_DOUBLE, 1.0);
+    double u = nextafter(zx * ROCRAND_2POW53_INV_DOUBLE, 1.0);
     unsigned long long zy = (unsigned long long)xy.z ^
         ((unsigned long long)xy.w << (53 - 32));
-    double v = nextafter(zy * (ROC_2POW53_INV_DOUBLE * 2.0), 2.0);
+    double v = nextafter(zy * (ROCRAND_2POW53_INV_DOUBLE * 2.0), 2.0);
     double s = sqrt(-2.0 * log(u));
     #ifdef __HIP_DEVICE_COMPILE__
         sincospi(v, &result.x, &result.y);
         result.x *= s;
         result.y *= s;
     #else
-        result.x = sin(v * ROC_PI_DOUBLE) * s;
-        result.y = cos(v * ROC_PI_DOUBLE) * s;
+        result.x = sin(v * ROCRAND_PI_DOUBLE) * s;
+        result.y = cos(v * ROCRAND_PI_DOUBLE) * s;
     #endif
     return result;
 }
@@ -84,8 +84,8 @@ __host__ __device__ double2 box_muller_double(uint4 xy)
 __host__ __device__ float2 marsaglia(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafterf(x * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
-    float v = nextafterf(y * ROC_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float u = nextafterf(x * ROCRAND_2POW32_INV, 1.0f) * 2.0f - 1.0f;
+    float v = nextafterf(y * ROCRAND_2POW32_INV, 1.0f) * 2.0f - 1.0f;
     float s = u * u + v * v;
     float multiplier = sqrtf(-2.0f * logf(s) / s);
     result.x = u * s;
@@ -99,10 +99,10 @@ __host__ __device__ double2 marsaglia_double(uint4 xy)
     double2 result;
     unsigned long long zx = (unsigned long long)xy.x ^
         ((unsigned long long)xy.y << (53 - 32));
-    double u = nextafter(zx * ROC_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
+    double u = nextafter(zx * ROCRAND_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
     unsigned long long zy = (unsigned long long)xy.z ^
         ((unsigned long long)xy.w << (53 - 32));
-    double v = nextafter(zy * ROC_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
+    double v = nextafter(zy * ROCRAND_2POW53_INV_DOUBLE, 1.0) * 2.0 - 1.0;
     double s = u * u + v * v;
     double multiplier = sqrt(-2.0f * log(s) / s);
     result.x = u * s;
