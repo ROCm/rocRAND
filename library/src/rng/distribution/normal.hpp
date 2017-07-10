@@ -33,14 +33,15 @@ struct normal_distribution;
 template<>
 struct normal_distribution<float>
 {
-    float stddev;
-    float mean;
+    const float stddev;
+    const float mean;
 
     __host__ __device__
     normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
                                mean(mean), stddev(stddev) {}
 
-    __host__ __device__ float2 operator()(unsigned int x, unsigned int y)
+    __forceinline__ __host__ __device__
+    float2 operator()(const unsigned int x, const unsigned int y)
     {
         float2 v = box_muller(x, y);
         v.x = mean + v.x * stddev;
@@ -48,7 +49,17 @@ struct normal_distribution<float>
         return v;
     }
 
-    __host__ __device__ float4 operator()(uint4 x)
+    __forceinline__ __host__ __device__
+    float2 operator()(const uint2 x)
+    {
+        float2 v = box_muller(x.x, x.y);
+        v.x = mean + v.x * stddev;
+        v.y = mean + v.y * stddev;
+        return v;
+    }
+
+    __forceinline__ __host__ __device__
+    float4 operator()(const uint4 x)
     {
         float2 v = box_muller(x.x, x.y);
         float2 w = box_muller(x.z, x.w);
@@ -64,14 +75,15 @@ struct normal_distribution<float>
 template<>
 struct normal_distribution<double>
 {
-    double stddev;
-    double mean;
+    const double stddev;
+    const double mean;
 
     __host__ __device__
     normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
                                 mean(mean), stddev(stddev) {}
 
-    __host__ __device__ double2 operator()(uint4 x)
+    __forceinline__ __host__ __device__
+    double2 operator()(uint4 x)
     {
         double2 v = box_muller_double(x);
         v.x = mean + v.x * stddev;

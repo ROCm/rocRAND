@@ -32,12 +32,14 @@ struct uniform_distribution;
 template<>
 struct uniform_distribution<unsigned int>
 {
-    __host__ __device__ unsigned int operator()(const unsigned int v) const
+    __forceinline__ __host__ __device__
+    unsigned int operator()(const unsigned int v) const
     {
         return v;
     }
 
-    __host__ __device__ uint4 operator()(const uint4 v) const
+    __forceinline__ __host__ __device__
+    uint4 operator()(const uint4 v) const
     {
         return v;
     }
@@ -48,12 +50,14 @@ struct uniform_distribution<unsigned int>
 template<>
 struct uniform_distribution<float>
 {
-    __host__ __device__ float operator()(const unsigned int v) const
+    __forceinline__ __host__ __device__
+    float operator()(const unsigned int v) const
     {
         return nextafterf(v * ROCRAND_2POW32_INV, 1.0f);
     }
 
-    __host__ __device__ float4 operator()(const uint4 v) const
+    __forceinline__ __host__ __device__
+    float4 operator()(const uint4 v) const
     {
         return {
             (*this)(v.x),
@@ -69,12 +73,14 @@ struct uniform_distribution<float>
 template<>
 struct uniform_distribution<double>
 {
-    __host__ __device__ double operator()(const unsigned int v) const
+    __forceinline__ __host__ __device__
+    double operator()(const unsigned int v) const
     {
         return nextafter(v * static_cast<double>(ROCRAND_2POW32_INV), 1.0);
     }
 
-    __host__ __device__ double operator()(const unsigned long long v) const
+    __forceinline__ __host__ __device__
+    double operator()(const unsigned long long v) const
     {
         return nextafter(
             // 2^53 is the biggest int that can be stored in double, such
@@ -83,7 +89,8 @@ struct uniform_distribution<double>
         );
     }
 
-    __host__ __device__ double4 operator()(const uint4 v) const
+    __forceinline__ __host__ __device__
+    double4 operator()(const uint4 v) const
     {
         return {
             (*this)(v.x),

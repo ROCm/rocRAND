@@ -26,7 +26,8 @@
 
 #include "common.hpp"
 
-__host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
+__forceinline__ __host__ __device__
+float2 box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
     float u = nextafterf(x * ROCRAND_2POW32_INV, 1.0f);
@@ -43,7 +44,8 @@ __host__ __device__ float2 box_muller(unsigned int x, unsigned int y)
     return result;
 }
 
-__host__ __device__ double2 box_muller_double(uint4 xy)
+__forceinline__ __host__ __device__
+double2 box_muller_double(uint4 xy)
 {
     double2 result;
     unsigned long long zx = (unsigned long long)xy.x ^
