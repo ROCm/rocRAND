@@ -236,6 +236,22 @@ rocrand_generate_poisson(rocrand_generator generator,
                          unsigned int * output_data, size_t n,
                          double lambda);
 
+/**
+ * \brief Set the current stream for kernel launches.
+ *
+ * Set the current stream for all kernel launches of the generator.
+ * All functions will use this stream.
+ *
+ * \param generator - Generator to modify
+ * \param stream - Stream to use or NULL for null stream
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_SUCCESS if stream was set successfully \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
