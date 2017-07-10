@@ -22,6 +22,8 @@ endif()
 
 if (BUILD_CRUSH_TEST)
     find_package(TestU01 REQUIRED)
+    set(CRUSH_TEST_BOOST_COMPONENTS program_options)
+    find_package(Boost 1.54 REQUIRED COMPONENTS ${CRUSH_TEST_BOOST_COMPONENTS})
 endif()
 
 if(BUILD_BENCHMARK)

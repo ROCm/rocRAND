@@ -33,7 +33,10 @@ void rocrand_file_write_results(std::string file_name, T * data, size_t n)
 	{
 		for(int i = 0; i < n; i++)
 		{   
-            fout << data[i] << " ";
+            if (i == n - 1)
+                fout << data[i];
+            else
+                fout << data[i] << " ";
 		}
         std::cout << "File was written successfully" << std::endl;
 	}
