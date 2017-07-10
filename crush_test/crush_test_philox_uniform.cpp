@@ -24,6 +24,11 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
+extern "C" 
+{
+#include "bbattery.h"
+}
+
 int main(void)
 {
     rocrand_generator generator;
@@ -32,7 +37,7 @@ int main(void)
         ROCRAND_RNG_PSEUDO_PHILOX4_32_10
     );
 
-    const size_t size = 256;
+    const size_t size = 50000;
     unsigned int * d_data;
     unsigned int * h_data = new unsigned int[size];
 
@@ -40,13 +45,17 @@ int main(void)
     hipDeviceSynchronize();
 
     rocrand_generate(generator, (unsigned int *) d_data, size);
+    hipDeviceSynchronize();
     
     hipMemcpy(h_data, d_data, size * sizeof(unsigned int), hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+
+    rocrand_file_write_results("philox_uniform.txt", h_data, size);
     
-    rocrand_file_write_results("philox.txt", h_data, size);
+    bbattery_SmallCrushFile("philox_uniform.txt");
     
     hipFree(d_data);
-    delete h_data;
+    delete[] h_data;
     rocrand_destroy_generator(generator);
     
     return 0;
