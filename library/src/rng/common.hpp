@@ -25,7 +25,8 @@
 
 // nextafterf(float, float) is not implemented for device on HIP/HCC platform
 #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
-inline __device__ float nextafterf(const float from, const float to)
+__forceinline__ __device__
+float nextafterf(const float from, const float to)
 {
     if(from == to) return to;
     // (2.3283064e-10f) is float min value
