@@ -65,6 +65,11 @@ struct rocrand_generator_type : public rocrand_generator_base_type
     {
         return rng_type;
     }
+
+    void set_stream(hipStream_t stream)
+    {
+        this->stream = stream;
+    }
 };
 
 #endif // ROCRAND_RNG_GENERATOR_TYPE_H_
