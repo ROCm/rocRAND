@@ -55,3 +55,16 @@ TEST(rocrand_generator_type_tests, ctor_test)
     EXPECT_EQ(g.offset, 0);
     EXPECT_EQ(g.stream, (hipStream_t)(0));
 }
+
+TEST(rocrand_generator_type_tests, set_stream_test)
+{
+    rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10> g;
+    EXPECT_EQ(g.stream, (hipStream_t)(0));
+    hipStream_t stream;
+    ASSERT_EQ(hipStreamCreate(&stream), hipSuccess);
+    g.set_stream(stream);
+    EXPECT_EQ(g.stream, stream);
+    g.set_stream(NULL);
+    EXPECT_EQ(g.stream, (hipStream_t)(0));
+    ASSERT_EQ(hipStreamDestroy(stream), hipSuccess);
+}
