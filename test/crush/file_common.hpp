@@ -30,21 +30,20 @@ void rocrand_file_write_results(std::string file_name, T * data, size_t n)
 {
     std::ofstream fout(file_name);
     if(fout.is_open())
-	{
-		for(int i = 0; i < n; i++)
-		{   
+    {
+        for(int i = 0; i < n; i++)
+        {   
             if (i == n - 1)
                 fout << static_cast<float>(data[i]);
             else
                 fout << static_cast<float>(data[i]) << " ";
-		}
+        }
         std::cout << "File was written successfully" << std::endl;
-	}
-	else
-	{
-		std::cout << "File could not be opened" << std::endl;
-	}
+    }
+    else
+    {
+        std::cout << "File could not be opened" << std::endl;
+    }
 }
-
 
 #endif // ROCRAND_FILE_COMMON_H_

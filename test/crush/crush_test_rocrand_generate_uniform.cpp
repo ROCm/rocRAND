@@ -26,7 +26,6 @@
 #include <iterator>
 #include <random>
 #include <algorithm>
-#include <climits>
 
 #include <boost/program_options.hpp>
 
@@ -62,6 +61,10 @@ const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 
 void run_crush_test(const size_t size, const rocrand_rng_type rng_type)
 {
+    std::string filename = "rocrand_generate.txt";
+    char * file = new char[filename.length() + 1];
+    std::strcpy(file, filename.c_str());
+    
     float * data;
     float * h_data = new float[size];
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(float)));
@@ -77,13 +80,14 @@ void run_crush_test(const size_t size, const rocrand_rng_type rng_type)
     HIP_CHECK(hipMemcpy(h_data, data, size * sizeof(float), hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     
-    rocrand_file_write_results("rocrand_generate.txt", h_data, size);
+    rocrand_file_write_results(filename, h_data, size);
     
     rocrand_destroy_generator(generator);
     HIP_CHECK(hipFree(data));
     delete[] h_data;
     
-    bbattery_SmallCrushFile("rocrand_generate.txt");
+    bbattery_SmallCrushFile(file);
+    delete[] file;
 }
 
 int main(int argc, char *argv[])

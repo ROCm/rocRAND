@@ -8,7 +8,6 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 # Options
 option(BUILD_SHARED_LIBS "Build libhiprand.so" ON)
 option(BUILD_TEST "Build tests (requires googletest)" ON)
-option(BUILD_CRUSH_TEST "Build Crush tests (requires testu01)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 
 # Include cmake scripts
@@ -33,11 +32,6 @@ add_subdirectory(library)
 if (BUILD_TEST)
     enable_testing()
     add_subdirectory(test)
-endif()
-
-# Crush Tests
-if (BUILD_CRUSH_TEST)
-    add_subdirectory(crush_test)
 endif()
 
 # Benchmarks
