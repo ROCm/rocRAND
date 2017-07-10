@@ -1,4 +1,5 @@
 # Tests
+option(BUILD_CRUSH_TEST "Build Crush tests (requires testu01)" OFF)
 
 # Get sources
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
@@ -26,3 +27,11 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     )
     add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
 endforeach()
+
+# Crush Tests
+if (BUILD_CRUSH_TEST)
+    find_package(TestU01 REQUIRED)
+    set(CRUSH_TEST_BOOST_COMPONENTS program_options)
+    find_package(Boost 1.54 REQUIRED COMPONENTS ${CRUSH_TEST_BOOST_COMPONENTS})
+    add_subdirectory(crush)
+endif()

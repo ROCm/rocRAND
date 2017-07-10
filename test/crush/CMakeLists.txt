@@ -25,6 +25,6 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     set_target_properties(
         ${crush_test_name}
         PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/crush_test"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
 endforeach()

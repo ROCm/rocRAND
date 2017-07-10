@@ -143,7 +143,7 @@ rocrand_generate(rocrand_generator generator,
  */
 rocrand_status ROCRANDAPI
 rocrand_generate_uniform(rocrand_generator generator,
-                 float * output_data, size_t n);
+                         float * output_data, size_t n);
 
 /**
  * \brief Generates normal distributed floats.
