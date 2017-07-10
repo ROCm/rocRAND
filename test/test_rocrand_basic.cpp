@@ -36,3 +36,16 @@ TEST(rocrand_basic_tests, rocrand_create_destroy_generator_test)
     EXPECT_EQ(rocrand_create_generator(&g, ROCRAND_RNG_PSEUDO_PHILOX4_32_10), ROCRAND_STATUS_SUCCESS);
     EXPECT_EQ(rocrand_destroy_generator(g), ROCRAND_STATUS_SUCCESS);
 }
+
+TEST(rocrand_basic_tests, rocrand_set_stream_test)
+{
+    rocrand_generator g = NULL;
+    EXPECT_EQ(rocrand_set_stream(g, NULL), ROCRAND_STATUS_NOT_INITIALIZED);
+    EXPECT_EQ(rocrand_create_generator(&g, ROCRAND_RNG_PSEUDO_PHILOX4_32_10), ROCRAND_STATUS_SUCCESS);
+    hipStream_t stream;
+    ASSERT_EQ(hipStreamCreate(&stream), hipSuccess);
+    EXPECT_EQ(rocrand_set_stream(g, stream), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_set_stream(g, NULL), ROCRAND_STATUS_SUCCESS);
+    ASSERT_EQ(hipStreamDestroy(stream), hipSuccess);
+    EXPECT_EQ(rocrand_destroy_generator(g), ROCRAND_STATUS_SUCCESS);
+}
