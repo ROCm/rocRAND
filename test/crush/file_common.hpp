@@ -21,24 +21,25 @@
 #ifndef ROCRAND_FILE_COMMON_H_
 #define ROCRAND_FILE_COMMON_H_
 
-#include <iostream> 
-#include <fstream>  
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <iomanip>
 #include <limits>
 
-template<class T>
-void rocrand_file_write_results(std::string file_name, T * data, size_t n)
+template<class RealType>
+void rocrand_file_write_results(std::string file_name, RealType * data, size_t n)
 {
-    std::ofstream fout(file_name, std::ios::out | std::ios::trunc);
+    std::ofstream fout(file_name, std::ios_base::out | std::ios_base::trunc);
     if(fout.is_open())
     {
+        fout << std::setprecision(std::numeric_limits<long double>::digits10 + 1);
         for(int i = 0; i < n; i++)
-        {   
+        {
             if (i == n - 1)
-                fout << static_cast<float>(data[i]);
+                fout << data[i];
             else
-                fout << static_cast<float>(data[i]) << " ";
+                fout << data[i] << " ";
         }
         std::cout << "File was written successfully" << std::endl;
     }

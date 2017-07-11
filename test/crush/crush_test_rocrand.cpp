@@ -56,7 +56,7 @@ extern "C" {
   }
 
 #ifndef DEFAULT_RAND_N
-const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
+const size_t DEFAULT_RAND_N = 1024 * 1024 * 64;
 #endif
 
 void run_crush_test(const size_t size, const rocrand_rng_type rng_type)
@@ -64,29 +64,37 @@ void run_crush_test(const size_t size, const rocrand_rng_type rng_type)
     std::string filename = "rocrand_generate.txt";
     char * file = new char[filename.length() + 1];
     std::strcpy(file, filename.c_str());
-    
-    float * data;
-    float * h_data = new float[size];
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(float)));
+
+    unsigned int * data;
+    unsigned int * h_data = new unsigned int[size];
+    double * h_data_double = new double[size];
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
     // Make sure memory is allocated
     HIP_CHECK(hipDeviceSynchronize());
 
-    ROCRAND_CHECK(rocrand_generate_uniform(generator, (float *) data, size));
+    ROCRAND_CHECK(rocrand_generate(generator, (unsigned int *) data, size));
     HIP_CHECK(hipDeviceSynchronize());
-    
-    HIP_CHECK(hipMemcpy(h_data, data, size * sizeof(float), hipMemcpyDeviceToHost));
+
+    HIP_CHECK(hipMemcpy(h_data, data, size * sizeof(unsigned int), hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
-    
-    rocrand_file_write_results(filename, h_data, size);
-    
+
+    for(size_t i = 0; i < size; i++)
+    {
+        h_data_double[i] = static_cast<double>(h_data[i]) / (UINT_MAX + 1UL);
+    }
+    delete[] h_data;
+
+    rocrand_file_write_results(filename, h_data_double, size);
+
     rocrand_destroy_generator(generator);
     HIP_CHECK(hipFree(data));
-    delete[] h_data;
-    
+    delete[] h_data_double;
+
     bbattery_SmallCrushFile(file);
+    std::remove(file);
     delete[] file;
 }
 
@@ -116,7 +124,7 @@ int main(int argc, char *argv[])
         run_crush_test(size, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
         return 0;
     }
-    
+
     std::cerr << "Error: unknown random number engine '" << engine << "'" << std::endl;
     return -1;
 }
