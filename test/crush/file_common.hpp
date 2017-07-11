@@ -24,11 +24,13 @@
 #include <iostream> 
 #include <fstream>  
 #include <string>
+#include <iomanip>
+#include <limits>
 
 template<class T>
 void rocrand_file_write_results(std::string file_name, T * data, size_t n)
 {
-    std::ofstream fout(file_name);
+    std::ofstream fout(file_name, std::ios::out | std::ios::trunc);
     if(fout.is_open())
     {
         for(int i = 0; i < n; i++)
