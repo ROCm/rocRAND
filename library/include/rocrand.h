@@ -27,6 +27,8 @@
 #define ROCRANDAPI
 #endif
 
+#define ROCRAND_VERSION 100
+
 /// rocRAND random number generator (opaque)
 typedef struct rocrand_generator_base_type * rocrand_generator;
 
@@ -228,7 +230,7 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - ROCRAND_STATUS_OUT_OF_RANGE if lambda is non-positive
+ * - ROCRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -251,6 +253,21 @@ rocrand_generate_poisson(rocrand_generator generator,
  */
 rocrand_status ROCRANDAPI
 rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
+
+/**
+ * \brief Return the version number of the library.
+ *
+ * Return in \p version the version number of the dynamically linked ROCRAND
+ * library.
+ *
+ * \param version - Version of the library
+ *
+ * \return
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p version is NULL \n
+ * - ROCRAND_STATUS_SUCCESS if the version number was successfully returned \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_get_version(int * version);
 
 #if defined(__cplusplus)
 }
