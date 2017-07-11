@@ -33,8 +33,8 @@
 
 struct rocrand_generator_base_type
 {
-    rocrand_rng_type rng_type;
     rocrand_generator_base_type(rocrand_rng_type rng_type) : rng_type(rng_type) {}
+    const rocrand_rng_type rng_type;
 };
 
 // rocRAND random number generator base class
@@ -44,13 +44,11 @@ struct rocrand_generator_type : public rocrand_generator_base_type
     using base_type = rocrand_generator_base_type;
     using state_type = typename rocrand_get_state_type<GeneratorType>::type;
 
-    // ordering type
-    unsigned long long offset;
-    hipStream_t stream;
-
     rocrand_generator_type(unsigned long long offset = 0,
+                           unsigned long long seed = 0,
                            hipStream_t stream = 0)
-        : base_type(GeneratorType), offset(offset), stream(stream)
+        : base_type(GeneratorType),
+          m_seed(seed), m_offset(offset), m_stream(stream)
     {
 
     }
@@ -66,10 +64,31 @@ struct rocrand_generator_type : public rocrand_generator_base_type
         return rng_type;
     }
 
+    unsigned long long get_seed() const
+    {
+        return m_seed;
+    }
+
+    unsigned long long get_offset() const
+    {
+        return m_offset;
+    }
+
+    hipStream_t get_stream() const
+    {
+        return m_stream;
+    }
+
     void set_stream(hipStream_t stream)
     {
-        this->stream = stream;
+        m_stream = stream;
     }
+
+protected:
+    // ordering type
+    unsigned long long m_seed;
+    unsigned long long m_offset;
+    hipStream_t m_stream;
 };
 
 #endif // ROCRAND_RNG_GENERATOR_TYPE_H_

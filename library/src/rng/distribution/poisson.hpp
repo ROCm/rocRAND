@@ -92,7 +92,7 @@ private:
         // Rejection method PA, A. C. Atkinson
 
         const double c = 0.767 - 3.36 / lambda;
-        const double beta = ROC_PI_DOUBLE / sqrt(3.0 * lambda);
+        const double beta = ROCRAND_PI_DOUBLE / sqrt(3.0 * lambda);
         const double alpha = beta * lambda;
         const double k = log(c) - lambda - log(beta);
         const double log_lambda = log(lambda);

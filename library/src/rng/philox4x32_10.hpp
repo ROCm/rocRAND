@@ -100,37 +100,57 @@ namespace rocrand_philox4x32_10_detail
         class Generator, class Distribution
     >
     __global__
-    void generate_kernel(StateType init_state,
+    void generate_kernel(StateType * states,
+                         bool init_states,
+                         unsigned long long seed,
+                         unsigned long long offset,
                          Type * data, const size_t n,
                          Generator generator,
                          Distribution distribution)
     {
-        typedef decltype(distribution(generator(&init_state))) Type4;
+        typedef decltype(distribution(generator.get4(states))) Type4;
 
-        unsigned int id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = state_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        StateType state = init_state;
-        generator.discard(&state, id);
+        // Load or init the state
+        StateType state;
+        if(init_states)
+        {
+            generator.init_state(&state, offset, index, seed);
+        }
+        else
+        {
+            state = states[state_id];
+        }
 
         Type4 * data4 = (Type4 *)data;
-        auto result = distribution(generator(&state));
-        while(id < (n/4))
+        while(index < (n/4))
         {
-            data4[id] = result;
-            generator.discard(&state, stride);
-            result = distribution(generator(&state));
-            id += stride;
+            // Base on state.sub_state calculate correct 4 uint values
+            // from the subsequence and pass them to distribution
+            data4[index] = distribution(generator.get4(&state));
+            // Next position
+            index += stride;
         }
-        // first work-item saves the tail when n is not a multiple of 4
+
+        // First work-item saves the tail when n is not a multiple of 4
         auto tail_size = n % 4;
         if(tail_size > 0 && hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x == 0)
         {
-            result = distribution(generator(&state));
+            // Base on state.sub_state calculate correct 4 uint values
+            // from the subsequence and pass them to distribution
+            Type4 result = distribution(generator.get4(&state));
+            // Save the tail
             data[n - tail_size] = result.x;
             if(tail_size > 1) data[n - tail_size + 1] = result.y;
             if(tail_size > 2) data[n - tail_size + 2] = result.z;
+            // Update state.sub_state
+            state.sub_state = (tail_size + state.sub_state) % 4;
         }
+        // Save state
+        states[state_id] = state;
     }
 
     template <
@@ -232,9 +252,72 @@ public:
     public:
 
         inline __host__ __device__
-        uint4 operator()(state_type * state)
+        uint operator()(state_type * state)
         {
-            return ten_rounds(state->counter, state->key);
+            uint ret = (&state->result.x)[state->sub_state];
+            state->sub_state++;
+            if(state->sub_state == 4)
+            {
+                state->sub_state = 0;
+                discard(state);
+                state->result = ten_rounds(state->counter, state->key);
+            }
+            return ret;
+        }
+
+        inline __host__ __device__
+        uint4 get4(state_type * state)
+        {
+            uint4 ret = state->result;
+            discard(state);
+            state->result = ten_rounds(state->counter, state->key);
+            switch(state->sub_state){
+            case 0:
+                return ret;
+            case 1:
+                ret.x = ret.y;
+                ret.y = ret.z;
+                ret.z = ret.w;
+                ret.w = state->result.x;
+                break;
+            case 2:
+                ret.x = ret.z;
+                ret.y = ret.w;
+                ret.z = state->result.x;
+                ret.w = state->result.y;
+                break;
+            case 3:
+                ret.x = ret.w;
+                ret.y = state->result.x;
+                ret.z = state->result.y;
+                ret.w = state->result.z;
+                break;
+            default:
+                return ret;
+            }
+            return ret;
+        }
+
+        // Get uint4 ignoring state's substate
+        inline __host__ __device__
+        uint4 unsafe_get4(state_type * state)
+        {
+            uint4 ret = state->result;
+            state->result = ten_rounds(state->counter, state->key);
+            discard(state);
+            return ret;
+        }
+
+        inline __host__ __device__
+        void init_state(state_type * state,
+                        unsigned long long offset,
+                        unsigned long long sequence,
+                        unsigned long long seed)
+        {
+            state->set_seed(seed);
+            state->discard_sequence(sequence);
+            state->discard(offset);
+            state->result = ten_rounds(state->counter, state->key);
         }
 
         inline __host__ __device__
@@ -298,69 +381,67 @@ public:
         }
     };
 
-    rocrand_philox4x32_10(unsigned long long offset = 0, hipStream_t stream = 0)
-        : base_type(offset, stream), m_state(0)
+    rocrand_philox4x32_10(unsigned long long seed = 0,
+                          unsigned long long offset = 0,
+                          hipStream_t stream = 0)
+        : base_type(seed, offset, stream),
+          m_states_initialized(false), m_states(NULL), m_states_size(1024 * 256)
     {
-
+        auto error = hipMalloc(&m_states, sizeof(state_type) * m_states_size);
+        if(error != hipSuccess)
+        {
+            throw ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
     }
 
     ~rocrand_philox4x32_10()
     {
-
+        hipFree(m_states);
     }
 
     void reset()
     {
-        m_state.reset();
+        m_states_initialized = false;
     }
 
-    /// Changes seed to \p seed and reset generator state.
+    /// Changes seed to \p seed and resets generator state.
     void set_seed(unsigned long long seed)
     {
-        m_state.set_seed(seed);
+        m_seed = seed;
+        m_states_initialized = false;
     }
 
-    state_type get_state() const
+    void set_offset(unsigned long long offset)
     {
-        return m_state;
-    }
-
-    void discard(unsigned long long n)
-    {
-        m_state.discard(n);
-    }
-
-    void discard_sequence(unsigned long long n)
-    {
-        m_state.discard_sequence(n);
+        m_offset = offset;
+        m_states_initialized = false;
     }
 
     template<class T, class Distribution = uniform_distribution<T> >
-    rocrand_status generate(T * data, size_t n,
+    rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
         #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 1024;
-        const uint32_t max_blocks = 4096;
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = 128; // 512
         #else
         const uint32_t threads = 256;
         const uint32_t max_blocks = 1024;
         #endif
-        const uint32_t blocks =
-            std::min<uint32_t>(max_blocks, (n + threads - 1) / threads);
+        const uint32_t blocks = max_blocks;
 
         namespace detail = rocrand_philox4x32_10_detail;
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(detail::generate_kernel),
-            dim3(blocks), dim3(threads), 0, stream,
-            m_state,
-            data, n,
-            m_generator, distribution
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_states, !m_states_initialized, m_seed, m_offset,
+            data, data_size, m_generator, distribution
         );
+        // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
-        // Progress state
-        m_generator.discard(&m_state, ((n + 3) / 4));
+
+        m_states_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -374,62 +455,64 @@ public:
     template<class T>
     rocrand_status generate_normal(T * data, size_t n, T stddev, T mean)
     {
-        normal_distribution<T> ndistribution(mean, stddev);
-        namespace detail = rocrand_philox4x32_10_detail;
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_normal_kernel),
-            dim3(1), dim3(n), 0, stream,
-            m_state,
-            data, n,
-            m_generator, ndistribution
-        );
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        // normal_distribution<T> ndistribution(mean, stddev);
+        // namespace detail = rocrand_philox4x32_10_detail;
+        // hipLaunchKernelGGL(
+        //     HIP_KERNEL_NAME(detail::generate_normal_kernel),
+        //     dim3(1), dim3(n), 0, stream,
+        //     m_state,
+        //     data, n,
+        //     m_generator, ndistribution
+        // );
+        // if(hipPeekAtLastError() != hipSuccess)
+        //     return ROCRAND_STATUS_LAUNCH_FAILURE;
         return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t n, T stddev, T mean)
     {
-        log_normal_distribution<T> lndistribution(mean, stddev);
-        namespace detail = rocrand_philox4x32_10_detail;
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_log_normal_kernel),
-            dim3(1), dim3(n), 0, stream,
-            m_state,
-            data, n,
-            m_generator, lndistribution
-        );
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        // log_normal_distribution<T> lndistribution(mean, stddev);
+        // namespace detail = rocrand_philox4x32_10_detail;
+        // hipLaunchKernelGGL(
+        //     HIP_KERNEL_NAME(detail::generate_log_normal_kernel),
+        //     dim3(1), dim3(n), 0, stream,
+        //     m_state,
+        //     data, n,
+        //     m_generator, lndistribution
+        // );
+        // if(hipPeekAtLastError() != hipSuccess)
+        //     return ROCRAND_STATUS_LAUNCH_FAILURE;
         return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T>
     rocrand_status generate_poisson(T * data, size_t n, double lambda)
     {
-        poisson_distribution<T> distribution(lambda);
+        // poisson_distribution<T> distribution(lambda);
 
-        const uint32_t threads = 256;
-        const uint32_t block_size =
-            std::min<uint32_t>(16384, (n + threads - 1) / threads);
+        // const uint32_t threads = 256;
+        // const uint32_t block_size =
+        //     std::min<uint32_t>(16384, (n + threads - 1) / threads);
 
-        namespace detail = rocrand_philox4x32_10_detail;
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_poisson_kernel),
-            dim3(block_size), dim3(threads), 0, stream,
-            m_state,
-            data, n,
-            m_generator, distribution
-        );
-        // Progress state
-        // TODO Check how the counter should be changed
-        m_generator.discard(&m_state, static_cast<unsigned long long>((n + 3) / 4) << 8);
+        // namespace detail = rocrand_philox4x32_10_detail;
+        // hipLaunchKernelGGL(
+        //     HIP_KERNEL_NAME(detail::generate_poisson_kernel),
+        //     dim3(block_size), dim3(threads), 0, stream,
+        //     m_state,
+        //     data, n,
+        //     m_generator, distribution
+        // );
         return ROCRAND_STATUS_SUCCESS;
     }
 
 private:
-    state_type m_state;
+    bool m_states_initialized;
+    state_type * m_states;
+    size_t m_states_size;
+
+    // m_seed from base_type
+    // m_offset from base_type
     philox4x32_10_generator m_generator;
 };
 
