@@ -94,6 +94,7 @@ void run_crush_test(const size_t size, const rocrand_rng_type rng_type)
     delete[] h_data_double;
 
     bbattery_SmallCrushFile(file);
+    std::remove(file);
     delete[] file;
 }
 
