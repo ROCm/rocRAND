@@ -44,6 +44,12 @@ struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_XORWOW>
     typedef rocrand_xorwow_state type;
 };
 
+template<>
+struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_MRG32K3A>
+{
+    typedef rocrand_mrg32k3a_state type;
+};
+
 #endif // ROCRAND_RNG_GET_STATE_TYPE_H_
 
 

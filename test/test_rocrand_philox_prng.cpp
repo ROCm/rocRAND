@@ -45,6 +45,8 @@ TEST(rocrand_philox_prng_tests, uniform_uint_test)
         const unsigned int max = UINT_MAX;
         ASSERT_GE(host_data[i], 0);
         ASSERT_LE(host_data[i], max);
+        if (i % 100 == 0)
+            printf("%d\n", host_data[i]);
     }
 }
 
