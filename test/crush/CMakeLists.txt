@@ -9,7 +9,7 @@ set_source_files_properties(${rocRAND_CRUSH_TEST_SRCS} PROPERTIES HIP_SOURCE_PRO
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # Boost
 include_directories(${PROJECT_SOURCE_DIR}/library/include)
 include_directories(${PROJECT_SOURCE_DIR}/library/src)
-include_directories(${PROJECT_SOURCE_DIR}/crush_test)
+include_directories(${PROJECT_SOURCE_DIR}/test/crush)
 include_directories(${TESTU01_INCLUDE_DIRS})
 foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     get_filename_component(crush_test_name ${crush_test_src} NAME_WE)
