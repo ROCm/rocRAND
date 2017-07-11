@@ -89,6 +89,24 @@ rocrand_generate(rocrand_generator generator,
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
+    
+rocrand_status ROCRANDAPI
+rocrand_generate_uniform(rocrand_generator generator,
+                         float * output_data, size_t n)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_INITIALIZED;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_uniform(output_data, n);
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
 
 rocrand_status ROCRANDAPI
 rocrand_generate_normal(rocrand_generator generator,
