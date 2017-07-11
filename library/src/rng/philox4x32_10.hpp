@@ -125,6 +125,11 @@ namespace rocrand_philox4x32_10_detail
             state = states[state_id];
         }
 
+        // TODO: It's possible to improve performance for situations when
+        // generate_poisson_kernel was not called before generate_kernel
+        //
+        // TODO: We need to check if ordering is so imporant, or if we can
+        // skip some random numbers (which increases performance).
         Type4 * data4 = (Type4 *)data;
         while(index < (n/4))
         {
@@ -158,78 +163,128 @@ namespace rocrand_philox4x32_10_detail
         class Generator, class Distribution
     >
     __global__
-    void generate_normal_kernel(StateType init_state,
+    void generate_normal_kernel(StateType * states,
+                                bool init_states,
+                                unsigned long long seed,
+                                unsigned long long offset,
                                 RealType * data, const size_t n,
                                 Generator generator,
                                 Distribution distribution)
     {
-        // TODO: implement
-    }
+        // RealTypeX can be float4, double2
+        typedef decltype(distribution(generator.get4(states))) RealTypeX;
+        // x can be 2 or 4
+        const unsigned x = sizeof(RealTypeX) / sizeof(RealType);
 
-    template <
-        class RealType, class StateType,
-        class Generator, class Distribution
-    >
-    __global__
-    void generate_log_normal_kernel(StateType init_state,
-                                    RealType * data, const size_t n,
-                                    Generator generator,
-                                    Distribution distribution)
-    {
-        // TODO: implement
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = state_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load or init the state
+        StateType state;
+        if(init_states)
+        {
+            generator.init_state(&state, offset, index, seed);
+        }
+        else
+        {
+            state = states[state_id];
+        }
+
+        // TODO: Improve ordering. Current implementation isn't the best,
+        // because box_muller which is used to generate float and double
+        // values takes 2 values and generate 2 outputs. Problem occurs
+        // when substate is not 0.
+        //
+        // TODO: Improve performance. For some reason it's ~30 - 40%
+        // slower compared to generate_kernel and curandGenerateNormal.
+        RealTypeX * dataX = (RealTypeX *)data;
+        while(index < (n/x))
+        {
+            // Base on state.sub_state calculate correct 4 uint values
+            // from the subsequence and pass them to distribution
+            dataX[index] = distribution(generator.get4(&state));
+            // Next position
+            index += stride;
+        }
+
+        // First work-item saves the tail when n is not a multiple of X
+        auto tail_size = n % x;
+        if(tail_size > 0 && hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x == 0)
+        {
+            // Base on state.sub_state calculate correct 4 uint values
+            // from the subsequence and pass them to distribution
+            RealTypeX result = distribution(generator.get4(&state));
+            // Save the tail
+            data[n - tail_size] = (&result.x)[0]; // .x
+            if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
+            if(tail_size > 2) data[n - tail_size + 2] = (&result.x)[2]; // .z
+            // Update state.sub_state
+            state.sub_state = (tail_size + state.sub_state) % 4;
+        }
+
+        // Save state
+        states[state_id] = state;
     }
 
     // Returns 1 value (runs Philox generation per every 4 calls)
     template<class Generator, class StateType>
-    struct single_value_generator
+    struct generator_state_wrapper
     {
         __host__ __device__
-        single_value_generator(Generator generator, StateType state)
-            : generator(generator), state(state), index(4) {}
+        generator_state_wrapper(Generator generator, StateType state)
+            : generator(generator), state(state) {}
 
-        __host__ __device__ unsigned int operator()()
+        __forceinline__ __host__ __device__
+        unsigned int operator()()
         {
-            if (index == 4)
-            {
-                value = generator(&state);
-                generator.discard(&state);
-                index = 0;
-            }
-            const unsigned int v = (&value.x)[index];
-            index++;
-            return v;
+            return generator(&state);
         }
 
         Generator generator;
         StateType state;
-        int index;
-        uint4 value;
     };
 
     template <
-        class Type, class StateType,
+        class StateType,
         class Generator, class Distribution
     >
     __global__
-    void generate_poisson_kernel(StateType init_state,
-                                 Type * data, const size_t n,
+    void generate_poisson_kernel(StateType * states,
+                                 bool init_states,
+                                 unsigned long long seed,
+                                 unsigned long long offset,
+                                 unsigned int * data, const size_t n,
                                  Generator generator,
                                  Distribution distribution)
     {
-        unsigned int id = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = state_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        StateType state = init_state;
-        generator.discard_sequence(&state, id);
+        // Load or init the state
+        StateType state;
+        if(init_states)
+        {
+            generator.init_state(&state, offset, index, seed);
+        }
+        else
+        {
+            state = states[state_id];
+        }
 
-        single_value_generator<Generator, StateType> gen(generator, state);
+        generator_state_wrapper<Generator, StateType> gen(generator, state);
 
-        while(id < n)
+        // TODO: Improve performance.
+        while(index < n)
         {
             auto result = distribution(gen);
-            data[id] = result;
-            id += stride;
+            data[index] = result;
+            index += stride;
         }
+
+        // Save state
+        states[state_id] = gen.state;
     }
 
 } // end namespace rocrand_philox4x32_10_detail
@@ -251,7 +306,7 @@ public:
 
     public:
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         uint operator()(state_type * state)
         {
             uint ret = (&state->result.x)[state->sub_state];
@@ -265,7 +320,7 @@ public:
             return ret;
         }
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         uint4 get4(state_type * state)
         {
             uint4 ret = state->result;
@@ -299,7 +354,7 @@ public:
         }
 
         // Get uint4 ignoring state's substate
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         uint4 unsafe_get4(state_type * state)
         {
             uint4 ret = state->result;
@@ -308,7 +363,7 @@ public:
             return ret;
         }
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         void init_state(state_type * state,
                         unsigned long long offset,
                         unsigned long long sequence,
@@ -320,26 +375,26 @@ public:
             state->result = ten_rounds(state->counter, state->key);
         }
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         void discard(state_type * state, unsigned int n)
         {
             state->discard(n);
         }
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         void discard(state_type * state)
         {
             state->discard();
         }
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         void discard_sequence(state_type * state, unsigned int n)
         {
             state->discard_sequence(n);
         }
 
     private:
-        inline  __host__ __device__
+        __forceinline__ __host__ __device__
         uint4 single_round(uint4 counter, uint2 key)
         {
             namespace detail = rocrand_philox4x32_10_detail;
@@ -357,7 +412,7 @@ public:
             };
         }
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         uint2 bumpkey(uint2 key)
         {
             key.x += PHILOX_W32_0;
@@ -365,7 +420,7 @@ public:
             return key;
         }
 
-        inline __host__ __device__
+        __forceinline__ __host__ __device__
         uint4 ten_rounds(uint4 counter, uint2 key)
         {
             counter = single_round(counter, key); key = bumpkey(key); // 1
@@ -453,56 +508,88 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_normal(T * data, size_t n, T stddev, T mean)
+    rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        // normal_distribution<T> ndistribution(mean, stddev);
-        // namespace detail = rocrand_philox4x32_10_detail;
-        // hipLaunchKernelGGL(
-        //     HIP_KERNEL_NAME(detail::generate_normal_kernel),
-        //     dim3(1), dim3(n), 0, stream,
-        //     m_state,
-        //     data, n,
-        //     m_generator, ndistribution
-        // );
-        // if(hipPeekAtLastError() != hipSuccess)
-        //     return ROCRAND_STATUS_LAUNCH_FAILURE;
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = 128; // 512
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 1024;
+        #endif
+        const uint32_t blocks = max_blocks;
+
+        normal_distribution<T> distribution(mean, stddev);
+
+        namespace detail = rocrand_philox4x32_10_detail;
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(detail::generate_normal_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_states, !m_states_initialized, m_seed, m_offset,
+            data, data_size, m_generator, distribution
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        m_states_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T>
-    rocrand_status generate_log_normal(T * data, size_t n, T stddev, T mean)
+    rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        // log_normal_distribution<T> lndistribution(mean, stddev);
-        // namespace detail = rocrand_philox4x32_10_detail;
-        // hipLaunchKernelGGL(
-        //     HIP_KERNEL_NAME(detail::generate_log_normal_kernel),
-        //     dim3(1), dim3(n), 0, stream,
-        //     m_state,
-        //     data, n,
-        //     m_generator, lndistribution
-        // );
-        // if(hipPeekAtLastError() != hipSuccess)
-        //     return ROCRAND_STATUS_LAUNCH_FAILURE;
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = 128; // 512
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 1024;
+        #endif
+        const uint32_t blocks = max_blocks;
+
+        log_normal_distribution<T> distribution(mean, stddev);
+
+        namespace detail = rocrand_philox4x32_10_detail;
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(detail::generate_normal_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_states, !m_states_initialized, m_seed, m_offset,
+            data, data_size, m_generator, distribution
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        m_states_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T>
-    rocrand_status generate_poisson(T * data, size_t n, double lambda)
+    rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        // poisson_distribution<T> distribution(lambda);
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = 128; // 512
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 1024;
+        #endif
+        const uint32_t blocks = max_blocks;
 
-        // const uint32_t threads = 256;
-        // const uint32_t block_size =
-        //     std::min<uint32_t>(16384, (n + threads - 1) / threads);
+        poisson_distribution<unsigned int> distribution(lambda);
 
-        // namespace detail = rocrand_philox4x32_10_detail;
-        // hipLaunchKernelGGL(
-        //     HIP_KERNEL_NAME(detail::generate_poisson_kernel),
-        //     dim3(block_size), dim3(threads), 0, stream,
-        //     m_state,
-        //     data, n,
-        //     m_generator, distribution
-        // );
+        namespace detail = rocrand_philox4x32_10_detail;
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(detail::generate_poisson_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_states, !m_states_initialized, m_seed, m_offset,
+            data, data_size, m_generator, distribution
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        m_states_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 

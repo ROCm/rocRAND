@@ -65,6 +65,26 @@ struct rocrand_philox4_32_10_state
         counter.x++;
         uint add = counter.x == 0 ? 1 : 0;
         counter.y += add; add = counter.y == 0 ? add : 0;
+        // TODO: Considering subsequences I think we should acutally
+        // increase counter.z by number of states.
+        //
+        // Example situation:
+        //
+        // Generator was just created:
+        // states[0].counter == { 0, 0, 0, 0}
+        // states[1].counter == { 0, 0, 1, 0}
+        //
+        // After each counter of each sequence was increased
+        // UINT_MAX * UINT_MAX times
+        // states[0].counter == { UINT_MAX, UINT_MAX, 0, 0}
+        // states[1].counter == { UINT_MAX, UINT_MAX, 1, 0}
+        //
+        // states[0].discard(); states[1].discard();
+        //
+        // states[0].counter == { 0, 0, 1, 0} // THIS ALREADY WAS USED
+        //                                    // BY states[1]
+        //                                    // Is it ok?
+        // states[1].counter == { 0, 0, 2, 0}
         counter.z += add; add = counter.z == 0 ? add : 0;
         counter.w += add;
     }
