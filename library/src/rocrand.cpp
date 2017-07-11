@@ -210,6 +210,18 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
+rocrand_status ROCRANDAPI
+rocrand_get_version(int * version)
+{
+    if(version == NULL)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    *version = ROCRAND_VERSION;
+    return ROCRAND_STATUS_SUCCESS;
+}
+
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */

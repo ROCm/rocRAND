@@ -24,6 +24,14 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
+TEST(rocrand_basic_tests, rocrand_get_version_test)
+{
+    EXPECT_EQ(rocrand_get_version(NULL), ROCRAND_STATUS_OUT_OF_RANGE);
+    int version;
+    EXPECT_EQ(rocrand_get_version(&version), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(version, ROCRAND_VERSION);
+}
+
 TEST(rocrand_basic_tests, rocrand_generator_test)
 {
     rocrand_generator gen = 0;
