@@ -24,18 +24,23 @@
 struct rocrand_philox4_32_10_state
 {
     uint4 counter;
+    uint4 result;
     uint2 key;
+    unsigned int sub_state;
+    unsigned int _padding;
 
     __host__ __device__
     rocrand_philox4_32_10_state()
-        : counter({0, 0, 0, 0}), key({0, 0})
+        : counter({0, 0, 0, 0}), result({0, 0, 0, 0}),
+          key({0, 0}), sub_state(0)
     {
 
     }
 
     __host__ __device__
     rocrand_philox4_32_10_state(unsigned long long seed)
-        : counter({0, 0, 0, 0})
+        : counter({0, 0, 0, 0}), result({0, 0, 0, 0}),
+          key({0, 0}), sub_state(0)
     {
        key.x = static_cast<unsigned int>(seed);
        key.y = static_cast<unsigned int>(seed >> 32);
@@ -75,13 +80,15 @@ struct rocrand_philox4_32_10_state
         counter.w += hi + (counter.z < temp ? 1 : 0);
     }
 
-    inline __host__
+    inline __device__ __host__
     void reset()
     {
         counter = {0, 0, 0, 0};
+        result  = {0, 0, 0, 0};
+        sub_state = 0;
     }
 
-    inline __host__
+    inline __device__ __host__
     void set_seed(unsigned long long seed)
     {
         key.x = static_cast<unsigned int>(seed);
