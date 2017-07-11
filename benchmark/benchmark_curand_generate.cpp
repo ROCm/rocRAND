@@ -96,23 +96,17 @@ void run_benchmarks(const size_t size, const size_t trials,
                     const boost::program_options::variables_map& vm)
 {
     bool all = distribution == "all";
-
-    std::cout << "  ";
     if (distribution == "uniform-uint" || all)
     {
         if (rng_type != CURAND_RNG_QUASI_SOBOL64 &&
             rng_type != CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
         {
-            std::cout << "uniform-uint:" << std::endl;
+            std::cout << "  " << "uniform-uint:" << std::endl;
             run_benchmark<unsigned int>(size, trials, rng_type,
                 [](curandGenerator_t gen, unsigned int * data, size_t size) {
                     return curandGenerate(gen, data, size);
                 }
             );
-        }
-        else
-        {
-            std::cout << "Not supported for this engine" << std::endl;
         }
     }
     if (distribution == "uniform-long-long" || all)
@@ -120,21 +114,17 @@ void run_benchmarks(const size_t size, const size_t trials,
         if (rng_type == CURAND_RNG_QUASI_SOBOL64 ||
             rng_type == CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
         {
-            std::cout << "uniform-long-long:" << std::endl;
+            std::cout << "  " << "uniform-long-long:" << std::endl;
             run_benchmark<unsigned long long>(size, trials, rng_type,
                 [](curandGenerator_t gen, unsigned long long * data, size_t size) {
                     return curandGenerateLongLong(gen, data, size);
                 }
             );
         }
-        else
-        {
-            std::cout << "Not supported for this engine" << std::endl;
-        }
     }
     if (distribution == "uniform-float" || all)
     {
-        std::cout << "uniform-float:" << std::endl;
+        std::cout << "  " << "uniform-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateUniform(gen, data, size);
@@ -143,7 +133,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "uniform-double" || all)
     {
-        std::cout << "uniform-double:" << std::endl;
+        std::cout << "  " << "uniform-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateUniformDouble(gen, data, size);
@@ -152,7 +142,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "normal-float" || all)
     {
-        std::cout << "normal-float:" << std::endl;
+        std::cout << "  " << "normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateNormal(gen, data, size, 0.0f, 1.0);
@@ -161,7 +151,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "normal-double" || all)
     {
-        std::cout << "normal-double:" << std::endl;
+        std::cout << "  " << "normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateNormalDouble(gen, data, size, 0.0f, 1.0f);
@@ -170,7 +160,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-float" || all)
     {
-        std::cout << "log-normal-float:" << std::endl;
+        std::cout << "  " << "log-normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0);
@@ -179,7 +169,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-double" || all)
     {
-        std::cout << "log-normal-double:" << std::endl;
+        std::cout << "  " << "log-normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateLogNormalDouble(gen, data, size, 0.0f, 1.0f);
@@ -188,7 +178,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "poisson" || all)
     {
-        std::cout << "poisson:" << std::endl;
+        std::cout << "  " << "poisson:" << std::endl;
         const double lambda = vm["lambda"].as<double>();
         run_benchmark<unsigned int>(size, trials, rng_type,
             [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {

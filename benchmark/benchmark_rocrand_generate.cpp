@@ -108,10 +108,9 @@ void run_benchmarks(const size_t size, const size_t trials,
                     const boost::program_options::variables_map& vm)
 {
     bool all = distribution == "all";
-    std::cout << "  ";
     if (distribution == "uniform-uint" || all)
     {
-        std::cout << "uniform-uint:" << std::endl;
+        std::cout << "  " << "uniform-uint:" << std::endl;
         run_benchmark<unsigned int>(size, trials, rng_type,
             [](rocrand_generator gen, unsigned int * data, size_t size) {
                 return rocrand_generate(gen, data, size);
@@ -120,7 +119,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "uniform-float" || all)
     {
-        std::cout << "uniform-float:" << std::endl;
+        std::cout << "  " << "uniform-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_uniform(gen, data, size);
@@ -129,7 +128,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "uniform-double" || all)
     {
-        std::cout << "uniform-double:" << std::endl;
+        std::cout << "  " << "uniform-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_uniform_double(gen, data, size);
@@ -138,7 +137,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "normal-float" || all)
     {
-        std::cout << "normal-float:" << std::endl;
+        std::cout << "  " << "normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_normal(gen, data, size, 0.0f, 1.0);
@@ -147,7 +146,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "normal-double" || all)
     {
-        std::cout << "normal-double:" << std::endl;
+        std::cout << "  " << "normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_normal_double(gen, data, size, 0.0f, 1.0f);
@@ -156,7 +155,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-float" || all)
     {
-        std::cout << "log-normal-float:" << std::endl;
+        std::cout << "  " << "log-normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0);
@@ -165,7 +164,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-double" || all)
     {
-        std::cout << "log-normal-double:" << std::endl;
+        std::cout << "  " << "log-normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_log_normal_double(gen, data, size, 0.0f, 1.0f);
@@ -174,7 +173,7 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
     if (distribution == "poisson" || all)
     {
-        std::cout << "poisson:" << std::endl;
+        std::cout << "  " << "poisson:" << std::endl;
         const double lambda = vm["lambda"].as<double>();
         run_benchmark<unsigned int>(size, trials, rng_type,
             [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
