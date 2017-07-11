@@ -8,7 +8,6 @@ include(cmake/HIP.cmake)
 # Test dependencies
 if (BUILD_TEST)
     include(cmake/DownloadProject.cmake)
-
     # Download googletest library
     download_project(PROJ                googletest
                      GIT_REPOSITORY      https://github.com/google/googletest.git
