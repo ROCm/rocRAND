@@ -127,7 +127,7 @@ rocrand_destroy_generator(rocrand_generator generator);
 rocrand_status ROCRANDAPI
 rocrand_generate(rocrand_generator generator,
                  unsigned int * output_data, size_t n);
-    
+
 /**
  * \brief Generates uniformly distributed floats.
  *
@@ -146,6 +146,25 @@ rocrand_generate(rocrand_generator generator,
 rocrand_status ROCRANDAPI
 rocrand_generate_uniform(rocrand_generator generator,
                          float * output_data, size_t n);
+
+/**
+ * \brief Generates uniformly distributed double-precision floating-point values.
+ *
+ * Generates \p n uniformly distributed double-precision floating-point values
+ * and saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of floats to generate
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_generate_uniform_double(rocrand_generator generator,
+                                double * output_data, size_t n);
 
 /**
  * \brief Generates normal distributed floats.
