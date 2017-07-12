@@ -45,8 +45,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
         const unsigned int max = UINT_MAX;
         ASSERT_GE(host_data[i], 0);
         ASSERT_LE(host_data[i], max);
-        if (i % 100 == 0)
-            printf("%d\n", host_data[i]);
+        printf("%d\n", host_data[i]);
     }
 }
 
@@ -67,7 +66,5 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
     {
         ASSERT_GT(host_data[i], 0.0f);
         ASSERT_LE(host_data[i], 1.0f);
-        if (i % 100 == 0)
-            printf("%.8f\n", host_data[i]);
     }
 }

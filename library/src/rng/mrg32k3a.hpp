@@ -57,7 +57,7 @@ namespace rocrand_mrg32k3a_detail
         StateType state;
         if(init_states)
         {
-            generator.init_state(&state, offset, index, state_id);
+            generator.init_state(&state, offset, index, (state_id + seed));
         }
         else
         {
@@ -66,7 +66,7 @@ namespace rocrand_mrg32k3a_detail
         
         while(index < n)
         {
-            data[index] = generator(&state);
+            data[index] = distribution(generator(&state));
             index += stride;
         }
         
@@ -159,7 +159,7 @@ public:
 
             p = g1[2] - g2[2];
             if (g1[2] <= g2[2]) 
-                p += M1;  // 0 < p <= mrg32k3a_m1
+                p += M1;  // 0 < p <= M1
             
             return p;
         }
@@ -184,7 +184,7 @@ public:
         __forceinline__ __host__ __device__
         void discard(state_type * state)
         {
-            state->discard(1);
+            state->discard();
         }
 
         __forceinline__ __host__ __device__
@@ -194,8 +194,8 @@ public:
         }
     };
 
-    rocrand_mrg32k3a(unsigned long long seed = 12345ULL,
-                     unsigned long long offset = 0ULL,
+    rocrand_mrg32k3a(unsigned long long seed = 12345,
+                     unsigned long long offset = 1,
                      hipStream_t stream = 0)
         : base_type(seed, offset, stream),
           m_states_initialized(false), m_states(NULL), m_states_size(1024 * 256)
@@ -230,7 +230,7 @@ public:
         m_states_initialized = false;
     }
 
-    template<class T, class Distribution = uniform_distribution<T> >
+    template<class T, class Distribution = mrg_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
@@ -261,7 +261,7 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t n)
     {
-        uniform_distribution<T> udistribution;
+        mrg_uniform_distribution<T> udistribution;
         return generate(data, n, udistribution);
     }
 
