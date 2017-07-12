@@ -31,5 +31,6 @@
 
 #include "rocrand_uniform.h"
 #include "rocrand_normal.h"
+#include "rocrand_log_normal.h"
 
 #endif // ROCRAND_KERNEL_H_
