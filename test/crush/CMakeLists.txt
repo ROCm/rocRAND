@@ -1,8 +1,12 @@
 # Crush Tests
 
 # Get sources
-file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*rocrand*.cpp)
 set(rocRAND_CRUSH_TEST_SRCS ${tmp})
+if(HIP_PLATFORM STREQUAL "nvcc")
+    file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*curand*.cpp)
+    set(rocRAND_CRUSH_TEST_SRCS ${rocRAND_CRUSH_TEST_SRCS} ${tmp})
+endif()
 set_source_files_properties(${rocRAND_CRUSH_TEST_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
@@ -11,6 +15,7 @@ include_directories(${PROJECT_SOURCE_DIR}/library/include)
 include_directories(${PROJECT_SOURCE_DIR}/library/src)
 include_directories(${PROJECT_SOURCE_DIR}/test/crush)
 include_directories(${TESTU01_INCLUDE_DIRS})
+
 foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     get_filename_component(crush_test_name ${crush_test_src} NAME_WE)
     hip_add_executable(${crush_test_name} "${crush_test_src}")
@@ -22,6 +27,9 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
         $<TARGET_FILE:rocRAND> ${testu01} ${probdist} ${mylib}
         ${Boost_LIBRARIES} # Boost program_options
     )
+    if(HIP_PLATFORM STREQUAL "nvcc")
+        target_link_libraries( ${crush_test_name} "-lcurand")
+    endif()
     set_target_properties(
         ${crush_test_name}
         PROPERTIES
