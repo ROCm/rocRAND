@@ -124,6 +124,11 @@ int main(int argc, char *argv[])
         run_crush_test(size, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
         return 0;
     }
+    else if(engine == "mrg32k3a"){
+        std::cout << "mrg32k3a:" << std::endl;
+        run_crush_test(size, ROCRAND_RNG_PSEUDO_MRG32K3A);
+        return 0;
+    }
 
     std::cerr << "Error: unknown random number engine '" << engine << "'" << std::endl;
     return -1;

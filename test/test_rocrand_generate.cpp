@@ -55,6 +55,37 @@ TEST(rocrand_generate_tests, simple_test)
     );
 }
 
+TEST(rocrand_generate_tests, simple_test_2)
+{
+    rocrand_generator generator;
+    ASSERT_EQ(
+        rocrand_create_generator(
+            &generator,
+            ROCRAND_RNG_PSEUDO_MRG32K3A
+        ),
+        ROCRAND_STATUS_SUCCESS
+    );
+
+    const size_t size = 256;
+    unsigned int * data;
+    ASSERT_EQ(
+        hipMalloc((void **)&data, size * sizeof(unsigned int)),
+        hipSuccess
+    );
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    EXPECT_EQ(
+        rocrand_generate(generator, (unsigned int *) data, size),
+        ROCRAND_STATUS_SUCCESS
+    );
+
+    EXPECT_EQ(hipFree(data), hipSuccess);
+    EXPECT_EQ(
+        rocrand_destroy_generator(generator),
+        ROCRAND_STATUS_SUCCESS
+    );
+}
+
 TEST(rocrand_generate_tests, simple_neg_test)
 {
     const size_t size = 256;

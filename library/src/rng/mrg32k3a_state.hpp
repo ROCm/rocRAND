@@ -35,6 +35,20 @@
 #define A23 (4294944443 - 1370589)
 #define A23N 1370589
 
+__device__
+unsigned long long A1p76[3][3] = {
+    {82758667, 1871391091, 4127413238},
+    {3672831523, 69195019, 1871391091},
+    {3672091415, 3528743235, 69195019}
+};
+
+__device__
+unsigned long long A2p76[3][3] = {
+    {1511326704, 3759209742, 1610795712},
+    {4292754251, 1511326704, 3889917532},
+    {3859662829, 4292754251, 3708466080}
+};
+
 struct rocrand_mrg32k3a_state
 {
     unsigned long long g1[3];
@@ -65,54 +79,17 @@ struct rocrand_mrg32k3a_state
     inline __host__ __device__
     void discard(unsigned long long n)
     {
-        unsigned long long A1[9], A2[9], A1b[9], A2b[9], a1, a2, v1b[3], v2b[3];
-        int i, j, k;
-        
-        // Initialize discard matrices
-        A1[0] = 0;   A1[3] = 1;   A1[6] = 0;
-        A1[1] = 0;   A1[4] = 0;   A1[7] = 1;
-        A1[2] = A13; A1[5] = A12; A1[8] = 0; 
-
-        A2[0] = 0;   A2[3] = 1; A2[6] = 0;
-        A2[1] = 0;   A2[4] = 0; A2[7] = 1;
-        A2[2] = A23; A2[5] = 0; A2[8] = A21;
-        
-        while (n > 0) {
-            if (n % 2 == 1) {
-                for (i = 0; i < 3; ++i) {
-                    v1b[i] = ((A1[i + 3 * 0] * g1[0]) % M1
-                            + (A1[i + 3 * 1] * g1[1]) % M1
-                            + (A1[i + 3 * 2] * g1[2]) % M1) % M1;
-                    v2b[i] = ((A2[i + 3 * 0] * g2[0]) % M2
-                            + (A2[i + 3 * 1] * g2[1]) % M2
-                            + (A2[i + 3 * 2] * g2[2]) % M2) % M2;
-                }
-                for (i = 0; i < 3; ++i) {
-                    g1[i] = v1b[i];
-                    g2[i] = v2b[i];
-                }
-            }
-            
-            n = n / 2;
-            
-            for (i = 0; i < 3; ++i) {
-                for (j = 0; j < 3; ++j) {
-                    a1 = 0;
-                    a2 = 0;
-                    for (k = 0; k < 3; ++k) {
-                        a1 += (A1[i + 3 * k] * A1[k + 3 * j]) % M1;
-                        a2 += (A2[i + 3 * k] * A2[k + 3 * j]) % M2;
-                    }
-                    A1b[i + 3 * j] = a1 % M1;
-                    A2b[i + 3 * j] = a2 % M2;
-                }
-            }
-            
-            for (i = 0; i < 9; ++i) {
-                A1[i] = A1b[i];
-                A2[i] = A2b[i];
-            }
+        for (int i = 0; i < n; ++i) {
+            modMatVec(A1p76, g1, g1, M1);
+            modMatVec(A2p76, g2, g2, M2); 
         }
+    }
+    
+    inline __host__ __device__
+    void discard()
+    {
+        modMatVec(A1p76, g1, g1, M1);
+        modMatVec(A2p76, g2, g2, M2); 
     }
 
     inline __host__ __device__
@@ -138,6 +115,32 @@ struct rocrand_mrg32k3a_state
         g2[2] = seed;
         reset();
     }
+    
+    private:
+        inline __device__ __host__
+        unsigned long long modMult(unsigned long long a, 
+                                   unsigned long long s, 
+                                   unsigned long long c, 
+                                   long m)
+        {   
+            return (((unsigned long long) a * s + c) % m);
+        }
+    
+        inline __device__ __host__
+        void modMatVec (unsigned long long A[3][3], 
+                        unsigned long long s[3], 
+                        unsigned long long v[3], 
+                        long m)
+        {
+            unsigned long long x[3];
+            for (size_t i = 0; i < 3; ++i) {
+                x[i] = 0;
+                for (size_t j = 0; j < 3; j++)
+                    x[i] = modMult(A[i][j], s[j], x[i], m);
+                }
+            for (size_t i = 0; i < 3; ++i)
+                v[i] = x[i];
+        }
 };
 
 #endif // ROCRAND_RNG_MRG32K3A_STATE_H_
