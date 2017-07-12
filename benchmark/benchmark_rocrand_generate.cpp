@@ -140,7 +140,7 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_normal(gen, data, size, 0.0f, 1.0);
+                return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
@@ -149,7 +149,7 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_normal_double(gen, data, size, 0.0f, 1.0f);
+                return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
             }
         );
     }
@@ -158,7 +158,7 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "log-normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0);
+                return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
@@ -167,14 +167,14 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "log-normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_log_normal_double(gen, data, size, 0.0f, 1.0f);
+                return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
             }
         );
     }
     if (distribution == "poisson" || all)
     {
-        std::cout << "  " << "poisson:" << std::endl;
         const double lambda = vm["lambda"].as<double>();
+        std::cout << "  " << "poisson (" << std::setprecision(1) << lambda << "):" << std::endl;
         run_benchmark<unsigned int>(size, trials, rng_type,
             [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
                 return rocrand_generate_poisson(gen, data, size, lambda);
