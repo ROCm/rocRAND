@@ -33,8 +33,8 @@ struct normal_distribution;
 template<>
 struct normal_distribution<float>
 {
-    const float stddev;
     const float mean;
+    const float stddev;
 
     __host__ __device__
     normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
@@ -75,8 +75,8 @@ struct normal_distribution<float>
 template<>
 struct normal_distribution<double>
 {
-    const double stddev;
     const double mean;
+    const double stddev;
 
     __host__ __device__
     normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
