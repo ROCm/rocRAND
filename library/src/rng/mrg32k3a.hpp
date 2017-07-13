@@ -57,7 +57,7 @@ namespace rocrand_mrg32k3a_detail
         StateType state;
         if(init_states)
         {
-            generator.init_state(&state, offset, index, (state_id + seed));
+            generator.init_state(&state, offset + state_id, index, seed + state_id);
         }
         else
         {
@@ -172,7 +172,10 @@ public:
         {
             state->set_seed(seed);
             state->discard_sequence(sequence);
-            state->discard(offset);
+            if (offset > 0)
+                state->discard(offset);
+            else
+                state->discard();
         }
 
         __forceinline__ __host__ __device__
