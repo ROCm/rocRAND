@@ -21,33 +21,20 @@
 #ifndef ROCRAND_RNG_MRG32K3A_STATE_H_
 #define ROCRAND_RNG_MRG32K3A_STATE_H_
 
-#define PI 3.14159265358979323846f
-#define NORM 2.3283065498378288e-10
-#define POW32 4294967296
-#define M1 4294967087
-#define M1C 209
-#define M2 4294944443
-#define M2C 22853
-#define A12 1403580
-#define A13 (4294967087 -  810728)
-#define A13N 810728
-#define A21 527612
-#define A23 (4294944443 - 1370589)
-#define A23N 1370589
+#define ROCRAND_RNG_MRG32K3A_POW32 4294967296
+#define ROCRAND_RNG_MRG32K3A_M1 4294967087
+#define ROCRAND_RNG_MRG32K3A_M1C 209
+#define ROCRAND_RNG_MRG32K3A_M2 4294944443
+#define ROCRAND_RNG_MRG32K3A_M2C 22853
+#define ROCRAND_RNG_MRG32K3A_A12 1403580
+#define ROCRAND_RNG_MRG32K3A_A13 (4294967087 -  810728)
+#define ROCRAND_RNG_MRG32K3A_A13N 810728
+#define ROCRAND_RNG_MRG32K3A_A21 527612
+#define ROCRAND_RNG_MRG32K3A_A23 (4294944443 - 1370589)
+#define ROCRAND_RNG_MRG32K3A_A23N 1370589
 
-__device__
-unsigned long long A1p76[3][3] = {
-    {82758667, 1871391091, 4127413238},
-    {3672831523, 69195019, 1871391091},
-    {3672091415, 3528743235, 69195019}
-};
-
-__device__
-unsigned long long A2p76[3][3] = {
-    {1511326704, 3759209742, 1610795712},
-    {4292754251, 1511326704, 3889917532},
-    {3859662829, 4292754251, 3708466080}
-};
+// TODO: During optimisation stage, precompute all matrices for discard_sequence
+// And try local reduction pattern
 
 struct rocrand_mrg32k3a_state
 {
@@ -76,26 +63,70 @@ struct rocrand_mrg32k3a_state
         g2[2] = seed;
     }
     
+    __host__ __device__
+    ~rocrand_mrg32k3a_state() {}
+
+    
     inline __host__ __device__
     void discard(unsigned long long n)
     {
-        for (int i = 0; i < n; ++i) {
-            modMatVec(A1p76, g1, g1, M1);
-            modMatVec(A2p76, g2, g2, M2); 
+        unsigned long long A1[9] = 
+        {
+            0,                        1,   0,
+            0,                        0,   1,
+            ROCRAND_RNG_MRG32K3A_A13, ROCRAND_RNG_MRG32K3A_A12, 0
+        };
+        unsigned long long A2[9] = 
+        {
+            0,                        1, 0,
+            0,                        0, 1,
+            ROCRAND_RNG_MRG32K3A_A23, 0, ROCRAND_RNG_MRG32K3A_A21
+        };
+        
+        while(n > 0) {
+            if (n % 2 == 1) {
+                mod_mat_vec(A1, g1, ROCRAND_RNG_MRG32K3A_M1);
+                mod_mat_vec(A2, g2, ROCRAND_RNG_MRG32K3A_M2);
+            }
+            n = n / 2;
+
+            mod_mat_sq(A1, ROCRAND_RNG_MRG32K3A_M1);
+            mod_mat_sq(A2, ROCRAND_RNG_MRG32K3A_M2);
         }
     }
     
     inline __host__ __device__
     void discard()
     {
-        modMatVec(A1p76, g1, g1, M1);
-        modMatVec(A2p76, g2, g2, M2); 
+        discard(1);
     }
 
     inline __host__ __device__
     void discard_sequence(unsigned long long n)
     {
+        unsigned long long A1p76[9] = 
+        {
+            82758667, 1871391091, 4127413238,
+            3672831523, 69195019, 1871391091,
+            3672091415, 3528743235, 69195019
+        };
+        unsigned long long A2p76[9] = 
+        {
+            1511326704, 3759209742, 1610795712,
+            4292754251, 1511326704, 3889917532,
+            3859662829, 4292754251, 3708466080
+        };
         
+        while(n > 0) {
+            if (n % 2 == 1) {
+                mod_mat_vec(A1p76, g1, ROCRAND_RNG_MRG32K3A_M1);
+                mod_mat_vec(A2p76, g2, ROCRAND_RNG_MRG32K3A_M2);
+            }
+            n = n / 2;
+
+            mod_mat_sq(A1p76, ROCRAND_RNG_MRG32K3A_M1);
+            mod_mat_sq(A2p76, ROCRAND_RNG_MRG32K3A_M2);
+        }
     }
     
     inline __device__ __host__
@@ -118,28 +149,40 @@ struct rocrand_mrg32k3a_state
     
     private:
         inline __device__ __host__
-        unsigned long long modMult(unsigned long long a, 
-                                   unsigned long long s, 
-                                   unsigned long long c, 
-                                   long m)
-        {   
-            return (((unsigned long long) a * s + c) % m);
-        }
-    
-        inline __device__ __host__
-        void modMatVec (unsigned long long A[3][3], 
-                        unsigned long long s[3], 
-                        unsigned long long v[3], 
-                        long m)
+        void mod_mat_vec(unsigned long long * A, 
+                         unsigned long long * s, 
+                         long m)
         {
             unsigned long long x[3];
             for (size_t i = 0; i < 3; ++i) {
                 x[i] = 0;
                 for (size_t j = 0; j < 3; j++)
-                    x[i] = modMult(A[i][j], s[j], x[i], m);
-                }
+                    x[i] = (A[i + 3 * j] * s[j] + x[i]) % m;
+            }
             for (size_t i = 0; i < 3; ++i)
-                v[i] = x[i];
+                s[i] = x[i];
+        }
+    
+        inline __device__ __host__
+        void mod_mat_sq(unsigned long long * A, 
+                        long m)
+        {
+            unsigned long long x[9];
+            unsigned long long a;
+            for (size_t i = 0; i < 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    a = 0;
+                    for (size_t k = 0; k < 3; k++) {
+                        a += (A[i + 3 * k] * A[k + 3 * j]) % m;
+                    }
+                    x[i + 3 * j] = a % m;
+                }
+            }
+            for (size_t i = 0; i < 3; i++) {
+                A[i + 3 * 0] = x[i + 3 * 0];
+                A[i + 3 * 1] = x[i + 3 * 1];
+                A[i + 3 * 2] = x[i + 3 * 2];
+            }
         }
 };
 

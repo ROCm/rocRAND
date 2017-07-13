@@ -57,7 +57,7 @@ namespace rocrand_mrg32k3a_detail
         StateType state;
         if(init_states)
         {
-            generator.init_state(&state, offset + state_id, index, seed + state_id);
+            generator.init_state(&state, offset, index, seed);
         }
         else
         {
@@ -97,9 +97,12 @@ namespace rocrand_mrg32k3a_detail
         __host__ __device__
         generator_state_wrapper(Generator generator, StateType state)
             : generator(generator), state(state) {}
+        
+        __host__ __device__
+        ~generator_state_wrapper() {}
 
         __forceinline__ __host__ __device__
-        double operator()()
+        unsigned long long operator()()
         {
             return generator(&state);
         }
@@ -142,24 +145,29 @@ public:
             unsigned long long * g1 = state->g1;
             unsigned long long * g2 = state->g2;
             
-            p = A12 * g1[1] + A13N * (M1 - g1[0]);
-            p = (p & (POW32 - 1)) + (p >> 32) * M1C;
-            if (p >= M1) 
-                p -= M1;
+            p = ROCRAND_RNG_MRG32K3A_A12 * g1[1] + ROCRAND_RNG_MRG32K3A_A13N 
+                * (ROCRAND_RNG_MRG32K3A_M1 - g1[0]);
+            p = (p & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (p >> 32) 
+                * ROCRAND_RNG_MRG32K3A_M1C;
+            if (p >= ROCRAND_RNG_MRG32K3A_M1) 
+                p -= ROCRAND_RNG_MRG32K3A_M1;
 
             g1[0] = g1[1]; g1[1] = g1[2]; g1[2] = p;
 
-            p = A21 * g2[2] + A23N * (M2 - g2[0]);
-            p = (p & (POW32 - 1)) + (p >> 32) * M2C;
-            p = (p & (POW32 - 1)) + (p >> 32) * M2C;
-            if (p >= M2) 
-                p -= M2;
+            p = ROCRAND_RNG_MRG32K3A_A21 * g2[2] + ROCRAND_RNG_MRG32K3A_A23N 
+                * (ROCRAND_RNG_MRG32K3A_M2 - g2[0]);
+            p = (p & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (p >> 32) 
+                * ROCRAND_RNG_MRG32K3A_M2C;
+            p = (p & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (p >> 32) 
+                * ROCRAND_RNG_MRG32K3A_M2C;
+            if (p >= ROCRAND_RNG_MRG32K3A_M2) 
+                p -= ROCRAND_RNG_MRG32K3A_M2;
                 
             g2[0] = g2[1]; g2[1] = g2[2]; g2[2] = p;
 
             p = g1[2] - g2[2];
             if (g1[2] <= g2[2]) 
-                p += M1;  // 0 < p <= M1
+                p += ROCRAND_RNG_MRG32K3A_M1;  // 0 < p <= M1
             
             return p;
         }
@@ -172,10 +180,8 @@ public:
         {
             state->set_seed(seed);
             state->discard_sequence(sequence);
-            if (offset > 0)
-                state->discard(offset);
-            else
-                state->discard();
+            state->discard(offset);
+
         }
 
         __forceinline__ __host__ __device__

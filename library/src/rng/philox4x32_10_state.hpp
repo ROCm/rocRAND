@@ -46,6 +46,10 @@ struct rocrand_philox4_32_10_state
        key.y = static_cast<unsigned int>(seed >> 32);
     }
 
+    __host__ __device__
+    ~rocrand_philox4_32_10_state() {}
+
+
     inline __host__ __device__
     void discard(unsigned long long n)
     {
