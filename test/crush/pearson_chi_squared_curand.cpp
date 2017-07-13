@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <chrono>
 #include <numeric>
 #include <utility>
 #include <type_traits>
@@ -58,6 +57,35 @@ void run_test(const size_t size, const size_t trials,
               const double mean, const double stddev,
               distribution_func_type distribution_func)
 {
+    const std::vector<size_t> cells_counts({ 1000, 100, 25 });
+    const double significance_level = 0.9;
+    std::vector<double> rejection_criteria;
+    for (size_t cells_count : cells_counts)
+    {
+        const double c = finv_ChiSquare2(static_cast<long>(cells_count), significance_level);
+        rejection_criteria.push_back(c);
+    }
+
+    const int w = 14;
+
+    // Header
+    {
+        std::cout << "  ";
+        for (size_t cells_count : cells_counts)
+        {
+            std::cout << std::setw(w) << ("P" + std::to_string(cells_count));
+            std::cout << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "  ";
+        for (double c : rejection_criteria)
+        {
+            std::cout << std::setw(w) << ("< " + std::to_string(static_cast<int>(c)));
+            std::cout << " ";
+        }
+        std::cout << std::endl << std::endl;
+    }
+
     T * data;
     CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
 
@@ -65,26 +93,6 @@ void run_test(const size_t size, const size_t trials,
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
     CUDA_CALL(cudaDeviceSynchronize());
 
-    const int w = 12;
-
-    const size_t cells_counts[] = { 1000, 100, 25 };
-    const double significance_level = 0.9;
-
-    std::cout << "  ";
-    for (size_t cells_count : cells_counts)
-    {
-        std::cout << std::setw(w) << ("P" + std::to_string(cells_count));
-    }
-    std::cout << std::endl;
-    std::cout << "  ";
-    for (size_t cells_count : cells_counts)
-    {
-        const double p = finv_ChiSquare2(static_cast<long>(cells_count), significance_level);
-        std::cout << std::setw(w) << ("< " + std::to_string(static_cast<int>(p)));
-    }
-    std::cout << std::endl << std::endl;
-
-    auto start = std::chrono::high_resolution_clock::now();
     for (size_t trial = 0; trial < trials; trial++)
     {
         CURAND_CALL(generate_func(generator, data, size));
@@ -95,8 +103,11 @@ void run_test(const size_t size, const size_t trials,
         CUDA_CALL(cudaDeviceSynchronize());
 
         std::cout << "  ";
-        for (size_t cells_count : cells_counts)
+        for (size_t test = 0; test < cells_counts.size(); test++)
         {
+            const size_t cells_count = cells_counts[test];
+            const double rejection_criterion = rejection_criteria[test];
+
             double start = (mean - 6.0 * stddev);
             double cell_width = 12.0 * stddev / cells_count;
             if (std::is_integral<T>::value)
@@ -135,9 +146,11 @@ void run_test(const size_t size, const size_t trials,
             chi_squared *= count;
 
             std::cout << std::setw(w) << std::fixed << std::setprecision(5) << chi_squared;
+            std::cout << (chi_squared < rejection_criterion ? " " : "*");
         }
         std::cout << std::endl;
     }
+    std::cout << std::endl;
 
     CURAND_CALL(curandDestroyGenerator(generator));
     CUDA_CALL(cudaFree(data));
@@ -218,7 +231,8 @@ void run_tests(const size_t size, const size_t trials,
     if (distribution == "poisson" || all)
     {
         const double lambda = vm["lambda"].as<double>();
-        std::cout << "  " << "poisson (" << std::setprecision(1) << lambda << "):" << std::endl;
+        std::cout << "  " << "poisson ("
+             << std::fixed << std::setprecision(1) << lambda << "):" << std::endl;
         run_test<unsigned int>(size, trials, rng_type,
             [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
                 return curandGeneratePoisson(gen, data, size, lambda);
@@ -272,7 +286,7 @@ int main(int argc, char *argv[])
             distribution_desc.c_str())
         ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
             engine_desc.c_str())
-        ("lambda", po::value<double>()->default_value(100.0), "lambda of Poisson distribution")
+        ("lambda", po::value<double>()->default_value(1000.0), "lambda of Poisson distribution")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, options), vm);
@@ -286,13 +300,13 @@ int main(int argc, char *argv[])
     const size_t size = vm["size"].as<size_t>();
     const size_t trials = vm["trials"].as<size_t>();
 
-    std::cout << "cuRAND:" << std::endl;
+    std::cout << "cuRAND:" << std::endl << std::endl;
     for (auto engine : vm["engine"].as<std::vector<std::string>>())
     for (auto e : engines)
     {
         if (engine == e.second || engine == "all")
         {
-            std::cout << std::endl << e.second << ":" << std::endl;
+            std::cout << e.second << ":" << std::endl;
             const curandRngType rng_type = e.first;
             for (auto distribution : vm["dis"].as<std::vector<std::string>>())
             {
