@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <chrono>
 #include <numeric>
 #include <utility>
 #include <type_traits>
@@ -69,34 +68,42 @@ void run_test(const size_t size, const size_t trials,
               const double mean, const double stddev,
               distribution_func_type distribution_func)
 {
+    const std::vector<size_t> cells_counts({ 1000, 100, 25 });
+    const double significance_level = 0.9;
+    std::vector<double> rejection_criteria;
+    for (size_t cells_count : cells_counts)
+    {
+        const double c = finv_ChiSquare2(static_cast<long>(cells_count), significance_level);
+        rejection_criteria.push_back(c);
+    }
+
+    const int w = 14;
+
+    // Header
+    {
+        std::cout << "  ";
+        for (size_t cells_count : cells_counts)
+        {
+            std::cout << std::setw(w) << ("P" + std::to_string(cells_count));
+            std::cout << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "  ";
+        for (double c : rejection_criteria)
+        {
+            std::cout << std::setw(w) << ("< " + std::to_string(static_cast<int>(c)));
+            std::cout << " ";
+        }
+        std::cout << std::endl << std::endl;
+    }
+
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
-    // Make sure memory is allocated
     HIP_CHECK(hipDeviceSynchronize());
 
-    const int w = 12;
-
-    const size_t cells_counts[] = { 1000, 100, 25 };
-    const double significance_level = 0.9;
-
-    std::cout << "  ";
-    for (size_t cells_count : cells_counts)
-    {
-        std::cout << std::setw(w) << ("P" + std::to_string(cells_count));
-    }
-    std::cout << std::endl;
-    std::cout << "  ";
-    for (size_t cells_count : cells_counts)
-    {
-        const double p = finv_ChiSquare2(static_cast<long>(cells_count), significance_level);
-        std::cout << std::setw(w) << ("< " + std::to_string(static_cast<int>(p)));
-    }
-    std::cout << std::endl << std::endl;
-
-    auto start = std::chrono::high_resolution_clock::now();
     for (size_t trial = 0; trial < trials; trial++)
     {
         ROCRAND_CHECK(generate_func(generator, data, size));
@@ -107,11 +114,13 @@ void run_test(const size_t size, const size_t trials,
         HIP_CHECK(hipDeviceSynchronize());
 
         std::cout << "  ";
-        for (size_t cells_count : cells_counts)
+        for (size_t test = 0; test < cells_counts.size(); test++)
         {
+            const size_t cells_count = cells_counts[test];
+            const double rejection_criterion = rejection_criteria[test];
+
             double start = (mean - 6.0 * stddev);
             double cell_width = 12.0 * stddev / cells_count;
-
             if (std::is_integral<T>::value)
             {
                 // Use integral values for discrete distributions (e.g. Poisson)
@@ -148,9 +157,11 @@ void run_test(const size_t size, const size_t trials,
             chi_squared *= count;
 
             std::cout << std::setw(w) << std::fixed << std::setprecision(5) << chi_squared;
+            std::cout << (chi_squared < rejection_criterion ? " " : "*");
         }
         std::cout << std::endl;
     }
+    std::cout << std::endl;
 
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
     HIP_CHECK(hipFree(data));
@@ -231,7 +242,8 @@ void run_tests(const size_t size, const size_t trials,
     if (distribution == "poisson" || all)
     {
         const double lambda = vm["lambda"].as<double>();
-        std::cout << "  " << "poisson (" << std::setprecision(1) << lambda << "):" << std::endl;
+        std::cout << "  " << "poisson ("
+             << std::fixed << std::setprecision(1) << lambda << "):" << std::endl;
         run_test<unsigned int>(size, trials, rng_type,
             [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
                 return rocrand_generate_poisson(gen, data, size, lambda);
@@ -281,7 +293,7 @@ int main(int argc, char *argv[])
             distribution_desc.c_str())
         ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
             engine_desc.c_str())
-        ("lambda", po::value<double>()->default_value(100.0), "lambda of Poisson distribution")
+        ("lambda", po::value<double>()->default_value(1000.0), "lambda of Poisson distribution")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, options), vm);
@@ -295,13 +307,13 @@ int main(int argc, char *argv[])
     const size_t size = vm["size"].as<size_t>();
     const size_t trials = vm["trials"].as<size_t>();
 
-    std::cout << "rocRAND:" << std::endl;
+    std::cout << "rocRAND:" << std::endl << std::endl;
     for (auto engine : vm["engine"].as<std::vector<std::string>>())
     for (auto e : engines)
     {
         if (engine == e.second || engine == "all")
         {
-            std::cout << std::endl << e.second << ":" << std::endl;
+            std::cout << e.second << ":" << std::endl;
             const rocrand_rng_type rng_type = e.first;
             for (auto distribution : vm["dis"].as<std::vector<std::string>>())
             {
