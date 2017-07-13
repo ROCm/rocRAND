@@ -145,7 +145,7 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
-                return curandGenerateNormal(gen, data, size, 0.0f, 1.0);
+                return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
@@ -154,7 +154,7 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
-                return curandGenerateNormalDouble(gen, data, size, 0.0f, 1.0f);
+                return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
             }
         );
     }
@@ -163,7 +163,7 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "log-normal-float:" << std::endl;
         run_benchmark<float>(size, trials, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
-                return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0);
+                return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
@@ -172,14 +172,14 @@ void run_benchmarks(const size_t size, const size_t trials,
         std::cout << "  " << "log-normal-double:" << std::endl;
         run_benchmark<double>(size, trials, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
-                return curandGenerateLogNormalDouble(gen, data, size, 0.0f, 1.0f);
+                return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
             }
         );
     }
     if (distribution == "poisson" || all)
     {
-        std::cout << "  " << "poisson:" << std::endl;
         const double lambda = vm["lambda"].as<double>();
+        std::cout << "  " << "poisson (" << std::setprecision(1) << lambda << "):" << std::endl;
         run_benchmark<unsigned int>(size, trials, rng_type,
             [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
                 return curandGeneratePoisson(gen, data, size, lambda);
