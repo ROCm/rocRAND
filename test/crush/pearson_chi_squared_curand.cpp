@@ -20,11 +20,13 @@
 
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <numeric>
 #include <utility>
 #include <type_traits>
+#include <algorithm>
 
 #include <boost/program_options.hpp>
 
@@ -53,6 +55,7 @@ using distribution_func_type = std::function<double(double)>;
 template<typename T>
 void run_test(const size_t size, const size_t trials,
               const curandRngType rng_type,
+              const bool save_plots, const std::string plot_name,
               generate_func_type<T> generate_func,
               const double mean, const double stddev,
               distribution_func_type distribution_func)
@@ -131,6 +134,12 @@ void run_test(const size_t size, const size_t trials,
                 }
             }
 
+            std::ofstream fout;
+            if (save_plots)
+            {
+                fout.open(plot_name + "-" + std::to_string(trial) + "-" + std::to_string(test) + ".dat",
+                    std::ios_base::out | std::ios_base::trunc);
+            }
             double chi_squared = 0.0;
             for (size_t ci = 0; ci < cells_count; ci++)
             {
@@ -141,6 +150,10 @@ void run_test(const size_t size, const size_t trials,
                 if (expected > 0.0)
                 {
                     chi_squared += (observed - expected) * (observed - expected) / expected;
+                }
+                if (save_plots)
+                {
+                    fout << observed << "\t" << expected << std::endl;
                 }
             }
             chi_squared *= count;
@@ -159,13 +172,13 @@ void run_test(const size_t size, const size_t trials,
 void run_tests(const size_t size, const size_t trials,
                const curandRngType rng_type,
                const std::string& distribution,
+               const bool save_plots, const std::string plot_name,
                const boost::program_options::variables_map& vm)
 {
-    bool all = distribution == "all";
-    if (distribution == "uniform-float" || all)
+    std::cout << "  " << distribution << ":" << std::endl;
+    if (distribution == "uniform-float")
     {
-        std::cout << "  " << "uniform-float:" << std::endl;
-        run_test<float>(size, trials, rng_type,
+        run_test<float>(size, trials, rng_type, save_plots, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateUniform(gen, data, size);
             },
@@ -173,10 +186,9 @@ void run_tests(const size_t size, const size_t trials,
             [](double x) { return fdist_Unif(x); }
         );
     }
-    if (distribution == "uniform-double" || all)
+    if (distribution == "uniform-double")
     {
-        std::cout << "  " << "uniform-double:" << std::endl;
-        run_test<double>(size, trials, rng_type,
+        run_test<double>(size, trials, rng_type, save_plots, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateUniformDouble(gen, data, size);
             },
@@ -184,10 +196,9 @@ void run_tests(const size_t size, const size_t trials,
             [](double x) { return fdist_Unif(x); }
         );
     }
-    if (distribution == "normal-float" || all)
+    if (distribution == "normal-float")
     {
-        std::cout << "  " << "normal-float:" << std::endl;
-        run_test<float>(size, trials, rng_type,
+        run_test<float>(size, trials, rng_type, save_plots, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -195,10 +206,9 @@ void run_tests(const size_t size, const size_t trials,
             [](double x) { return fdist_Normal2(x); }
         );
     }
-    if (distribution == "normal-double" || all)
+    if (distribution == "normal-double")
     {
-        std::cout << "  " << "normal-double:" << std::endl;
-        run_test<double>(size, trials, rng_type,
+        run_test<double>(size, trials, rng_type, save_plots, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -206,10 +216,9 @@ void run_tests(const size_t size, const size_t trials,
             [](double x) { return fdist_Normal2(x); }
         );
     }
-    if (distribution == "log-normal-float" || all)
+    if (distribution == "log-normal-float")
     {
-        std::cout << "  " << "log-normal-float:" << std::endl;
-        run_test<float>(size, trials, rng_type,
+        run_test<float>(size, trials, rng_type, save_plots, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -217,10 +226,9 @@ void run_tests(const size_t size, const size_t trials,
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
-    if (distribution == "log-normal-double" || all)
+    if (distribution == "log-normal-double")
     {
-        std::cout << "  " << "log-normal-double:" << std::endl;
-        run_test<double>(size, trials, rng_type,
+        run_test<double>(size, trials, rng_type, save_plots, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -228,12 +236,12 @@ void run_tests(const size_t size, const size_t trials,
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
-    if (distribution == "poisson" || all)
+    if (distribution == "poisson")
     {
         const double lambda = vm["lambda"].as<double>();
-        std::cout << "  " << "poisson ("
-             << std::fixed << std::setprecision(1) << lambda << "):" << std::endl;
-        run_test<unsigned int>(size, trials, rng_type,
+        std::cout << "  " << "lambda:"
+             << std::fixed << std::setprecision(1) << lambda << ":" << std::endl;
+        run_test<unsigned int>(size, trials, rng_type, save_plots, plot_name,
             [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
                 return curandGeneratePoisson(gen, data, size, lambda);
             },
@@ -243,7 +251,7 @@ void run_tests(const size_t size, const size_t trials,
     }
 }
 
-const std::vector<std::pair<curandRngType, std::string>> engines = {
+const std::vector<std::pair<curandRngType, std::string>> all_engines = {
     { CURAND_RNG_PSEUDO_XORWOW, "xorwow" },
     { CURAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
     { CURAND_RNG_PSEUDO_MTGP32, "mtgp32" },
@@ -255,24 +263,32 @@ const std::vector<std::pair<curandRngType, std::string>> engines = {
     { CURAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64" }
 };
 
+const std::vector<std::string> all_distributions = {
+    "uniform-float",
+    "uniform-double",
+    "normal-float",
+    "normal-double",
+    "log-normal-float",
+    "log-normal-double",
+    "poisson",
+};
+
 int main(int argc, char *argv[])
 {
     namespace po = boost::program_options;
     po::options_description options("options");
 
     const std::string distribution_desc =
-        "space-separated list of distributions:"
-            "\n   uniform-float"
-            "\n   uniform-double"
-            "\n   normal-float"
-            "\n   normal-double"
-            "\n   log-normal-float"
-            "\n   log-normal-double"
-            "\n   poisson"
+        "space-separated list of distributions:" +
+        std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
+            [](std::string a, std::string b) {
+                return a + "\n   " + b;
+            }
+        ) +
             "\nor all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
-        std::accumulate(engines.begin(), engines.end(), std::string(),
+        std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
             [](std::string a, std::pair<curandRngType, std::string> b) {
                 return a + "\n   " + b.second;
             }
@@ -287,6 +303,7 @@ int main(int argc, char *argv[])
         ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
             engine_desc.c_str())
         ("lambda", po::value<double>()->default_value(1000.0), "lambda of Poisson distribution")
+        ("plots", "save plots for GnuPlot")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, options), vm);
@@ -299,19 +316,52 @@ int main(int argc, char *argv[])
 
     const size_t size = vm["size"].as<size_t>();
     const size_t trials = vm["trials"].as<size_t>();
+    const bool save_plots = vm.count("plots");
 
     std::cout << "cuRAND:" << std::endl << std::endl;
-    for (auto engine : vm["engine"].as<std::vector<std::string>>())
+    std::vector<std::pair<curandRngType, std::string>> engines;
+    {
+        auto es = vm["engine"].as<std::vector<std::string>>();
+        if (std::find(es.begin(), es.end(), "all") != es.end())
+        {
+            engines = all_engines;
+        }
+        else
+        {
+            for (auto e : all_engines)
+            {
+                if (std::find(es.begin(), es.end(), e.second) != es.end())
+                    engines.push_back(e);
+            }
+        }
+    }
+
+    std::vector<std::string> distributions;
+    {
+        auto ds = vm["dis"].as<std::vector<std::string>>();
+        if (std::find(ds.begin(), ds.end(), "all") != ds.end())
+        {
+            distributions = all_distributions;
+        }
+        else
+        {
+            for (auto d : all_distributions)
+            {
+                if (std::find(ds.begin(), ds.end(), d) != ds.end())
+                    distributions.push_back(d);
+            }
+        }
+    }
+
     for (auto e : engines)
     {
-        if (engine == e.second || engine == "all")
+        const std::string engine_name = e.second;
+        std::cout << engine_name << ":" << std::endl;
+        const curandRngType rng_type = e.first;
+        for (auto distribution : distributions)
         {
-            std::cout << e.second << ":" << std::endl;
-            const curandRngType rng_type = e.first;
-            for (auto distribution : vm["dis"].as<std::vector<std::string>>())
-            {
-                run_tests(size, trials, rng_type, distribution, vm);
-            }
+            const std::string plot_name = engine_name + "-" + distribution;
+            run_tests(size, trials, rng_type, distribution, save_plots, plot_name, vm);
         }
     }
 
