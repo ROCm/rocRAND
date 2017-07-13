@@ -235,6 +235,9 @@ namespace rocrand_philox4x32_10_detail
         generator_state_wrapper(Generator generator, StateType state)
             : generator(generator), state(state) {}
 
+        __host__ __device__
+        ~generator_state_wrapper() {}
+
         __forceinline__ __host__ __device__
         unsigned int operator()()
         {
