@@ -33,8 +33,8 @@ struct log_normal_distribution;
 template<>
 struct log_normal_distribution<float>
 {
-    const float stddev;
     const float mean;
+    const float stddev;
 
     __host__ __device__
     log_normal_distribution<float>(const float mean, const float stddev) :
@@ -66,8 +66,8 @@ struct log_normal_distribution<float>
 template<>
 struct log_normal_distribution<double>
 {
-    const double stddev;
     const double mean;
+    const double stddev;
 
     __host__ __device__
     log_normal_distribution<double>(const double mean, const double stddev) :
