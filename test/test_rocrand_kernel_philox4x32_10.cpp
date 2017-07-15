@@ -137,12 +137,33 @@ void rocrand_log_normal_kernel(float * output, const size_t size)
     }
 }
 
+TEST(rocrand_kernel_philox4x32_10, rocrand_state_philox4x32_10_type)
+{
+    EXPECT_EQ(sizeof(rocrand_state_philox4x32_10), 16 * sizeof(float));
+    EXPECT_EQ(sizeof(rocrand_state_philox4x32_10[32]), 32 * sizeof(rocrand_state_philox4x32_10));
+}
+
 TEST(rocrand_kernel_philox4x32_10, rocrand_init)
 {
+    // Just get access to internal state
+    class rocrand_state_philox4x32_10_test : public rocrand_state_philox4x32_10
+    {
+        typedef rocrand_state_philox4x32_10 base_type;
+        typedef rocrand_state_philox4x32_10::philox4x32_10_state internal_state_type;
+
+    public:
+
+        internal_state_type internal_state() const
+        {
+            return m_state;
+        }
+    };
+
     typedef rocrand_state_philox4x32_10 state_type;
+    typedef rocrand_state_philox4x32_10_test state_type_test;
 
     unsigned long long seed = 0xdeadbeefbeefdeadULL;
-    unsigned long long offset = (UINT_MAX * 17UL) + 17;
+    unsigned long long offset = 4 * ((UINT_MAX * 17UL) + 17);
 
     const size_t states_size = 256;
     state_type * states;
@@ -157,7 +178,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
     );
     HIP_CHECK(hipPeekAtLastError());
 
-    std::vector<state_type> states_host(states_size);
+    std::vector<state_type_test> states_host(states_size);
     HIP_CHECK(
         hipMemcpy(
             states_host.data(), states,
@@ -169,8 +190,9 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
     HIP_CHECK(hipFree(states));
 
     unsigned int subsequence = 0;
-    for(auto& s : states_host)
+    for(auto& state : states_host)
     {
+        auto s = state.internal_state();
         EXPECT_EQ(s.key.x, 0xbeefdeadU);
         EXPECT_EQ(s.key.y, 0xdeadbeefU);
 
