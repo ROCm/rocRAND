@@ -57,37 +57,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand.h"
 #include "rocrand_common.h"
-
-namespace detail {
-
-struct philox4x32_10_state
-{
-    uint4 counter;
-    uint4 result;
-    uint2 key;
-    unsigned int substate;
-
-    // The Box–Muller transform requires two inputs to convert uniformly
-    // distributed real values [0; 1] to normally distributed real values
-    // (with mean = 0, and stddev = 1). Often user wants only one
-    // normally distributed number, to save performance and random
-    // numbers the 2nd value is saved for future requests.
-    unsigned int boxmuller_float_state; // is there a float in boxmuller_float
-    unsigned int boxmuller_double_state; // is there a double in boxmuller_double
-    float boxmuller_float; // normally distributed float
-    double boxmuller_double; // normally distributed double
-};
-
-namespace philox4x32_10 {
 
 // Constants from Random123
 // See https://www.deshawresearch.com/resources_random123.html
-const unsigned int PHILOX_M4x32_0 = 0xD2511F53;
-const unsigned int PHILOX_M4x32_1 = 0xCD9E8D57;
-const unsigned int PHILOX_W32_0   = 0x9E3779B9;
-const unsigned int PHILOX_W32_1   = 0xBB67AE85;
+#define ROCRAND_PHILOX_M4x32_0 0xD2511F53U
+#define ROCRAND_PHILOX_M4x32_1 0xCD9E8D57U
+#define ROCRAND_PHILOX_W32_0   0x9E3779B9U
+#define ROCRAND_PHILOX_W32_1   0xBB67AE85U
+
+#define ROCRAND_PHILOX4x32_DEFAULT_SEED 0xdeadbeefdeadbeefULL
+
+namespace rocrand_device {
+namespace detail {
+
+// forward declaration
+struct philox4x32_10_engine_boxmuller_helper;
 
 // HCC
 #ifdef __HIP_DEVICE_COMPILE__
@@ -108,161 +93,293 @@ unsigned int mulhilo32(unsigned int x, unsigned int y, unsigned int& z)
 }
 #endif
 
-FQUALIFIERS
-void set_seed(philox4x32_10_state * state, unsigned long long seed)
+} // end detail namespace
+
+class philox4x32_10_engine
 {
-    state->key.x = static_cast<unsigned int>(seed);
-    state->key.y = static_cast<unsigned int>(seed >> 32);
-    state->counter = {0, 0, 0, 0};
-    state->result  = {0, 0, 0, 0};
-    state->substate = 0;
-    state->boxmuller_float_state = 0;
-    state->boxmuller_double_state = 0;
-}
+public:
+    struct philox4x32_10_state
+    {
+        uint4 counter;
+        uint4 result;
+        uint2 key;
+        unsigned int substate;
 
-FQUALIFIERS
-void discard(philox4x32_10_state * state, unsigned long long n)
-{
-    unsigned int lo = static_cast<unsigned int>(n);
-    unsigned int hi = static_cast<unsigned int>(n >> 32);
-
-    uint4 temp = state->counter;
-    state->counter.x += lo;
-    state->counter.y += hi + (state->counter.x < temp.x ? 1 : 0);
-    state->counter.z += (state->counter.y < temp.y ? 1 : 0);
-    state->counter.w += (state->counter.z < temp.z ? 1 : 0);
-}
-
-FQUALIFIERS
-void discard(philox4x32_10_state * state)
-{
-    state->counter.x++;
-    uint add = state->counter.x == 0 ? 1 : 0;
-    state->counter.y += add; add = state->counter.y == 0 ? add : 0;
-    state->counter.z += add; add = state->counter.z == 0 ? add : 0;
-    state->counter.w += add;
-}
-
-FQUALIFIERS
-void discard_subsequence(philox4x32_10_state * state,
-                         unsigned long long subsequence)
-{
-    unsigned int lo = static_cast<unsigned int>(subsequence);
-    unsigned int hi = static_cast<unsigned int>(subsequence >> 32);
-
-    unsigned int temp = state->counter.z;
-    state->counter.z += lo;
-    state->counter.w += hi + (state->counter.z < temp ? 1 : 0);
-}
-
-// Single Philox4x32 round
-FQUALIFIERS
-uint4 single_round(uint4 counter, uint2 key)
-{
-    // Source: Random123
-    unsigned int hi0;
-    unsigned int hi1;
-    unsigned int lo0 = mulhilo32(PHILOX_M4x32_0, counter.x, hi0);
-    unsigned int lo1 = mulhilo32(PHILOX_M4x32_1, counter.z, hi1);
-    return uint4 {
-        hi1 ^ counter.y ^ key.x,
-        lo1,
-        hi0 ^ counter.w ^ key.y,
-        lo0
+        // The Box–Muller transform requires two inputs to convert uniformly
+        // distributed real values [0; 1] to normally distributed real values
+        // (with mean = 0, and stddev = 1). Often user wants only one
+        // normally distributed number, to save performance and random
+        // numbers the 2nd value is saved for future requests.
+        unsigned int boxmuller_float_state; // is there a float in boxmuller_float
+        unsigned int boxmuller_double_state; // is there a double in boxmuller_double
+        float boxmuller_float; // normally distributed float
+        double boxmuller_double; // normally distributed double
     };
-}
 
-FQUALIFIERS
-uint2 bumpkey(uint2 key)
-{
-    key.x += PHILOX_W32_0;
-    key.y += PHILOX_W32_1;
-    return key;
-}
-
-// 10 Philox4x32 rounds
-FQUALIFIERS
-uint4 ten_rounds(uint4 counter, uint2 key)
-{
-    counter = single_round(counter, key); key = bumpkey(key); // 1
-    counter = single_round(counter, key); key = bumpkey(key); // 2
-    counter = single_round(counter, key); key = bumpkey(key); // 3
-    counter = single_round(counter, key); key = bumpkey(key); // 4
-    counter = single_round(counter, key); key = bumpkey(key); // 5
-    counter = single_round(counter, key); key = bumpkey(key); // 6
-    counter = single_round(counter, key); key = bumpkey(key); // 7
-    counter = single_round(counter, key); key = bumpkey(key); // 8
-    counter = single_round(counter, key); key = bumpkey(key); // 9
-    return single_round(counter, key);                        // 10
-}
-
-FQUALIFIERS
-void init_state(philox4x32_10_state * state,
-                const unsigned long long seed,
-                const unsigned long long subsequence,
-                const unsigned long long offset)
-{
-    set_seed(state, seed);
-    discard_subsequence(state, subsequence);
-    discard(state, offset);
-    state->result = ten_rounds(state->counter, state->key);
-}
-
-FQUALIFIERS
-unsigned int next(philox4x32_10_state * state)
-{
-    unsigned int ret = (&state->result.x)[state->substate];
-    state->substate++;
-    if(state->substate == 4)
+    FQUALIFIERS
+    philox4x32_10_engine()
     {
-        state->substate = 0;
-        discard(state);
-        state->result = ten_rounds(state->counter, state->key);
+        this->seed(ROCRAND_PHILOX4x32_DEFAULT_SEED, 0, 0);
     }
-    return ret;
-}
 
-FQUALIFIERS
-uint4 next4(philox4x32_10_state * state)
-{
-    uint4 ret = state->result;
-    discard(state);
-    state->result = ten_rounds(state->counter, state->key);
-    switch(state->substate)
+    /// Initializes the internal state of the PRNG using
+    /// seed value \p seed, goes to \p subsequence -th subsequence,
+    /// and skips \p offset random numbers.
+    ///
+    /// A subsequence is 4 * 2^64 numbers long.
+    FQUALIFIERS
+    philox4x32_10_engine(const unsigned long long seed,
+                         const unsigned long long subsequence,
+                         const unsigned long long offset)
     {
-        case 0:
-            return ret;
-        case 1:
-            ret = { ret.y, ret.z, ret.w, state->result.x };
-            // ret.x = ret.y;
-            // ret.y = ret.z;
-            // ret.z = ret.w;
-            // ret.w = state->result.x;
-            break;
-        case 2:
-            ret = { ret.z, ret.w, state->result.x, state->result.y };
-            // ret.x = ret.z;
-            // ret.y = ret.w;
-            // ret.z = state->result.x;
-            // ret.w = state->result.y;
-            break;
-        case 3:
-            ret = { ret.w, state->result.x, state->result.y, state->result.z };
-            // ret.x = ret.w;
-            // ret.y = state->result.x;
-            // ret.z = state->result.y;
-            // ret.w = state->result.z;
-            break;
-        default:
-            return ret;
+        this->seed(seed, subsequence, offset);
     }
-    return ret;
-}
 
-} // end namespace philox4x32_10
+    /// Reinitializes the internal state of the PRNG using new
+    /// seed value \p seed_value, skips \p subsequence subsequences
+    /// and \p offset random numbers.
+    ///
+    /// A subsequence is 4 * 2^64 numbers long.
+    FQUALIFIERS
+    void seed(unsigned long long seed_value,
+              const unsigned long long subsequence,
+              const unsigned long long offset)
+    {
+        m_state.key.x = static_cast<unsigned int>(seed_value);
+        m_state.key.y = static_cast<unsigned int>(seed_value >> 32);
+        this->restart(subsequence, offset);
+    }
+
+    /// Advances the internal state to skip \p offset numbers.
+    FQUALIFIERS
+    void discard(unsigned long long offset)
+    {
+        this->discard_impl(offset);
+        this->m_state.result = this->ten_rounds(m_state.counter, m_state.key);
+    }
+
+    /// Advances the internal state to skip \p subsequence subsequences.
+    /// A subsequence is 4 * 2^64 numbers long.
+    FQUALIFIERS
+    void discard_subsequence(unsigned long long subsequence)
+    {
+        this->discard_subsequence_impl(subsequence);
+        m_state.result = this->ten_rounds(m_state.counter, m_state.key);
+    }
+
+    FQUALIFIERS
+    void restart(const unsigned long long subsequence,
+                 const unsigned long long offset)
+    {
+        m_state.counter = {0, 0, 0, 0};
+        m_state.result  = {0, 0, 0, 0};
+        m_state.substate = 0;
+        m_state.boxmuller_float_state = 0;
+        m_state.boxmuller_double_state = 0;
+        this->discard_subsequence_impl(subsequence);
+        this->discard_impl(offset);
+        m_state.result = this->ten_rounds(m_state.counter, m_state.key);
+    }
+
+    FQUALIFIERS
+    unsigned int operator()()
+    {
+        return this->next();
+    }
+
+    FQUALIFIERS
+    unsigned int next()
+    {
+        unsigned int ret = (&m_state.result.x)[m_state.substate];
+        m_state.substate++;
+        if(m_state.substate == 4)
+        {
+            m_state.substate = 0;
+            this->discard_state();
+            m_state.result = this->ten_rounds(m_state.counter, m_state.key);
+        }
+        return ret;
+    }
+
+    FQUALIFIERS
+    uint4 next4()
+    {
+        uint4 ret = m_state.result;
+        this->discard_state();
+        m_state.result = this->ten_rounds(m_state.counter, m_state.key);
+        switch(m_state.substate)
+        {
+            case 0:
+                return ret;
+            case 1:
+                ret = { ret.y, ret.z, ret.w, m_state.result.x };
+                break;
+            case 2:
+                ret = { ret.z, ret.w, m_state.result.x, m_state.result.y };
+                break;
+            case 3:
+                ret = { ret.w, m_state.result.x, m_state.result.y, m_state.result.z };
+                break;
+            default:
+                return ret;
+        }
+        return ret;
+    }
+
+protected:
+    // Advances the internal state to skip \p offset numbers.
+    // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
+    FQUALIFIERS
+    void discard_impl(unsigned long long offset)
+    {
+        // Adjust offset for subset
+        m_state.substate += offset & 3;
+        offset += m_state.substate < 4 ? 0 : 4;
+        m_state.substate += m_state.substate < 4 ? 0 : -4;
+        // Discard states
+        this->discard_state(offset / 4);
+    }
+
+    // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
+    FQUALIFIERS
+    void discard_subsequence_impl(unsigned long long subsequence)
+    {
+        unsigned int lo = static_cast<unsigned int>(subsequence);
+        unsigned int hi = static_cast<unsigned int>(subsequence >> 32);
+
+        unsigned int temp = m_state.counter.z;
+        m_state.counter.z += lo;
+        m_state.counter.w += hi + (m_state.counter.z < temp ? 1 : 0);
+    }
+
+    // Advances the internal state by offset times.
+    // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
+    FQUALIFIERS
+    void discard_state(unsigned long long offset)
+    {
+        unsigned int lo = static_cast<unsigned int>(offset);
+        unsigned int hi = static_cast<unsigned int>(offset >> 32);
+
+        uint4 temp = m_state.counter;
+        m_state.counter.x += lo;
+        m_state.counter.y += hi + (m_state.counter.x < temp.x ? 1 : 0);
+        m_state.counter.z += (m_state.counter.y < temp.y ? 1 : 0);
+        m_state.counter.w += (m_state.counter.z < temp.z ? 1 : 0);
+    }
+
+    // Advances the internal state to the next state
+    // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
+    FQUALIFIERS
+    void discard_state()
+    {
+        m_state.counter.x++;
+        uint add = m_state.counter.x == 0 ? 1 : 0;
+        m_state.counter.y += add; add = m_state.counter.y == 0 ? add : 0;
+        m_state.counter.z += add; add = m_state.counter.z == 0 ? add : 0;
+        m_state.counter.w += add;
+    }
+
+    // 10 Philox4x32 rounds
+    FQUALIFIERS
+    uint4 ten_rounds(uint4 counter, uint2 key)
+    {
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 1
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 2
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 3
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 4
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 5
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 6
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 7
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 8
+        counter = this->single_round(counter, key); key = this->bumpkey(key); // 9
+        return this->single_round(counter, key);                        // 10
+    }
+
+private:
+    // Single Philox4x32 round
+    FQUALIFIERS
+    uint4 single_round(uint4 counter, uint2 key)
+    {
+        // Source: Random123
+        unsigned int hi0;
+        unsigned int hi1;
+        unsigned int lo0 = detail::mulhilo32(ROCRAND_PHILOX_M4x32_0, counter.x, hi0);
+        unsigned int lo1 = detail::mulhilo32(ROCRAND_PHILOX_M4x32_1, counter.z, hi1);
+        return uint4 {
+            hi1 ^ counter.y ^ key.x,
+            lo1,
+            hi0 ^ counter.w ^ key.y,
+            lo0
+        };
+    }
+
+    FQUALIFIERS
+    uint2 bumpkey(uint2 key)
+    {
+        key.x += ROCRAND_PHILOX_W32_0;
+        key.y += ROCRAND_PHILOX_W32_1;
+        return key;
+    }
+
+protected:
+    // State
+    philox4x32_10_state m_state;
+
+    friend class detail::philox4x32_10_engine_boxmuller_helper;
+
+}; // philox4x32_10 class
+
+namespace detail {
+
+// This helps access fields of philox4x32_10_engine's internal state which
+// saves floats and doubles generated using the Box–Muller transform
+struct philox4x32_10_engine_boxmuller_helper
+{
+    static FQUALIFIERS
+    bool is_float(philox4x32_10_engine * engine)
+    {
+        return engine->m_state.boxmuller_float_state != 0;
+    }
+
+    static FQUALIFIERS
+    float get_float(philox4x32_10_engine * engine)
+    {
+        engine->m_state.boxmuller_float_state = 0;
+        return engine->m_state.boxmuller_float;
+    }
+
+    static FQUALIFIERS
+    void save_float(philox4x32_10_engine * engine, float f)
+    {
+        engine->m_state.boxmuller_double_state = 1;
+        engine->m_state.boxmuller_double = f;
+    }
+
+    static FQUALIFIERS
+    bool is_double(philox4x32_10_engine * engine)
+    {
+        return engine->m_state.boxmuller_double_state != 0;
+    }
+
+    static FQUALIFIERS
+    float get_double(philox4x32_10_engine * engine)
+    {
+        engine->m_state.boxmuller_double_state = 0;
+        return engine->m_state.boxmuller_double;
+    }
+
+    static FQUALIFIERS
+    void save_double(philox4x32_10_engine * engine, double d)
+    {
+        engine->m_state.boxmuller_double_state = 1;
+        engine->m_state.boxmuller_double = d;
+    }
+}; //
+
 } // end namespace detail
+} // end namespace rocrand
 
-typedef detail::philox4x32_10_state rocrand_state_philox4x32_10;
+typedef rocrand_device::philox4x32_10_engine rocrand_state_philox4x32_10;
 
 FQUALIFIERS
 void rocrand_init(const unsigned long long seed,
@@ -270,36 +387,31 @@ void rocrand_init(const unsigned long long seed,
                   const unsigned long long offset,
                   rocrand_state_philox4x32_10 * state)
 {
-    detail::philox4x32_10::init_state(state, seed, subsequence, offset);
+    *state = rocrand_state_philox4x32_10(seed, subsequence, offset);
 }
 
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_philox4x32_10 * state)
 {
-    return detail::philox4x32_10::next(state);
+    return state->next();
 }
 
 FQUALIFIERS
 uint4 rocrand4(rocrand_state_philox4x32_10 * state)
 {
-    return detail::philox4x32_10::next4(state);
+    return state->next4();
 }
 
 FQUALIFIERS
 void skipahead(unsigned long long offset, rocrand_state_philox4x32_10 * state)
 {
-    // Adjust for substate
-    state->substate += offset & 3;
-    offset /= 4;
-    offset += state->substate < 4 ? 0 : 1;
-    state->substate += state->substate < 4 ? 0 : -4;
-    return detail::philox4x32_10::discard(state, offset);
+    return state->discard(offset);
 }
 
 FQUALIFIERS
 void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4x32_10 * state)
 {
-    return detail::philox4x32_10::discard_subsequence(state, subsequence);
+    return state->discard_subsequence(subsequence);
 }
 
 #endif // ROCRAND_PHILOX4X32_10_H_

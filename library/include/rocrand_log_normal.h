@@ -31,14 +31,14 @@
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
 {
-    if(state->boxmuller_float_state != 0)
+    typedef rocrand_device::detail::philox4x32_10_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_float(state))
     {
-        state->boxmuller_float_state = 0;
-        return expf(mean + (stddev * state->boxmuller_float));
+        return expf(mean + (stddev * bm_helper::get_float(state)));
     }
     float2 r = detail::normal_distribution2(rocrand(state), rocrand(state));
-    state->boxmuller_float_state = 1;
-    state->boxmuller_float = r.y;
+    bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
 
@@ -67,14 +67,14 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mean, double stddev)
 {
-    if(state->boxmuller_double_state != 0)
+    typedef rocrand_device::detail::philox4x32_10_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_double(state))
     {
-        state->boxmuller_double_state = 0;
-        return exp(mean + (stddev * state->boxmuller_double));
+        return exp(mean + (stddev * bm_helper::get_double(state)));
     }
     double2 r = detail::normal_distribution_double2(rocrand4(state));
-    state->boxmuller_double_state = 1;
-    state->boxmuller_double = r.y;
+    bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
 
