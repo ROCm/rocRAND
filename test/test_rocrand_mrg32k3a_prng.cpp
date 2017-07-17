@@ -99,3 +99,38 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
     EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
+
+TEST(rocrand_mrg32k3a_prng_tests, log_normal_float_test)
+{
+    const size_t size = 1313;
+    float * data;
+    hipMalloc(&data, sizeof(float) * size);
+
+    rocrand_mrg32k3a g;
+    g.generate_log_normal(data, size, 2.0f, 5.0f);
+    hipDeviceSynchronize();
+
+    float host_data[size];
+    hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+    
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        mean += host_data[i];
+    }
+    mean = mean / size;
+    
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(host_data[i] - mean, 2);
+    }
+    std = std::sqrt(std / size);
+    
+    float logmean = logf(mean * mean / sqrtf(std * std + mean * mean));
+    float logstd = sqrtf(logf(std * std / mean / mean + 1.0f));
+    
+    EXPECT_NEAR(5.0f, logmean, 1.0f);
+    EXPECT_NEAR(2.0f, logstd, 1.0f);
+}

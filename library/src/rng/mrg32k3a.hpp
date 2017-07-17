@@ -349,7 +349,7 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        log_normal_distribution<T> distribution(mean, stddev);
+        mrg_log_normal_distribution<T> distribution(mean, stddev);
 
         namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
