@@ -76,6 +76,21 @@ namespace detail {
         using base_type::base_type; // Get base class ctors
 
         __forceinline__ __device__ __host__
+        philox4x32_10_device_engine() { }
+
+        __forceinline__ __device__ __host__
+        philox4x32_10_device_engine(const unsigned long long seed,
+                                    const unsigned long long subsequence,
+                                    const unsigned long long offset)
+            : base_type(seed, subsequence, offset)
+        {
+
+        }
+
+        __forceinline__ __device__ __host__
+        ~philox4x32_10_device_engine () {}
+
+        __forceinline__ __device__ __host__
         uint4 nextn(unsigned int n /* n can only be 1, 2, or 3 */)
         {
             uint4 ret = m_state.result;
