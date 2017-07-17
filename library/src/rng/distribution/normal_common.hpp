@@ -66,6 +66,42 @@ double2 box_muller_double(uint4 xy)
     return result;
 }
 
+__forceinline__ __host__ __device__
+float2 box_muller_mrg(float x, float y)
+{
+    float2 result;
+    float u = x;
+    float v = y * ROCRAND_2PI;
+    float s = sqrtf(-2.0f * logf(u));
+    #ifdef __HIP_DEVICE_COMPILE__
+        __sincosf(v, &result.x, &result.y);
+        result.x *= s;
+        result.y *= s;
+    #else
+        result.x = sinf(v) * s;
+        result.y = cosf(v) * s;
+    #endif
+    return result;
+}
+
+__forceinline__ __host__ __device__
+double2 box_muller_double_mrg(double x, double y)
+{
+    double2 result;
+    double u = x;
+    double v = y * 2.0;
+    double s = sqrt(-2.0 * log(u));
+    #ifdef __HIP_DEVICE_COMPILE__
+        sincospi(v, &result.x, &result.y);
+        result.x *= s;
+        result.y *= s;
+    #else
+        result.x = sin(v * ROCRAND_PI_DOUBLE) * s;
+        result.y = cos(v * ROCRAND_PI_DOUBLE) * s;
+    #endif
+    return result;
+}
+
 // TODO: Improve implementation
 /*
     float2 result;

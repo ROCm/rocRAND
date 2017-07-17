@@ -87,7 +87,32 @@ namespace rocrand_mrg32k3a_detail
                                 Generator generator,
                                 Distribution distribution)
     {
-        // TODO: Implement it 
+        typedef decltype(distribution(generator.get2(states))) Type2;
+        
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = state_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load or init the state
+        StateType state;
+        if(init_states)
+        {
+            generator.init_state(&state, offset, index, seed);
+        }
+        else
+        {
+            state = states[state_id];
+        }
+        
+        Type2 * data2 = (Type2 *)data;
+        while(index < (n/2))
+        {
+            data2[index] = distribution(generator.get2(&state));
+            index += stride;
+        }
+        
+        // Save state
+        states[state_id] = state;
     }
 
     // Returns 1 value
@@ -171,7 +196,16 @@ public:
             
             return p;
         }
-
+        
+        __forceinline__ __host__ __device__
+        ulonglong2 get2(state_type * state)
+        {
+            unsigned long long x = (*this)(state);
+            unsigned long long y = (*this)(state);
+            ulonglong2 xy = {x, y};
+            return xy;
+        }
+        
         __forceinline__ __host__ __device__
         void init_state(state_type * state,
                         unsigned long long offset,
@@ -286,7 +320,7 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        normal_distribution<T> distribution(mean, stddev);
+        mrg_normal_distribution<T> distribution(mean, stddev);
 
         namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
