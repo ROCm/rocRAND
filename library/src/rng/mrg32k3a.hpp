@@ -149,7 +149,33 @@ namespace rocrand_mrg32k3a_detail
                                  Generator generator,
                                  Distribution distribution)
     {
-        // TODO: Implement it 
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = state_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load or init the state
+        StateType state;
+        if(init_states)
+        {
+            generator.init_state(&state, offset, index, seed);
+        }
+        else
+        {
+            state = states[state_id];
+        }
+
+        generator_state_wrapper<Generator, StateType> gen(generator, state);
+
+        // TODO: Improve performance.
+        while(index < n)
+        {
+            auto result = distribution(gen);
+            data[index] = result;
+            index += stride;
+        }
+
+        // Save state
+        states[state_id] = gen.state;
     }
 
 } // end namespace rocrand_mrg32k3a_detail
@@ -377,7 +403,7 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        poisson_distribution<unsigned int> distribution(lambda);
+        mrg_poisson_distribution<unsigned int> distribution(lambda);
 
         namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(

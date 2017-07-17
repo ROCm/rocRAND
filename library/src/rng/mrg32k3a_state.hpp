@@ -36,6 +36,8 @@
 // TODO: During optimisation stage, precompute all matrices for discard_sequence
 // And try local reduction pattern
 
+// TODO: Replace modulo operations in discard and discard_sequence
+
 struct rocrand_mrg32k3a_state
 {
     unsigned long long g1[3];
