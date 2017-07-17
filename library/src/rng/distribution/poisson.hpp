@@ -236,7 +236,7 @@ private:
         // Approximate Poisson distribution with normal distribution
 
         mrg_normal_distribution<double> normal;
-        const double n = normal(make_ulonglong2(g(), g())).x;
+        const double n = normal(g(), g()).x;
         return static_cast<unsigned int>(round(sqrt(lambda) * n + lambda));
     }
 

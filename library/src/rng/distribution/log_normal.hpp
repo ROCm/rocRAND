@@ -98,11 +98,11 @@ struct mrg_log_normal_distribution<float>
                                        mean(mean), stddev(stddev) {}
 
     __forceinline__ __host__ __device__
-    float2 operator()(const ulonglong2 x)
+    float2 operator()(const unsigned long long x, const unsigned long long y)
     {
         mrg_uniform_distribution<float> uniform;
-        float a = uniform(x.x);
-        float b = uniform(x.y);
+        float a = uniform(x);
+        float b = uniform(y);
         float2 v = box_muller_mrg(a, b);
         v.x = exp(mean + (stddev * v.x));
         v.y = exp(mean + (stddev * v.y));
@@ -121,11 +121,11 @@ struct mrg_log_normal_distribution<double>
                                         mean(mean), stddev(stddev) {}
 
     __forceinline__ __host__ __device__
-    double2 operator()(const ulonglong2 x)
+    double2 operator()(const unsigned long long x, const unsigned long long y)
     {
         mrg_uniform_distribution<double> uniform;
-        double a = uniform(x.x);
-        double b = uniform(x.y);
+        double a = uniform(x);
+        double b = uniform(y);
         double2 v = box_muller_double_mrg(a, b);
         v.x = exp(mean + (stddev * v.x));
         v.y = exp(mean + (stddev * v.y));

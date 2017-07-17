@@ -87,7 +87,7 @@ namespace rocrand_mrg32k3a_detail
                                 Generator generator,
                                 Distribution distribution)
     {
-        typedef decltype(distribution(generator.get2(states))) Type2;
+        typedef decltype(distribution(generator(states), generator(states))) Type2;
         
         const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = state_id;
@@ -107,8 +107,18 @@ namespace rocrand_mrg32k3a_detail
         Type2 * data2 = (Type2 *)data;
         while(index < (n/2))
         {
-            data2[index] = distribution(generator.get2(&state));
+            data2[index] = distribution(generator(&state), generator(&state));
             index += stride;
+        }
+        
+        // First work-item saves the tail when n is not a multiple of 2
+        auto tail_size = n % 2;
+        if(tail_size > 0 && hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x == 0)
+        {
+            Type2 result =  distribution(generator(&state), generator(&state));
+            // Save the tail
+            data[n - tail_size] = (&result.x)[0]; // .x
+            if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
         }
         
         // Save state
@@ -221,15 +231,6 @@ public:
                 p += ROCRAND_RNG_MRG32K3A_M1;  // 0 < p <= M1
             
             return p;
-        }
-        
-        __forceinline__ __host__ __device__
-        ulonglong2 get2(state_type * state)
-        {
-            unsigned long long x = (*this)(state);
-            unsigned long long y = (*this)(state);
-            ulonglong2 xy = {x, y};
-            return xy;
         }
         
         __forceinline__ __host__ __device__
