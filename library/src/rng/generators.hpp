@@ -22,5 +22,6 @@
 #define ROCRAND_RNG_GENERATORS_H_
 
 #include "philox4x32_10.hpp"
+#include "mrg32k3a.hpp"
 
 #endif // ROCRAND_RNG_GENERATORS_H_
