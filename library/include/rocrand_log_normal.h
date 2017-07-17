@@ -28,6 +28,7 @@
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_normal.h"
 
+#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
 {
@@ -41,6 +42,7 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
+#endif // ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, float stddev)
@@ -64,6 +66,7 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
     };
 }
 
+#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mean, double stddev)
 {
@@ -77,6 +80,7 @@ double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mea
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
+#endif // ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double mean, double stddev)

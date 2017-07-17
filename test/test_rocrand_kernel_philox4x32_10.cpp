@@ -25,7 +25,9 @@
 #include <cmath>
 
 #include <hip/hip_runtime.h>
+
 #define FQUALIFIERS __forceinline__ __host__ __device__
+#define ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 #include <rocrand_kernel.h>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)

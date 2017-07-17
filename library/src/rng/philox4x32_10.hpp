@@ -73,7 +73,6 @@ namespace detail {
     {
         typedef ::rocrand_device::philox4x32_10_engine base_type;
         typedef base_type::philox4x32_10_state state_type;
-        using base_type::base_type; // Get base class ctors
 
         __forceinline__ __device__ __host__
         philox4x32_10_device_engine() { }
