@@ -22,11 +22,6 @@
 #define ROCRAND_RNG_GENERATOR_TYPE_H_
 
 #include <hip/hip_runtime.h>
-
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __host__ __device__
-#endif // FQUALIFIERS
-
 #include <rocrand.h>
 
 #include "get_state_type.hpp" // includes all states

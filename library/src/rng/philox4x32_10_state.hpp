@@ -21,6 +21,7 @@
 #ifndef ROCRAND_RNG_PHILOX4X32_10_STATE_H_
 #define ROCRAND_RNG_PHILOX4X32_10_STATE_H_
 
+// TODO: Remove
 struct rocrand_philox4_32_10_state
 {
     uint4 counter;

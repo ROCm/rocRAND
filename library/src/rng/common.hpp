@@ -25,6 +25,8 @@
 
 // nextafterf(float, float) is not implemented for device on HIP/HCC platform
 #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
+#ifndef ROCRAND_PLATFORM_HCC_NEXTAFTERF
+#define ROCRAND_PLATFORM_HCC_NEXTAFTERF
 inline __forceinline__ __device__
 float nextafterf(const float from, const float to)
 {
@@ -32,6 +34,7 @@ float nextafterf(const float from, const float to)
     // (2.3283064e-10f) is float min value
     return fminf(from + (2.3283064e-10f), to);
 }
+#endif
 #endif // defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
 
 #endif // ROCRAND_RNG_COMMON_H_
