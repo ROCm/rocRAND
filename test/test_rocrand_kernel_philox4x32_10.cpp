@@ -25,6 +25,7 @@
 #include <cmath>
 
 #include <hip/hip_runtime.h>
+#define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand_kernel.h>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
@@ -153,7 +154,9 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
 
     public:
 
-        internal_state_type internal_state() const
+        __host__ rocrand_state_philox4x32_10_test() {}
+
+        __host__ internal_state_type internal_state() const
         {
             return m_state;
         }

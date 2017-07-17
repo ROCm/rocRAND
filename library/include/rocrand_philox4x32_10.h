@@ -114,6 +114,9 @@ public:
         unsigned int boxmuller_double_state; // is there a double in boxmuller_double
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
+
+        FQUALIFIERS
+        ~philox4x32_10_state() { }
     };
 
     FQUALIFIERS
@@ -134,6 +137,9 @@ public:
     {
         this->seed(seed, subsequence, offset);
     }
+
+    FQUALIFIERS
+    ~philox4x32_10_engine() { }
 
     /// Reinitializes the internal state of the PRNG using new
     /// seed value \p seed_value, skips \p subsequence subsequences
@@ -377,7 +383,7 @@ struct philox4x32_10_engine_boxmuller_helper
 }; //
 
 } // end namespace detail
-} // end namespace rocrand
+} // end namespace rocrand_device
 
 typedef rocrand_device::philox4x32_10_engine rocrand_state_philox4x32_10;
 

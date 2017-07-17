@@ -61,7 +61,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // nextafterf(float, float) is not implemented for device on HIP/HCC platform
 #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
-__forceinline__ __device__
+inline __forceinline__ __device__
 float nextafterf(const float from, const float to)
 {
     if(from == to) return to;
