@@ -27,6 +27,7 @@
 
 #include "rocrand_philox4x32_10.h"
 
+namespace rocrand_device {
 namespace detail {
 
 // For unsigned integer between 0 and UINT_MAX, returns value between
@@ -78,47 +79,48 @@ double4 uniform_distribution_double4(uint4 v)
 }
 
 } // end namespace detail
+} // end namespace rocrand_device
 
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_philox4x32_10 * state)
 {
-    return detail::uniform_distribution(rocrand(state));
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 FQUALIFIERS
 float2 rocrand_uniform2(rocrand_state_philox4x32_10 * state)
 {
     return float2 {
-        detail::uniform_distribution(rocrand(state)),
-        detail::uniform_distribution(rocrand(state))
+        rocrand_device::detail::uniform_distribution(rocrand(state)),
+        rocrand_device::detail::uniform_distribution(rocrand(state))
     };
 }
 
 FQUALIFIERS
 float4 rocrand_uniform4(rocrand_state_philox4x32_10 * state)
 {
-    return detail::uniform_distribution4(rocrand4(state));
+    return rocrand_device::detail::uniform_distribution4(rocrand4(state));
 }
 
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_philox4x32_10 * state)
 {
-    return detail::uniform_distribution_double(rocrand(state));
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
 FQUALIFIERS
 double2 rocrand_uniform_double2(rocrand_state_philox4x32_10 * state)
 {
     return double2 {
-        detail::uniform_distribution_double(rocrand(state)),
-        detail::uniform_distribution_double(rocrand(state))
+        rocrand_device::detail::uniform_distribution_double(rocrand(state)),
+        rocrand_device::detail::uniform_distribution_double(rocrand(state))
     };
 }
 
 FQUALIFIERS
 double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 * state)
 {
-    return detail::uniform_distribution_double4(rocrand4(state));
+    return rocrand_device::detail::uniform_distribution_double4(rocrand4(state));
 }
 
 #endif // ROCRAND_UNIFORM_H_
