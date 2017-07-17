@@ -100,37 +100,35 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, log_normal_float_test)
+TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
 {
     const size_t size = 1313;
-    float * data;
-    hipMalloc(&data, sizeof(float) * size);
+    unsigned int * data;
+    hipMalloc(&data, sizeof(unsigned int) * size);
 
     rocrand_mrg32k3a g;
-    g.generate_log_normal(data, size, 2.0f, 5.0f);
+    g.generate_poisson(data, size, 5.5);
     hipDeviceSynchronize();
 
-    float host_data[size];
-    hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
+    unsigned int host_data[size];
+    hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
     
-    float mean = 0.0f;
+    double mean = 0.0;
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
     
-    float std = 0.0f;
+    double var = 0.0;
     for(size_t i = 0; i < size; i++)
     {
-        std += std::pow(host_data[i] - mean, 2);
+        double x = host_data[i] - mean;
+        var += x * x;
     }
-    std = std::sqrt(std / size);
+    var = var / size;
     
-    float logmean = logf(mean * mean / sqrtf(std * std + mean * mean));
-    float logstd = sqrtf(logf(std * std / mean / mean + 1.0f));
-    
-    EXPECT_NEAR(5.0f, logmean, 1.0f);
-    EXPECT_NEAR(2.0f, logstd, 1.0f);
+    EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
+    EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
 }
