@@ -101,4 +101,44 @@ struct uniform_distribution<double>
     }
 };
 
+template<class T>
+struct mrg_uniform_distribution;
+
+template<>
+struct mrg_uniform_distribution<unsigned int>
+{
+    __forceinline__ __host__ __device__
+    unsigned int operator()(const unsigned long long v) const
+    {
+        double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
+        return static_cast<unsigned int>(ret * UINT_MAX);
+    }
+};
+
+// For unsigned integer between 0 and UINT_MAX, returns value between
+// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+template<>
+struct mrg_uniform_distribution<float>
+{
+    __forceinline__ __host__ __device__
+    float operator()(const unsigned long long v) const
+    {
+        double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
+        return static_cast<float>(ret);
+    }
+};
+
+// For unsigned integer between 0 and UINT_MAX, returns value between
+// 0.0 and 1.0, excluding 0.0 and including 1.0.
+template<>
+struct mrg_uniform_distribution<double>
+{
+    __forceinline__ __host__ __device__
+    double operator()(const unsigned long long v) const
+    {
+        double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
+        return ret;
+    }
+};
+
 #endif // ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_

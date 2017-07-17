@@ -18,38 +18,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_GET_STATE_TYPE_H_
-#define ROCRAND_RNG_GET_STATE_TYPE_H_
+#include <stdio.h>
+#include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-
 #include <rocrand.h>
-#include "states.hpp"
 
-template<rocrand_rng_type>
-struct rocrand_get_state_type
+#include <rng/generator_type.hpp>
+#include <rng/generators.hpp>
+
+TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
 {
-    typedef void type;
-};
+    const size_t size = 1313;
+    unsigned int * data;
+    hipMalloc(&data, sizeof(unsigned int) * size);
 
-template<>
-struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
+    rocrand_mrg32k3a g;
+    g.generate(data, size);
+    hipDeviceSynchronize();
+
+    unsigned int host_data[size];
+    hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+    for(size_t i = 0; i < size; i++)
+    {
+        const unsigned int max = UINT_MAX;
+        ASSERT_GE(host_data[i], 0);
+        ASSERT_LE(host_data[i], max);
+    }
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
 {
-    typedef rocrand_philox4_32_10_state type;
-};
+    const size_t size = 1313;
+    float * data;
+    hipMalloc(&data, sizeof(float) * size);
 
-template<>
-struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_XORWOW>
-{
-    typedef rocrand_xorwow_state type;
-};
+    rocrand_mrg32k3a g;
+    g.generate(data, size);
+    hipDeviceSynchronize();
 
-template<>
-struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_MRG32K3A>
-{
-    typedef rocrand_mrg32k3a_state type;
-};
-
-#endif // ROCRAND_RNG_GET_STATE_TYPE_H_
-
-
+    float host_data[size];
+    hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+    for(size_t i = 0; i < size; i++)
+    {
+        ASSERT_GT(host_data[i], 0.0f);
+        ASSERT_LE(host_data[i], 1.0f);
+    }
+}
