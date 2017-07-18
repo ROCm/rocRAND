@@ -140,12 +140,14 @@ struct rocrand_mrg32k3a_state
     inline __device__ __host__
     void set_seed(unsigned long long seed)
     {
-        g1[0] = seed;
-        g1[1] = seed;
-        g1[2] = seed;
-        g2[0] = seed;
-        g2[1] = seed;
-        g2[2] = seed;
+        unsigned int x = (unsigned int) seed ^ 0x55555555UL;
+        unsigned int y = (unsigned int) ((seed >> 32) ^ 0xAAAAAAAAUL);
+        g1[0] = mod_mul_m1(x, seed);
+        g1[1] = mod_mul_m1(y, seed);
+        g1[2] = mod_mul_m1(x, seed);
+        g2[0] = mod_mul_m2(y, seed);
+        g2[1] = mod_mul_m2(x, seed);
+        g2[2] = mod_mul_m2(y, seed);
         reset();
     }
     
@@ -153,7 +155,7 @@ struct rocrand_mrg32k3a_state
         inline __device__ __host__
         void mod_mat_vec(unsigned long long * A, 
                          unsigned long long * s, 
-                         long m)
+                         unsigned long long m)
         {
             unsigned long long x[3];
             for (size_t i = 0; i < 3; ++i) {
@@ -167,7 +169,7 @@ struct rocrand_mrg32k3a_state
     
         inline __device__ __host__
         void mod_mat_sq(unsigned long long * A, 
-                        long m)
+                        unsigned long long m)
         {
             unsigned long long x[9];
             unsigned long long a;
@@ -185,6 +187,66 @@ struct rocrand_mrg32k3a_state
                 A[i + 3 * 1] = x[i + 3 * 1];
                 A[i + 3 * 2] = x[i + 3 * 2];
             }
+        }
+    
+        inline __host__ __device__
+        unsigned long long mod_mul_m1(unsigned int i, 
+                                      unsigned long long j)
+        {
+            long long hi, lo, temp1, temp2;
+
+            hi = i / 131072;
+            lo = i - (hi * 131072);
+            temp1 = mod_m1(hi * j) * 131072;
+            temp2 = mod_m1(lo * j);
+            lo = mod_m1(temp1 + temp2);
+
+            if (lo < 0) 
+                lo += ROCRAND_RNG_MRG32K3A_M1;
+            return lo;
+        }
+    
+        inline __host__ __device__
+        unsigned long long mod_m1(unsigned long long i)
+        {
+            unsigned long long p;
+            p = (i & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (i >> 32) 
+                * ROCRAND_RNG_MRG32K3A_M1C;
+            if (p >= ROCRAND_RNG_MRG32K3A_M1) 
+                p -= ROCRAND_RNG_MRG32K3A_M1;
+            
+            return p;
+        }
+    
+        inline __host__ __device__
+        unsigned long long mod_mul_m2(unsigned int i, 
+                                      unsigned long long j)
+        {
+            long long hi, lo, temp1, temp2;
+
+            hi = i / 131072;
+            lo = i - (hi * 131072);
+            temp1 = mod_m2(hi * j) * 131072;
+            temp2 = mod_m2(lo * j);
+            lo = mod_m2(temp1 + temp2);
+
+            if (lo < 0) 
+                lo += ROCRAND_RNG_MRG32K3A_M2;
+            return lo;
+        }
+    
+        inline __host__ __device__
+        unsigned long long mod_m2(unsigned long long i)
+        {
+            unsigned long long p;
+            p = (i & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (i >> 32) 
+                * ROCRAND_RNG_MRG32K3A_M2C;
+            p = (p & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (p >> 32) 
+                * ROCRAND_RNG_MRG32K3A_M2C;
+            if (p >= ROCRAND_RNG_MRG32K3A_M2) 
+                p -= ROCRAND_RNG_MRG32K3A_M2;
+            
+            return p;
         }
 };
 

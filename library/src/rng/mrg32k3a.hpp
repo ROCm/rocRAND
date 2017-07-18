@@ -34,6 +34,8 @@
 #include "generator_type.hpp"
 #include "distributions.hpp"
 
+// TODO: Reduce number of states
+
 namespace rocrand_mrg32k3a_detail
 {
     template <
