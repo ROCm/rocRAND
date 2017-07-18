@@ -13,11 +13,6 @@ set_source_files_properties(${rocRAND_BENCHMARK_SRCS} PROPERTIES HIP_SOURCE_PROP
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # Boost
 include_directories(${PROJECT_SOURCE_DIR}/library/include) # rocRAND
 
-set(CURAND_LIB)
-if(HIP_PLATFORM STREQUAL "nvcc")
-    set(CURAND_LIB -lcurand)
-endif()
-
 foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     get_filename_component(benchmark_name ${benchmark_src} NAME_WE)
     hip_add_executable(${benchmark_name} "${benchmark_src}")
