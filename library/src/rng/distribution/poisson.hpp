@@ -137,4 +137,114 @@ private:
     }
 };
 
+template<class T>
+class mrg_poisson_distribution;
+
+template<>
+class mrg_poisson_distribution<unsigned int>
+{
+public:
+
+    __host__ __device__
+    mrg_poisson_distribution(double lambda)
+        : lambda(lambda) {}
+
+    template<class Generator>
+    __host__ __device__
+    unsigned int operator()(Generator& g)
+    {
+        if (lambda < lambda_threshold_small)
+        {
+            return generate_small(g);
+        }
+        else if (lambda <= lambda_threshold_huge)
+        {
+            return generate_large(g);
+        }
+        else
+        {
+            return generate_huge(g);
+        }
+    }
+
+private:
+
+    static constexpr double lambda_threshold_small = 64.0;
+    static constexpr double lambda_threshold_huge  = 4000.0;
+
+    double lambda;
+
+    template<class Generator>
+    __host__ __device__
+    unsigned int generate_small(Generator& g)
+    {
+        // Knuth's method
+
+        const double limit = exp(-lambda);
+        unsigned int k = 0;
+        double product = 1.0;
+
+        mrg_uniform_distribution<double> uniform;
+        do
+        {
+            k++;
+            product *= uniform(g());
+        }
+        while (product > limit);
+
+        return k - 1;
+    }
+
+    template<class Generator>
+    __host__ __device__
+    unsigned int generate_large(Generator& g)
+    {
+        // Rejection method PA, A. C. Atkinson
+
+        const double c = 0.767 - 3.36 / lambda;
+        const double beta = ROCRAND_PI_DOUBLE / sqrt(3.0 * lambda);
+        const double alpha = beta * lambda;
+        const double k = log(c) - lambda - log(beta);
+        const double log_lambda = log(lambda);
+
+        mrg_uniform_distribution<double> uniform;
+        while (true)
+        {
+            const double u = uniform(g());
+            const double x = (alpha - log((1.0 - u) / u)) / beta;
+            const double n = floor(x + 0.5);
+            if (n < 0)
+            {
+                continue;
+            }
+            const double v = uniform(g());
+            const double y = alpha - beta * x;
+            const double t = 1.0 + exp(y);
+            const double lhs = y + log(v / (t * t));
+            const double rhs = k + n * log_lambda - log_factorial(n);
+            if (lhs <= rhs)
+            {
+                return static_cast<unsigned int>(n);
+            }
+        }
+    }
+
+    template<class Generator>
+    __host__ __device__
+    unsigned int generate_huge(Generator& g)
+    {
+        // Approximate Poisson distribution with normal distribution
+
+        mrg_normal_distribution<double> normal;
+        const double n = normal(g(), g()).x;
+        return static_cast<unsigned int>(round(sqrt(lambda) * n + lambda));
+    }
+
+    inline __host__ __device__
+    double log_factorial(const double n)
+    {
+        return (n <= 1.0 ? 0.0 : lgamma(n + 1.0));
+    }
+};
+
 #endif // ROCRAND_RNG_DISTRIBUTION_POISSON_H_
