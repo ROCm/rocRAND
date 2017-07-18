@@ -18,261 +18,224 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/*
+Copyright 2010-2011, D. E. Shaw Research.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions, and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions, and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+
+* Neither the name of D. E. Shaw Research nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #ifndef ROCRAND_RNG_MRG32K3A_H_
 #define ROCRAND_RNG_MRG32K3A_H_
+
+#ifndef FQUALIFIERS
+#define FQUALIFIERS __forceinline__ __device__ __host__
+#endif
 
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __host__ __device__
-#endif // FQUALIFIERS
-
 #include <rocrand.h>
+#include <rocrand_kernel.h>
 
-#include "mrg32k3a_state.hpp"
 #include "generator_type.hpp"
 #include "distributions.hpp"
 
-// TODO: Reduce number of states
+namespace rocrand_host {
+namespace detail {
 
-namespace rocrand_mrg32k3a_detail
-{
-    template <
-        class Type, class StateType,
-        class Generator, class Distribution
-    >
+    struct mrg32k3a_device_engine : public ::rocrand_device::mrg32k3a_engine
+    {
+        typedef ::rocrand_device::mrg32k3a_engine base_type;
+        typedef base_type::mrg32k3a_state state_type;
+
+        __forceinline__ __device__ __host__
+        mrg32k3a_device_engine() { }
+
+        __forceinline__ __device__ __host__
+        mrg32k3a_device_engine(const unsigned long long seed,
+                               const unsigned long long subsequence,
+                               const unsigned long long offset)
+            : base_type(seed, subsequence, offset)
+        {
+
+        }
+
+        __forceinline__ __device__ __host__
+        ~mrg32k3a_device_engine () {}
+
+        // m_state from base class
+    };
+
+    template<class Type, class Distribution>
     __global__
-    void generate_kernel(StateType * states,
-                         bool init_states,
+    void generate_kernel(mrg32k3a_device_engine * engines,
+                         bool init_engines,
                          unsigned long long seed,
                          unsigned long long offset,
                          Type * data, const size_t n,
-                         Generator generator,
                          Distribution distribution)
     {
-        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = state_id;
+        typedef mrg32k3a_device_engine DeviceEngineType;
+
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init the state
-        StateType state;
-        if(init_states)
+        // Load or init device engine
+        DeviceEngineType engine;
+        if(init_engines)
         {
-            generator.init_state(&state, offset, index, seed);
+            engine = DeviceEngineType(seed, index, 0);
         }
         else
         {
-            state = states[state_id];
+            engine = engines[engine_id];
         }
-        
+
+        // TODO: It's possible to improve performance for situations when
+        // generate_poisson_kernel was not called before generate_kernel
+        // TODO: We need to check if ordering is so imporant, or if we can
+        // skip some random numbers (which increases performance).
         while(index < n)
         {
-            data[index] = distribution(generator(&state));
+            data[index] = distribution(engine());
+            // Next position
             index += stride;
         }
-        
-        // Save state
-        states[state_id] = state;
+
+        // Save engine with its state
+        engines[engine_id] = engine;
     }
 
-    template <
-        class RealType, class StateType,
-        class Generator, class Distribution
-    >
+    template<class RealType, class Distribution>
     __global__
-    void generate_normal_kernel(StateType * states,
-                                bool init_states,
+    void generate_normal_kernel(mrg32k3a_device_engine * engines,
+                                bool init_engines,
                                 unsigned long long seed,
                                 unsigned long long offset,
                                 RealType * data, const size_t n,
-                                Generator generator,
                                 Distribution distribution)
     {
-        typedef decltype(distribution(generator(states), generator(states))) Type2;
-        
-        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = state_id;
+        typedef mrg32k3a_device_engine DeviceEngineType;
+        typedef decltype(distribution(engines->next(), engines->next())) RealType2;
+
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init the state
-        StateType state;
-        if(init_states)
+        // Load or init device engine
+        DeviceEngineType engine;
+        if(init_engines)
         {
-            generator.init_state(&state, offset, index, seed);
+            engine = DeviceEngineType(seed, index, 0);
         }
         else
         {
-            state = states[state_id];
+            engine = engines[engine_id];
         }
-        
-        Type2 * data2 = (Type2 *)data;
-        while(index < (n/2))
+
+        RealType2 * data2 = (RealType2 *)data;
+        while(index < (n / 2))
         {
-            data2[index] = distribution(generator(&state), generator(&state));
+            data2[index] = distribution(engine(), engine());
+            // Next position
             index += stride;
         }
-        
+
         // First work-item saves the tail when n is not a multiple of 2
-        auto tail_size = n % 2;
-        if(tail_size > 0 && hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x == 0)
+        auto tail_size = n & 1;
+        if(engine_id == 0 && tail_size > 0)
         {
-            Type2 result =  distribution(generator(&state), generator(&state));
+            RealType2 result = distribution(engine(), engine());
             // Save the tail
             data[n - tail_size] = (&result.x)[0]; // .x
             if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
         }
-        
-        // Save state
-        states[state_id] = state;
+        // Save engine with its state
+        engines[engine_id] = engine;
     }
 
-    // Returns 1 value
-    template<class Generator, class StateType>
-    struct generator_state_wrapper
-    {
-        __host__ __device__
-        generator_state_wrapper(Generator generator, StateType state)
-            : generator(generator), state(state) {}
-        
-        __host__ __device__
-        ~generator_state_wrapper() {}
-
-        __forceinline__ __host__ __device__
-        unsigned long long operator()()
-        {
-            return generator(&state);
-        }
-
-        Generator generator;
-        StateType state;
-    };
-
-    template <
-        class StateType,
-        class Generator, class Distribution
-    >
+    template <class Distribution>
     __global__
-    void generate_poisson_kernel(StateType * states,
-                                 bool init_states,
+    void generate_poisson_kernel(mrg32k3a_device_engine * engines,
+                                 bool init_engines,
                                  unsigned long long seed,
                                  unsigned long long offset,
                                  unsigned int * data, const size_t n,
-                                 Generator generator,
                                  Distribution distribution)
     {
-        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = state_id;
+        typedef mrg32k3a_device_engine DeviceEngineType;
+
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init the state
-        StateType state;
-        if(init_states)
+        // Load or init device engine
+        DeviceEngineType engine;
+        if(init_engines)
         {
-            generator.init_state(&state, offset, index, seed);
+            engine = DeviceEngineType(seed, index, 0);
         }
         else
         {
-            state = states[state_id];
+            engine = engines[engine_id];
         }
-
-        generator_state_wrapper<Generator, StateType> gen(generator, state);
 
         // TODO: Improve performance.
         while(index < n)
         {
-            auto result = distribution(gen);
+            auto result = distribution(engine);
             data[index] = result;
             index += stride;
         }
 
-        // Save state
-        states[state_id] = gen.state;
+        // Save engine with its state
+        engines[engine_id] = engine;
     }
 
-} // end namespace rocrand_mrg32k3a_detail
+} // end namespace detail
+} // end namespace rocrand_host
 
 class rocrand_mrg32k3a : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_MRG32K3A>
 {
 public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MRG32K3A>;
-    using state_type = base_type::state_type;
-
-    class mrg32k3a_generator
-    {
-    public:
-        __forceinline__ __host__ __device__
-        unsigned long long operator()(state_type * state)
-        {
-            unsigned long long p;
-            unsigned long long * g1 = state->g1;
-            unsigned long long * g2 = state->g2;
-            
-            p = ROCRAND_RNG_MRG32K3A_A12 * g1[1] + ROCRAND_RNG_MRG32K3A_A13N 
-                * (ROCRAND_RNG_MRG32K3A_M1 - g1[0]);
-            p = (p & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (p >> 32) 
-                * ROCRAND_RNG_MRG32K3A_M1C;
-            if (p >= ROCRAND_RNG_MRG32K3A_M1) 
-                p -= ROCRAND_RNG_MRG32K3A_M1;
-
-            g1[0] = g1[1]; g1[1] = g1[2]; g1[2] = p;
-
-            p = ROCRAND_RNG_MRG32K3A_A21 * g2[2] + ROCRAND_RNG_MRG32K3A_A23N 
-                * (ROCRAND_RNG_MRG32K3A_M2 - g2[0]);
-            p = (p & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (p >> 32) 
-                * ROCRAND_RNG_MRG32K3A_M2C;
-            p = (p & (ROCRAND_RNG_MRG32K3A_POW32 - 1)) + (p >> 32) 
-                * ROCRAND_RNG_MRG32K3A_M2C;
-            if (p >= ROCRAND_RNG_MRG32K3A_M2) 
-                p -= ROCRAND_RNG_MRG32K3A_M2;
-                
-            g2[0] = g2[1]; g2[1] = g2[2]; g2[2] = p;
-
-            p = g1[2] - g2[2];
-            if (g1[2] <= g2[2]) 
-                p += ROCRAND_RNG_MRG32K3A_M1;  // 0 < p <= M1
-            
-            return p;
-        }
-        
-        __forceinline__ __host__ __device__
-        void init_state(state_type * state,
-                        unsigned long long offset,
-                        unsigned long long sequence,
-                        unsigned long long seed)
-        {
-            state->set_seed(seed);
-            state->discard_sequence(sequence);
-            state->discard(offset);
-
-        }
-
-        __forceinline__ __host__ __device__
-        void discard(state_type * state, unsigned int n)
-        {
-            state->discard(n);
-        }
-
-        __forceinline__ __host__ __device__
-        void discard(state_type * state)
-        {
-            state->discard();
-        }
-
-        __forceinline__ __host__ __device__
-        void discard_sequence(state_type * state, unsigned int n)
-        {
-            state->discard_sequence(n);
-        }
-    };
+    using engine_type = ::rocrand_host::detail::mrg32k3a_device_engine;
 
     rocrand_mrg32k3a(unsigned long long seed = 12345,
                      unsigned long long offset = 1,
                      hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_states_initialized(false), m_states(NULL), m_states_size(1024 * 256)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(1024 * 256)
     {
-        auto error = hipMalloc(&m_states, sizeof(state_type) * m_states_size);
+        // Allocate device random number engines
+        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -281,25 +244,25 @@ public:
 
     ~rocrand_mrg32k3a()
     {
-        hipFree(m_states);
+        hipFree(m_engines);
     }
 
     void reset()
     {
-        m_states_initialized = false;
+        m_engines_initialized = false;
     }
 
     /// Changes seed to \p seed and resets generator state.
     void set_seed(unsigned long long seed)
     {
         m_seed = seed;
-        m_states_initialized = false;
+        m_engines_initialized = false;
     }
 
     void set_offset(unsigned long long offset)
     {
         m_offset = offset;
-        m_states_initialized = false;
+        m_engines_initialized = false;
     }
 
     template<class T, class Distribution = mrg_uniform_distribution<T> >
@@ -315,18 +278,17 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_states, !m_states_initialized, m_seed, m_offset,
-            data, data_size, m_generator, distribution
+            m_engines, !m_engines_initialized, m_seed, m_offset,
+            data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_states_initialized = true;
+        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -351,18 +313,17 @@ public:
 
         mrg_normal_distribution<T> distribution(mean, stddev);
 
-        namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_normal_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_states, !m_states_initialized, m_seed, m_offset,
-            data, data_size, m_generator, distribution
+            m_engines, !m_engines_initialized, m_seed, m_offset,
+            data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_states_initialized = true;
+        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -380,18 +341,17 @@ public:
 
         mrg_log_normal_distribution<T> distribution(mean, stddev);
 
-        namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_normal_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_states, !m_states_initialized, m_seed, m_offset,
-            data, data_size, m_generator, distribution
+            m_engines, !m_engines_initialized, m_seed, m_offset,
+            data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_states_initialized = true;
+        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -408,29 +368,27 @@ public:
 
         mrg_poisson_distribution<unsigned int> distribution(lambda);
 
-        namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_poisson_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_states, !m_states_initialized, m_seed, m_offset,
-            data, data_size, m_generator, distribution
+            m_engines, !m_engines_initialized, m_seed, m_offset,
+            data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_states_initialized = true;
+        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
 private:
-    bool m_states_initialized;
-    state_type * m_states;
-    size_t m_states_size;
+    bool m_engines_initialized;
+    engine_type * m_engines;
+    size_t m_engines_size;
 
     // m_seed from base_type
     // m_offset from base_type
-    mrg32k3a_generator m_generator;
 };
 
 #endif // ROCRAND_RNG_MRG32K3A_H_
