@@ -87,7 +87,42 @@ namespace rocrand_mrg32k3a_detail
                                 Generator generator,
                                 Distribution distribution)
     {
-        // TODO: Implement it 
+        typedef decltype(distribution(generator(states), generator(states))) Type2;
+        
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = state_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load or init the state
+        StateType state;
+        if(init_states)
+        {
+            generator.init_state(&state, offset, index, seed);
+        }
+        else
+        {
+            state = states[state_id];
+        }
+        
+        Type2 * data2 = (Type2 *)data;
+        while(index < (n/2))
+        {
+            data2[index] = distribution(generator(&state), generator(&state));
+            index += stride;
+        }
+        
+        // First work-item saves the tail when n is not a multiple of 2
+        auto tail_size = n % 2;
+        if(tail_size > 0 && hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x == 0)
+        {
+            Type2 result =  distribution(generator(&state), generator(&state));
+            // Save the tail
+            data[n - tail_size] = (&result.x)[0]; // .x
+            if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
+        }
+        
+        // Save state
+        states[state_id] = state;
     }
 
     // Returns 1 value
@@ -124,7 +159,33 @@ namespace rocrand_mrg32k3a_detail
                                  Generator generator,
                                  Distribution distribution)
     {
-        // TODO: Implement it 
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = state_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load or init the state
+        StateType state;
+        if(init_states)
+        {
+            generator.init_state(&state, offset, index, seed);
+        }
+        else
+        {
+            state = states[state_id];
+        }
+
+        generator_state_wrapper<Generator, StateType> gen(generator, state);
+
+        // TODO: Improve performance.
+        while(index < n)
+        {
+            auto result = distribution(gen);
+            data[index] = result;
+            index += stride;
+        }
+
+        // Save state
+        states[state_id] = gen.state;
     }
 
 } // end namespace rocrand_mrg32k3a_detail
@@ -171,7 +232,7 @@ public:
             
             return p;
         }
-
+        
         __forceinline__ __host__ __device__
         void init_state(state_type * state,
                         unsigned long long offset,
@@ -286,7 +347,7 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        normal_distribution<T> distribution(mean, stddev);
+        mrg_normal_distribution<T> distribution(mean, stddev);
 
         namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
@@ -315,7 +376,7 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        log_normal_distribution<T> distribution(mean, stddev);
+        mrg_log_normal_distribution<T> distribution(mean, stddev);
 
         namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(
@@ -343,7 +404,7 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        poisson_distribution<unsigned int> distribution(lambda);
+        mrg_poisson_distribution<unsigned int> distribution(lambda);
 
         namespace detail = rocrand_mrg32k3a_detail;
         hipLaunchKernelGGL(

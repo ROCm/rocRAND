@@ -26,6 +26,7 @@
 
 #include "common.hpp"
 #include "normal_common.hpp"
+#include "uniform.hpp"
 
 template<class T>
 struct log_normal_distribution;
@@ -77,6 +78,55 @@ struct log_normal_distribution<double>
     double2 operator()(const uint4 x)
     {
         double2 v = box_muller_double(x);
+        v.x = exp(mean + (stddev * v.x));
+        v.y = exp(mean + (stddev * v.y));
+        return v;
+    }
+};
+
+template<class T>
+struct mrg_log_normal_distribution;
+
+template<>
+struct mrg_log_normal_distribution<float>
+{
+    const float mean;
+    const float stddev;
+
+    __host__ __device__
+    mrg_log_normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
+                                       mean(mean), stddev(stddev) {}
+
+    __forceinline__ __host__ __device__
+    float2 operator()(const unsigned long long x, const unsigned long long y)
+    {
+        mrg_uniform_distribution<float> uniform;
+        float a = uniform(x);
+        float b = uniform(y);
+        float2 v = box_muller_mrg(a, b);
+        v.x = exp(mean + (stddev * v.x));
+        v.y = exp(mean + (stddev * v.y));
+        return v;
+    }
+};
+
+template<>
+struct mrg_log_normal_distribution<double>
+{
+    const double mean;
+    const double stddev;
+
+    __host__ __device__
+    mrg_log_normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
+                                        mean(mean), stddev(stddev) {}
+
+    __forceinline__ __host__ __device__
+    double2 operator()(const unsigned long long x, const unsigned long long y)
+    {
+        mrg_uniform_distribution<double> uniform;
+        double a = uniform(x);
+        double b = uniform(y);
+        double2 v = box_muller_double_mrg(a, b);
         v.x = exp(mean + (stddev * v.x));
         v.y = exp(mean + (stddev * v.y));
         return v;
