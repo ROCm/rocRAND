@@ -27,6 +27,7 @@
 
 #include "rocrand_philox4x32_10.h"
 
+namespace rocrand_device {
 namespace detail {
 
 FQUALIFIERS
@@ -72,14 +73,14 @@ double2 box_muller_double(uint4 v)
 FQUALIFIERS
 float2 normal_distribution2(unsigned int v1, unsigned int v2)
 {
-    return box_muller(v1, v2);
+    return ::rocrand_device::detail::box_muller(v1, v2);
 }
 
 FQUALIFIERS
 float4 normal_distribution4(uint4 v)
 {
-    float2 r1 = box_muller(v.x, v.y);
-    float2 r2 = box_muller(v.z, v.w);
+    float2 r1 = ::rocrand_device::detail::box_muller(v.x, v.y);
+    float2 r2 = ::rocrand_device::detail::box_muller(v.z, v.w);
     return float4{
         r1.x,
         r1.y,
@@ -91,11 +92,13 @@ float4 normal_distribution4(uint4 v)
 FQUALIFIERS
 double2 normal_distribution_double2(uint4 v)
 {
-    return box_muller_double(v);
+    return ::rocrand_device::detail::box_muller_double(v);
 }
 
 } // end namespace detail
+} // end namespace rocrand_device
 
+#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_philox4x32_10 * state)
 {
@@ -105,23 +108,25 @@ float rocrand_normal(rocrand_state_philox4x32_10 * state)
     {
         return bm_helper::get_float(state);
     }
-    float2 r = detail::normal_distribution2(rocrand(state), rocrand(state));
+    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
     bm_helper::save_float(state, r.y);
     return r.x;
 }
+#endif // ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_philox4x32_10 * state)
 {
-    return detail::normal_distribution2(rocrand(state), rocrand(state));
+    return rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
 }
 
 FQUALIFIERS
 float4 rocrand_normal4(rocrand_state_philox4x32_10 * state)
 {
-    return detail::normal_distribution4(rocrand4(state));
+    return rocrand_device::detail::normal_distribution4(rocrand4(state));
 }
 
+#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 FQUALIFIERS
 double rocrand_normal_double(rocrand_state_philox4x32_10 * state)
 {
@@ -131,15 +136,16 @@ double rocrand_normal_double(rocrand_state_philox4x32_10 * state)
     {
         return bm_helper::get_double(state);
     }
-    double2 r = detail::normal_distribution_double2(rocrand4(state));
+    double2 r = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
     bm_helper::save_double(state, r.y);
     return r.x;
 }
+#endif // ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_philox4x32_10 * state)
 {
-    return detail::normal_distribution_double2(rocrand4(state));
+    return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
 }
 
 #endif // ROCRAND_NORMAL_H_

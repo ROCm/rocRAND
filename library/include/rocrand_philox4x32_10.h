@@ -105,6 +105,7 @@ public:
         uint2 key;
         unsigned int substate;
 
+        #ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -114,6 +115,7 @@ public:
         unsigned int boxmuller_double_state; // is there a double in boxmuller_double
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
+        #endif
 
         FQUALIFIERS
         ~philox4x32_10_state() { }
@@ -180,8 +182,10 @@ public:
         m_state.counter = {0, 0, 0, 0};
         m_state.result  = {0, 0, 0, 0};
         m_state.substate = 0;
+        #ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
+        #endif
         this->discard_subsequence_impl(subsequence);
         this->discard_impl(offset);
         m_state.result = this->ten_rounds(m_state.counter, m_state.key);
@@ -333,10 +337,11 @@ protected:
 
     friend class detail::philox4x32_10_engine_boxmuller_helper;
 
-}; // philox4x32_10 class
+}; // philox4x32_10_engine class
 
 namespace detail {
 
+#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
 // This helps access fields of philox4x32_10_engine's internal state which
 // saves floats and doubles generated using the Box–Muller transform
 struct philox4x32_10_engine_boxmuller_helper
@@ -380,7 +385,8 @@ struct philox4x32_10_engine_boxmuller_helper
         engine->m_state.boxmuller_double_state = 1;
         engine->m_state.boxmuller_double = d;
     }
-}; //
+};
+#endif
 
 } // end namespace detail
 } // end namespace rocrand_device
