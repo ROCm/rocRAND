@@ -83,7 +83,7 @@ public:
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.
     ///
-    /// A subsequence is 4 * 2^64 numbers long.
+    /// A subsequence is 2^127 numbers long.
     FQUALIFIERS
     mrg32k3a_engine(const unsigned long long seed,
                     const unsigned long long subsequence,
@@ -99,7 +99,7 @@ public:
     /// seed value \p seed_value, skips \p subsequence subsequences
     /// and \p offset random numbers.
     ///
-    /// A subsequence is 4 * 2^64 numbers long.
+    /// A subsequence is 2^127 numbers long.
     FQUALIFIERS
     void seed(unsigned long long seed_value,
               const unsigned long long subsequence,
@@ -124,7 +124,7 @@ public:
     }
 
     /// Advances the internal state to skip \p subsequence subsequences.
-    /// A subsequence is 4 * 2^64 numbers long.
+    /// A subsequence is 2^127 numbers long.
     FQUALIFIERS
     void discard_subsequence(unsigned long long subsequence)
     {

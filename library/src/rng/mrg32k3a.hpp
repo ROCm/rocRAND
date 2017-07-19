@@ -18,38 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/*
-Copyright 2010-2011, D. E. Shaw Research.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-* Redistributions of source code must retain the above copyright
-  notice, this list of conditions, and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright
-  notice, this list of conditions, and the following disclaimer in the
-  documentation and/or other materials provided with the distribution.
-
-* Neither the name of D. E. Shaw Research nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #ifndef ROCRAND_RNG_MRG32K3A_H_
 #define ROCRAND_RNG_MRG32K3A_H_
 
@@ -68,29 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace rocrand_host {
 namespace detail {
-
-    struct mrg32k3a_device_engine : public ::rocrand_device::mrg32k3a_engine
-    {
-        typedef ::rocrand_device::mrg32k3a_engine base_type;
-        typedef base_type::mrg32k3a_state state_type;
-
-        __forceinline__ __device__ __host__
-        mrg32k3a_device_engine() { }
-
-        __forceinline__ __device__ __host__
-        mrg32k3a_device_engine(const unsigned long long seed,
-                               const unsigned long long subsequence,
-                               const unsigned long long offset)
-            : base_type(seed, subsequence, offset)
-        {
-
-        }
-
-        __forceinline__ __device__ __host__
-        ~mrg32k3a_device_engine () {}
-
-        // m_state from base class
-    };
+    
+    typedef ::rocrand_device::mrg32k3a_engine mrg32k3a_device_engine;
 
     template<class Type, class Distribution>
     __global__
@@ -101,17 +48,15 @@ namespace detail {
                          Type * data, const size_t n,
                          Distribution distribution)
     {
-        typedef mrg32k3a_device_engine DeviceEngineType;
-
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
         // Load or init device engine
-        DeviceEngineType engine;
+        mrg32k3a_device_engine engine;
         if(init_engines)
         {
-            engine = DeviceEngineType(seed, index, offset);
+            rocrand_init(seed, index, offset, &engine);
         }
         else
         {
@@ -142,7 +87,6 @@ namespace detail {
                                 RealType * data, const size_t n,
                                 Distribution distribution)
     {
-        typedef mrg32k3a_device_engine DeviceEngineType;
         typedef decltype(distribution(engines->next(), engines->next())) RealType2;
 
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -150,10 +94,10 @@ namespace detail {
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
         // Load or init device engine
-        DeviceEngineType engine;
+        mrg32k3a_device_engine engine;
         if(init_engines)
         {
-            engine = DeviceEngineType(seed, index, offset);
+            rocrand_init(seed, index, offset, &engine);
         }
         else
         {
@@ -190,17 +134,15 @@ namespace detail {
                                  unsigned int * data, const size_t n,
                                  Distribution distribution)
     {
-        typedef mrg32k3a_device_engine DeviceEngineType;
-
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
         // Load or init device engine
-        DeviceEngineType engine;
+        mrg32k3a_device_engine engine;
         if(init_engines)
         {
-            engine = DeviceEngineType(seed, index, offset);
+            rocrand_init(seed, index, offset, &engine);
         }
         else
         {
@@ -229,7 +171,7 @@ public:
     using engine_type = ::rocrand_host::detail::mrg32k3a_device_engine;
 
     rocrand_mrg32k3a(unsigned long long seed = 12345,
-                     unsigned long long offset = 1,
+                     unsigned long long offset = 0,
                      hipStream_t stream = 0)
         : base_type(seed, offset, stream),
           m_engines_initialized(false), m_engines(NULL), m_engines_size(1024 * 256)
