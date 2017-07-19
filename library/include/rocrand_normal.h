@@ -26,6 +26,8 @@
 #endif // FQUALIFIERS
 
 #include "rocrand_philox4x32_10.h"
+#include "rocrand_mrg32k3a.h"
+#include "rocrand_uniform.h"
 
 namespace rocrand_device {
 namespace detail {
@@ -69,6 +71,42 @@ double2 box_muller_double(uint4 v)
     #endif
     return result;
 }
+    
+FQUALIFIERS
+float2 mrg_box_muller(float x, float y)
+{
+    float2 result;
+    float u = x;
+    float v = y * ROCRAND_2PI;
+    float s = sqrtf(-2.0f * logf(u));
+    #ifdef __HIP_DEVICE_COMPILE__
+        __sincosf(v, &result.x, &result.y);
+        result.x *= s;
+        result.y *= s;
+    #else
+        result.x = sinf(v) * s;
+        result.y = cosf(v) * s;
+    #endif
+    return result;
+}
+
+FQUALIFIERS
+double2 mrg_box_muller_double(double x, double y)
+{
+    double2 result;
+    double u = x;
+    double v = y * 2.0;
+    double s = sqrt(-2.0 * log(u));
+    #ifdef __HIP_DEVICE_COMPILE__
+        sincospi(v, &result.x, &result.y);
+        result.x *= s;
+        result.y *= s;
+    #else
+        result.x = sin(v * ROCRAND_PI_DOUBLE) * s;
+        result.y = cos(v * ROCRAND_PI_DOUBLE) * s;
+    #endif
+    return result;
+}
 
 FQUALIFIERS
 float2 normal_distribution2(unsigned int v1, unsigned int v2)
@@ -93,6 +131,22 @@ FQUALIFIERS
 double2 normal_distribution_double2(uint4 v)
 {
     return ::rocrand_device::detail::box_muller_double(v);
+}
+    
+FQUALIFIERS
+float2 mrg_normal_distribution2(unsigned long long v1, unsigned long long v2)
+{
+    float x = rocrand_device::detail::mrg_uniform_distribution(v1);
+    float y = rocrand_device::detail::mrg_uniform_distribution(v2);
+    return ::rocrand_device::detail::mrg_box_muller(x, y);
+}
+    
+FQUALIFIERS
+double2 mrg_normal_distribution_double2(unsigned long long v1, unsigned long long v2)
+{
+    double x = rocrand_device::detail::mrg_uniform_distribution(v1);
+    double y = rocrand_device::detail::mrg_uniform_distribution(v2);
+    return ::rocrand_device::detail::mrg_box_muller_double(x, y);
 }
 
 } // end namespace detail
@@ -146,6 +200,50 @@ FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
+}
+
+#ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+FQUALIFIERS
+float rocrand_normal(rocrand_state_mrg32k3a * state)
+{
+    typedef rocrand_device::detail::mrg32k3a_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_float(state))
+    {
+        return bm_helper::get_float(state);
+    }
+    float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
+    bm_helper::save_float(state, r.y);
+    return r.x;
+}
+#endif // ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+
+FQUALIFIERS
+float2 rocrand_normal2(rocrand_state_mrg32k3a * state)
+{
+    return rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
+}
+
+#ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+FQUALIFIERS
+double rocrand_normal_double(rocrand_state_mrg32k3a * state)
+{
+    typedef rocrand_device::detail::mrg32k3a_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_double(state))
+    {
+        return bm_helper::get_double(state);
+    }
+    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
+    bm_helper::save_double(state, r.y);
+    return r.x;
+}
+#endif // ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+
+FQUALIFIERS
+double2 rocrand_normal_double2(rocrand_state_mrg32k3a * state)
+{
+    return rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
 }
 
 #endif // ROCRAND_NORMAL_H_

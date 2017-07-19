@@ -216,9 +216,6 @@ protected:
     FQUALIFIERS
     void discard_state(unsigned long long offset)
     {
-        if (offset == 0)
-            offset = 1;
-            
         unsigned long long A1[9] = 
         {
             0,                    1,   0,
