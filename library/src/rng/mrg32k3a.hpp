@@ -111,7 +111,7 @@ namespace detail {
         DeviceEngineType engine;
         if(init_engines)
         {
-            engine = DeviceEngineType(seed, index, 0);
+            engine = DeviceEngineType(seed, index, offset);
         }
         else
         {
@@ -153,7 +153,7 @@ namespace detail {
         DeviceEngineType engine;
         if(init_engines)
         {
-            engine = DeviceEngineType(seed, index, 0);
+            engine = DeviceEngineType(seed, index, offset);
         }
         else
         {
@@ -200,7 +200,7 @@ namespace detail {
         DeviceEngineType engine;
         if(init_engines)
         {
-            engine = DeviceEngineType(seed, index, 0);
+            engine = DeviceEngineType(seed, index, offset);
         }
         else
         {
