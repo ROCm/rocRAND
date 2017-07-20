@@ -304,6 +304,25 @@ rocrand_status ROCRANDAPI
 rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
 
 /**
+ * \brief Sets the seed of a pseudo-random number generator.
+ *
+ * Sets the seed of the pseudo-random number generator.
+ *
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's offset.
+ *
+ * \param generator - Pseudo-random number generator
+ * \param seed - New seed value
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_TYPE_ERROR if the generator is a quasi-random number generator \n
+ * - ROCRAND_STATUS_SUCCESS if seed was set successfully \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
+
+/**
  * \brief Sets the offset of a random number generator.
  *
  * Sets the absolute offset of the random number generator.

@@ -354,17 +354,17 @@ hiprandSetStream(hiprandGenerator_t generator, hipStream_t stream);
 /**
  * \brief Sets the seed of a pseudo-random number generator.
  *
- * Sets the seed of the pseudorandom number generator.
+ * Sets the seed of the pseudo-random number generator.
  *
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's offset.
  *
- * \param generator - Generator to modify
- * \param seed - Seed value
+ * \param generator - Pseudo-random number generator
+ * \param seed - New seed value
  *
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - HIPRAND_STATUS_TYPE_ERROR if the generator is a quasirandom number generator \n
+ * - HIPRAND_STATUS_TYPE_ERROR if the generator is a quasi random number generator \n
  * - HIPRAND_STATUS_SUCCESS if seed was set successfully \n
  */
 hiprandStatus_t HIPRANDAPI
