@@ -100,6 +100,6 @@ TEST(rocrand_generate_log_normal_tests, neg_test)
     rocrand_generator generator = NULL;
     EXPECT_EQ(
         rocrand_generate_log_normal(generator, (float *) data, size, mean, stddev),
-        ROCRAND_STATUS_NOT_INITIALIZED
+        ROCRAND_STATUS_NOT_CREATED
     );
 }

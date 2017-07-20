@@ -65,7 +65,7 @@ TEST(rocrand_generate_poisson_tests, neg_test)
     rocrand_generator generator = NULL;
     EXPECT_EQ(
         rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
-        ROCRAND_STATUS_NOT_INITIALIZED
+        ROCRAND_STATUS_NOT_CREATED
     );
 }
 

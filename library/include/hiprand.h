@@ -40,9 +40,9 @@ extern "C" {
 typedef enum hiprandStatus {
     HIPRAND_STATUS_SUCCESS = 0, ///< Success
     HIPRAND_STATUS_VERSION_MISMATCH = 100, ///< Header file and linked library version do not match
-    HIPRAND_STATUS_NOT_INITIALIZED = 101, ///< Generator not initialized
+    HIPRAND_STATUS_NOT_INITIALIZED = 101, ///< Generator not created
     HIPRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
-    HIPRAND_STATUS_TYPE_ERROR = 103, ///< Generator is wrong type
+    HIPRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
     HIPRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
     HIPRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Length requested is not a multple of dimension
     HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
@@ -334,6 +334,27 @@ hiprandStatus_t HIPRANDAPI
 hiprandGeneratePoisson(hiprandGenerator_t generator,
                        unsigned int * output_data, size_t n,
                        double lambda);
+
+/**
+ * \brief Initializes the generator's state on GPU or host.
+ *
+ * Initializes the generator's state on GPU or host.
+ *
+ * If hiprandGenerateSeeds() was not called for a generator, it will be
+ * automatically called by functions which generates random numbers like
+ * hiprandGenerate(), hiprandGenerateUniform(), hiprandGenerateNormal() etc.
+ *
+ * \param generator - Generator to initialize
+ *
+ * \return
+ * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was never created \n
+ * - HIPRAND_STATUS_PREEXISTING_FAILURE if there was an existing error from
+ *     a previous kernel launch \n
+ * - HIPRAND_STATUS_LAUNCH_FAILURE if the kernel launch failed for any reason \n
+ * - HIPRAND_STATUS_SUCCESS if the seeds were generated successfully \n
+ */
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateSeeds(hiprandGenerator_t generator);
 
 /**
  * \brief Sets the current stream for kernel launches.
