@@ -101,14 +101,13 @@ namespace detail {
         }
 
         // First work-item saves the tail when n is not a multiple of 2
-        auto tail_size = n & 1;
-        if(engine_id == 0 && tail_size > 0)
+        if(engine_id == 0 && (n & 1) > 0)
         {
             RealType2 result = distribution(engine(), engine());
             // Save the tail
-            data[n - tail_size] = result.x; // .x
-            if(tail_size > 1) data[n - tail_size + 1] = result.y; // .y
+            data[n - 1] = result.x;
         }
+
         // Save engine with its state
         engines[engine_id] = engine;
     }
