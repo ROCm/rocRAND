@@ -23,15 +23,27 @@
 
 namespace rocrand_xorwow_detail
 {
+    template <class StateType, class Generator>
+    __global__
+    void init_states_kernel(StateType * states,
+                            unsigned long long seed,
+                            unsigned long long offset,
+                            Generator generator)
+    {
+        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+
+        StateType state;
+        generator.init_state(&state, offset, state_id, seed);
+
+        states[state_id] = state;
+    }
+
     template <
         class Type, class StateType,
         class Generator, class Distribution
     >
     __global__
     void generate_kernel(StateType * states,
-                         bool init_states,
-                         unsigned long long seed,
-                         unsigned long long offset,
                          Type * data, const size_t n,
                          Generator generator,
                          Distribution distribution)
@@ -40,16 +52,7 @@ namespace rocrand_xorwow_detail
         unsigned int index = state_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init the state
-        StateType state;
-        if(init_states)
-        {
-            generator.init_state(&state, offset, index, seed);
-        }
-        else
-        {
-            state = states[state_id];
-        }
+        StateType state = states[state_id];
 
         while(index < n)
         {
@@ -57,7 +60,6 @@ namespace rocrand_xorwow_detail
             index += stride;
         }
 
-        // Save state
         states[state_id] = state;
     }
 }
@@ -127,10 +129,43 @@ public:
         m_states_initialized = false;
     }
 
+    rocrand_status init_states()
+    {
+        if (m_states_initialized)
+            return ROCRAND_STATUS_SUCCESS;
+
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = 128;
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 1024;
+        #endif
+        const uint32_t blocks = max_blocks;
+
+        namespace detail = rocrand_xorwow_detail;
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(detail::init_states_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_states, m_seed, m_offset, m_generator
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        m_states_initialized = true;
+
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     template<class T, class Distribution = uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
+        rocrand_status status = init_states();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
         #ifdef __HIP_PLATFORM_NVCC__
         const uint32_t threads = 128;
         const uint32_t max_blocks = 128;
@@ -144,14 +179,13 @@ public:
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(detail::generate_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_states, !m_states_initialized, m_seed, m_offset,
+            m_states,
             data, data_size, m_generator, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_states_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
