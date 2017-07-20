@@ -177,8 +177,8 @@ rocrand_generate_normal(rocrand_generator generator,
 
 rocrand_status ROCRANDAPI
 rocrand_generate_normal_double(rocrand_generator generator,
-                 double * output_data, size_t n,
-                 double mean, double stddev)
+                               double * output_data, size_t n,
+                               double mean, double stddev)
 {
     if(generator == NULL)
     {
