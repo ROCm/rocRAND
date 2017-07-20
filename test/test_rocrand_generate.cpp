@@ -94,6 +94,6 @@ TEST(rocrand_generate_tests, simple_neg_test)
     rocrand_generator generator = NULL;
     EXPECT_EQ(
         rocrand_generate(generator, (unsigned int *) data, size),
-        ROCRAND_STATUS_NOT_INITIALIZED
+        ROCRAND_STATUS_NOT_CREATED
     );
 }

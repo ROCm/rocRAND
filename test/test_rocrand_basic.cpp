@@ -24,6 +24,8 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
+class rocrand_basic_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
+
 TEST(rocrand_basic_tests, rocrand_get_version_test)
 {
     EXPECT_EQ(rocrand_get_version(NULL), ROCRAND_STATUS_OUT_OF_RANGE);
@@ -38,18 +40,22 @@ TEST(rocrand_basic_tests, rocrand_generator_test)
     EXPECT_EQ(gen, static_cast<rocrand_generator>(0));
 }
 
-TEST(rocrand_basic_tests, rocrand_create_destroy_generator_test)
+TEST_P(rocrand_basic_tests, rocrand_create_destroy_generator_test)
 {
+    const rocrand_rng_type rng_type = GetParam();
+
     rocrand_generator g = NULL;
-    EXPECT_EQ(rocrand_create_generator(&g, ROCRAND_RNG_PSEUDO_PHILOX4_32_10), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_create_generator(&g, rng_type), ROCRAND_STATUS_SUCCESS);
     EXPECT_EQ(rocrand_destroy_generator(g), ROCRAND_STATUS_SUCCESS);
 }
 
-TEST(rocrand_basic_tests, rocrand_set_stream_test)
+TEST_P(rocrand_basic_tests, rocrand_set_stream_test)
 {
+    const rocrand_rng_type rng_type = GetParam();
+
     rocrand_generator g = NULL;
-    EXPECT_EQ(rocrand_set_stream(g, NULL), ROCRAND_STATUS_NOT_INITIALIZED);
-    EXPECT_EQ(rocrand_create_generator(&g, ROCRAND_RNG_PSEUDO_PHILOX4_32_10), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_set_stream(g, NULL), ROCRAND_STATUS_NOT_CREATED);
+    EXPECT_EQ(rocrand_create_generator(&g, rng_type), ROCRAND_STATUS_SUCCESS);
     hipStream_t stream;
     ASSERT_EQ(hipStreamCreate(&stream), hipSuccess);
     EXPECT_EQ(rocrand_set_stream(g, stream), ROCRAND_STATUS_SUCCESS);
@@ -57,3 +63,29 @@ TEST(rocrand_basic_tests, rocrand_set_stream_test)
     ASSERT_EQ(hipStreamDestroy(stream), hipSuccess);
     EXPECT_EQ(rocrand_destroy_generator(g), ROCRAND_STATUS_SUCCESS);
 }
+
+TEST_P(rocrand_basic_tests, rocrand_initialize_generator_test)
+{
+    const rocrand_rng_type rng_type = GetParam();
+
+    rocrand_generator g = NULL;
+    EXPECT_EQ(rocrand_create_generator(&g, rng_type), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_initialize_generator(g), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_destroy_generator(g), ROCRAND_STATUS_SUCCESS);
+
+    EXPECT_EQ(rocrand_create_generator(&g, rng_type), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_initialize_generator(g), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_initialize_generator(g), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_initialize_generator(g), ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(rocrand_destroy_generator(g), ROCRAND_STATUS_SUCCESS);
+}
+
+const rocrand_rng_type rng_types[] = {
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+    ROCRAND_RNG_PSEUDO_MRG32K3A,
+    ROCRAND_RNG_PSEUDO_XORWOW
+};
+
+INSTANTIATE_TEST_CASE_P(rocrand_basic_tests,
+                        rocrand_basic_tests,
+                        ::testing::ValuesIn(rng_types));

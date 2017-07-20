@@ -35,6 +35,8 @@ hiprandStatus_t to_hiprand_status(curandStatus_t status)
     {
         case CURAND_STATUS_SUCCESS:
             return HIPRAND_STATUS_SUCCESS;
+        case CURAND_STATUS_NOT_INITIALIZED:
+            return HIPRAND_STATUS_NOT_INITIALIZED;
         case CURAND_STATUS_VERSION_MISMATCH:
             return HIPRAND_STATUS_VERSION_MISMATCH;
         case CURAND_STATUS_ALLOCATION_FAILED:
@@ -237,6 +239,16 @@ hiprandGeneratePoisson(hiprandGenerator_t generator,
             (curandGenerator_t)(generator),
             output_data, n,
             lambda
+        )
+    );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateSeeds(hiprandGenerator_t generator)
+{
+    return to_hiprand_status(
+        curandGenerateSeeds(
+            (curandGenerator_t)(generator)
         )
     );
 }

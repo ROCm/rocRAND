@@ -82,7 +82,7 @@ rocrand_generate(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -112,7 +112,7 @@ rocrand_generate_uniform(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -142,7 +142,7 @@ rocrand_generate_uniform_double(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -173,7 +173,7 @@ rocrand_generate_normal(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -200,7 +200,7 @@ rocrand_generate_normal_double(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -227,7 +227,7 @@ rocrand_generate_log_normal(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -254,7 +254,7 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -281,7 +281,7 @@ rocrand_generate_poisson(rocrand_generator generator,
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
     if (lambda <= 0.0)
     {
@@ -306,11 +306,37 @@ rocrand_generate_poisson(rocrand_generator generator,
 }
 
 rocrand_status ROCRANDAPI
+rocrand_initialize_generator(rocrand_generator generator)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        static_cast<rocrand_philox4x32_10 *>(generator)->init();
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        static_cast<rocrand_mrg32k3a *>(generator)->init();
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+    {
+        static_cast<rocrand_xorwow *>(generator)->init();
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
 rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -336,7 +362,7 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed)
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -362,7 +388,7 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
 {
     if(generator == NULL)
     {
-        return ROCRAND_STATUS_NOT_INITIALIZED;
+        return ROCRAND_STATUS_NOT_CREATED;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
