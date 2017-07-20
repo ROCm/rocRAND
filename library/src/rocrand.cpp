@@ -332,6 +332,32 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
 }
 
 rocrand_status ROCRANDAPI
+rocrand_set_seed(rocrand_generator generator, unsigned long long seed)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_INITIALIZED;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        static_cast<rocrand_philox4x32_10 *>(generator)->set_seed(seed);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        static_cast<rocrand_mrg32k3a *>(generator)->set_seed(seed);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+    {
+        static_cast<rocrand_xorwow *>(generator)->set_seed(seed);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
 rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
 {
     if(generator == NULL)
