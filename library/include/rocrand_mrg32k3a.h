@@ -83,7 +83,7 @@ public:
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.
     ///
-    /// A subsequence is 2^127 numbers long.
+    /// A subsequence is 2^67 numbers long.
     FQUALIFIERS
     mrg32k3a_engine(const unsigned long long seed,
                     const unsigned long long subsequence,
@@ -99,7 +99,7 @@ public:
     /// seed value \p seed_value, skips \p subsequence subsequences
     /// and \p offset random numbers.
     ///
-    /// A subsequence is 2^127 numbers long.
+    /// A subsequence is 2^67 numbers long.
     FQUALIFIERS
     void seed(unsigned long long seed_value,
               const unsigned long long subsequence,
@@ -124,11 +124,19 @@ public:
     }
 
     /// Advances the internal state to skip \p subsequence subsequences.
-    /// A subsequence is 2^127 numbers long.
+    /// A subsequence is 2^67 numbers long.
     FQUALIFIERS
     void discard_subsequence(unsigned long long subsequence)
     {
         this->discard_subsequence_impl(subsequence);
+    }
+    
+    /// Advances the internal state to skip \p sequence sequences.
+    /// A sequence is 2^127 numbers long.
+    FQUALIFIERS
+    void discard_sequence(unsigned long long sequence)
+    {
+        this->discard_sequence_impl(sequence);
     }
 
     FQUALIFIERS
@@ -186,13 +194,13 @@ protected:
     FQUALIFIERS
     void discard_subsequence_impl(unsigned long long subsequence)
     {
-        unsigned long long A1p76[9] = 
+        unsigned long long A1p67[9] = 
         {
             82758667, 1871391091, 4127413238,
             3672831523, 69195019, 1871391091,
             3672091415, 3528743235, 69195019
         };
-        unsigned long long A2p76[9] = 
+        unsigned long long A2p67[9] = 
         {
             1511326704, 3759209742, 1610795712,
             4292754251, 1511326704, 3889917532,
@@ -201,13 +209,42 @@ protected:
         
         while(subsequence > 0) {
             if (subsequence % 2 == 1) {
-                mod_mat_vec(A1p76, m_state.g1, ROCRAND_MRG32K3A_M1);
-                mod_mat_vec(A2p76, m_state.g2, ROCRAND_MRG32K3A_M2);
+                mod_mat_vec(A1p67, m_state.g1, ROCRAND_MRG32K3A_M1);
+                mod_mat_vec(A2p67, m_state.g2, ROCRAND_MRG32K3A_M2);
             }
             subsequence = subsequence / 2;
 
-            mod_mat_sq(A1p76, ROCRAND_MRG32K3A_M1);
-            mod_mat_sq(A2p76, ROCRAND_MRG32K3A_M2);
+            mod_mat_sq(A1p67, ROCRAND_MRG32K3A_M1);
+            mod_mat_sq(A2p67, ROCRAND_MRG32K3A_M2);
+        }
+    }
+    
+    // DOES NOT CALCULATE NEW ULONGLONG 
+    FQUALIFIERS
+    void discard_sequence_impl(unsigned long long sequence)
+    {
+        unsigned long long A1p127[9] = 
+        {
+            2427906178, 3580155704, 949770784,
+            226153695,  1230515664, 3580155704,
+            1988835001, 986791581,  1230515664
+        };
+        unsigned long long A2p127[9] = 
+        {
+            1464411153, 277697599,  1610723613,
+            32183930,   1464411153, 1022607788,
+            2824425944, 32183930,   2093834863
+        };
+        
+        while(sequence > 0) {
+            if (sequence % 2 == 1) {
+                mod_mat_vec(A1p127, m_state.g1, ROCRAND_MRG32K3A_M1);
+                mod_mat_vec(A2p127, m_state.g2, ROCRAND_MRG32K3A_M2);
+            }
+            sequence = sequence / 2;
+
+            mod_mat_sq(A1p127, ROCRAND_MRG32K3A_M1);
+            mod_mat_sq(A2p127, ROCRAND_MRG32K3A_M2);
         }
     }
 
@@ -434,6 +471,12 @@ FQUALIFIERS
 void skipahead_subsequence(unsigned long long subsequence, rocrand_state_mrg32k3a * state)
 {
     return state->discard_subsequence(subsequence);
+}
+
+FQUALIFIERS
+void skipahead_sequence(unsigned long long sequence, rocrand_state_mrg32k3a * state)
+{
+    return state->discard_sequence(sequence);
 }
 
 #endif // ROCRAND_MRG32K3A_H_
