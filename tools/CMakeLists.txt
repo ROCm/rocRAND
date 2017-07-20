@@ -1,0 +1,1 @@
+add_executable(xorwow_precomputed_generator xorwow_precomputed_generator.cpp)
