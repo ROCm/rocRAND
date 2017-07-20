@@ -244,13 +244,23 @@ hiprandSetStream(hiprandGenerator_t generator, hipStream_t stream)
 hiprandStatus_t HIPRANDAPI
 hiprandSetPseudoRandomGeneratorSeed(hiprandGenerator_t generator, unsigned long long seed)
 {
-    return HIPRAND_STATUS_NOT_IMPLEMENTED;
+    return to_hiprand_status(
+        rocrand_set_seed(
+            (rocrand_generator)(generator),
+            seed
+        )
+    );
 }
 
 hiprandStatus_t HIPRANDAPI
 hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offset)
 {
-    return HIPRAND_STATUS_NOT_IMPLEMENTED;
+    return to_hiprand_status(
+        rocrand_set_offset(
+            (rocrand_generator)(generator),
+            offset
+        )
+    );
 }
 
 hiprandStatus_t HIPRANDAPI

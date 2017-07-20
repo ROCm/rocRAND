@@ -352,30 +352,34 @@ hiprandStatus_t HIPRANDAPI
 hiprandSetStream(hiprandGenerator_t generator, hipStream_t stream);
 
 /**
- * \brief Sets the seed of the pseudo-random number generator.
+ * \brief Sets the seed of a pseudo-random number generator.
  *
- * Sets the seed of the pseudorandom number generator. This operation
- * resets generator's internal state.
+ * Sets the seed of the pseudo-random number generator.
  *
- * \param generator - Generator to modify
- * \param seed - Seed value
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's offset.
+ *
+ * \param generator - Pseudo-random number generator
+ * \param seed - New seed value
  *
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - HIPRAND_STATUS_TYPE_ERROR if the generator is a quasirandom number generator \n
+ * - HIPRAND_STATUS_TYPE_ERROR if the generator is a quasi random number generator \n
  * - HIPRAND_STATUS_SUCCESS if seed was set successfully \n
  */
 hiprandStatus_t HIPRANDAPI
 hiprandSetPseudoRandomGeneratorSeed(hiprandGenerator_t generator, unsigned long long seed);
 
 /**
- * \brief Sets the offset of the random number generator.
+ * \brief Sets the offset of a random number generator.
  *
- * Sets the absolute offset of the random number generator. This operation
- * resets generator's internal state.
+ * Sets the absolute offset of the random number generator.
  *
- * \param generator - Generator to modify
- * \param offset - Absolute offset
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's seed.
+ *
+ * \param generator - Random number generator
+ * \param offset - New absolute offset
  *
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
@@ -385,10 +389,10 @@ hiprandStatus_t HIPRANDAPI
 hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offset);
 
 /**
- * \brief Returns the version number of the library.
+ * \brief Returns the version number of the cuRAND or rocRAND library.
  *
- * Returns in \p version the version number of the underlying dynamically
- * linked cuRAND or rocRAND library.
+ * Returns in \p version the version number of the underlying cuRAND or
+ * rocRAND library.
  *
  * \param version - Version of the library
  *
