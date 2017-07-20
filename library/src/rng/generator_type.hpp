@@ -39,8 +39,8 @@ struct rocrand_generator_type : public rocrand_generator_base_type
     using base_type = rocrand_generator_base_type;
     using state_type = typename rocrand_get_state_type<GeneratorType>::type;
 
-    rocrand_generator_type(unsigned long long offset = 0,
-                           unsigned long long seed = 0,
+    rocrand_generator_type(unsigned long long seed = 0,
+                           unsigned long long offset = 0,
                            hipStream_t stream = 0)
         : base_type(GeneratorType),
           m_seed(seed), m_offset(offset), m_stream(stream)
