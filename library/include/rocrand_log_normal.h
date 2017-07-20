@@ -29,7 +29,7 @@
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_normal.h"
 
-#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
 {
@@ -67,7 +67,7 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
     };
 }
 
-#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mean, double stddev)
 {
@@ -93,7 +93,7 @@ double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double m
     };
 }
 
-#ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stddev)
 {
@@ -119,7 +119,7 @@ float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float std
     };
 }
 
-#ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, double stddev)
 {
