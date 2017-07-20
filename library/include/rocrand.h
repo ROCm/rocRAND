@@ -304,6 +304,24 @@ rocrand_status ROCRANDAPI
 rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
 
 /**
+ * \brief Sets the offset of a random number generator.
+ *
+ * Sets the absolute offset of the random number generator.
+ *
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's seed.
+ *
+ * \param generator - Random number generator
+ * \param offset - New absolute offset
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_SUCCESS if offset was successfully set \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
+
+/**
  * \brief Returns the version number of the library.
  *
  * Returns in \p version the version number of the dynamically linked

@@ -250,7 +250,12 @@ hiprandSetPseudoRandomGeneratorSeed(hiprandGenerator_t generator, unsigned long 
 hiprandStatus_t HIPRANDAPI
 hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offset)
 {
-    return HIPRAND_STATUS_NOT_IMPLEMENTED;
+    return to_hiprand_status(
+        rocrand_set_offset(
+            (rocrand_generator)(generator),
+            offset
+        )
+    );
 }
 
 hiprandStatus_t HIPRANDAPI
