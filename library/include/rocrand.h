@@ -57,21 +57,23 @@ typedef enum rocrand_status {
  * ROCRAND generator types
  */
 typedef enum rocrand_rng_type {
-    ROCRAND_RNG_PSEUDO_XORWOW = 100, ///< XORWOW pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG32K3A = 200, ///< MRG32k3a pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MTGP32 = 300, ///< Mersenne Twister MTGP32 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 400, ///< PHILOX-4x32-10 pseudorandom generator
-    ROCRAND_RNG_QUASI_SOBOL32 = 500, ///< Sobol32 quasirandom generator
+    ROCRAND_RNG_PSEUDO_DEFAULT = 400,
+    ROCRAND_RNG_PSEUDO_XORWOW = 401, ///< XORWOW pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG32K3A = 402, ///< MRG32k3a pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MTGP32 = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
+    ROCRAND_RNG_QUASI_DEFAULT = 500,
+    ROCRAND_RNG_QUASI_SOBOL32 = 501 ///< Sobol32 quasirandom generator
 } rocrand_rng_type;
 
 
 // Host API function
 
 /**
- * \brief Create new random number generator.
+ * \brief Creates a new random number generator.
  *
- * Creates a new random number generator of type \p rng_type
- * and returns it in \p *generator.
+ * Creates a new pseudo random number generator of type \p rng_type
+ * and returns it in \p generator.
  *
  * Values for \p rng_type are:
  * - ROCRAND_RNG_PSEUDO_XORWOW
@@ -96,11 +98,11 @@ rocrand_status ROCRANDAPI
 rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_type);
 
 /**
- * \brief Destroy generator.
+ * \brief Destroys random number generator.
  *
- * Destroy generator and free all memory (state)
+ * Destroys random number generator and frees related memory.
  *
- * \param generator - Generator to destroy
+ * \param generator - Generator to be destroyed
  *
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
@@ -114,6 +116,9 @@ rocrand_destroy_generator(rocrand_generator generator);
  *
  * Generates \p n uniformly distributed 32-bit unsigned integers and
  * saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0 and \p 2^32, including \p 0 and
+ * excluding \p 2^32.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -131,8 +136,11 @@ rocrand_generate(rocrand_generator generator,
 /**
  * \brief Generates uniformly distributed floats.
  *
- * Generates \p n uniformly distributed floats and
- * saves them to \p output_data.
+ * Generates \p n uniformly distributed 32-bit floating-point values
+ * and saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0.0f and \p 1.0f, excluding \p 0.0f and
+ * including \p 1.0f.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -150,8 +158,11 @@ rocrand_generate_uniform(rocrand_generator generator,
 /**
  * \brief Generates uniformly distributed double-precision floating-point values.
  *
- * Generates \p n uniformly distributed double-precision floating-point values
- * and saves them to \p output_data.
+ * Generates \p n uniformly distributed 64-bit double-precision floating-point
+ * values and saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0.0 and \p 1.0, excluding \p 0.0 and
+ * including \p 1.0.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -167,10 +178,10 @@ rocrand_generate_uniform_double(rocrand_generator generator,
                                 double * output_data, size_t n);
 
 /**
- * \brief Generates normal distributed floats.
+ * \brief Generates normally distributed floats.
  *
- * Generates \p n normal distributed floats and
- * saves them to \p output_data.
+ * Generates \p n normally distributed distributed 32-bit floating-point
+ * values and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -189,10 +200,10 @@ rocrand_generate_normal(rocrand_generator generator,
                         float mean, float stddev);
 
 /**
- * \brief Generates normal distributed doubles.
+ * \brief Generates normally distributed doubles.
  *
- * Generates \p n normal distributed doubles and
- * saves them to \p output_data.
+ * Generates \p n normally distributed 64-bit double-precision floating-point
+ * numbers and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -211,10 +222,10 @@ rocrand_generate_normal_double(rocrand_generator generator,
                                double mean, double stddev);
 
 /**
- * \brief Generates log-normal distributed floats.
+ * \brief Generates log-normally distributed floats.
  *
- * Generates \p n log-normal distributed floats and
- * saves them to \p output_data.
+ * Generates \p n log-normally distributed 32-bit floating-point values
+ * and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -233,10 +244,10 @@ rocrand_generate_log_normal(rocrand_generator generator,
                             float mean, float stddev);
 
 /**
- * \brief Generates log-normal distributed doubles.
+ * \brief Generates log-normally distributed doubles.
  *
- * Generates \p n log-normal distributed doubles and
- * saves them to \p output_data.
+ * Generates \p n log-normally distributed 64-bit double-precision floating-point
+ * values and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -277,13 +288,13 @@ rocrand_generate_poisson(rocrand_generator generator,
                          double lambda);
 
 /**
- * \brief Set the current stream for kernel launches.
+ * \brief Sets the current stream for kernel launches.
  *
- * Set the current stream for all kernel launches of the generator.
+ * Sets the current stream for all kernel launches of the generator.
  * All functions will use this stream.
  *
  * \param generator - Generator to modify
- * \param stream - Stream to use or NULL for null stream
+ * \param stream - Stream to use or NULL for default stream
  *
  * \return
  * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
@@ -293,10 +304,10 @@ rocrand_status ROCRANDAPI
 rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
 
 /**
- * \brief Return the version number of the library.
+ * \brief Returns the version number of the library.
  *
- * Return in \p version the version number of the dynamically linked ROCRAND
- * library.
+ * Returns in \p version the version number of the dynamically linked
+ * rocRAND library.
  *
  * \param version - Version of the library
  *
