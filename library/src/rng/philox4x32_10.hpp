@@ -131,6 +131,15 @@ namespace detail {
         // m_state from base class
     };
 
+    __global__
+    void init_engines_kernel(philox4x32_10_device_engine * engines,
+                             unsigned long long seed,
+                             unsigned long long offset)
+    {
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        engines[engine_id] = philox4x32_10_device_engine(seed, engine_id, offset);
+    }
+
     template<class Type, class Distribution>
     __global__
     void generate_kernel(philox4x32_10_device_engine * engines,
@@ -318,6 +327,33 @@ public:
     {
         m_offset = offset;
         m_engines_initialized = false;
+    }
+
+    rocrand_status init()
+    {
+        if(m_engines_initialized)
+            return ROCRAND_STATUS_SUCCESS;
+
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = 128;
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 1024;
+        #endif
+        const uint32_t blocks = max_blocks;
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_engines, m_seed, m_offset
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        m_engines_initialized = true;
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T, class Distribution = uniform_distribution<T> >
