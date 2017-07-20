@@ -66,10 +66,6 @@ namespace detail {
         // Load device engine
         mrg32k3a_device_engine engine = engines[engine_id];
 
-        // TODO: It's possible to improve performance for situations when
-        // generate_poisson_kernel was not called before generate_kernel
-        // TODO: We need to check if ordering is so imporant, or if we can
-        // skip some random numbers (which increases performance).
         while(index < n)
         {
             data[index] = distribution(engine());
@@ -110,8 +106,8 @@ namespace detail {
         {
             RealType2 result = distribution(engine(), engine());
             // Save the tail
-            data[n - tail_size] = (&result.x)[0]; // .x
-            if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
+            data[n - tail_size] = result.x; // .x
+            if(tail_size > 1) data[n - tail_size + 1] = result.y; // .y
         }
         // Save engine with its state
         engines[engine_id] = engine;
