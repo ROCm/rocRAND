@@ -29,6 +29,7 @@ hip_add_library(hipRAND SHARED "${hipRAND_SRCS}")
 if(HIP_PLATFORM STREQUAL "nvcc")
     target_link_libraries(hipRAND "-lcurand")
 else()
+    add_dependencies(hipRAND rocRAND)
     target_link_libraries(
         hipRAND
         -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
