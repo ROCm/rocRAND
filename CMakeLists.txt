@@ -24,6 +24,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Werror -Wno-variadic-ma
 # Print configuration summary
 print_configuration_summary()
 
+add_subdirectory(tools)
+
 # rocRAND library
 # This adds library target rocRAND
 add_subdirectory(library)

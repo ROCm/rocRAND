@@ -265,7 +265,7 @@ void run_tests(const size_t size, const size_t trials,
 }
 
 const std::vector<std::pair<rocrand_rng_type, std::string>> all_engines = {
-    // { ROCRAND_RNG_PSEUDO_XORWOW, "xorwow" },
+    { ROCRAND_RNG_PSEUDO_XORWOW, "xorwow" },
     { ROCRAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
     // { ROCRAND_RNG_PSEUDO_MTGP32, "mtgp32" },
     { ROCRAND_RNG_PSEUDO_PHILOX4_32_10, "philox" },
