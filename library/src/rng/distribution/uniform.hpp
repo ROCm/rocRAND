@@ -110,8 +110,7 @@ struct mrg_uniform_distribution<unsigned int>
     __forceinline__ __host__ __device__
     unsigned int operator()(const unsigned long long v) const
     {
-        double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
-        return static_cast<unsigned int>(ret * UINT_MAX);
+        return static_cast<unsigned int>(v);
     }
 };
 

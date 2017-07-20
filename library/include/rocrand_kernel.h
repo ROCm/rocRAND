@@ -28,6 +28,7 @@
 #include "rocrand.h"
 #include "rocrand_common.h"
 #include "rocrand_philox4x32_10.h"
+#include "rocrand_mrg32k3a.h"
 
 #include "rocrand_uniform.h"
 #include "rocrand_normal.h"
