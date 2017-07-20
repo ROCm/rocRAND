@@ -105,7 +105,7 @@ public:
         uint2 key;
         unsigned int substate;
 
-        #ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+        #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -182,7 +182,7 @@ public:
         m_state.counter = {0, 0, 0, 0};
         m_state.result  = {0, 0, 0, 0};
         m_state.substate = 0;
-        #ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+        #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
         #endif
@@ -341,7 +341,7 @@ protected:
 
 namespace detail {
 
-#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 // This helps access fields of philox4x32_10_engine's internal state which
 // saves floats and doubles generated using the Box–Muller transform
 struct philox4x32_10_engine_boxmuller_helper
