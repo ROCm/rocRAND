@@ -318,6 +318,16 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
         static_cast<rocrand_philox4x32_10 *>(generator)->set_stream(stream);
         return ROCRAND_STATUS_SUCCESS;
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        static_cast<rocrand_mrg32k3a *>(generator)->set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+    {
+        static_cast<rocrand_xorwow*>(generator)->set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
