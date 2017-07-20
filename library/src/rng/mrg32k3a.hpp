@@ -38,13 +38,24 @@ namespace rocrand_host {
 namespace detail {
     
     typedef ::rocrand_device::mrg32k3a_engine mrg32k3a_device_engine;
+    
+    __global__
+    void init_states_kernel(mrg32k3a_device_engine * engines,
+                            unsigned long long seed,
+                            unsigned long long offset)
+    {
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+
+        mrg32k3a_device_engine engine;
+        rocrand_init(seed, engine_id, offset, &engine);
+
+        engines[engine_id] = engine;
+    }
+
 
     template<class Type, class Distribution>
     __global__
     void generate_kernel(mrg32k3a_device_engine * engines,
-                         bool init_engines,
-                         unsigned long long seed,
-                         unsigned long long offset,
                          Type * data, const size_t n,
                          Distribution distribution)
     {
@@ -52,16 +63,8 @@ namespace detail {
         unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init device engine
-        mrg32k3a_device_engine engine;
-        if(init_engines)
-        {
-            rocrand_init(seed, index, offset, &engine);
-        }
-        else
-        {
-            engine = engines[engine_id];
-        }
+        // Load device engine
+        mrg32k3a_device_engine engine = engines[engine_id];
 
         // TODO: It's possible to improve performance for situations when
         // generate_poisson_kernel was not called before generate_kernel
@@ -81,9 +84,6 @@ namespace detail {
     template<class RealType, class Distribution>
     __global__
     void generate_normal_kernel(mrg32k3a_device_engine * engines,
-                                bool init_engines,
-                                unsigned long long seed,
-                                unsigned long long offset,
                                 RealType * data, const size_t n,
                                 Distribution distribution)
     {
@@ -93,16 +93,8 @@ namespace detail {
         unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init device engine
-        mrg32k3a_device_engine engine;
-        if(init_engines)
-        {
-            rocrand_init(seed, index, offset, &engine);
-        }
-        else
-        {
-            engine = engines[engine_id];
-        }
+        // Load device engine
+        mrg32k3a_device_engine engine = engines[engine_id];
 
         RealType2 * data2 = (RealType2 *)data;
         while(index < (n / 2))
@@ -128,9 +120,6 @@ namespace detail {
     template <class Distribution>
     __global__
     void generate_poisson_kernel(mrg32k3a_device_engine * engines,
-                                 bool init_engines,
-                                 unsigned long long seed,
-                                 unsigned long long offset,
                                  unsigned int * data, const size_t n,
                                  Distribution distribution)
     {
@@ -138,16 +127,8 @@ namespace detail {
         unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init device engine
-        mrg32k3a_device_engine engine;
-        if(init_engines)
-        {
-            rocrand_init(seed, index, offset, &engine);
-        }
-        else
-        {
-            engine = engines[engine_id];
-        }
+        // Load device engine
+        mrg32k3a_device_engine engine = engines[engine_id];
 
         // TODO: Improve performance.
         while(index < n)
@@ -206,11 +187,44 @@ public:
         m_offset = offset;
         m_engines_initialized = false;
     }
+    
+    rocrand_status init_states()
+    {
+        if (m_engines_initialized)
+            return ROCRAND_STATUS_SUCCESS;
+
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = 128;
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 1024;
+        #endif
+        const uint32_t blocks = max_blocks;
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::init_states_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_engines, m_seed, m_offset
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        m_engines_initialized = true;
+
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
 
     template<class T, class Distribution = mrg_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
+        rocrand_status status = init_states();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+    
         #ifdef __HIP_PLATFORM_NVCC__
         const uint32_t threads = 128;
         const uint32_t max_blocks = 128; // 512
@@ -223,14 +237,12 @@ public:
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, distribution
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -244,6 +256,10 @@ public:
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
     {
+        rocrand_status status = init_states();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
         #ifdef __HIP_PLATFORM_NVCC__
         const uint32_t threads = 128;
         const uint32_t max_blocks = 128; // 512
@@ -258,20 +274,22 @@ public:
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, distribution
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
     {
+        rocrand_status status = init_states();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
         #ifdef __HIP_PLATFORM_NVCC__
         const uint32_t threads = 128;
         const uint32_t max_blocks = 128; // 512
@@ -286,19 +304,21 @@ public:
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, distribution
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
+        rocrand_status status = init_states();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
         #ifdef __HIP_PLATFORM_NVCC__
         const uint32_t threads = 128;
         const uint32_t max_blocks = 128; // 512
@@ -313,14 +333,12 @@ public:
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, distribution
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
