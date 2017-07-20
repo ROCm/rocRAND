@@ -111,7 +111,8 @@ int main(int argc, char *argv[])
     po::store(po::parse_command_line(argc, argv, options), vm);
     po::notify(vm);
 
-    if(vm.count("help")) {
+    if(vm.count("help"))
+    {
         std::cout << options << std::endl;
         return 0;
     }
@@ -119,14 +120,22 @@ int main(int argc, char *argv[])
     const size_t size = vm["size"].as<size_t>();
     const std::string& engine = vm["engine"].as<std::string>();
 
-    if(engine == "philox" || engine == "all"){
+    if(engine == "philox")
+    {
         std::cout << "philox4x32_10:" << std::endl;
         run_crush_test(size, ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
         return 0;
     }
-    else if(engine == "mrg32k3a"){
+    else if(engine == "mrg32k3a")
+    {
         std::cout << "mrg32k3a:" << std::endl;
         run_crush_test(size, ROCRAND_RNG_PSEUDO_MRG32K3A);
+        return 0;
+    }
+    else if(engine == "xorwow")
+    {
+        std::cout << "xorwow:" << std::endl;
+        run_crush_test(size, ROCRAND_RNG_PSEUDO_XORWOW);
         return 0;
     }
 
