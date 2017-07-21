@@ -43,7 +43,7 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+#endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, float stddev)
@@ -81,7 +81,7 @@ double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mea
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
-#endif // ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+#endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double mean, double stddev)
@@ -107,7 +107,7 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+#endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float stddev)
@@ -133,7 +133,7 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
-#endif // ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+#endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, double stddev)
@@ -145,7 +145,7 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
     };
 }
 
-#ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
 {
@@ -159,7 +159,7 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+#endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stddev)
@@ -171,7 +171,7 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
     };
 }
 
-#ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, double stddev)
 {
@@ -187,7 +187,7 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
     bm_helper::save_double(state, r.y);
     return exp(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+#endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, double stddev)
