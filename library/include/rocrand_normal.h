@@ -204,6 +204,17 @@ double2 rocrand_normal_double2(rocrand_state_philox4x32_10 * state)
     return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
 }
 
+FQUALIFIERS
+double4 rocrand_normal_double4(rocrand_state_philox4x32_10 * state)
+{
+    double2 r1, r2;
+    r1 = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
+    r2 = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
+    return double4 {
+        r1.x, r1.y, r2.x, r2.y
+    };
+}
+
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_mrg32k3a * state)
