@@ -57,7 +57,7 @@ public:
         unsigned long long g1[3];
         unsigned long long g2[3];
 
-        #ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+        #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -130,7 +130,7 @@ public:
     {
         this->discard_subsequence_impl(subsequence);
     }
-    
+
     /// Advances the internal state to skip \p sequence sequences.
     /// A sequence is 2^127 numbers long.
     FQUALIFIERS
@@ -143,7 +143,7 @@ public:
     void restart(const unsigned long long subsequence,
                  const unsigned long long offset)
     {
-        #ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+        #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
         #endif
@@ -161,23 +161,23 @@ public:
     unsigned long long next()
     {
         unsigned long long p;
-            
-        p = ROCRAND_MRG32K3A_A12 * m_state.g1[1] + ROCRAND_MRG32K3A_A13N 
+
+        p = ROCRAND_MRG32K3A_A12 * m_state.g1[1] + ROCRAND_MRG32K3A_A13N
             * (ROCRAND_MRG32K3A_M1 - m_state.g1[0]);
         p = mod_m1(p);
 
         m_state.g1[0] = m_state.g1[1]; m_state.g1[1] = m_state.g1[2]; m_state.g1[2] = p;
 
-        p = ROCRAND_MRG32K3A_A21 * m_state.g2[2] + ROCRAND_MRG32K3A_A23N 
+        p = ROCRAND_MRG32K3A_A21 * m_state.g2[2] + ROCRAND_MRG32K3A_A23N
             * (ROCRAND_MRG32K3A_M2 - m_state.g2[0]);
         p = mod_m2(p);
-                
+
         m_state.g2[0] = m_state.g2[1]; m_state.g2[1] = m_state.g2[2]; m_state.g2[2] = p;
 
         p = m_state.g1[2] - m_state.g2[2];
-        if (m_state.g1[2] <= m_state.g2[2]) 
+        if (m_state.g1[2] <= m_state.g2[2])
             p += ROCRAND_MRG32K3A_M1;  // 0 < p <= M1
-            
+
         return p;
     }
 
@@ -190,23 +190,23 @@ protected:
         discard_state(offset);
     }
 
-    // DOES NOT CALCULATE NEW ULONGLONG 
+    // DOES NOT CALCULATE NEW ULONGLONG
     FQUALIFIERS
     void discard_subsequence_impl(unsigned long long subsequence)
     {
-        unsigned long long A1p67[9] = 
+        unsigned long long A1p67[9] =
         {
             82758667, 1871391091, 4127413238,
             3672831523, 69195019, 1871391091,
             3672091415, 3528743235, 69195019
         };
-        unsigned long long A2p67[9] = 
+        unsigned long long A2p67[9] =
         {
             1511326704, 3759209742, 1610795712,
             4292754251, 1511326704, 3889917532,
             3859662829, 4292754251, 3708466080
         };
-        
+
         while(subsequence > 0) {
             if (subsequence % 2 == 1) {
                 mod_mat_vec(A1p67, m_state.g1, ROCRAND_MRG32K3A_M1);
@@ -218,24 +218,24 @@ protected:
             mod_mat_sq(A2p67, ROCRAND_MRG32K3A_M2);
         }
     }
-    
-    // DOES NOT CALCULATE NEW ULONGLONG 
+
+    // DOES NOT CALCULATE NEW ULONGLONG
     FQUALIFIERS
     void discard_sequence_impl(unsigned long long sequence)
     {
-        unsigned long long A1p127[9] = 
+        unsigned long long A1p127[9] =
         {
             2427906178, 3580155704, 949770784,
             226153695,  1230515664, 3580155704,
             1988835001, 986791581,  1230515664
         };
-        unsigned long long A2p127[9] = 
+        unsigned long long A2p127[9] =
         {
             1464411153, 277697599,  1610723613,
             32183930,   1464411153, 1022607788,
             2824425944, 32183930,   2093834863
         };
-        
+
         while(sequence > 0) {
             if (sequence % 2 == 1) {
                 mod_mat_vec(A1p127, m_state.g1, ROCRAND_MRG32K3A_M1);
@@ -249,23 +249,23 @@ protected:
     }
 
     // Advances the internal state by offset times.
-    // DOES NOT CALCULATE NEW ULONGLONG 
+    // DOES NOT CALCULATE NEW ULONGLONG
     FQUALIFIERS
     void discard_state(unsigned long long offset)
     {
-        unsigned long long A1[9] = 
+        unsigned long long A1[9] =
         {
             0,                    1,   0,
             0,                    0,   1,
             ROCRAND_MRG32K3A_A13, ROCRAND_MRG32K3A_A12, 0
         };
-        unsigned long long A2[9] = 
+        unsigned long long A2[9] =
         {
             0,                    1, 0,
             0,                    0, 1,
             ROCRAND_MRG32K3A_A23, 0, ROCRAND_MRG32K3A_A21
         };
-        
+
         while(offset > 0) {
             if (offset % 2 == 1) {
                 mod_mat_vec(A1, m_state.g1, ROCRAND_MRG32K3A_M1);
@@ -279,7 +279,7 @@ protected:
     }
 
     // Advances the internal state to the next state
-    // DOES NOT CALCULATE NEW ULONGLONG 
+    // DOES NOT CALCULATE NEW ULONGLONG
     FQUALIFIERS
     void discard_state()
     {
@@ -288,8 +288,8 @@ protected:
 
 private:
     inline __device__ __host__
-    void mod_mat_vec(unsigned long long * A, 
-                     unsigned long long * s, 
+    void mod_mat_vec(unsigned long long * A,
+                     unsigned long long * s,
                      unsigned long long m)
     {
         unsigned long long x[3];
@@ -301,9 +301,9 @@ private:
         for (size_t i = 0; i < 3; ++i)
             s[i] = x[i];
     }
-    
+
     inline __device__ __host__
-    void mod_mat_sq(unsigned long long * A, 
+    void mod_mat_sq(unsigned long long * A,
                     unsigned long long m)
     {
         unsigned long long x[9];
@@ -323,9 +323,9 @@ private:
             A[i + 3 * 2] = x[i + 3 * 2];
         }
     }
-    
+
     inline __host__ __device__
-    unsigned long long mod_mul_m1(unsigned int i, 
+    unsigned long long mod_mul_m1(unsigned int i,
                                   unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
@@ -336,25 +336,25 @@ private:
         temp2 = mod_m1(lo * j);
         lo = mod_m1(temp1 + temp2);
 
-        if (lo < 0) 
+        if (lo < 0)
             lo += ROCRAND_MRG32K3A_M1;
         return lo;
     }
-    
+
     inline __host__ __device__
     unsigned long long mod_m1(unsigned long long i)
     {
         unsigned long long p;
-        p = (i & (ROCRAND_MRG32K3A_POW32 - 1)) + (i >> 32) 
+        p = (i & (ROCRAND_MRG32K3A_POW32 - 1)) + (i >> 32)
             * ROCRAND_MRG32K3A_M1C;
-        if (p >= ROCRAND_MRG32K3A_M1) 
+        if (p >= ROCRAND_MRG32K3A_M1)
             p -= ROCRAND_MRG32K3A_M1;
-            
+
         return p;
     }
-    
+
     inline __host__ __device__
-    unsigned long long mod_mul_m2(unsigned int i, 
+    unsigned long long mod_mul_m2(unsigned int i,
                                   unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
@@ -365,22 +365,22 @@ private:
         temp2 = mod_m2(lo * j);
         lo = mod_m2(temp1 + temp2);
 
-        if (lo < 0) 
+        if (lo < 0)
             lo += ROCRAND_MRG32K3A_M2;
         return lo;
     }
-    
+
     inline __host__ __device__
     unsigned long long mod_m2(unsigned long long i)
     {
         unsigned long long p;
-        p = (i & (ROCRAND_MRG32K3A_POW32 - 1)) + (i >> 32) 
+        p = (i & (ROCRAND_MRG32K3A_POW32 - 1)) + (i >> 32)
             * ROCRAND_MRG32K3A_M2C;
-        p = (p & (ROCRAND_MRG32K3A_POW32 - 1)) + (p >> 32) 
+        p = (p & (ROCRAND_MRG32K3A_POW32 - 1)) + (p >> 32)
             * ROCRAND_MRG32K3A_M2C;
-        if (p >= ROCRAND_MRG32K3A_M2) 
+        if (p >= ROCRAND_MRG32K3A_M2)
             p -= ROCRAND_MRG32K3A_M2;
-            
+
         return p;
     }
 
@@ -394,7 +394,7 @@ protected:
 
 namespace detail {
 
-#ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 // This helps access fields of mrg32k3a_engine's internal state which
 // saves floats and doubles generated using the Box–Muller transform
 struct mrg32k3a_engine_boxmuller_helper
