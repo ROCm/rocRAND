@@ -329,6 +329,10 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's offset.
  *
+ * For a MRG32K3a generator seed value can't be zero. If \p seed is
+ * equal zero and generator's type is ROCRAND_RNG_PSEUDO_MRG32K3A,
+ * value \p 12345 is used as a seed instead.
+ *
  * \param generator - Pseudo-random number generator
  * \param seed - New seed value
  *
