@@ -27,6 +27,8 @@
 
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
+#include "rocrand_xorwow.h"
+
 #include "rocrand_normal.h"
 
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE

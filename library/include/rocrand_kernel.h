@@ -25,7 +25,6 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-#include "rocrand.h"
 #include "rocrand_common.h"
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
