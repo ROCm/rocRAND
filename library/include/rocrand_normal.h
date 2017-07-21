@@ -246,4 +246,52 @@ double2 rocrand_normal_double2(rocrand_state_mrg32k3a * state)
     return rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
 }
 
+#ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+FQUALIFIERS
+float rocrand_normal(rocrand_state_xorwow * state)
+{
+    typedef rocrand_device::detail::xorwow_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_float(state))
+    {
+        return bm_helper::get_float(state);
+    }
+    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    bm_helper::save_float(state, r.y);
+    return r.x;
+}
+#endif // ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+
+FQUALIFIERS
+float2 rocrand_normal2(rocrand_state_xorwow * state)
+{
+    return rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+}
+
+#ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+FQUALIFIERS
+double rocrand_normal_double(rocrand_state_xorwow * state)
+{
+    typedef rocrand_device::detail::xorwow_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_double(state))
+    {
+        return bm_helper::get_double(state);
+    }
+    double2 r = rocrand_device::detail::normal_distribution_double2(
+        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+    );
+    bm_helper::save_double(state, r.y);
+    return r.x;
+}
+#endif // ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+
+FQUALIFIERS
+double2 rocrand_normal_double2(rocrand_state_xorwow * state)
+{
+    return rocrand_device::detail::normal_distribution_double2(
+        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+    );
+}
+
 #endif // ROCRAND_NORMAL_H_

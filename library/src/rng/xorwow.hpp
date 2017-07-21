@@ -21,85 +21,71 @@
 #ifndef ROCRAND_RNG_XORWOW_H_
 #define ROCRAND_RNG_XORWOW_H_
 
-namespace rocrand_xorwow_detail
-{
-    template <class StateType, class Generator>
+#ifndef FQUALIFIERS
+#define FQUALIFIERS __forceinline__ __device__ __host__
+#endif
+
+#include <algorithm>
+#include <hip/hip_runtime.h>
+
+#include <rocrand.h>
+#include <rocrand_kernel.h>
+
+#include "generator_type.hpp"
+#include "distributions.hpp"
+
+namespace rocrand_host {
+namespace detail {
+
+    typedef ::rocrand_device::xorwow_engine xorwow_device_engine;
+
     __global__
-    void init_states_kernel(StateType * states,
-                            unsigned long long seed,
-                            unsigned long long offset,
-                            Generator generator)
+    void init_engines_kernel(xorwow_device_engine * engines,
+                             unsigned long long seed,
+                             unsigned long long offset)
     {
-        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-
-        StateType state;
-        generator.init_state(&state, offset, state_id, seed);
-
-        states[state_id] = state;
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        engines[engine_id] = xorwow_device_engine(seed, engine_id, offset);
     }
 
-    template <
-        class Type, class StateType,
-        class Generator, class Distribution
-    >
+    template<class Type, class Distribution>
     __global__
-    void generate_kernel(StateType * states,
+    void generate_kernel(xorwow_device_engine * engines,
                          Type * data, const size_t n,
-                         Generator generator,
                          Distribution distribution)
     {
-        const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = state_id;
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        StateType state = states[state_id];
+        xorwow_device_engine engine = engines[engine_id];
 
         while(index < n)
         {
-            data[index] = distribution(generator(&state));
+            data[index] = distribution(engine());
             index += stride;
         }
 
-        states[state_id] = state;
+        engines[engine_id] = engine;
     }
-}
+
+} // end namespace detail
+} // end namespace rocrand_host
 
 class rocrand_xorwow : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW>
 {
 public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW>;
-    using state_type = base_type::state_type;
-
-    class xorwow_generator
-    {
-    public:
-
-        __forceinline__ __host__ __device__
-        unsigned int operator()(state_type * state)
-        {
-            state->discard();
-            return (*state)();
-        }
-
-        __forceinline__ __host__ __device__
-        void init_state(state_type * state,
-                        unsigned long long offset,
-                        unsigned long long sequence,
-                        unsigned long long seed)
-        {
-            state->set_seed(seed);
-            state->discard_sequence(sequence);
-            state->discard(offset);
-        }
-    };
+    using engine_type = ::rocrand_host::detail::xorwow_device_engine;
 
     rocrand_xorwow(unsigned long long seed = 0,
                    unsigned long long offset = 0,
                    hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_states_initialized(false), m_states(NULL), m_states_size(1024 * 256)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(1024 * 256)
     {
-        auto error = hipMalloc(&m_states, sizeof(state_type) * m_states_size);
+        // Allocate device random number engines
+        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -108,52 +94,46 @@ public:
 
     ~rocrand_xorwow()
     {
-        hipFree(m_states);
-    }
-
-    void reset()
-    {
-        m_states_initialized = false;
+        hipFree(m_engines);
     }
 
     /// Changes seed to \p seed and resets generator state.
     void set_seed(unsigned long long seed)
     {
         m_seed = seed;
-        m_states_initialized = false;
+        m_engines_initialized = false;
     }
 
     void set_offset(unsigned long long offset)
     {
         m_offset = offset;
-        m_states_initialized = false;
+        m_engines_initialized = false;
     }
 
     rocrand_status init()
     {
-        if (m_states_initialized)
+        if (m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
         #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128;
+        const uint32_t threads = 64;
+        const uint32_t max_blocks = 64;
         #else
         const uint32_t threads = 256;
         const uint32_t max_blocks = 1024;
         #endif
         const uint32_t blocks = max_blocks;
 
-        namespace detail = rocrand_xorwow_detail;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::init_states_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_states, m_seed, m_offset, m_generator
+            m_engines, m_seed, m_offset
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_states_initialized = true;
+        m_engines_initialized = true;
 
         return ROCRAND_STATUS_SUCCESS;
     }
@@ -167,20 +147,18 @@ public:
             return status;
 
         #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128;
+        const uint32_t threads = 64;
+        const uint32_t max_blocks = 64;
         #else
         const uint32_t threads = 256;
         const uint32_t max_blocks = 1024;
         #endif
         const uint32_t blocks = max_blocks;
 
-        namespace detail = rocrand_xorwow_detail;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::generate_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
-            m_states,
-            data, data_size, m_generator, distribution
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
@@ -197,13 +175,12 @@ public:
     }
 
 private:
-    bool m_states_initialized;
-    state_type * m_states;
-    size_t m_states_size;
+    bool m_engines_initialized;
+    engine_type * m_engines;
+    size_t m_engines_size;
 
     // m_seed from base_type
     // m_offset from base_type
-    xorwow_generator m_generator;
 };
 
 #endif // ROCRAND_RNG_XORWOW_H_

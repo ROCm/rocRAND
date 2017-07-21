@@ -78,7 +78,7 @@ double4 uniform_distribution_double4(uint4 v)
        nextafter(v.w * static_cast<double>(ROCRAND_2POW32_INV), 1.0)
    };
 }
-    
+
 // For unsigned integer between 0 and UINT_MAX, returns value between
 // 0.0f and 1.0f, excluding 0.0f and including 1.0f (MRG32K3A).
 FQUALIFIERS
@@ -87,7 +87,7 @@ float mrg_uniform_distribution(unsigned long long v)
     double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
     return static_cast<float>(ret);
 }
-    
+
 FQUALIFIERS
 double mrg_uniform_distribution_double(unsigned long long v)
 {
@@ -150,6 +150,18 @@ FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_mrg32k3a * state)
 {
     return rocrand_device::detail::mrg_uniform_distribution_double(rocrand(state));
+}
+
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_xorwow * state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
+}
+
+FQUALIFIERS
+double rocrand_uniform_double(rocrand_state_xorwow * state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
 #endif // ROCRAND_UNIFORM_H_

@@ -145,4 +145,60 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
     };
 }
 
+#ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+FQUALIFIERS
+float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
+{
+    typedef rocrand_device::detail::xorwow_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_float(state))
+    {
+        return expf(mean + (stddev * bm_helper::get_float(state)));
+    }
+    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    bm_helper::save_float(state, r.y);
+    return expf(mean + (stddev * r.x));
+}
+#endif // ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+
+FQUALIFIERS
+float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stddev)
+{
+    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    return float2 {
+        expf(mean + (stddev * r.x)),
+        expf(mean + (stddev * r.y))
+    };
+}
+
+#ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+FQUALIFIERS
+double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, double stddev)
+{
+    typedef rocrand_device::detail::xorwow_engine_boxmuller_helper bm_helper;
+
+    if(bm_helper::is_double(state))
+    {
+        return exp(mean + (stddev * bm_helper::get_double(state)));
+    }
+    double2 r = rocrand_device::detail::normal_distribution_double2(
+        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+    );
+    bm_helper::save_double(state, r.y);
+    return exp(mean + (stddev * r.x));
+}
+#endif // ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+
+FQUALIFIERS
+double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, double stddev)
+{
+    double2 r = rocrand_device::detail::normal_distribution_double2(
+        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+    );
+    return double2 {
+        exp(mean + (stddev * r.x)),
+        exp(mean + (stddev * r.y))
+    };
+}
+
 #endif // ROCRAND_LOG_NORMAL_H_
