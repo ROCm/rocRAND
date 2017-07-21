@@ -61,10 +61,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <hip/hip_runtime.h>
 
 #include <rocrand.h>
-#define ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
-#include <rocrand_kernel.h>
 
 #include "generator_type.hpp"
+#include "device_engines.hpp"
 #include "distributions.hpp"
 
 namespace rocrand_host {

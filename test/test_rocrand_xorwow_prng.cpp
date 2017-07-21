@@ -27,9 +27,6 @@
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
 
-#include <rng/xorwow_state.hpp>
-
-
 TEST(rocrand_xorwow_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
@@ -198,10 +195,12 @@ TEST(rocrand_xorwow_prng_tests, different_seed_test)
 TEST(rocrand_xorwow_prng_tests, discard_test)
 {
     const unsigned long long seed = 1234567890123ULL;
-    rocrand_xorwow_state state1(seed);
-    rocrand_xorwow_state state2(seed);
+    rocrand_xorwow::engine_type engine1(seed, 0, 678ULL);
+    rocrand_xorwow::engine_type engine2(seed, 0, 677ULL);
 
-    EXPECT_EQ(state1(), state2());
+    (void)engine2.next();
+
+    EXPECT_EQ(engine1(), engine2());
 
     const unsigned long long ds[] = {
         1ULL, 4ULL, 37ULL, 583ULL, 7452ULL,
@@ -212,36 +211,38 @@ TEST(rocrand_xorwow_prng_tests, discard_test)
     {
         for (unsigned long long i = 0; i < d; i++)
         {
-            state1.discard();
+            (void)engine1.next();
         }
-        state2.discard(d);
+        engine2.discard(d);
 
-        EXPECT_EQ(state1(), state2());
+        EXPECT_EQ(engine1(), engine2());
     }
 }
 
 TEST(rocrand_xorwow_prng_tests, discard_sequence_test)
 {
     const unsigned long long seed = ~1234567890123ULL;
-    rocrand_xorwow_state state1(seed);
-    rocrand_xorwow_state state2(seed);
+    rocrand_xorwow::engine_type engine1(seed, 0, 444ULL);
+    rocrand_xorwow::engine_type engine2(seed, 123ULL, 444ULL);
 
-    EXPECT_EQ(state1(), state2());
+    engine1.discard_subsequence(123ULL);
 
-    state1.discard( 5356446450ULL);
-    state1.discard_sequence(123ULL);
-    state1.discard(30000000006ULL);
+    EXPECT_EQ(engine1(), engine2());
 
-    state2.discard_sequence(3ULL);
-    state2.discard(35356446456ULL);
-    state2.discard_sequence(120ULL);
+    engine1.discard( 5356446450ULL);
+    engine1.discard_subsequence(123ULL);
+    engine1.discard(30000000006ULL);
 
-    EXPECT_EQ(state1(), state2());
+    engine2.discard_subsequence(3ULL);
+    engine2.discard(35356446456ULL);
+    engine2.discard_subsequence(120ULL);
 
-    state1.discard_sequence(3456000ULL);
-    state1.discard_sequence(1000005ULL);
+    EXPECT_EQ(engine1(), engine2());
 
-    state2.discard_sequence(4456005ULL);
+    engine1.discard_subsequence(3456000ULL);
+    engine1.discard_subsequence(1000005ULL);
 
-    EXPECT_EQ(state1(), state2());
+    engine2.discard_subsequence(4456005ULL);
+
+    EXPECT_EQ(engine1(), engine2());
 }
