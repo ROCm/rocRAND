@@ -404,6 +404,10 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed)
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
+        if(seed == 0ULL)
+        {
+            seed = ROCRAND_MRG32K3A_DEFAULT_SEED;
+        }
         static_cast<rocrand_mrg32k3a *>(generator)->set_seed(seed);
         return ROCRAND_STATUS_SUCCESS;
     }
