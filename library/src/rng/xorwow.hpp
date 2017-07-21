@@ -129,7 +129,7 @@ public:
         m_states_initialized = false;
     }
 
-    rocrand_status init_states()
+    rocrand_status init()
     {
         if (m_states_initialized)
             return ROCRAND_STATUS_SUCCESS;
@@ -162,7 +162,7 @@ public:
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
-        rocrand_status status = init_states();
+        rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
