@@ -21,6 +21,10 @@
 #ifndef ROCRAND_RNG_GENERATORS_H_
 #define ROCRAND_RNG_GENERATORS_H_
 
+#define ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#define ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#define ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+
 #include "philox4x32_10.hpp"
 #include "mrg32k3a.hpp"
 #include "xorwow.hpp"

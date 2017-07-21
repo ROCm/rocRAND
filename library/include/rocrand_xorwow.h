@@ -101,7 +101,7 @@ public:
         // Weyl sequence value
         unsigned int d;
 
-        #ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+        #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -153,7 +153,7 @@ public:
         discard_subsequence(subsequence);
         discard(offset);
 
-        #ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+        #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
         #endif
@@ -297,7 +297,7 @@ protected:
 
 namespace detail {
 
-#ifdef ROCRAND_DETAIL_XORWOW_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 // This helps access fields of xorwow_engine's internal state which
 // saves floats and doubles generated using the Box–Muller transform
 struct xorwow_engine_boxmuller_helper
