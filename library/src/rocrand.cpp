@@ -315,18 +315,15 @@ rocrand_initialize_generator(rocrand_generator generator)
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
     {
-        static_cast<rocrand_philox4x32_10 *>(generator)->init();
-        return ROCRAND_STATUS_SUCCESS;
+        return static_cast<rocrand_philox4x32_10 *>(generator)->init();
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
-        static_cast<rocrand_mrg32k3a *>(generator)->init();
-        return ROCRAND_STATUS_SUCCESS;
+        return static_cast<rocrand_mrg32k3a *>(generator)->init();
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
-        static_cast<rocrand_xorwow *>(generator)->init();
-        return ROCRAND_STATUS_SUCCESS;
+        return static_cast<rocrand_xorwow *>(generator)->init();
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
