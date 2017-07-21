@@ -84,7 +84,7 @@ void rocrand_uniform_kernel(float * output, const size_t size)
     {
         if(state_id % 4 == 0)
             output[index] = rocrand_uniform4(&state).x;
-        if(state_id % 2 == 0)
+        else if(state_id % 2 == 0)
             output[index] = rocrand_uniform2(&state).x;
         else
             output[index] = rocrand_uniform(&state);
@@ -108,7 +108,7 @@ void rocrand_normal_kernel(float * output, const size_t size)
     {
         if(state_id % 4 == 0)
             output[index] = rocrand_normal4(&state).x;
-        if(state_id % 2 == 0)
+        else if(state_id % 2 == 0)
             output[index] = rocrand_normal2(&state).x;
         else
             output[index] = rocrand_normal(&state);
@@ -132,7 +132,7 @@ void rocrand_log_normal_kernel(float * output, const size_t size)
     {
         if(state_id % 4 == 0)
             output[index] = rocrand_log_normal4(&state, 1.6f, 0.25f).x;
-        if(state_id % 2 == 0)
+        else if(state_id % 2 == 0)
             output[index] = rocrand_log_normal2(&state, 1.6f, 0.25f).x;
         else
             output[index] = rocrand_log_normal(&state, 1.6f, 0.25f);

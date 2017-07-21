@@ -35,6 +35,8 @@ hiprandStatus_t to_hiprand_status(rocrand_status status)
     {
         case ROCRAND_STATUS_SUCCESS:
             return HIPRAND_STATUS_SUCCESS;
+        case ROCRAND_STATUS_NOT_CREATED:
+            return HIPRAND_STATUS_NOT_INITIALIZED;
         case ROCRAND_STATUS_VERSION_MISMATCH:
             return HIPRAND_STATUS_VERSION_MISMATCH;
         case ROCRAND_STATUS_ALLOCATION_FAILED:
@@ -49,8 +51,8 @@ hiprandStatus_t to_hiprand_status(rocrand_status status)
             return HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED;
         case ROCRAND_STATUS_LAUNCH_FAILURE:
             return HIPRAND_STATUS_LAUNCH_FAILURE;
-        case ROCRAND_STATUS_PREEXISTING_FAILURE:
-            return HIPRAND_STATUS_PREEXISTING_FAILURE;
+        // case ROCRAND_STATUS_PREEXISTING_FAILURE:
+        //     return HIPRAND_STATUS_PREEXISTING_FAILURE;
         // case ROCRAND_STATUS_INITIALIZATION_FAILED:
         //     return HIPRAND_STATUS_INITIALIZATION_FAILED;
         // case ROCRAND_STATUS_ARCH_MISMATCH:
@@ -226,6 +228,16 @@ hiprandGeneratePoisson(hiprandGenerator_t generator,
             (rocrand_generator)(generator),
             output_data, n,
             lambda
+        )
+    );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateSeeds(hiprandGenerator_t generator)
+{
+    return to_hiprand_status(
+        rocrand_initialize_generator(
+            (rocrand_generator)(generator)
         )
     );
 }

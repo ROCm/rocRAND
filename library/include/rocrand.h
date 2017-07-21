@@ -42,15 +42,14 @@ extern "C" {
 typedef enum rocrand_status {
     ROCRAND_STATUS_SUCCESS = 0, ///< No errors
     ROCRAND_STATUS_VERSION_MISMATCH = 100, ///< Header file and linked library version do not match
-    ROCRAND_STATUS_NOT_INITIALIZED = 101, ///< Generator not initialized
-    ROCRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
-    ROCRAND_STATUS_TYPE_ERROR = 103, ///< Generator is wrong type
+    ROCRAND_STATUS_NOT_CREATED = 101, ///< Generator was not created using rocrand_create_generator
+    ROCRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed during execution
+    ROCRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
     ROCRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
     ROCRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Length requested is not a multple of dimension
-    ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision required by MRG32k3a
-    ROCRAND_STATUS_LAUNCH_FAILURE = 201, ///< Kernel launch failure
-    ROCRAND_STATUS_PREEXISTING_FAILURE = 202, ///< Preexisting failure on library entry
-    ROCRAND_STATUS_INTERNAL_ERROR = 999 ///< Internal library error
+    ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
+    ROCRAND_STATUS_LAUNCH_FAILURE = 107, ///< Kernel launch failure
+    ROCRAND_STATUS_INTERNAL_ERROR = 108 ///< Internal library error
 } rocrand_status;
 
 /**
@@ -87,7 +86,6 @@ typedef enum rocrand_rng_type {
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
- * - ROCRAND_STATUS_INITIALIZATION_FAILED if there was a problem setting up the GPU \n
  * - ROCRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
  *   dynamically linked library version \n
  * - ROCRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
@@ -105,7 +103,7 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
  * \param generator - Generator to be destroyed
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_SUCCESS if generator was destroyed successfully \n
  */
 rocrand_status ROCRANDAPI
@@ -125,8 +123,8 @@ rocrand_destroy_generator(rocrand_generator generator);
  * \param n - Number of 32-bit unsigned integers to generate
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -147,8 +145,8 @@ rocrand_generate(rocrand_generator generator,
  * \param n - Number of floats to generate
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -169,8 +167,8 @@ rocrand_generate_uniform(rocrand_generator generator,
  * \param n - Number of floats to generate
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -190,8 +188,8 @@ rocrand_generate_uniform_double(rocrand_generator generator,
  * \param stddev - Standard deviation value of normal distribution
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -212,8 +210,8 @@ rocrand_generate_normal(rocrand_generator generator,
  * \param stddev - Standard deviation value of normal distribution
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -234,8 +232,8 @@ rocrand_generate_normal_double(rocrand_generator generator,
  * \param stddev - Standard deviation value of log normal distribution
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -256,8 +254,8 @@ rocrand_generate_log_normal(rocrand_generator generator,
  * \param stddev - Standard deviation value of log normal distribution
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -277,8 +275,8 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
  * \param lambda - lambda for the Poisson distribution
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - ROCRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
@@ -286,6 +284,26 @@ rocrand_status ROCRANDAPI
 rocrand_generate_poisson(rocrand_generator generator,
                          unsigned int * output_data, size_t n,
                          double lambda);
+
+/**
+ * \brief Initializes the generator's state on GPU or host.
+ *
+ * Initializes the generator's state on GPU or host. User it not
+ * required to call this function before using a generator.
+ *
+ * If rocrand_initialize() was not called for a generator, it will be
+ * automatically called by functions which generates random numbers like
+ * rocrand_generate(), rocrang_generate_uniform() etc.
+ *
+ * \param generator - Generator to initialize
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_SUCCESS if the seeds were generated successfully \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_initialize_generator(rocrand_generator generator);
 
 /**
  * \brief Sets the current stream for kernel launches.
@@ -297,7 +315,7 @@ rocrand_generate_poisson(rocrand_generator generator,
  * \param stream - Stream to use or NULL for default stream
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_SUCCESS if stream was set successfully \n
  */
 rocrand_status ROCRANDAPI
@@ -315,7 +333,7 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
  * \param seed - New seed value
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_TYPE_ERROR if the generator is a quasi-random number generator \n
  * - ROCRAND_STATUS_SUCCESS if seed was set successfully \n
  */
@@ -334,7 +352,7 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
  * \param offset - New absolute offset
  *
  * \return
- * - ROCRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_SUCCESS if offset was successfully set \n
  */
 rocrand_status ROCRANDAPI

@@ -36,22 +36,17 @@
 
 namespace rocrand_host {
 namespace detail {
-    
+
     typedef ::rocrand_device::mrg32k3a_engine mrg32k3a_device_engine;
-    
+
     __global__
-    void init_states_kernel(mrg32k3a_device_engine * engines,
+    void init_engines_kernel(mrg32k3a_device_engine * engines,
                             unsigned long long seed,
                             unsigned long long offset)
     {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-
-        mrg32k3a_device_engine engine;
-        rocrand_init(seed, engine_id, offset, &engine);
-
-        engines[engine_id] = engine;
+        engines[engine_id] = mrg32k3a_device_engine(seed, engine_id, offset);
     }
-
 
     template<class Type, class Distribution>
     __global__
@@ -182,8 +177,8 @@ public:
         m_offset = offset;
         m_engines_initialized = false;
     }
-    
-    rocrand_status init_states()
+
+    rocrand_status init()
     {
         if (m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
@@ -198,7 +193,7 @@ public:
         const uint32_t blocks = max_blocks;
 
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::init_states_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
             dim3(blocks), dim3(threads), 0, m_stream,
             m_engines, m_seed, m_offset
         );
@@ -211,15 +206,14 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-
     template<class T, class Distribution = mrg_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
-        rocrand_status status = init_states();
+        rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
-    
+
         #ifdef __HIP_PLATFORM_NVCC__
         const uint32_t threads = 128;
         const uint32_t max_blocks = 128; // 512
@@ -251,7 +245,7 @@ public:
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        rocrand_status status = init_states();
+        rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
@@ -281,7 +275,7 @@ public:
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        rocrand_status status = init_states();
+        rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
@@ -310,7 +304,7 @@ public:
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        rocrand_status status = init_states();
+        rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
