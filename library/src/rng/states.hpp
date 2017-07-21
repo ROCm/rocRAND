@@ -22,7 +22,6 @@
 #define ROCRAND_RNG_STATES_H_
 
 #include "philox4x32_10_state.hpp"
-#include "xorwow_state.hpp"
 #include "mrg32k3a_state.hpp"
 
 #endif // ROCRAND_RNG_STATES_H_
