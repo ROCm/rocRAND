@@ -71,7 +71,7 @@ double2 box_muller_double(uint4 v)
     #endif
     return result;
 }
-    
+
 FQUALIFIERS
 float2 mrg_box_muller(float x, float y)
 {
@@ -132,7 +132,7 @@ double2 normal_distribution_double2(uint4 v)
 {
     return ::rocrand_device::detail::box_muller_double(v);
 }
-    
+
 FQUALIFIERS
 float2 mrg_normal_distribution2(unsigned long long v1, unsigned long long v2)
 {
@@ -140,7 +140,7 @@ float2 mrg_normal_distribution2(unsigned long long v1, unsigned long long v2)
     float y = rocrand_device::detail::mrg_uniform_distribution(v2);
     return ::rocrand_device::detail::mrg_box_muller(x, y);
 }
-    
+
 FQUALIFIERS
 double2 mrg_normal_distribution_double2(unsigned long long v1, unsigned long long v2)
 {
@@ -152,7 +152,7 @@ double2 mrg_normal_distribution_double2(unsigned long long v1, unsigned long lon
 } // end namespace detail
 } // end namespace rocrand_device
 
-#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_philox4x32_10 * state)
 {
@@ -180,7 +180,7 @@ float4 rocrand_normal4(rocrand_state_philox4x32_10 * state)
     return rocrand_device::detail::normal_distribution4(rocrand4(state));
 }
 
-#ifdef ROCRAND_DETAIL_PHILOX_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_normal_double(rocrand_state_philox4x32_10 * state)
 {
@@ -202,7 +202,7 @@ double2 rocrand_normal_double2(rocrand_state_philox4x32_10 * state)
     return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
 }
 
-#ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_mrg32k3a * state)
 {
@@ -224,7 +224,7 @@ float2 rocrand_normal2(rocrand_state_mrg32k3a * state)
     return rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
 }
 
-#ifdef ROCRAND_DETAIL_MRG32K3A_BM_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_normal_double(rocrand_state_mrg32k3a * state)
 {
