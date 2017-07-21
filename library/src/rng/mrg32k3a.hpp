@@ -29,9 +29,9 @@
 #include <hip/hip_runtime.h>
 
 #include <rocrand.h>
-#include <rocrand_kernel.h>
 
 #include "generator_type.hpp"
+#include "device_engines.hpp"
 #include "distributions.hpp"
 
 namespace rocrand_host {
