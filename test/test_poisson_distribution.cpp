@@ -78,14 +78,16 @@ TEST_P(PoissonDistribution, MeanVar)
     std::random_device rd;
     std::mt19937 host_gen(rd());
     dummy_gen<std::mt19937> gen(host_gen);
-    poisson_distribution<unsigned int> dis(lambda);
+
+    poisson_distribution<true> dis;
+    dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
     std::vector<unsigned int> values(samples_count);
 
     for (size_t si = 0; si < samples_count; si++)
     {
-        const unsigned int v = dis(gen);
+        const unsigned int v = dis.use_small() ? dis.small(gen) : dis.large(gen).x;
         values[si] = v;
     }
 
@@ -105,7 +107,8 @@ TEST_P(PoissonDistribution, HistogramCompare)
     dummy_gen<std::mt19937> gen(host_gen);
     std::poisson_distribution<unsigned int> host_dis(lambda);
 
-    poisson_distribution<unsigned int> dis(lambda);
+    poisson_distribution<true> dis;
+    dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
     const size_t bin_size = static_cast<size_t>(std::max(2.0, sqrt(lambda)));
@@ -125,7 +128,7 @@ TEST_P(PoissonDistribution, HistogramCompare)
 
     for (size_t si = 0; si < samples_count; si++)
     {
-        const unsigned int v = dis(gen);
+        const unsigned int v = dis.use_small() ? dis.small(gen) : dis.large(gen).x;
         const size_t bin = v / bin_size;
         if (bin < bins_count)
         {
