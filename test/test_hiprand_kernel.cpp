@@ -149,6 +149,25 @@ void hiprand_log_normal_kernel(float * output, const size_t size)
     }
 }
 
+template <class GeneratorState>
+__global__
+void hiprand_poisson_kernel(unsigned int * output, const size_t size, double lambda)
+{
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+
+    GeneratorState state;
+    const unsigned int subsequence = state_id;
+    hiprand_init(12345, subsequence, 0, &state);
+
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        output[index] = hiprand_poisson(&state, lambda);
+        index += global_size;
+    }
+}
+
 template<class T>
 void hiprand_kernel_h_hiprand_init_test()
 {
@@ -530,3 +549,84 @@ TEST(hiprand_kernel_h_xorwow, hiprand_log_normal)
     typedef hiprandStateXORWOW_t state_type;
     hiprand_kernel_h_hiprand_log_normal_test<state_type>();
 }
+
+template<class T>
+void hiprand_kernel_h_hiprand_poisson_test(double lambda)
+{
+    typedef T state_type;
+
+    const size_t output_size = 8192;
+    unsigned int * output;
+    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(hiprand_poisson_kernel<state_type>),
+        dim3(4), dim3(64), 0, 0,
+        output, output_size, lambda
+    );
+    HIP_CHECK(hipPeekAtLastError());
+
+    std::vector<unsigned int> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(unsigned int),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    double mean = 0;
+    for(auto v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_size;
+
+    double variance = 0;
+    for(auto v : output_host)
+    {
+        variance += std::pow(v - mean, 2);
+    }
+    variance = variance / output_size;
+
+    EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
+    EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+}
+
+const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
+
+class hiprand_kernel_h_philox4x32_10_poisson : public ::testing::TestWithParam<double> { };
+TEST_P(hiprand_kernel_h_philox4x32_10_poisson, hiprand_poisson)
+{
+    typedef hiprandStatePhilox4_32_10_t state_type;
+    hiprand_kernel_h_hiprand_poisson_test<state_type>(GetParam());
+}
+
+INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_philox4x32_10_poisson,
+                        hiprand_kernel_h_philox4x32_10_poisson,
+                        ::testing::ValuesIn(lambdas));
+
+class hiprand_kernel_h_mrg32k3a_poisson : public ::testing::TestWithParam<double> { };
+TEST_P(hiprand_kernel_h_mrg32k3a_poisson, hiprand_poisson)
+{
+    typedef hiprandStateMRG32k3a_t state_type;
+    hiprand_kernel_h_hiprand_poisson_test<state_type>(GetParam());
+}
+
+INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_mrg32k3a_poisson,
+                        hiprand_kernel_h_mrg32k3a_poisson,
+                        ::testing::ValuesIn(lambdas));
+
+class hiprand_kernel_h_xorwow_poisson : public ::testing::TestWithParam<double> { };
+TEST_P(hiprand_kernel_h_xorwow_poisson, hiprand_poisson)
+{
+    typedef hiprandStateXORWOW_t state_type;
+    hiprand_kernel_h_hiprand_poisson_test<state_type>(GetParam());
+}
+
+INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_xorwow_poisson,
+                        hiprand_kernel_h_xorwow_poisson,
+                        ::testing::ValuesIn(lambdas));
