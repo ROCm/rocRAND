@@ -95,6 +95,17 @@ double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double m
     };
 }
 
+FQUALIFIERS
+double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double mean, double stddev)
+{
+    double2 r1, r2;
+    r1 = rocrand_log_normal_double2(state, mean, stddev);
+    r2 = rocrand_log_normal_double2(state, mean, stddev);
+    return double4 {
+        r1.x, r1.y, r2.x, r2.y
+    };
+}
+
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stddev)

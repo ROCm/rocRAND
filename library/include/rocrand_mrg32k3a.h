@@ -83,6 +83,9 @@ public:
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.
     ///
+    /// New seed value should not be zero. If \p seed_value is equal
+    /// zero, value \p ROCRAND_MRG32K3A_DEFAULT_SEED is used instead.
+    ///
     /// A subsequence is 2^67 numbers long.
     FQUALIFIERS
     mrg32k3a_engine(const unsigned long long seed,
@@ -99,12 +102,19 @@ public:
     /// seed value \p seed_value, skips \p subsequence subsequences
     /// and \p offset random numbers.
     ///
+    /// New seed value should not be zero. If \p seed_value is equal
+    /// zero, value \p ROCRAND_MRG32K3A_DEFAULT_SEED is used instead.
+    ///
     /// A subsequence is 2^67 numbers long.
     FQUALIFIERS
     void seed(unsigned long long seed_value,
               const unsigned long long subsequence,
               const unsigned long long offset)
     {
+        if(seed_value == 0)
+        {
+            seed_value = ROCRAND_MRG32K3A_DEFAULT_SEED;
+        }
         unsigned int x = (unsigned int) seed_value ^ 0x55555555UL;
         unsigned int y = (unsigned int) ((seed_value >> 32) ^ 0xAAAAAAAAUL);
         m_state.g1[0] = mod_mul_m1(x, seed_value);

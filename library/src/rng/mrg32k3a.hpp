@@ -153,6 +153,10 @@ public:
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
+        if(m_seed == 0)
+        {
+            m_seed = ROCRAND_MRG32K3A_DEFAULT_SEED;
+        }
     }
 
     ~rocrand_mrg32k3a()
@@ -166,8 +170,15 @@ public:
     }
 
     /// Changes seed to \p seed and resets generator state.
+    ///
+    /// New seed value should not be zero. If \p seed_value is equal
+    /// zero, value \p ROCRAND_MRG32K3A_DEFAULT_SEED is used instead.
     void set_seed(unsigned long long seed)
     {
+        if(seed == 0)
+        {
+            seed = ROCRAND_MRG32K3A_DEFAULT_SEED;
+        }
         m_seed = seed;
         m_engines_initialized = false;
     }
