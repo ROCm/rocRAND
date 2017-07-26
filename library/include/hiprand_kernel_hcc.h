@@ -284,18 +284,18 @@ double4 hiprand_log_normal4_double(hiprandStatePhilox4_32_10_t * state,
     return rocrand_log_normal_double4(state, mean, stddev);
 }
 
-// template<class StateType>
-// QUALIFIERS
-// uint hiprand_poisson(StateType * state, double lambda)
-// {
-//     check_state_type<StateType>();
-//     return rocrand_poisson(state, lambda);
-// }
+template<class StateType>
+QUALIFIERS
+uint hiprand_poisson(StateType * state, double lambda)
+{
+    check_state_type<StateType>();
+    return rocrand_poisson(state, lambda);
+}
 
-// QUALIFIERS
-// uint4 hiprand_poisson4(hiprandStatePhilox4_32_10_t * state, double lambda)
-// {
-//     return rocrand_poisson4(state, lambda);
-// }
+QUALIFIERS
+uint4 hiprand_poisson4(hiprandStatePhilox4_32_10_t * state, double lambda)
+{
+    return rocrand_poisson4(state, lambda);
+}
 
 #endif // HIPRAND_KERNEL_HCC_H_
