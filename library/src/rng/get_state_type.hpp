@@ -33,12 +33,6 @@ struct rocrand_get_state_type
 };
 
 template<>
-struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
-{
-    typedef rocrand_philox4_32_10_state type;
-};
-
-template<>
 struct rocrand_get_state_type<ROCRAND_RNG_PSEUDO_MRG32K3A>
 {
     typedef rocrand_mrg32k3a_state type;
