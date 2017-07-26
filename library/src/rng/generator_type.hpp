@@ -30,6 +30,8 @@ struct rocrand_generator_base_type
 {
     rocrand_generator_base_type(rocrand_rng_type rng_type) : rng_type(rng_type) {}
     const rocrand_rng_type rng_type;
+
+    virtual ~rocrand_generator_base_type() {}
 };
 
 // rocRAND random number generator base class
@@ -44,11 +46,6 @@ struct rocrand_generator_type : public rocrand_generator_base_type
                            hipStream_t stream = 0)
         : base_type(GeneratorType),
           m_seed(seed), m_offset(offset), m_stream(stream)
-    {
-
-    }
-
-    ~rocrand_generator_type()
     {
 
     }
