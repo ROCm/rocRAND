@@ -44,7 +44,7 @@ extern "C" {
   {                                  \
     hipError_t error = condition;    \
     if(error != hipSuccess){         \
-        std::cout << error << std::endl; \
+        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
         exit(error); \
     } \
   }
@@ -53,7 +53,7 @@ extern "C" {
   {                                              \
     rocrand_status status = condition;           \
     if(status != ROCRAND_STATUS_SUCCESS) {       \
-        std::cout << status << std::endl; \
+        std::cout << "ROCRAND error: " << status << " line: " << __LINE__ << std::endl; \
         exit(status); \
     } \
   }
@@ -259,7 +259,7 @@ void run_tests(const size_t size, const size_t trials,
                 return rocrand_generate_poisson(gen, data, size, lambda);
             },
             lambda, std::sqrt(lambda),
-            [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x))); }
+            [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
         );
     }
 }
