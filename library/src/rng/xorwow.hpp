@@ -146,9 +146,9 @@ namespace detail {
 
     template<class Distribution>
     __global__
-    void generate_poisson_kernel(xorwow_device_engine * engines,
-                                 unsigned int * data, const size_t n,
-                                 Distribution distribution)
+    void generate_small_poisson_kernel(xorwow_device_engine * engines,
+                                       unsigned int * data, const size_t n,
+                                       const Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
@@ -157,12 +157,46 @@ namespace detail {
         // Load device engine
         xorwow_device_engine engine = engines[engine_id];
 
-        // TODO: Improve performance.
         while(index < n)
         {
-            auto result = distribution(engine);
+            const unsigned int result = distribution(engine);
             data[index] = result;
             index += stride;
+        }
+
+        // Save engine with its state
+        engines[engine_id] = engine;
+    }
+
+    template<class Distribution>
+    __global__
+    void generate_large_poisson_kernel(xorwow_device_engine * engines,
+                                       unsigned int * data, const size_t n,
+                                       const Distribution distribution)
+    {
+        typedef decltype(distribution(*engines)) Type2;
+
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load device engine
+        xorwow_device_engine engine = engines[engine_id];
+
+        Type2 * data2 = (Type2 *)data;
+        while(index < (n / 2))
+        {
+            const Type2 result = distribution(engine);
+            data2[index] = result;
+            index += stride;
+        }
+
+        // First work-item saves the tail when n is not a multiple of 2
+        if(engine_id == 0 && (n & 1) > 0)
+        {
+            const Type2 result = distribution(engine);
+            // Save the tail
+            data[n - 1] = result.x;
         }
 
         // Save engine with its state
@@ -349,13 +383,30 @@ public:
         #endif
         const uint32_t blocks = max_blocks;
 
-        poisson_distribution<unsigned int> distribution(lambda);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
+        try
+        {
+            poisson.set_lambda(lambda);
+        }
+        catch(rocrand_status status)
+        {
+            return status;
+        }
+        if (poisson.use_small())
+        {
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(rocrand_host::detail::generate_small_poisson_kernel),
+                dim3(blocks), dim3(threads), 0, m_stream,
+                m_engines, data, data_size, poisson.small
+            );
+        }
+        else
+        {
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(rocrand_host::detail::generate_large_poisson_kernel),
+                dim3(blocks), dim3(threads), 0, m_stream,
+                m_engines, data, data_size, poisson.large
+            );
+        }
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
@@ -367,6 +418,8 @@ private:
     bool m_engines_initialized;
     engine_type * m_engines;
     size_t m_engines_size;
+
+    poisson_distribution<> poisson;
 
     // m_seed from base_type
     // m_offset from base_type
