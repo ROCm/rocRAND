@@ -28,6 +28,9 @@
 #include "rocrand_common.h"
 #include "rocrand_xorwow_precomputed.h"
 
+// G. Marsaglia, Xorshift RNGs, 2003
+// http://www.jstatsoft.org/v08/i14/paper
+
 #define ROCRAND_XORWOW_DEFAULT_SEED 0ULL
 
 namespace rocrand_device {
