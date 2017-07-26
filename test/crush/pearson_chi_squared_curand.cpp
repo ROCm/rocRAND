@@ -246,7 +246,7 @@ void run_tests(const size_t size, const size_t trials,
                 return curandGeneratePoisson(gen, data, size, lambda);
             },
             lambda, std::sqrt(lambda),
-            [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x))); }
+            [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
         );
     }
 }
