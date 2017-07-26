@@ -24,8 +24,6 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-#include "get_state_type.hpp" // includes all states
-
 struct rocrand_generator_base_type
 {
     rocrand_generator_base_type(rocrand_rng_type rng_type) : rng_type(rng_type) {}
@@ -39,7 +37,6 @@ template<rocrand_rng_type GeneratorType = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 struct rocrand_generator_type : public rocrand_generator_base_type
 {
     using base_type = rocrand_generator_base_type;
-    using state_type = typename rocrand_get_state_type<GeneratorType>::type;
 
     rocrand_generator_type(unsigned long long seed = 0,
                            unsigned long long offset = 0,
