@@ -242,16 +242,19 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
     if (distribution == "poisson")
     {
-        const double lambda = vm["lambda"].as<double>();
-        std::cout << "    " << "lambda:"
-             << std::fixed << std::setprecision(1) << lambda << ":" << std::endl;
-        run_test<unsigned int>(vm, rng_type, plot_name,
-            [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
-                return curandGeneratePoisson(gen, data, size, lambda);
-            },
-            lambda, std::sqrt(lambda),
-            [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
-        );
+        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        for (double lambda : lambdas)
+        {
+            std::cout << "    " << "lambda:"
+                 << std::fixed << std::setprecision(1) << lambda << ":" << std::endl;
+            run_test<unsigned int>(vm, rng_type, plot_name,
+                [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
+                    return curandGeneratePoisson(gen, data, size, lambda);
+                },
+                lambda, std::sqrt(lambda),
+                [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
+            );
+        }
     }
 }
 
@@ -306,7 +309,8 @@ int main(int argc, char *argv[])
             distribution_desc.c_str())
         ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
             engine_desc.c_str())
-        ("lambda", po::value<double>()->default_value(1000.0), "lambda of Poisson distribution")
+        ("lambda", po::value<std::vector<double>>()->multitoken()->default_value({ 100.0 }, "100.0"),
+            "space-separated list of lambdas of Poisson distribution")
         ("plots", "save plots for GnuPlot")
     ;
     po::variables_map vm;
