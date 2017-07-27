@@ -58,19 +58,25 @@ extern "C" {
     } \
   }
 
+typedef rocrand_rng_type rng_type_t;
+
 template<typename T>
 using generate_func_type = std::function<rocrand_status(rocrand_generator, T *, size_t)>;
 
 using distribution_func_type = std::function<double(double)>;
 
 template<typename T>
-void run_test(const size_t size, const size_t trials,
-              const rocrand_rng_type rng_type,
-              const bool save_plots, const std::string plot_name,
+void run_test(const boost::program_options::variables_map& vm,
+              const rng_type_t rng_type,
+              const std::string plot_name,
               generate_func_type<T> generate_func,
               const double mean, const double stddev,
               distribution_func_type distribution_func)
 {
+    const size_t size = vm["size"].as<size_t>();
+    const size_t trials = vm["trials"].as<size_t>();
+    const bool save_plots = vm.count("plots");
+
     const std::vector<size_t> cells_counts({ 1000, 100, 25 });
     const double significance_level = 0.9;
     std::vector<double> rejection_criteria;
@@ -105,7 +111,6 @@ void run_test(const size_t size, const size_t trials,
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
-    HIP_CHECK(hipDeviceSynchronize());
 
     for (size_t trial = 0; trial < trials; trial++)
     {
@@ -114,7 +119,6 @@ void run_test(const size_t size, const size_t trials,
 
         std::vector<T> h_data(size);
         HIP_CHECK(hipMemcpy(h_data.data(), data, size * sizeof(T), hipMemcpyDeviceToHost));
-        HIP_CHECK(hipDeviceSynchronize());
 
         std::cout << "  ";
         for (size_t test = 0; test < cells_counts.size(); test++)
@@ -182,16 +186,14 @@ void run_test(const size_t size, const size_t trials,
     HIP_CHECK(hipFree(data));
 }
 
-void run_tests(const size_t size, const size_t trials,
-               const rocrand_rng_type rng_type,
+void run_tests(const boost::program_options::variables_map& vm,
+               const rng_type_t rng_type,
                const std::string& distribution,
-               const bool save_plots, const std::string plot_name,
-               const boost::program_options::variables_map& vm)
+               const std::string plot_name)
 {
-    std::cout << "  " << distribution << ":" << std::endl;
     if (distribution == "uniform-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_uniform(gen, data, size);
             },
@@ -201,7 +203,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "uniform-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_uniform_double(gen, data, size);
             },
@@ -211,7 +213,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "normal-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
             },
@@ -221,7 +223,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "normal-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
             },
@@ -231,7 +233,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
             },
@@ -241,7 +243,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
             },
@@ -252,9 +254,9 @@ void run_tests(const size_t size, const size_t trials,
     if (distribution == "poisson")
     {
         const double lambda = vm["lambda"].as<double>();
-        std::cout << "  " << "lambda:"
+        std::cout << "    " << "lambda:"
              << std::fixed << std::setprecision(1) << lambda << ":" << std::endl;
-        run_test<unsigned int>(size, trials, rng_type, save_plots, plot_name,
+        run_test<unsigned int>(vm, rng_type, plot_name,
             [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
                 return rocrand_generate_poisson(gen, data, size, lambda);
             },
@@ -264,7 +266,7 @@ void run_tests(const size_t size, const size_t trials,
     }
 }
 
-const std::vector<std::pair<rocrand_rng_type, std::string>> all_engines = {
+const std::vector<std::pair<rng_type_t, std::string>> all_engines = {
     { ROCRAND_RNG_PSEUDO_XORWOW, "xorwow" },
     { ROCRAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
     // { ROCRAND_RNG_PSEUDO_MTGP32, "mtgp32" },
@@ -298,7 +300,7 @@ int main(int argc, char *argv[])
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-            [](std::string a, std::pair<rocrand_rng_type, std::string> b) {
+            [](std::string a, std::pair<rng_type_t, std::string> b) {
                 return a + "\n   " + b.second;
             }
         ) +
@@ -318,18 +320,13 @@ int main(int argc, char *argv[])
     po::store(po::parse_command_line(argc, argv, options), vm);
     po::notify(vm);
 
-    if(vm.count("help")) {
+    if(vm.count("help"))
+    {
         std::cout << options << std::endl;
         return 0;
     }
 
-    const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
-    const bool save_plots = vm.count("plots");
-
-    std::cout << "rocRAND:" << std::endl << std::endl;
-
-    std::vector<std::pair<rocrand_rng_type, std::string>> engines;
+    std::vector<std::pair<rng_type_t, std::string>> engines;
     {
         auto es = vm["engine"].as<std::vector<std::string>>();
         if (std::find(es.begin(), es.end(), "all") != es.end())
@@ -363,15 +360,17 @@ int main(int argc, char *argv[])
         }
     }
 
+    std::cout << "rocRAND:" << std::endl << std::endl;
     for (auto e : engines)
     {
         const std::string engine_name = e.second;
         std::cout << engine_name << ":" << std::endl;
-        const rocrand_rng_type rng_type = e.first;
+        const rng_type_t rng_type = e.first;
         for (auto distribution : distributions)
         {
+            std::cout << "  " << distribution << ":" << std::endl;
             const std::string plot_name = engine_name + "-" + distribution;
-            run_tests(size, trials, rng_type, distribution, save_plots, plot_name, vm);
+            run_tests(vm, rng_type, distribution, plot_name);
         }
     }
 

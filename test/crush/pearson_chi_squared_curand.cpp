@@ -47,19 +47,25 @@ extern "C" {
     printf("Error at %s:%d\n",__FILE__,__LINE__);\
     return exit(EXIT_FAILURE);}} while(0)
 
+typedef curandRngType rng_type_t;
+
 template<typename T>
 using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T *, size_t)>;
 
 using distribution_func_type = std::function<double(double)>;
 
 template<typename T>
-void run_test(const size_t size, const size_t trials,
-              const curandRngType rng_type,
-              const bool save_plots, const std::string plot_name,
+void run_test(const boost::program_options::variables_map& vm,
+              const rng_type_t rng_type,
+              const std::string plot_name,
               generate_func_type<T> generate_func,
               const double mean, const double stddev,
               distribution_func_type distribution_func)
 {
+    const size_t size = vm["size"].as<size_t>();
+    const size_t trials = vm["trials"].as<size_t>();
+    const bool save_plots = vm.count("plots");
+
     const std::vector<size_t> cells_counts({ 1000, 100, 25 });
     const double significance_level = 0.9;
     std::vector<double> rejection_criteria;
@@ -94,7 +100,6 @@ void run_test(const size_t size, const size_t trials,
 
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
-    CUDA_CALL(cudaDeviceSynchronize());
 
     for (size_t trial = 0; trial < trials; trial++)
     {
@@ -103,7 +108,6 @@ void run_test(const size_t size, const size_t trials,
 
         std::vector<T> h_data(size);
         CUDA_CALL(cudaMemcpy(h_data.data(), data, size * sizeof(T), cudaMemcpyDeviceToHost));
-        CUDA_CALL(cudaDeviceSynchronize());
 
         std::cout << "  ";
         for (size_t test = 0; test < cells_counts.size(); test++)
@@ -140,6 +144,7 @@ void run_test(const size_t size, const size_t trials,
                 fout.open(plot_name + "-" + std::to_string(trial) + "-" + std::to_string(test) + ".dat",
                     std::ios_base::out | std::ios_base::trunc);
             }
+
             double chi_squared = 0.0;
             for (size_t ci = 0; ci < cells_count; ci++)
             {
@@ -151,6 +156,7 @@ void run_test(const size_t size, const size_t trials,
                 {
                     chi_squared += (observed - expected) * (observed - expected) / expected;
                 }
+
                 if (save_plots)
                 {
                     fout << observed << "\t" << expected << std::endl;
@@ -169,16 +175,14 @@ void run_test(const size_t size, const size_t trials,
     CUDA_CALL(cudaFree(data));
 }
 
-void run_tests(const size_t size, const size_t trials,
-               const curandRngType rng_type,
+void run_tests(const boost::program_options::variables_map& vm,
+               const rng_type_t rng_type,
                const std::string& distribution,
-               const bool save_plots, const std::string plot_name,
-               const boost::program_options::variables_map& vm)
+               const std::string plot_name)
 {
-    std::cout << "  " << distribution << ":" << std::endl;
     if (distribution == "uniform-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateUniform(gen, data, size);
             },
@@ -188,7 +192,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "uniform-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateUniformDouble(gen, data, size);
             },
@@ -198,7 +202,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "normal-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -208,7 +212,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "normal-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -218,7 +222,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -228,7 +232,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -239,9 +243,9 @@ void run_tests(const size_t size, const size_t trials,
     if (distribution == "poisson")
     {
         const double lambda = vm["lambda"].as<double>();
-        std::cout << "  " << "lambda:"
+        std::cout << "    " << "lambda:"
              << std::fixed << std::setprecision(1) << lambda << ":" << std::endl;
-        run_test<unsigned int>(size, trials, rng_type, save_plots, plot_name,
+        run_test<unsigned int>(vm, rng_type, plot_name,
             [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
                 return curandGeneratePoisson(gen, data, size, lambda);
             },
@@ -251,7 +255,7 @@ void run_tests(const size_t size, const size_t trials,
     }
 }
 
-const std::vector<std::pair<curandRngType, std::string>> all_engines = {
+const std::vector<std::pair<rng_type_t, std::string>> all_engines = {
     { CURAND_RNG_PSEUDO_XORWOW, "xorwow" },
     { CURAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
     { CURAND_RNG_PSEUDO_MTGP32, "mtgp32" },
@@ -285,11 +289,11 @@ int main(int argc, char *argv[])
                 return a + "\n   " + b;
             }
         ) +
-            "\nor all";
+        "\nor all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-            [](std::string a, std::pair<curandRngType, std::string> b) {
+            [](std::string a, std::pair<rng_type_t, std::string> b) {
                 return a + "\n   " + b.second;
             }
         ) +
@@ -309,17 +313,13 @@ int main(int argc, char *argv[])
     po::store(po::parse_command_line(argc, argv, options), vm);
     po::notify(vm);
 
-    if(vm.count("help")) {
+    if(vm.count("help"))
+    {
         std::cout << options << std::endl;
         return 0;
     }
 
-    const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
-    const bool save_plots = vm.count("plots");
-
-    std::cout << "cuRAND:" << std::endl << std::endl;
-    std::vector<std::pair<curandRngType, std::string>> engines;
+    std::vector<std::pair<rng_type_t, std::string>> engines;
     {
         auto es = vm["engine"].as<std::vector<std::string>>();
         if (std::find(es.begin(), es.end(), "all") != es.end())
@@ -353,15 +353,17 @@ int main(int argc, char *argv[])
         }
     }
 
+    std::cout << "cuRAND:" << std::endl << std::endl;
     for (auto e : engines)
     {
         const std::string engine_name = e.second;
         std::cout << engine_name << ":" << std::endl;
-        const curandRngType rng_type = e.first;
+        const rng_type_t rng_type = e.first;
         for (auto distribution : distributions)
         {
+            std::cout << "  " << distribution << ":" << std::endl;
             const std::string plot_name = engine_name + "-" + distribution;
-            run_tests(size, trials, rng_type, distribution, save_plots, plot_name, vm);
+            run_tests(vm, rng_type, distribution, plot_name);
         }
     }
 
