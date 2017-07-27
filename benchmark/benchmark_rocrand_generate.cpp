@@ -182,12 +182,12 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
 }
 
-const std::vector<std::pair<rng_type_t, std::string>> all_engines = {
-    { ROCRAND_RNG_PSEUDO_XORWOW, "xorwow" },
-    { ROCRAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
-    // { ROCRAND_RNG_PSEUDO_MTGP32, "mtgp32" },
-    { ROCRAND_RNG_PSEUDO_PHILOX4_32_10, "philox" },
-    // { ROCRAND_RNG_QUASI_SOBOL32, "sobol32" },
+const std::vector<std::string> all_engines = {
+    "xorwow",
+    "mrg32k3a",
+    // "mtgp32",
+    "philox",
+    // "sobol32",
 };
 
 const std::vector<std::string> all_distributions = {
@@ -218,8 +218,8 @@ int main(int argc, char *argv[])
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-            [](std::string a, std::pair<rng_type_t, std::string> b) {
-                return a + "\n   " + b.second;
+            [](std::string a, std::string b) {
+                return a + "\n   " + b;
             }
         ) +
         "\nor all";
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    std::vector<std::pair<rng_type_t, std::string>> engines;
+    std::vector<std::string> engines;
     {
         auto es = vm["engine"].as<std::vector<std::string>>();
         if (std::find(es.begin(), es.end(), "all") != es.end())
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
         {
             for (auto e : all_engines)
             {
-                if (std::find(es.begin(), es.end(), e.second) != es.end())
+                if (std::find(es.begin(), es.end(), e) != es.end())
                     engines.push_back(e);
             }
         }
@@ -279,11 +279,17 @@ int main(int argc, char *argv[])
     }
 
     std::cout << "rocRAND:" << std::endl << std::endl;
-    for (auto e : engines)
+    for (auto engine : engines)
     {
-        const std::string engine_name = e.second;
-        std::cout << engine_name << ":" << std::endl;
-        const rng_type_t rng_type = e.first;
+        std::cout << engine << ":" << std::endl;
+        rng_type_t rng_type;
+        if (engine == "xorwow")
+            rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
+        else if (engine == "mrg32k3a")
+            rng_type = ROCRAND_RNG_PSEUDO_MRG32K3A;
+        else if (engine == "philox")
+            rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
+
         for (auto distribution : distributions)
         {
             std::cout << "  " << distribution << ":" << std::endl;
