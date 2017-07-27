@@ -25,6 +25,7 @@
 #include <chrono>
 #include <numeric>
 #include <utility>
+#include <algorithm>
 
 #include <boost/program_options.hpp>
 
@@ -35,7 +36,7 @@
   {                                  \
     hipError_t error = condition;    \
     if(error != hipSuccess){         \
-        std::cout << error << std::endl; \
+        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
         exit(error); \
     } \
   }
@@ -44,7 +45,7 @@
   {                                              \
     rocrand_status status = condition;           \
     if(status != ROCRAND_STATUS_SUCCESS) {       \
-        std::cout << status << std::endl; \
+        std::cout << "ROCRAND error: " << status << " line: " << __LINE__ << std::endl; \
         exit(status); \
     } \
   }
@@ -53,21 +54,24 @@
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 #endif
 
+typedef rocrand_rng_type rng_type_t;
+
 template<typename T>
 using generate_func_type = std::function<rocrand_status(rocrand_generator, T *, size_t)>;
 
 template<typename T>
-void run_benchmark(const size_t size, const size_t trials,
-                   const rocrand_rng_type rng_type,
+void run_benchmark(const boost::program_options::variables_map& vm,
+                   const rng_type_t rng_type,
                    generate_func_type<T> generate_func)
 {
+    const size_t size = vm["size"].as<size_t>();
+    const size_t trials = vm["trials"].as<size_t>();
+
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
-    // Make sure memory is allocated
-    HIP_CHECK(hipDeviceSynchronize());
 
     // Warm-up
     for (size_t i = 0; i < 5; i++)
@@ -87,7 +91,7 @@ void run_benchmark(const size_t size, const size_t trials,
     std::chrono::duration<double, std::milli> elapsed = end - start;
 
     std::cout << std::fixed << std::setprecision(3)
-              << "     "
+              << "      "
               << "Throughput = "
               << std::setw(8) << (trials * size * sizeof(T)) /
                     (elapsed.count() / 1e3 * (1 << 30))
@@ -102,80 +106,72 @@ void run_benchmark(const size_t size, const size_t trials,
     HIP_CHECK(hipFree(data));
 }
 
-void run_benchmarks(const size_t size, const size_t trials,
-                    const rocrand_rng_type rng_type,
-                    const std::string& distribution,
-                    const boost::program_options::variables_map& vm)
+void run_benchmarks(const boost::program_options::variables_map& vm,
+                    const rng_type_t rng_type,
+                    const std::string& distribution)
 {
-    bool all = distribution == "all";
-    if (distribution == "uniform-uint" || all)
+    if (distribution == "uniform-uint")
     {
-        std::cout << "  " << "uniform-uint:" << std::endl;
-        run_benchmark<unsigned int>(size, trials, rng_type,
+        run_benchmark<unsigned int>(vm, rng_type,
             [](rocrand_generator gen, unsigned int * data, size_t size) {
                 return rocrand_generate(gen, data, size);
             }
         );
     }
-    if (distribution == "uniform-float" || all)
+    if (distribution == "uniform-float")
     {
-        std::cout << "  " << "uniform-float:" << std::endl;
-        run_benchmark<float>(size, trials, rng_type,
+        run_benchmark<float>(vm, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_uniform(gen, data, size);
             }
         );
     }
-    if (distribution == "uniform-double" || all)
+    if (distribution == "uniform-double")
     {
-        std::cout << "  " << "uniform-double:" << std::endl;
-        run_benchmark<double>(size, trials, rng_type,
+        run_benchmark<double>(vm, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_uniform_double(gen, data, size);
             }
         );
     }
-    if (distribution == "normal-float" || all)
+    if (distribution == "normal-float")
     {
-        std::cout << "  " << "normal-float:" << std::endl;
-        run_benchmark<float>(size, trials, rng_type,
+        run_benchmark<float>(vm, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
-    if (distribution == "normal-double" || all)
+    if (distribution == "normal-double")
     {
-        std::cout << "  " << "normal-double:" << std::endl;
-        run_benchmark<double>(size, trials, rng_type,
+        run_benchmark<double>(vm, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
             }
         );
     }
-    if (distribution == "log-normal-float" || all)
+    if (distribution == "log-normal-float")
     {
-        std::cout << "  " << "log-normal-float:" << std::endl;
-        run_benchmark<float>(size, trials, rng_type,
+        run_benchmark<float>(vm, rng_type,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
-    if (distribution == "log-normal-double" || all)
+    if (distribution == "log-normal-double")
     {
-        std::cout << "  " << "log-normal-double:" << std::endl;
-        run_benchmark<double>(size, trials, rng_type,
+        run_benchmark<double>(vm, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
             }
         );
     }
-    if (distribution == "poisson" || all)
+    if (distribution == "poisson")
     {
         const double lambda = vm["lambda"].as<double>();
-        std::cout << "  " << "poisson (" << std::setprecision(1) << lambda << "):" << std::endl;
-        run_benchmark<unsigned int>(size, trials, rng_type,
+        std::cout << "    " << "lambda "
+             << std::fixed << std::setprecision(1) << lambda << std::endl;
+        run_benchmark<unsigned int>(vm, rng_type,
             [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
                 return rocrand_generate_poisson(gen, data, size, lambda);
             }
@@ -183,12 +179,24 @@ void run_benchmarks(const size_t size, const size_t trials,
     }
 }
 
-const std::vector<std::pair<rocrand_rng_type, std::string>> engines = {
+const std::vector<std::pair<rng_type_t, std::string>> all_engines = {
     { ROCRAND_RNG_PSEUDO_XORWOW, "xorwow" },
     { ROCRAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
     // { ROCRAND_RNG_PSEUDO_MTGP32, "mtgp32" },
     { ROCRAND_RNG_PSEUDO_PHILOX4_32_10, "philox" },
     // { ROCRAND_RNG_QUASI_SOBOL32, "sobol32" },
+};
+
+const std::vector<std::string> all_distributions = {
+    "uniform-uint",
+    // "uniform-long-long",
+    "uniform-float",
+    "uniform-double",
+    "normal-float",
+    "normal-double",
+    "log-normal-float",
+    "log-normal-double",
+    "poisson"
 };
 
 int main(int argc, char *argv[])
@@ -197,20 +205,17 @@ int main(int argc, char *argv[])
     po::options_description options("options");
 
     const std::string distribution_desc =
-        "space-separated list of distributions:"
-            "\n   uniform-uint"
-            "\n   uniform-float"
-            "\n   uniform-double"
-            "\n   normal-float"
-            "\n   normal-double"
-            "\n   log-normal-float"
-            "\n   log-normal-double"
-            "\n   poisson"
-            "\nor all";
+        "space-separated list of distributions:" +
+        std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
+            [](std::string a, std::string b) {
+                return a + "\n   " + b;
+            }
+        ) +
+        "\nor all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
-        std::accumulate(engines.begin(), engines.end(), std::string(),
-            [](std::string a, std::pair<rocrand_rng_type, std::string> b) {
+        std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
+            [](std::string a, std::pair<rng_type_t, std::string> b) {
                 return a + "\n   " + b.second;
             }
         ) +
@@ -229,27 +234,58 @@ int main(int argc, char *argv[])
     po::store(po::parse_command_line(argc, argv, options), vm);
     po::notify(vm);
 
-    if(vm.count("help")) {
+    if (vm.count("help"))
+    {
         std::cout << options << std::endl;
         return 0;
     }
 
-    const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
-
-    std::cout << "rocRAND:" << std::endl;
-    for (auto engine : vm["engine"].as<std::vector<std::string>>())
-    for (auto e : engines)
+    std::vector<std::pair<rng_type_t, std::string>> engines;
     {
-        if (engine == e.second || engine == "all")
+        auto es = vm["engine"].as<std::vector<std::string>>();
+        if (std::find(es.begin(), es.end(), "all") != es.end())
         {
-            std::cout << std::endl << e.second << ":" << std::endl;
-            const rocrand_rng_type rng_type = e.first;
-            for (auto distribution : vm["dis"].as<std::vector<std::string>>())
+            engines = all_engines;
+        }
+        else
+        {
+            for (auto e : all_engines)
             {
-                run_benchmarks(size, trials, rng_type, distribution, vm);
+                if (std::find(es.begin(), es.end(), e.second) != es.end())
+                    engines.push_back(e);
             }
         }
+    }
+
+    std::vector<std::string> distributions;
+    {
+        auto ds = vm["dis"].as<std::vector<std::string>>();
+        if (std::find(ds.begin(), ds.end(), "all") != ds.end())
+        {
+            distributions = all_distributions;
+        }
+        else
+        {
+            for (auto d : all_distributions)
+            {
+                if (std::find(ds.begin(), ds.end(), d) != ds.end())
+                    distributions.push_back(d);
+            }
+        }
+    }
+
+    std::cout << "rocRAND:" << std::endl << std::endl;
+    for (auto e : engines)
+    {
+        const std::string engine_name = e.second;
+        std::cout << engine_name << ":" << std::endl;
+        const rng_type_t rng_type = e.first;
+        for (auto distribution : distributions)
+        {
+            std::cout << "  " << distribution << ":" << std::endl;
+            run_benchmarks(vm, rng_type, distribution);
+        }
+        std::cout << std::endl;
     }
 
     return 0;
