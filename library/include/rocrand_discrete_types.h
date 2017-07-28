@@ -18,13 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTIONS_H_
-#define ROCRAND_RNG_DISTRIBUTIONS_H_
+#ifndef ROCRAND_DISCRETE_TYPES_H_
+#define ROCRAND_DISCRETE_TYPES_H_
 
-#include "distribution/uniform.hpp"
-#include "distribution/normal.hpp"
-#include "distribution/log_normal.hpp"
-#include "distribution/poisson.hpp"
-#include "distribution/discrete.hpp"
+struct rocrand_discrete_distribution_st
+{
+    // Square histogram
+    // Top-parts of histogram
+    unsigned int * K;
+    // Division points (between the bottom-part and the top-part of each column)
+    double * V;
 
-#endif // ROCRAND_RNG_DISTRIBUTION_S_H_
+    unsigned int size;
+    unsigned int offset;
+
+    // Approximation with normal distribution (when size = 0)
+    double normal_mean;
+    double normal_stddev;
+};
+
+typedef struct rocrand_discrete_distribution_st * rocrand_discrete_distribution;
+
+#endif // ROCRAND_DISCRETE_TYPES_H_
