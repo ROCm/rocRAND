@@ -248,6 +248,23 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
             );
         }
     }
+    if (distribution == "discrete")
+    {
+        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        for (double lambda : lambdas)
+        {
+            std::cout << "    " << "lambda "
+                 << std::fixed << std::setprecision(1) << lambda << std::endl;
+            rocrand_discrete_distribution discrete_distribution;
+            ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
+            run_benchmark<unsigned int, GeneratorState>(vm,
+                [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
+                    return rocrand_discrete(state, discrete_distribution);
+                }, discrete_distribution
+            );
+            ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
+        }
+    }
 }
 
 const std::vector<std::string> all_engines = {
@@ -272,6 +289,7 @@ const std::vector<std::string> all_distributions = {
     "log-normal-float",
     "log-normal-double",
     "poisson",
+    "discrete",
 };
 
 int main(int argc, char *argv[])

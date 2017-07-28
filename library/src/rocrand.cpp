@@ -57,7 +57,7 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
     }
     catch(rocrand_status status)
     {
-        return ROCRAND_STATUS_SUCCESS;
+        return status;
     }
     return ROCRAND_STATUS_SUCCESS;
 }
@@ -454,6 +454,83 @@ rocrand_get_version(int * version)
     }
 
     *version = ROCRAND_VERSION;
+    return ROCRAND_STATUS_SUCCESS;
+}
+
+rocrand_status ROCRANDAPI
+rocrand_create_poisson_distribution(double lambda,
+                                    rocrand_discrete_distribution * discrete_distribution)
+{
+    if (discrete_distribution == NULL)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+    if (lambda <= 0.0)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    rocrand_discrete_distribution_poisson<> h_dis;
+    try
+    {
+        h_dis = rocrand_discrete_distribution_poisson<>(lambda);
+    }
+    catch(const std::exception& e)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+    catch(rocrand_status status)
+    {
+        return status;
+    }
+
+    hipError_t error;
+    error = hipMalloc(discrete_distribution, sizeof(rocrand_discrete_distribution_st));
+    if (error != hipSuccess)
+    {
+        return ROCRAND_STATUS_ALLOCATION_FAILED;
+    }
+    error = hipMemcpy(*discrete_distribution, &h_dis, sizeof(rocrand_discrete_distribution_st), hipMemcpyDefault);
+    if (error != hipSuccess)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+
+    return ROCRAND_STATUS_SUCCESS;
+}
+
+rocrand_status ROCRANDAPI
+rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution)
+{
+    if (discrete_distribution == NULL)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    rocrand_discrete_distribution_poisson<> h_dis;
+
+    hipError_t error;
+    error = hipMemcpy(&h_dis, discrete_distribution, sizeof(rocrand_discrete_distribution_st), hipMemcpyDefault);
+    if (error != hipSuccess)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+
+    try
+    {
+        h_dis.deallocate();
+    }
+    catch(rocrand_status status)
+    {
+        return status;
+    }
+
+    error = hipFree(discrete_distribution);
+    if (error != hipSuccess)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+
     return ROCRAND_STATUS_SUCCESS;
 }
 

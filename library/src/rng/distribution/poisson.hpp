@@ -70,7 +70,7 @@ public:
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
-                error = hipMalloc(&K, sizeof(int) * capacity);
+                error = hipMalloc(&K, sizeof(unsigned int) * capacity);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -110,6 +110,7 @@ public:
     unsigned int operator()(Engine& engine) const
     {
         const unsigned int r = engine();
+        // [0, 1)
         const double u = r * 2.3283064365386963e-10;
         const unsigned int j = static_cast<unsigned int>(floor(size * u));
         return offset + (u < V[j] ? j : K[j]);
@@ -192,8 +193,8 @@ private:
             // Find the minimum and maximum columns
             double min_p = a;
             double max_p = a;
-            int min_i = 0;
-            int max_i = 0;
+            int min_i = -1;
+            int max_i = -1;
             for (int i = 0; i < size; i++)
             {
                 const double t = p[i];
@@ -208,12 +209,15 @@ private:
                     max_i = i;
                 }
             }
-            // Store donating index in K[] and division point in V[]
-            h_V[min_i] = min_p + min_i * a;
-            h_K[min_i] = max_i;
-            // Take from maximum to bring minimum to average.
-            p[max_i] = max_p + min_p - a;
-            p[min_i] = a;
+            if (min_i != -1 && max_i != -1)
+            {
+                // Store donating index in K[] and division point in V[]
+                h_V[min_i] = min_p + min_i * a;
+                h_K[min_i] = max_i;
+                // Take from maximum to bring minimum to average.
+                p[max_i] = max_p + min_p - a;
+                p[min_i] = a;
+            }
         }
 
         if (IsHostSide)
@@ -320,7 +324,7 @@ public:
 
 private:
 
-    static constexpr double lambda_threshold_small = 4000.0;
+    static constexpr double lambda_threshold_small = 2000.0;
 
     double lambda;
 };
