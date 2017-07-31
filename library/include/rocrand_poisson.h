@@ -25,6 +25,11 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
+/** @addtogroup device
+ *  
+ *  @{
+ */
+
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
@@ -128,6 +133,17 @@ unsigned int poisson_distribution(State& state, double lambda)
 } // end namespace detail
 } // end namespace rocrand_device
 
+/**
+ * \brief Return a Poisson distributed unsigned int from a Philox Generator.
+ *
+ * Return a Poisson distributed unsigned int with lambda \p lambda
+ * and increments the position of generator by a variable amount. 
+ *
+ * \param state - Pointer to state to update
+ * \param lambda - Lambda of the related Poisson distribution
+ *
+ * \return Poisson distributed unsigned int with lambda \p lambda 
+ */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_philox4x32_10 * state, double lambda)
@@ -135,6 +151,17 @@ unsigned int rocrand_poisson(rocrand_state_philox4x32_10 * state, double lambda)
     return rocrand_device::detail::poisson_distribution(state, lambda);
 }
 
+/**
+ * \brief Return four Poisson distributed unsigned ints from a Philox Generator.
+ *
+ * Return four Poisson distributed unsigned ints with lambda \p lambda
+ * and increments the position of generator by a variable amount. 
+ *
+ * \param state - Pointer to state to update
+ * \param lambda - Lambda of the related Poisson distribution
+ *
+ * \return four Poisson distributed unsigned int with lambda \p lambda 
+ */
 FQUALIFIERS
 uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
 {
@@ -147,6 +174,17 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
 }
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
+/**
+ * \brief Return a Poisson distributed unsigned int from a MRG32K3A Generator.
+ *
+ * Return a Poisson distributed unsigned int with lambda \p lambda
+ * and increments the position of generator by a variable amount. 
+ *
+ * \param state - Pointer to state to update
+ * \param lambda - Lambda of the related Poisson distribution
+ *
+ * \return Poisson distributed unsigned int with lambda \p lambda 
+ */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
@@ -155,6 +193,17 @@ unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
 }
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
+/**
+ * \brief Return a Poisson distributed unsigned int from a XORWOW Generator.
+ *
+ * Return a Poisson distributed unsigned int with lambda \p lambda
+ * and increments the position of generator by a variable amount. 
+ *
+ * \param state - Pointer to state to update
+ * \param lambda - Lambda of the related Poisson distribution
+ *
+ * \return Poisson distributed unsigned int with lambda \p lambda 
+ */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
@@ -164,3 +213,5 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 #endif // ROCRAND_POISSON_H_
+
+/** @} */ // end of group device
