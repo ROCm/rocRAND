@@ -24,8 +24,7 @@
 #include "distribution/uniform.hpp"
 #include "distribution/normal.hpp"
 #include "distribution/log_normal.hpp"
-#include "distribution/poisson.hpp"
-#include "distribution/poisson0.hpp"
 #include "distribution/discrete.hpp"
+#include "distribution/poisson.hpp"
 
 #endif // ROCRAND_RNG_DISTRIBUTION_S_H_

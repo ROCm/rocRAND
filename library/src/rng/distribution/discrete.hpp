@@ -1,4 +1,4 @@
- // Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <rocrand.h>
+#include <rocrand_discrete.h>
 
 // Alias method
 //
@@ -82,6 +83,12 @@ public:
                 hipFree(alias);
             }
         }
+    }
+
+    __forceinline__ __host__ __device__
+    unsigned int operator()(const unsigned int x) const
+    {
+        return rocrand_device::detail::discrete(x, *this);
     }
 
 protected:
