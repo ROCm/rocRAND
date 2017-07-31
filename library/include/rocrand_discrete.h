@@ -73,15 +73,15 @@ unsigned int discrete(const unsigned int r, const rocrand_discrete_distribution_
 } // end namespace rocrand_device
 
 /**
- * \brief Return a Discrete distributed unsigned int from a Philox Generator.
+ * \brief Return a discrete distributed unsigned int from a Philox Generator.
  *
- * Return a Discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one. 
  *
  * \param state - Pointer to state to update
- * \param discrete_distribution - Related Discrete distribution
+ * \param discrete_distribution - Related discrete distribution
  *
- * \return Discrete distributed unsigned int with discrete distribution \p discrete_distribution 
+ * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution 
  */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -91,15 +91,15 @@ unsigned int rocrand_discrete(rocrand_state_philox4x32_10 * state, const rocrand
 }
 
 /**
- * \brief Return four Discrete distributed unsigned ints from a Philox Generator.
+ * \brief Return four discrete distributed unsigned ints from a Philox Generator.
  *
- * Return four Discrete distributed unsigned ints with discrete distribution \p discrete_distribution
+ * Return four discrete distributed unsigned ints with discrete distribution \p discrete_distribution
  * and increments the position of generator by four. 
  *
  * \param state - Pointer to state to update
  * \param discrete_distribution - Related Discrete distribution
  *
- * \return four Discrete distributed unsigned ints with discrete distribution \p discrete_distribution 
+ * \return four discrete distributed unsigned ints with discrete distribution \p discrete_distribution 
  */
 FQUALIFIERS
 uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discrete_distribution discrete_distribution)
@@ -115,15 +115,15 @@ uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discr
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 /**
- * \brief Return a Discrete distributed unsigned int from a MRG32K3A Generator.
+ * \brief Return a discrete distributed unsigned int from a MRG32K3A Generator.
  *
- * Return a Discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one. 
  *
  * \param state - Pointer to state to update
  * \param discrete_distribution - Related Discrete distribution
  *
- * \return Discrete distributed unsigned int with discrete distribution \p discrete_distribution 
+ * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution 
  */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -134,15 +134,15 @@ unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_disc
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 /**
- * \brief Return a Discrete distributed unsigned int from a XORWOW Generator.
+ * \brief Return a discrete distributed unsigned int from a XORWOW Generator.
  *
- * Return a Discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one. 
  *
  * \param state - Pointer to state to update
  * \param discrete_distribution - Related Discrete distribution
  *
- * \return Discrete distributed unsigned int with discrete distribution \p discrete_distribution 
+ * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution 
  */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS

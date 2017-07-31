@@ -76,8 +76,10 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
  * is used to generate log-normally distributed floats.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally two distributed floats with mean \p mean and 
+ * \return two log-normally distributed floats with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
@@ -99,8 +101,10 @@ float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, floa
  * is used to generate log-normally distributed floats.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally four distributed floats with mean \p mean and 
+ * \return four log-normally distributed floats with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
@@ -124,6 +128,8 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
  * is used to generate log-normally distributed doubles.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
  * \return log-normally distributed double with mean \p mean and 
  * standard deviation \p stddev
@@ -153,8 +159,10 @@ double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mea
  * is used to generate log-normally distributed doubles.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally two distributed doubles with mean \p mean and 
+ * \return two log-normally distributed doubles with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
@@ -176,8 +184,10 @@ double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double m
  * is used to generate log-normally distributed doubles.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally four distributed doubles with mean \p mean and 
+ * \return four log-normally distributed doubles with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
@@ -231,8 +241,10 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
  * is used to generate log-normally distributed floats.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally two distributed floats with mean \p mean and 
+ * \return two log-normally distributed floats with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
@@ -254,6 +266,8 @@ float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float std
  * is used to generate log-normally distributed doubles.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
  * \return log-normally distributed double with mean \p mean and 
  * standard deviation \p stddev
@@ -283,8 +297,10 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
  * is used to generate log-normally distributed doubles.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally two distributed doubles with mean \p mean and 
+ * \return two log-normally distributed doubles with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
@@ -337,8 +353,10 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
  * is used to generate log-normally distributed floats.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally two distributed floats with mean \p mean and 
+ * \return two log-normally distributed floats with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
@@ -360,6 +378,8 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
  * is used to generate log-normally distributed doubles.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
  * \return log-normally distributed double with mean \p mean and 
  * standard deviation \p stddev
@@ -391,8 +411,10 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
  * is used to generate log-normally distributed doubles.
  *
  * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally two distributed doubles with mean \p mean and 
+ * \return double log-normally distributed doubles with mean \p mean and 
  * standard deviation \p stddev
  */
 FQUALIFIERS
