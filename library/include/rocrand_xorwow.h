@@ -36,9 +36,6 @@
 namespace rocrand_device {
 namespace detail {
 
-// forward declaration
-struct xorwow_engine_boxmuller_helper;
-
 FQUALIFIERS
 void copy_mat(unsigned int * dst, const unsigned int * src)
 {
@@ -294,60 +291,12 @@ protected:
     // State
     xorwow_state m_state;
 
-    friend class detail::xorwow_engine_boxmuller_helper;
+    #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+    friend class detail::engine_boxmuller_helper<xorwow_engine>;
+    #endif
 
 }; // xorwow_engine class
 
-namespace detail {
-
-#ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
-// This helps access fields of xorwow_engine's internal state which
-// saves floats and doubles generated using the Box–Muller transform
-struct xorwow_engine_boxmuller_helper
-{
-    static FQUALIFIERS
-    bool is_float(xorwow_engine * engine)
-    {
-        return engine->m_state.boxmuller_float_state != 0;
-    }
-
-    static FQUALIFIERS
-    float get_float(xorwow_engine * engine)
-    {
-        engine->m_state.boxmuller_float_state = 0;
-        return engine->m_state.boxmuller_float;
-    }
-
-    static FQUALIFIERS
-    void save_float(xorwow_engine * engine, float f)
-    {
-        engine->m_state.boxmuller_double_state = 1;
-        engine->m_state.boxmuller_double = f;
-    }
-
-    static FQUALIFIERS
-    bool is_double(xorwow_engine * engine)
-    {
-        return engine->m_state.boxmuller_double_state != 0;
-    }
-
-    static FQUALIFIERS
-    float get_double(xorwow_engine * engine)
-    {
-        engine->m_state.boxmuller_double_state = 0;
-        return engine->m_state.boxmuller_double;
-    }
-
-    static FQUALIFIERS
-    void save_double(xorwow_engine * engine, double d)
-    {
-        engine->m_state.boxmuller_double_state = 1;
-        engine->m_state.boxmuller_double = d;
-    }
-};
-#endif
-
-} // end namespace detail
 } // end namespace rocrand_device
 
 typedef rocrand_device::xorwow_engine rocrand_state_xorwow;
