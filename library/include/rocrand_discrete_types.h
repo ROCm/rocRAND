@@ -23,18 +23,12 @@
 
 struct rocrand_discrete_distribution_st
 {
-    // Square histogram
-    // Top-parts of histogram
-    unsigned int * K;
-    // Division points (between the bottom-part and the top-part of each column)
-    double * V;
-
     unsigned int size;
     unsigned int offset;
 
-    // Approximation with normal distribution (when size = 0)
-    double normal_mean;
-    double normal_stddev;
+    // Alias table
+    unsigned int * alias;
+    double * probability;
 };
 
 typedef struct rocrand_discrete_distribution_st * rocrand_discrete_distribution;

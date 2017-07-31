@@ -33,52 +33,31 @@
 #include "rocrand_normal.h"
 #include "rocrand_discrete_types.h"
 
-// George Marsaglia, Wai Wan Tsang, Jingbo Wang
-// Fast Generation of Discrete Random Variables
-// Journal of Statistical Software, 2004
-// https://www.jstatsoft.org/article/view/v011i03
-
-// Only square histogram from Method II is used here (without J[256]).
-// Instead of increasing performance, J[256] makes the algorithm slower on GPUs.
+// Alias method
+//
+// Walker, A. J.
+// An Efficient Method for Generating Discrete Random Variables with General Distributions, 1977
+//
+// Vose M. D.
+// A Linear Algorithm For Generating Random Numbers With a Given Distribution, 1991
 
 namespace rocrand_device {
 namespace detail {
 
 template<class State>
 FQUALIFIERS
-unsigned int small_discrete(State& state, const rocrand_discrete_distribution_st& dis)
+unsigned int discrete(State& state, const rocrand_discrete_distribution_st& dis)
 {
-    // Calculate value using square histrogram
+    // Calculate value using Alias table
 
     const unsigned int r = rocrand(state);
     // [0, 1)
-    const double u = r * 2.3283064365386963e-10;
-    const unsigned int j = static_cast<unsigned int>(floor(dis.size * u));
-    return dis.offset + (u < dis.V[j] ? j : dis.K[j]);
-}
-
-template<class State>
-FQUALIFIERS
-unsigned int large_discrete(State& state, const rocrand_discrete_distribution_st& dis)
-{
-    // Approximate Poisson distribution with normal distribution
-
-    const double n = rocrand_normal_double(state);
-    return static_cast<unsigned int>(round(dis.normal_stddev * n + dis.normal_mean));
-}
-
-template<class State>
-FQUALIFIERS
-unsigned int discrete(State& state, const rocrand_discrete_distribution_st& dis)
-{
-    if (dis.size != 0)
-    {
-        return small_discrete(state, dis);
-    }
-    else
-    {
-        return large_discrete(state, dis);
-    }
+    const double x = r * 2.3283064365386963e-10;
+    const double nx = dis.size * x;
+    const double fnx = floor(nx);
+    const double y = nx - fnx;
+    const unsigned int i = static_cast<unsigned int>(fnx);
+    return dis.offset + (y < dis.probability[i] ? i : dis.alias[i]);
 }
 
 } // end namespace detail

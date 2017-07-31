@@ -27,14 +27,6 @@
 
 #include <rocrand.h>
 
-// George Marsaglia, Wai Wan Tsang, Jingbo Wang
-// Fast Generation of Discrete Random Variables
-// Journal of Statistical Software, 2004
-// https://www.jstatsoft.org/article/view/v011i03
-
-// Only square histogram from Method II is used here (without J[256]).
-// Instead of increasing performance, J[256] makes the algorithm slower on GPUs.
-
 template<bool IsHostSide = false>
 class rocrand_discrete_distribution_poisson : rocrand_discrete_distribution_st
 {
@@ -43,25 +35,19 @@ public:
     rocrand_discrete_distribution_poisson()
     {
         size = 0;
-        V = NULL;
-        K = NULL;
+        probability = NULL;
+        alias = NULL;
     }
 
     rocrand_discrete_distribution_poisson(double lambda)
         : rocrand_discrete_distribution_poisson()
     {
-        normal_mean = lambda;
-        normal_stddev = std::sqrt(lambda);
+        const size_t capacity =
+            2 * static_cast<size_t>(16.0 * (2.0 + std::sqrt(lambda)));
+        std::vector<double> p(capacity);
 
-        if (lambda < lambda_threshold_small)
-        {
-            const size_t capacity =
-                static_cast<size_t>(lambda + 16.0 * (2.0 + std::sqrt(lambda)));
-            std::vector<double> p(capacity);
-
-            calculate_probabilities(p, capacity, lambda);
-            create_square_histogram(p);
-        }
+        calculate_probabilities(p, capacity, lambda);
+        create_square_histogram(p);
     }
 
     __host__ __device__
@@ -72,34 +58,40 @@ public:
         // Explicit deallocation is used because on HCC the object is copied
         // multiple times inside hipLaunchKernelGGL, and destructor is called
         // for all copies (we can't use c++ smart pointers for device pointers)
-        if (V != NULL)
+        if (probability != NULL)
         {
             if (IsHostSide)
             {
-                delete[] V;
-                delete[] K;
+                delete[] probability;
+                delete[] alias;
             }
             else
             {
-                hipFree(V);
-                hipFree(K);
+                hipFree(probability);
+                hipFree(alias);
             }
         }
     }
 
 protected:
 
-    static constexpr double lambda_threshold_small = 2000.0;
-
-    void calculate_probabilities(std::vector<double>& p, size_t capacity, double lambda)
+    void calculate_probabilities(std::vector<double>& p, const size_t capacity,
+                                 const double lambda)
     {
-        const double p_epsilon = 1e-9;
+        const double p_epsilon = 1e-12;
         const double log_lambda = std::log(lambda);
 
+        const int left = static_cast<int>(std::floor(lambda)) - capacity / 2;
+
+        // Calculate probabilities starting from mean in both directions,
+        // because only a small part of [0, lambda] has non-negligible values
+        // (> p_epsilon).
+
         int lo = 0;
-        for (int i = static_cast<int>(std::floor(lambda)); i >= 0; i--)
+        for (int i = capacity / 2; i >= 0; i--)
         {
-            const double pp = std::exp(i * log_lambda - std::lgamma(i + 1.0) - lambda);
+            const double x = left + i;
+            const double pp = std::exp(x * log_lambda - std::lgamma(x + 1.0) - lambda);
             if (pp < p_epsilon)
             {
                 lo = i + 1;
@@ -109,9 +101,10 @@ protected:
         }
 
         int hi = capacity - 1;
-        for (int i = static_cast<int>(std::floor(lambda)) + 1; i < capacity; i++)
+        for (int i = capacity / 2 + 1; i < capacity; i++)
         {
-            const double pp = std::exp(i * log_lambda - std::lgamma(i + 1.0) - lambda);
+            const double x = left + i;
+            const double pp = std::exp(x * log_lambda - std::lgamma(x + 1.0) - lambda);
             if (pp < p_epsilon)
             {
                 hi = i - 1;
@@ -126,94 +119,114 @@ protected:
         }
 
         size = hi - lo + 1;
-        offset = lo;
+        offset = left + lo;
     }
 
-    void create_square_histogram(std::vector<double>& p)
+    void allocate()
     {
-        std::vector<double> h_V(size);
-        std::vector<unsigned int> h_K(size);
-
-        const double a = 1.0 / size;
-        for (int i = 0; i < size; i++)
+        if (IsHostSide)
         {
-            h_K[i] = i;
-            h_V[i] = (i + 1) * a;
+            probability = new double[size];
+            alias = new unsigned int[size];
         }
+        else
+        {
+            hipError_t error;
+            error = hipMalloc(&probability, sizeof(double) * size);
+            if (error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+            }
+            error = hipMalloc(&alias, sizeof(unsigned int) * size);
+            if (error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+            }
+        }
+    }
 
-        // Normalize probailities
+    void create_square_histogram(std::vector<double> p)
+    {
+        std::vector<double> h_probability(size);
+        std::vector<unsigned int> h_alias(size);
+
+        const double average = 1.0 / size;
+
         double sum = 0.0;
         for (int i = 0; i < size; i++)
         {
             sum += p[i];
         }
+        // Normalize probabilities
         for (int i = 0; i < size; i++)
         {
             p[i] /= sum;
         }
 
-        // Apply Robin Hood rule size - 1 times:
-        for (int s = 0; s < size - 1; s++)
+        // For detailed descrition of Vose's algorithm see
+        // Darts, Dice, and Coins: Sampling from a Discrete Distribution
+        // by Keith Schwarz
+        // http://www.keithschwarz.com/darts-dice-coins/
+        //
+        // The algorithm is O(n).
+
+        std::vector<int> small;
+        std::vector<int> large;
+
+        small.reserve(size);
+        large.reserve(size);
+
+        for (int i = 0; i < size; i++)
         {
-            // Find the minimum and maximum columns
-            double min_p = a;
-            double max_p = a;
-            int min_i = -1;
-            int max_i = -1;
-            for (int i = 0; i < size; i++)
-            {
-                const double t = p[i];
-                if (t < min_p)
-                {
-                    min_p = t;
-                    min_i = i;
-                }
-                if (t > max_p)
-                {
-                    max_p = t;
-                    max_i = i;
-                }
-            }
-            if (min_i != -1 && max_i != -1)
-            {
-                // Store donating index in K[] and division point in V[]
-                h_V[min_i] = min_p + min_i * a;
-                h_K[min_i] = max_i;
-                // Take from maximum to bring minimum to average.
-                p[max_i] = max_p - (a - min_p);
-                p[min_i] = a;
-            }
+            if (p[i] >= average)
+                large.push_back(i);
+            else
+                small.push_back(i);
         }
+
+        while (!small.empty() && !large.empty())
+        {
+            const int less = small.back();
+            small.pop_back();
+            const int more = large.back();
+            large.pop_back();
+
+            h_probability[less] = p[less] * size;
+            h_alias[less] = more;
+
+            p[more] = (p[more] + p[less]) - average;
+
+            if (p[more] >= average)
+                large.push_back(more);
+            else
+                small.push_back(more);
+        }
+
+        for (int i : small)
+        {
+            h_probability[i] = 1.0;
+        }
+        for (int i : large)
+        {
+            h_probability[i] = 1.0;
+        }
+
+        allocate();
 
         if (IsHostSide)
         {
-            V = new double[size];
-            K = new unsigned int[size];
-
-            std::copy(h_V.begin(), h_V.end(), V);
-            std::copy(h_K.begin(), h_K.end(), K);
+            std::copy(h_probability.begin(), h_probability.end(), probability);
+            std::copy(h_alias.begin(), h_alias.end(), alias);
         }
         else
         {
             hipError_t error;
-
-            error = hipMalloc(&V, sizeof(double) * size);
-            if (error != hipSuccess)
-            {
-                throw ROCRAND_STATUS_ALLOCATION_FAILED;
-            }
-            error = hipMalloc(&K, sizeof(unsigned int) * size);
-            if (error != hipSuccess)
-            {
-                throw ROCRAND_STATUS_ALLOCATION_FAILED;
-            }
-
-            error = hipMemcpy(V, h_V.data(), sizeof(double) * size, hipMemcpyDefault);
+            error = hipMemcpy(probability, h_probability.data(), sizeof(double) * size, hipMemcpyDefault);
             if (error != hipSuccess)
             {
                 throw ROCRAND_STATUS_INTERNAL_ERROR;
             }
-            error = hipMemcpy(K, h_K.data(), sizeof(unsigned int) * size, hipMemcpyDefault);
+            error = hipMemcpy(alias, h_alias.data(), sizeof(unsigned int) * size, hipMemcpyDefault);
             if (error != hipSuccess)
             {
                 throw ROCRAND_STATUS_INTERNAL_ERROR;
