@@ -25,6 +25,11 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
+/** @addtogroup device
+ *  
+ *  @{
+ */
+
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
@@ -154,6 +159,19 @@ double2 mrg_normal_distribution_double2(unsigned long long v1, unsigned long lon
 } // end namespace detail
 } // end namespace rocrand_device
 
+/**
+ * \brief Return a normally distributed float from a Philox Generator.
+ *
+ * Return a normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by one. Box-Muller implementation
+ * is used to generate normally distributed floats.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_philox4x32_10 * state)
@@ -170,18 +188,57 @@ float rocrand_normal(rocrand_state_philox4x32_10 * state)
 }
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
+/**
+ * \brief Return two normally distributed floats from a Philox Generator.
+ *
+ * Return two normally distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by two. Box-Muller implementation
+ * is used to generate normally distributed floats.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally two distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
 }
 
+/**
+ * \brief Return four normally distributed floats from a Philox Generator.
+ *
+ * Return four normally distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by four. Box-Muller implementation
+ * is used to generate normally distributed floats.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally four distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
 FQUALIFIERS
 float4 rocrand_normal4(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::normal_distribution4(rocrand4(state));
 }
 
+/**
+ * \brief Return a normally distributed double from a Philox Generator.
+ *
+ * Return a normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by one. Box-Muller implementation
+ * is used to generate normally distributed doubles.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_normal_double(rocrand_state_philox4x32_10 * state)
@@ -198,12 +255,38 @@ double rocrand_normal_double(rocrand_state_philox4x32_10 * state)
 }
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
+/**
+ * \brief Return two normally distributed doubles from a Philox Generator.
+ *
+ * Return two normally distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by two. Box-Muller implementation
+ * is used to generate normally distributed doubles.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally two distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
 }
 
+/**
+ * \brief Return four normally distributed doubles from a Philox Generator.
+ *
+ * Return four normally distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by four. Box-Muller implementation
+ * is used to generate normally distributed doubles.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally four distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
 FQUALIFIERS
 double4 rocrand_normal_double4(rocrand_state_philox4x32_10 * state)
 {
@@ -215,6 +298,19 @@ double4 rocrand_normal_double4(rocrand_state_philox4x32_10 * state)
     };
 }
 
+/**
+ * \brief Return a normally distributed float from a MRG32K3A Generator.
+ *
+ * Return a normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by one. Box-Muller implementation
+ * is used to generate normally distributed floats.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_mrg32k3a * state)
@@ -231,12 +327,38 @@ float rocrand_normal(rocrand_state_mrg32k3a * state)
 }
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
+/**
+ * \brief Return two normally distributed floats from a MRG32K3A Generator.
+ *
+ * Return two normally distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by two. Box-Muller implementation
+ * is used to generate normally distributed floats.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally two distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_mrg32k3a * state)
 {
     return rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
 }
 
+/**
+ * \brief Return a normally distributed double from a MRG32K3A Generator.
+ *
+ * Return a normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by one. Box-Muller implementation
+ * is used to generate normally distributed doubles.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_normal_double(rocrand_state_mrg32k3a * state)
@@ -253,12 +375,38 @@ double rocrand_normal_double(rocrand_state_mrg32k3a * state)
 }
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
+/**
+ * \brief Return two normally distributed doubles from a MRG32K3A Generator.
+ *
+ * Return two normally distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by two. Box-Muller implementation
+ * is used to generate normally distributed doubles.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally two distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_mrg32k3a * state)
 {
     return rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
 }
 
+/**
+ * \brief Return a normally distributed float from a XORWOW Generator.
+ *
+ * Return a normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by one. Box-Muller implementation
+ * is used to generate normally distributed floats.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_xorwow * state)
@@ -275,12 +423,38 @@ float rocrand_normal(rocrand_state_xorwow * state)
 }
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
+/**
+ * \brief Return two normally distributed floats from a XORWOW Generator.
+ *
+ * Return two normally distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by two. Box-Muller implementation
+ * is used to generate normally distributed floats.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally two distributed floats with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_xorwow * state)
 {
     return rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
 }
 
+/**
+ * \brief Return a normally distributed double from a XORWOW Generator.
+ *
+ * Return a normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by one. Box-Muller implementation
+ * is used to generate normally distributed doubles.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_normal_double(rocrand_state_xorwow * state)
@@ -299,6 +473,19 @@ double rocrand_normal_double(rocrand_state_xorwow * state)
 }
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
+/**
+ * \brief Return two normally distributed doubles from a XORWOW Generator.
+ *
+ * Return two normally distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by two. Box-Muller implementation
+ * is used to generate normally distributed doubles.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally two distributed doubles with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_xorwow * state)
 {
@@ -308,3 +495,5 @@ double2 rocrand_normal_double2(rocrand_state_xorwow * state)
 }
 
 #endif // ROCRAND_NORMAL_H_
+
+/** @} */ // end of group device

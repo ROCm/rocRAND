@@ -18,6 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/** @addtogroup host
+ *  
+ *  @{
+ */
+
 #ifndef ROCRAND_H_
 #define ROCRAND_H_
 
@@ -441,3 +446,5 @@ rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_dis
 #endif /* __cplusplus */
 
 #endif // ROCRAND_H_
+
+/** @} */ // end of group host
