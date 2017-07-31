@@ -286,7 +286,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
             );
         }
     }
-    if (distribution == "discrete")
+    if (distribution == "discrete-poisson")
     {
         const auto lambdas = vm["lambda"].as<std::vector<double>>();
         for (double lambda : lambdas)
@@ -327,7 +327,7 @@ const std::vector<std::string> all_distributions = {
     "log-normal-float",
     "log-normal-double",
     "poisson",
-    "discrete",
+    "discrete-poisson",
 };
 
 int main(int argc, char *argv[])

@@ -27,31 +27,42 @@
 
 #include <rocrand.h>
 
+// Alias method
+//
+// Walker, A. J.
+// An Efficient Method for Generating Discrete Random Variables with General Distributions, 1977
+//
+// Vose M. D.
+// A Linear Algorithm For Generating Random Numbers With a Given Distribution, 1991
+
 template<bool IsHostSide = false>
-class rocrand_discrete_distribution_poisson : rocrand_discrete_distribution_st
+class rocrand_discrete_distribution_base : public rocrand_discrete_distribution_st
 {
 public:
 
-    rocrand_discrete_distribution_poisson()
+    rocrand_discrete_distribution_base()
     {
         size = 0;
         probability = NULL;
         alias = NULL;
     }
 
-    rocrand_discrete_distribution_poisson(double lambda)
-        : rocrand_discrete_distribution_poisson()
+    rocrand_discrete_distribution_base(const double * probabilities,
+                                       unsigned int size,
+                                       unsigned int offset)
+        : rocrand_discrete_distribution_base()
     {
-        const size_t capacity =
-            2 * static_cast<size_t>(16.0 * (2.0 + std::sqrt(lambda)));
-        std::vector<double> p(capacity);
+        std::vector<double> p(probabilities, probabilities + size);
 
-        calculate_probabilities(p, capacity, lambda);
-        create_square_histogram(p);
+        this->size = size;
+        this->offset = offset;
+
+        allocate();
+        create_alias_table(p);
     }
 
     __host__ __device__
-    ~rocrand_discrete_distribution_poisson() { }
+    ~rocrand_discrete_distribution_base() { }
 
     void deallocate()
     {
@@ -74,53 +85,6 @@ public:
     }
 
 protected:
-
-    void calculate_probabilities(std::vector<double>& p, const size_t capacity,
-                                 const double lambda)
-    {
-        const double p_epsilon = 1e-12;
-        const double log_lambda = std::log(lambda);
-
-        const int left = static_cast<int>(std::floor(lambda)) - capacity / 2;
-
-        // Calculate probabilities starting from mean in both directions,
-        // because only a small part of [0, lambda] has non-negligible values
-        // (> p_epsilon).
-
-        int lo = 0;
-        for (int i = capacity / 2; i >= 0; i--)
-        {
-            const double x = left + i;
-            const double pp = std::exp(x * log_lambda - std::lgamma(x + 1.0) - lambda);
-            if (pp < p_epsilon)
-            {
-                lo = i + 1;
-                break;
-            }
-            p[i] = pp;
-        }
-
-        int hi = capacity - 1;
-        for (int i = capacity / 2 + 1; i < capacity; i++)
-        {
-            const double x = left + i;
-            const double pp = std::exp(x * log_lambda - std::lgamma(x + 1.0) - lambda);
-            if (pp < p_epsilon)
-            {
-                hi = i - 1;
-                break;
-            }
-            p[i] = pp;
-        }
-
-        for (int i = lo; i <= hi; i++)
-        {
-            p[i - lo] = p[i];
-        }
-
-        size = hi - lo + 1;
-        offset = left + lo;
-    }
 
     void allocate()
     {
@@ -145,7 +109,7 @@ protected:
         }
     }
 
-    void create_square_histogram(std::vector<double> p)
+    void create_alias_table(std::vector<double> p)
     {
         std::vector<double> h_probability(size);
         std::vector<unsigned int> h_alias(size);
@@ -210,8 +174,6 @@ protected:
         {
             h_probability[i] = 1.0;
         }
-
-        allocate();
 
         if (IsHostSide)
         {
