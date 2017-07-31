@@ -340,8 +340,24 @@ protected:
 
 } // end namespace rocrand_device
 
+/** @addtogroup device
+ *  
+ *  @{
+ */
+
 typedef rocrand_device::philox4x32_10_engine rocrand_state_philox4x32_10;
 
+/**
+ * \brief Initialize Philox state.
+ *
+ * Initialize Philox state in \p state with the given \p seed, \p subsequence,
+ * and \p offset.
+ *
+ * \param seed - Value to use as a seed
+ * \param subsequence - Subsequence to start at
+ * \param offset - Absolute offset into sequence
+ * \param state - Pointer to state to initialize
+ */
 FQUALIFIERS
 void rocrand_init(const unsigned long long seed,
                   const unsigned long long subsequence,
@@ -351,24 +367,61 @@ void rocrand_init(const unsigned long long seed,
     *state = rocrand_state_philox4x32_10(seed, subsequence, offset);
 }
 
+/**
+ * \brief Return pseudorandom value (32-bit) from Philox generator.
+ *
+ * Return pseudorandom value (32-bit) from the Philox generator in \p state,
+ * increment position of generator by one.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return pseudorandom value (32-bit) as an unsigned int
+ */
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_philox4x32_10 * state)
 {
     return state->next();
 }
 
+/**
+ * \brief Return four pseudorandom value (32-bit) from Philox generator.
+ *
+ * Return four pseudorandom value (32-bit) from the Philox generator in \p state,
+ * increment position of generator by four.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return pseudorandom value (32-bit) as an uint4
+ */
 FQUALIFIERS
 uint4 rocrand4(rocrand_state_philox4x32_10 * state)
 {
     return state->next4();
 }
 
+/**
+ * \brief Update Philox state to skip ahead by \p offset elements.
+ *
+ * Update the Philox state in \p state to skip ahead by \p offset elements.
+ *
+ * \param offset - Number of elements to skip
+ * \param state - Pointer to state to update
+ */
 FQUALIFIERS
 void skipahead(unsigned long long offset, rocrand_state_philox4x32_10 * state)
 {
     return state->discard(offset);
 }
 
+/**
+ * \brief Update Philox state to skip ahead by \p subsequence subsequences.
+ *
+ * Update the Philox state in \p state to skip ahead by \p subsequence subsequences.
+ * Each subsequence is 4 * 2^64 numbers long.
+ *
+ * \param subsequence - Number of subsequences to skip
+ * \param state - Pointer to state to update
+ */
 FQUALIFIERS
 void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4x32_10 * state)
 {
@@ -376,3 +429,5 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4
 }
 
 #endif // ROCRAND_PHILOX4X32_10_H_
+
+/** @} */ // end of group device
