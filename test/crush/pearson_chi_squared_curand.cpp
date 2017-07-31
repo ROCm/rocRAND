@@ -33,6 +33,8 @@
 #include <cuda_runtime.h>
 #include <curand.h>
 
+#include "pearson_chi_squared_common.hpp"
+
 extern "C" {
 #include "gofs.h"
 #include "fdist.h"
@@ -47,138 +49,51 @@ extern "C" {
     printf("Error at %s:%d\n",__FILE__,__LINE__);\
     return exit(EXIT_FAILURE);}} while(0)
 
+typedef curandRngType rng_type_t;
+
 template<typename T>
 using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T *, size_t)>;
 
-using distribution_func_type = std::function<double(double)>;
-
 template<typename T>
-void run_test(const size_t size, const size_t trials,
-              const curandRngType rng_type,
-              const bool save_plots, const std::string plot_name,
+void run_test(const boost::program_options::variables_map& vm,
+              const rng_type_t rng_type,
+              const std::string plot_name,
               generate_func_type<T> generate_func,
               const double mean, const double stddev,
               distribution_func_type distribution_func)
 {
-    const std::vector<size_t> cells_counts({ 1000, 100, 25 });
-    const double significance_level = 0.9;
-    std::vector<double> rejection_criteria;
-    for (size_t cells_count : cells_counts)
-    {
-        const double c = finv_ChiSquare2(static_cast<long>(cells_count), significance_level);
-        rejection_criteria.push_back(c);
-    }
-
-    const int w = 14;
-
-    // Header
-    {
-        std::cout << "  ";
-        for (size_t cells_count : cells_counts)
-        {
-            std::cout << std::setw(w) << ("P" + std::to_string(cells_count));
-            std::cout << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  ";
-        for (double c : rejection_criteria)
-        {
-            std::cout << std::setw(w) << ("< " + std::to_string(static_cast<int>(c)));
-            std::cout << " ";
-        }
-        std::cout << std::endl << std::endl;
-    }
+    const size_t size = vm["size"].as<size_t>();
+    const size_t trials = vm["trials"].as<size_t>();
+    const bool save_plots = vm.count("plots");
 
     T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
+    CUDA_CALL(cudaMalloc((void **)&data, size * trials * sizeof(T)));
 
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
+
+    CURAND_CALL(generate_func(generator, data, size * trials));
     CUDA_CALL(cudaDeviceSynchronize());
 
-    for (size_t trial = 0; trial < trials; trial++)
-    {
-        CURAND_CALL(generate_func(generator, data, size));
-        CUDA_CALL(cudaDeviceSynchronize());
-
-        std::vector<T> h_data(size);
-        CUDA_CALL(cudaMemcpy(h_data.data(), data, size * sizeof(T), cudaMemcpyDeviceToHost));
-        CUDA_CALL(cudaDeviceSynchronize());
-
-        std::cout << "  ";
-        for (size_t test = 0; test < cells_counts.size(); test++)
-        {
-            const size_t cells_count = cells_counts[test];
-            const double rejection_criterion = rejection_criteria[test];
-
-            double start = (mean - 6.0 * stddev);
-            double cell_width = 12.0 * stddev / cells_count;
-            if (std::is_integral<T>::value)
-            {
-                // Use integral values for discrete distributions (e.g. Poisson)
-                start = std::floor(start);
-                cell_width = std::ceil(cell_width);
-            }
-
-            std::vector<unsigned int> historgram(cells_count);
-
-            unsigned int count = 0;
-            for (size_t si = 0; si < size; si++)
-            {
-                const double v = h_data[si];
-                const int cell = static_cast<int>((v - start) / cell_width);
-                if (cell >= 0 && cell < cells_count)
-                {
-                    historgram[cell]++;
-                    count++;
-                }
-            }
-
-            std::ofstream fout;
-            if (save_plots)
-            {
-                fout.open(plot_name + "-" + std::to_string(trial) + "-" + std::to_string(test) + ".dat",
-                    std::ios_base::out | std::ios_base::trunc);
-            }
-            double chi_squared = 0.0;
-            for (size_t ci = 0; ci < cells_count; ci++)
-            {
-                const double x0 = start + ci * cell_width;
-                const double x1 = start + (ci + 1) * cell_width;
-                const double observed = historgram[ci] / static_cast<double>(count);
-                const double expected = distribution_func(x1) - distribution_func(x0);
-                if (expected > 0.0)
-                {
-                    chi_squared += (observed - expected) * (observed - expected) / expected;
-                }
-                if (save_plots)
-                {
-                    fout << observed << "\t" << expected << std::endl;
-                }
-            }
-            chi_squared *= count;
-
-            std::cout << std::setw(w) << std::fixed << std::setprecision(5) << chi_squared;
-            std::cout << (chi_squared < rejection_criterion ? " " : "*");
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
+    std::vector<T> h_data(size * trials);
+    CUDA_CALL(cudaMemcpy(h_data.data(), data, size * trials * sizeof(T), cudaMemcpyDeviceToHost));
 
     CURAND_CALL(curandDestroyGenerator(generator));
     CUDA_CALL(cudaFree(data));
+
+    analyze(size, trials, h_data.data(),
+            save_plots, plot_name,
+            mean, stddev, distribution_func);
 }
 
-void run_tests(const size_t size, const size_t trials,
-               const curandRngType rng_type,
+void run_tests(const boost::program_options::variables_map& vm,
+               const rng_type_t rng_type,
                const std::string& distribution,
-               const bool save_plots, const std::string plot_name,
-               const boost::program_options::variables_map& vm)
+               const std::string plot_name)
 {
-    std::cout << "  " << distribution << ":" << std::endl;
     if (distribution == "uniform-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateUniform(gen, data, size);
             },
@@ -188,7 +103,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "uniform-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateUniformDouble(gen, data, size);
             },
@@ -198,7 +113,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "normal-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -208,7 +123,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "normal-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -218,7 +133,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-float")
     {
-        run_test<float>(size, trials, rng_type, save_plots, plot_name,
+        run_test<float>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -228,7 +143,7 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "log-normal-double")
     {
-        run_test<double>(size, trials, rng_type, save_plots, plot_name,
+        run_test<double>(vm, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -238,20 +153,23 @@ void run_tests(const size_t size, const size_t trials,
     }
     if (distribution == "poisson")
     {
-        const double lambda = vm["lambda"].as<double>();
-        std::cout << "  " << "lambda:"
-             << std::fixed << std::setprecision(1) << lambda << ":" << std::endl;
-        run_test<unsigned int>(size, trials, rng_type, save_plots, plot_name,
-            [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
-                return curandGeneratePoisson(gen, data, size, lambda);
-            },
-            lambda, std::sqrt(lambda),
-            [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
-        );
+        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        for (double lambda : lambdas)
+        {
+            std::cout << "    " << "lambda "
+                 << std::fixed << std::setprecision(1) << lambda << std::endl;
+            run_test<unsigned int>(vm, rng_type, plot_name,
+                [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
+                    return curandGeneratePoisson(gen, data, size, lambda);
+                },
+                lambda, std::sqrt(lambda),
+                [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
+            );
+        }
     }
 }
 
-const std::vector<std::pair<curandRngType, std::string>> all_engines = {
+const std::vector<std::pair<rng_type_t, std::string>> all_engines = {
     { CURAND_RNG_PSEUDO_XORWOW, "xorwow" },
     { CURAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
     { CURAND_RNG_PSEUDO_MTGP32, "mtgp32" },
@@ -285,11 +203,11 @@ int main(int argc, char *argv[])
                 return a + "\n   " + b;
             }
         ) +
-            "\nor all";
+        "\nor all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-            [](std::string a, std::pair<curandRngType, std::string> b) {
+            [](std::string a, std::pair<rng_type_t, std::string> b) {
                 return a + "\n   " + b.second;
             }
         ) +
@@ -302,24 +220,21 @@ int main(int argc, char *argv[])
             distribution_desc.c_str())
         ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
             engine_desc.c_str())
-        ("lambda", po::value<double>()->default_value(1000.0), "lambda of Poisson distribution")
+        ("lambda", po::value<std::vector<double>>()->multitoken()->default_value({ 100.0 }, "100.0"),
+            "space-separated list of lambdas of Poisson distribution")
         ("plots", "save plots for GnuPlot")
     ;
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, options), vm);
     po::notify(vm);
 
-    if(vm.count("help")) {
+    if(vm.count("help"))
+    {
         std::cout << options << std::endl;
         return 0;
     }
 
-    const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
-    const bool save_plots = vm.count("plots");
-
-    std::cout << "cuRAND:" << std::endl << std::endl;
-    std::vector<std::pair<curandRngType, std::string>> engines;
+    std::vector<std::pair<rng_type_t, std::string>> engines;
     {
         auto es = vm["engine"].as<std::vector<std::string>>();
         if (std::find(es.begin(), es.end(), "all") != es.end())
@@ -353,15 +268,17 @@ int main(int argc, char *argv[])
         }
     }
 
+    std::cout << "cuRAND:" << std::endl << std::endl;
     for (auto e : engines)
     {
         const std::string engine_name = e.second;
         std::cout << engine_name << ":" << std::endl;
-        const curandRngType rng_type = e.first;
+        const rng_type_t rng_type = e.first;
         for (auto distribution : distributions)
         {
+            std::cout << "  " << distribution << ":" << std::endl;
             const std::string plot_name = engine_name + "-" + distribution;
-            run_tests(size, trials, rng_type, distribution, save_plots, plot_name, vm);
+            run_tests(vm, rng_type, distribution, plot_name);
         }
     }
 

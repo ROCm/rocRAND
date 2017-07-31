@@ -53,10 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROCRAND_RNG_PHILOX4X32_10_H_
 #define ROCRAND_RNG_PHILOX4X32_10_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
@@ -247,12 +243,12 @@ namespace detail {
 
     template <class Distribution>
     __global__
-    void generate_small_poisson_kernel(philox4x32_10_device_engine * engines,
-                                       bool init_engines,
-                                       unsigned long long seed,
-                                       unsigned long long offset,
-                                       unsigned int * data, const size_t n,
-                                       const Distribution distribution)
+    void generate_poisson_kernel(philox4x32_10_device_engine * engines,
+                                 bool init_engines,
+                                 unsigned long long seed,
+                                 unsigned long long offset,
+                                 unsigned int * data, const size_t n,
+                                 const Distribution distribution)
     {
         typedef philox4x32_10_device_engine DeviceEngineType;
 
@@ -271,59 +267,34 @@ namespace detail {
             engine = engines[engine_id];
         }
 
-        // TODO: Improve performance.
-        while(index < n)
+        uint4 * data4 = (uint4 *)data;
+        while(index < (n / 4))
         {
-            auto result = distribution(engine);
-            data[index] = result;
+            const uint4 u4 = engine.next4();
+            const uint4 result = uint4 {
+                distribution(u4.x),
+                distribution(u4.y),
+                distribution(u4.z),
+                distribution(u4.w)
+            };
+            data4[index] = result;
             index += stride;
         }
 
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
-
-    template <class Distribution>
-    __global__
-    void generate_large_poisson_kernel(philox4x32_10_device_engine * engines,
-                                       bool init_engines,
-                                       unsigned long long seed,
-                                       unsigned long long offset,
-                                       unsigned int * data, const size_t n,
-                                       const Distribution distribution)
-    {
-        typedef philox4x32_10_device_engine DeviceEngineType;
-        typedef decltype(distribution(*engines)) Type2;
-
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load or init device engine
-        DeviceEngineType engine;
-        if(init_engines)
+        // First work-item saves the tail when n is not a multiple of 4
+        auto tail_size = n & 3;
+        if(engine_id == 0 && tail_size > 0)
         {
-            engine = DeviceEngineType(seed, index, 0);
-        }
-        else
-        {
-            engine = engines[engine_id];
-        }
-
-        Type2 * data2 = (Type2 *)data;
-        while(index < (n / 2))
-        {
-            const Type2 result = distribution(engine);
-            data2[index] = result;
-            index += stride;
-        }
-
-        // First work-item saves the tail when n is not a multiple of 2
-        if(engine_id == 0 && (n & 1) > 0)
-        {
-            const Type2 result = distribution(engine);
-            // Save the tail
-            data[n - 1] = result.x;
+            const uint4 u4 = engine.next4();
+            const uint4 result = uint4 {
+                distribution(u4.x),
+                distribution(u4.y),
+                distribution(u4.z),
+                distribution(u4.w)
+            };
+            data[n - tail_size] = (&result.x)[0]; // .x
+            if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
+            if(tail_size > 2) data[n - tail_size + 2] = (&result.x)[2]; // .z
         }
 
         // Save engine with its state
@@ -431,10 +402,10 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_uniform(T * data, size_t n)
+    rocrand_status generate_uniform(T * data, size_t data_size)
     {
         uniform_distribution<T> udistribution;
-        return generate(data, n, udistribution);
+        return generate(data, data_size, udistribution);
     }
 
     template<class T>
@@ -512,24 +483,12 @@ public:
         {
             return status;
         }
-        if (poisson.use_small())
-        {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(rocrand_host::detail::generate_small_poisson_kernel),
-                dim3(blocks), dim3(threads), 0, m_stream,
-                m_engines, !m_engines_initialized, m_seed, m_offset,
-                data, data_size, poisson.small
-            );
-        }
-        else
-        {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(rocrand_host::detail::generate_large_poisson_kernel),
-                dim3(blocks), dim3(threads), 0, m_stream,
-                m_engines, !m_engines_initialized, m_seed, m_offset,
-                data, data_size, poisson.large
-            );
-        }
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_engines, !m_engines_initialized, m_seed, m_offset,
+            data, data_size, poisson.dis
+        );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
@@ -543,7 +502,7 @@ private:
     engine_type * m_engines;
     size_t m_engines_size;
 
-    poisson_distribution<> poisson;
+    poisson_distribution_manager<> poisson;
 
     // m_seed from base_type
     // m_offset from base_type

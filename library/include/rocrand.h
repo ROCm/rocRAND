@@ -23,6 +23,8 @@
 
 #include <hip/hip_runtime.h>
 
+#include "rocrand_discrete_types.h"
+
 #ifndef ROCRANDAPI
 #define ROCRANDAPI
 #endif
@@ -376,6 +378,63 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  */
 rocrand_status ROCRANDAPI
 rocrand_get_version(int * version);
+
+/**
+ * \brief Construct the histogram for a Poisson distribution.
+ *
+ * Construct the histogram for the Poisson distribution with lambda \p lambda.
+ *
+ * \param lambda - lambda for the Poisson distribution
+ * \param discrete_distribution - pointer to the histogram in device memory
+ *
+ * \return
+ * - ROCRAND_STATUS_ALLOCATION_FAILED if memory could not be allocated \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution pointer was null \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
+ * - ROCRAND_STATUS_SUCCESS if the histogram was constructed successfully \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_create_poisson_distribution(double lambda,
+                                    rocrand_discrete_distribution * discrete_distribution);
+
+/**
+ * \brief Construct the histogram for a custom discrete distribution.
+ *
+ * Construct the histogram for the discrete distribution of \p size
+ * 32-bit unsigned integers from the range [offset, offset + size)
+ * using \p probabilities as probabilities.
+ *
+ * \param probabilities - probabilities of the the distribution in host memory
+ * \param size - size of \p probabilities
+ * \param offset - offset of values
+ * \param discrete_distribution - pointer to the histogram in device memory
+ *
+ * \return
+ * - ROCRAND_STATUS_ALLOCATION_FAILED if memory could not be allocated \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution pointer was null \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p size was zero \n
+ * - ROCRAND_STATUS_SUCCESS if the histogram was constructed successfully \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_create_discrete_distribution(const double * probabilities,
+                                     unsigned int size,
+                                     unsigned int offset,
+                                     rocrand_discrete_distribution * discrete_distribution);
+
+/**
+ * \brief Destroy the histogram array for a discrete distribution.
+ *
+ * Destroy the histogram array for a discrete distribution created by
+ * rocrand_create_poisson_distribution.
+ *
+ * \param discrete_distribution - pointer to the histogram in device memory
+ *
+ * \return
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution was null \n
+ * - ROCRAND_STATUS_SUCCESS if the histogram was destroyed successfully \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution);
 
 #if defined(__cplusplus)
 }

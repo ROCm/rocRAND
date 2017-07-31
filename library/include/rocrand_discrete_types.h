@@ -18,13 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTIONS_H_
-#define ROCRAND_RNG_DISTRIBUTIONS_H_
+#ifndef ROCRAND_DISCRETE_TYPES_H_
+#define ROCRAND_DISCRETE_TYPES_H_
 
-#include "distribution/uniform.hpp"
-#include "distribution/normal.hpp"
-#include "distribution/log_normal.hpp"
-#include "distribution/discrete.hpp"
-#include "distribution/poisson.hpp"
+struct rocrand_discrete_distribution_st
+{
+    unsigned int size;
+    unsigned int offset;
 
-#endif // ROCRAND_RNG_DISTRIBUTION_S_H_
+    // Alias table
+    unsigned int * alias;
+    double * probability;
+};
+
+typedef struct rocrand_discrete_distribution_st * rocrand_discrete_distribution;
+
+#endif // ROCRAND_DISCRETE_TYPES_H_
