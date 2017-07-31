@@ -185,7 +185,10 @@ void run_benchmark(const boost::program_options::variables_map& vm,
               << "Throughput = "
               << std::setw(8) << (trials * size * sizeof(T)) /
                     (elapsed.count() / 1e3 * (1 << 30))
-              << " GB/s, AvgTime (1 trial) = "
+              << " GB/s, Samples = "
+              << std::setw(8) << (trials * size) /
+                    (elapsed.count() / 1e3 * (1 << 30))
+              << " GSample/s, AvgTime (1 trial) = "
               << std::setw(8) << elapsed.count() / trials
               << " ms, Time (all) = "
               << std::setw(8) << elapsed.count()
