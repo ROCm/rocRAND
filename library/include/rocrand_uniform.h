@@ -18,6 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/** @addtogroup device
+ *  
+ *  @{
+ */
+
 #ifndef ROCRAND_UNIFORM_H_
 #define ROCRAND_UNIFORM_H_
 
@@ -99,12 +104,34 @@ double mrg_uniform_distribution_double(unsigned long long v)
 } // end namespace detail
 } // end namespace rocrand_device
 
+/**
+ * \brief Return a uniformly distributed float from a Philox Generator.
+ *
+ * Return a uniformly distributed float between \p 0.0f and \p 1.0f 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0f but includes \p 1.0f.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed float between \p 0.0f and \p 1.0f
+ */
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
+/**
+ * \brief Return two uniformly distributed floats from a Philox Generator.
+ *
+ * Return two uniformly distributed floats between \p 0.0f and \p 1.0f 
+ * from \p state, and increments position of generator by two.
+ * Output range excludes \p 0.0f but includes \p 1.0f.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return two uniformly distributed float between \p 0.0f and \p 1.0f
+ */
 FQUALIFIERS
 float2 rocrand_uniform2(rocrand_state_philox4x32_10 * state)
 {
@@ -114,18 +141,51 @@ float2 rocrand_uniform2(rocrand_state_philox4x32_10 * state)
     };
 }
 
+/**
+ * \brief Return four uniformly distributed floats from a Philox Generator.
+ *
+ * Return four uniformly distributed floats between \p 0.0f and \p 1.0f 
+ * from \p state, and increments position of generator by four.
+ * Output range excludes \p 0.0f but includes \p 1.0f.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return four uniformly distributed float between \p 0.0f and \p 1.0f
+ */
 FQUALIFIERS
 float4 rocrand_uniform4(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::uniform_distribution4(rocrand4(state));
 }
 
+/**
+ * \brief Return a uniformly distributed double from a Philox Generator.
+ *
+ * Return a uniformly distributed double between \p 0.0 and \p 1.0 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0 but includes \p 1.0.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed double between \p 0.0 and \p 1.0
+ */
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
+/**
+ * \brief Return two uniformly distributed doubles from a Philox Generator.
+ *
+ * Return two uniformly distributed doubles between \p 0.0 and \p 1.0 
+ * from \p state, and increments position of generator by two.
+ * Output range excludes \p 0.0 but includes \p 1.0.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return two uniformly distributed float between \p 0.0 and \p 1.0
+ */
 FQUALIFIERS
 double2 rocrand_uniform_double2(rocrand_state_philox4x32_10 * state)
 {
@@ -135,30 +195,85 @@ double2 rocrand_uniform_double2(rocrand_state_philox4x32_10 * state)
     };
 }
 
+/**
+ * \brief Return four uniformly distributed doubles from a Philox Generator.
+ *
+ * Return four uniformly distributed doubles between \p 0.0 and \p 1.0
+ * from \p state, and increments position of generator by four.
+ * Output range excludes \p 0.0 but includes \p 1.0.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return four uniformly distributed doubles between \p 0.0 and \p 1.0
+ */
 FQUALIFIERS
 double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 * state)
 {
     return rocrand_device::detail::uniform_distribution_double4(rocrand4(state));
 }
 
+/**
+ * \brief Return a uniformly distributed float from a MRG32K3A Generator.
+ *
+ * Return a uniformly distributed float between \p 0.0f and \p 1.0f 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0f but includes \p 1.0f.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed float between \p 0.0f and \p 1.0f
+ */
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_mrg32k3a * state)
 {
     return rocrand_device::detail::mrg_uniform_distribution(rocrand(state));
 }
 
+/**
+ * \brief Return a uniformly distributed double from a MRG32K3A Generator.
+ *
+ * Return a uniformly distributed double between \p 0.0 and \p 1.0 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0 but includes \p 1.0.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed double between \p 0.0 and \p 1.0
+ */
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_mrg32k3a * state)
 {
     return rocrand_device::detail::mrg_uniform_distribution_double(rocrand(state));
 }
 
+/**
+ * \brief Return a uniformly distributed float from a XORWOW Generator.
+ *
+ * Return a uniformly distributed float between \p 0.0f and \p 1.0f 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0f but includes \p 1.0f.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed float between \p 0.0f and \p 1.0f
+ */
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_xorwow * state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
+/**
+ * \brief Return a uniformly distributed double from a XORWOW Generator.
+ *
+ * Return a uniformly distributed double between \p 0.0 and \p 1.0 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0 but includes \p 1.0.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed double between \p 0.0 and \p 1.0
+ */
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_xorwow * state)
 {
@@ -166,3 +281,5 @@ double rocrand_uniform_double(rocrand_state_xorwow * state)
 }
 
 #endif // ROCRAND_UNIFORM_H_
+
+/** @} */ // end of group device
