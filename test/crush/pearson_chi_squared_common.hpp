@@ -51,19 +51,24 @@ void analyze(const size_t size,
              const distribution_func_type& distribution_func)
 {
     const std::vector<size_t> cells_counts({ 1000, 100, 25 });
+    // When the chi-squared statistic exceeds the critical value (rejection_criteria),
+    // we reject the null hypothesis ("observed random values are * distribution")
+    // with 90% significance level.
     const double significance_level = 0.9;
     std::vector<double> rejection_criteria;
     for (size_t cells_count : cells_counts)
     {
-        const double c = finv_ChiSquare2(static_cast<long>(cells_count), significance_level);
+        const double c = finv_ChiSquare2(static_cast<long>(cells_count - 1), significance_level);
         rejection_criteria.push_back(c);
     }
 
     const int w = 14;
+    const int w0 = 4;
 
     // Header
     {
         std::cout << "  ";
+        std::cout << std::setw(w0) << "#";
         for (size_t cells_count : cells_counts)
         {
             std::cout << std::setw(w) << ("P" + std::to_string(cells_count));
@@ -71,6 +76,7 @@ void analyze(const size_t size,
         }
         std::cout << std::endl;
         std::cout << "  ";
+        std::cout << std::setw(w0) << "";
         for (double c : rejection_criteria)
         {
             std::cout << std::setw(w) << ("< " + std::to_string(static_cast<int>(c)));
@@ -82,6 +88,7 @@ void analyze(const size_t size,
     for (size_t trial = 0; trial < trials; trial++)
     {
         std::cout << "  ";
+        std::cout << std::setw(w0) << trial;
         for (size_t test = 0; test < cells_counts.size(); test++)
         {
             const size_t cells_count = cells_counts[test];
@@ -98,7 +105,6 @@ void analyze(const size_t size,
 
             std::vector<unsigned int> historgram(cells_count);
 
-            unsigned int count = 0;
             for (size_t si = 0; si < size; si++)
             {
                 const double v = data[trial * size + si];
@@ -106,7 +112,6 @@ void analyze(const size_t size,
                 if (cell >= 0 && cell < cells_count)
                 {
                     historgram[cell]++;
-                    count++;
                 }
             }
 
@@ -122,19 +127,18 @@ void analyze(const size_t size,
             {
                 const double x0 = start + ci * cell_width;
                 const double x1 = start + (ci + 1) * cell_width;
-                const double observed = historgram[ci] / static_cast<double>(count);
-                const double expected = distribution_func(x1) - distribution_func(x0);
-                if (expected > 0.0)
-                {
-                    chi_squared += (observed - expected) * (observed - expected) / expected;
-                }
+                const double observed = historgram[ci] / static_cast<double>(size);
+                double expected = distribution_func(x1) - distribution_func(x0);
+                if (expected == 0.0)
+                    expected = 1e-12;
+                chi_squared += (observed - expected) * (observed - expected) / expected;
 
                 if (save_plots)
                 {
                     fout << observed << "\t" << expected << std::endl;
                 }
             }
-            chi_squared *= count;
+            chi_squared *= size;
 
             std::cout << std::setw(w) << std::fixed << std::setprecision(5) << chi_squared;
             std::cout << (chi_squared < rejection_criterion ? " " : "*");
