@@ -71,9 +71,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace rocrand_device {
 namespace detail {
 
-// forward declaration
-struct philox4x32_10_engine_boxmuller_helper;
-
 // HCC
 #ifdef __HIP_DEVICE_COMPILE__
 __forceinline__ __device__
@@ -335,60 +332,12 @@ protected:
     // State
     philox4x32_10_state m_state;
 
-    friend class detail::philox4x32_10_engine_boxmuller_helper;
+    #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+    friend class detail::engine_boxmuller_helper<philox4x32_10_engine>;
+    #endif
 
 }; // philox4x32_10_engine class
 
-namespace detail {
-
-#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
-// This helps access fields of philox4x32_10_engine's internal state which
-// saves floats and doubles generated using the Box–Muller transform
-struct philox4x32_10_engine_boxmuller_helper
-{
-    static FQUALIFIERS
-    bool is_float(philox4x32_10_engine * engine)
-    {
-        return engine->m_state.boxmuller_float_state != 0;
-    }
-
-    static FQUALIFIERS
-    float get_float(philox4x32_10_engine * engine)
-    {
-        engine->m_state.boxmuller_float_state = 0;
-        return engine->m_state.boxmuller_float;
-    }
-
-    static FQUALIFIERS
-    void save_float(philox4x32_10_engine * engine, float f)
-    {
-        engine->m_state.boxmuller_double_state = 1;
-        engine->m_state.boxmuller_double = f;
-    }
-
-    static FQUALIFIERS
-    bool is_double(philox4x32_10_engine * engine)
-    {
-        return engine->m_state.boxmuller_double_state != 0;
-    }
-
-    static FQUALIFIERS
-    float get_double(philox4x32_10_engine * engine)
-    {
-        engine->m_state.boxmuller_double_state = 0;
-        return engine->m_state.boxmuller_double;
-    }
-
-    static FQUALIFIERS
-    void save_double(philox4x32_10_engine * engine, double d)
-    {
-        engine->m_state.boxmuller_double_state = 1;
-        engine->m_state.boxmuller_double = d;
-    }
-};
-#endif
-
-} // end namespace detail
 } // end namespace rocrand_device
 
 typedef rocrand_device::philox4x32_10_engine rocrand_state_philox4x32_10;

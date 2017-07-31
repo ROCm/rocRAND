@@ -35,9 +35,9 @@
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
 {
-    typedef rocrand_device::detail::philox4x32_10_engine_boxmuller_helper bm_helper;
+    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_philox4x32_10> bm_helper;
 
-    if(bm_helper::is_float(state))
+    if(bm_helper::has_float(state))
     {
         return expf(mean + (stddev * bm_helper::get_float(state)));
     }
@@ -73,9 +73,9 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mean, double stddev)
 {
-    typedef rocrand_device::detail::philox4x32_10_engine_boxmuller_helper bm_helper;
+    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_philox4x32_10> bm_helper;
 
-    if(bm_helper::is_double(state))
+    if(bm_helper::has_double(state))
     {
         return exp(mean + (stddev * bm_helper::get_double(state)));
     }
@@ -110,9 +110,9 @@ double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double m
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stddev)
 {
-    typedef rocrand_device::detail::mrg32k3a_engine_boxmuller_helper bm_helper;
+    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg32k3a> bm_helper;
 
-    if(bm_helper::is_float(state))
+    if(bm_helper::has_float(state))
     {
         return expf(mean + (stddev * bm_helper::get_float(state)));
     }
@@ -136,9 +136,9 @@ float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float std
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, double stddev)
 {
-    typedef rocrand_device::detail::mrg32k3a_engine_boxmuller_helper bm_helper;
+    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg32k3a> bm_helper;
 
-    if(bm_helper::is_double(state))
+    if(bm_helper::has_double(state))
     {
         return exp(mean + (stddev * bm_helper::get_double(state)));
     }
@@ -162,9 +162,9 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
 {
-    typedef rocrand_device::detail::xorwow_engine_boxmuller_helper bm_helper;
+    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow> bm_helper;
 
-    if(bm_helper::is_float(state))
+    if(bm_helper::has_float(state))
     {
         return expf(mean + (stddev * bm_helper::get_float(state)));
     }
@@ -188,9 +188,9 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, double stddev)
 {
-    typedef rocrand_device::detail::xorwow_engine_boxmuller_helper bm_helper;
+    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow> bm_helper;
 
-    if(bm_helper::is_double(state))
+    if(bm_helper::has_double(state))
     {
         return exp(mean + (stddev * bm_helper::get_double(state)));
     }

@@ -31,6 +31,7 @@
 
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
+#include <rocrand_kernel.h>
 
 #define HIP_CHECK(condition)         \
   {                                  \
@@ -54,29 +55,90 @@
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 #endif
 
-typedef rocrand_rng_type rng_type_t;
+template<typename GeneratorState>
+__global__
+void init_kernel(GeneratorState * states,
+                 const unsigned long long seed,
+                 const unsigned long long offset)
+{
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int subsequence = state_id;
+    GeneratorState state;
+    rocrand_init(seed, subsequence, offset, &state);
+    states[state_id] = state;
+}
 
-template<typename T>
-using generate_func_type = std::function<rocrand_status(rocrand_generator, T *, size_t)>;
+template<typename GeneratorState>
+struct initializer
+{
+    void operator()(const size_t blocks,
+                    const size_t threads,
+                    GeneratorState * states,
+                    const unsigned long long seed,
+                    const unsigned long long offset)
+    {
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(init_kernel),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, seed, offset
+        );
+    }
+};
 
-template<typename T>
+template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
+__global__
+void generate_kernel(GeneratorState * states,
+                     T * data,
+                     const size_t size,
+                     const GenerateFunc& generate_func,
+                     const Extra extra)
+{
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+    GeneratorState state = states[state_id];
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        data[index] = generate_func(&state, extra);
+        index += stride;
+    }
+    states[state_id] = state;
+}
+
+template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 void run_benchmark(const boost::program_options::variables_map& vm,
-                   const rng_type_t rng_type,
-                   generate_func_type<T> generate_func)
+                   const GenerateFunc& generate_func,
+                   const Extra extra)
 {
     const size_t size = vm["size"].as<size_t>();
     const size_t trials = vm["trials"].as<size_t>();
 
+    const size_t blocks = vm["blocks"].as<size_t>();
+    const size_t threads = vm["threads"].as<size_t>();
+
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
 
-    rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
+    const size_t states_size = blocks * threads;
+    GeneratorState * states;
+    HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(GeneratorState)));
+
+    initializer<GeneratorState> init;
+    init(blocks, threads, states, 12345ULL, 6789ULL);
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
 
     // Warm-up
     for (size_t i = 0; i < 5; i++)
     {
-        ROCRAND_CHECK(generate_func(generator, data, size));
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(generate_kernel),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, data, size, generate_func, extra
+        );
+        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipDeviceSynchronize());
     }
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -84,7 +146,13 @@ void run_benchmark(const boost::program_options::variables_map& vm,
     auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < trials; i++)
     {
-        ROCRAND_CHECK(generate_func(generator, data, size));
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(generate_kernel),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, data, size, generate_func, extra
+        );
+        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipDeviceSynchronize());
     }
     HIP_CHECK(hipDeviceSynchronize());
     auto end = std::chrono::high_resolution_clock::now();
@@ -105,68 +173,68 @@ void run_benchmark(const boost::program_options::variables_map& vm,
               << " ms, Size = " << size
               << std::endl;
 
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+	HIP_CHECK(hipFree(states));
     HIP_CHECK(hipFree(data));
 }
 
+template<typename GeneratorState>
 void run_benchmarks(const boost::program_options::variables_map& vm,
-                    const rng_type_t rng_type,
                     const std::string& distribution)
 {
     if (distribution == "uniform-uint")
     {
-        run_benchmark<unsigned int>(vm, rng_type,
-            [](rocrand_generator gen, unsigned int * data, size_t size) {
-                return rocrand_generate(gen, data, size);
-            }
+        run_benchmark<unsigned int, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, int) {
+                return rocrand(state);
+            }, 0
         );
     }
     if (distribution == "uniform-float")
     {
-        run_benchmark<float>(vm, rng_type,
-            [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_uniform(gen, data, size);
-            }
+        run_benchmark<float, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, int) {
+                return rocrand_uniform(state);
+            }, 0
         );
     }
     if (distribution == "uniform-double")
     {
-        run_benchmark<double>(vm, rng_type,
-            [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_uniform_double(gen, data, size);
-            }
+        run_benchmark<double, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, int) {
+                return rocrand_uniform_double(state);
+            }, 0
         );
     }
     if (distribution == "normal-float")
     {
-        run_benchmark<float>(vm, rng_type,
-            [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
-            }
+        run_benchmark<float, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, int) {
+                return rocrand_normal(state);
+            }, 0
         );
     }
     if (distribution == "normal-double")
     {
-        run_benchmark<double>(vm, rng_type,
-            [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
-            }
+        run_benchmark<double, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, int) {
+                return rocrand_normal_double(state);
+            }, 0
         );
     }
     if (distribution == "log-normal-float")
     {
-        run_benchmark<float>(vm, rng_type,
-            [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
-            }
+        run_benchmark<float, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, int) {
+                return rocrand_log_normal(state, 0.0f, 1.0f);
+            }, 0
         );
     }
     if (distribution == "log-normal-double")
     {
-        run_benchmark<double>(vm, rng_type,
-            [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
-            }
+        run_benchmark<double, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, int) {
+                return rocrand_log_normal_double(state, 0.0, 1.0);
+            }, 0
         );
     }
     if (distribution == "poisson")
@@ -176,12 +244,53 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_benchmark<unsigned int>(vm, rng_type,
-                [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
-                    return rocrand_generate_poisson(gen, data, size, lambda);
-                }
+            run_benchmark<unsigned int, GeneratorState>(vm,
+                [] __device__ (GeneratorState * state, double lambda) {
+                    return rocrand_poisson(state, lambda);
+                }, lambda
             );
         }
+    }
+    if (distribution == "discrete-poisson")
+    {
+        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        for (double lambda : lambdas)
+        {
+            std::cout << "    " << "lambda "
+                 << std::fixed << std::setprecision(1) << lambda << std::endl;
+            rocrand_discrete_distribution discrete_distribution;
+            ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
+            run_benchmark<unsigned int, GeneratorState>(vm,
+                [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
+                    return rocrand_discrete(state, discrete_distribution);
+                }, discrete_distribution
+            );
+            ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
+        }
+    }
+    if (distribution == "discrete-custom")
+    {
+        const unsigned int offset = 1234;
+        std::vector<double> probabilities = { 10, 10, 1, 120, 8, 6, 140, 2, 150, 150, 10, 80 };
+        const int size = probabilities.size();
+        double sum = 0.0;
+        for (int i = 0; i < size; i++)
+        {
+            sum += probabilities[i];
+        }
+        for (int i = 0; i < size; i++)
+        {
+            probabilities[i] /= sum;
+        }
+
+        rocrand_discrete_distribution discrete_distribution;
+        ROCRAND_CHECK(rocrand_create_discrete_distribution(probabilities.data(), probabilities.size(), offset, &discrete_distribution));
+        run_benchmark<unsigned int, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
+                return rocrand_discrete(state, discrete_distribution);
+            }, discrete_distribution
+        );
+        ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
     }
 }
 
@@ -189,20 +298,26 @@ const std::vector<std::string> all_engines = {
     "xorwow",
     "mrg32k3a",
     // "mtgp32",
+    // "mt19937",
     "philox",
     // "sobol32",
+    // "scrambled_sobol32",
+    // "sobol64",
+    // "scrambled_sobol64",
 };
 
 const std::vector<std::string> all_distributions = {
     "uniform-uint",
-    // "uniform-long-long",
+    "uniform-long-long",
     "uniform-float",
     "uniform-double",
     "normal-float",
     "normal-double",
     "log-normal-float",
     "log-normal-double",
-    "poisson"
+    "poisson",
+    "discrete-poisson",
+    "discrete-custom",
 };
 
 int main(int argc, char *argv[])
@@ -230,6 +345,8 @@ int main(int argc, char *argv[])
         ("help", "show usage instructions")
         ("size", po::value<size_t>()->default_value(DEFAULT_RAND_N), "number of values")
         ("trials", po::value<size_t>()->default_value(20), "number of trials")
+        ("blocks", po::value<size_t>()->default_value(64), "number of blocks")
+        ("threads", po::value<size_t>()->default_value(256), "number of threads in each block")
         ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "uniform-uint" }, "uniform-uint"),
             distribution_desc.c_str())
         ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
@@ -285,20 +402,23 @@ int main(int argc, char *argv[])
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;
-        rng_type_t rng_type;
-        if (engine == "xorwow")
-            rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
-        else if (engine == "mrg32k3a")
-            rng_type = ROCRAND_RNG_PSEUDO_MRG32K3A;
-        else if (engine == "philox")
-            rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
-
         for (auto distribution : distributions)
         {
             std::cout << "  " << distribution << ":" << std::endl;
-            run_benchmarks(vm, rng_type, distribution);
+            const std::string plot_name = engine + "-" + distribution;
+            if (engine == "xorwow")
+            {
+                run_benchmarks<rocrand_state_xorwow>(vm, distribution);
+            }
+            else if (engine == "mrg32k3a")
+            {
+                run_benchmarks<rocrand_state_mrg32k3a>(vm, distribution);
+            }
+            else if (engine == "philox")
+            {
+                run_benchmarks<rocrand_state_philox4x32_10>(vm, distribution);
+            }
         }
-        std::cout << std::endl;
     }
 
     return 0;

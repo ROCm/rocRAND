@@ -21,10 +21,6 @@
 #ifndef ROCRAND_RNG_XORWOW_H_
 #define ROCRAND_RNG_XORWOW_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
@@ -52,7 +48,7 @@ namespace detail {
     __global__
     void generate_kernel(xorwow_device_engine * engines,
                          Type * data, const size_t n,
-                         Distribution distribution)
+                         const Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
@@ -136,65 +132,6 @@ namespace detail {
             RealType2 result = distribution(
                 uint4 { engine(), engine(), engine(), engine() }
             );
-            // Save the tail
-            data[n - 1] = result.x;
-        }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
-
-    template<class Distribution>
-    __global__
-    void generate_small_poisson_kernel(xorwow_device_engine * engines,
-                                       unsigned int * data, const size_t n,
-                                       const Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        xorwow_device_engine engine = engines[engine_id];
-
-        while(index < n)
-        {
-            const unsigned int result = distribution(engine);
-            data[index] = result;
-            index += stride;
-        }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
-
-    template<class Distribution>
-    __global__
-    void generate_large_poisson_kernel(xorwow_device_engine * engines,
-                                       unsigned int * data, const size_t n,
-                                       const Distribution distribution)
-    {
-        typedef decltype(distribution(*engines)) Type2;
-
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        xorwow_device_engine engine = engines[engine_id];
-
-        Type2 * data2 = (Type2 *)data;
-        while(index < (n / 2))
-        {
-            const Type2 result = distribution(engine);
-            data2[index] = result;
-            index += stride;
-        }
-
-        // First work-item saves the tail when n is not a multiple of 2
-        if(engine_id == 0 && (n & 1) > 0)
-        {
-            const Type2 result = distribution(engine);
             // Save the tail
             data[n - 1] = result.x;
         }
@@ -302,10 +239,10 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_uniform(T * data, size_t n)
+    rocrand_status generate_uniform(T * data, size_t data_size)
     {
         uniform_distribution<T> udistribution;
-        return generate(data, n, udistribution);
+        return generate(data, data_size, udistribution);
     }
 
     template<class T>
@@ -370,19 +307,6 @@ public:
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 64;
-        const uint32_t max_blocks = 64;
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
-
         try
         {
             poisson.set_lambda(lambda);
@@ -391,27 +315,7 @@ public:
         {
             return status;
         }
-        if (poisson.use_small())
-        {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(rocrand_host::detail::generate_small_poisson_kernel),
-                dim3(blocks), dim3(threads), 0, m_stream,
-                m_engines, data, data_size, poisson.small
-            );
-        }
-        else
-        {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(rocrand_host::detail::generate_large_poisson_kernel),
-                dim3(blocks), dim3(threads), 0, m_stream,
-                m_engines, data, data_size, poisson.large
-            );
-        }
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, poisson.dis);
     }
 
 private:
@@ -419,7 +323,7 @@ private:
     engine_type * m_engines;
     size_t m_engines_size;
 
-    poisson_distribution<> poisson;
+    poisson_distribution_manager<> poisson;
 
     // m_seed from base_type
     // m_offset from base_type

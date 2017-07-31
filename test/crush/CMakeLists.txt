@@ -16,6 +16,10 @@ include_directories(${PROJECT_SOURCE_DIR}/library/src)
 include_directories(${PROJECT_SOURCE_DIR}/test/crush)
 include_directories(${TESTU01_INCLUDE_DIRS})
 
+if(HIP_PLATFORM STREQUAL "nvcc")
+    set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} --expt-extended-lambda")
+endif()
+
 foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     get_filename_component(crush_test_name ${crush_test_src} NAME_WE)
     hip_add_executable(${crush_test_name} "${crush_test_src}")

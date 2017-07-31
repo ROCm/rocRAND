@@ -74,4 +74,56 @@ float nextafterf(const float from, const float to)
 #endif
 #endif // defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
 
+namespace rocrand_device {
+namespace detail {
+
+// This helps access fields of engine's internal state which
+// saves floats and doubles generated using the Box–Muller transform
+template<typename Engine>
+struct engine_boxmuller_helper
+{
+    static FQUALIFIERS
+    bool has_float(const Engine * engine)
+    {
+        return engine->m_state.boxmuller_float_state != 0;
+    }
+
+    static FQUALIFIERS
+    float get_float(Engine * engine)
+    {
+        engine->m_state.boxmuller_float_state = 0;
+        return engine->m_state.boxmuller_float;
+    }
+
+    static FQUALIFIERS
+    void save_float(Engine * engine, float f)
+    {
+        engine->m_state.boxmuller_float_state = 1;
+        engine->m_state.boxmuller_float = f;
+    }
+
+    static FQUALIFIERS
+    bool has_double(const Engine * engine)
+    {
+        return engine->m_state.boxmuller_double_state != 0;
+    }
+
+    static FQUALIFIERS
+    float get_double(Engine * engine)
+    {
+        engine->m_state.boxmuller_double_state = 0;
+        return engine->m_state.boxmuller_double;
+    }
+
+    static FQUALIFIERS
+    void save_double(Engine * engine, double d)
+    {
+        engine->m_state.boxmuller_double_state = 1;
+        engine->m_state.boxmuller_double = d;
+    }
+};
+
+} // end namespace detail
+} // end namespace rocrand_device
+
 #endif // ROCRAND_COMMON_H_
