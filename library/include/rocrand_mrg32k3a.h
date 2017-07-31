@@ -42,12 +42,6 @@
 #define ROCRAND_MRG32K3A_DEFAULT_SEED 0x12345ULL
 
 namespace rocrand_device {
-namespace detail {
-
-// forward declaration
-struct mrg32k3a_engine_boxmuller_helper;
-
-} // end detail namespace
 
 class mrg32k3a_engine
 {
@@ -398,60 +392,12 @@ protected:
     // State
     mrg32k3a_state m_state;
 
-    friend class detail::mrg32k3a_engine_boxmuller_helper;
+    #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+    friend class detail::engine_boxmuller_helper<mrg32k3a_engine>;
+    #endif
 
 }; // mrg32k3a_engine class
 
-namespace detail {
-
-#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
-// This helps access fields of mrg32k3a_engine's internal state which
-// saves floats and doubles generated using the Box–Muller transform
-struct mrg32k3a_engine_boxmuller_helper
-{
-    static FQUALIFIERS
-    bool is_float(mrg32k3a_engine * engine)
-    {
-        return engine->m_state.boxmuller_float_state != 0;
-    }
-
-    static FQUALIFIERS
-    float get_float(mrg32k3a_engine * engine)
-    {
-        engine->m_state.boxmuller_float_state = 0;
-        return engine->m_state.boxmuller_float;
-    }
-
-    static FQUALIFIERS
-    void save_float(mrg32k3a_engine * engine, float f)
-    {
-        engine->m_state.boxmuller_double_state = 1;
-        engine->m_state.boxmuller_double = f;
-    }
-
-    static FQUALIFIERS
-    bool is_double(mrg32k3a_engine * engine)
-    {
-        return engine->m_state.boxmuller_double_state != 0;
-    }
-
-    static FQUALIFIERS
-    float get_double(mrg32k3a_engine * engine)
-    {
-        engine->m_state.boxmuller_double_state = 0;
-        return engine->m_state.boxmuller_double;
-    }
-
-    static FQUALIFIERS
-    void save_double(mrg32k3a_engine * engine, double d)
-    {
-        engine->m_state.boxmuller_double_state = 1;
-        engine->m_state.boxmuller_double = d;
-    }
-};
-#endif
-
-} // end namespace detail
 } // end namespace rocrand_device
 
 typedef rocrand_device::mrg32k3a_engine rocrand_state_mrg32k3a;
