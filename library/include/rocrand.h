@@ -383,8 +383,6 @@ rocrand_get_version(int * version);
  * \brief Construct the histogram for a Poisson distribution.
  *
  * Construct the histogram for the Poisson distribution with lambda \p lambda.
- * For lambda greater than 2000, an approximation with a normal distribution
- * is used.
  *
  * \param lambda - lambda for the Poisson distribution
  *
