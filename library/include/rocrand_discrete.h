@@ -44,20 +44,24 @@
 namespace rocrand_device {
 namespace detail {
 
-template<class State>
 FQUALIFIERS
-unsigned int discrete(State& state, const rocrand_discrete_distribution_st& dis)
+unsigned int discrete(const double x, const rocrand_discrete_distribution_st& dis)
 {
     // Calculate value using Alias table
 
-    const unsigned int r = rocrand(state);
-    // [0, 1)
-    const double x = r * 2.3283064365386963e-10;
+    // x is [0, 1)
     const double nx = dis.size * x;
     const double fnx = floor(nx);
     const double y = nx - fnx;
     const unsigned int i = static_cast<unsigned int>(fnx);
     return dis.offset + (y < dis.probability[i] ? i : dis.alias[i]);
+}
+
+FQUALIFIERS
+unsigned int discrete(const unsigned int r, const rocrand_discrete_distribution_st& dis)
+{
+    const double x = r * 2.3283064365386963e-10;
+    return discrete(x, dis);
 }
 
 } // end namespace detail
@@ -67,18 +71,18 @@ unsigned int discrete(State& state, const rocrand_discrete_distribution_st& dis)
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_philox4x32_10 * state, const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete(state, *discrete_distribution);
+    return rocrand_device::detail::discrete(rocrand(state), *discrete_distribution);
 }
 
 FQUALIFIERS
 uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discrete_distribution discrete_distribution)
 {
-    // Naive implemetation
+    const uint4 u4 = rocrand4(state);
     return uint4 {
-        rocrand_device::detail::discrete(state, *discrete_distribution),
-        rocrand_device::detail::discrete(state, *discrete_distribution),
-        rocrand_device::detail::discrete(state, *discrete_distribution),
-        rocrand_device::detail::discrete(state, *discrete_distribution)
+        rocrand_device::detail::discrete(u4.x, *discrete_distribution),
+        rocrand_device::detail::discrete(u4.y, *discrete_distribution),
+        rocrand_device::detail::discrete(u4.z, *discrete_distribution),
+        rocrand_device::detail::discrete(u4.w, *discrete_distribution)
     };
 }
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
@@ -87,7 +91,7 @@ uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discr
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete(state, *discrete_distribution);
+    return rocrand_device::detail::discrete(static_cast<unsigned int>(rocrand(state)), *discrete_distribution);
 }
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
@@ -95,7 +99,7 @@ unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_disc
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete(state, *discrete_distribution);
+    return rocrand_device::detail::discrete(rocrand(state), *discrete_distribution);
 }
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 

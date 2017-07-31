@@ -21,10 +21,6 @@
 #ifndef ROCRAND_RNG_MRG32K3A_H_
 #define ROCRAND_RNG_MRG32K3A_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
@@ -52,7 +48,7 @@ namespace detail {
     __global__
     void generate_kernel(mrg32k3a_device_engine * engines,
                          Type * data, const size_t n,
-                         Distribution distribution)
+                         const Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
@@ -101,31 +97,6 @@ namespace detail {
             RealType2 result = distribution(engine(), engine());
             // Save the tail
             data[n - 1] = result.x;
-        }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
-
-    template <class Distribution>
-    __global__
-    void generate_poisson_kernel(mrg32k3a_device_engine * engines,
-                                 unsigned int * data, const size_t n,
-                                 Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        mrg32k3a_device_engine engine = engines[engine_id];
-
-        // TODO: Improve performance.
-        while(index < n)
-        {
-            auto result = distribution(engine);
-            data[index] = result;
-            index += stride;
         }
 
         // Save engine with its state
@@ -247,10 +218,10 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_uniform(T * data, size_t n)
+    rocrand_status generate_uniform(T * data, size_t data_size)
     {
         mrg_uniform_distribution<T> udistribution;
-        return generate(data, n, udistribution);
+        return generate(data, data_size, udistribution);
     }
 
     template<class T>
@@ -315,37 +286,23 @@ public:
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
+        try
+        {
+            poisson.set_lambda(lambda);
+        }
+        catch(rocrand_status status)
+        {
             return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
-
-        mrg_poisson_distribution<unsigned int> distribution(lambda);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        }
+        return generate(data, data_size, poisson.dis);
     }
 
 private:
     bool m_engines_initialized;
     engine_type * m_engines;
     size_t m_engines_size;
+
+    poisson_distribution_manager<> poisson;
 
     // m_seed from base_type
     // m_offset from base_type

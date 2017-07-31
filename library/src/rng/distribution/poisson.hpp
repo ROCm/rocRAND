@@ -1,4 +1,4 @@
- // Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,17 +42,23 @@ public:
     rocrand_poisson_distribution(double lambda)
         : rocrand_poisson_distribution()
     {
+        set_lambda(lambda);
+    }
+
+    __host__ __device__
+    ~rocrand_poisson_distribution() { }
+
+    void set_lambda(double lambda)
+    {
         const size_t capacity =
             2 * static_cast<size_t>(16.0 * (2.0 + std::sqrt(lambda)));
         std::vector<double> p(capacity);
 
         calculate_probabilities(p, capacity, lambda);
+        this->deallocate();
         this->allocate();
         this->create_alias_table(p);
     }
-
-    __host__ __device__
-    ~rocrand_poisson_distribution() { }
 
 protected:
 
@@ -102,6 +108,37 @@ protected:
         this->size = hi - lo + 1;
         this->offset = left + lo;
     }
+};
+
+template<bool IsHostSide = false>
+class poisson_distribution_manager
+{
+public:
+
+    rocrand_poisson_distribution<IsHostSide> dis;
+
+    poisson_distribution_manager()
+        : lambda(0.0)
+    { }
+
+    ~poisson_distribution_manager()
+    {
+        dis.deallocate();
+    }
+
+    void set_lambda(double new_lambda)
+    {
+        const bool changed = lambda != new_lambda;
+        if (changed)
+        {
+            lambda = new_lambda;
+            dis.set_lambda(lambda);
+        }
+    }
+
+private:
+
+    double lambda;
 };
 
 #endif // ROCRAND_RNG_DISTRIBUTION_POISSON_H_

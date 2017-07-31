@@ -24,9 +24,9 @@
 #include <random>
 #include <vector>
 
-#include <rng/distribution/poisson.hpp>
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
+#include <rng/distribution/poisson.hpp>
 
 template<typename T>
 double get_mean(std::vector<T> values)
@@ -53,33 +53,14 @@ double get_variance(std::vector<T> values, double mean)
 
 class PoissonDistribution : public ::testing::TestWithParam<double> { };
 
-template<class Generator>
-struct dummy_gen
-{
-    dummy_gen(Generator gen) : gen(gen) { }
-
-    // Disables 'warning: calling a __host__ function'
-    #if defined(__CUDACC__) && !defined(__CUDA__)
-    #pragma hd_warning_disable
-    #endif
-    __host__ __device__
-    unsigned int operator()()
-    {
-        return gen();
-    }
-
-    Generator gen;
-};
-
 TEST_P(PoissonDistribution, MeanVar)
 {
     const double lambda = GetParam();
 
     std::random_device rd;
-    std::mt19937 host_gen(rd());
-    dummy_gen<std::mt19937> gen(host_gen);
+    std::mt19937 gen(rd());
 
-    poisson_distribution<true> dis;
+    rocrand_poisson_distribution<true> dis;
     dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
@@ -87,7 +68,7 @@ TEST_P(PoissonDistribution, MeanVar)
 
     for (size_t si = 0; si < samples_count; si++)
     {
-        const unsigned int v = dis.use_small() ? dis.small(gen) : dis.large(gen).x;
+        const unsigned int v = dis(gen());
         values[si] = v;
     }
 
@@ -103,11 +84,10 @@ TEST_P(PoissonDistribution, HistogramCompare)
     const double lambda = GetParam();
 
     std::random_device rd;
-    std::mt19937 host_gen(rd());
-    dummy_gen<std::mt19937> gen(host_gen);
+    std::mt19937 gen(rd());
     std::poisson_distribution<unsigned int> host_dis(lambda);
 
-    poisson_distribution<true> dis;
+    rocrand_poisson_distribution<true> dis;
     dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
@@ -118,7 +98,7 @@ TEST_P(PoissonDistribution, HistogramCompare)
 
     for (size_t si = 0; si < samples_count; si++)
     {
-        const unsigned int v = host_dis(host_gen);
+        const unsigned int v = host_dis(gen);
         const size_t bin = v / bin_size;
         if (bin < bins_count)
         {
@@ -128,7 +108,7 @@ TEST_P(PoissonDistribution, HistogramCompare)
 
     for (size_t si = 0; si < samples_count; si++)
     {
-        const unsigned int v = dis.use_small() ? dis.small(gen) : dis.large(gen).x;
+        const unsigned int v = dis(gen());
         const size_t bin = v / bin_size;
         if (bin < bins_count)
         {
