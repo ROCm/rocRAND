@@ -248,7 +248,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
             );
         }
     }
-    if (distribution == "discrete")
+    if (distribution == "discrete-poisson")
     {
         const auto lambdas = vm["lambda"].as<std::vector<double>>();
         for (double lambda : lambdas)
@@ -264,6 +264,30 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
             );
             ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
         }
+    }
+    if (distribution == "discrete-custom")
+    {
+        const unsigned int offset = 1234;
+        std::vector<double> probabilities = { 10, 10, 1, 120, 8, 6, 140, 2, 150, 150, 10, 80 };
+        const int size = probabilities.size();
+        double sum = 0.0;
+        for (int i = 0; i < size; i++)
+        {
+            sum += probabilities[i];
+        }
+        for (int i = 0; i < size; i++)
+        {
+            probabilities[i] /= sum;
+        }
+
+        rocrand_discrete_distribution discrete_distribution;
+        ROCRAND_CHECK(rocrand_create_discrete_distribution(probabilities.data(), probabilities.size(), offset, &discrete_distribution));
+        run_benchmark<unsigned int, GeneratorState>(vm,
+            [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
+                return rocrand_discrete(state, discrete_distribution);
+            }, discrete_distribution
+        );
+        ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
     }
 }
 
@@ -289,7 +313,8 @@ const std::vector<std::string> all_distributions = {
     "log-normal-float",
     "log-normal-double",
     "poisson",
-    "discrete",
+    "discrete-poisson",
+    "discrete-custom",
 };
 
 int main(int argc, char *argv[])

@@ -470,10 +470,54 @@ rocrand_create_poisson_distribution(double lambda,
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_poisson<> h_dis;
+    rocrand_poisson_distribution<> h_dis;
     try
     {
-        h_dis = rocrand_discrete_distribution_poisson<>(lambda);
+        h_dis = rocrand_poisson_distribution<>(lambda);
+    }
+    catch(const std::exception& e)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+    catch(rocrand_status status)
+    {
+        return status;
+    }
+
+    hipError_t error;
+    error = hipMalloc(discrete_distribution, sizeof(rocrand_discrete_distribution_st));
+    if (error != hipSuccess)
+    {
+        return ROCRAND_STATUS_ALLOCATION_FAILED;
+    }
+    error = hipMemcpy(*discrete_distribution, &h_dis, sizeof(rocrand_discrete_distribution_st), hipMemcpyDefault);
+    if (error != hipSuccess)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+
+    return ROCRAND_STATUS_SUCCESS;
+}
+
+rocrand_status ROCRANDAPI
+rocrand_create_discrete_distribution(const double * probabilities,
+                                     unsigned int size,
+                                     unsigned int offset,
+                                     rocrand_discrete_distribution * discrete_distribution)
+{
+    if (discrete_distribution == NULL)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+    if (size == 0)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    rocrand_discrete_distribution_base<> h_dis;
+    try
+    {
+        h_dis = rocrand_discrete_distribution_base<>(probabilities, size, offset);
     }
     catch(const std::exception& e)
     {
@@ -507,7 +551,7 @@ rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_dis
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_poisson<> h_dis;
+    rocrand_discrete_distribution_base<> h_dis;
 
     hipError_t error;
     error = hipMemcpy(&h_dis, discrete_distribution, sizeof(rocrand_discrete_distribution_st), hipMemcpyDefault);
