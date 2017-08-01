@@ -1,5 +1,11 @@
 # Dependencies
 
+# GIT
+find_package(Git REQUIRED)
+if (!Git_FOUND)
+    message(FATAL_ERROR "Please ensure Git is installed on the system")
+endif()
+
 # HIP
 find_package(HIP REQUIRED)
 include_directories(SYSTEM ${HIP_INCLUDE_DIRECTORIES})
@@ -21,4 +27,7 @@ endif()
 if(BUILD_BENCHMARK)
     set(BENCHMARK_BOOST_COMPONENTS program_options)
     find_package(Boost 1.54 REQUIRED COMPONENTS ${BENCHMARK_BOOST_COMPONENTS})
+    if (!Boost_FOUND)
+        message(FATAL_ERROR "Please ensure Boost program_options is installed")
+    endif()
 endif()
