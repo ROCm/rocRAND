@@ -28,6 +28,7 @@
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand_kernel.h>
+#include <rocrand.h>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
 
@@ -145,6 +146,25 @@ void rocrand_poisson_kernel(unsigned int * output, const size_t size, double lam
     while(index < size)
     {
         output[index] = rocrand_poisson(&state, lambda);
+        index += global_size;
+    }
+}
+
+template <class GeneratorState>
+__global__
+void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_discrete_distribution discrete_distribution)
+{
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+
+    GeneratorState state;
+    const unsigned int subsequence = state_id;
+    rocrand_init(23456, subsequence, 234ULL, &state);
+
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        output[index] = rocrand_discrete(&state, discrete_distribution);
         index += global_size;
     }
 }
@@ -349,6 +369,57 @@ TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_poisson)
     );
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
+
+    double mean = 0;
+    for(auto v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_size;
+
+    double variance = 0;
+    for(auto v : output_host)
+    {
+        variance += std::pow(v - mean, 2);
+    }
+    variance = variance / output_size;
+
+    EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
+    EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+}
+
+TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_discrete)
+{
+    typedef rocrand_state_mrg32k3a state_type;
+
+    const double lambda = GetParam();
+
+    const size_t output_size = 8192;
+    unsigned int * output;
+    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    rocrand_discrete_distribution discrete_distribution;
+    ASSERT_EQ(rocrand_create_poisson_distribution(lambda, &discrete_distribution), ROCRAND_STATUS_SUCCESS);
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
+        dim3(4), dim3(64), 0, 0,
+        output, output_size, lambda
+    );
+    HIP_CHECK(hipPeekAtLastError());
+
+    std::vector<unsigned int> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(unsigned int),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+    ASSERT_EQ(rocrand_destroy_discrete_distribution(discrete_distribution), ROCRAND_STATUS_SUCCESS);
 
     double mean = 0;
     for(auto v : output_host)
