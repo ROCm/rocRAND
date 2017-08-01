@@ -101,30 +101,6 @@ namespace detail {
         engines[engine_id] = engine;
     }
     
-    /*template <class Distribution>
-    __global__
-    void generate_poisson_kernel(sobol32_device_engine * engines,
-                                 unsigned int * data, const size_t n,
-                                 Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        sobol32_device_engine engine = engines[engine_id];
-
-        // TODO: Improve performance.
-        while(index < n)
-        {
-            auto result = distribution(engine);
-            data[index] = result;
-            index += stride;
-        }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }*/
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -301,39 +277,25 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    /*rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
+    rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
+        try
+        {
+            poisson.set_lambda(lambda);
+        }
+        catch(rocrand_status status)
+        {
             return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
-
-        poisson_distribution<unsigned int> distribution(lambda);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
-    }*/
+        }
+        return generate(data, data_size, poisson.dis);
+    }
 
 private:
     bool m_engines_initialized;
     engine_type * m_engines;
     size_t m_engines_size;
+    
+    poisson_distribution_manager<> poisson;
 
     // m_seed from base_type
     // m_offset from base_type
