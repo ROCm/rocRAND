@@ -114,6 +114,21 @@ double2 mrg_box_muller_double(double x, double y)
     #endif
     return result;
 }
+    
+FQUALIFIERS
+float normal_distribution(unsigned int x)
+{
+    float s = -ROCRAND_SQRT2;
+    unsigned int z = x;
+    if(z > 0x80000000) {
+        z = 0xffffffff - z;
+        s = -s;
+    }
+    float p = ::rocrand_device::detail::uniform_distribution(z);
+    float v = s * erfcinvf(2.0f * p);
+    return v;
+}
+
 
 FQUALIFIERS
 float2 normal_distribution2(unsigned int v1, unsigned int v2)
@@ -133,6 +148,22 @@ float4 normal_distribution4(uint4 v)
         r2.y
     };
 }
+    
+FQUALIFIERS
+double normal_distribution_double(unsigned int x)
+{
+    double s = -ROCRAND_SQRT2_DOUBLE;
+    unsigned int z = x;
+    if(z > 0x80000000) {
+        z = 0xffffffff - z;
+        s = -s;
+    }
+    double p = ::rocrand_device::detail::uniform_distribution_double(z);
+    double v = s * erfcinv(2.0 * p);
+    return v;
+}
+
+
 
 FQUALIFIERS
 double2 normal_distribution_double2(uint4 v)
@@ -492,6 +523,42 @@ double2 rocrand_normal_double2(rocrand_state_xorwow * state)
     return rocrand_device::detail::normal_distribution_double2(
         uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
     );
+}
+
+/**
+ * \brief Return a normally distributed float from a SOBOL32 Generator.
+ *
+ * Return a normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by one. 
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
+FQUALIFIERS
+float rocrand_normal(rocrand_state_sobol32 * state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
+ * \brief Return a normally distributed double from a SOBOL32 Generator.
+ *
+ * Return a normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by one. 
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
+FQUALIFIERS
+double rocrand_normal_double(rocrand_state_sobol32 * state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }
 
 #endif // ROCRAND_NORMAL_H_

@@ -27,6 +27,10 @@
 
 #include "rocrand_common.h"
 
+// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom 
+// sequence generator, 2003
+// http://doi.acm.org/10.1145/641876.641879
+
 namespace rocrand_device {
 
 class sobol32_engine
@@ -109,7 +113,7 @@ public:
 
 protected:
     // Advances the internal state to skip \p offset numbers.
-    // DOES NOT CALCULATE NEW ULONGLONG
+    // DOES NOT CALCULATE NEW UINT
     FQUALIFIERS
     void discard_impl(unsigned int offset)
     {
@@ -186,6 +190,15 @@ protected:
 
 typedef rocrand_device::sobol32_engine rocrand_state_sobol32;
 
+/**
+ * \brief Initialize SOBOL32 state.
+ *
+ * Initialize SOBOL32 state in \p state with the given \p vectors and \p offset.
+ *
+ * \param vectors - Direction vectors
+ * \param offset - Absolute offset into sequence
+ * \param state - Pointer to state to initialize
+ */
 FQUALIFIERS
 void rocrand_init(const unsigned int * vectors,
                   const unsigned int offset,
@@ -194,12 +207,30 @@ void rocrand_init(const unsigned int * vectors,
     *state = rocrand_state_sobol32(vectors, offset);
 }
 
+/**
+ * \brief Return pseudorandom value (32-bit) from SOBOL32 generator.
+ *
+ * Return pseudorandom value (32-bit) from the SOBOL32 generator in \p state,
+ * increment position of generator by one.
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return pseudorandom value (32-bit) as an unsigned int
+ */
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_sobol32 * state)
 {
     return state->next();
 }
 
+/**
+ * \brief Update SOBOL32 state to skip ahead by \p offset elements.
+ *
+ * Update the SOBOL32 state in \p state to skip ahead by \p offset elements.
+ *
+ * \param offset - Number of elements to skip
+ * \param state - Pointer to state to update
+ */
 FQUALIFIERS
 void skipahead(unsigned long long offset, rocrand_state_sobol32 * state)
 {
