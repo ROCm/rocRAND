@@ -190,7 +190,7 @@ const std::vector<std::string> all_engines = {
     "mrg32k3a",
     // "mtgp32",
     "philox",
-    // "sobol32",
+    "sobol32",
 };
 
 const std::vector<std::string> all_distributions = {
@@ -292,6 +292,8 @@ int main(int argc, char *argv[])
             rng_type = ROCRAND_RNG_PSEUDO_MRG32K3A;
         else if (engine == "philox")
             rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
+        else if (engine == "sobol32")
+            rng_type = ROCRAND_RNG_QUASI_SOBOL32;
 
         for (auto distribution : distributions)
         {

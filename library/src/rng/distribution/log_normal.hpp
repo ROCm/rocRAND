@@ -62,6 +62,20 @@ struct log_normal_distribution<float>
             expf(mean + (stddev * w.y))
         };
     }
+    
+    __forceinline__ __host__ __device__
+    float operator()(unsigned int x)
+    {
+        float s = -ROCRAND_SQRT2;
+        if(x > 0x80000000UL) {
+            x = 0xffffffffUL - x;
+            s = -s;
+        }
+        float p = x * ROCRAND_2POW32_INV + (ROCRAND_2POW32_INV / 2.0f);
+        float v = s * erfcinvf(2.0f * p);
+        v = expf(mean + (stddev * v));
+        return v;
+    }
 };
 
 template<>
@@ -80,6 +94,20 @@ struct log_normal_distribution<double>
         double2 v = box_muller_double(x);
         v.x = exp(mean + (stddev * v.x));
         v.y = exp(mean + (stddev * v.y));
+        return v;
+    }
+    
+    __forceinline__ __host__ __device__
+    double operator()(unsigned int x)
+    {
+        double s = -ROCRAND_SQRT2_DOUBLE;
+        if(x > 0x80000000UL) {
+            x = 0xffffffffUL - x;
+            s = -s;
+        }
+        double p = x * ROCRAND_2POW32_INV_DOUBLE + (ROCRAND_2POW32_INV_DOUBLE / 2.0);
+        double v = s * erfcinv(2.0 * p);
+        v = exp(mean + (stddev * v));
         return v;
     }
 };
