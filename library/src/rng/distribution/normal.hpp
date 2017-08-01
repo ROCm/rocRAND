@@ -72,6 +72,8 @@ struct normal_distribution<float>
         };
     }
     
+    // inverse CDF
+    // TODO: find alternative as performance is low
     __forceinline__ __host__ __device__
     float operator()(const unsigned int x)
     {
@@ -107,6 +109,8 @@ struct normal_distribution<double>
         return v;
     }
     
+    // inverse CDF
+    // TODO: find alternative as performance is low
     __forceinline__ __host__ __device__
     double operator()(const unsigned int x)
     {

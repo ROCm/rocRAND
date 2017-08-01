@@ -229,7 +229,7 @@ unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution(state, lambda);
 }
-#endif // ROCRAND_DETAIL_SOBOL32_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 #endif // ROCRAND_POISSON_H_
 
