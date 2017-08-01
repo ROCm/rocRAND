@@ -46,6 +46,10 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
         {
             *generator = new rocrand_xorwow();
         }
+        else if(rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+        {
+            *generator = new rocrand_sobol32();
+        }
         else
         {
             return ROCRAND_STATUS_TYPE_ERROR;
@@ -103,6 +107,12 @@ rocrand_generate(rocrand_generator generator,
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate(output_data, n);
+    }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -133,6 +143,12 @@ rocrand_generate_uniform(rocrand_generator generator,
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate_uniform(output_data, n);
+    }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -162,6 +178,12 @@ rocrand_generate_uniform_double(rocrand_generator generator,
         rocrand_xorwow * rocrand_xorwow_generator =
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_uniform(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate_uniform(output_data, n);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -197,6 +219,13 @@ rocrand_generate_normal(rocrand_generator generator,
         return rocrand_xorwow_generator->generate_normal(output_data, n,
                                                          stddev, mean);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate_normal(output_data, n,
+                                                          stddev, mean);
+    }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -230,6 +259,13 @@ rocrand_generate_normal_double(rocrand_generator generator,
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_normal(output_data, n,
                                                          stddev, mean);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate_normal(output_data, n,
+                                                          stddev, mean);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -265,6 +301,13 @@ rocrand_generate_log_normal(rocrand_generator generator,
         return rocrand_xorwow_generator->generate_log_normal(output_data, n,
                                                              stddev, mean);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate_log_normal(output_data, n,
+                                                              stddev, mean);
+    }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -298,6 +341,13 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_log_normal(output_data, n,
                                                              stddev, mean);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate_log_normal(output_data, n,
+                                                              stddev, mean);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -337,6 +387,13 @@ rocrand_generate_poisson(rocrand_generator generator,
         return rocrand_xorwow_generator->generate_poisson(output_data, n,
                                                           lambda);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        rocrand_sobol32 * rocrand_sobol32_generator =
+            static_cast<rocrand_sobol32 *>(generator);
+        return rocrand_sobol32_generator->generate_poisson(output_data, n,
+                                                           lambda);
+    }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -359,6 +416,10 @@ rocrand_initialize_generator(rocrand_generator generator)
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
         return static_cast<rocrand_xorwow *>(generator)->init();
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        return static_cast<rocrand_sobol32 *>(generator)->init();
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -383,7 +444,12 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
-        static_cast<rocrand_xorwow*>(generator)->set_stream(stream);
+        static_cast<rocrand_xorwow *>(generator)->set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        static_cast<rocrand_sobol32 *>(generator)->set_stream(stream);
         return ROCRAND_STATUS_SUCCESS;
     }
     return ROCRAND_STATUS_TYPE_ERROR;
@@ -440,6 +506,11 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
         static_cast<rocrand_xorwow *>(generator)->set_offset(offset);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        static_cast<rocrand_sobol32 *>(generator)->set_offset(offset);
         return ROCRAND_STATUS_SUCCESS;
     }
     return ROCRAND_STATUS_TYPE_ERROR;

@@ -212,6 +212,25 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
 }
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
+/**
+ * \brief Return a Poisson distributed unsigned int from a SOBOL32 Generator.
+ *
+ * Return a Poisson distributed unsigned int with lambda \p lambda
+ * and increments the position of generator by a variable amount. 
+ *
+ * \param state - Pointer to state to update
+ * \param lambda - Lambda of the related Poisson distribution
+ *
+ * \return Poisson distributed unsigned int with lambda \p lambda 
+ */
+#ifndef ROCRAND_DETAIL_SOBOL32_BM_NOT_IN_STATE
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution(state, lambda);
+}
+#endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+
 #endif // ROCRAND_POISSON_H_
 
 /** @} */ // end of group device

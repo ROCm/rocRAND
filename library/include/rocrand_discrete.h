@@ -152,6 +152,25 @@ unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discre
 }
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
+/**
+ * \brief Return a discrete distributed unsigned int from a SOBOL32 Generator.
+ *
+ * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * and increments the position of generator by one. 
+ *
+ * \param state - Pointer to state to update
+ * \param discrete_distribution - Related Discrete distribution
+ *
+ * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution 
+ */
+#ifndef ROCRAND_DETAIL_SOBOL32_BM_NOT_IN_STATE
+FQUALIFIERS
+unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete(rocrand(state), *discrete_distribution);
+}
+#endif // ROCRAND_DETAIL_SOBOL32_BM_NOT_IN_STATE
+
 #endif // ROCRAND_DISCRETE_H_
 
 /** @} */ // end of group device
