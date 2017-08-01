@@ -287,7 +287,12 @@ public:
         {
             return status;
         }
-        return generate(data, data_size, poisson.dis);
+        if (lambda < 1000)
+            return generate(data, data_size, poisson.dis);
+        else {
+            normal_distribution<double> distribution(lambda, sqrt(lambda));
+            return generate(data, data_size, distribution);
+        }
     }
 
 private:
