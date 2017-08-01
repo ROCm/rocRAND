@@ -15,6 +15,8 @@ layer.
 * Git
 * Boost [program_options](https://github.com/boostorg/program_options) (Optional: for benchmarks and crush_tests)
     * for ubuntu, install via `sudo apt-get install libboost-program-options-dev`
+* TestU01 (Optional: for crush_tests)
+    * download link and installation instructions can be found [here](http://simul.iro.umontreal.ca/testu01/tu01.html)
 * cmake (2.8.12 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
