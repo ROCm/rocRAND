@@ -35,6 +35,8 @@ typedef rocrand_state_xorwow hiprandStateXORWOW_t;
 typedef rocrand_state_philox4x32_10 hiprandStatePhilox4_32_10_t;
 typedef rocrand_state_mrg32k3a hiprandStateMRG32k3a_t;
 
+typedef rocrand_discrete_distribution hiprandDiscreteDistribution_t;
+
 template<typename T, typename... R>
 struct is_any_of : std::false_type { };
 
@@ -296,6 +298,20 @@ QUALIFIERS
 uint4 hiprand_poisson4(hiprandStatePhilox4_32_10_t * state, double lambda)
 {
     return rocrand_poisson4(state, lambda);
+}
+
+template<class StateType>
+QUALIFIERS
+uint hiprand_discrete(StateType * state, hiprandDiscreteDistribution_t discrete_distribution)
+{
+    check_state_type<StateType>();
+    return rocrand_discrete(state, discrete_distribution);
+}
+
+QUALIFIERS
+uint4 hiprand_discrete4(hiprandStatePhilox4_32_10_t * state, hiprandDiscreteDistribution_t discrete_distribution)
+{
+    return rocrand_discrete4(state, discrete_distribution);
 }
 
 #endif // HIPRAND_KERNEL_HCC_H_
