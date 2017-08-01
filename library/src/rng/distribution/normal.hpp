@@ -71,6 +71,23 @@ struct normal_distribution<float>
             mean + w.y * stddev,
         };
     }
+    
+    // inverse CDF
+    // TODO: find alternative as performance is low
+    __forceinline__ __host__ __device__
+    float operator()(const unsigned int x)
+    {
+        float s = -ROCRAND_SQRT2;
+        unsigned int z = x;
+        if(z > 0x80000000) {
+            z = 0xffffffff - z;
+            s = -s;
+        }
+        float p = z * ROCRAND_2POW32_INV + (ROCRAND_2POW32_INV / 2.0f);
+        float v = s * erfcinvf(2.0f * p);
+        v = mean + v * stddev;
+        return v;
+    }
 };
 
 template<>
@@ -89,6 +106,23 @@ struct normal_distribution<double>
         double2 v = box_muller_double(x);
         v.x = mean + v.x * stddev;
         v.y = mean + v.y * stddev;
+        return v;
+    }
+    
+    // inverse CDF
+    // TODO: find alternative as performance is low
+    __forceinline__ __host__ __device__
+    double operator()(const unsigned int x)
+    {
+        double s = -ROCRAND_SQRT2_DOUBLE;
+        unsigned int z = x;
+        if(z > 0x80000000) {
+            z = 0xffffffff - z;
+            s = -s;
+        }
+        double p = z * ROCRAND_2POW32_INV_DOUBLE + (ROCRAND_2POW32_INV_DOUBLE / 2.0);
+        double v = s * erfcinv(2.0 * p);
+        v = mean + v * stddev;
         return v;
     }
 };

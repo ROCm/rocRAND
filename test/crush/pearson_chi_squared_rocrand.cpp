@@ -185,7 +185,7 @@ const std::vector<std::pair<rng_type_t, std::string>> all_engines = {
     { ROCRAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
     // { ROCRAND_RNG_PSEUDO_MTGP32, "mtgp32" },
     { ROCRAND_RNG_PSEUDO_PHILOX4_32_10, "philox" },
-    // { ROCRAND_RNG_QUASI_SOBOL32, "sobol32" },
+    { ROCRAND_RNG_QUASI_SOBOL32, "sobol32" },
 };
 
 const std::vector<std::string> all_distributions = {
