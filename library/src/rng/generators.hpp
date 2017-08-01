@@ -24,5 +24,6 @@
 #include "philox4x32_10.hpp"
 #include "mrg32k3a.hpp"
 #include "xorwow.hpp"
+#include "sobol32.hpp"
 
 #endif // ROCRAND_RNG_GENERATORS_H_
