@@ -27,8 +27,17 @@
 #define HIPRANDAPI
 #endif
 
+#if defined(__HIP_PLATFORM_HCC__)
+#include "hiprand_hcc.h"
+#elif defined(__HIP_PLATFORM_NVCC__)
+#include "hiprand_nvcc.h"
+#endif
+
 /// hipRAND random number generator (opaque)
 typedef hiprandGenerator_st * hiprandGenerator_t;
+
+/// hipRAND discrete distribution
+typedef hiprandDiscreteDistribution_st * hiprandDiscreteDistribution_t;
 
 #if defined(__cplusplus)
 extern "C" {
@@ -423,6 +432,38 @@ hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offse
  */
 hiprandStatus_t HIPRANDAPI
 hiprandGetVersion(int * version);
+
+/**
+ * \brief Construct the histogram for a Poisson distribution.
+ *
+ * Construct the histogram for the Poisson distribution with lambda \p lambda.
+ *
+ * \param lambda - lambda for the Poisson distribution
+ * \param discrete_distribution - pointer to the histogram in device memory
+ *
+ * \return
+ * - HIPRAND_STATUS_ALLOCATION_FAILED if memory could not be allocated \n
+ * - HIPRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution pointer was null \n
+ * - HIPRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
+ * - HIPRAND_STATUS_SUCCESS if the histogram was constructed successfully \n
+ */
+hiprandStatus_t HIPRANDAPI
+hiprandCreatePoissonDistribution(double lambda, hiprandDiscreteDistribution_t * discrete_distribution);
+
+/**
+ * \brief Destroy the histogram array for a discrete distribution.
+ *
+ * Destroy the histogram array for a discrete distribution created by
+ * hiprandCreatePoissonDistribution.
+ *
+ * \param discrete_distribution - pointer to the histogram in device memory
+ *
+ * \return
+ * - HIPRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution was null \n
+ * - HIPRAND_STATUS_SUCCESS if the histogram was destroyed successfully \n
+ */
+hiprandStatus_t HIPRANDAPI
+hiprandDestroyDistribution(hiprandDiscreteDistribution_t discrete_distribution);
 
 #if defined(__cplusplus)
 }

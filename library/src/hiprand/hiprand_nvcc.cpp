@@ -22,7 +22,6 @@
 
 #include <curand.h>
 
-typedef struct curandGenerator_st hiprandGenerator_st;
 #include <hiprand.h>
 
 #if defined(__cplusplus)
@@ -291,6 +290,22 @@ hiprandGetVersion(int * version)
 {
     return to_hiprand_status(
         curandGetVersion(version)
+    );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandCreatePoissonDistribution(double lambda, hiprandDiscreteDistribution_t * discrete_distribution)
+{
+    return to_hiprand_status(
+        curandCreatePoissonDistribution(lambda, discrete_distribution)
+    );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandDestroyDistribution(hiprandDiscreteDistribution_t discrete_distribution)
+{
+    return to_hiprand_status(
+        curandDestroyDistribution(discrete_distribution)
     );
 }
 
