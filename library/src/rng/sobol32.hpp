@@ -134,13 +134,6 @@ public:
         m_engines_initialized = false;
     }
 
-    /// Changes seed to \p seed and resets generator state.
-    void set_seed(unsigned long long seed)
-    {
-        m_seed = seed;
-        m_engines_initialized = false;
-    }
-
     void set_offset(unsigned long long offset)
     {
         m_offset = offset;
@@ -164,7 +157,10 @@ public:
         unsigned int * m_vector;
         hipMalloc(&m_vector, sizeof(unsigned int) * SOBOL_N);
         hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * SOBOL_N, hipMemcpyHostToDevice);
-        hipDeviceSynchronize();
+        
+        // Check memcpy status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::init_sobol_engines_kernel),

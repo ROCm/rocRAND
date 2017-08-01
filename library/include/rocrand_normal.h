@@ -115,6 +115,8 @@ double2 mrg_box_muller_double(double x, double y)
     return result;
 }
     
+// inverse CDF
+// TODO: find alternative as performance is low
 FQUALIFIERS
 float normal_distribution(unsigned int x)
 {
@@ -149,6 +151,8 @@ float4 normal_distribution4(uint4 v)
     };
 }
     
+// inverse CDF
+// TODO: find alternative as performance is low
 FQUALIFIERS
 double normal_distribution_double(unsigned int x)
 {
