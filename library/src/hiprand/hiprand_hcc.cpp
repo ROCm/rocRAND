@@ -22,7 +22,6 @@
 
 #include <rocrand.h>
 
-typedef rocrand_generator_base_type hiprandGenerator_st;
 #include <hiprand.h>
 
 #if defined(__cplusplus)
@@ -280,6 +279,22 @@ hiprandGetVersion(int * version)
 {
     return to_hiprand_status(
         rocrand_get_version(version)
+    );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandCreatePoissonDistribution(double lambda, hiprandDiscreteDistribution_t * discrete_distribution)
+{
+    return to_hiprand_status(
+        rocrand_create_poisson_distribution(lambda, discrete_distribution)
+    );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandDestroyDistribution(hiprandDiscreteDistribution_t discrete_distribution)
+{
+    return to_hiprand_status(
+        rocrand_destroy_discrete_distribution(discrete_distribution)
     );
 }
 
