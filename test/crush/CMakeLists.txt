@@ -10,7 +10,7 @@ endif()
 set_source_files_properties(${rocRAND_CRUSH_TEST_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # Boost
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/include) # Boost
 include_directories(${PROJECT_SOURCE_DIR}/library/include)
 include_directories(${PROJECT_SOURCE_DIR}/library/src)
 include_directories(${PROJECT_SOURCE_DIR}/test/crush)
@@ -29,7 +29,7 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
         ${crush_test_name}
         -Wl,-rpath,${TESTU01_LIBRARY_DIRS}:${rocRAND_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocRAND> TestU01
-        ${Boost_LIBRARIES} # Boost program_options
+        program_options # Boost program_options
     )
     if(HIP_PLATFORM STREQUAL "nvcc")
         target_link_libraries( ${crush_test_name} "-lcurand")
