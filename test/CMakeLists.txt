@@ -34,9 +34,13 @@ endforeach()
 
 # Crush Tests
 if (BUILD_CRUSH_TEST)
-    find_package(TestU01 REQUIRED)
-    set(CRUSH_TEST_BOOST_COMPONENTS program_options)
-    find_package(Boost 1.54 REQUIRED COMPONENTS ${CRUSH_TEST_BOOST_COMPONENTS})
+    # Download TestU01 library
+    download_project(PROJ                TestU01
+                     GIT_REPOSITORY      https://github.com/JamesHirschorn/TestU01-CMake.git
+                     GIT_TAG             master
+                     UPDATE_DISCONNECTED TRUE
+    )
+    add_subdirectory(${TestU01_SOURCE_DIR} ${TestU01_BINARY_DIR})
     add_subdirectory(crush)
 endif()
 
