@@ -25,9 +25,10 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     hip_add_executable(${crush_test_name} "${crush_test_src}")
     add_dependencies(${crush_test_name} rocRAND TestU01)
     get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+    get_target_property(program_options_rpath program_options BINARY_DIR)
     target_link_libraries(
         ${crush_test_name}
-        -Wl,-rpath,${TESTU01_LIBRARY_DIRS}:${rocRAND_rpath} # workaround for HIP linker
+        -Wl,-rpath,${TESTU01_LIBRARY_DIRS}:${rocRAND_rpath}:${program_options_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocRAND> TestU01
         program_options # Boost program_options
     )
