@@ -129,6 +129,51 @@ unsigned int poisson_distribution(State& state, double lambda)
         return poisson_distribution_huge(state, lambda);
     }
 }
+    
+template<class State>
+FQUALIFIERS
+unsigned int poisson_itr(State& state, double lambda)
+{
+    double L;
+    double x = 1.0;
+    double y = 1.0;
+    int k = 0;
+    int pow = 0;
+    double u = rocrand_uniform_double(state);
+    double upow = pow + 500.0;
+    double ex = exp(-500.0);
+    do{
+        if (lambda > upow)
+            L = ex;
+        else
+            L = exp((double)(pow - lambda));
+      
+        x *= L;
+        y *= L;
+        pow += 500;
+        while (u > y)
+        {
+            k++;
+            x *= ((double)lambda / (double) k);
+            y += x;
+        }
+    } while((double)pow < lambda);
+    return k;
+}
+    
+template<class State>
+FQUALIFIERS
+unsigned int _poisson_distribution(State& state, double lambda)
+{
+    if (lambda < 1000.0)
+    {
+        return poisson_itr(state, lambda);
+    }
+    else
+    {
+        return poisson_distribution_huge(state, lambda);
+    }
+}
 
 } // end namespace detail
 } // end namespace rocrand_device
@@ -226,7 +271,7 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
 {
-    return rocrand_device::detail::poisson_distribution(state, lambda);
+    return rocrand_device::detail::_poisson_distribution(state, lambda);
 }
 
 #endif // ROCRAND_POISSON_H_
