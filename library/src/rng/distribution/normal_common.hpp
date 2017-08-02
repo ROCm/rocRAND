@@ -102,6 +102,24 @@ double2 box_muller_double_mrg(double x, double y)
     return result;
 }
 
+__forceinline__ __host__ __device__
+float inverse_f_cdf(float t)
+{
+    // Abramowitz and Stegun formula 26.2.23.
+    // The absolute value of the error should be less than 4.5 e-4.
+    return t - ((0.010328f * t + 0.802853f) * t + 2.515517f) /
+                (((0.001308f * t + 0.189269f) * t + 1.432788f) * t + 1.0f);
+}
+
+__forceinline__ __host__ __device__
+double inverse_d_cdf(double t)
+{
+    // Abramowitz and Stegun formula 26.2.23.
+    // The absolute value of the error should be less than 4.5 e-4.
+    return t - ((0.010328 * t + 0.802853) * t + 2.515517) /
+                (((0.001308 * t + 0.189269) * t + 1.432788) * t + 1.0);
+}
+
 // TODO: Improve implementation
 /*
     float2 result;
