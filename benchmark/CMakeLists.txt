@@ -22,9 +22,10 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     hip_add_executable(${benchmark_name} "${benchmark_src}")
     add_dependencies(${benchmark_name} rocRAND)
     get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+    get_target_property(program_options_rpath program_options BINARY_DIR)
     target_link_libraries(
         ${benchmark_name}
-        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
+        -Wl,-rpath,${rocRAND_rpath}:${program_options_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocRAND> # rocRAND
         program_options # Boost program_options
     )

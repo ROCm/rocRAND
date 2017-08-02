@@ -28,4 +28,9 @@ if(BUILD_BENCHMARK OR BUILD_TEST)
     file(GLOB tmp ${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/src/*.cpp)
     include_directories(${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/include)
     add_library(program_options SHARED "${tmp}")
+    set_target_properties(
+    program_options
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+)
 endif()
