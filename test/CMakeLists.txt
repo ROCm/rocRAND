@@ -41,8 +41,6 @@ if (BUILD_CRUSH_TEST)
                      UPDATE_DISCONNECTED TRUE
     )
     add_subdirectory(${TestU01_SOURCE_DIR} ${TestU01_BINARY_DIR})
-    set(CRUSH_TEST_BOOST_COMPONENTS program_options)
-    find_package(Boost 1.54 REQUIRED COMPONENTS ${CRUSH_TEST_BOOST_COMPONENTS})
     add_subdirectory(crush)
 endif()
 
