@@ -12,6 +12,11 @@ layer.
 
 ## Requirements
 
+* Git
+* Boost [program_options](https://github.com/boostorg/program_options) (Optional: for benchmarks and crush_tests)
+    * Included as a submodule to hipRAND
+* [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (Optional: for crush_tests)
+    * Cmake automatically downloads and builds
 * cmake (2.8.12 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
@@ -23,7 +28,7 @@ layer.
 ## Build and Install
 
 ```
-git clone https://github.com/ROCmSoftwarePlatform/hipRAND.git
+git clone --recursive https://github.com/ROCmSoftwarePlatform/hipRAND.git
 
 # go to hipRAND directory, create and go to build directory
 cd hipRAND; mkdir build; cd build

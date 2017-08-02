@@ -1,5 +1,11 @@
 # Dependencies
 
+# GIT
+find_package(Git REQUIRED)
+if (NOT Git_FOUND)
+    message(FATAL_ERROR "Please ensure Git is installed on the system")
+endif()
+
 # HIP
 find_package(HIP REQUIRED)
 include_directories(SYSTEM ${HIP_INCLUDE_DIRECTORIES})
@@ -12,13 +18,14 @@ if (BUILD_TEST)
     download_project(PROJ                googletest
                      GIT_REPOSITORY      https://github.com/google/googletest.git
                      GIT_TAG             master
-                     ${UPDATE_DISCONNECTED_IF_AVAILABLE}
+                     UPDATE_DISCONNECTED TRUE
     )
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 endif()
 
-if(BUILD_BENCHMARK)
-    set(BENCHMARK_BOOST_COMPONENTS program_options)
-    find_package(Boost 1.54 REQUIRED COMPONENTS ${BENCHMARK_BOOST_COMPONENTS})
+if(BUILD_BENCHMARK OR BUILD_TEST)
+    file(GLOB tmp ${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/src/*.cpp)
+    include_directories(${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/include)
+    add_library(program_options SHARED "${tmp}")
 endif()
