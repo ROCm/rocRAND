@@ -38,7 +38,7 @@ if (BUILD_CRUSH_TEST)
     download_project(PROJ                TestU01
                      GIT_REPOSITORY      https://github.com/JamesHirschorn/TestU01-CMake.git
                      GIT_TAG             master
-                     ${UPDATE_DISCONNECTED_IF_AVAILABLE}
+                     UPDATE_DISCONNECTED TRUE
     )
     add_subdirectory(${TestU01_SOURCE_DIR} ${TestU01_BINARY_DIR})
     set(CRUSH_TEST_BOOST_COMPONENTS program_options)
