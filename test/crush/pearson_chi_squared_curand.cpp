@@ -63,27 +63,31 @@ void run_test(const boost::program_options::variables_map& vm,
               distribution_func_type distribution_func)
 {
     const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
+    const size_t level1_tests = vm["level1-tests"].as<size_t>();
+    const size_t level2_tests = vm["level2-tests"].as<size_t>();
     const bool save_plots = vm.count("plots");
 
     T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * trials * sizeof(T)));
+    CUDA_CALL(cudaMalloc((void **)&data, size * level1_tests * sizeof(T)));
 
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
 
-    CURAND_CALL(generate_func(generator, data, size * trials));
-    CUDA_CALL(cudaDeviceSynchronize());
+    for (size_t level2_test = 0; level2_test < level2_tests; level2_test++)
+    {
+        CURAND_CALL(generate_func(generator, data, size * level1_tests));
+        CUDA_CALL(cudaDeviceSynchronize());
 
-    std::vector<T> h_data(size * trials);
-    CUDA_CALL(cudaMemcpy(h_data.data(), data, size * trials * sizeof(T), cudaMemcpyDeviceToHost));
+        std::vector<T> h_data(size * level1_tests);
+        CUDA_CALL(cudaMemcpy(h_data.data(), data, size * level1_tests * sizeof(T), cudaMemcpyDeviceToHost));
+
+        analyze(size, level1_tests, h_data.data(),
+                save_plots, plot_name + "-" + std::to_string(level2_test),
+                mean, stddev, distribution_func);
+    }
 
     CURAND_CALL(curandDestroyGenerator(generator));
     CUDA_CALL(cudaFree(data));
-
-    analyze(size, trials, h_data.data(),
-            save_plots, plot_name,
-            mean, stddev, distribution_func);
 }
 
 void run_tests(const boost::program_options::variables_map& vm,
@@ -137,7 +141,7 @@ void run_tests(const boost::program_options::variables_map& vm,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
             },
-            0.0, 1.0,
+            std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
@@ -147,7 +151,7 @@ void run_tests(const boost::program_options::variables_map& vm,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
             },
-            0.0, 1.0,
+            std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
@@ -169,16 +173,16 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
 }
 
-const std::vector<std::pair<rng_type_t, std::string>> all_engines = {
-    { CURAND_RNG_PSEUDO_XORWOW, "xorwow" },
-    { CURAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a" },
-    { CURAND_RNG_PSEUDO_MTGP32, "mtgp32" },
-    { CURAND_RNG_PSEUDO_MT19937, "mt19937" },
-    { CURAND_RNG_PSEUDO_PHILOX4_32_10, "philox" },
-    { CURAND_RNG_QUASI_SOBOL32, "sobol32" },
-    { CURAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32" },
-    { CURAND_RNG_QUASI_SOBOL64, "sobol64" },
-    { CURAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64" }
+const std::vector<std::string> all_engines = {
+    "xorwow",
+    "mrg32k3a",
+    // "mtgp32",
+    // "mt19937",
+    "philox",
+    "sobol32",
+    // "scrambled_sobol32",
+    // "sobol64",
+    // "scrambled_sobol64",
 };
 
 const std::vector<std::string> all_distributions = {
@@ -207,15 +211,16 @@ int main(int argc, char *argv[])
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-            [](std::string a, std::pair<rng_type_t, std::string> b) {
-                return a + "\n   " + b.second;
+            [](std::string a, std::string b) {
+                return a + "\n   " + b;
             }
         ) +
         "\nor all";
     options.add_options()
         ("help", "show usage instructions")
-        ("size", po::value<size_t>()->default_value(10000), "number of values")
-        ("trials", po::value<size_t>()->default_value(20), "number of trials")
+        ("size", po::value<size_t>()->default_value(10000), "number of samples in every first level test")
+        ("level1-tests", po::value<size_t>()->default_value(10), "number of first level tests")
+        ("level2-tests", po::value<size_t>()->default_value(10), "number of second level tests")
         ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "all" }, "all"),
             distribution_desc.c_str())
         ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
@@ -234,7 +239,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    std::vector<std::pair<rng_type_t, std::string>> engines;
+    std::vector<std::string> engines;
     {
         auto es = vm["engine"].as<std::vector<std::string>>();
         if (std::find(es.begin(), es.end(), "all") != es.end())
@@ -245,7 +250,7 @@ int main(int argc, char *argv[])
         {
             for (auto e : all_engines)
             {
-                if (std::find(es.begin(), es.end(), e.second) != es.end())
+                if (std::find(es.begin(), es.end(), e) != es.end())
                     engines.push_back(e);
             }
         }
@@ -269,16 +274,29 @@ int main(int argc, char *argv[])
     }
 
     std::cout << "cuRAND:" << std::endl << std::endl;
-    for (auto e : engines)
+    for (auto engine : engines)
     {
-        const std::string engine_name = e.second;
-        std::cout << engine_name << ":" << std::endl;
-        const rng_type_t rng_type = e.first;
+        std::cout << engine << ":" << std::endl;
         for (auto distribution : distributions)
         {
             std::cout << "  " << distribution << ":" << std::endl;
-            const std::string plot_name = engine_name + "-" + distribution;
-            run_tests(vm, rng_type, distribution, plot_name);
+            const std::string plot_name = engine + "-" + distribution;
+            if (engine == "xorwow")
+            {
+                run_tests(vm, CURAND_RNG_PSEUDO_XORWOW, distribution, plot_name);
+            }
+            else if (engine == "mrg32k3a")
+            {
+                run_tests(vm, CURAND_RNG_PSEUDO_MRG32K3A, distribution, plot_name);
+            }
+            else if (engine == "philox")
+            {
+                run_tests(vm, CURAND_RNG_PSEUDO_PHILOX4_32_10, distribution, plot_name);
+            }
+            else if (engine == "sobol32")
+            {
+                run_tests(vm, CURAND_RNG_QUASI_SOBOL32, distribution, plot_name);
+            }
         }
     }
 

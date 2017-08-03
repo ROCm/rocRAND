@@ -94,30 +94,25 @@ void init_kernel_sobol(GeneratorState * states,
 template<>
 struct initializer<curandStateSobol32_t>
 {
-    initializer()
-    {
-        const size_t size = 20000 * sizeof(curandDirectionVectors32_t);
-        CUDA_CALL(cudaMalloc((void **)&directions, size));
-        curandDirectionVectors32_t * h_directions;
-        CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
-        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
-    }
-
-    ~initializer()
-    {
-        CUDA_CALL(cudaFree(directions));
-    }
-
     void operator()(const size_t blocks,
                     const size_t threads,
                     curandStateSobol32_t * states,
                     const unsigned long long seed,
                     const unsigned long long offset)
     {
-        init_kernel_sobol<<<blocks, threads>>>(states, directions, offset);
-    }
+        unsigned int * directions;
+        const size_t size = 20000 * sizeof(curandDirectionVectors32_t);
+        CUDA_CALL(cudaMalloc((void **)&directions, size));
+        curandDirectionVectors32_t * h_directions;
+        CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
-    unsigned int * directions;
+        init_kernel_sobol<<<blocks, threads>>>(states, directions, offset);
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
+
+        CUDA_CALL(cudaFree(directions));
+    }
 };
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
@@ -150,14 +145,15 @@ void run_test(const boost::program_options::variables_map& vm,
               const distribution_func_type& distribution_func)
 {
     const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
+    const size_t level1_tests = vm["level1-tests"].as<size_t>();
+    const size_t level2_tests = vm["level2-tests"].as<size_t>();
     const bool save_plots = vm.count("plots");
 
     const size_t blocks = vm["blocks"].as<size_t>();
     const size_t threads = vm["threads"].as<size_t>();
 
     T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * trials * sizeof(T)));
+    CUDA_CALL(cudaMalloc((void **)&data, size * level1_tests * sizeof(T)));
 
     const size_t states_size = blocks * threads;
     GeneratorState * states;
@@ -168,19 +164,22 @@ void run_test(const boost::program_options::variables_map& vm,
     CUDA_CALL(cudaPeekAtLastError());
     CUDA_CALL(cudaDeviceSynchronize());
 
-    generate_kernel<<<blocks, threads>>>(states, data, size * trials, generate_func, extra);
-    CUDA_CALL(cudaPeekAtLastError());
-    CUDA_CALL(cudaDeviceSynchronize());
+    for (size_t level2_test = 0; level2_test < level2_tests; level2_test++)
+    {
+        generate_kernel<<<blocks, threads>>>(states, data, size * level1_tests, generate_func, extra);
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
 
-    std::vector<T> h_data(size * trials);
-    CUDA_CALL(cudaMemcpy(h_data.data(), data, size * trials * sizeof(T), cudaMemcpyDeviceToHost));
+        std::vector<T> h_data(size * level1_tests);
+        CUDA_CALL(cudaMemcpy(h_data.data(), data, size * level1_tests * sizeof(T), cudaMemcpyDeviceToHost));
+
+        analyze(size, level1_tests, h_data.data(),
+                save_plots, plot_name + "-" + std::to_string(level2_test),
+                mean, stddev, distribution_func);
+    }
 
     CUDA_CALL(cudaFree(states));
     CUDA_CALL(cudaFree(data));
-
-    analyze(size, trials, h_data.data(),
-            save_plots, plot_name,
-            mean, stddev, distribution_func);
 }
 
 template<typename GeneratorState>
@@ -234,7 +233,7 @@ void run_tests(const boost::program_options::variables_map& vm,
             [] __device__ (GeneratorState * state, int) {
                 return curand_log_normal(state, 0.0f, 1.0f);
             }, 0,
-            0.0, 1.0,
+            std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
@@ -244,7 +243,7 @@ void run_tests(const boost::program_options::variables_map& vm,
             [] __device__ (GeneratorState * state, int) {
                 return curand_log_normal_double(state, 0.0, 1.0);
             }, 0,
-            0.0, 1.0,
+            std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
@@ -331,8 +330,9 @@ int main(int argc, char *argv[])
         "\nor all";
     options.add_options()
         ("help", "show usage instructions")
-        ("size", po::value<size_t>()->default_value(10000), "number of values")
-        ("trials", po::value<size_t>()->default_value(20), "number of trials")
+        ("size", po::value<size_t>()->default_value(10000), "number of samples in every first level test")
+        ("level1-tests", po::value<size_t>()->default_value(10), "number of first level tests")
+        ("level2-tests", po::value<size_t>()->default_value(10), "number of second level tests")
         ("blocks", po::value<size_t>()->default_value(64), "number of blocks")
         ("threads", po::value<size_t>()->default_value(256), "number of threads in each block")
         ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "all" }, "all"),
