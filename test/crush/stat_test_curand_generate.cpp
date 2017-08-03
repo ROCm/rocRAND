@@ -33,7 +33,7 @@
 #include <cuda_runtime.h>
 #include <curand.h>
 
-#include "pearson_chi_squared_common.hpp"
+#include "stat_test_common.hpp"
 
 extern "C" {
 #include "gofs.h"

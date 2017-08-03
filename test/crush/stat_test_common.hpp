@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef PEARSON_CHI_SQUARED_COMMON_H_
-#define PEARSON_CHI_SQUARED_COMMON_H_
+#ifndef STAT_TEST_COMMON_H_
+#define STAT_TEST_COMMON_H_
 
 #include <iostream>
 #include <iomanip>
@@ -135,6 +135,9 @@ void analyze(const size_t size,
         t.smax = cells_count - 1;
         t.nb_classes = 0;
 
+        // Merge classes (cells) with low probability to ensure that
+        // the expected number of observation per class is at least 5
+        gofs_MinExpected = 5.0;
         gofs_MergeClasses(t.nb_exp.data(), t.loc.data(), &t.smin, &t.smax, &t.nb_classes);
 
         for (long s = 0; s < cells_count; s++)
@@ -148,8 +151,8 @@ void analyze(const size_t size,
         }
 
         // When the chi-squared statistic exceeds the critical value (rejection_criterion),
-        // we reject the null hypothesis ("observed random values are * distribution")
-        // with (1.0 - alpha) significance level.
+        // we reject the null hypothesis ("observed random values follow a specific distribution")
+        // with alpha significance level.
         t.rejection_criterion = finv_ChiSquare2(static_cast<long>(t.nb_classes - 1), 1.0 - alpha);
         t.name = "P" + std::to_string(t.nb_classes);
 
@@ -204,7 +207,7 @@ void analyze(const size_t size,
             test_param& t = ts[test];
 
             const size_t cells_count = max_cells_counts[test];
-            std::vector<long> count(cells_count);
+            std::vector<long> count(cells_count, 0);
 
             for (size_t si = 0; si < size; si++)
             {
@@ -240,7 +243,8 @@ void analyze(const size_t size,
                 fout.open(plot_name + "-" + std::to_string(level1_test) + "-" + t.name + ".plot",
                     std::ios_base::out | std::ios_base::trunc);
 
-                fout << "set arrow from " << mean << ", graph 0 to " << mean << ", graph 1 nohead lt 0" << std::endl;
+                fout << "set arrow from " << mean << ", graph 0 to " << mean << ", graph 1 nohead lt 0 lc rgb 'blue'" << std::endl;
+                fout << "set arrow from " << test_mean << ", graph 0 to " << test_mean << ", graph 1 nohead lt 0 lc rgb 'red'" << std::endl;
                 fout << "plot '-' title 'observed' with fsteps, '-' title 'expected' with fsteps" << std::endl;
 
                 for (long s = t.smin; s <= t.smax; s++)
@@ -285,21 +289,15 @@ void analyze(const size_t size,
         std::cout << std::setw(w) << "";
         for (size_t test = 0; test < tests; test++)
         {
-            test_param& t = ts[test];
+            const test_param& t = ts[test];
+            std::vector<double> ps(t.ps.begin(), t.ps.end());
 
             // Anderson-Darling test needs ordered values
-            std::sort(t.ps.begin(), t.ps.end());
+            std::sort(ps.begin(), ps.end());
 
-            // Weird but gofs_AndersonDarling does something else.
-            // Anderson-Darling test
-            double a = 0.0;
             const int n = level1_tests;
-            for (int i = 1; i <= n; i++)
-            {
-                a += (2 * i - 1) * (std::log(t.ps[i - 1]) + std::log(1.0 - t.ps[n - i]));
-            }
-            a = -n - a / static_cast<double>(n);
-            const double p = 1.0 - fdist_AndersonDarling2(level1_tests, a);
+            const double a = gofs_AndersonDarling(ps.data() - 1, n);
+            const double p = 1.0 - fdist_AndersonDarling2(n, a);
 
             std::cout << std::setw(w) << std::fixed << std::setprecision(3) << a;
             std::cout << " ";
@@ -312,4 +310,4 @@ void analyze(const size_t size,
     std::cout << std::endl;
 }
 
-#endif // PEARSON_CHI_SQUARED_COMMON_H_
+#endif // STAT_TEST_COMMON_H_
