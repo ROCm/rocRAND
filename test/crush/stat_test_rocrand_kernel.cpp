@@ -30,11 +30,12 @@
 
 #include <boost/program_options.hpp>
 
-#include <cuda_runtime.h>
-#include <curand.h>
-#include <curand_kernel.h>
+#include <hip/hip_runtime.h>
+#include <rocrand.h>
+#include <rocrand_kernel.h>
+#include <rocrand_sobol_precomputed.h>
 
-#include "pearson_chi_squared_common.hpp"
+#include "stat_test_common.hpp"
 
 extern "C" {
 #include "gofs.h"
@@ -43,14 +44,23 @@ extern "C" {
 #include "finv.h"
 }
 
-#define CUDA_CALL(x) do { \
-    cudaError_t error = (x);\
-    if(error!=cudaSuccess) { \
-    printf("Error %d at %s:%d\n",error,__FILE__,__LINE__);\
-    exit(EXIT_FAILURE);}} while(0)
-#define CURAND_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
-    printf("Error at %s:%d\n",__FILE__,__LINE__);\
-    exit(EXIT_FAILURE);}} while(0)
+#define HIP_CHECK(condition)         \
+  {                                  \
+    hipError_t error = condition;    \
+    if(error != hipSuccess){         \
+        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
+        exit(error); \
+    } \
+  }
+
+#define ROCRAND_CHECK(condition)                 \
+  {                                              \
+    rocrand_status status = condition;           \
+    if(status != ROCRAND_STATUS_SUCCESS) {       \
+        std::cout << "ROCRAND error: " << status << " line: " << __LINE__ << std::endl; \
+        exit(status); \
+    } \
+  }
 
 template<typename GeneratorState>
 __global__
@@ -58,10 +68,10 @@ void init_kernel(GeneratorState * states,
                  const unsigned long long seed,
                  const unsigned long long offset)
 {
-    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int subsequence = state_id;
     GeneratorState state;
-    curand_init(seed, subsequence, offset, &state);
+    rocrand_init(seed, subsequence, offset, &state);
     states[state_id] = state;
 }
 
@@ -74,7 +84,11 @@ struct initializer
                     const unsigned long long seed,
                     const unsigned long long offset)
     {
-        init_kernel<<<blocks, threads>>>(states, seed, offset);
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(init_kernel),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, seed, offset
+        );
     }
 };
 
@@ -84,34 +98,36 @@ void init_kernel_sobol(GeneratorState * states,
                        const Directions directions,
                        const unsigned long long offset)
 {
-    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int subsequence = state_id;
     GeneratorState state;
-    curand_init(&directions[subsequence % 20000], offset, &state);
+    rocrand_init(&directions[subsequence % SOBOL_DIM * 32], offset, &state);
     states[state_id] = state;
 }
 
 template<>
-struct initializer<curandStateSobol32_t>
+struct initializer<rocrand_state_sobol32>
 {
     void operator()(const size_t blocks,
                     const size_t threads,
-                    curandStateSobol32_t * states,
+                    rocrand_state_sobol32 * states,
                     const unsigned long long seed,
                     const unsigned long long offset)
     {
         unsigned int * directions;
-        const size_t size = 20000 * sizeof(curandDirectionVectors32_t);
-        CUDA_CALL(cudaMalloc((void **)&directions, size));
-        curandDirectionVectors32_t * h_directions;
-        CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
-        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
+        const size_t size = SOBOL_DIM * 32 * sizeof(unsigned int);
+        HIP_CHECK(hipMalloc((void **)&directions, size));
+        HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
 
-        init_kernel_sobol<<<blocks, threads>>>(states, directions, offset);
-        CUDA_CALL(cudaPeekAtLastError());
-        CUDA_CALL(cudaDeviceSynchronize());
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(init_kernel_sobol),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, directions, offset
+        );
+        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipDeviceSynchronize());
 
-        CUDA_CALL(cudaFree(directions));
+        HIP_CHECK(hipFree(directions));
     }
 };
 
@@ -123,8 +139,8 @@ void generate_kernel(GeneratorState * states,
                      const GenerateFunc& generate_func,
                      const Extra extra)
 {
-    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride = gridDim.x * blockDim.x;
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     GeneratorState state = states[state_id];
     unsigned int index = state_id;
@@ -153,33 +169,37 @@ void run_test(const boost::program_options::variables_map& vm,
     const size_t threads = vm["threads"].as<size_t>();
 
     T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * level1_tests * sizeof(T)));
+    HIP_CHECK(hipMalloc((void **)&data, size * level1_tests * sizeof(T)));
 
     const size_t states_size = blocks * threads;
     GeneratorState * states;
-    CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(GeneratorState)));
+    HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(GeneratorState)));
 
     initializer<GeneratorState> init;
     init(blocks, threads, states, 12345ULL, 6789ULL);
-    CUDA_CALL(cudaPeekAtLastError());
-    CUDA_CALL(cudaDeviceSynchronize());
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
 
     for (size_t level2_test = 0; level2_test < level2_tests; level2_test++)
     {
-        generate_kernel<<<blocks, threads>>>(states, data, size * level1_tests, generate_func, extra);
-        CUDA_CALL(cudaPeekAtLastError());
-        CUDA_CALL(cudaDeviceSynchronize());
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(generate_kernel),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, data, size * level1_tests, generate_func, extra
+        );
+        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipDeviceSynchronize());
 
         std::vector<T> h_data(size * level1_tests);
-        CUDA_CALL(cudaMemcpy(h_data.data(), data, size * level1_tests * sizeof(T), cudaMemcpyDeviceToHost));
+        HIP_CHECK(hipMemcpy(h_data.data(), data, size * level1_tests * sizeof(T), hipMemcpyDeviceToHost));
 
         analyze(size, level1_tests, h_data.data(),
-                save_plots, plot_name + "-" + std::to_string(level2_test),
+                save_plots, plot_name,
                 mean, stddev, distribution_func);
     }
 
-    CUDA_CALL(cudaFree(states));
-    CUDA_CALL(cudaFree(data));
+    HIP_CHECK(hipFree(states));
+    HIP_CHECK(hipFree(data));
 }
 
 template<typename GeneratorState>
@@ -191,7 +211,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     {
         run_test<float, GeneratorState>(vm, plot_name,
             [] __device__ (GeneratorState * state, int) {
-                return curand_uniform(state);
+                return rocrand_uniform(state);
             }, 0,
             0.5, std::sqrt(1.0 / 12.0),
             [](double x) { return fdist_Unif(x); }
@@ -201,7 +221,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     {
         run_test<double, GeneratorState>(vm, plot_name,
             [] __device__ (GeneratorState * state, int) {
-                return curand_uniform_double(state);
+                return rocrand_uniform_double(state);
             }, 0,
             0.5, std::sqrt(1.0 / 12.0),
             [](double x) { return fdist_Unif(x); }
@@ -211,7 +231,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     {
         run_test<float, GeneratorState>(vm, plot_name,
             [] __device__ (GeneratorState * state, int) {
-                return curand_normal(state);
+                return rocrand_normal(state);
             }, 0,
             0.0, 1.0,
             [](double x) { return fdist_Normal2(x); }
@@ -221,7 +241,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     {
         run_test<double, GeneratorState>(vm, plot_name,
             [] __device__ (GeneratorState * state, int) {
-                return curand_normal_double(state);
+                return rocrand_normal_double(state);
             }, 0,
             0.0, 1.0,
             [](double x) { return fdist_Normal2(x); }
@@ -231,7 +251,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     {
         run_test<float, GeneratorState>(vm, plot_name,
             [] __device__ (GeneratorState * state, int) {
-                return curand_log_normal(state, 0.0f, 1.0f);
+                return rocrand_log_normal(state, 0.0f, 1.0f);
             }, 0,
             std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
@@ -241,7 +261,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     {
         run_test<double, GeneratorState>(vm, plot_name,
             [] __device__ (GeneratorState * state, int) {
-                return curand_log_normal_double(state, 0.0, 1.0);
+                return rocrand_log_normal_double(state, 0.0, 1.0);
             }, 0,
             std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
@@ -256,7 +276,7 @@ void run_tests(const boost::program_options::variables_map& vm,
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
             run_test<unsigned int, GeneratorState>(vm, plot_name,
                 [] __device__ (GeneratorState * state, double lambda) {
-                    return curand_poisson(state, lambda);
+                    return rocrand_poisson(state, lambda);
                 }, lambda,
                 lambda, std::sqrt(lambda),
                 [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
@@ -270,17 +290,68 @@ void run_tests(const boost::program_options::variables_map& vm,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            curandDiscreteDistribution_t discrete_distribution;
-            CURAND_CALL(curandCreatePoissonDistribution(lambda, &discrete_distribution));
+            rocrand_discrete_distribution discrete_distribution;
+            ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
             run_test<unsigned int, GeneratorState>(vm, plot_name,
-                [] __device__ (GeneratorState * state, curandDiscreteDistribution_t discrete_distribution) {
-                    return curand_discrete(state, discrete_distribution);
+                [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
+                    return rocrand_discrete(state, discrete_distribution);
                 }, discrete_distribution,
                 lambda, std::sqrt(lambda),
                 [lambda](double x) { return fdist_Poisson1(lambda, static_cast<long>(std::round(x)) - 1); }
             );
-            CURAND_CALL(curandDestroyDistribution(discrete_distribution));
+            ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
         }
+    }
+    if (distribution == "discrete-custom")
+    {
+        const unsigned int offset = 123;
+        std::vector<double> probabilities = { 10, 10, 1, 120, 8, 6, 140, 2, 150, 150, 10, 80 };
+        const int size = probabilities.size();
+        double sum = 0.0;
+        for (int i = 0; i < size; i++)
+        {
+            sum += probabilities[i];
+        }
+        for (int i = 0; i < size; i++)
+        {
+            probabilities[i] /= sum;
+        }
+        std::vector<double> cdf(size);
+        for (int i = 0; i < size; i++)
+        {
+            cdf[i] = (i == 0 ? 0.0 : cdf[i - 1]) + probabilities[i];
+        }
+
+        double mean = 0.0;
+        for (int i = 0; i < size; i++)
+        {
+            mean += probabilities[i] * i;
+        }
+
+        double stddev = 0.0;
+        for (int i = 0; i < size; i++)
+        {
+            const double d = i - mean;
+            stddev += d * d * probabilities[i];
+        }
+        stddev = std::sqrt(stddev);
+
+        rocrand_discrete_distribution discrete_distribution;
+        ROCRAND_CHECK(rocrand_create_discrete_distribution(probabilities.data(), probabilities.size(), offset, &discrete_distribution));
+        run_test<unsigned int, GeneratorState>(vm, plot_name,
+            [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
+                return rocrand_discrete(state, discrete_distribution);
+            }, discrete_distribution,
+            offset + mean, stddev,
+            [size, &cdf](double x) {
+                const int i = static_cast<int>(std::round(x)) - offset - 1;
+                if (i < 0)
+                    return 0.0;
+                else
+                    return cdf[std::min(size - 1, i)];
+            }
+        );
+        ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
     }
 }
 
@@ -305,6 +376,7 @@ const std::vector<std::string> all_distributions = {
     "log-normal-double",
     "poisson",
     "discrete-poisson",
+    "discrete-custom",
 };
 
 int main(int argc, char *argv[])
@@ -387,7 +459,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "cuRAND:" << std::endl << std::endl;
+    std::cout << "rocRAND:" << std::endl << std::endl;
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;
@@ -397,19 +469,19 @@ int main(int argc, char *argv[])
             const std::string plot_name = engine + "-" + distribution;
             if (engine == "xorwow")
             {
-                run_tests<curandStateXORWOW_t>(vm, distribution, plot_name);
+                run_tests<rocrand_state_xorwow>(vm, distribution, plot_name);
             }
             else if (engine == "mrg32k3a")
             {
-                run_tests<curandStateMRG32k3a_t>(vm, distribution, plot_name);
+                run_tests<rocrand_state_mrg32k3a>(vm, distribution, plot_name);
             }
             else if (engine == "philox")
             {
-                run_tests<curandStatePhilox4_32_10_t>(vm, distribution, plot_name);
+                run_tests<rocrand_state_philox4x32_10>(vm, distribution, plot_name);
             }
             else if (engine == "sobol32")
             {
-                run_tests<curandStateSobol32_t>(vm, distribution, plot_name);
+                run_tests<rocrand_state_sobol32>(vm, distribution, plot_name);
             }
         }
     }
