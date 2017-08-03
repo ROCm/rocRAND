@@ -77,14 +77,13 @@ struct normal_distribution<float>
     __forceinline__ __host__ __device__
     float operator()(const unsigned int x)
     {
-        float s = -ROCRAND_SQRT2;
-        unsigned int z = x;
-        if(z > 0x80000000) {
-            z = 0xffffffff - z;
-            s = -s;
-        }
-        float p = z * ROCRAND_2POW32_INV + (ROCRAND_2POW32_INV / 2.0f);
-        float v = s * erfcinvf(2.0f * p);
+        uniform_distribution<float> uniform;
+        float p = uniform(x);
+        float v;
+        if (p < 0.5f)
+            v = -inverse_f_cdf(sqrtf(-2.0f * logf(p)));
+        else
+            v =  inverse_f_cdf(sqrtf(-2.0f * logf(1.0f - p)));
         v = mean + v * stddev;
         return v;
     }
@@ -114,14 +113,13 @@ struct normal_distribution<double>
     __forceinline__ __host__ __device__
     double operator()(const unsigned int x)
     {
-        double s = -ROCRAND_SQRT2_DOUBLE;
-        unsigned int z = x;
-        if(z > 0x80000000) {
-            z = 0xffffffff - z;
-            s = -s;
-        }
-        double p = z * ROCRAND_2POW32_INV_DOUBLE + (ROCRAND_2POW32_INV_DOUBLE / 2.0);
-        double v = s * erfcinv(2.0 * p);
+        uniform_distribution<double> uniform;
+        double p = uniform(x);
+        double v;
+        if (p < 0.5)
+            v = -inverse_d_cdf(sqrt(-2.0 * log(p)));
+        else
+            v =  inverse_d_cdf(sqrt(-2.0 * log(1.0 - p)));
         v = mean + v * stddev;
         return v;
     }
