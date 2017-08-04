@@ -73,6 +73,13 @@ void run_test(const boost::program_options::variables_map& vm,
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
 
+    const size_t dimensions = level1_tests;
+    curandStatus_t status = curandSetQuasiRandomGeneratorDimensions(generator, dimensions);
+    if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
+    {
+        CURAND_CALL(status);
+    }
+
     for (size_t level2_test = 0; level2_test < level2_tests; level2_test++)
     {
         CURAND_CALL(generate_func(generator, data, size * level1_tests));

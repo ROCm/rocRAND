@@ -62,6 +62,13 @@ void run_benchmark(const boost::program_options::variables_map& vm,
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
 
+    const size_t dimensions = vm["dimensions"].as<size_t>();
+    curandStatus_t status = curandSetQuasiRandomGeneratorDimensions(generator, dimensions);
+    if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
+    {
+        CURAND_CALL(status);
+    }
+
     // Warm-up
     for (size_t i = 0; i < 5; i++)
     {
@@ -238,6 +245,7 @@ int main(int argc, char *argv[])
     options.add_options()
         ("help", "show usage instructions")
         ("size", po::value<size_t>()->default_value(DEFAULT_RAND_N), "number of values")
+        ("dimensions", po::value<size_t>()->default_value(1), "number of dimensions of quasi-random values")
         ("trials", po::value<size_t>()->default_value(20), "number of trials")
         ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "uniform-uint" }, "uniform-uint"),
             distribution_desc.c_str())
