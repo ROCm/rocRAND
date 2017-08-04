@@ -27,7 +27,7 @@
 
 #include "rocrand_common.h"
 
-// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom 
+// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom
 // sequence generator, 2003
 // http://doi.acm.org/10.1145/641876.641879
 
@@ -50,7 +50,6 @@ public:
     {
         m_state.d = 0;
         m_state.i = (unsigned int) -1;
-        //this->seed(0);
     }
 
     FQUALIFIERS
@@ -70,7 +69,8 @@ public:
               const unsigned int offset)
     {
         #pragma unroll
-        for(int i = 0; i < 32; i++) {
+        for(int i = 0; i < 32; i++)
+        {
             m_state.vectors[i] = vectors[i];
         }
         this->restart(offset);
@@ -82,7 +82,7 @@ public:
     {
         this->discard_impl(offset);
     }
-    
+
     FQUALIFIERS
     void discard()
     {
@@ -126,10 +126,11 @@ protected:
     void discard_state(unsigned int offset)
     {
         unsigned int dx = sobol_bits(m_state.i, offset);
-        unsigned int dy = 0;
-        unsigned int c  = 0x00000000;
-        
-        while(dx) {
+        unsigned int dy = m_state.d;
+        unsigned int c  = 0;
+
+        while(dx)
+        {
             if (dx & 1)
                 dy ^= m_state.vectors[c];
             dx >>= 1;
@@ -137,7 +138,7 @@ protected:
         }
 
         m_state.i -= offset;
-        m_state.d = dy; 
+        m_state.d = dy;
     }
 
     // Advances the internal state to the next state
@@ -145,34 +146,37 @@ protected:
     FQUALIFIERS
     void discard_state()
     {
-        int c = ftz(m_state.i);
+        unsigned int c = ctz(m_state.i);
         m_state.d ^= m_state.vectors[c];
-        m_state.i--; 
+        m_state.i--;
     }
 
 private:
     FQUALIFIERS
     unsigned int sobol_bits(unsigned int x, unsigned int offset)
     {
-        unsigned int i  = ~x;
-        unsigned int n  = i + offset;
-        unsigned int a  = i ^ (i >> 1);
-        unsigned int b  = n ^ (n >> 1);
-        unsigned int d  = a ^ b;
+        unsigned int i = ~x;
+        unsigned int n = i + offset;
+        unsigned int a = i ^ (i >> 1);
+        unsigned int b = n ^ (n >> 1);
+        unsigned int d = a ^ b;
 
         return d;
     }
-    
+
     FQUALIFIERS
-    int ftz(unsigned int x)
+    unsigned int ctz(unsigned int x)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        int z = __ffs(x) - 1;
-        return z;
+        unsigned int z = __ffs(x);
+        return z ? z - 1 : 0;
         #else
-        unsigned int y = x;
-        int z = 1;
-        while(y & 1) {
+        if(x == 0)
+            return 0;
+        unsigned int y = ~x;
+        unsigned int z = 1;
+        while(y & 1)
+        {
             z++;
             y >>= 1;
         }
