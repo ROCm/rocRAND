@@ -151,9 +151,8 @@ void run_benchmark(const boost::program_options::variables_map& vm,
             dim3(blocks), dim3(threads), 0, 0,
             states, data, size, generate_func, extra
         );
-        HIP_CHECK(hipPeekAtLastError());
-        HIP_CHECK(hipDeviceSynchronize());
     }
+    HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end - start;
