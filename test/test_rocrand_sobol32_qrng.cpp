@@ -23,6 +23,7 @@
 
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
+#include <rocrand_sobol_precomputed.h>
 
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
@@ -82,7 +83,7 @@ TEST(rocrand_sobol32_qrng_tests, normal_float_test)
     float host_data[size];
     hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
-    
+
     float mean = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
@@ -90,14 +91,14 @@ TEST(rocrand_sobol32_qrng_tests, normal_float_test)
         //printf("%.5f\n", host_data[i]);
     }
     mean = mean / size;
-    
+
     float std = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
         std += std::pow(host_data[i] - mean, 2);
     }
     std = sqrt(std / size);
-    
+
     EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
@@ -115,14 +116,14 @@ TEST(rocrand_sobol32_qrng_tests, poisson_test)
     unsigned int host_data[size];
     hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
-    
+
     double mean = 0.0;
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
-    
+
     double var = 0.0;
     for(size_t i = 0; i < size; i++)
     {
@@ -130,7 +131,7 @@ TEST(rocrand_sobol32_qrng_tests, poisson_test)
         var += x * x;
     }
     var = var / size;
-    
+
     EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
     EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
 }
@@ -171,4 +172,37 @@ TEST(rocrand_sobol32_qrng_tests, state_progress_test)
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
     EXPECT_LT(same, static_cast<size_t>(0.01f * size));
+}
+
+TEST(rocrand_sobol32_qrng_tests, discard_test)
+{
+    rocrand_sobol32::engine_type engine1(&h_sobol32_direction_vectors[32], 678);
+    rocrand_sobol32::engine_type engine2(&h_sobol32_direction_vectors[32], 676);
+
+    EXPECT_NE(engine1(), engine2());
+
+    engine2.discard();
+
+    EXPECT_NE(engine1(), engine2());
+
+    engine2.discard();
+
+    EXPECT_EQ(engine1(), engine2());
+    EXPECT_EQ(engine1(), engine2());
+
+    const unsigned int ds[] = {
+        0, 1, 4, 37, 583, 7452,
+        21032, 35678, 66778, 10313475, 82120230
+    };
+
+    for (auto d : ds)
+    {
+        for (unsigned int i = 0; i < d; i++)
+        {
+            engine1.discard();
+        }
+        engine2.discard(d);
+
+        EXPECT_EQ(engine1(), engine2());
+    }
 }
