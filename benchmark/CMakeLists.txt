@@ -10,7 +10,7 @@ endif()
 set_source_files_properties(${rocRAND_BENCHMARK_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/include) # Boost
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # Boost
 include_directories(${PROJECT_SOURCE_DIR}/library/include) # rocRAND
 
 if(HIP_PLATFORM STREQUAL "nvcc")
@@ -25,9 +25,9 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     get_target_property(program_options_rpath program_options BINARY_DIR)
     target_link_libraries(
         ${benchmark_name}
-        -Wl,-rpath,${rocRAND_rpath}:${program_options_rpath} # workaround for HIP linker
+        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocRAND> # rocRAND
-        program_options # Boost program_options
+        ${Boost_LIBRARIES} # Boost program_options
     )
     if(HIP_PLATFORM STREQUAL "nvcc")
         target_link_libraries( ${benchmark_name} "-lcurand")
