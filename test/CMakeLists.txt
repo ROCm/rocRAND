@@ -33,7 +33,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
 endforeach()
 
 # Crush Tests
-if (BUILD_CRUSH_TEST)
+if(BUILD_CRUSH_TEST)
     # Download TestU01 library
     download_project(PROJ                TestU01
                      GIT_REPOSITORY      https://github.com/JamesHirschorn/TestU01-CMake.git

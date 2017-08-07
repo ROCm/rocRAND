@@ -24,13 +24,9 @@ if (BUILD_TEST)
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 endif()
 
-if(BUILD_BENCHMARK OR BUILD_TEST)
-    file(GLOB tmp ${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/src/*.cpp)
-    include_directories(${PROJECT_SOURCE_DIR}/cmake/Modules/program_options/include)
-    add_library(program_options SHARED "${tmp}")
-    set_target_properties(
-    program_options
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
-)
+# Boost.Program_options is required only for benchmarks and crush tests
+if(BUILD_BENCHMARK OR BUILD_CRUSH_TEST)
+    # TODO: Download, build, and install Boost if not found
+    set(ROCRAND_BOOST_COMPONENTS program_options)
+    find_package(Boost 1.54 REQUIRED COMPONENTS ${ROCRAND_BOOST_COMPONENTS})
 endif()
