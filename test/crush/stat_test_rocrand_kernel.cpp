@@ -69,28 +69,25 @@ void init_kernel(GeneratorState * states,
                  const unsigned long long offset)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int subsequence = state_id;
     GeneratorState state;
-    rocrand_init(seed, subsequence, offset, &state);
+    rocrand_init(seed, state_id, offset, &state);
     states[state_id] = state;
 }
 
 template<typename GeneratorState>
-struct initializer
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                GeneratorState * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
 {
-    void operator()(const size_t blocks,
-                    const size_t threads,
-                    GeneratorState * states,
-                    const unsigned long long seed,
-                    const unsigned long long offset)
-    {
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(init_kernel),
-            dim3(blocks), dim3(threads), 0, 0,
-            states, seed, offset
-        );
-    }
-};
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(init_kernel),
+        dim3(blocks), dim3(threads), 0, 0,
+        states, seed, offset
+    );
+}
 
 template<typename GeneratorState, typename Directions>
 __global__
@@ -98,38 +95,48 @@ void init_kernel_sobol(GeneratorState * states,
                        const Directions directions,
                        const unsigned long long offset)
 {
+    const unsigned int dimension = hipBlockIdx_y;
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int subsequence = state_id;
     GeneratorState state;
-    rocrand_init(&directions[subsequence % SOBOL_DIM * 32], offset, &state);
-    states[state_id] = state;
+    rocrand_init(&directions[dimension * 32], offset + state_id, &state);
+    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
+}
+
+size_t next_power2(size_t x)
+{
+    size_t power = 1;
+    while (power < x)
+    {
+        power *= 2;
+    }
+    return power;
 }
 
 template<>
-struct initializer<rocrand_state_sobol32>
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                rocrand_state_sobol32 * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
 {
-    void operator()(const size_t blocks,
-                    const size_t threads,
-                    rocrand_state_sobol32 * states,
-                    const unsigned long long seed,
-                    const unsigned long long offset)
-    {
-        unsigned int * directions;
-        const size_t size = SOBOL_DIM * 32 * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc((void **)&directions, size));
-        HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
+    unsigned int * directions;
+    const size_t size = dimensions * 32 * sizeof(unsigned int);
+    HIP_CHECK(hipMalloc((void **)&directions, size));
+    HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(init_kernel_sobol),
-            dim3(blocks), dim3(threads), 0, 0,
-            states, directions, offset
-        );
-        HIP_CHECK(hipPeekAtLastError());
-        HIP_CHECK(hipDeviceSynchronize());
+    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(init_kernel_sobol),
+        dim3(blocks_x, dimensions), dim3(threads), 0, 0,
+        states, directions, offset
+    );
 
-        HIP_CHECK(hipFree(directions));
-    }
-};
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    HIP_CHECK(hipFree(directions));
+}
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 __global__
@@ -153,6 +160,74 @@ void generate_kernel(GeneratorState * states,
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              GeneratorState * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    generate_kernel<<<blocks, threads>>>(states, data, size, generate_func, extra);
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+__global__
+void generate_kernel(rocrand_state_sobol32 * states,
+                     T * data,
+                     const size_t size,
+                     const GenerateFunc& generate_func,
+                     const Extra extra)
+{
+    const unsigned int dimension = hipBlockIdx_y;
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+    rocrand_state_sobol32 state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
+    const unsigned int offset = dimension * size;
+    const unsigned int stride_log2 = __ffs(stride) - 1;
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        // rocrand_device::sobol32_engine::sobol32_state& m_state = reinterpret_cast<rocrand_device::sobol32_engine::sobol32_state&>(state);
+        // Save the current state to restore before strided skip ("leap frog")
+        // because generate_func jumps to the next state
+        // const unsigned old_x = m_state.d;
+        // const unsigned old_i = m_state.i;
+        data[offset + index] = generate_func(&state, extra);
+        // m_state.d = old_x;
+        // m_state.i = old_i;
+        // With restoring the state this is an optimized equivalent of skipahead(stride - 1, &state);
+        // (when stride is power of 2)
+        // _skipahead_stride(stride_log2, &state);
+        skipahead(stride - 1, &state);
+        index += stride;
+    }
+    state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
+    skipahead(static_cast<unsigned int>(size), &state);
+    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              rocrand_state_sobol32 * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(generate_kernel),
+        dim3(blocks_x, dimensions), dim3(threads), 0, 0,
+        states, data, size / dimensions, generate_func, extra
+    );
+}
+
+template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 void run_test(const boost::program_options::variables_map& vm,
               const std::string plot_name,
               const GenerateFunc& generate_func,
@@ -168,25 +243,22 @@ void run_test(const boost::program_options::variables_map& vm,
     const size_t blocks = vm["blocks"].as<size_t>();
     const size_t threads = vm["threads"].as<size_t>();
 
+    const size_t dimensions = level1_tests;
+
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * level1_tests * sizeof(T)));
 
-    const size_t states_size = blocks * threads;
+    const size_t states_size = blocks * threads * dimensions;
     GeneratorState * states;
     HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(GeneratorState)));
 
-    initializer<GeneratorState> init;
-    init(blocks, threads, states, 12345ULL, 6789ULL);
+    initialize(dimensions, blocks, threads, states, 0, 0);
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     for (size_t level2_test = 0; level2_test < level2_tests; level2_test++)
     {
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(generate_kernel),
-            dim3(blocks), dim3(threads), 0, 0,
-            states, data, size * level1_tests, generate_func, extra
-        );
+        generate(dimensions, blocks, threads, states, data, size * level1_tests, generate_func, extra);
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
@@ -194,7 +266,7 @@ void run_test(const boost::program_options::variables_map& vm,
         HIP_CHECK(hipMemcpy(h_data.data(), data, size * level1_tests * sizeof(T), hipMemcpyDeviceToHost));
 
         analyze(size, level1_tests, h_data.data(),
-                save_plots, plot_name,
+                save_plots, plot_name + "-" + std::to_string(level2_test),
                 mean, stddev, distribution_func);
     }
 
@@ -274,7 +346,7 @@ void run_tests(const boost::program_options::variables_map& vm,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_test<unsigned int, GeneratorState>(vm, plot_name,
+            run_test<unsigned int, GeneratorState>(vm, plot_name + "-" + std::to_string(lambda),
                 [] __device__ (GeneratorState * state, double lambda) {
                     return rocrand_poisson(state, lambda);
                 }, lambda,
@@ -292,7 +364,7 @@ void run_tests(const boost::program_options::variables_map& vm,
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
             rocrand_discrete_distribution discrete_distribution;
             ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
-            run_test<unsigned int, GeneratorState>(vm, plot_name,
+            run_test<unsigned int, GeneratorState>(vm, plot_name + "-" + std::to_string(lambda),
                 [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
                     return rocrand_discrete(state, discrete_distribution);
                 }, discrete_distribution,

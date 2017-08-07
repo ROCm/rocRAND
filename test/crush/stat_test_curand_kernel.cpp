@@ -325,7 +325,7 @@ void run_tests(const boost::program_options::variables_map& vm,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_test<unsigned int, GeneratorState>(vm, plot_name,
+            run_test<unsigned int, GeneratorState>(vm, plot_name + "-" + std::to_string(lambda),
                 [] __device__ (GeneratorState * state, double lambda) {
                     return curand_poisson(state, lambda);
                 }, lambda,
@@ -343,7 +343,7 @@ void run_tests(const boost::program_options::variables_map& vm,
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
             curandDiscreteDistribution_t discrete_distribution;
             CURAND_CALL(curandCreatePoissonDistribution(lambda, &discrete_distribution));
-            run_test<unsigned int, GeneratorState>(vm, plot_name,
+            run_test<unsigned int, GeneratorState>(vm, plot_name + "-" + std::to_string(lambda),
                 [] __device__ (GeneratorState * state, curandDiscreteDistribution_t discrete_distribution) {
                     return curand_discrete(state, discrete_distribution);
                 }, discrete_distribution,
