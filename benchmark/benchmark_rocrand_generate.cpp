@@ -43,10 +43,10 @@
 
 #define ROCRAND_CHECK(condition)                 \
   {                                              \
-    rocrand_status status = condition;           \
-    if(status != ROCRAND_STATUS_SUCCESS) {       \
-        std::cout << "ROCRAND error: " << status << " line: " << __LINE__ << std::endl; \
-        exit(status); \
+    rocrand_status _status = condition;           \
+    if(_status != ROCRAND_STATUS_SUCCESS) {       \
+        std::cout << "ROCRAND error: " << _status << " line: " << __LINE__ << std::endl; \
+        exit(_status); \
     } \
   }
 
@@ -73,13 +73,12 @@ void run_benchmark(const boost::program_options::variables_map& vm,
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
 
-    // TODO
-    // const size_t dimensions = vm["dimensions"].as<size_t>();
-    // rocrand_status status = rocrand_set_quasi_random_generator_dimensions(generator, dimensions);
-    // if (status != ROCRAND_STATUS_SUCCESS) // If the RNG is not quasi-random
-    // {
-    //     ROCRAND_CHECK(status);
-    // }
+    const size_t dimensions = vm["dimensions"].as<size_t>();
+    rocrand_status status = rocrand_set_quasi_random_generator_dimensions(generator, dimensions);
+    if (status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
+    {
+        ROCRAND_CHECK(status);
+    }
 
     // Warm-up
     for (size_t i = 0; i < 5; i++)
