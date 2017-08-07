@@ -65,6 +65,55 @@ double get_stddev(const T * values, const size_t size, double mean)
 }
 
 template<typename T>
+void save_points_plots(const size_t size,
+                       const size_t level1_tests,
+                       const T * data,
+                       const std::string plot_name)
+{
+    for (size_t level1_test = 0; level1_test < level1_tests; level1_test++)
+    {
+        std::ofstream fout;
+        fout.open(plot_name + "-" + std::to_string(level1_test) + ".plot",
+            std::ios_base::out | std::ios_base::trunc);
+
+        fout << "set size square" << std::endl;
+
+        if (std::is_integral<T>::value)
+        {
+            fout << "plot '-' with points pointtype 7 pointsize 0.15 notitle" << std::endl;
+
+            const size_t x_offset = level1_test * size;
+            const size_t y_offset = ((level1_test + 1 + level1_tests) % level1_tests) * size;
+            for (size_t si = 0; si < size; si++)
+            {
+                const double r = 0.25;
+                const double a = 2.0 * M_PI * si / size;
+                const double x = data[x_offset + si] + r * std::cos(a);
+                const double y = data[y_offset + si] + r * std::sin(a);
+                fout << x << '\t' << y << std::endl;
+            }
+            fout << "e" << std::endl;
+        }
+        else
+        {
+            fout << "plot '-' with points pointtype 7 pointsize 0.15 notitle" << std::endl;
+
+            const size_t x_offset = level1_test * size;
+            const size_t y_offset = ((level1_test + 1 + level1_tests) % level1_tests) * size;
+            for (size_t si = 0; si < size; si++)
+            {
+                const double x = data[x_offset + si];
+                const double y = data[y_offset + si];
+                fout << x << '\t' << y << std::endl;
+            }
+            fout << "e" << std::endl;
+        }
+
+        fout << "pause mouse close" << std::endl;
+    }
+}
+
+template<typename T>
 void analyze(const size_t size,
              const size_t level1_tests,
              const T * data,
@@ -73,6 +122,11 @@ void analyze(const size_t size,
              const double mean, const double stddev,
              const distribution_func_type& distribution_func)
 {
+    if (save_plots)
+    {
+        save_points_plots(size, level1_tests, data, plot_name);
+    }
+
     const double alpha = 0.05;
 
     double start = (mean - 6.0 * stddev);

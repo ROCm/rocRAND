@@ -169,7 +169,7 @@ void run_tests(const boost::program_options::variables_map& vm,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_test<unsigned int>(vm, rng_type, plot_name,
+            run_test<unsigned int>(vm, rng_type, plot_name + "-" + std::to_string(lambda),
                 [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
                     return curandGeneratePoisson(gen, data, size, lambda);
                 },
