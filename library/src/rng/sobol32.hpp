@@ -212,7 +212,7 @@ public:
         }
         else
         {
-            normal_distribution<double> distribution(lambda, sqrt(lambda));
+            normal_distribution<double> distribution(lambda + 0.5, std::sqrt(lambda));
             return generate(data, data_size, distribution);
         }
     }
