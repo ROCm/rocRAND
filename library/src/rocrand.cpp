@@ -517,6 +517,27 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
 }
 
 rocrand_status ROCRANDAPI
+rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
+                                              unsigned int dimensions)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+    if(dimensions < 1 || dimensions > 20000)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        static_cast<rocrand_sobol32 *>(generator)->set_dimensions(dimensions);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
 rocrand_get_version(int * version)
 {
     if(version == NULL)
