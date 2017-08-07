@@ -36,6 +36,18 @@ namespace rocrand_host {
 namespace detail {
 
     typedef ::rocrand_device::mtgp32_engine mtgp32_device_engine;
+    typedef ::rocrand_device::mtgp32_state mtgp32_state;
+    typedef ::rocrand_device::mtgp32_param mtgp32_param;
+    
+    __global__
+    void init_mtgp32_engines_kernel(mtgp32_device_engine * engines,
+                                    mtgp32_state * states,
+                                    mtgp32_param * param)
+    {
+        const unsigned int engine_id = hipThreadIdx_x;
+        mtgp32_device_engine engine = mtgp32_device_engine(states[engine_id], param, engine_id);
+        engines[engine_id] = engine;
+    }
 
     template<class Type, class Distribution>
     __global__
@@ -43,20 +55,20 @@ namespace detail {
                          Type * data, const size_t n,
                          const Distribution distribution)
     {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
+        const unsigned int engine_id = hipBlockIdx_x;
+        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
+        
         // Load device engine
         mtgp32_device_engine engine = engines[engine_id];
-
+        
         while(index < n)
         {
             data[index] = distribution(engine());
             // Next position
             index += stride;
         }
-
+        
         // Save engine with its state
         engines[engine_id] = engine;
     }
@@ -70,21 +82,17 @@ public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MTGP32>;
     using engine_type = ::rocrand_host::detail::mtgp32_device_engine;
 
-    rocrand_mtgp32(unsigned long long seed = 12345,
-                     unsigned long long offset = 0,
-                     hipStream_t stream = 0)
+    rocrand_mtgp32(unsigned long long seed = 0,
+                   unsigned long long offset = 0,
+                   hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(128 * 256)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(64)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
-        if(m_seed == 0)
-        {
-            m_seed = 0;
         }
     }
 
@@ -104,10 +112,6 @@ public:
     /// zero, value \p rocrand_mtgp32_DEFAULT_SEED is used instead.
     void set_seed(unsigned long long seed)
     {
-        if(seed == 0)
-        {
-            seed = 0;
-        }
         m_seed = seed;
         m_engines_initialized = false;
     }
@@ -126,14 +130,26 @@ public:
         rocrand_status status;
         rocrand_device::mtgp32_state * d_state;
         rocrand_device::mtgp32_param * d_param;
-        hipMalloc(&d_state, sizeof(d_state) * 128);
-        hipMalloc(&d_param, sizeof(d_param));
-        status = rocrand_device::rocrand_make_constant(mtgp32dc_params_fast_11213, d_param);
-        status = rocrand_device::rocrand_make_state_mtgp32(d_state, mtgp32dc_params_fast_11213, 128, m_seed);
+        hipMalloc(&d_state, sizeof(rocrand_device::mtgp32_state) * m_engines_size);
+        hipMalloc(&d_param, sizeof(rocrand_device::mtgp32_param));
         
-        if(!status)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        status = rocrand_device::rocrand_make_constant(mtgp32dc_params_fast_11213, d_param);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
             
+        status = rocrand_device::rocrand_make_state_mtgp32(d_state, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::init_mtgp32_engines_kernel),
+            dim3(1), dim3(m_engines_size), 0, m_stream,
+            m_engines, d_state, d_param
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+              
         hipFree(d_state);
         hipFree(d_param);
 
@@ -142,7 +158,7 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = mrg_uniform_distribution<T> >
+    template<class T, class Distribution = uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
@@ -152,10 +168,10 @@ public:
 
         #ifdef __HIP_PLATFORM_NVCC__
         const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
+        const uint32_t max_blocks = m_engines_size; // 512
         #else
         const uint32_t threads = 256;
-        const uint32_t max_blocks = 128;
+        const uint32_t max_blocks = m_engines_size;
         #endif
         const uint32_t blocks = max_blocks;
 
@@ -177,79 +193,6 @@ public:
         uniform_distribution<T> udistribution;
         return generate(data, data_size, udistribution);
     }
-
-    /*template<class T>
-    rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
-    {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
-
-        mrg_normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
-    }
-
-    template<class T>
-    rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
-    {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
-
-        mrg_log_normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
-    }
-
-    rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
-    {
-        try
-        {
-            poisson.set_lambda(lambda);
-        }
-        catch(rocrand_status status)
-        {
-            return status;
-        }
-        return generate(data, data_size, poisson.dis);
-    }*/
 
 private:
     bool m_engines_initialized;
