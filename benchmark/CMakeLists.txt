@@ -10,7 +10,7 @@ endif()
 set_source_files_properties(${rocRAND_BENCHMARK_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # Boost
+include_directories(SYSTEM ${Boost_INCLUDE_DIR}) # Boost
 include_directories(${PROJECT_SOURCE_DIR}/library/include) # rocRAND
 
 if(HIP_PLATFORM STREQUAL "nvcc")
@@ -20,9 +20,8 @@ endif()
 foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     get_filename_component(benchmark_name ${benchmark_src} NAME_WE)
     hip_add_executable(${benchmark_name} "${benchmark_src}")
-    add_dependencies(${benchmark_name} rocRAND)
+    add_dependencies(${benchmark_name} rocRAND ${ROCRAND_BENCHMARK_DEPENDENCIES})
     get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
-    get_target_property(program_options_rpath program_options BINARY_DIR)
     target_link_libraries(
         ${benchmark_name}
         -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
