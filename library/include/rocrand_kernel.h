@@ -30,6 +30,7 @@
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
 #include "rocrand_sobol32.h"
+#include "rocrand_mtgp32.h"
 
 #include "rocrand_uniform.h"
 #include "rocrand_normal.h"
