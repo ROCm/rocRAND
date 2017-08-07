@@ -36,6 +36,8 @@
 #define MTGP_LS (MTGP_TN * 3)
 #define MTGP_BN_MAX 200
 #define MTGP_TS 16
+#define MTGP_STATE 1024
+#define MTGP_MASK 1023
 
 
 namespace rocrand_device {
@@ -73,7 +75,7 @@ struct mtgp32_fast_param
     
 struct mtgp32_state
 {
-    unsigned int status[MTGP_LS];
+    unsigned int status[MTGP_STATE];
     int offset;
     int id;
        
@@ -101,9 +103,9 @@ void rocrand_mtgp32_init_state(unsigned int array[],
 }
     
 rocrand_status rocrand_make_state_mtgp32(mtgp32_state * d_state,
-				                 mtgp32_fast_param params[],
-				                 int n,
-                                 unsigned long long seed)
+				                         mtgp32_fast_param params[],
+				                         int n,
+                                         unsigned long long seed)
 {
     int i;
     mtgp32_state* h_state = (mtgp32_state *) malloc(sizeof(mtgp32_state) * n);
@@ -226,6 +228,20 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
 class mtgp32_engine
 {
 public:
+    struct mtgp32_kernel_param
+    {
+        unsigned int pos_tbl;
+        unsigned int param_tbl[MTGP_TS];
+        unsigned int temper_tbl[MTGP_TS];
+        unsigned int single_temper_tbl[MTGP_TS];
+        unsigned int sh1_tbl;
+        unsigned int sh2_tbl;
+        unsigned int mask;
+
+        FQUALIFIERS
+        ~mtgp32_kernel_param() { }
+    };
+    
     FQUALIFIERS
     mtgp32_engine()
     {
@@ -234,10 +250,19 @@ public:
 
     FQUALIFIERS
     mtgp32_engine(const mtgp32_state m_state,
-                  const mtgp32_param m_param)
+                  const mtgp32_param * params,
+                  int bid)
     {
         this->m_state = m_state;
-        this->m_param = m_param;
+        m_param.pos_tbl = params->pos_tbl[bid];
+        m_param.sh1_tbl = params->sh1_tbl[bid];
+        m_param.sh2_tbl = params->sh2_tbl[bid];
+        m_param.mask = params->mask[0];
+	    for (int j = 0; j < MTGP_TS; j++) {
+	        m_param.param_tbl[j] = params->param_tbl[bid][j];
+	        m_param.temper_tbl[j] = params->temper_tbl[bid][j];
+	        m_param.single_temper_tbl[j] = params->single_temper_tbl[bid][j];
+	    }
     }
 
     FQUALIFIERS
@@ -253,23 +278,48 @@ public:
     unsigned int next()
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int t = (hipBlockIdx_z * hipBlockIdx_y * hipThreadIdx_z) + 
-                         (hipBlockIdx_x * hipThreadIdx_y) + hipThreadIdx_x;
-        unsigned int d = hipBlockIdx_z * hipBlockIdx_y * hipBlockIdx_x;
-        int pos = m_param.pos_tbl[m_state.id];
+        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) + 
+                         (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
+        unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
+        int pos = m_param.pos_tbl;
         unsigned int r;
         unsigned int o;
         
-        r = para_rec(m_state.status[(t + m_state.offset) & MTGP_LS],
-                     m_state.status[(t + m_state.offset + 1) & MTGP_LS],
-                     m_state.status[(t + m_state.offset + pos) & MTGP_LS],
-                     m_state.id);
-        m_state.status[(t + m_state.offset + MTGP_N) & MTGP_LS] = r;
+        r = para_rec(m_state.status[(t + m_state.offset) & MTGP_MASK],
+                     m_state.status[(t + m_state.offset + 1) & MTGP_MASK],
+                     m_state.status[(t + m_state.offset + pos) & MTGP_MASK]);
+        m_state.status[(t + m_state.offset + MTGP_N) & MTGP_MASK] = r;
         
-        o = temper(r, m_state.status[(t + m_state.offset + pos -1) & MTGP_LS], m_state.id);
+        o = temper(r, m_state.status[(t + m_state.offset + pos - 1) & MTGP_MASK]);
         __syncthreads();
         if (t == 0)
-            m_state.offset = (m_state.offset + d) & MTGP_LS;
+            m_state.offset = (m_state.offset + d) & MTGP_MASK;
+        __syncthreads();
+        return o;
+        #endif
+        return 0;
+    }
+    
+    FQUALIFIERS
+    unsigned int next_single()
+    {
+        #if defined(__HIP_DEVICE_COMPILE__)
+        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) + 
+                         (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
+        unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
+        int pos = m_param.pos_tbl;
+        unsigned int r;
+        unsigned int o;
+        
+        r = para_rec(m_state.status[(t + m_state.offset) & MTGP_MASK],
+                     m_state.status[(t + m_state.offset + 1) & MTGP_MASK],
+                     m_state.status[(t + m_state.offset + pos) & MTGP_MASK]);
+        m_state.status[(t + m_state.offset + MTGP_N) & MTGP_MASK] = r;
+        
+        o = temper_single(r, m_state.status[(t + m_state.offset + pos - 1) & MTGP_MASK]);
+        __syncthreads();
+        if (t == 0)
+            m_state.offset = (m_state.offset + d) & MTGP_MASK;
         __syncthreads();
         return o;
         #endif
@@ -278,32 +328,45 @@ public:
 
 private:
     FQUALIFIERS 
-    unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y, int bid) 
+    unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y) 
     {
-        unsigned int X = (X1 & m_param.mask[0]) ^ X2;
+        unsigned int X = (X1 & m_param.mask) ^ X2;
         unsigned int MAT;
 
-        X ^= X << m_param.sh1_tbl[bid];
-        Y = X ^ (Y >> m_param.sh2_tbl[bid]);
-        MAT = m_param.param_tbl[bid][Y & 0x0f];
+        X ^= X << m_param.sh1_tbl;
+        Y = X ^ (Y >> m_param.sh2_tbl);
+        MAT = m_param.param_tbl[Y & 0x0f];
         return Y ^ MAT;
     }
     
     FQUALIFIERS
-    unsigned int temper(unsigned int V, unsigned int T, int bid) 
+    unsigned int temper(unsigned int V, unsigned int T) 
     {
         unsigned int MAT;
 
         T ^= T >> 16;
         T ^= T >> 8;
-        MAT = m_param.temper_tbl[bid][T & 0x0f];
+        MAT = m_param.temper_tbl[T & 0x0f];
         return V ^ MAT;
+    }
+    
+    FQUALIFIERS
+    unsigned int temper_single(unsigned int V, unsigned int T) 
+    {
+        unsigned int MAT;
+        unsigned int r;
+
+        T ^= T >> 16;
+        T ^= T >> 8;
+        MAT = m_param.single_temper_tbl[T & 0x0f];
+        r = (V >> 9) ^ MAT;
+        return r;
     }
     
 protected:
     // State
     mtgp32_state m_state;
-    mtgp32_param m_param;
+    mtgp32_kernel_param m_param;
 
 }; // mtgp32_engine class
 
