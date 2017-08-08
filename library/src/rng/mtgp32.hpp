@@ -18,6 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/*
+ * Copyright (c) 2009, 2010 Mutsuo Saito, Makoto Matsumoto and Hiroshima
+ * University.  All rights reserved.
+ * Copyright (c) 2011 Mutsuo Saito, Makoto Matsumoto, Hiroshima
+ * University and University of Tokyo.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ * 
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *     * Neither the name of the Hiroshima University nor the names of
+ *       its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written
+ *       permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef ROCRAND_RNG_MTGP32_H_
 #define ROCRAND_RNG_MTGP32_H_
 
@@ -53,14 +87,19 @@ namespace detail {
     __global__
     void generate_kernel(mtgp32_device_engine * engines,
                          Type * data, const size_t n,
-                         const Distribution distribution)
+                         Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x;
+        const unsigned int thread_id = hipThreadIdx_x;
         unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
         
         // Load device engine
-        mtgp32_device_engine engine = engines[engine_id];
+        __shared__ mtgp32_device_engine engine;
+        
+        if (thread_id == 0)
+            engine = engines[engine_id];
+        __syncthreads();
         
         while(index < n)
         {
@@ -68,35 +107,13 @@ namespace detail {
             // Next position
             index += stride;
         }
+        __syncthreads();
         
         // Save engine with its state
-        engines[engine_id] = engine;
+        if (thread_id == 0)
+            engines[engine_id] = engine;
     }
     
-    template<class RealType, class Distribution>
-    __global__
-    void generate_normal_kernel(mtgp32_device_engine * engines,
-                                RealType * data, const size_t n,
-                                Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x;
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        mtgp32_device_engine engine = engines[engine_id];
-
-        while(index < n)
-        {
-            data[index] = distribution(engine());
-            // Next position
-            index += stride;
-        }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
-
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -214,69 +231,38 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        uniform_distribution<T> udistribution;
-        return generate(data, data_size, udistribution);
+        uniform_distribution<T> distribution;
+        return generate(data, data_size, distribution);
     }
-    
+
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = m_engines_size; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = m_engines_size;
-        #endif
-        const uint32_t blocks = max_blocks;
-
         normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = m_engines_size; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = m_engines_size;
-        #endif
-        const uint32_t blocks = max_blocks;
-
         log_normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, distribution);
     }
+
+    
+    rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
+    {
+        try
+        {
+            poisson.set_lambda(lambda);
+        }
+        catch(rocrand_status status)
+        {
+            return status;
+        }
+        return generate(data, data_size, poisson.dis);
+    }
+
 
 private:
     bool m_engines_initialized;
