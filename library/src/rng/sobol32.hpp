@@ -54,22 +54,11 @@ namespace detail {
         sobol32_device_engine engine = sobol32_device_engine(&direction_vectors[dimension * 32], offset + engine_id);
 
         const unsigned int start = dimension * n;
-        // const unsigned int stride_log2 = __ffs(stride) - 1;
         unsigned int index = engine_id;
         while(index < n)
         {
-            // rocrand_device::sobol32_engine::sobol32_state& m_state = reinterpret_cast<rocrand_device::sobol32_engine::sobol32_state&>(state);
-            // Save the current state to restore before strided skip ("leap frog")
-            // because generate_func jumps to the next state
-            // const unsigned old_x = m_state.d;
-            // const unsigned old_i = m_state.i;
-            data[start + index] = distribution(engine());
-            // m_state.d = old_x;
-            // m_state.i = old_i;
-            // With restoring the state this is an optimized equivalent of skipahead(stride - 1, &state);
-            // (when stride is power of 2)
-            // _skipahead_stride(stride_log2, &state);
-            engine.discard(stride - 1);
+            data[start + index] = distribution(engine.current());
+            engine.discard_stride(stride);
             index += stride;
         }
     }
@@ -153,7 +142,7 @@ public:
         #endif
 
         const size_t size = data_size / m_dimensions;
-        const uint32_t blocks = std::max(max_blocks, static_cast<uint32_t>((size + threads - 1) / threads));
+        const uint32_t blocks = std::min(max_blocks, static_cast<uint32_t>((size + threads - 1) / threads));
 
         // blocks_x must be power of 2 because strided discard (leap frog)
         // supports only power of 2 jumps
