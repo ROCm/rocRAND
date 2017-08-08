@@ -302,6 +302,7 @@ private:
     engine_type * m_engines;
     size_t m_engines_size;
 
+    // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> poisson;
 
     // m_seed from base_type

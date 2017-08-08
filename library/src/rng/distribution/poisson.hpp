@@ -109,6 +109,9 @@ protected:
     }
 };
 
+// Handles caching of precomputed tables for the distribution and recomputes
+// them only when lambda is changed (as these computations, device memory
+// allocations and copying take time).
 template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class poisson_distribution_manager
 {
