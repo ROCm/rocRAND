@@ -170,21 +170,11 @@ void generate_kernel(curandStateSobol32_t * states,
 
     curandStateSobol32_t state = states[gridDim.x * blockDim.x * dimension + state_id];
     const unsigned int offset = dimension * size;
-    const unsigned int stride_log2 = __ffs(stride) - 1;
     unsigned int index = state_id;
     while(index < size)
     {
-        // Save the current state to restore before strided skip ("leap frog")
-        // because generate_func jumps to the next state
-        const unsigned old_x = state.x;
-        const unsigned old_i = state.i;
         data[offset + index] = generate_func(&state, extra);
-        state.x = old_x;
-        state.i = old_i;
-        // With restoring the state this is an optimized equivalent of skipahead(stride - 1, &state);
-        // (when stride is power of 2)
-        _skipahead_stride(stride_log2, &state);
-        // skipahead(stride - 1, &state);
+        skipahead(stride - 1, &state);
         index += stride;
     }
     state = states[gridDim.x * blockDim.x * dimension + state_id];

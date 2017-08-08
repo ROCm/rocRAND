@@ -184,21 +184,10 @@ void generate_kernel(rocrand_state_sobol32 * states,
 
     rocrand_state_sobol32 state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
     const unsigned int offset = dimension * size;
-    // const unsigned int stride_log2 = __ffs(stride) - 1;
     unsigned int index = state_id;
     while(index < size)
     {
-        // rocrand_device::sobol32_engine::sobol32_state& m_state = reinterpret_cast<rocrand_device::sobol32_engine::sobol32_state&>(state);
-        // Save the current state to restore before strided skip ("leap frog")
-        // because generate_func jumps to the next state
-        // const unsigned old_x = m_state.d;
-        // const unsigned old_i = m_state.i;
         data[offset + index] = generate_func(&state, extra);
-        // m_state.d = old_x;
-        // m_state.i = old_i;
-        // With restoring the state this is an optimized equivalent of skipahead(stride - 1, &state);
-        // (when stride is power of 2)
-        // _skipahead_stride(stride_log2, &state);
         skipahead(stride - 1, &state);
         index += stride;
     }
