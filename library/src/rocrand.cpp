@@ -562,10 +562,10 @@ rocrand_create_poisson_distribution(double lambda,
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_poisson_distribution<> h_dis;
+    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
     try
     {
-        h_dis = rocrand_poisson_distribution<>(lambda);
+        h_dis = rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_UNIVERSAL>(lambda);
     }
     catch(const std::exception& e)
     {
@@ -606,10 +606,10 @@ rocrand_create_discrete_distribution(const double * probabilities,
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_base<> h_dis;
+    rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
     try
     {
-        h_dis = rocrand_discrete_distribution_base<>(probabilities, size, offset);
+        h_dis = rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL>(probabilities, size, offset);
     }
     catch(const std::exception& e)
     {
@@ -643,7 +643,7 @@ rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_dis
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_base<> h_dis;
+    rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
 
     hipError_t error;
     error = hipMemcpy(&h_dis, discrete_distribution, sizeof(rocrand_discrete_distribution_st), hipMemcpyDefault);

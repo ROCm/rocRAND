@@ -187,23 +187,15 @@ public:
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        if (lambda < 1000)
+        try
         {
-            try
-            {
-                poisson.set_lambda(lambda);
-            }
-            catch(rocrand_status status)
-            {
-                return status;
-            }
-            return generate(data, data_size, poisson.dis);
+            poisson.set_lambda(lambda);
         }
-        else
+        catch(rocrand_status status)
         {
-            normal_distribution<double> distribution(lambda + 0.5, std::sqrt(lambda));
-            return generate(data, data_size, distribution);
+            return status;
         }
+        return generate(data, data_size, poisson.dis);
     }
 
 private:
@@ -212,7 +204,7 @@ private:
     unsigned int m_current_offset;
     unsigned int * m_direction_vectors;
 
-    poisson_distribution_manager<> poisson;
+    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_CDF> poisson;
 
     // m_offset from base_type
 
