@@ -53,7 +53,8 @@ struct uniform_distribution<float>
     __forceinline__ __host__ __device__
     float operator()(const unsigned int v) const
     {
-        return nextafterf(v * ROCRAND_2POW32_INV, 1.0f);
+        // return nextafterf(v * ROCRAND_2POW32_INV, 1.0f);
+        return v * ROCRAND_2POW32_INV + (ROCRAND_2POW32_INV / 2.0f);
     }
 
     __forceinline__ __host__ __device__
@@ -76,7 +77,8 @@ struct uniform_distribution<double>
     __forceinline__ __host__ __device__
     double operator()(const unsigned int v) const
     {
-        return nextafter(v * static_cast<double>(ROCRAND_2POW32_INV), 1.0);
+        // return nextafter(v * static_cast<double>(ROCRAND_2POW32_INV), 1.0);
+        return v * ROCRAND_2POW32_INV_DOUBLE + (ROCRAND_2POW32_INV_DOUBLE / 2.0);
     }
 
     __forceinline__ __host__ __device__

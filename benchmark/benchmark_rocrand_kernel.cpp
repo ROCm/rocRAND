@@ -163,7 +163,11 @@ void generate(const size_t dimensions,
               const GenerateFunc& generate_func,
               const Extra extra)
 {
-    generate_kernel<<<blocks, threads>>>(states, data, size, generate_func, extra);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(generate_kernel),
+        dim3(blocks), dim3(threads), 0, 0,
+        states, data, size / dimensions, generate_func, extra
+    );
 }
 
 template<typename T, typename GenerateFunc, typename Extra>
@@ -180,7 +184,7 @@ void generate_kernel(rocrand_state_sobol32 * states,
 
     rocrand_state_sobol32 state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
     const unsigned int offset = dimension * size;
-    const unsigned int stride_log2 = __ffs(stride) - 1;
+    // const unsigned int stride_log2 = __ffs(stride) - 1;
     unsigned int index = state_id;
     while(index < size)
     {
@@ -406,7 +410,7 @@ const std::vector<std::string> all_engines = {
     // "mtgp32",
     // "mt19937",
     "philox",
-    // "sobol32",
+    "sobol32",
     // "scrambled_sobol32",
     // "sobol64",
     // "scrambled_sobol64",
@@ -524,6 +528,10 @@ int main(int argc, char *argv[])
             else if (engine == "philox")
             {
                 run_benchmarks<rocrand_state_philox4x32_10>(vm, distribution);
+            }
+            else if (engine == "sobol32")
+            {
+                run_benchmarks<rocrand_state_sobol32>(vm, distribution);
             }
         }
     }

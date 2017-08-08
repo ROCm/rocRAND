@@ -66,7 +66,6 @@ TEST(rocrand_sobol32_qrng_tests, uniform_float_test)
     {
         ASSERT_GT(host_data[i], 0.0f);
         ASSERT_LE(host_data[i], 1.0f);
-        //printf("%.5f\n", host_data[i]);
     }
 }
 
@@ -88,7 +87,6 @@ TEST(rocrand_sobol32_qrng_tests, normal_float_test)
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
-        //printf("%.5f\n", host_data[i]);
     }
     mean = mean / size;
 
@@ -202,6 +200,26 @@ TEST(rocrand_sobol32_qrng_tests, discard_test)
             engine1.discard();
         }
         engine2.discard(d);
+
+        EXPECT_EQ(engine1(), engine2());
+    }
+}
+
+TEST(rocrand_sobol32_qrng_tests, discard_stride_test)
+{
+    rocrand_sobol32::engine_type engine1(&h_sobol32_direction_vectors[64], 123);
+    rocrand_sobol32::engine_type engine2(&h_sobol32_direction_vectors[64], 123);
+
+    EXPECT_EQ(engine1(), engine2());
+
+    const unsigned int ds[] = {
+        1, 10, 12, 20, 4, 5, 30
+    };
+
+    for (auto d : ds)
+    {
+        engine1.discard(1 << d);
+        engine2.discard_stride(1 << d);
 
         EXPECT_EQ(engine1(), engine2());
     }
