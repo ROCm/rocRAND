@@ -204,6 +204,7 @@ private:
     unsigned int m_current_offset;
     unsigned int * m_direction_vectors;
 
+    // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_CDF> poisson;
 
     // m_offset from base_type
