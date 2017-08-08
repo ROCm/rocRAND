@@ -36,7 +36,14 @@
 // Vose M. D.
 // A Linear Algorithm For Generating Random Numbers With a Given Distribution, 1991
 
-template<bool IsHostSide = false>
+enum rocrand_discrete_method
+{
+    ROCRAND_DISCRETE_METHOD_ALIAS = 1,
+    ROCRAND_DISCRETE_METHOD_CDF = 2,
+    ROCRAND_DISCRETE_METHOD_UNIVERSAL = ROCRAND_DISCRETE_METHOD_ALIAS | ROCRAND_DISCRETE_METHOD_CDF
+};
+
+template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class rocrand_discrete_distribution_base : public rocrand_discrete_distribution_st
 {
 public:
@@ -46,6 +53,7 @@ public:
         size = 0;
         probability = NULL;
         alias = NULL;
+        cdf = NULL;
     }
 
     rocrand_discrete_distribution_base(const double * probabilities,
@@ -55,11 +63,7 @@ public:
     {
         std::vector<double> p(probabilities, probabilities + size);
 
-        this->size = size;
-        this->offset = offset;
-
-        allocate();
-        create_alias_table(p);
+        init(p, size, offset);
     }
 
     __host__ __device__
@@ -70,59 +74,119 @@ public:
         // Explicit deallocation is used because on HCC the object is copied
         // multiple times inside hipLaunchKernelGGL, and destructor is called
         // for all copies (we can't use c++ smart pointers for device pointers)
-        if (probability != NULL)
+        if (IsHostSide)
         {
-            if (IsHostSide)
+            if (probability != NULL)
             {
                 delete[] probability;
+            }
+            if (alias != NULL)
+            {
                 delete[] alias;
             }
-            else
+            if (cdf != NULL)
             {
-                hipFree(probability);
-                hipFree(alias);
+                delete[] cdf;
             }
         }
+        else
+        {
+            if (probability != NULL)
+            {
+                hipFree(probability);
+            }
+            if (alias != NULL)
+            {
+                hipFree(alias);
+            }
+            if (cdf != NULL)
+            {
+                hipFree(cdf);
+            }
+        }
+        probability = NULL;
+        alias = NULL;
+        cdf = NULL;
     }
 
     __forceinline__ __host__ __device__
     unsigned int operator()(const unsigned int x) const
     {
-        return rocrand_device::detail::discrete(x, *this);
+        if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
+        {
+            return rocrand_device::detail::discrete_alias(x, *this);
+        }
+        else
+        {
+            return rocrand_device::detail::discrete_cdf(x, *this);
+        }
     }
 
 protected:
+
+    void init(std::vector<double> p,
+              const unsigned int size,
+              const unsigned int offset)
+    {
+        this->size = size;
+        this->offset = offset;
+
+        deallocate();
+        allocate();
+        normalize(p);
+        if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
+        {
+            create_alias_table(p);
+        }
+        if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
+        {
+            create_cdf(p);
+        }
+    }
 
     void allocate()
     {
         if (IsHostSide)
         {
-            probability = new double[size];
-            alias = new unsigned int[size];
+            if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
+            {
+                probability = new double[size];
+                alias = new unsigned int[size];
+            }
+            if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
+            {
+                cdf = new double[size];
+            }
         }
         else
         {
             hipError_t error;
-            error = hipMalloc(&probability, sizeof(double) * size);
-            if (error != hipSuccess)
+            if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
             {
-                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+                error = hipMalloc(&probability, sizeof(double) * size);
+                if (error != hipSuccess)
+                {
+                    throw ROCRAND_STATUS_ALLOCATION_FAILED;
+                }
+                error = hipMalloc(&alias, sizeof(unsigned int) * size);
+                if (error != hipSuccess)
+                {
+                    throw ROCRAND_STATUS_ALLOCATION_FAILED;
+                }
             }
-            error = hipMalloc(&alias, sizeof(unsigned int) * size);
-            if (error != hipSuccess)
+            if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
             {
-                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+                error = hipMalloc(&cdf, sizeof(double) * size);
+                if (error != hipSuccess)
+                {
+                    throw ROCRAND_STATUS_ALLOCATION_FAILED;
+                }
             }
         }
     }
 
-    void create_alias_table(std::vector<double> p)
+    void normalize(std::vector<double>& p)
     {
-        std::vector<double> h_probability(size);
-        std::vector<unsigned int> h_alias(size);
-
-        const double average = 1.0 / size;
-
         double sum = 0.0;
         for (int i = 0; i < size; i++)
         {
@@ -133,6 +197,14 @@ protected:
         {
             p[i] /= sum;
         }
+    }
+
+    void create_alias_table(std::vector<double> p)
+    {
+        std::vector<double> h_probability(size);
+        std::vector<unsigned int> h_alias(size);
+
+        const double average = 1.0 / size;
 
         // For detailed descrition of Vose's algorithm see
         // Darts, Dice, and Coins: Sampling from a Discrete Distribution
@@ -196,6 +268,32 @@ protected:
                 throw ROCRAND_STATUS_INTERNAL_ERROR;
             }
             error = hipMemcpy(alias, h_alias.data(), sizeof(unsigned int) * size, hipMemcpyDefault);
+            if (error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+        }
+    }
+
+    void create_cdf(std::vector<double> p)
+    {
+        std::vector<double> h_cdf(size);
+
+        double sum = 0.0;
+        for (int i = 0; i < size; i++)
+        {
+            sum += p[i];
+            h_cdf[i] = sum;
+        }
+
+        if (IsHostSide)
+        {
+            std::copy(h_cdf.begin(), h_cdf.end(), cdf);
+        }
+        else
+        {
+            hipError_t error;
+            error = hipMemcpy(cdf, h_cdf.data(), sizeof(double) * size, hipMemcpyDefault);
             if (error != hipSuccess)
             {
                 throw ROCRAND_STATUS_INTERNAL_ERROR;

@@ -29,6 +29,9 @@ struct rocrand_discrete_distribution_st
     // Alias table
     unsigned int * alias;
     double * probability;
+
+    // Cumulative distribution function
+    double * cdf;
 };
 
 typedef struct rocrand_discrete_distribution_st * rocrand_discrete_distribution;

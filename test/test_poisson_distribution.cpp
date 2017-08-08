@@ -51,16 +51,16 @@ double get_variance(std::vector<T> values, double mean)
     return variance / values.size();
 }
 
-class PoissonDistribution : public ::testing::TestWithParam<double> { };
+class poisson_distribution_tests : public ::testing::TestWithParam<double> { };
 
-TEST_P(PoissonDistribution, MeanVar)
+TEST_P(poisson_distribution_tests, mean_var)
 {
     const double lambda = GetParam();
 
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    rocrand_poisson_distribution<true> dis;
+    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis;
     dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
@@ -79,7 +79,7 @@ TEST_P(PoissonDistribution, MeanVar)
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-2));
 }
 
-TEST_P(PoissonDistribution, HistogramCompare)
+TEST_P(poisson_distribution_tests, histogram_compare)
 {
     const double lambda = GetParam();
 
@@ -87,7 +87,7 @@ TEST_P(PoissonDistribution, HistogramCompare)
     std::mt19937 gen(rd());
     std::poisson_distribution<unsigned int> host_dis(lambda);
 
-    rocrand_poisson_distribution<true> dis;
+    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis;
     dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
@@ -127,6 +127,6 @@ TEST_P(PoissonDistribution, HistogramCompare)
 
 const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
 
-INSTANTIATE_TEST_CASE_P(PoissonDistribution,
-                        PoissonDistribution,
+INSTANTIATE_TEST_CASE_P(poisson_distribution_tests,
+                        poisson_distribution_tests,
                         ::testing::ValuesIn(lambdas));
