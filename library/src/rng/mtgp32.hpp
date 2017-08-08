@@ -72,6 +72,30 @@ namespace detail {
         // Save engine with its state
         engines[engine_id] = engine;
     }
+    
+    template<class RealType, class Distribution>
+    __global__
+    void generate_normal_kernel(mtgp32_device_engine * engines,
+                                RealType * data, const size_t n,
+                                Distribution distribution)
+    {
+        const unsigned int engine_id = hipBlockIdx_x;
+        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load device engine
+        mtgp32_device_engine engine = engines[engine_id];
+
+        while(index < n)
+        {
+            data[index] = distribution(engine());
+            // Next position
+            index += stride;
+        }
+
+        // Save engine with its state
+        engines[engine_id] = engine;
+    }
 
 } // end namespace detail
 } // end namespace rocrand_host
@@ -192,6 +216,66 @@ public:
     {
         uniform_distribution<T> udistribution;
         return generate(data, data_size, udistribution);
+    }
+    
+    template<class T>
+    rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
+    {
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = m_engines_size; // 512
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = m_engines_size;
+        #endif
+        const uint32_t blocks = max_blocks;
+
+        normal_distribution<T> distribution(mean, stddev);
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_engines, data, data_size, distribution
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    template<class T>
+    rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
+    {
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
+        #ifdef __HIP_PLATFORM_NVCC__
+        const uint32_t threads = 128;
+        const uint32_t max_blocks = m_engines_size; // 512
+        #else
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = m_engines_size;
+        #endif
+        const uint32_t blocks = max_blocks;
+
+        log_normal_distribution<T> distribution(mean, stddev);
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
+            dim3(blocks), dim3(threads), 0, m_stream,
+            m_engines, data, data_size, distribution
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        return ROCRAND_STATUS_SUCCESS;
     }
 
 private:
