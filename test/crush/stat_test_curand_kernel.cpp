@@ -34,7 +34,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
-#include "pearson_chi_squared_common.hpp"
+#include "stat_test_common.hpp"
 
 extern "C" {
 #include "gofs.h"
@@ -59,24 +59,21 @@ void init_kernel(GeneratorState * states,
                  const unsigned long long offset)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int subsequence = state_id;
     GeneratorState state;
-    curand_init(seed, subsequence, offset, &state);
+    curand_init(seed, state_id, offset, &state);
     states[state_id] = state;
 }
 
 template<typename GeneratorState>
-struct initializer
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                GeneratorState * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
 {
-    void operator()(const size_t blocks,
-                    const size_t threads,
-                    GeneratorState * states,
-                    const unsigned long long seed,
-                    const unsigned long long offset)
-    {
-        init_kernel<<<blocks, threads>>>(states, seed, offset);
-    }
-};
+    init_kernel<<<blocks, threads>>>(states, seed, offset);
+}
 
 template<typename GeneratorState, typename Directions>
 __global__
@@ -84,41 +81,46 @@ void init_kernel_sobol(GeneratorState * states,
                        const Directions directions,
                        const unsigned long long offset)
 {
+    const unsigned int dimension = blockIdx.y;
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int subsequence = state_id;
     GeneratorState state;
-    curand_init(&directions[subsequence % 20000], offset, &state);
-    states[state_id] = state;
+    curand_init(directions[dimension], offset + state_id, &state);
+    states[gridDim.x * blockDim.x * dimension + state_id] = state;
+}
+
+size_t next_power2(size_t x)
+{
+    size_t power = 1;
+    while (power < x)
+    {
+        power *= 2;
+    }
+    return power;
 }
 
 template<>
-struct initializer<curandStateSobol32_t>
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                curandStateSobol32_t * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
 {
-    initializer()
-    {
-        const size_t size = 20000 * sizeof(curandDirectionVectors32_t);
-        CUDA_CALL(cudaMalloc((void **)&directions, size));
-        curandDirectionVectors32_t * h_directions;
-        CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
-        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
-    }
+    curandDirectionVectors32_t * directions;
+    const size_t size = dimensions * sizeof(curandDirectionVectors32_t);
+    CUDA_CALL(cudaMalloc((void **)&directions, size));
+    curandDirectionVectors32_t * h_directions;
+    CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
+    CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
-    ~initializer()
-    {
-        CUDA_CALL(cudaFree(directions));
-    }
+    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+    init_kernel_sobol<<<dim3(blocks_x, dimensions), threads>>>(states, directions, offset);
 
-    void operator()(const size_t blocks,
-                    const size_t threads,
-                    curandStateSobol32_t * states,
-                    const unsigned long long seed,
-                    const unsigned long long offset)
-    {
-        init_kernel_sobol<<<blocks, threads>>>(states, directions, offset);
-    }
+    CUDA_CALL(cudaPeekAtLastError());
+    CUDA_CALL(cudaDeviceSynchronize());
 
-    unsigned int * directions;
-};
+    CUDA_CALL(cudaFree(directions));
+}
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 __global__
@@ -142,6 +144,59 @@ void generate_kernel(GeneratorState * states,
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              GeneratorState * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    generate_kernel<<<blocks, threads>>>(states, data, size, generate_func, extra);
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+__global__
+void generate_kernel(curandStateSobol32_t * states,
+                     T * data,
+                     const size_t size,
+                     const GenerateFunc& generate_func,
+                     const Extra extra)
+{
+    const unsigned int dimension = blockIdx.y;
+    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride = gridDim.x * blockDim.x;
+
+    curandStateSobol32_t state = states[gridDim.x * blockDim.x * dimension + state_id];
+    const unsigned int offset = dimension * size;
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        data[offset + index] = generate_func(&state, extra);
+        skipahead(stride - 1, &state);
+        index += stride;
+    }
+    state = states[gridDim.x * blockDim.x * dimension + state_id];
+    skipahead(static_cast<unsigned int>(size), &state);
+    states[gridDim.x * blockDim.x * dimension + state_id] = state;
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              curandStateSobol32_t * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+    generate_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, data, size / dimensions, generate_func, extra);
+}
+
+template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 void run_test(const boost::program_options::variables_map& vm,
               const std::string plot_name,
               const GenerateFunc& generate_func,
@@ -150,37 +205,42 @@ void run_test(const boost::program_options::variables_map& vm,
               const distribution_func_type& distribution_func)
 {
     const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
+    const size_t level1_tests = vm["level1-tests"].as<size_t>();
+    const size_t level2_tests = vm["level2-tests"].as<size_t>();
     const bool save_plots = vm.count("plots");
 
     const size_t blocks = vm["blocks"].as<size_t>();
     const size_t threads = vm["threads"].as<size_t>();
 
-    T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * trials * sizeof(T)));
+    const size_t dimensions = level1_tests;
 
-    const size_t states_size = blocks * threads;
+    T * data;
+    CUDA_CALL(cudaMalloc((void **)&data, size * level1_tests * sizeof(T)));
+
+    const size_t states_size = blocks * threads * dimensions;
     GeneratorState * states;
     CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(GeneratorState)));
 
-    initializer<GeneratorState> init;
-    init(blocks, threads, states, 12345ULL, 6789ULL);
+    initialize(dimensions, blocks, threads, states, 0, 0);
     CUDA_CALL(cudaPeekAtLastError());
     CUDA_CALL(cudaDeviceSynchronize());
 
-    generate_kernel<<<blocks, threads>>>(states, data, size * trials, generate_func, extra);
-    CUDA_CALL(cudaPeekAtLastError());
-    CUDA_CALL(cudaDeviceSynchronize());
+    for (size_t level2_test = 0; level2_test < level2_tests; level2_test++)
+    {
+        generate(dimensions, blocks, threads, states, data, size * level1_tests, generate_func, extra);
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
 
-    std::vector<T> h_data(size * trials);
-    CUDA_CALL(cudaMemcpy(h_data.data(), data, size * trials * sizeof(T), cudaMemcpyDeviceToHost));
+        std::vector<T> h_data(size * level1_tests);
+        CUDA_CALL(cudaMemcpy(h_data.data(), data, size * level1_tests * sizeof(T), cudaMemcpyDeviceToHost));
+
+        analyze(size, level1_tests, h_data.data(),
+                save_plots, plot_name + "-" + std::to_string(level2_test),
+                mean, stddev, distribution_func);
+    }
 
     CUDA_CALL(cudaFree(states));
     CUDA_CALL(cudaFree(data));
-
-    analyze(size, trials, h_data.data(),
-            save_plots, plot_name,
-            mean, stddev, distribution_func);
 }
 
 template<typename GeneratorState>
@@ -234,7 +294,7 @@ void run_tests(const boost::program_options::variables_map& vm,
             [] __device__ (GeneratorState * state, int) {
                 return curand_log_normal(state, 0.0f, 1.0f);
             }, 0,
-            0.0, 1.0,
+            std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
@@ -244,7 +304,7 @@ void run_tests(const boost::program_options::variables_map& vm,
             [] __device__ (GeneratorState * state, int) {
                 return curand_log_normal_double(state, 0.0, 1.0);
             }, 0,
-            0.0, 1.0,
+            std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
         );
     }
@@ -255,7 +315,7 @@ void run_tests(const boost::program_options::variables_map& vm,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_test<unsigned int, GeneratorState>(vm, plot_name,
+            run_test<unsigned int, GeneratorState>(vm, plot_name + "-" + std::to_string(lambda),
                 [] __device__ (GeneratorState * state, double lambda) {
                     return curand_poisson(state, lambda);
                 }, lambda,
@@ -273,7 +333,7 @@ void run_tests(const boost::program_options::variables_map& vm,
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
             curandDiscreteDistribution_t discrete_distribution;
             CURAND_CALL(curandCreatePoissonDistribution(lambda, &discrete_distribution));
-            run_test<unsigned int, GeneratorState>(vm, plot_name,
+            run_test<unsigned int, GeneratorState>(vm, plot_name + "-" + std::to_string(lambda),
                 [] __device__ (GeneratorState * state, curandDiscreteDistribution_t discrete_distribution) {
                     return curand_discrete(state, discrete_distribution);
                 }, discrete_distribution,
@@ -331,8 +391,9 @@ int main(int argc, char *argv[])
         "\nor all";
     options.add_options()
         ("help", "show usage instructions")
-        ("size", po::value<size_t>()->default_value(10000), "number of values")
-        ("trials", po::value<size_t>()->default_value(20), "number of trials")
+        ("size", po::value<size_t>()->default_value(10000), "number of samples in every first level test")
+        ("level1-tests", po::value<size_t>()->default_value(10), "number of first level tests")
+        ("level2-tests", po::value<size_t>()->default_value(10), "number of second level tests")
         ("blocks", po::value<size_t>()->default_value(64), "number of blocks")
         ("threads", po::value<size_t>()->default_value(256), "number of threads in each block")
         ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "all" }, "all"),

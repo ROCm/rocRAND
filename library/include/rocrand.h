@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 /** @addtogroup host
- *  
+ *
  *  @{
  */
 
@@ -368,6 +368,28 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
  */
 rocrand_status ROCRANDAPI
 rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
+
+/**
+ * \brief Set the number of dimensions of a quasi-random number generator.
+ *
+ * Set the number of dimensions of a quasi-random number generator.
+ * Supported values of \p dimensions are 1 to 20000.
+ *
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's offset.
+ *
+ * \param generator - Quasi-random number generator
+ * \param dimensions - Number of dimensions
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_TYPE_ERROR if the generator is not a quasi-random number generator \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p dimensions is out of range \n
+ * - ROCRAND_STATUS_SUCCESS if the number of dimensions was set successfully \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
+                                              unsigned int dimensions);
 
 /**
  * \brief Returns the version number of the library.
