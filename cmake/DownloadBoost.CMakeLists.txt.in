@@ -1,37 +1,47 @@
+# CMake project template for downloading, building,
+# and installing Boost Libs 1.64
+#
+# Options:
+# BOOST_DOWNLOAD_COMPONENTS - list of requested Boost Libs
+# BOOST_ROOT - install dir for Boost Lib
+#
+
 cmake_minimum_required(VERSION 2.8.2)
 
 project(boost-download NONE)
 
-include(ExternalProject)
-include(FindPackageHandleStandardArgs)
+# Get requested components
+set(Boost_FIND_COMPONENTS @BOOST_DOWNLOAD_COMPONENTS@)
 
-set(Boost_FIND_COMPONENTS @ROCRAND_BOOST_COMPONENTS@)
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(boost_am 64)
+# Address model of boost
+if(@CMAKE_SIZEOF_VOID_P@ EQUAL 8)
+    set(b_am 64)
 else()
-    set(boost_am 32)
+    set(b_am 32)
 endif()
-mark_as_advanced(boost_am)
+mark_as_advanced(b_am)
 
-set(boost_variant "release")
+set(b_variant "release")
 if("@CMAKE_BUILD_TYPE@" STREQUAL "Debug")
-    set(boost_variant "debug")
+    set(b_variant "debug")
 endif()
-mark_as_advanced(boost_variant)
+mark_as_advanced(b_variant)
 
 foreach(component ${Boost_FIND_COMPONENTS})
     list(APPEND Boost_COMPONENTS_FOR_BUILD --with-${component})
 endforeach()
 
+include(ExternalProject)
 ExternalProject_Add(boost
     URL                 https://sourceforge.net/projects/boost/files/boost/1.64.0/boost_1_64_0.tar.bz2/download
     URL_MD5             93eecce2abed9d2442c9676914709349
-    UPDATE_DISCONNECTED TRUE
     CONFIGURE_COMMAND   ./bootstrap.sh --prefix=@BOOST_ROOT@
-    BUILD_COMMAND       ./b2 --prefix=@BOOST_ROOT@ -d0 address-model=${boostlib_am} variant=${boost_variant} ${Boost_COMPONENTS_FOR_BUILD}
-    INSTALL_COMMAND     ./b2 --prefix=@BOOST_ROOT@ -d0 address-model=${boostlib_am} variant=${boost_variant} ${Boost_COMPONENTS_FOR_BUILD} install
-    INSTALL_DIR         @BOOST_ROOT_DIR@
+    BUILD_COMMAND       ./b2 --prefix=@BOOST_ROOT@ -d0 address-model=${b_am} variant=${b_variant} ${Boost_COMPONENTS_FOR_BUILD}
+    INSTALL_COMMAND     ./b2 --prefix=@BOOST_ROOT@ -d0 address-model=${b_am} variant=${b_variant} ${Boost_COMPONENTS_FOR_BUILD} install
+    UPDATE_COMMAND      ""
+    PATCH_COMMAND       ""
+    INSTALL_DIR         @BOOST_ROOT@
+    SOURCE_DIR          @CMAKE_CURRENT_BINARY_DIR@/boost-src
     BUILD_IN_SOURCE     TRUE
     LOG_DOWNLOAD        TRUE
     LOG_CONFIGURE       TRUE

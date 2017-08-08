@@ -18,12 +18,12 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     hip_add_executable(${test_name} "${test_src}")
     add_dependencies(${test_name} rocRAND ${ROCRAND_TEST_DEPENDENCIES})
-    get_target_property(gtest_rpath gtest BINARY_DIR)
     get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
     target_link_libraries(
         ${test_name}
-        -Wl,-rpath,${gtest_rpath}:${rocRAND_rpath} # workaround for HIP linker
-        $<TARGET_FILE:rocRAND> $<TARGET_FILE:gtest> $<TARGET_FILE:gtest_main>)
+        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
+        $<TARGET_FILE:rocRAND>
+        ${GTEST_BOTH_LIBRARIES})
     set_target_properties(
         ${test_name}
         PROPERTIES
@@ -49,21 +49,20 @@ foreach(test_src ${hipRAND_TEST_SRCS})
         add_dependencies(${test_name} rocRAND)
     endif()
     add_dependencies(${test_name} hipRAND ${ROCRAND_TEST_DEPENDENCIES})
-    get_target_property(gtest_rpath gtest BINARY_DIR)
     get_target_property(hipRAND_rpath hipRAND BINARY_DIR)
     if(HIP_PLATFORM STREQUAL "hcc")
         get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
         target_link_libraries(
             ${test_name}
-            -Wl,-rpath,${gtest_rpath}:${hipRAND_rpath}:${rocRAND_rpath} # workaround for HIP linker
+            -Wl,-rpath,${hipRAND_rpath}:${rocRAND_rpath} # workaround for HIP linker
             $<TARGET_FILE:hipRAND> $<TARGET_FILE:rocRAND>
-            $<TARGET_FILE:gtest> $<TARGET_FILE:gtest_main>
+            ${GTEST_BOTH_LIBRARIES}
         )
     else()
         target_link_libraries(
             ${test_name}
             "-lcurand" hipRAND
-            gtest gtest_main
+            ${GTEST_BOTH_LIBRARIES}
         )
     endif()
     set_target_properties(

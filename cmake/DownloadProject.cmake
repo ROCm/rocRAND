@@ -46,13 +46,6 @@
 #
 #       In addition to the above, any other options are passed through unmodified to
 #       ExternalProject_Add() to perform the actual download, patch and update steps.
-#       The following ExternalProject_Add() options are explicitly prohibited (they
-#       are reserved for use by the download_project() command):
-#
-#           CONFIGURE_COMMAND
-#           BUILD_COMMAND
-#           INSTALL_COMMAND
-#           TEST_COMMAND
 #
 #       Only those ExternalProject_Add() arguments which relate to downloading, patching
 #       and updating of the project sources are intended to be used. Also note that at
@@ -102,11 +95,6 @@ function(download_project)
         DOWNLOAD_DIR
         SOURCE_DIR
         BINARY_DIR
-        # Prevent the following from being passed through
-        CONFIGURE_COMMAND
-        BUILD_COMMAND
-        INSTALL_COMMAND
-        TEST_COMMAND
     )
     set(multiValueArgs "")
 
