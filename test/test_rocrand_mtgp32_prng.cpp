@@ -68,3 +68,35 @@ TEST(rocrand_mtgp32_prng_tests, uniform_float_test)
         ASSERT_LE(host_data[i], 1.0f);
     }
 }
+
+TEST(rocrand_mtgp32_prng_tests, normal_float_test)
+{
+    const size_t size = 1313;
+    float * data;
+    hipMalloc(&data, sizeof(float) * size);
+
+    rocrand_mtgp32 g;
+    g.generate_normal(data, size, 5.0f, 2.0f);
+    hipDeviceSynchronize();
+
+    float host_data[size];
+    hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+    
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        mean += host_data[i];
+    }
+    mean = mean / size;
+    
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(host_data[i] - mean, 2);
+    }
+    std = sqrt(std / size);
+    
+    EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
+    EXPECT_NEAR(5.0f, std, 1.0f); // 20%
+}
