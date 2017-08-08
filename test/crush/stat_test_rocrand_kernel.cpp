@@ -172,7 +172,7 @@ void generate(const size_t dimensions,
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(generate_kernel),
         dim3(blocks), dim3(threads), 0, 0,
-        states, data, size / dimensions, generate_func, extra
+        states, data, size, generate_func, extra
     );
 }
 
