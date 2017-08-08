@@ -43,10 +43,10 @@
 
 #define ROCRAND_CHECK(condition)                 \
   {                                              \
-    rocrand_status status = condition;           \
-    if(status != ROCRAND_STATUS_SUCCESS) {       \
-        std::cout << "ROCRAND error: " << status << " line: " << __LINE__ << std::endl; \
-        exit(status); \
+    rocrand_status _status = condition;           \
+    if(_status != ROCRAND_STATUS_SUCCESS) {       \
+        std::cout << "ROCRAND error: " << _status << " line: " << __LINE__ << std::endl; \
+        exit(_status); \
     } \
   }
 
@@ -72,6 +72,13 @@ void run_benchmark(const boost::program_options::variables_map& vm,
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
+
+    const size_t dimensions = vm["dimensions"].as<size_t>();
+    rocrand_status status = rocrand_set_quasi_random_generator_dimensions(generator, dimensions);
+    if (status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
+    {
+        ROCRAND_CHECK(status);
+    }
 
     // Warm-up
     for (size_t i = 0; i < 5; i++)
@@ -229,6 +236,7 @@ int main(int argc, char *argv[])
     options.add_options()
         ("help", "show usage instructions")
         ("size", po::value<size_t>()->default_value(DEFAULT_RAND_N), "number of values")
+        ("dimensions", po::value<size_t>()->default_value(1), "number of dimensions of quasi-random values")
         ("trials", po::value<size_t>()->default_value(20), "number of trials")
         ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "uniform-uint" }, "uniform-uint"),
             distribution_desc.c_str())

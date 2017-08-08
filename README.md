@@ -39,7 +39,7 @@ cmake ../. # or cmake-gui ../.
 cmake -DBUILD_BENCHMARK=ON -DBUILD_CRUSH_TEST=ON ../.
 
 # build
-# for ROCM-1.6, if a HCC runtime error is caught, consider setting HCC_AMDGPU_TARGET=<arch> in front of make as a workaround 
+# for ROCM-1.6, if a HCC runtime error is caught, consider setting HCC_AMDGPU_TARGET=<arch> in front of make as a workaround
 make -j4
 
 # optionally, run tests if they're enabled
@@ -80,9 +80,10 @@ cd hipRAND; cd build
 # curand version of test also exists
 ./test/crush_test_rocrand --engine <engine>
 
-# to run Pearson Chi-squared test
+# to run statistical tests of generators and distirbutions
+# (two-level tests: Pearson Chi-squared test + Anderson-Darling test)
 # curand version of test also exists
-./test/pearson_chi_squared_rocrand --engine <engine>
+./test/stat_test_rocrand_generate --engine <engine>
 ```
 
 ## Documentation

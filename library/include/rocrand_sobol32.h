@@ -27,7 +27,7 @@
 
 #include "rocrand_common.h"
 
-// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom 
+// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom
 // sequence generator, 2003
 // http://doi.acm.org/10.1145/641876.641879
 
@@ -38,7 +38,8 @@ class sobol32_engine
 public:
     struct sobol32_state
     {
-        unsigned int i, d;
+        unsigned int d;
+        unsigned int i;
         unsigned int vectors[32];
 
         FQUALIFIERS
@@ -49,15 +50,14 @@ public:
     sobol32_engine()
     {
         m_state.d = 0;
-        m_state.i = (unsigned int) -1;
-        //this->seed(0);
+        m_state.i = 0;
     }
 
     FQUALIFIERS
     sobol32_engine(const unsigned int * vectors,
                    const unsigned int offset)
     {
-        this->seed(vectors, offset);
+        this->init(vectors, offset);
     }
 
     FQUALIFIERS
@@ -66,35 +66,37 @@ public:
     /// Reinitializes the internal state of the QRNG using new
     /// direction vector \p vectors, and \p offset random numbers.
     FQUALIFIERS
-    void seed(const unsigned int * vectors,
+    void init(const unsigned int * vectors,
               const unsigned int offset)
     {
         #pragma unroll
-        for(int i = 0; i < 32; i++) {
+        for(int i = 0; i < 32; i++)
+        {
             m_state.vectors[i] = vectors[i];
         }
-        this->restart(offset);
+        m_state.d = 0;
+        m_state.i = 0;
+        discard_state(offset);
     }
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS
     void discard(unsigned int offset)
     {
-        this->discard_impl(offset);
-    }
-    
-    FQUALIFIERS
-    void discard()
-    {
-        this->discard_state();
+        discard_state(offset);
     }
 
     FQUALIFIERS
-    void restart(const unsigned int offset)
+    void discard()
     {
-        m_state.d = 0;
-        m_state.i = (unsigned int) -1;
-        this->discard_impl(offset);
+        discard_state();
+    }
+
+    /// Advances the internal state by stride times, where stride is power of 2
+    FQUALIFIERS
+    void discard_stride(unsigned int stride)
+    {
+        discard_state_power2(stride);
     }
 
     FQUALIFIERS
@@ -111,70 +113,71 @@ public:
         return p;
     }
 
-protected:
-    // Advances the internal state to skip \p offset numbers.
-    // DOES NOT CALCULATE NEW UINT
     FQUALIFIERS
-    void discard_impl(unsigned int offset)
+    unsigned int current()
     {
-        discard_state(offset);
+        return m_state.d;
     }
 
+protected:
     // Advances the internal state by offset times.
-    // DOES NOT CALCULATE NEW UINT
     FQUALIFIERS
     void discard_state(unsigned int offset)
     {
-        unsigned int dx = sobol_bits(m_state.i, offset);
-        unsigned int dy = 0;
-        unsigned int c  = 0x00000000;
-        
-        while(dx) {
-            if (dx & 1)
-                dy ^= m_state.vectors[c];
-            dx >>= 1;
-            c += 1;
+        m_state.i += offset;
+        const unsigned int g = m_state.i ^ (m_state.i >> 1);
+        m_state.d = 0;
+        for(int i = 0; i < 32; i++)
+        {
+            m_state.d ^= (g & (1 << i) ? m_state.vectors[i] : 0);
         }
-
-        m_state.i -= offset;
-        m_state.d = dy; 
     }
 
     // Advances the internal state to the next state
-    // DOES NOT CALCULATE NEW UINT
     FQUALIFIERS
     void discard_state()
     {
-        int c = ftz(m_state.i);
-        m_state.d ^= m_state.vectors[c];
-        m_state.i--; 
+        m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i)];
+        m_state.i++;
     }
 
-private:
     FQUALIFIERS
-    unsigned int sobol_bits(unsigned int x, unsigned int offset)
+    void discard_state_power2(unsigned int stride)
     {
-        unsigned int i  = ~x;
-        unsigned int n  = i + offset;
-        unsigned int a  = i ^ (i >> 1);
-        unsigned int b  = n ^ (n >> 1);
-        unsigned int d  = a ^ b;
+        // Leap frog
+        //
+        // T Bradley, J Toit, M Giles, R Tong, P Woodhams
+        // Parallelisation Techniques for Random Number Generators
+        // GPU Computing Gems, 2011
+        //
+        // For power of 2 jumps only 2 bits in Gray code change values
+        // All bits lower than log2(stride) flip 2, 4... times, i.e.
+        // do not change their values.
 
-        return d;
+        // log2(stride) bit
+        m_state.d ^= m_state.vectors[rightmost_zero_bit(~stride) - 1];
+        // the rightmost zero bit of i, not including the lower log2(stride) bits
+        m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i | (stride - 1))];
+        m_state.i += stride;
     }
-    
+
+    // Returns the index of the rightmost zero bit in the binary expansion of
+    // x (Gray code of the current element's index)
     FQUALIFIERS
-    int ftz(unsigned int x)
+    unsigned int rightmost_zero_bit(unsigned int x)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        int z = __ffs(x) - 1;
-        return z;
+        unsigned int z = __ffs(~x);
+        return z ? z - 1 : 0;
         #else
+        if(x == 0)
+            return 0;
         unsigned int y = x;
-        int z = 1;
-        while(y & 1) {
-            z++;
+        unsigned int z = 1;
+        while(y & 1)
+        {
             y >>= 1;
+            z++;
         }
         return z - 1;
         #endif

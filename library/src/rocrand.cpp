@@ -517,6 +517,27 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
 }
 
 rocrand_status ROCRANDAPI
+rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
+                                              unsigned int dimensions)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+    if(dimensions < 1 || dimensions > 20000)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        static_cast<rocrand_sobol32 *>(generator)->set_dimensions(dimensions);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
 rocrand_get_version(int * version)
 {
     if(version == NULL)
@@ -541,10 +562,10 @@ rocrand_create_poisson_distribution(double lambda,
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_poisson_distribution<> h_dis;
+    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
     try
     {
-        h_dis = rocrand_poisson_distribution<>(lambda);
+        h_dis = rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_UNIVERSAL>(lambda);
     }
     catch(const std::exception& e)
     {
@@ -585,10 +606,10 @@ rocrand_create_discrete_distribution(const double * probabilities,
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_base<> h_dis;
+    rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
     try
     {
-        h_dis = rocrand_discrete_distribution_base<>(probabilities, size, offset);
+        h_dis = rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL>(probabilities, size, offset);
     }
     catch(const std::exception& e)
     {
@@ -622,7 +643,7 @@ rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_dis
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_base<> h_dis;
+    rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
 
     hipError_t error;
     error = hipMemcpy(&h_dis, discrete_distribution, sizeof(rocrand_discrete_distribution_st), hipMemcpyDefault);

@@ -29,12 +29,12 @@
 
 #include "discrete.hpp"
 
-template<bool IsHostSide = false>
-class rocrand_poisson_distribution : public rocrand_discrete_distribution_base<IsHostSide>
+template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
+class rocrand_poisson_distribution : public rocrand_discrete_distribution_base<Method, IsHostSide>
 {
 public:
 
-    typedef rocrand_discrete_distribution_base<IsHostSide> base;
+    typedef rocrand_discrete_distribution_base<Method, IsHostSide> base;
 
     rocrand_poisson_distribution()
         : base() { }
@@ -55,9 +55,8 @@ public:
         std::vector<double> p(capacity);
 
         calculate_probabilities(p, capacity, lambda);
-        this->deallocate();
-        this->allocate();
-        this->create_alias_table(p);
+
+        this->init(p, this->size, this->offset);
     }
 
 protected:
@@ -110,12 +109,15 @@ protected:
     }
 };
 
-template<bool IsHostSide = false>
+// Handles caching of precomputed tables for the distribution and recomputes
+// them only when lambda is changed (as these computations, device memory
+// allocations and copying take time).
+template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class poisson_distribution_manager
 {
 public:
 
-    rocrand_poisson_distribution<IsHostSide> dis;
+    rocrand_poisson_distribution<Method, IsHostSide> dis;
 
     poisson_distribution_manager()
         : lambda(0.0)

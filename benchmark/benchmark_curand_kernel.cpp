@@ -54,24 +54,21 @@ void init_kernel(GeneratorState * states,
                  const unsigned long long offset)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int subsequence = state_id;
     GeneratorState state;
-    curand_init(seed, subsequence, offset, &state);
+    curand_init(seed, state_id, offset, &state);
     states[state_id] = state;
 }
 
 template<typename GeneratorState>
-struct initializer
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                GeneratorState * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
 {
-    void operator()(const size_t blocks,
-                    const size_t threads,
-                    GeneratorState * states,
-                    const unsigned long long seed,
-                    const unsigned long long offset)
-    {
-        init_kernel<<<blocks, threads>>>(states, seed, offset);
-    }
-};
+    init_kernel<<<blocks, threads>>>(states, seed, offset);
+}
 
 template<typename GeneratorState, typename Directions>
 __global__
@@ -79,41 +76,46 @@ void init_kernel_sobol(GeneratorState * states,
                        const Directions directions,
                        const unsigned long long offset)
 {
+    const unsigned int dimension = blockIdx.y;
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int subsequence = state_id;
     GeneratorState state;
-    curand_init(&directions[subsequence % 20000], offset, &state);
-    states[state_id] = state;
+    curand_init(directions[dimension], offset + state_id, &state);
+    states[gridDim.x * blockDim.x * dimension + state_id] = state;
+}
+
+size_t next_power2(size_t x)
+{
+    size_t power = 1;
+    while (power < x)
+    {
+        power *= 2;
+    }
+    return power;
 }
 
 template<>
-struct initializer<curandStateSobol32_t>
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                curandStateSobol32_t * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
 {
-    initializer()
-    {
-        const size_t size = 20000 * sizeof(curandDirectionVectors32_t);
-        CUDA_CALL(cudaMalloc((void **)&directions, size));
-        curandDirectionVectors32_t * h_directions;
-        CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
-        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
-    }
+    curandDirectionVectors32_t * directions;
+    const size_t size = dimensions * sizeof(curandDirectionVectors32_t);
+    CUDA_CALL(cudaMalloc((void **)&directions, size));
+    curandDirectionVectors32_t * h_directions;
+    CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
+    CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
-    ~initializer()
-    {
-        CUDA_CALL(cudaFree(directions));
-    }
+    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+    init_kernel_sobol<<<dim3(blocks_x, dimensions), threads>>>(states, directions, offset);
 
-    void operator()(const size_t blocks,
-                    const size_t threads,
-                    curandStateSobol32_t * states,
-                    const unsigned long long seed,
-                    const unsigned long long offset)
-    {
-        init_kernel_sobol<<<blocks, threads>>>(states, directions, offset);
-    }
+    CUDA_CALL(cudaPeekAtLastError());
+    CUDA_CALL(cudaDeviceSynchronize());
 
-    unsigned int * directions;
-};
+    CUDA_CALL(cudaFree(directions));
+}
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 __global__
@@ -137,11 +139,65 @@ void generate_kernel(GeneratorState * states,
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              GeneratorState * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    generate_kernel<<<blocks, threads>>>(states, data, size, generate_func, extra);
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+__global__
+void generate_kernel(curandStateSobol32_t * states,
+                     T * data,
+                     const size_t size,
+                     const GenerateFunc& generate_func,
+                     const Extra extra)
+{
+    const unsigned int dimension = blockIdx.y;
+    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride = gridDim.x * blockDim.x;
+
+    curandStateSobol32_t state = states[gridDim.x * blockDim.x * dimension + state_id];
+    const unsigned int offset = dimension * size;
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        data[offset + index] = generate_func(&state, extra);
+        skipahead(stride - 1, &state);
+        index += stride;
+    }
+    state = states[gridDim.x * blockDim.x * dimension + state_id];
+    skipahead(static_cast<unsigned int>(size), &state);
+    states[gridDim.x * blockDim.x * dimension + state_id] = state;
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              curandStateSobol32_t * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+    generate_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, data, size / dimensions, generate_func, extra);
+}
+
+template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 void run_benchmark(const boost::program_options::variables_map& vm,
                    const GenerateFunc& generate_func,
                    const Extra extra)
 {
     const size_t size = vm["size"].as<size_t>();
+    const size_t dimensions = vm["dimensions"].as<size_t>();
     const size_t trials = vm["trials"].as<size_t>();
 
     const size_t blocks = vm["blocks"].as<size_t>();
@@ -150,19 +206,18 @@ void run_benchmark(const boost::program_options::variables_map& vm,
     T * data;
     CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
 
-    const size_t states_size = blocks * threads;
+    const size_t states_size = blocks * threads * dimensions;
     GeneratorState * states;
     CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(GeneratorState)));
 
-    initializer<GeneratorState> init;
-    init(blocks, threads, states, 12345ULL, 6789ULL);
+    initialize(dimensions, blocks, threads, states, 12345ULL, 6789ULL);
     CUDA_CALL(cudaPeekAtLastError());
     CUDA_CALL(cudaDeviceSynchronize());
 
     // Warm-up
     for (size_t i = 0; i < 5; i++)
     {
-        generate_kernel<<<blocks, threads>>>(states, data, size, generate_func, extra);
+        generate(dimensions, blocks, threads, states, data, size, generate_func, extra);
         CUDA_CALL(cudaPeekAtLastError());
         CUDA_CALL(cudaDeviceSynchronize());
     }
@@ -172,10 +227,9 @@ void run_benchmark(const boost::program_options::variables_map& vm,
     auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < trials; i++)
     {
-        generate_kernel<<<blocks, threads>>>(states, data, size, generate_func, extra);
-        CUDA_CALL(cudaPeekAtLastError());
-        CUDA_CALL(cudaDeviceSynchronize());
+        generate(dimensions, blocks, threads, states, data, size, generate_func, extra);
     }
+    CUDA_CALL(cudaPeekAtLastError());
     CUDA_CALL(cudaDeviceSynchronize());
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end - start;
@@ -357,6 +411,7 @@ int main(int argc, char *argv[])
     options.add_options()
         ("help", "show usage instructions")
         ("size", po::value<size_t>()->default_value(DEFAULT_RAND_N), "number of values")
+        ("dimensions", po::value<size_t>()->default_value(1), "number of dimensions of quasi-random values")
         ("trials", po::value<size_t>()->default_value(20), "number of trials")
         ("blocks", po::value<size_t>()->default_value(64), "number of blocks")
         ("threads", po::value<size_t>()->default_value(256), "number of threads in each block")

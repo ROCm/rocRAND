@@ -40,67 +40,29 @@ namespace detail {
 
     typedef ::rocrand_device::sobol32_engine sobol32_device_engine;
 
-    __global__
-    void init_sobol_engines_kernel(sobol32_device_engine * engines,
-                                   unsigned int * vectors,
-                                   unsigned long long offset)
-    {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int vector_dim = (engine_id % SOBOL_DIM) * 32;
-        unsigned long long off = offset + engine_id + 1;
-        sobol32_device_engine engine = sobol32_device_engine(vectors + vector_dim, off);
-        engine.discard();
-        engines[engine_id] = engine;
-    }
-
     template<class Type, class Distribution>
     __global__
-    void generate_kernel(sobol32_device_engine * engines,
-                         Type * data, const size_t n,
+    void generate_kernel(Type * data, const size_t n,
+                         const unsigned int * direction_vectors,
+                         const unsigned int offset,
                          Distribution distribution)
     {
+        const unsigned int dimension = hipBlockIdx_y;
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        sobol32_device_engine engine = sobol32_device_engine(&direction_vectors[dimension * 32], offset + engine_id);
+
+        const unsigned int start = dimension * n;
         unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        sobol32_device_engine engine = engines[engine_id];
-
         while(index < n)
         {
-            data[index] = distribution(engine());
-            // Next position
+            data[start + index] = distribution(engine.current());
+            engine.discard_stride(stride);
             index += stride;
         }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
     }
-    
-    template<class RealType, class Distribution>
-    __global__
-    void generate_normal_kernel(sobol32_device_engine * engines,
-                                RealType * data, const size_t n,
-                                Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load device engine
-        sobol32_device_engine engine = engines[engine_id];
-
-        while(index < n)
-        {
-            data[index] = distribution(engine());
-            // Next position
-            index += stride;
-        }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
-    
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -109,70 +71,56 @@ class rocrand_sobol32 : public rocrand_generator_type<ROCRAND_RNG_QUASI_SOBOL32>
 public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_QUASI_SOBOL32>;
     using engine_type = ::rocrand_host::detail::sobol32_device_engine;
-    
-    rocrand_sobol32(unsigned long long seed = 0,
-                    unsigned long long offset = 0,
+
+    rocrand_sobol32(unsigned long long offset = 0,
                     hipStream_t stream = 0)
-        : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(256 * 128)
+        : base_type(0, offset, stream),
+          m_initialized(false),
+          m_dimensions(1)
     {
-        // Allocate device random number engines
-        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
+        // Allocate direction vectors
+        hipError_t error;
+        error = hipMalloc(&m_direction_vectors, sizeof(unsigned int) * SOBOL_N);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
+        error = hipMemcpy(m_direction_vectors, h_sobol32_direction_vectors, sizeof(unsigned int) * SOBOL_N, hipMemcpyHostToDevice);
+        if(error != hipSuccess)
+        {
+            throw ROCRAND_STATUS_INTERNAL_ERROR;
         }
     }
 
     ~rocrand_sobol32()
     {
-        hipFree(m_engines);
+        hipFree(m_direction_vectors);
     }
 
     void reset()
     {
-        m_engines_initialized = false;
+        m_initialized = false;
     }
 
     void set_offset(unsigned long long offset)
     {
         m_offset = offset;
-        m_engines_initialized = false;
+        m_initialized = false;
+    }
+
+    void set_dimensions(unsigned int dimensions)
+    {
+        m_dimensions = dimensions;
+        m_initialized = false;
     }
 
     rocrand_status init()
     {
-        if (m_engines_initialized)
+        if (m_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128;
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 128;
-        #endif
-        const uint32_t blocks = max_blocks;
-        
-        unsigned int * m_vector;
-        hipMalloc(&m_vector, sizeof(unsigned int) * SOBOL_N);
-        hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * SOBOL_N, hipMemcpyHostToDevice);
-        
-        // Check memcpy status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::init_sobol_engines_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, m_vector, m_offset
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        m_engines_initialized = true;
-        hipFree(m_vector);
+        m_current_offset = static_cast<unsigned int>(m_offset);
+        m_initialized = true;
 
         return ROCRAND_STATUS_SUCCESS;
     }
@@ -186,91 +134,55 @@ public:
             return status;
 
         #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
+        const uint32_t threads = 64;
+        const uint32_t max_blocks = 4096;
         #else
         const uint32_t threads = 256;
-        const uint32_t max_blocks = 128;
+        const uint32_t max_blocks = 4096;
         #endif
-        const uint32_t blocks = max_blocks;
 
+        const size_t size = data_size / m_dimensions;
+        const uint32_t blocks = std::min(max_blocks, static_cast<uint32_t>((size + threads - 1) / threads));
+
+        // blocks_x must be power of 2 because strided discard (leap frog)
+        // supports only power of 2 jumps
+        const uint32_t blocks_x = next_power2((blocks + m_dimensions - 1) / m_dimensions);
+        const uint32_t blocks_y = m_dimensions;
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
+            dim3(blocks_x, blocks_y), dim3(threads), 0, m_stream,
+            data, size,
+            m_direction_vectors, m_current_offset,
+            distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
+        m_current_offset += size;
+
         return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T>
-    rocrand_status generate_uniform(T * data, size_t n)
+    rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        uniform_distribution<T> udistribution;
-        return generate(data, n, udistribution);
+        uniform_distribution<T> distribution;
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 128;
-        #endif
-        const uint32_t blocks = max_blocks;
-
         normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 128;
-        #endif
-        const uint32_t blocks = max_blocks;
-
         log_normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, distribution);
     }
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
@@ -283,23 +195,29 @@ public:
         {
             return status;
         }
-        if (lambda < 1000)
-            return generate(data, data_size, poisson.dis);
-        else {
-            normal_distribution<double> distribution(lambda, sqrt(lambda));
-            return generate(data, data_size, distribution);
-        }
+        return generate(data, data_size, poisson.dis);
     }
 
 private:
-    bool m_engines_initialized;
-    engine_type * m_engines;
-    size_t m_engines_size;
-    
-    poisson_distribution_manager<> poisson;
+    bool m_initialized;
+    unsigned int m_dimensions;
+    unsigned int m_current_offset;
+    unsigned int * m_direction_vectors;
 
-    // m_seed from base_type
+    // For caching of Poisson for consecutive generations with the same lambda
+    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_CDF> poisson;
+
     // m_offset from base_type
+
+    size_t next_power2(size_t x)
+    {
+        size_t power = 1;
+        while (power < x)
+        {
+            power *= 2;
+        }
+        return power;
+    }
 };
 
 #endif // ROCRAND_RNG_SOBOL32_H_
