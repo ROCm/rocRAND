@@ -11,35 +11,66 @@ find_package(HIP REQUIRED)
 include_directories(SYSTEM ${HIP_INCLUDE_DIRECTORIES})
 include(cmake/HIP.cmake)
 
-set(ROCRAND_TEST_DEPENDENCIES)
-set(ROCRAND_CRUSH_TEST_DEPENDENCIES)
-set(ROCRAND_BENCHMARK_DEPENDENCIES)
+# For downloading, building, and installing required dependencies
+include(cmake/DownloadProject.cmake)
+
+if (CMAKE_VERSION VERSION_LESS 3.2)
+    set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
+else()
+    set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED TRUE")
+endif()
 
 # Test dependencies
-if (BUILD_TEST)
-    include(cmake/DownloadProject.cmake)
-    # Download googletest library
-    download_project(PROJ                googletest
-                     GIT_REPOSITORY      https://github.com/google/googletest.git
-                     GIT_TAG             master
-                     UPDATE_DISCONNECTED TRUE
-    )
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
-    list(APPEND ROCRAND_TEST_DEPENDENCIES gtest gtest_main)
+if(BUILD_TEST)
+    if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+        find_package(GTest QUIET)
+    endif()
+
+    if(NOT GTEST_FOUND)
+        message(STATUS "GTest not found. Downloading and building GTest.")
+        # Download, build and install googletest library
+        download_project(PROJ                googletest
+                         GIT_REPOSITORY      https://github.com/google/googletest.git
+                         GIT_TAG             master
+                         INSTALL_DIR         ${CMAKE_CURRENT_BINARY_DIR}/gtest
+                         CMAKE_ARGS          -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+                         LOG_DOWNLOAD        TRUE
+                         LOG_CONFIGURE       TRUE
+                         LOG_BUILD           TRUE
+                         LOG_INSTALL         TRUE
+                         ${UPDATE_DISCONNECTED_IF_AVAILABLE}
+        )
+        find_package(GTest REQUIRED)
+    endif()
 endif()
 
 # Crush Tests
 if(BUILD_CRUSH_TEST)
-    # Download TestU01 library
-    download_project(PROJ                TestU01
-                     GIT_REPOSITORY      https://github.com/JamesHirschorn/TestU01-CMake.git
-                     GIT_TAG             master
-                     UPDATE_DISCONNECTED TRUE
-    )
-    add_subdirectory(${TestU01_SOURCE_DIR} ${TestU01_BINARY_DIR})
-    # Add dependency
-    list(APPEND ROCRAND_CRUSH_TEST_DEPENDENCIES TestU01)
+    if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+        find_package(TestU01 QUIET)
+    endif()
+
+    if(NOT TestU01_FOUND)
+        message(STATUS "TestU01 not found. Downloading and building TestU01.")
+        # Download and install TestU01 library
+        set(TESTU01_ROOT_DIR ${CMAKE_CURRENT_BINARY_DIR}/testu01)
+        download_project(PROJ                TestU01
+                         URL                 http://simul.iro.umontreal.ca/testu01/TestU01.zip
+                         URL_MD5             0cbbe837f330d813ee258ef6bea2ac0e
+                         INSTALL_DIR         ${TESTU01_ROOT_DIR}
+                         CONFIGURE_COMMAND   ./configure --prefix=<INSTALL_DIR>
+                         BUILD_COMMAND       make
+                         INSTALL_COMMAND     make install
+                         UPDATE_COMMAND      ""
+                         PATCH_COMMAND       ""
+                         LOG_DOWNLOAD        TRUE
+                         LOG_CONFIGURE       TRUE
+                         LOG_BUILD           TRUE
+                         LOG_INSTALL         TRUE
+        )
+        # Add dependency
+        find_package(TestU01 REQUIRED)
+    endif()
 endif()
 
 # Boost.Program_options is required only for benchmarks and crush tests
@@ -52,7 +83,10 @@ if(BUILD_BENCHMARK OR BUILD_CRUSH_TEST)
     # Download, build, and install Boost if not found
     if(NOT Boost_FOUND)
         message(STATUS "Boost not found. Downloading and building Boost.")
+
         set(BOOST_ROOT ${CMAKE_BINARY_DIR}/boost CACHE PATH "")
+        set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "")
+        set(BOOST_DOWNLOAD_COMPONENTS ${ROCRAND_BOOST_COMPONENTS})
         configure_file(
             ${CMAKE_CURRENT_LIST_DIR}/DownloadBoost.CMakeLists.txt.in boost-download/CMakeLists.txt
             @ONLY
