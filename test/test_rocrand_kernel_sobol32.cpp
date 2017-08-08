@@ -57,7 +57,7 @@ void rocrand_kernel(unsigned int * output, unsigned int * vectors, const size_t 
 
     const unsigned int n = size / global_size;
     GeneratorState state;
-    rocrand_init(vectors, state_id * n, &state);
+    rocrand_init(vectors, 1234 + state_id * n, &state);
 
     for (unsigned int i = 0; i < n; i++)
     {
@@ -74,7 +74,7 @@ void rocrand_uniform_kernel(float * output, unsigned int * vectors, const size_t
 
     const unsigned int n = size / global_size;
     GeneratorState state;
-    rocrand_init(vectors, state_id * n, &state);
+    rocrand_init(vectors, 1234 + state_id * n, &state);
 
     for (unsigned int i = 0; i < n; i++)
     {
@@ -91,7 +91,7 @@ void rocrand_normal_kernel(float * output, unsigned int * vectors, const size_t 
 
     const unsigned int n = size / global_size;
     GeneratorState state;
-    rocrand_init(vectors, state_id * n, &state);
+    rocrand_init(vectors, 1234 + state_id * n, &state);
 
     for (unsigned int i = 0; i < n; i++)
     {
@@ -108,7 +108,7 @@ void rocrand_log_normal_kernel(float * output, unsigned int * vectors, const siz
 
     const unsigned int n = size / global_size;
     GeneratorState state;
-    rocrand_init(vectors, state_id * n, &state);
+    rocrand_init(vectors, 1234 + state_id * n, &state);
 
     for (unsigned int i = 0; i < n; i++)
     {
@@ -125,7 +125,7 @@ void rocrand_poisson_kernel(unsigned int * output, unsigned int * vectors, const
 
     const unsigned int n = size / global_size;
     GeneratorState state;
-    rocrand_init(vectors, state_id * n, &state);
+    rocrand_init(vectors, 1234 + state_id * n, &state);
 
     for (unsigned int i = 0; i < n; i++)
     {
