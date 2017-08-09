@@ -13,10 +13,12 @@ layer.
 ## Requirements
 
 * Git
+* [GTest](https://github.com/google/googletest) (required for tests)
+  * Use `GTEST_ROOT` to specify GTest location (also see [FindGTest](https://cmake.org/cmake/help/latest/module/FindGTest.html))
 * Boost [program_options](https://github.com/boostorg/program_options) (Optional: for benchmarks and crush_tests)
-    * Included as a submodule to hipRAND
+  * Use `BOOST_ROOT` to specify Boost location (also see [FindBoost](https://cmake.org/cmake/help/latest/module/FindBoost.html))
 * [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (Optional: for crush_tests)
-    * Cmake automatically downloads and builds
+  * Use `TESTU01_ROOT_DIR` to specify TestU01 location
 * cmake (2.8.12 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
@@ -24,6 +26,10 @@ layer.
 * For CUDA platforms:
     * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
     * Latest CUDA SDK
+
+If some dependencies are misssing, cmake script automatically downloads, builds and
+installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
+not to use system-installed libraries, and to download all dependencies.
 
 ## Build and Install
 
@@ -35,8 +41,7 @@ cd hipRAND; mkdir build; cd build
 
 # configure hipRAND, setup options for your system
 # build options: BUILD_TEST, BUILD_BENCHMARK (off by default), BUILD_CRUSH_TEST (off by default)
-cmake ../. # or cmake-gui ../.
-cmake -DBUILD_BENCHMARK=ON -DBUILD_CRUSH_TEST=ON ../.
+cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # build
 # for ROCM-1.6, if a HCC runtime error is caught, consider setting HCC_AMDGPU_TARGET=<arch> in front of make as a workaround
