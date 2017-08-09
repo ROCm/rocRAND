@@ -530,6 +530,42 @@ double2 rocrand_normal_double2(rocrand_state_xorwow * state)
 }
 
 /**
+ * \brief Return a normally distributed float from a MTGP32 Generator.
+ *
+ * Return a normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f from \p state, and increments 
+ * position of generator by one. 
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed float with mean \p 0.0f and 
+ * standard deviation \p 1.0f
+ */
+FQUALIFIERS
+float rocrand_normal(rocrand_state_mtgp32 * state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
+ * \brief Return a normally distributed double from a MTGP32 Generator.
+ *
+ * Return a normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0 from \p state, and increments 
+ * position of generator by one. 
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return normally distributed double with mean \p 0.0 and 
+ * standard deviation \p 1.0
+ */
+FQUALIFIERS
+double rocrand_normal_double(rocrand_state_mtgp32 * state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
  * \brief Return a normally distributed float from a SOBOL32 Generator.
  *
  * Return a normally distributed float with mean \p 0.0f and 

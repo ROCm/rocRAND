@@ -281,6 +281,40 @@ double rocrand_uniform_double(rocrand_state_xorwow * state)
 }
 
 /**
+ * \brief Return a uniformly distributed float from a MTGP32 Generator.
+ *
+ * Return a uniformly distributed float between \p 0.0f and \p 1.0f 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0f but includes \p 1.0f.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed float between \p 0.0f and \p 1.0f
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_mtgp32 * state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
+}
+
+/**
+ * \brief Return a uniformly distributed double from a MTGP32 Generator.
+ *
+ * Return a uniformly distributed double between \p 0.0 and \p 1.0 
+ * from \p state, and increments position of generator by one.
+ * Output range excludes \p 0.0 but includes \p 1.0.  
+ *
+ * \param state - Pointer to state to update
+ *
+ * \return uniformly distributed double between \p 0.0 and \p 1.0
+ */
+FQUALIFIERS
+double rocrand_uniform_double(rocrand_state_mtgp32 * state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
  * \brief Return a uniformly distributed float from a SOBOL32 Generator.
  *
  * Return a uniformly distributed float between \p 0.0f and \p 1.0f
