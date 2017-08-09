@@ -127,7 +127,7 @@ public:
                    unsigned long long offset = 0,
                    hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(64)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(128)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
@@ -208,8 +208,8 @@ public:
             return status;
 
         #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = m_engines_size; // 512
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 64; // 512
         #else
         const uint32_t threads = 256;
         const uint32_t max_blocks = m_engines_size;
