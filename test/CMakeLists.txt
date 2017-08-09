@@ -13,7 +13,7 @@ set_source_files_properties(${rocRAND_TEST_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_
 # Build
 include_directories(${PROJECT_SOURCE_DIR}/library/include)
 include_directories(${PROJECT_SOURCE_DIR}/library/src)
-include_directories(SYSTEM ${googletest_SOURCE_DIR}/googletest/include)
+include_directories(SYSTEM ${GTEST_INCLUDE_DIRS})
 foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     hip_add_executable(${test_name} "${test_src}")
