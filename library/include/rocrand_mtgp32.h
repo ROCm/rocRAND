@@ -101,9 +101,6 @@ struct mtgp32_fast_param
     unsigned int flt_tmp_tbl[16];
     unsigned int mask;
     unsigned char poly_sha1[21];
-
-    FQUALIFIERS
-    ~mtgp32_fast_param() { }
 };
 
 struct mtgp32_state
