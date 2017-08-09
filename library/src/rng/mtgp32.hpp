@@ -169,31 +169,11 @@ public:
             return ROCRAND_STATUS_SUCCESS;
         
         rocrand_status status;
-        rocrand_device::mtgp32_state * d_state;
-        rocrand_device::mtgp32_param * d_param;
-        hipMalloc(&d_state, sizeof(rocrand_device::mtgp32_state) * m_engines_size);
-        hipMalloc(&d_param, sizeof(rocrand_device::mtgp32_param));
-        
-        status = rocrand_device::rocrand_make_constant(mtgp32dc_params_fast_11213, d_param);
+            
+        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
             
-        status = rocrand_device::rocrand_make_state_mtgp32(d_state, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
-        if(status != ROCRAND_STATUS_SUCCESS)
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
-            
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::init_mtgp32_engines_kernel),
-            dim3(1), dim3(m_engines_size), 0, m_stream,
-            m_engines, d_state, d_param
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-              
-        hipFree(d_state);
-        hipFree(d_param);
-
         m_engines_initialized = true;
 
         return ROCRAND_STATUS_SUCCESS;
