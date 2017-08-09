@@ -134,99 +134,6 @@ void rocrand_mtgp32_init_state(unsigned int array[],
         array[i] ^= (1812433253) * (array[i - 1] ^ (array[i - 1] >> 30)) + i;
 }
 
-rocrand_status rocrand_make_state_mtgp32(mtgp32_state * d_state,
-                                         mtgp32_fast_param params[],
-                                         int n,
-                                         unsigned long long seed)
-{
-    int i;
-    mtgp32_state* h_state = (mtgp32_state *) malloc(sizeof(mtgp32_state) * n);
-    seed = seed ^ (seed >> 32);
-
-    if (h_state == NULL)
-        return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-    for (i = 0; i < n; i++) {
-        rocrand_mtgp32_init_state(&(h_state[i].status[0]), &params[i], (unsigned int)seed + i + 1);
-        h_state[i].offset = 0;
-        h_state[i].id = i;
-    }
-
-    hipMemcpy(d_state, h_state, sizeof(mtgp32_state) * n, hipMemcpyHostToDevice);
-    free(h_state);
-
-    if (hipPeekAtLastError() != hipSuccess)
-        return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-    return ROCRAND_STATUS_SUCCESS;
-}
-
-rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_param * p)
-{
-    const int block_num = MTGP_BN_MAX;
-    const int size1 = sizeof(uint32_t) * block_num;
-    const int size2 = sizeof(uint32_t) * block_num * MTGP_TS;
-    uint32_t *h_pos_tbl;
-    uint32_t *h_sh1_tbl;
-    uint32_t *h_sh2_tbl;
-    uint32_t *h_param_tbl;
-    uint32_t *h_temper_tbl;
-    uint32_t *h_single_temper_tbl;
-    uint32_t *h_mask;
-    h_pos_tbl = (uint32_t *)malloc(size1);
-    h_sh1_tbl = (uint32_t *)malloc(size1);
-    h_sh2_tbl = (uint32_t *)malloc(size1);
-    h_param_tbl = (uint32_t *)malloc(size2);
-    h_temper_tbl = (uint32_t *)malloc(size2);
-    h_single_temper_tbl = (uint32_t *)malloc(size2);
-    h_mask = (uint32_t *)malloc(sizeof(uint32_t));
-    rocrand_status status = ROCRAND_STATUS_SUCCESS;
-
-    if (h_pos_tbl == NULL || h_sh1_tbl == NULL || h_sh2_tbl == NULL
-            || h_param_tbl == NULL || h_temper_tbl == NULL || h_single_temper_tbl == NULL
-            || h_mask == NULL) {
-        printf("failure in allocating host memory for constant table.\n");
-        return ROCRAND_STATUS_ALLOCATION_FAILED;
-    }
-
-    h_mask[0] = params[0].mask;
-    for (int i = 0; i < block_num; i++) {
-        h_pos_tbl[i] = params[i].pos;
-        h_sh1_tbl[i] = params[i].sh1;
-        h_sh2_tbl[i] = params[i].sh2;
-        for (int j = 0; j < MTGP_TS; j++) {
-            h_param_tbl[i * MTGP_TS + j] = params[i].tbl[j];
-            h_temper_tbl[i * MTGP_TS + j] = params[i].tmp_tbl[j];
-            h_single_temper_tbl[i * MTGP_TS + j] = params[i].flt_tmp_tbl[j];
-        }
-    }
-
-    if (hipMemcpy(p->pos_tbl, h_pos_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->sh1_tbl, h_sh1_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->sh2_tbl, h_sh2_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->param_tbl, h_param_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->temper_tbl, h_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->single_temper_tbl, h_single_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->mask, h_mask, sizeof(unsigned int), hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-
-    free(h_pos_tbl);
-    free(h_sh1_tbl);
-    free(h_sh2_tbl);
-    free(h_param_tbl);
-    free(h_temper_tbl);
-    free(h_single_temper_tbl);
-    free(h_mask);
-
-    return status;
-}
-
 class mtgp32_engine
 {
 public:
@@ -367,7 +274,7 @@ private:
         return r;
     }
 
-protected:
+public:
     // State
     mtgp32_state m_state;
     mtgp32_kernel_param m_param;
@@ -383,7 +290,145 @@ protected:
 
 /// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::mtgp32_engine rocrand_state_mtgp32;
+typedef rocrand_device::mtgp32_state mtgp32_state;
+typedef rocrand_device::mtgp32_fast_param mtgp32_fast_param;
+typedef rocrand_device::mtgp32_param mtgp32_param;
 /// \endcond
+
+/**
+ * \brief Initialize MTGP32 states
+ *
+ * Initializes MTGP32 states on the host-side by allocating a state array in host
+ * memory, initializes that array, and copies the result to device memory.
+ *
+ * \param d_state - pointer to an array of states in device memory
+ * \param params - Pointer to an array of type mtgp32_fast_param in host memory
+ * \param n - number of states to initialize
+ * \param seed - seed value
+ *
+ * \return
+ * - ROCRAND_STATUS_ALLOCATION_FAILED if states could not be initialized
+ * - ROCRAND_STATUS_SUCCESS if states are initialized
+ */
+__host__
+rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
+                                         mtgp32_fast_param params[],
+                                         int n,
+                                         unsigned long long seed)
+{
+    int i;
+    rocrand_state_mtgp32 * h_state = (rocrand_state_mtgp32 *) malloc(sizeof(rocrand_state_mtgp32) * n);
+    seed = seed ^ (seed >> 32);
+
+    if (h_state == NULL)
+        return ROCRAND_STATUS_ALLOCATION_FAILED;
+
+    for (i = 0; i < n; i++) {
+        rocrand_device::rocrand_mtgp32_init_state(&(h_state[i].m_state.status[0]), &params[i], (unsigned int)seed + i + 1);
+        h_state[i].m_state.offset = 0;
+        h_state[i].m_state.id = i;
+        h_state[i].m_param.pos_tbl = params[i].pos;
+        h_state[i].m_param.sh1_tbl = params[i].sh1;
+        h_state[i].m_param.sh2_tbl = params[i].sh2;
+        h_state[i].m_param.mask = params[0].mask;
+        for (int j = 0; j < MTGP_TS; j++) {
+            h_state[i].m_param.param_tbl[j] = params[i].tbl[j];
+            h_state[i].m_param.temper_tbl[j] = params[i].tmp_tbl[j];
+            h_state[i].m_param.single_temper_tbl[j] = params[i].flt_tmp_tbl[j];
+        }
+    }
+
+    hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
+    free(h_state);
+
+    if (hipPeekAtLastError() != hipSuccess)
+        return ROCRAND_STATUS_ALLOCATION_FAILED;
+
+    return ROCRAND_STATUS_SUCCESS;
+}
+
+/**
+ * \brief Loads parameters for MTGP32
+ *
+ * Loads parameters for use by kernel functions on the host-side and copies the
+ * results to the specified location in device memory.
+ *
+ * NOTE: Not used as rocrand_make_state_mtgp32 handles loading parameters into
+ * state.
+ *
+ * \param params - Pointer to an array of type mtgp32_fast_param in host memory
+ * \param p - pointer to a structure of type mtgp32_param in device memory.
+ *
+ * \return
+ * - ROCRAND_STATUS_ALLOCATION_FAILED if parameters could not be loaded
+ * - ROCRAND_STATUS_SUCCESS if parameters are loaded
+ */
+__host__
+rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_param * p)
+{
+    const int block_num = MTGP_BN_MAX;
+    const int size1 = sizeof(uint32_t) * block_num;
+    const int size2 = sizeof(uint32_t) * block_num * MTGP_TS;
+    uint32_t *h_pos_tbl;
+    uint32_t *h_sh1_tbl;
+    uint32_t *h_sh2_tbl;
+    uint32_t *h_param_tbl;
+    uint32_t *h_temper_tbl;
+    uint32_t *h_single_temper_tbl;
+    uint32_t *h_mask;
+    h_pos_tbl = (uint32_t *)malloc(size1);
+    h_sh1_tbl = (uint32_t *)malloc(size1);
+    h_sh2_tbl = (uint32_t *)malloc(size1);
+    h_param_tbl = (uint32_t *)malloc(size2);
+    h_temper_tbl = (uint32_t *)malloc(size2);
+    h_single_temper_tbl = (uint32_t *)malloc(size2);
+    h_mask = (uint32_t *)malloc(sizeof(uint32_t));
+    rocrand_status status = ROCRAND_STATUS_SUCCESS;
+
+    if (h_pos_tbl == NULL || h_sh1_tbl == NULL || h_sh2_tbl == NULL
+        || h_param_tbl == NULL || h_temper_tbl == NULL || h_single_temper_tbl == NULL
+        || h_mask == NULL) {
+        printf("failure in allocating host memory for constant table.\n");
+        return ROCRAND_STATUS_ALLOCATION_FAILED;
+    }
+
+    h_mask[0] = params[0].mask;
+    for (int i = 0; i < block_num; i++) {
+        h_pos_tbl[i] = params[i].pos;
+        h_sh1_tbl[i] = params[i].sh1;
+        h_sh2_tbl[i] = params[i].sh2;
+        for (int j = 0; j < MTGP_TS; j++) {
+            h_param_tbl[i * MTGP_TS + j] = params[i].tbl[j];
+            h_temper_tbl[i * MTGP_TS + j] = params[i].tmp_tbl[j];
+            h_single_temper_tbl[i * MTGP_TS + j] = params[i].flt_tmp_tbl[j];
+        }
+    }
+
+    if (hipMemcpy(p->pos_tbl, h_pos_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+    if (hipMemcpy(p->sh1_tbl, h_sh1_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+    if (hipMemcpy(p->sh2_tbl, h_sh2_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+    if (hipMemcpy(p->param_tbl, h_param_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+    if (hipMemcpy(p->temper_tbl, h_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+    if (hipMemcpy(p->single_temper_tbl, h_single_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+    if (hipMemcpy(p->mask, h_mask, sizeof(unsigned int), hipMemcpyHostToDevice) != hipSuccess)
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+
+    free(h_pos_tbl);
+    free(h_sh1_tbl);
+    free(h_sh2_tbl);
+    free(h_param_tbl);
+    free(h_temper_tbl);
+    free(h_single_temper_tbl);
+    free(h_mask);
+
+    return status;
+}
 
 /**
  * \brief Return pseudorandom value (32-bit) from MTGP32 generator.
