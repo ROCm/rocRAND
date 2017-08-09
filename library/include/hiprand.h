@@ -419,6 +419,27 @@ hiprandStatus_t HIPRANDAPI
 hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offset);
 
 /**
+ * \brief Set the number of dimensions of a quasi-random number generator.
+ *
+ * Set the number of dimensions of a quasi-random number generator.
+ * Supported values of \p dimensions are 1 to 20000.
+ *
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's offset.
+ *
+ * \param generator - Quasi-random number generator
+ * \param dimensions - Number of dimensions
+ *
+ * \return
+ * - HIPRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - HIPRAND_STATUS_TYPE_ERROR if the generator is not a quasi-random number generator \n
+ * - HIPRAND_STATUS_OUT_OF_RANGE if \p dimensions is out of range \n
+ * - HIPRAND_STATUS_SUCCESS if the number of dimensions was set successfully \n
+ */
+hiprandStatus_t HIPRANDAPI
+hiprandSetQuasiRandomGeneratorDimensions(hiprandGenerator_t generator, unsigned int dimensions)
+
+/**
  * \brief Returns the version number of the cuRAND or rocRAND library.
  *
  * Returns in \p version the version number of the underlying cuRAND or
