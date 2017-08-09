@@ -147,7 +147,7 @@ void initialize(const size_t dimensions,
                 const unsigned long long seed,
                 const unsigned long long offset)
 {
-    rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, blocks, seed);
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, blocks, seed));
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
@@ -272,7 +272,6 @@ void generate(const size_t dimensions,
               const GenerateFunc& generate_func,
               const Extra extra)
 {
-    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(generate_kernel),
         dim3(blocks), dim3(256), 0, 0,

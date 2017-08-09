@@ -33,6 +33,8 @@
 #include <cuda_runtime.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include <curand_mtgp32_host.h>
+#include <curand_mtgp32dc_p_11213.h>
 
 #include "stat_test_common.hpp"
 
@@ -51,6 +53,8 @@ extern "C" {
 #define CURAND_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
     printf("Error at %s:%d\n",__FILE__,__LINE__);\
     exit(EXIT_FAILURE);}} while(0)
+
+mtgp32_kernel_params_t * d_param;
 
 template<typename GeneratorState>
 __global__
@@ -120,6 +124,19 @@ void initialize(const size_t dimensions,
     CUDA_CALL(cudaDeviceSynchronize());
 
     CUDA_CALL(cudaFree(directions));
+}
+
+template<>
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                curandStateMtgp32_t * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
+{
+    CUDA_CALL(cudaMalloc((void **)&d_param, sizeof(mtgp32_kernel_params)));
+    CURAND_CALL(curandMakeMTGP32Constants(mtgp32dc_params_fast_11213, d_param));
+    CURAND_CALL(curandMakeMTGP32KernelState(states, mtgp32dc_params_fast_11213, d_param, blocks, seed));
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
@@ -196,6 +213,49 @@ void generate(const size_t dimensions,
     generate_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, data, size / dimensions, generate_func, extra);
 }
 
+template<typename T, typename GenerateFunc, typename Extra>
+__global__
+void generate_kernel(curandStateMtgp32_t * states,
+                     T * data,
+                     const size_t size,
+                     const GenerateFunc& generate_func,
+                     const Extra extra)
+{
+    const unsigned int state_id = blockIdx.x;
+    const unsigned int thread_id = threadIdx.x;
+    unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int stride = gridDim.x * blockDim.x;
+        
+    __shared__ curandStateMtgp32_t state;
+       
+    if (thread_id == 0)
+        state = states[state_id];
+    __syncthreads();
+        
+    while(index < size)
+    {
+        data[index] = generate_func(&state, extra);
+        index += stride;
+    }
+    __syncthreads();
+        
+    if (thread_id == 0)
+        states[state_id] = state;
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              curandStateMtgp32_t * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    generate_kernel<<<dim3(blocks), 256>>>(states, data, size, generate_func, extra);
+}
+
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 void run_test(const boost::program_options::variables_map& vm,
               const std::string plot_name,
@@ -241,6 +301,8 @@ void run_test(const boost::program_options::variables_map& vm,
 
     CUDA_CALL(cudaFree(states));
     CUDA_CALL(cudaFree(data));
+    if (d_param != NULL)
+        CUDA_CALL(cudaFree(d_param));
 }
 
 template<typename GeneratorState>
@@ -348,7 +410,7 @@ void run_tests(const boost::program_options::variables_map& vm,
 const std::vector<std::string> all_engines = {
     "xorwow",
     "mrg32k3a",
-    // "mtgp32",
+    "mtgp32",
     // "mt19937",
     "philox",
     "sobol32",
@@ -471,6 +533,10 @@ int main(int argc, char *argv[])
             else if (engine == "sobol32")
             {
                 run_tests<curandStateSobol32_t>(vm, distribution, plot_name);
+            }
+            else if (engine == "mtgp32")
+            {
+                run_tests<curandStateMtgp32_t>(vm, distribution, plot_name);
             }
         }
     }

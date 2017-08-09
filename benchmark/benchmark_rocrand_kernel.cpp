@@ -141,7 +141,7 @@ void initialize(const size_t dimensions,
                 const unsigned long long seed,
                 const unsigned long long offset)
 {
-    rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, blocks, seed);
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, blocks, seed));
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
