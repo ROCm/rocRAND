@@ -275,6 +275,17 @@ hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offse
 }
 
 hiprandStatus_t HIPRANDAPI
+hiprandSetQuasiRandomGeneratorDimensions(hiprandGenerator_t generator, unsigned int dimensions)
+{
+    return to_hiprand_status(
+        rocrand_set_quasi_random_generator_dimensions(
+            (rocrand_generator)(generator),
+            dimensions
+        )
+    );
+}
+
+hiprandStatus_t HIPRANDAPI
 hiprandGetVersion(int * version)
 {
     return to_hiprand_status(
