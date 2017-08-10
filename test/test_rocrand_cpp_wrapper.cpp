@@ -204,3 +204,90 @@ TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_double)
         rocrand_uniform_real_dist_template<rocrand_cpp::mrg32k3a_engine, double>()
     ));
 }
+
+template<class T, class RealType>
+void rocrand_normal_dist_template()
+{
+    T engine;
+    rocrand_cpp::normal_distribution<RealType> d;
+
+    const size_t output_size = 8192;
+    RealType * output;
+    ASSERT_EQ(
+        hipMalloc((void **)&output,
+        output_size * sizeof(RealType)),
+        hipSuccess
+    );
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    // generate
+    EXPECT_NO_THROW(d(engine, output, output_size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    std::vector<RealType> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(RealType),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    double mean = 0;
+    for(auto v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_size;
+    EXPECT_NEAR(mean, 0.0, 0.2);
+
+    double stddev = 0;
+    for(auto v : output_host)
+    {
+        stddev += std::pow(static_cast<double>(v) - mean, 2);
+    }
+    stddev = stddev / output_size;
+    EXPECT_NEAR(stddev, 1.0, 0.2);
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_normal_dist_float)
+{
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::philox4x32_10_engine, float>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::xorwow_engine, float>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::mrg32k3a_engine, float>()
+    ));
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_normal_dist_double)
+{
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::philox4x32_10_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::xorwow_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::mrg32k3a_engine, double>()
+    ));
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_normal_dist)
+{
+    rocrand_cpp::normal_distribution<> d1(1.0f, 3.0f);
+    rocrand_cpp::normal_distribution<> d2(1.0f, 3.0f);
+    rocrand_cpp::normal_distribution<> d3(2.0f, 4.0f);
+
+    ASSERT_TRUE(d1.param() == d2.param());
+    ASSERT_TRUE(d1.param() == d1.param());
+    ASSERT_TRUE(d1.param() != d3.param());
+
+    d3.param(d1.param());
+    ASSERT_TRUE(d1.param() == d3.param());
+}
