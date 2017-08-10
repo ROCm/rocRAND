@@ -437,7 +437,7 @@ hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offse
  * - HIPRAND_STATUS_SUCCESS if the number of dimensions was set successfully \n
  */
 hiprandStatus_t HIPRANDAPI
-hiprandSetQuasiRandomGeneratorDimensions(hiprandGenerator_t generator, unsigned int dimensions)
+hiprandSetQuasiRandomGeneratorDimensions(hiprandGenerator_t generator, unsigned int dimensions);
 
 /**
  * \brief Returns the version number of the cuRAND or rocRAND library.
