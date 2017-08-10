@@ -92,7 +92,7 @@ template<class T, class IntType>
 void rocrand_uniform_int_dist_template()
 {
     T engine;
-    rocrand_cpp::uniform_int_distribution<> d;
+    rocrand_cpp::uniform_int_distribution<IntType> d;
 
     const size_t output_size = 8192;
     IntType * output;
@@ -137,5 +137,70 @@ TEST(rocrand_cpp_wrapper, rocrand_uniform_int_dist)
     ));
     ASSERT_NO_THROW((
         rocrand_uniform_int_dist_template<rocrand_cpp::mrg32k3a_engine, unsigned int>()
+    ));
+}
+
+template<class T, class RealType>
+void rocrand_uniform_real_dist_template()
+{
+    T engine;
+    rocrand_cpp::uniform_real_distribution<RealType> d;
+
+    const size_t output_size = 8192;
+    RealType * output;
+    ASSERT_EQ(
+        hipMalloc((void **)&output,
+        output_size * sizeof(RealType)),
+        hipSuccess
+    );
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    // generate
+    EXPECT_NO_THROW(d(engine, output, output_size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    std::vector<RealType> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(RealType),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    double mean = 0;
+    for(auto v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_size;
+    EXPECT_NEAR(mean, 0.5, 0.1);
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_float)
+{
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::philox4x32_10_engine, float>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::xorwow_engine, float>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::mrg32k3a_engine, float>()
+    ));
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_double)
+{
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::philox4x32_10_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::xorwow_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::mrg32k3a_engine, double>()
     ));
 }
