@@ -175,7 +175,7 @@ public:
     uniform_int_distribution()
     {
         static_assert(
-            std::is_same<IntType, unsigned int>::value,
+            std::is_same<unsigned int, IntType>::value,
              "Only unsigned int type is supported in uniform_int_distribution"
         );
     }
@@ -192,6 +192,47 @@ public:
     }
 };
 
+template<class RealType = float>
+class uniform_real_distribution
+{
+public:
+    typedef RealType result_type;
+
+    uniform_real_distribution()
+    {
+        static_assert(
+             std::is_same<float, RealType>::value
+                || std::is_same<double, RealType>::value,
+             "Only float and double types are supported in uniform_real_distribution"
+        );
+    }
+
+    void reset()
+    {
+    }
+
+    template<class Generator>
+    void operator()(Generator& g, RealType * output, size_t size)
+    {
+        rocrand_status status;
+        status = this->generate(g, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+private:
+    template<class Generator>
+    rocrand_status generate(Generator& g, float * output, size_t size)
+    {
+        return rocrand_generate_uniform(g.m_generator, output, size);
+    }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, double * output, size_t size)
+    {
+        return rocrand_generate_uniform_double(g.m_generator, output, size);
+    }
+};
+
 class philox4x32_10_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED>
 {
     typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED> base_type;
@@ -200,6 +241,9 @@ public:
 
     template<class T>
     friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
 };
 
 class xorwow_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, ROCRAND_XORWOW_DEFAULT_SEED>
@@ -210,6 +254,9 @@ public:
 
     template<class T>
     friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
 };
 
 class mrg32k3a_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, ROCRAND_MRG32K3A_DEFAULT_SEED>
@@ -220,6 +267,9 @@ public:
 
     template<class T>
     friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
 };
 
 } // end namespace rocrand
