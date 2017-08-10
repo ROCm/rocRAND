@@ -335,6 +335,108 @@ private:
     param_type m_params;
 };
 
+template<class RealType = float>
+class lognormal_distribution
+{
+public:
+    typedef RealType result_type;
+
+    class param_type
+    {
+    public:
+        using distribution_type = lognormal_distribution<RealType>;
+        param_type(RealType m = 0.0, RealType s = 1.0)
+            : m_mean(m), m_stddev(s)
+        {
+
+        }
+
+        RealType m() const
+        {
+            return m_mean;
+        }
+
+        RealType s() const
+        {
+            return m_stddev;
+        }
+
+        bool operator==(const param_type& other)
+        {
+            return m_mean == other.m_mean && m_stddev == other.m_stddev;
+        }
+
+        bool operator!=(const param_type& other)
+        {
+            return !(*this == other);
+        }
+
+        RealType m_mean;
+        RealType m_stddev;
+    };
+
+    lognormal_distribution(RealType m = 0.0, RealType s = 1.0)
+        : m_params(m, s)
+    {
+        static_assert(
+             std::is_same<float, RealType>::value
+                || std::is_same<double, RealType>::value,
+             "Only float and double types are supported in lognormal_distribution"
+        );
+    }
+
+    void reset()
+    {
+    }
+
+    RealType m() const
+    {
+        return m_params.m();
+    }
+
+    RealType s() const
+    {
+        return m_params.s();
+    }
+
+    param_type param() const
+    {
+        return m_params;
+    }
+
+    void param(const param_type& params)
+    {
+        m_params = params;
+    }
+
+    template<class Generator>
+    void operator()(Generator& g, RealType * output, size_t size)
+    {
+        rocrand_status status;
+        status = this->generate(g, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+private:
+    template<class Generator>
+    rocrand_status generate(Generator& g, float * output, size_t size)
+    {
+        return rocrand_generate_log_normal(
+            g.m_generator, output, size, this->m(), this->s()
+        );
+    }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, double * output, size_t size)
+    {
+        return rocrand_generate_log_normal_double(
+            g.m_generator, output, size, this->m(), this->s()
+        );
+    }
+
+    param_type m_params;
+};
+
 class philox4x32_10_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED>
 {
     typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED> base_type;
@@ -349,6 +451,9 @@ public:
 
     template<class T>
     friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
 };
 
 class xorwow_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, ROCRAND_XORWOW_DEFAULT_SEED>
@@ -365,6 +470,9 @@ public:
 
     template<class T>
     friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
 };
 
 class mrg32k3a_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, ROCRAND_MRG32K3A_DEFAULT_SEED>
@@ -381,6 +489,9 @@ public:
 
     template<class T>
     friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
 };
 
 } // end namespace rocrand

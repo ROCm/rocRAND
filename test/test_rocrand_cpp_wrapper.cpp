@@ -291,3 +291,99 @@ TEST(rocrand_cpp_wrapper, rocrand_normal_dist)
     d3.param(d1.param());
     ASSERT_TRUE(d1.param() == d3.param());
 }
+
+template<class T, class RealType>
+void rocrand_lognormal_dist_template()
+{
+    T engine;
+    rocrand_cpp::lognormal_distribution<RealType> d(1.6, 0.25);
+
+    const size_t output_size = 8192;
+    RealType * output;
+    ASSERT_EQ(
+        hipMalloc((void **)&output,
+        output_size * sizeof(RealType)),
+        hipSuccess
+    );
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    // generate
+    EXPECT_NO_THROW(d(engine, output, output_size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    std::vector<RealType> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(RealType),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    double mean = 0;
+    for(auto v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_size;
+
+    double stddev = 0;
+    for(auto v : output_host)
+    {
+        stddev += std::pow(v - mean, 2);
+    }
+    stddev = std::sqrt(stddev / output_size);
+
+    double logmean = std::log(mean * mean / std::sqrt(stddev + mean * mean));
+    double logstd = std::sqrt(std::log(1.0f + stddev/(mean * mean)));
+
+    EXPECT_NEAR(1.6, logmean, 1.6 * 0.2);
+    EXPECT_NEAR(0.25, logstd, 0.25 * 0.2);
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_float)
+{
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::philox4x32_10_engine, float>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::xorwow_engine, float>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::mrg32k3a_engine, float>()
+    ));
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_double)
+{
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::philox4x32_10_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::xorwow_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::mrg32k3a_engine, double>()
+    ));
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist)
+{
+    rocrand_cpp::lognormal_distribution<> d1(1.0f, 3.0f);
+    rocrand_cpp::lognormal_distribution<> d2(1.0f, 3.0f);
+    rocrand_cpp::lognormal_distribution<> d3(2.0f, 4.0f);
+
+    ASSERT_TRUE(d1.m() == d1.param().m());
+    ASSERT_TRUE(d1.m() == 1.0f);
+    ASSERT_TRUE(d1.s() == d1.param().s());
+    ASSERT_TRUE(d1.s() == 3.0f);
+
+    ASSERT_TRUE(d1.param() == d2.param());
+    ASSERT_TRUE(d1.param() == d1.param());
+    ASSERT_TRUE(d1.param() != d3.param());
+
+    d3.param(d1.param());
+    ASSERT_TRUE(d1.param() == d3.param());
+}
