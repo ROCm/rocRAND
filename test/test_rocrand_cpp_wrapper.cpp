@@ -278,7 +278,7 @@ TEST(rocrand_cpp_wrapper, rocrand_normal_dist_double)
     ));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_normal_dist)
+TEST(rocrand_cpp_wrapper, rocrand_normal_dist_param)
 {
     rocrand_cpp::normal_distribution<> d1(1.0f, 3.0f);
     rocrand_cpp::normal_distribution<> d2(1.0f, 3.0f);
@@ -369,7 +369,7 @@ TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_double)
     ));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist)
+TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_param)
 {
     rocrand_cpp::lognormal_distribution<> d1(1.0f, 3.0f);
     rocrand_cpp::lognormal_distribution<> d2(1.0f, 3.0f);
@@ -379,6 +379,93 @@ TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist)
     ASSERT_TRUE(d1.m() == 1.0f);
     ASSERT_TRUE(d1.s() == d1.param().s());
     ASSERT_TRUE(d1.s() == 3.0f);
+
+    ASSERT_TRUE(d1.param() == d2.param());
+    ASSERT_TRUE(d1.param() == d1.param());
+    ASSERT_TRUE(d1.param() != d3.param());
+
+    d3.param(d1.param());
+    ASSERT_TRUE(d1.param() == d3.param());
+}
+
+template<class T, class IntType>
+void rocrand_poisson_dist_template(const double lambda)
+{
+    T engine;
+    rocrand_cpp::poisson_distribution<IntType> d(lambda);
+
+    const size_t output_size = 8192;
+    IntType * output;
+    ASSERT_EQ(
+        hipMalloc((void **)&output,
+        output_size * sizeof(IntType)),
+        hipSuccess
+    );
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    // generate
+    EXPECT_NO_THROW(d(engine, output, output_size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    std::vector<IntType> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(IntType),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    double mean = 0;
+    for(auto v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_size;
+
+    double variance = 0;
+    for(auto v : output_host)
+    {
+        variance += std::pow(v - mean, 2);
+    }
+    variance = variance / output_size;
+
+    EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
+    EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+}
+
+class poisson_dist : public ::testing::TestWithParam<double> { };
+
+TEST_P(poisson_dist, rocrand_poisson_dist)
+{
+    const double lambda = GetParam();
+    ASSERT_NO_THROW((
+        rocrand_poisson_dist_template<rocrand_cpp::philox4x32_10_engine, unsigned int>(lambda)
+    ));
+    ASSERT_NO_THROW((
+        rocrand_poisson_dist_template<rocrand_cpp::xorwow_engine, unsigned int>(lambda)
+    ));
+    ASSERT_NO_THROW((
+        rocrand_poisson_dist_template<rocrand_cpp::mrg32k3a_engine, unsigned int>(lambda)
+    ));
+}
+
+const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
+
+INSTANTIATE_TEST_CASE_P(rocrand_cpp_wrapper,
+                        poisson_dist,
+                        ::testing::ValuesIn(lambdas));
+
+TEST(rocrand_cpp_wrapper, rocrand_poisson_dist_param)
+{
+    rocrand_cpp::poisson_distribution<> d1(1.0);
+    rocrand_cpp::poisson_distribution<> d2(1.0);
+    rocrand_cpp::poisson_distribution<> d3(2.0);
+
+    ASSERT_TRUE(d1.mean() == d1.param().mean());
+    ASSERT_TRUE(d1.mean() == 1.0);
 
     ASSERT_TRUE(d1.param() == d2.param());
     ASSERT_TRUE(d1.param() == d1.param());

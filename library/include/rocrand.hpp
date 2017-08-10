@@ -94,78 +94,6 @@ private:
     std::string m_error_string;
 };
 
-namespace detail {
-
-template<rocrand_rng_type GeneratorType>
-class rng_engine
-{
-public:
-    typedef unsigned int result_type; // 32bit uint
-
-    rng_engine()
-    {
-        rocrand_status status;
-        status = rocrand_create_generator(&m_generator, GeneratorType);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-    }
-
-    ~rng_engine()
-    {
-        rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-    }
-
-    void stream(hipStream_t value)
-    {
-        rocrand_status status = rocrand_set_stream(m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-    }
-
-protected:
-    rocrand_generator m_generator;
-};
-
-template<rocrand_rng_type GeneratorType, unsigned long long DefaultSeed>
-class prng_engine : public rng_engine<GeneratorType>
-{
-    typedef rng_engine<GeneratorType> base_type;
-
-public:
-
-    typedef unsigned long long seed_type; // 64bit uint
-    typedef unsigned long long offset_type;
-    typedef typename base_type::result_type result_type;
-
-    prng_engine(seed_type seed_value = DefaultSeed,
-                offset_type offset_value = 0)
-        : base_type()
-    {
-        this->seed(seed_value);
-        if(offset_value > 0)
-        {
-            this->offset(offset_value);
-        }
-    }
-
-    ~prng_engine()
-    {
-    }
-
-    void seed(seed_type value)
-    {
-        rocrand_status status = rocrand_set_seed(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-    }
-
-    void offset(offset_type value)
-    {
-        rocrand_status status = rocrand_set_offset(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-    }
-};
-
-} // end detail namespace
-
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
@@ -437,11 +365,110 @@ private:
     param_type m_params;
 };
 
-class philox4x32_10_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED>
+template<class IntType = unsigned int>
+class poisson_distribution
 {
-    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED> base_type;
 public:
-    using base_type::base_type;
+    typedef IntType result_type;
+
+    class param_type
+    {
+    public:
+        using distribution_type = poisson_distribution<IntType>;
+        param_type(double mean = 1)
+            : m_mean(mean)
+        {
+
+        }
+
+        double mean() const
+        {
+            return m_mean;
+        }
+
+        bool operator==(const param_type& other)
+        {
+            return m_mean == other.m_mean;
+        }
+
+        bool operator!=(const param_type& other)
+        {
+            return !(*this == other);
+        }
+
+    private:
+        double m_mean;
+    };
+
+    poisson_distribution(double mean = 1.0)
+        : m_params(mean)
+    {
+        static_assert(
+             std::is_same<unsigned int, IntType>::value,
+             "Only unsigned int type is supported in poisson_distribution"
+        );
+    }
+
+    void reset()
+    {
+    }
+
+    double mean() const
+    {
+        return m_params.mean();
+    }
+
+    param_type param() const
+    {
+        return m_params;
+    }
+
+    void param(const param_type& params)
+    {
+        m_params = params;
+    }
+
+    template<class Generator>
+    void operator()(Generator& g, IntType * output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate_poisson(g.m_generator, output, size, this->mean());
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+private:
+    param_type m_params;
+};
+
+namespace detail {
+
+template<rocrand_rng_type GeneratorType>
+class rng_engine
+{
+public:
+    typedef unsigned int result_type; // 32bit uint
+
+    rng_engine()
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, GeneratorType);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    ~rng_engine()
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+protected:
+    rocrand_generator m_generator;
 
     template<class T>
     friend class ::rocrand_cpp::uniform_int_distribution;
@@ -454,6 +481,57 @@ public:
 
     template<class T>
     friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+};
+
+template<rocrand_rng_type GeneratorType, unsigned long long DefaultSeed>
+class prng_engine : public rng_engine<GeneratorType>
+{
+    typedef rng_engine<GeneratorType> base_type;
+
+public:
+
+    typedef unsigned long long seed_type; // 64bit uint
+    typedef unsigned long long offset_type;
+    typedef typename base_type::result_type result_type;
+
+    prng_engine(seed_type seed_value = DefaultSeed,
+                offset_type offset_value = 0)
+        : base_type()
+    {
+        this->seed(seed_value);
+        if(offset_value > 0)
+        {
+            this->offset(offset_value);
+        }
+    }
+
+    ~prng_engine()
+    {
+    }
+
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+};
+
+} // end detail namespace
+
+class philox4x32_10_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED>
+{
+    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED> base_type;
+public:
+    using base_type::base_type;
 };
 
 class xorwow_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, ROCRAND_XORWOW_DEFAULT_SEED>
@@ -461,18 +539,6 @@ class xorwow_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, ROCR
     typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, ROCRAND_XORWOW_DEFAULT_SEED> base_type;
 public:
     using base_type::base_type;
-
-    template<class T>
-    friend class ::rocrand_cpp::uniform_int_distribution;
-
-    template<class T>
-    friend class ::rocrand_cpp::uniform_real_distribution;
-
-    template<class T>
-    friend class ::rocrand_cpp::normal_distribution;
-
-    template<class T>
-    friend class ::rocrand_cpp::lognormal_distribution;
 };
 
 class mrg32k3a_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, ROCRAND_MRG32K3A_DEFAULT_SEED>
@@ -480,18 +546,6 @@ class mrg32k3a_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, 
     typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, ROCRAND_MRG32K3A_DEFAULT_SEED> base_type;
 public:
     using base_type::base_type;
-
-    template<class T>
-    friend class ::rocrand_cpp::uniform_int_distribution;
-
-    template<class T>
-    friend class ::rocrand_cpp::uniform_real_distribution;
-
-    template<class T>
-    friend class ::rocrand_cpp::normal_distribution;
-
-    template<class T>
-    friend class ::rocrand_cpp::lognormal_distribution;
 };
 
 } // end namespace rocrand
