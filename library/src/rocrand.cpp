@@ -42,11 +42,13 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
         {
             *generator = new rocrand_mrg32k3a();
         }
-        else if(rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+        else if(rng_type == ROCRAND_RNG_PSEUDO_XORWOW
+                    || rng_type == ROCRAND_RNG_PSEUDO_DEFAULT)
         {
             *generator = new rocrand_xorwow();
         }
-        else if(rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+        else if(rng_type == ROCRAND_RNG_QUASI_SOBOL32
+                    || rng_type == ROCRAND_RNG_QUASI_DEFAULT)
         {
             *generator = new rocrand_sobol32();
         }
