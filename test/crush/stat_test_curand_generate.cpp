@@ -183,7 +183,7 @@ void run_tests(const boost::program_options::variables_map& vm,
 const std::vector<std::string> all_engines = {
     "xorwow",
     "mrg32k3a",
-    // "mtgp32",
+    "mtgp32",
     // "mt19937",
     "philox",
     "sobol32",
@@ -295,6 +295,10 @@ int main(int argc, char *argv[])
             else if (engine == "mrg32k3a")
             {
                 run_tests(vm, CURAND_RNG_PSEUDO_MRG32K3A, distribution, plot_name);
+            }
+            else if (engine == "mtgp32")
+            {
+                run_tests(vm, CURAND_RNG_PSEUDO_MTGP32, distribution, plot_name);
             }
             else if (engine == "philox")
             {
