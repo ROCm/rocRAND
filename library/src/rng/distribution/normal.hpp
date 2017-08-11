@@ -71,7 +71,7 @@ struct normal_distribution<float>
             mean + w.y * stddev,
         };
     }
-    
+
     // inverse CDF
     // TODO: find alternative as performance is low
     __forceinline__ __host__ __device__
@@ -107,7 +107,7 @@ struct normal_distribution<double>
         v.y = mean + v.y * stddev;
         return v;
     }
-    
+
     // inverse CDF
     // TODO: find alternative as performance is low
     __forceinline__ __host__ __device__
@@ -139,7 +139,7 @@ struct mrg_normal_distribution<float>
                                    mean(mean), stddev(stddev) {}
 
     __forceinline__ __host__ __device__
-    float2 operator()(const unsigned long long x, const unsigned long long y)
+    float2 operator()(const unsigned int x, const unsigned int y)
     {
         mrg_uniform_distribution<float> uniform;
         float a = uniform(x);
@@ -162,7 +162,7 @@ struct mrg_normal_distribution<double>
                                     mean(mean), stddev(stddev) {}
 
     __forceinline__ __host__ __device__
-    double2 operator()(const unsigned long long x, const unsigned long long y)
+    double2 operator()(const unsigned int x, const unsigned int y)
     {
         mrg_uniform_distribution<double> uniform;
         double a = uniform(x);
