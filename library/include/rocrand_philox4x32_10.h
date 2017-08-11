@@ -340,12 +340,14 @@ protected:
 
 } // end namespace rocrand_device
 
-/** @addtogroup device
- *  
+/** \addtogroup device
+ *
  *  @{
  */
 
+/// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::philox4x32_10_engine rocrand_state_philox4x32_10;
+/// \endcond
 
 /**
  * \brief Initialize Philox state.

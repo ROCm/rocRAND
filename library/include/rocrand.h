@@ -30,21 +30,26 @@
 
 #include "rocrand_discrete_types.h"
 
+/// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
 #define ROCRANDAPI
 #endif
+/// \endcond
 
+/// rocRAND library version
 #define ROCRAND_VERSION 100
 
+/// \cond ROCRAND_DOCS_TYPEDEFS
 /// rocRAND random number generator (opaque)
 typedef struct rocrand_generator_base_type * rocrand_generator;
+/// \endcond
 
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
 
 /**
- * ROCRAND function call status types
+ * rocRAND function call status types
  */
 typedef enum rocrand_status {
     ROCRAND_STATUS_SUCCESS = 0, ///< No errors
@@ -60,15 +65,15 @@ typedef enum rocrand_status {
 } rocrand_status;
 
 /**
- * ROCRAND generator types
+ * rocRAND generator types
  */
 typedef enum rocrand_rng_type {
-    ROCRAND_RNG_PSEUDO_DEFAULT = 400,
+    ROCRAND_RNG_PSEUDO_DEFAULT = 400, ///< Default pseudorandom generator
     ROCRAND_RNG_PSEUDO_XORWOW = 401, ///< XORWOW pseudorandom generator
     ROCRAND_RNG_PSEUDO_MRG32K3A = 402, ///< MRG32k3a pseudorandom generator
     ROCRAND_RNG_PSEUDO_MTGP32 = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
-    ROCRAND_RNG_QUASI_DEFAULT = 500,
+    ROCRAND_RNG_QUASI_DEFAULT = 500,  ///< Default quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL32 = 501 ///< Sobol32 quasirandom generator
 } rocrand_rng_type;
 
@@ -428,7 +433,7 @@ rocrand_create_poisson_distribution(double lambda,
  * \brief Construct the histogram for a custom discrete distribution.
  *
  * Construct the histogram for the discrete distribution of \p size
- * 32-bit unsigned integers from the range [offset, offset + size)
+ * 32-bit unsigned integers from the range [\p offset, \p offset + \p size)
  * using \p probabilities as probabilities.
  *
  * \param probabilities - probabilities of the the distribution in host memory

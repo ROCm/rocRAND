@@ -191,7 +191,14 @@ protected:
 
 } // end namespace rocrand_device
 
+/** \addtogroup device
+ *
+ *  @{
+ */
+
+/// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::sobol32_engine rocrand_state_sobol32;
+/// \endcond
 
 /**
  * \brief Initialize SOBOL32 state.
@@ -239,5 +246,7 @@ void skipahead(unsigned long long offset, rocrand_state_sobol32 * state)
 {
     return state->discard(offset);
 }
+
+/** @} */ // end of group device
 
 #endif // ROCRAND_SOBOL32_H_
