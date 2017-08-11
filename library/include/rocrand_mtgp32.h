@@ -117,7 +117,7 @@ struct mtgp32_state
 };
 
 void rocrand_mtgp32_init_state(unsigned int array[],
-		               const mtgp32_fast_param *para, unsigned int seed)
+                               const mtgp32_fast_param *para, unsigned int seed)
 {
     int i;
     int size = para->mexp / 32 + 1;
@@ -131,13 +131,12 @@ void rocrand_mtgp32_init_state(unsigned int array[],
     array[0] = seed;
     array[1] = hidden_seed;
     for (i = 1; i < size; i++)
-	    array[i] ^= (1812433253) * (array[i - 1] ^ (array[i - 1] >> 30)) + i;
-
+        array[i] ^= (1812433253) * (array[i - 1] ^ (array[i - 1] >> 30)) + i;
 }
 
 rocrand_status rocrand_make_state_mtgp32(mtgp32_state * d_state,
-				                         mtgp32_fast_param params[],
-				                         int n,
+                                         mtgp32_fast_param params[],
+                                         int n,
                                          unsigned long long seed)
 {
     int i;
@@ -145,10 +144,10 @@ rocrand_status rocrand_make_state_mtgp32(mtgp32_state * d_state,
     seed = seed ^ (seed >> 32);
 
     if (h_state == NULL)
-	    return ROCRAND_STATUS_LAUNCH_FAILURE;
+        return ROCRAND_STATUS_LAUNCH_FAILURE;
 
     for (i = 0; i < n; i++) {
-	    rocrand_mtgp32_init_state(&(h_state[i].status[0]), &params[i], (unsigned int)seed + i + 1);
+        rocrand_mtgp32_init_state(&(h_state[i].status[0]), &params[i], (unsigned int)seed + i + 1);
         h_state[i].offset = 0;
         h_state[i].id = i;
     }
@@ -184,10 +183,10 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
     rocrand_status status = ROCRAND_STATUS_SUCCESS;
 
     if (h_pos_tbl == NULL || h_sh1_tbl == NULL || h_sh2_tbl == NULL
-	    || h_param_tbl == NULL || h_temper_tbl == NULL || h_single_temper_tbl == NULL
-	    || h_mask == NULL) {
-	    printf("failure in allocating host memory for constant table.\n");
-	    return ROCRAND_STATUS_ALLOCATION_FAILED;
+            || h_param_tbl == NULL || h_temper_tbl == NULL || h_single_temper_tbl == NULL
+            || h_mask == NULL) {
+        printf("failure in allocating host memory for constant table.\n");
+        return ROCRAND_STATUS_ALLOCATION_FAILED;
     }
 
     h_mask[0] = params[0].mask;
@@ -261,11 +260,11 @@ public:
         m_param.sh1_tbl = params->sh1_tbl[bid];
         m_param.sh2_tbl = params->sh2_tbl[bid];
         m_param.mask = params->mask[0];
-	    for (int j = 0; j < MTGP_TS; j++) {
-	        m_param.param_tbl[j] = params->param_tbl[bid][j];
-	        m_param.temper_tbl[j] = params->temper_tbl[bid][j];
-	        m_param.single_temper_tbl[j] = params->single_temper_tbl[bid][j];
-	    }
+        for (int j = 0; j < MTGP_TS; j++) {
+            m_param.param_tbl[j] = params->param_tbl[bid][j];
+            m_param.temper_tbl[j] = params->temper_tbl[bid][j];
+            m_param.single_temper_tbl[j] = params->single_temper_tbl[bid][j];
+        }
     }
 
     FQUALIFIERS

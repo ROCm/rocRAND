@@ -272,7 +272,7 @@ void run_benchmark(const boost::program_options::variables_map& vm,
               << " ms, Size = " << size
               << std::endl;
 
-	HIP_CHECK(hipFree(states));
+    HIP_CHECK(hipFree(states));
     HIP_CHECK(hipFree(data));
 }
 
