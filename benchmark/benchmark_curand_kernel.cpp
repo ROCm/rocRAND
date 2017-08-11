@@ -249,7 +249,7 @@ void run_benchmark(const boost::program_options::variables_map& vm,
               << " ms, Size = " << size
               << std::endl;
 
-	CUDA_CALL(cudaFree(states));
+    CUDA_CALL(cudaFree(states));
     CUDA_CALL(cudaFree(data));
 }
 

@@ -299,12 +299,14 @@ protected:
 
 } // end namespace rocrand_device
 
-/** @addtogroup device
- *  
+/** \addtogroup device
+ *
  *  @{
  */
 
+/// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::xorwow_engine rocrand_state_xorwow;
+/// \endcond
 
 /**
  * \brief Initialize XORWOW state.

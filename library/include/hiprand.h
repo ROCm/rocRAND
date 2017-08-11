@@ -60,7 +60,7 @@ typedef enum hiprandStatus {
     HIPRAND_STATUS_INITIALIZATION_FAILED = 203, ///< Initialization of HIP failed
     HIPRAND_STATUS_ARCH_MISMATCH = 204, ///< Architecture mismatch, GPU does not support requested feature
     HIPRAND_STATUS_INTERNAL_ERROR = 999, ///< Internal library error
-    HIPRAND_STATUS_NOT_IMPLEMENTED = 1000
+    HIPRAND_STATUS_NOT_IMPLEMENTED = 1000 ///< Feature not implemented yet
 } hiprandStatus_t;
 
 /**
@@ -113,7 +113,7 @@ typedef enum hiprandRngType {
  * - HIPRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
  *   dynamically linked library version \n
  * - HIPRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
- * - HIPRAND_STATUS_NOT_IMPLEMENTED if generator of type \p rng_type is not implemented yet
+ * - HIPRAND_STATUS_NOT_IMPLEMENTED if generator of type \p rng_type is not implemented yet \n
  * - HIPRAND_STATUS_SUCCESS if generator was created successfully \n
  *
  */
@@ -148,7 +148,7 @@ hiprandCreateGenerator(hiprandGenerator_t * generator, hiprandRngType_t rng_type
  * - HIPRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
  *   dynamically linked library version \n
  * - HIPRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
- * - HIPRAND_STATUS_NOT_IMPLEMENTED if host generator of type \p rng_type is not implemented yet
+ * - HIPRAND_STATUS_NOT_IMPLEMENTED if host generator of type \p rng_type is not implemented yet \n
  * - HIPRAND_STATUS_SUCCESS if generator was created successfully \n
  */
 hiprandStatus_t HIPRANDAPI
