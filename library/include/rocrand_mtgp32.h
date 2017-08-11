@@ -55,6 +55,8 @@
 #ifndef ROCRAND_MTGP32_H_
 #define ROCRAND_MTGP32_H_
 
+#include <stdlib.h>
+
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
@@ -386,35 +388,36 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
         || h_param_tbl == NULL || h_temper_tbl == NULL || h_single_temper_tbl == NULL
         || h_mask == NULL) {
         printf("failure in allocating host memory for constant table.\n");
-        return ROCRAND_STATUS_ALLOCATION_FAILED;
+        status = ROCRAND_STATUS_ALLOCATION_FAILED;
     }
-
-    h_mask[0] = params[0].mask;
-    for (int i = 0; i < block_num; i++) {
-        h_pos_tbl[i] = params[i].pos;
-        h_sh1_tbl[i] = params[i].sh1;
-        h_sh2_tbl[i] = params[i].sh2;
-        for (int j = 0; j < MTGP_TS; j++) {
-            h_param_tbl[i * MTGP_TS + j] = params[i].tbl[j];
-            h_temper_tbl[i * MTGP_TS + j] = params[i].tmp_tbl[j];
-            h_single_temper_tbl[i * MTGP_TS + j] = params[i].flt_tmp_tbl[j];
+    else {
+        h_mask[0] = params[0].mask;
+        for (int i = 0; i < block_num; i++) {
+            h_pos_tbl[i] = params[i].pos;
+            h_sh1_tbl[i] = params[i].sh1;
+            h_sh2_tbl[i] = params[i].sh2;
+            for (int j = 0; j < MTGP_TS; j++) {
+                h_param_tbl[i * MTGP_TS + j] = params[i].tbl[j];
+                h_temper_tbl[i * MTGP_TS + j] = params[i].tmp_tbl[j];
+                h_single_temper_tbl[i * MTGP_TS + j] = params[i].flt_tmp_tbl[j];
+            }
         }
-    }
 
-    if (hipMemcpy(p->pos_tbl, h_pos_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->sh1_tbl, h_sh1_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->sh2_tbl, h_sh2_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->param_tbl, h_param_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->temper_tbl, h_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->single_temper_tbl, h_single_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    if (hipMemcpy(p->mask, h_mask, sizeof(unsigned int), hipMemcpyHostToDevice) != hipSuccess)
-        status = ROCRAND_STATUS_ALLOCATION_FAILED;
+        if (hipMemcpy(p->pos_tbl, h_pos_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+            status = ROCRAND_STATUS_ALLOCATION_FAILED;
+        if (hipMemcpy(p->sh1_tbl, h_sh1_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+            status = ROCRAND_STATUS_ALLOCATION_FAILED;
+        if (hipMemcpy(p->sh2_tbl, h_sh2_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+            status = ROCRAND_STATUS_ALLOCATION_FAILED;
+        if (hipMemcpy(p->param_tbl, h_param_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+            status = ROCRAND_STATUS_ALLOCATION_FAILED;
+        if (hipMemcpy(p->temper_tbl, h_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+            status = ROCRAND_STATUS_ALLOCATION_FAILED;
+        if (hipMemcpy(p->single_temper_tbl, h_single_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+            status = ROCRAND_STATUS_ALLOCATION_FAILED;
+        if (hipMemcpy(p->mask, h_mask, sizeof(unsigned int), hipMemcpyHostToDevice) != hipSuccess)
+            status = ROCRAND_STATUS_ALLOCATION_FAILED;
+    }
 
     free(h_pos_tbl);
     free(h_sh1_tbl);
