@@ -88,16 +88,16 @@ double4 uniform_distribution_double4(uint4 v)
 // For unsigned integer between 0 and UINT_MAX, returns value between
 // 0.0f and 1.0f, excluding 0.0f and including 1.0f (MRG32K3A).
 FQUALIFIERS
-float mrg_uniform_distribution(unsigned long long v)
+float mrg_uniform_distribution(unsigned int v)
 {
-    double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
+    double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
     return static_cast<float>(ret);
 }
 
 FQUALIFIERS
-double mrg_uniform_distribution_double(unsigned long long v)
+double mrg_uniform_distribution_double(unsigned int v)
 {
-    double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
+    double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
     return ret;
 }
 
