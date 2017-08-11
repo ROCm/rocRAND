@@ -25,11 +25,6 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-/** @addtogroup device
- *
- *  @{
- */
-
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
@@ -103,6 +98,11 @@ unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribut
 
 } // end namespace detail
 } // end namespace rocrand_device
+
+/** \addtogroup device
+ *
+ *  @{
+ */
 
 /**
  * \brief Return a discrete distributed unsigned int from a Philox Generator.

@@ -403,12 +403,14 @@ protected:
 
 } // end namespace rocrand_device
 
-/** @addtogroup device
- *  
+/** \addtogroup device
+ *
  *  @{
  */
 
+/// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::mrg32k3a_engine rocrand_state_mrg32k3a;
+/// \endcond
 
 /**
  * \brief Initialize MRG32K3A state.

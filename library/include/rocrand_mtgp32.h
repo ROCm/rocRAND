@@ -27,7 +27,7 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above
@@ -38,7 +38,7 @@
  *       its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written
  *       permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -75,7 +75,7 @@
 
 
 namespace rocrand_device {
-    
+
 struct mtgp32_param
 {
     unsigned int pos_tbl[MTGP_BN_MAX];
@@ -85,39 +85,39 @@ struct mtgp32_param
     unsigned int sh1_tbl[MTGP_BN_MAX];
     unsigned int sh2_tbl[MTGP_BN_MAX];
     unsigned int mask[1];
-        
+
     FQUALIFIERS
     ~mtgp32_param() { }
 };
-    
+
 struct mtgp32_fast_param
 {
-    int mexp;			
-    int pos;			
-    int sh1;			
-    int sh2;			
-    unsigned int tbl[16];		
-    unsigned int tmp_tbl[16];	
-    unsigned int flt_tmp_tbl[16];	
-    unsigned int mask;		
-    unsigned char poly_sha1[21]; 
-        
+    int mexp;
+    int pos;
+    int sh1;
+    int sh2;
+    unsigned int tbl[16];
+    unsigned int tmp_tbl[16];
+    unsigned int flt_tmp_tbl[16];
+    unsigned int mask;
+    unsigned char poly_sha1[21];
+
     FQUALIFIERS
     ~mtgp32_fast_param() { }
 };
-    
+
 struct mtgp32_state
 {
     unsigned int status[MTGP_STATE];
     int offset;
     int id;
-       
+
     FQUALIFIERS
     ~mtgp32_state() { }
 };
-    
+
 void rocrand_mtgp32_init_state(unsigned int array[],
-		               const mtgp32_fast_param *para, unsigned int seed) 
+		               const mtgp32_fast_param *para, unsigned int seed)
 {
     int i;
     int size = para->mexp / 32 + 1;
@@ -130,11 +130,11 @@ void rocrand_mtgp32_init_state(unsigned int array[],
     memset(array, tmp & 0xff, sizeof(unsigned int) * size);
     array[0] = seed;
     array[1] = hidden_seed;
-    for (i = 1; i < size; i++) 
+    for (i = 1; i < size; i++)
 	    array[i] ^= (1812433253) * (array[i - 1] ^ (array[i - 1] >> 30)) + i;
-    
+
 }
-    
+
 rocrand_status rocrand_make_state_mtgp32(mtgp32_state * d_state,
 				                         mtgp32_fast_param params[],
 				                         int n,
@@ -144,25 +144,25 @@ rocrand_status rocrand_make_state_mtgp32(mtgp32_state * d_state,
     mtgp32_state* h_state = (mtgp32_state *) malloc(sizeof(mtgp32_state) * n);
     seed = seed ^ (seed >> 32);
 
-    if (h_state == NULL) 
+    if (h_state == NULL)
 	    return ROCRAND_STATUS_LAUNCH_FAILURE;
-    
+
     for (i = 0; i < n; i++) {
 	    rocrand_mtgp32_init_state(&(h_state[i].status[0]), &params[i], (unsigned int)seed + i + 1);
         h_state[i].offset = 0;
         h_state[i].id = i;
     }
-    
+
     hipMemcpy(d_state, h_state, sizeof(mtgp32_state) * n, hipMemcpyHostToDevice);
     free(h_state);
-    
+
     if (hipPeekAtLastError() != hipSuccess)
         return ROCRAND_STATUS_LAUNCH_FAILURE;
-    
+
     return ROCRAND_STATUS_SUCCESS;
 }
-    
-rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_param * p) 
+
+rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_param * p)
 {
     const int block_num = MTGP_BN_MAX;
     const int size1 = sizeof(uint32_t) * block_num;
@@ -182,14 +182,14 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
     h_single_temper_tbl = (uint32_t *)malloc(size2);
     h_mask = (uint32_t *)malloc(sizeof(uint32_t));
     rocrand_status status = ROCRAND_STATUS_SUCCESS;
-    
+
     if (h_pos_tbl == NULL || h_sh1_tbl == NULL || h_sh2_tbl == NULL
 	    || h_param_tbl == NULL || h_temper_tbl == NULL || h_single_temper_tbl == NULL
 	    || h_mask == NULL) {
 	    printf("failure in allocating host memory for constant table.\n");
 	    return ROCRAND_STATUS_ALLOCATION_FAILED;
     }
-    
+
     h_mask[0] = params[0].mask;
     for (int i = 0; i < block_num; i++) {
         h_pos_tbl[i] = params[i].pos;
@@ -201,7 +201,7 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
             h_single_temper_tbl[i * MTGP_TS + j] = params[i].flt_tmp_tbl[j];
         }
     }
-    
+
     if (hipMemcpy(p->pos_tbl, h_pos_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
         status = ROCRAND_STATUS_ALLOCATION_FAILED;
     if (hipMemcpy(p->sh1_tbl, h_sh1_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
@@ -216,7 +216,7 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
         status = ROCRAND_STATUS_ALLOCATION_FAILED;
     if (hipMemcpy(p->mask, h_mask, sizeof(unsigned int), hipMemcpyHostToDevice) != hipSuccess)
         status = ROCRAND_STATUS_ALLOCATION_FAILED;
-    
+
     free(h_pos_tbl);
     free(h_sh1_tbl);
     free(h_sh2_tbl);
@@ -224,7 +224,7 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
     free(h_temper_tbl);
     free(h_single_temper_tbl);
     free(h_mask);
-    
+
     return status;
 }
 
@@ -244,7 +244,7 @@ public:
         FQUALIFIERS
         ~mtgp32_kernel_param() { }
     };
-    
+
     FQUALIFIERS
     mtgp32_engine()
     {
@@ -281,18 +281,18 @@ public:
     unsigned int next()
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) + 
+        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) +
                          (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
         unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
         int pos = m_param.pos_tbl;
         unsigned int r;
         unsigned int o;
-        
+
         r = para_rec(m_state.status[(t + m_state.offset) & MTGP_MASK],
                      m_state.status[(t + m_state.offset + 1) & MTGP_MASK],
                      m_state.status[(t + m_state.offset + pos) & MTGP_MASK]);
         m_state.status[(t + m_state.offset + MTGP_N) & MTGP_MASK] = r;
-        
+
         o = temper(r, m_state.status[(t + m_state.offset + pos - 1) & MTGP_MASK]);
         __syncthreads();
         if (t == 0)
@@ -303,23 +303,23 @@ public:
         return 0;
         #endif
     }
-    
+
     FQUALIFIERS
     unsigned int next_single()
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) + 
+        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) +
                          (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
         unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
         int pos = m_param.pos_tbl;
         unsigned int r;
         unsigned int o;
-        
+
         r = para_rec(m_state.status[(t + m_state.offset) & MTGP_MASK],
                      m_state.status[(t + m_state.offset + 1) & MTGP_MASK],
                      m_state.status[(t + m_state.offset + pos) & MTGP_MASK]);
         m_state.status[(t + m_state.offset + MTGP_N) & MTGP_MASK] = r;
-        
+
         o = temper_single(r, m_state.status[(t + m_state.offset + pos - 1) & MTGP_MASK]);
         __syncthreads();
         if (t == 0)
@@ -332,8 +332,8 @@ public:
     }
 
 private:
-    FQUALIFIERS 
-    unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y) 
+    FQUALIFIERS
+    unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y)
     {
         unsigned int X = (X1 & m_param.mask) ^ X2;
         unsigned int MAT;
@@ -343,9 +343,9 @@ private:
         MAT = m_param.param_tbl[Y & 0x0f];
         return Y ^ MAT;
     }
-    
+
     FQUALIFIERS
-    unsigned int temper(unsigned int V, unsigned int T) 
+    unsigned int temper(unsigned int V, unsigned int T)
     {
         unsigned int MAT;
 
@@ -354,9 +354,9 @@ private:
         MAT = m_param.temper_tbl[T & 0x0f];
         return V ^ MAT;
     }
-    
+
     FQUALIFIERS
-    unsigned int temper_single(unsigned int V, unsigned int T) 
+    unsigned int temper_single(unsigned int V, unsigned int T)
     {
         unsigned int MAT;
         unsigned int r;
@@ -367,7 +367,7 @@ private:
         r = (V >> 9) ^ MAT;
         return r;
     }
-    
+
 protected:
     // State
     mtgp32_state m_state;
@@ -377,7 +377,14 @@ protected:
 
 } // end namespace rocrand_device
 
+/** \addtogroup device
+ *
+ *  @{
+ */
+
+/// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::mtgp32_engine rocrand_state_mtgp32;
+/// \endcond
 
 /**
  * \brief Return pseudorandom value (32-bit) from MTGP32 generator.
@@ -394,5 +401,7 @@ unsigned int rocrand(rocrand_state_mtgp32 * state)
 {
     return state->next();
 }
+
+/** @} */ // end of group device
 
 #endif // ROCRAND_MTGP32_H_
