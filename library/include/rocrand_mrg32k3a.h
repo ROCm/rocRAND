@@ -41,6 +41,8 @@
 #define ROCRAND_MRG32K3A_A21 527612
 #define ROCRAND_MRG32K3A_A23 (4294944443 - 1370589)
 #define ROCRAND_MRG32K3A_A23N 1370589
+#define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
+#define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
 
 #define ROCRAND_MRG32K3A_DEFAULT_SEED 0x12345ULL
 
@@ -159,13 +161,15 @@ public:
     }
 
     FQUALIFIERS
-    unsigned long long operator()()
+    unsigned int operator()()
     {
         return this->next();
     }
 
+    // Returned value is in range (0; ROCRAND_MRG32K3A_M1],
+    // where ROCRAND_MRG32K3A_M1 < UINT_MAX
     FQUALIFIERS
-    unsigned long long next()
+    unsigned int next()
     {
         unsigned long long p;
 
@@ -433,19 +437,19 @@ void rocrand_init(const unsigned long long seed,
 }
 
 /**
- * \brief Return pseudorandom value (64-bit) from MRG32K3A generator.
+ * \brief Return pseudorandom value (32-bit) from MRG32K3A generator.
  *
- * Return pseudorandom value (64-bit) from the MRG32K3A generator in \p state,
+ * Return pseudorandom value (32-bit) from the MRG32K3A generator in \p state,
  * increment position of generator by one.
  *
  * \param state - Pointer to state to update
  *
- * \return pseudorandom value (64-bit) as an unsigned long long
+ * \return pseudorandom value (32-bit) as an unsigned int
  */
 FQUALIFIERS
-unsigned long long rocrand(rocrand_state_mrg32k3a * state)
+unsigned int rocrand(rocrand_state_mrg32k3a * state)
 {
-    return state->next();
+    return static_cast<unsigned int>(state->next() * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
 /**

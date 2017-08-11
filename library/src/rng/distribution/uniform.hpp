@@ -101,6 +101,14 @@ struct uniform_distribution<double>
     }
 };
 
+// MRG32K3A constants
+#ifndef ROCRAND_MRG32K3A_NORM_DOUBLE
+#define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
+#endif
+#ifndef ROCRAND_MRG32K3A_UINT_NORM
+#define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
+#endif
+
 template<class T>
 struct mrg_uniform_distribution;
 
@@ -108,9 +116,9 @@ template<>
 struct mrg_uniform_distribution<unsigned int>
 {
     __forceinline__ __host__ __device__
-    unsigned int operator()(const unsigned long long v) const
+    unsigned int operator()(const unsigned int v) const
     {
-        return static_cast<unsigned int>(v);
+        return static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
     }
 };
 
@@ -120,9 +128,9 @@ template<>
 struct mrg_uniform_distribution<float>
 {
     __forceinline__ __host__ __device__
-    float operator()(const unsigned long long v) const
+    float operator()(const unsigned int v) const
     {
-        double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
+        double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
         return static_cast<float>(ret);
     }
 };
@@ -133,9 +141,9 @@ template<>
 struct mrg_uniform_distribution<double>
 {
     __forceinline__ __host__ __device__
-    double operator()(const unsigned long long v) const
+    double operator()(const unsigned int v) const
     {
-        double ret = static_cast<double>(v) * ROCRAND_NORM_DOUBLE;
+        double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
         return ret;
     }
 };
