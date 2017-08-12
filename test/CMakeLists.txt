@@ -19,9 +19,14 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     hip_add_executable(${test_name} "${test_src}")
     add_dependencies(${test_name} rocRAND ${ROCRAND_TEST_DEPENDENCIES})
     get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+    if(NOT GTEST_ROOT)
+        set(GTest_rpath "${PROJECT_BINARY_DIR}/gtest/lib")
+    else()
+        set(GTest_rpath "${GTEST_ROOT}/lib")
+    endif()
     target_link_libraries(
         ${test_name}
-        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
+        -Wl,-rpath,${rocRAND_rpath}:${GTest_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocRAND>
         ${GTEST_BOTH_LIBRARIES})
     set_target_properties(
@@ -52,9 +57,14 @@ foreach(test_src ${hipRAND_TEST_SRCS})
     get_target_property(hipRAND_rpath hipRAND BINARY_DIR)
     if(HIP_PLATFORM STREQUAL "hcc")
         get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+        if(NOT GTEST_ROOT)
+            set(GTest_rpath "${PROJECT_BINARY_DIR}/gtest/lib")
+        else()
+            set(GTest_rpath "${GTEST_ROOT}/lib")
+        endif()
         target_link_libraries(
             ${test_name}
-            -Wl,-rpath,${hipRAND_rpath}:${rocRAND_rpath} # workaround for HIP linker
+            -Wl,-rpath,${hipRAND_rpath}:${rocRAND_rpath}:${GTest_rpath} # workaround for HIP linker
             $<TARGET_FILE:hipRAND> $<TARGET_FILE:rocRAND>
             ${GTEST_BOTH_LIBRARIES}
         )
