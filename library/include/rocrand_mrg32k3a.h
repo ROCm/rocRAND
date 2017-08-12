@@ -307,7 +307,7 @@ private:
         for (size_t i = 0; i < 3; ++i) {
             x[i] = 0;
             for (size_t j = 0; j < 3; j++)
-                x[i] = (A[i + 3 * j] * s[j] + x[i]) % m;
+                x[i] = (A[3 * i + j] * s[j] + x[i]) % m;
         }
         for (size_t i = 0; i < 3; ++i)
             s[i] = x[i];
