@@ -41,8 +41,8 @@ if(BUILD_TEST)
                          LOG_INSTALL         TRUE
                          ${UPDATE_DISCONNECTED_IF_AVAILABLE}
         )
-        find_package(GTest REQUIRED)
     endif()
+    find_package(GTest REQUIRED)
 endif()
 
 # Crush Tests
@@ -69,9 +69,8 @@ if(BUILD_CRUSH_TEST)
                          LOG_BUILD           TRUE
                          LOG_INSTALL         TRUE
         )
-        # Add dependency
-        find_package(TestU01 REQUIRED)
     endif()
+    find_package(TestU01 REQUIRED)
 endif()
 
 # Boost.Program_options is required only for benchmarks and crush tests
@@ -112,10 +111,6 @@ if(BUILD_BENCHMARK OR BUILD_CRUSH_TEST)
             message(FATAL_ERROR "Build step for Boost failed: ${result}")
             unset(BOOST_ROOT)
         endif()
-
-        find_package(Boost 1.54
-            REQUIRED
-            COMPONENTS ${ROCRAND_BOOST_COMPONENTS}
-        )
     endif()
+    find_package(Boost 1.54 REQUIRED COMPONENTS ${ROCRAND_BOOST_COMPONENTS})
 endif()
