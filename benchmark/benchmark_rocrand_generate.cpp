@@ -195,7 +195,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
 const std::vector<std::string> all_engines = {
     "xorwow",
     "mrg32k3a",
-    // "mtgp32",
+    "mtgp32",
     "philox",
     "sobol32",
 };
@@ -302,6 +302,8 @@ int main(int argc, char *argv[])
             rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
         else if (engine == "sobol32")
             rng_type = ROCRAND_RNG_QUASI_SOBOL32;
+        else if (engine == "mtgp32")
+            rng_type = ROCRAND_RNG_PSEUDO_MTGP32;
 
         for (auto distribution : distributions)
         {

@@ -32,6 +32,7 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 #include <rocrand_kernel.h>
+#include <rocrand_mtgp32_11213.h>
 #include <rocrand_sobol_precomputed.h>
 
 #define HIP_CHECK(condition)         \
@@ -132,6 +133,17 @@ void initialize(const size_t dimensions,
     HIP_CHECK(hipFree(directions));
 }
 
+template<>
+void initialize(const size_t dimensions,
+                const size_t blocks,
+                const size_t threads,
+                rocrand_state_mtgp32 * states,
+                const unsigned long long seed,
+                const unsigned long long offset)
+{
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, blocks, seed));
+}
+
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 __global__
 void generate_kernel(GeneratorState * states,
@@ -211,6 +223,54 @@ void generate(const size_t dimensions,
         HIP_KERNEL_NAME(generate_kernel),
         dim3(blocks_x, dimensions), dim3(threads), 0, 0,
         states, data, size / dimensions, generate_func, extra
+    );
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+__global__
+void generate_kernel(rocrand_state_mtgp32 * states,
+                     T * data,
+                     const size_t size,
+                     const GenerateFunc& generate_func,
+                     const Extra extra)
+{
+    const unsigned int state_id = hipBlockIdx_x;
+    const unsigned int thread_id = hipThreadIdx_x;
+    unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        
+    __shared__ rocrand_state_mtgp32 state;
+       
+    if (thread_id == 0)
+        state = states[state_id];
+    __syncthreads();
+        
+    while(index < size)
+    {
+        data[index] = generate_func(&state, extra);
+        index += stride;
+    }
+    __syncthreads();
+        
+    if (thread_id == 0)
+        states[state_id] = state;
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+void generate(const size_t dimensions,
+              const size_t blocks,
+              const size_t threads,
+              rocrand_state_mtgp32 * states,
+              T * data,
+              const size_t size,
+              const GenerateFunc& generate_func,
+              const Extra extra)
+{
+    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(generate_kernel),
+        dim3(blocks), dim3(256), 0, 0,
+        states, data, size, generate_func, extra
     );
 }
 
@@ -396,7 +456,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
 const std::vector<std::string> all_engines = {
     "xorwow",
     "mrg32k3a",
-    // "mtgp32",
+    "mtgp32",
     // "mt19937",
     "philox",
     "sobol32",
@@ -521,6 +581,10 @@ int main(int argc, char *argv[])
             else if (engine == "sobol32")
             {
                 run_benchmarks<rocrand_state_sobol32>(vm, distribution);
+            }
+            else if (engine == "mtgp32")
+            {
+                run_benchmarks<rocrand_state_mtgp32>(vm, distribution);
             }
         }
     }

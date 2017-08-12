@@ -430,6 +430,48 @@ double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, do
 }
 
 /**
+ * \brief Return a log-normally distributed float from a MTGP32 Generator.
+ *
+ * Return a log-normally distributed float with mean \p mean and 
+ * standard deviation \p stddev from \p state, and increments 
+ * position of generator by one. 
+ *
+ * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return log-normally distributed float with mean \p mean and 
+ * standard deviation \p stddev
+ */
+FQUALIFIERS
+float rocrand_log_normal(rocrand_state_mtgp32 * state, float mean, float stddev)
+{
+    float r = rocrand_device::detail::normal_distribution(rocrand(state));
+    return expf(mean + (stddev * r));
+}
+
+/**
+ * \brief Return a log-normally distributed double from a MTGP32 Generator.
+ *
+ * Return a log-normally distributed double with mean \p mean and 
+ * standard deviation \p stddev from \p state, and increments 
+ * position of generator by one. 
+ *
+ * \param state - Pointer to state to update
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return log-normally distributed double with mean \p mean and 
+ * standard deviation \p stddev
+ */
+FQUALIFIERS
+double rocrand_log_normal_double(rocrand_state_mtgp32 * state, double mean, double stddev)
+{
+    double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+    return exp(mean + (stddev * r));
+}
+
+/**
  * \brief Return a log-normally distributed float from a SOBOL32 Generator.
  *
  * Return a log-normally distributed float with mean \p mean and 

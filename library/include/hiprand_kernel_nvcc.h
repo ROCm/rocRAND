@@ -42,6 +42,8 @@ typedef curandStateScrambledSobol64_t hiprandStateScrambledSobol64_t;
 
 typedef curandDiscreteDistribution_t hiprandDiscreteDistribution_t;
 
+typedef curandDirectionVectors32_t hiprandDirectionVectors32_t;
+
 template<typename T, typename... R>
 struct is_any_of : std::false_type { };
 
@@ -84,14 +86,47 @@ void hiprand_init(const unsigned long long seed,
                   const unsigned long long offset,
                   StateType * state)
 {
+    static_assert(
+        !std::is_same<
+            StateType,
+            hiprandStateMtgp32_t
+        >::value,
+        "hiprandStateMtgp32_t does not have hiprand_init function, "
+        "check hiprandMakeMTGP32KernelState() host function"
+    );
+    static_assert(
+        !is_any_of<
+            StateType,
+            hiprandStateSobol32_t,
+            hiprandStateScrambledSobol32_t,
+            hiprandStateSobol64_t,
+            hiprandStateScrambledSobol64_t
+        >::value,
+        "Quasirandom generators use different hiprand_init() function"
+    );
     check_state_type<StateType>();
     curand_init(seed, subsequence, offset, state);
+}
+
+QUALIFIERS
+void hiprand_init(hiprandDirectionVectors32_t direction_vectors,
+                  unsigned int offset,
+                  hiprandStateSobol32_t * state)
+{
+    curand_init(direction_vectors, offset, state);
 }
 
 template<class StateType>
 QUALIFIERS
 void skipahead(unsigned long long n, StateType * state)
 {
+    static_assert(
+        !std::is_same<
+            StateType,
+            hiprandStateMtgp32_t
+        >::value,
+        "hiprandStateMtgp32_t does not have skipahead function"
+    );
     // Defined in curand_kernel.h
     check_state_type<StateType>();
 }
@@ -100,6 +135,17 @@ template<class StateType>
 QUALIFIERS
 void skipahead_sequence(unsigned long long n, StateType * state)
 {
+    static_assert(
+        !is_any_of<
+            StateType,
+            hiprandStateMtgp32_t,
+            hiprandStateSobol32_t,
+            hiprandStateScrambledSobol32_t,
+            hiprandStateSobol64_t,
+            hiprandStateScrambledSobol64_t
+        >::value,
+        "StateType does not have skipahead_sequence function"
+    );
     // Defined in curand_kernel.h
     check_state_type<StateType>();
 }

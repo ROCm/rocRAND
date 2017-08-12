@@ -200,7 +200,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
 const std::vector<std::string> all_engines = {
     "xorwow",
     "mrg32k3a",
-    // "mtgp32",
+    "mtgp32",
     // "mt19937",
     "philox",
     "sobol32",

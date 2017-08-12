@@ -179,6 +179,23 @@ unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discre
 }
 
 /**
+ * \brief Return a discrete distributed unsigned int from a MTGP32 Generator.
+ *
+ * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * and increments the position of generator by one.
+ *
+ * \param state - Pointer to state to update
+ * \param discrete_distribution - Related Discrete distribution
+ *
+ * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned int rocrand_discrete(rocrand_state_mtgp32 * state, const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
  * \brief Return a discrete distributed unsigned int from a SOBOL32 Generator.
  *
  * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
