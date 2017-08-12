@@ -22,9 +22,13 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     hip_add_executable(${benchmark_name} "${benchmark_src}")
     add_dependencies(${benchmark_name} rocRAND ${ROCRAND_BENCHMARK_DEPENDENCIES})
     get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+    set(Boost_rpath "${Boost_LIBRARY_DIRS}")
+    if("${Boost_rpath}" STREQUAL "")
+        set(Boost_rpath "${PROJECT_SOURCE_DIR}/boost/lib")
+    endif()
     target_link_libraries(
         ${benchmark_name}
-        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
+        -Wl,-rpath,${rocRAND_rpath}:${Boost_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocRAND> # rocRAND
         ${Boost_LIBRARIES} # Boost program_options
     )
