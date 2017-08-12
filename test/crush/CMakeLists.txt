@@ -25,9 +25,14 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     hip_add_executable(${crush_test_name} "${crush_test_src}")
     add_dependencies(${crush_test_name} rocRAND ${ROCRAND_CRUSH_TEST_DEPENDENCIES})
     get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+    set(TestU01_rpath "${TestU01_LIBRARY_DIRS}")
+    set(Boost_rpath "${Boost_LIBRARY_DIRS}")
+    if("${Boost_rpath}" STREQUAL "")
+        set(Boost_rpath "${PROJECT_SOURCE_DIR}/boost/lib")
+    endif()
     target_link_libraries(
         ${crush_test_name}
-        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
+        -Wl,-rpath,${rocRAND_rpath}:${TestU01_rpath}:${Boost_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocRAND>
         ${TestU01_LIBRARIES}
         ${Boost_LIBRARIES} # Boost program_options
