@@ -138,6 +138,12 @@ int main(int argc, char *argv[])
         run_crush_test(size, ROCRAND_RNG_PSEUDO_XORWOW);
         return 0;
     }
+    else if(engine == "mtgp32")
+    {
+        std::cout << "mtgp32:" << std::endl;
+        run_crush_test(size, ROCRAND_RNG_PSEUDO_MTGP32);
+        return 0;
+    }
 
     std::cerr << "Error: unknown random number engine '" << engine << "'" << std::endl;
     return -1;

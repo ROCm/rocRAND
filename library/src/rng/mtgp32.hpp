@@ -127,7 +127,7 @@ public:
                    unsigned long long offset = 0,
                    hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(64)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(128)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
@@ -169,31 +169,11 @@ public:
             return ROCRAND_STATUS_SUCCESS;
         
         rocrand_status status;
-        rocrand_device::mtgp32_state * d_state;
-        rocrand_device::mtgp32_param * d_param;
-        hipMalloc(&d_state, sizeof(rocrand_device::mtgp32_state) * m_engines_size);
-        hipMalloc(&d_param, sizeof(rocrand_device::mtgp32_param));
-        
-        status = rocrand_device::rocrand_make_constant(mtgp32dc_params_fast_11213, d_param);
+            
+        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
             
-        status = rocrand_device::rocrand_make_state_mtgp32(d_state, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
-        if(status != ROCRAND_STATUS_SUCCESS)
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
-            
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::init_mtgp32_engines_kernel),
-            dim3(1), dim3(m_engines_size), 0, m_stream,
-            m_engines, d_state, d_param
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-              
-        hipFree(d_state);
-        hipFree(d_param);
-
         m_engines_initialized = true;
 
         return ROCRAND_STATUS_SUCCESS;
@@ -208,8 +188,8 @@ public:
             return status;
 
         #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = m_engines_size; // 512
+        const uint32_t threads = 256;
+        const uint32_t max_blocks = 64; // 512
         #else
         const uint32_t threads = 256;
         const uint32_t max_blocks = m_engines_size;

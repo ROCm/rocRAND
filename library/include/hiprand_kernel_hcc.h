@@ -34,8 +34,14 @@ typedef rocrand_state_xorwow hiprandState_t;
 typedef rocrand_state_xorwow hiprandStateXORWOW_t;
 typedef rocrand_state_philox4x32_10 hiprandStatePhilox4_32_10_t;
 typedef rocrand_state_mrg32k3a hiprandStateMRG32k3a_t;
+typedef rocrand_state_mtgp32 hiprandStateMtgp32_t;
+typedef rocrand_state_sobol32 hiprandStateSobol32_t;
 
 typedef rocrand_discrete_distribution hiprandDiscreteDistribution_t;
+
+typedef unsigned int hiprandDirectionVectors32_t[32];
+
+typedef mtgp32_param mtgp32_kernel_params_t;
 
 template<typename T, typename... R>
 struct is_any_of : std::false_type { };
@@ -61,7 +67,9 @@ void check_state_type()
             hiprandState_t,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
-            hiprandStateMRG32k3a_t
+            hiprandStateMRG32k3a_t,
+            hiprandStateMtgp32_t,
+            hiprandStateSobol32_t
         >::value,
         "StateType is not a hipRAND generator state"
     );
@@ -74,14 +82,44 @@ void hiprand_init(const unsigned long long seed,
                   const unsigned long long offset,
                   StateType * state)
 {
+    static_assert(
+        !std::is_same<
+            StateType,
+            hiprandStateMtgp32_t
+        >::value,
+        "hiprandStateMtgp32_t does not have hiprand_init function, "
+        "check hiprandMakeMTGP32KernelState() host function"
+    );
+    static_assert(
+        !is_any_of<
+            StateType,
+            hiprandStateSobol32_t
+        >::value,
+        "Quasirandom generators use different hiprand_init() function"
+    );
     check_state_type<StateType>();
     rocrand_init(seed, subsequence, offset, state);
+}
+
+QUALIFIERS
+void hiprand_init(hiprandDirectionVectors32_t direction_vectors,
+                  unsigned int offset,
+                  hiprandStateSobol32_t * state)
+{
+    rocrand_init(direction_vectors, offset, state);
 }
 
 template<class StateType>
 QUALIFIERS
 void skipahead(unsigned long long n, StateType * state)
 {
+    static_assert(
+        !std::is_same<
+            StateType,
+            hiprandStateMtgp32_t
+        >::value,
+        "hiprandStateMtgp32_t does not have skipahead function"
+    );
     // Defined in rocrand_kernel.h
     check_state_type<StateType>();
 }
@@ -90,6 +128,14 @@ template<class StateType>
 QUALIFIERS
 void skipahead_sequence(unsigned long long n, StateType * state)
 {
+    static_assert(
+        !is_any_of<
+            StateType,
+            hiprandStateMtgp32_t,
+            hiprandStateSobol32_t
+        >::value,
+        "StateType does not have skipahead_sequence function"
+    );
     check_state_type<StateType>();
     skipahead_subsequence(n, state);
 }
@@ -264,7 +310,7 @@ double hiprand_log_normal_double(StateType * state,
 template<class StateType>
 QUALIFIERS
 double2 hiprand_log_normal2_double(StateType * state,
-                                  double mean, double stddev)
+                                   double mean, double stddev)
 {
     check_state_type<StateType>();
     static_assert(

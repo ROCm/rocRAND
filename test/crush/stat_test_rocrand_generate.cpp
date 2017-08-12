@@ -194,7 +194,7 @@ void run_tests(const boost::program_options::variables_map& vm,
 const std::vector<std::string> all_engines = {
     "xorwow",
     "mrg32k3a",
-    // "mtgp32",
+    "mtgp32",
     // "mt19937",
     "philox",
     "sobol32",
@@ -314,6 +314,10 @@ int main(int argc, char *argv[])
             else if (engine == "sobol32")
             {
                 run_tests(vm, ROCRAND_RNG_QUASI_SOBOL32, distribution, plot_name);
+            }
+            else if (engine == "mtgp32")
+            {
+                run_tests(vm, ROCRAND_RNG_PSEUDO_MTGP32, distribution, plot_name);
             }
         }
     }

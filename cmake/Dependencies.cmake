@@ -34,15 +34,15 @@ if(BUILD_TEST)
                          GIT_REPOSITORY      https://github.com/google/googletest.git
                          GIT_TAG             master
                          INSTALL_DIR         ${GTEST_ROOT}
-                         CMAKE_ARGS          -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+                         CMAKE_ARGS          -DBUILD_GTEST=ON -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
                          LOG_DOWNLOAD        TRUE
                          LOG_CONFIGURE       TRUE
                          LOG_BUILD           TRUE
                          LOG_INSTALL         TRUE
                          ${UPDATE_DISCONNECTED_IF_AVAILABLE}
         )
-        find_package(GTest REQUIRED)
     endif()
+    find_package(GTest REQUIRED)
 endif()
 
 # Crush Tests
@@ -69,9 +69,8 @@ if(BUILD_CRUSH_TEST)
                          LOG_BUILD           TRUE
                          LOG_INSTALL         TRUE
         )
-        # Add dependency
-        find_package(TestU01 REQUIRED)
     endif()
+    find_package(TestU01 REQUIRED)
 endif()
 
 # Boost.Program_options is required only for benchmarks and crush tests
@@ -112,10 +111,6 @@ if(BUILD_BENCHMARK OR BUILD_CRUSH_TEST)
             message(FATAL_ERROR "Build step for Boost failed: ${result}")
             unset(BOOST_ROOT)
         endif()
-
-        find_package(Boost 1.54
-            REQUIRED
-            COMPONENTS ${ROCRAND_BOOST_COMPONENTS}
-        )
     endif()
+    find_package(Boost 1.54 REQUIRED COMPONENTS ${ROCRAND_BOOST_COMPONENTS})
 endif()
