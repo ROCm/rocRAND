@@ -81,21 +81,21 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
     float host_data[size];
     hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
-    
+
     float mean = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
-    
+
     float std = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
         std += std::pow(host_data[i] - mean, 2);
     }
     std = sqrt(std / size);
-    
+
     EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
@@ -113,14 +113,14 @@ TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
     unsigned int host_data[size];
     hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
-    
+
     double mean = 0.0;
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
-    
+
     double var = 0.0;
     for(size_t i = 0; i < size; i++)
     {
@@ -128,7 +128,7 @@ TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
         var += x * x;
     }
     var = var / size;
-    
+
     EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
     EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
 }
@@ -255,4 +255,85 @@ TEST(rocrand_mrg32k3a_prng_tests, different_seed_test)
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
     EXPECT_LT(same, static_cast<size_t>(0.01f * size));
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, discard_test)
+{
+    const unsigned long long seed = 12345ULL;
+    rocrand_mrg32k3a::engine_type engine1(seed, 0, 678ULL);
+    rocrand_mrg32k3a::engine_type engine2(seed, 0, 677ULL);
+
+    (void)engine2.next();
+
+    EXPECT_EQ(engine1(), engine2());
+
+    const unsigned long long ds[] = {
+        1ULL, 4ULL, 37ULL, 583ULL, 7452ULL,
+        21032ULL, 35678ULL, 66778ULL, 10313475ULL, 82120230ULL
+    };
+
+    for (auto d : ds)
+    {
+        for (unsigned long long i = 0; i < d; i++)
+        {
+            (void)engine1.next();
+        }
+        engine2.discard(d);
+
+        EXPECT_EQ(engine1(), engine2());
+    }
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, discard_sequence_test)
+{
+    const unsigned long long seed = 23456ULL;
+    rocrand_mrg32k3a::engine_type engine1(seed, 123ULL, 444ULL);
+    rocrand_mrg32k3a::engine_type engine2(seed, 123ULL, 444ULL);
+
+    EXPECT_EQ(engine1(), engine2());
+
+    engine1.discard( 5356446450ULL);
+    engine1.discard_sequence(123ULL);
+    engine1.discard(30000000006ULL);
+
+    engine2.discard_sequence(3ULL);
+    engine2.discard(35356446456ULL);
+    engine2.discard_sequence(120ULL);
+
+    EXPECT_EQ(engine1(), engine2());
+
+    engine1.discard_sequence(3456000ULL);
+    engine1.discard_sequence(1000005ULL);
+
+    engine2.discard_sequence(4456005ULL);
+
+    EXPECT_EQ(engine1(), engine2());
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, discard_subsequence_test)
+{
+    const unsigned long long seed = 23456ULL;
+    rocrand_mrg32k3a::engine_type engine1(seed, 0, 444ULL);
+    rocrand_mrg32k3a::engine_type engine2(seed, 123ULL, 444ULL);
+
+    engine1.discard_subsequence(123ULL);
+
+    EXPECT_EQ(engine1(), engine2());
+
+    engine1.discard( 5356446450ULL);
+    engine1.discard_subsequence(123ULL);
+    engine1.discard(30000000006ULL);
+
+    engine2.discard_subsequence(3ULL);
+    engine2.discard(35356446456ULL);
+    engine2.discard_subsequence(120ULL);
+
+    EXPECT_EQ(engine1(), engine2());
+
+    engine1.discard_subsequence(3456000ULL);
+    engine1.discard_subsequence(1000005ULL);
+
+    engine2.discard_subsequence(4456005ULL);
+
+    EXPECT_EQ(engine1(), engine2());
 }
