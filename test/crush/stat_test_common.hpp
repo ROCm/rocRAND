@@ -30,8 +30,6 @@
 #include <utility>
 #include <algorithm>
 
-#include <boost/program_options.hpp>
-
 extern "C" {
 #include "gofs.h"
 #include "fdist.h"
