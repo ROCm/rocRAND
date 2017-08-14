@@ -26,6 +26,7 @@
 #endif // QUALIFIERS
 
 #include <hip/hip_runtime.h>
+#include <hiprand.h>
 
 #ifdef __HIP_PLATFORM_HCC__
 #include "hiprand_kernel_hcc.h"
