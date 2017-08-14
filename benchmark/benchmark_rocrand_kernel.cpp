@@ -27,7 +27,7 @@
 #include <utility>
 #include <algorithm>
 
-#include <boost/program_options.hpp>
+#include "cmdparser.hpp"
 
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
@@ -275,17 +275,17 @@ void generate(const size_t dimensions,
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
-void run_benchmark(const boost::program_options::variables_map& vm,
+void run_benchmark(const cli::Parser& parser,
                    const GenerateFunc& generate_func,
                    const Extra extra)
 {
-    const size_t size = vm["size"].as<size_t>();
-    const size_t dimensions = vm["dimensions"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
-
-    const size_t blocks = vm["blocks"].as<size_t>();
-    const size_t threads = vm["threads"].as<size_t>();
-
+    const size_t size = parser.get<size_t>("size");
+    const size_t dimensions = parser.get<size_t>("dimensions");
+    const size_t trials = parser.get<size_t>("trials");
+    
+    const size_t blocks = parser.get<size_t>("blocks");
+    const size_t threads = parser.get<size_t>("threads");
+    
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
 
@@ -337,12 +337,12 @@ void run_benchmark(const boost::program_options::variables_map& vm,
 }
 
 template<typename GeneratorState>
-void run_benchmarks(const boost::program_options::variables_map& vm,
+void run_benchmarks(const cli::Parser& parser,
                     const std::string& distribution)
 {
     if (distribution == "uniform-uint")
     {
-        run_benchmark<unsigned int, GeneratorState>(vm,
+        run_benchmark<unsigned int, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand(state);
             }, 0
@@ -350,7 +350,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "uniform-float")
     {
-        run_benchmark<float, GeneratorState>(vm,
+        run_benchmark<float, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_uniform(state);
             }, 0
@@ -358,7 +358,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "uniform-double")
     {
-        run_benchmark<double, GeneratorState>(vm,
+        run_benchmark<double, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_uniform_double(state);
             }, 0
@@ -366,7 +366,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "normal-float")
     {
-        run_benchmark<float, GeneratorState>(vm,
+        run_benchmark<float, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_normal(state);
             }, 0
@@ -374,7 +374,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "normal-double")
     {
-        run_benchmark<double, GeneratorState>(vm,
+        run_benchmark<double, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_normal_double(state);
             }, 0
@@ -382,7 +382,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "log-normal-float")
     {
-        run_benchmark<float, GeneratorState>(vm,
+        run_benchmark<float, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_log_normal(state, 0.0f, 1.0f);
             }, 0
@@ -390,7 +390,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "log-normal-double")
     {
-        run_benchmark<double, GeneratorState>(vm,
+        run_benchmark<double, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_log_normal_double(state, 0.0, 1.0);
             }, 0
@@ -398,12 +398,12 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "poisson")
     {
-        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        const auto lambdas = parser.get<std::vector<double>>("lambda");
         for (double lambda : lambdas)
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_benchmark<unsigned int, GeneratorState>(vm,
+            run_benchmark<unsigned int, GeneratorState>(parser,
                 [] __device__ (GeneratorState * state, double lambda) {
                     return rocrand_poisson(state, lambda);
                 }, lambda
@@ -412,14 +412,14 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "discrete-poisson")
     {
-        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        const auto lambdas = parser.get<std::vector<double>>("lambda");
         for (double lambda : lambdas)
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
             rocrand_discrete_distribution discrete_distribution;
             ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
-            run_benchmark<unsigned int, GeneratorState>(vm,
+            run_benchmark<unsigned int, GeneratorState>(parser,
                 [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
                     return rocrand_discrete(state, discrete_distribution);
                 }, discrete_distribution
@@ -444,7 +444,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
 
         rocrand_discrete_distribution discrete_distribution;
         ROCRAND_CHECK(rocrand_create_discrete_distribution(probabilities.data(), probabilities.size(), offset, &discrete_distribution));
-        run_benchmark<unsigned int, GeneratorState>(vm,
+        run_benchmark<unsigned int, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
                 return rocrand_discrete(state, discrete_distribution);
             }, discrete_distribution
@@ -481,52 +481,38 @@ const std::vector<std::string> all_distributions = {
 
 int main(int argc, char *argv[])
 {
-    namespace po = boost::program_options;
-    po::options_description options("options");
+    cli::Parser parser(argc, argv);
 
     const std::string distribution_desc =
         "space-separated list of distributions:" +
         std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
             [](std::string a, std::string b) {
-                return a + "\n   " + b;
+                return a + "\n      " + b;
             }
         ) +
-        "\nor all";
+        "\n      or all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
             [](std::string a, std::string b) {
-                return a + "\n   " + b;
+                return a + "\n      " + b;
             }
         ) +
-        "\nor all";
-    options.add_options()
-        ("help", "show usage instructions")
-        ("size", po::value<size_t>()->default_value(DEFAULT_RAND_N), "number of values")
-        ("dimensions", po::value<size_t>()->default_value(1), "number of dimensions of quasi-random values")
-        ("trials", po::value<size_t>()->default_value(20), "number of trials")
-        ("blocks", po::value<size_t>()->default_value(64), "number of blocks")
-        ("threads", po::value<size_t>()->default_value(256), "number of threads in each block")
-        ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "uniform-uint" }, "uniform-uint"),
-            distribution_desc.c_str())
-        ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
-            engine_desc.c_str())
-        ("lambda", po::value<std::vector<double>>()->multitoken()->default_value({ 100.0 }, "100.0"),
-            "space-separated list of lambdas of Poisson distribution")
-    ;
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, options), vm);
-    po::notify(vm);
-
-    if (vm.count("help"))
-    {
-        std::cout << options << std::endl;
-        return 0;
-    }
-
+        "\n      or all";
+    
+    parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
+    parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
+    parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
+    parser.set_optional<size_t>("blocks", "blocks", 64, "number of blocks");
+    parser.set_optional<size_t>("threads", "threads", 256, "number of threads in each block");
+	parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
+    parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
+    parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
+    parser.run_and_exit_if_error();
+    
     std::vector<std::string> engines;
     {
-        auto es = vm["engine"].as<std::vector<std::string>>();
+        auto es = parser.get<std::vector<std::string>>("engine");
         if (std::find(es.begin(), es.end(), "all") != es.end())
         {
             engines = all_engines;
@@ -543,7 +529,7 @@ int main(int argc, char *argv[])
 
     std::vector<std::string> distributions;
     {
-        auto ds = vm["dis"].as<std::vector<std::string>>();
+        auto ds = parser.get<std::vector<std::string>>("dis");
         if (std::find(ds.begin(), ds.end(), "all") != ds.end())
         {
             distributions = all_distributions;
@@ -568,23 +554,23 @@ int main(int argc, char *argv[])
             const std::string plot_name = engine + "-" + distribution;
             if (engine == "xorwow")
             {
-                run_benchmarks<rocrand_state_xorwow>(vm, distribution);
+                run_benchmarks<rocrand_state_xorwow>(parser, distribution);
             }
             else if (engine == "mrg32k3a")
             {
-                run_benchmarks<rocrand_state_mrg32k3a>(vm, distribution);
+                run_benchmarks<rocrand_state_mrg32k3a>(parser, distribution);
             }
             else if (engine == "philox")
             {
-                run_benchmarks<rocrand_state_philox4x32_10>(vm, distribution);
+                run_benchmarks<rocrand_state_philox4x32_10>(parser, distribution);
             }
             else if (engine == "sobol32")
             {
-                run_benchmarks<rocrand_state_sobol32>(vm, distribution);
+                run_benchmarks<rocrand_state_sobol32>(parser, distribution);
             }
             else if (engine == "mtgp32")
             {
-                run_benchmarks<rocrand_state_mtgp32>(vm, distribution);
+                run_benchmarks<rocrand_state_mtgp32>(parser, distribution);
             }
         }
     }
