@@ -42,6 +42,7 @@ typedef rocrand_discrete_distribution hiprandDiscreteDistribution_t;
 typedef unsigned int hiprandDirectionVectors32_t[32];
 
 typedef mtgp32_param mtgp32_kernel_params_t;
+typedef mtgp32_fast_param mtgp32_fast_param_t;
 
 template<typename T, typename... R>
 struct is_any_of : std::false_type { };
@@ -56,6 +57,41 @@ struct is_any_of<T, F, R...>
         std::is_same<T, F>::value || is_any_of<T, R...>::value
       >
 { };
+
+hiprandStatus_t to_hiprand_status(rocrand_status status)
+{
+    switch(status)
+    {
+        case ROCRAND_STATUS_SUCCESS:
+            return HIPRAND_STATUS_SUCCESS;
+        case ROCRAND_STATUS_NOT_CREATED:
+            return HIPRAND_STATUS_NOT_INITIALIZED;
+        case ROCRAND_STATUS_VERSION_MISMATCH:
+            return HIPRAND_STATUS_VERSION_MISMATCH;
+        case ROCRAND_STATUS_ALLOCATION_FAILED:
+            return HIPRAND_STATUS_ALLOCATION_FAILED;
+        case ROCRAND_STATUS_TYPE_ERROR:
+            return HIPRAND_STATUS_TYPE_ERROR;
+        case ROCRAND_STATUS_OUT_OF_RANGE:
+            return HIPRAND_STATUS_OUT_OF_RANGE;
+        case ROCRAND_STATUS_LENGTH_NOT_MULTIPLE:
+            return HIPRAND_STATUS_LENGTH_NOT_MULTIPLE;
+        case ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED:
+            return HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED;
+        case ROCRAND_STATUS_LAUNCH_FAILURE:
+            return HIPRAND_STATUS_LAUNCH_FAILURE;
+        // case ROCRAND_STATUS_PREEXISTING_FAILURE:
+        //     return HIPRAND_STATUS_PREEXISTING_FAILURE;
+        // case ROCRAND_STATUS_INITIALIZATION_FAILED:
+        //     return HIPRAND_STATUS_INITIALIZATION_FAILED;
+        // case ROCRAND_STATUS_ARCH_MISMATCH:
+        //     return HIPRAND_STATUS_ARCH_MISMATCH;
+        case ROCRAND_STATUS_INTERNAL_ERROR:
+            return HIPRAND_STATUS_INTERNAL_ERROR;
+        default:
+            return HIPRAND_STATUS_INTERNAL_ERROR;
+    }
+}
 
 template<typename StateType>
 QUALIFIERS
@@ -72,6 +108,27 @@ void check_state_type()
             hiprandStateSobol32_t
         >::value,
         "StateType is not a hipRAND generator state"
+    );
+}
+
+__host__
+hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
+                                           mtgp32_kernel_params_t * p) 
+{
+    return to_hiprand_status(
+        rocrand_make_constant(params, p)
+    );
+}
+
+__host__
+hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
+                                             mtgp32_params_fast_t params[],
+                                             mtgp32_kernel_params_t *k,
+                                             int n,
+                                             unsigned long long seed) 
+{
+    return to_hiprand_status(
+        rocrand_make_state_mtgp32(s, params, n, seed)
     );
 }
 

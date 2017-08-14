@@ -29,6 +29,7 @@
 #include <type_traits>
 
 #include "curand_kernel.h"
+#include "curand_mtgp32_host.h"
 
 typedef curandState_t hiprandState_t;
 typedef curandStateXORWOW_t hiprandStateXORWOW_t;
@@ -58,6 +59,41 @@ struct is_any_of<T, F, R...>
       >
 { };
 
+hiprandStatus_t to_hiprand_status(curandStatus_t status)
+{
+    switch(status)
+    {
+        case CURAND_STATUS_SUCCESS:
+            return HIPRAND_STATUS_SUCCESS;
+        case CURAND_STATUS_NOT_INITIALIZED:
+            return HIPRAND_STATUS_NOT_INITIALIZED;
+        case CURAND_STATUS_VERSION_MISMATCH:
+            return HIPRAND_STATUS_VERSION_MISMATCH;
+        case CURAND_STATUS_ALLOCATION_FAILED:
+            return HIPRAND_STATUS_ALLOCATION_FAILED;
+        case CURAND_STATUS_TYPE_ERROR:
+            return HIPRAND_STATUS_TYPE_ERROR;
+        case CURAND_STATUS_OUT_OF_RANGE:
+            return HIPRAND_STATUS_OUT_OF_RANGE;
+        case CURAND_STATUS_LENGTH_NOT_MULTIPLE:
+            return HIPRAND_STATUS_LENGTH_NOT_MULTIPLE;
+        case CURAND_STATUS_DOUBLE_PRECISION_REQUIRED:
+            return HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED;
+        case CURAND_STATUS_LAUNCH_FAILURE:
+            return HIPRAND_STATUS_LAUNCH_FAILURE;
+        case CURAND_STATUS_PREEXISTING_FAILURE:
+            return HIPRAND_STATUS_PREEXISTING_FAILURE;
+        case CURAND_STATUS_INITIALIZATION_FAILED:
+            return HIPRAND_STATUS_INITIALIZATION_FAILED;
+        case CURAND_STATUS_ARCH_MISMATCH:
+            return HIPRAND_STATUS_ARCH_MISMATCH;
+        case CURAND_STATUS_INTERNAL_ERROR:
+            return HIPRAND_STATUS_INTERNAL_ERROR;
+        default:
+            return HIPRAND_STATUS_INTERNAL_ERROR;
+    }
+}
+
 template<typename StateType>
 QUALIFIERS
 void check_state_type()
@@ -76,6 +112,27 @@ void check_state_type()
             hiprandStateScrambledSobol64_t
         >::value,
         "StateType is not a hipRAND generator state"
+    );
+}
+
+__host__
+hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
+                                           mtgp32_kernel_params_t * p) 
+{
+    return to_hiprand_status(
+        curandMakeMTGP32Constants(params, p)
+    );
+}
+
+__host__
+hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
+                                             mtgp32_params_fast_t params[],
+                                             mtgp32_kernel_params_t *k,
+                                             int n,
+                                             unsigned long long seed) 
+{
+    return to_hiprand_status(
+        curandMakeMTGP32KernelState(s, params, k, n, seed)
     );
 }
 
