@@ -26,12 +26,12 @@
 #include <iterator>
 #include <random>
 #include <algorithm>
-
-#include <boost/program_options.hpp>
+#include <cstring>
 
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 #include <file_common.hpp>
+#include "cmdparser.hpp"
 
 extern "C" {
 #include "bbattery.h"
@@ -100,25 +100,14 @@ void run_crush_test(const size_t size, const rocrand_rng_type rng_type)
 
 int main(int argc, char *argv[])
 {
-    namespace po = boost::program_options;
-    po::options_description options("options");
-    options.add_options()
-        ("help", "show usage instructions")
-        ("size", po::value<size_t>()->default_value(DEFAULT_RAND_N), "number of values")
-        ("engine", po::value<std::string>()->default_value("philox"), "random number engine")
-    ;
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, options), vm);
-    po::notify(vm);
+    cli::Parser parser(argc, argv);
 
-    if(vm.count("help"))
-    {
-        std::cout << options << std::endl;
-        return 0;
-    }
+    parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
+    parser.set_optional<std::string>("engine", "engine", "philox", "random number engine");
+    parser.run_and_exit_if_error();
 
-    const size_t size = vm["size"].as<size_t>();
-    const std::string& engine = vm["engine"].as<std::string>();
+    const size_t size = parser.get<size_t>("size");
+    const std::string& engine = parser.get<std::string>("engine");
 
     if(engine == "philox")
     {

@@ -27,7 +27,7 @@
 #include <utility>
 #include <algorithm>
 
-#include <boost/program_options.hpp>
+#include "cmdparser.hpp"
 
 #include <cuda_runtime.h>
 #include <curand.h>
@@ -49,12 +49,12 @@ template<typename T>
 using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T *, size_t)>;
 
 template<typename T>
-void run_benchmark(const boost::program_options::variables_map& vm,
+void run_benchmark(const cli::Parser& parser,
                    const rng_type_t rng_type,
                    generate_func_type<T> generate_func)
 {
-    const size_t size = vm["size"].as<size_t>();
-    const size_t trials = vm["trials"].as<size_t>();
+    const size_t size = parser.get<size_t>("size");
+    const size_t trials = parser.get<size_t>("trials");
 
     T * data;
     CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
@@ -62,7 +62,7 @@ void run_benchmark(const boost::program_options::variables_map& vm,
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
 
-    const size_t dimensions = vm["dimensions"].as<size_t>();
+    const size_t dimensions = parser.get<size_t>("dimensions");
     curandStatus_t status = curandSetQuasiRandomGeneratorDimensions(generator, dimensions);
     if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
     {
@@ -105,7 +105,7 @@ void run_benchmark(const boost::program_options::variables_map& vm,
     CUDA_CALL(cudaFree(data));
 }
 
-void run_benchmarks(const boost::program_options::variables_map& vm,
+void run_benchmarks(const cli::Parser& parser,
                     const rng_type_t rng_type,
                     const std::string& distribution)
 {
@@ -114,7 +114,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
         if (rng_type != CURAND_RNG_QUASI_SOBOL64 &&
             rng_type != CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
         {
-            run_benchmark<unsigned int>(vm, rng_type,
+            run_benchmark<unsigned int>(parser, rng_type,
                 [](curandGenerator_t gen, unsigned int * data, size_t size) {
                     return curandGenerate(gen, data, size);
                 }
@@ -126,7 +126,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
         if (rng_type == CURAND_RNG_QUASI_SOBOL64 ||
             rng_type == CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
         {
-            run_benchmark<unsigned long long>(vm, rng_type,
+            run_benchmark<unsigned long long>(parser, rng_type,
                 [](curandGenerator_t gen, unsigned long long * data, size_t size) {
                     return curandGenerateLongLong(gen, data, size);
                 }
@@ -135,7 +135,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "uniform-float")
     {
-        run_benchmark<float>(vm, rng_type,
+        run_benchmark<float>(parser, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateUniform(gen, data, size);
             }
@@ -143,7 +143,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "uniform-double")
     {
-        run_benchmark<double>(vm, rng_type,
+        run_benchmark<double>(parser, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateUniformDouble(gen, data, size);
             }
@@ -151,7 +151,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "normal-float")
     {
-        run_benchmark<float>(vm, rng_type,
+        run_benchmark<float>(parser, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
             }
@@ -159,7 +159,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "normal-double")
     {
-        run_benchmark<double>(vm, rng_type,
+        run_benchmark<double>(parser, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
             }
@@ -167,7 +167,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "log-normal-float")
     {
-        run_benchmark<float>(vm, rng_type,
+        run_benchmark<float>(parser, rng_type,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
             }
@@ -175,7 +175,7 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "log-normal-double")
     {
-        run_benchmark<double>(vm, rng_type,
+        run_benchmark<double>(parser, rng_type,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
             }
@@ -183,12 +183,12 @@ void run_benchmarks(const boost::program_options::variables_map& vm,
     }
     if (distribution == "poisson")
     {
-        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        const auto lambdas = parser.get<std::vector<double>>("lambda");
         for (double lambda : lambdas)
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_benchmark<unsigned int>(vm, rng_type,
+            run_benchmark<unsigned int>(parser, rng_type,
                 [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
                     return curandGeneratePoisson(gen, data, size, lambda);
                 }
@@ -223,50 +223,36 @@ const std::vector<std::string> all_distributions = {
 
 int main(int argc, char *argv[])
 {
-    namespace po = boost::program_options;
-    po::options_description options("options");
+    cli::Parser parser(argc, argv);
 
     const std::string distribution_desc =
         "space-separated list of distributions:" +
         std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
             [](std::string a, std::string b) {
-                return a + "\n   " + b;
+                return a + "\n      " + b;
             }
         ) +
-        "\nor all";
+        "\n      or all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
             [](std::string a, std::string b) {
-                return a + "\n   " + b;
+                return a + "\n      " + b;
             }
         ) +
-        "\nor all";
-    options.add_options()
-        ("help", "show usage instructions")
-        ("size", po::value<size_t>()->default_value(DEFAULT_RAND_N), "number of values")
-        ("dimensions", po::value<size_t>()->default_value(1), "number of dimensions of quasi-random values")
-        ("trials", po::value<size_t>()->default_value(20), "number of trials")
-        ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "uniform-uint" }, "uniform-uint"),
-            distribution_desc.c_str())
-        ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
-            engine_desc.c_str())
-        ("lambda", po::value<std::vector<double>>()->multitoken()->default_value({ 100.0 }, "100.0"),
-            "space-separated list of lambdas of Poisson distribution")
-    ;
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, options), vm);
-    po::notify(vm);
-
-    if (vm.count("help"))
-    {
-        std::cout << options << std::endl;
-        return 0;
-    }
-
+        "\n      or all";
+    
+    parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
+    parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
+    parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
+	parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
+    parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
+    parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
+    parser.run_and_exit_if_error();
+    
     std::vector<std::string> engines;
     {
-        auto es = vm["engine"].as<std::vector<std::string>>();
+        auto es = parser.get<std::vector<std::string>>("engine");
         if (std::find(es.begin(), es.end(), "all") != es.end())
         {
             engines = all_engines;
@@ -283,7 +269,7 @@ int main(int argc, char *argv[])
 
     std::vector<std::string> distributions;
     {
-        auto ds = vm["dis"].as<std::vector<std::string>>();
+        auto ds = parser.get<std::vector<std::string>>("dis");
         if (std::find(ds.begin(), ds.end(), "all") != ds.end())
         {
             distributions = all_distributions;
@@ -325,7 +311,7 @@ int main(int argc, char *argv[])
         for (auto distribution : distributions)
         {
             std::cout << "  " << distribution << ":" << std::endl;
-            run_benchmarks(vm, rng_type, distribution);
+            run_benchmarks(parser, rng_type, distribution);
         }
         std::cout << std::endl;
     }
