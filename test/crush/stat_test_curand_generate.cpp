@@ -28,12 +28,11 @@
 #include <type_traits>
 #include <algorithm>
 
-#include <boost/program_options.hpp>
-
 #include <cuda_runtime.h>
 #include <curand.h>
 
 #include "stat_test_common.hpp"
+#include "cmdparser.hpp"
 
 extern "C" {
 #include "gofs.h"
@@ -55,17 +54,17 @@ template<typename T>
 using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T *, size_t)>;
 
 template<typename T>
-void run_test(const boost::program_options::variables_map& vm,
+void run_test(const cli::Parser& parser,
               const rng_type_t rng_type,
               const std::string plot_name,
               generate_func_type<T> generate_func,
               const double mean, const double stddev,
               distribution_func_type distribution_func)
 {
-    const size_t size = vm["size"].as<size_t>();
-    const size_t level1_tests = vm["level1-tests"].as<size_t>();
-    const size_t level2_tests = vm["level2-tests"].as<size_t>();
-    const bool save_plots = vm.count("plots");
+    const size_t size = parser.get<size_t>("size");
+    const size_t level1_tests = parser.get<size_t>("level1-tests");
+    const size_t level2_tests = parser.get<size_t>("level2-tests");
+    const bool save_plots = parser.get<bool>("plots");
 
     T * data;
     CUDA_CALL(cudaMalloc((void **)&data, size * level1_tests * sizeof(T)));
@@ -97,14 +96,14 @@ void run_test(const boost::program_options::variables_map& vm,
     CUDA_CALL(cudaFree(data));
 }
 
-void run_tests(const boost::program_options::variables_map& vm,
+void run_tests(const cli::Parser& parser,
                const rng_type_t rng_type,
                const std::string& distribution,
                const std::string plot_name)
 {
     if (distribution == "uniform-float")
     {
-        run_test<float>(vm, rng_type, plot_name,
+        run_test<float>(parser, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateUniform(gen, data, size);
             },
@@ -114,7 +113,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
     if (distribution == "uniform-double")
     {
-        run_test<double>(vm, rng_type, plot_name,
+        run_test<double>(parser, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateUniformDouble(gen, data, size);
             },
@@ -124,7 +123,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
     if (distribution == "normal-float")
     {
-        run_test<float>(vm, rng_type, plot_name,
+        run_test<float>(parser, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -134,7 +133,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
     if (distribution == "normal-double")
     {
-        run_test<double>(vm, rng_type, plot_name,
+        run_test<double>(parser, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -144,7 +143,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
     if (distribution == "log-normal-float")
     {
-        run_test<float>(vm, rng_type, plot_name,
+        run_test<float>(parser, rng_type, plot_name,
             [](curandGenerator_t gen, float * data, size_t size) {
                 return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
             },
@@ -154,7 +153,7 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
     if (distribution == "log-normal-double")
     {
-        run_test<double>(vm, rng_type, plot_name,
+        run_test<double>(parser, rng_type, plot_name,
             [](curandGenerator_t gen, double * data, size_t size) {
                 return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
             },
@@ -164,12 +163,12 @@ void run_tests(const boost::program_options::variables_map& vm,
     }
     if (distribution == "poisson")
     {
-        const auto lambdas = vm["lambda"].as<std::vector<double>>();
+        const auto lambdas = parser.get<std::vector<double>>("lambda");
         for (double lambda : lambdas)
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_test<unsigned int>(vm, rng_type, plot_name + "-" + std::to_string(lambda),
+            run_test<unsigned int>(parser, rng_type, plot_name + "-" + std::to_string(lambda),
                 [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
                     return curandGeneratePoisson(gen, data, size, lambda);
                 },
@@ -204,51 +203,37 @@ const std::vector<std::string> all_distributions = {
 
 int main(int argc, char *argv[])
 {
-    namespace po = boost::program_options;
-    po::options_description options("options");
+    cli::Parser parser(argc, argv);
 
     const std::string distribution_desc =
         "space-separated list of distributions:" +
         std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
             [](std::string a, std::string b) {
-                return a + "\n   " + b;
+                return a + "\n      " + b;
             }
         ) +
-        "\nor all";
+        "\n      or all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
             [](std::string a, std::string b) {
-                return a + "\n   " + b;
+                return a + "\n      " + b;
             }
         ) +
-        "\nor all";
-    options.add_options()
-        ("help", "show usage instructions")
-        ("size", po::value<size_t>()->default_value(10000), "number of samples in every first level test")
-        ("level1-tests", po::value<size_t>()->default_value(10), "number of first level tests")
-        ("level2-tests", po::value<size_t>()->default_value(10), "number of second level tests")
-        ("dis", po::value<std::vector<std::string>>()->multitoken()->default_value({ "all" }, "all"),
-            distribution_desc.c_str())
-        ("engine", po::value<std::vector<std::string>>()->multitoken()->default_value({ "philox" }, "philox"),
-            engine_desc.c_str())
-        ("lambda", po::value<std::vector<double>>()->multitoken()->default_value({ 100.0 }, "100.0"),
-            "space-separated list of lambdas of Poisson distribution")
-        ("plots", "save plots for GnuPlot")
-    ;
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, options), vm);
-    po::notify(vm);
-
-    if(vm.count("help"))
-    {
-        std::cout << options << std::endl;
-        return 0;
-    }
+        "\n      or all";
+    
+    parser.set_optional<size_t>("size", "size", 10000, "number of samples in every first level test");
+    parser.set_optional<size_t>("level1-tests", "level1-tests", 10, "number of first level tests");
+    parser.set_optional<size_t>("level2-tests", "level2-tests", 10, "number of second level tests");
+	parser.set_optional<std::vector<std::string>>("dis", "dis", {"all"}, distribution_desc.c_str());
+    parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
+    parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
+	parser.set_optional<bool>("plots", "plots", false, "Boolean argument to save plots for GnuPlot");
+    parser.run_and_exit_if_error();
 
     std::vector<std::string> engines;
     {
-        auto es = vm["engine"].as<std::vector<std::string>>();
+        auto es = parser.get<std::vector<std::string>>("engine");
         if (std::find(es.begin(), es.end(), "all") != es.end())
         {
             engines = all_engines;
@@ -265,7 +250,7 @@ int main(int argc, char *argv[])
 
     std::vector<std::string> distributions;
     {
-        auto ds = vm["dis"].as<std::vector<std::string>>();
+        auto ds = parser.get<std::vector<std::string>>("dis");
         if (std::find(ds.begin(), ds.end(), "all") != ds.end())
         {
             distributions = all_distributions;
@@ -290,23 +275,23 @@ int main(int argc, char *argv[])
             const std::string plot_name = engine + "-" + distribution;
             if (engine == "xorwow")
             {
-                run_tests(vm, CURAND_RNG_PSEUDO_XORWOW, distribution, plot_name);
+                run_tests(parser, CURAND_RNG_PSEUDO_XORWOW, distribution, plot_name);
             }
             else if (engine == "mrg32k3a")
             {
-                run_tests(vm, CURAND_RNG_PSEUDO_MRG32K3A, distribution, plot_name);
+                run_tests(parser, CURAND_RNG_PSEUDO_MRG32K3A, distribution, plot_name);
             }
             else if (engine == "mtgp32")
             {
-                run_tests(vm, CURAND_RNG_PSEUDO_MTGP32, distribution, plot_name);
+                run_tests(parser, CURAND_RNG_PSEUDO_MTGP32, distribution, plot_name);
             }
             else if (engine == "philox")
             {
-                run_tests(vm, CURAND_RNG_PSEUDO_PHILOX4_32_10, distribution, plot_name);
+                run_tests(parser, CURAND_RNG_PSEUDO_PHILOX4_32_10, distribution, plot_name);
             }
             else if (engine == "sobol32")
             {
-                run_tests(vm, CURAND_RNG_QUASI_SOBOL32, distribution, plot_name);
+                run_tests(parser, CURAND_RNG_QUASI_SOBOL32, distribution, plot_name);
             }
         }
     }
