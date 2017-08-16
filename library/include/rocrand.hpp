@@ -29,6 +29,7 @@
 #include <string>
 #include <sstream>
 #include <type_traits>
+#include <limits>
 
 #include "rocrand.h"
 #include "rocrand_kernel.h"
@@ -51,7 +52,6 @@ public:
         : m_error(error),
           m_error_string(to_string(error))
     {
-
     }
 
     ~error() noexcept
@@ -97,19 +97,30 @@ private:
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
+    static_assert(
+        std::is_same<unsigned int, IntType>::value,
+            "Only unsigned int type is supported in uniform_int_distribution"
+    );
+
 public:
     typedef IntType result_type;
 
     uniform_int_distribution()
     {
-        static_assert(
-            std::is_same<unsigned int, IntType>::value,
-             "Only unsigned int type is supported in uniform_int_distribution"
-        );
     }
 
     void reset()
     {
+    }
+
+    IntType min() const
+    {
+        return 0;
+    }
+
+    IntType max() const
+    {
+        return std::numeric_limits<IntType>::max();
     }
 
     template<class Generator>
@@ -118,25 +129,46 @@ public:
         rocrand_status status = rocrand_generate(g.m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
+
+    bool operator==(const uniform_int_distribution<IntType>& other)
+    {
+        return true;
+    }
+
+    bool operator!=(const uniform_int_distribution<IntType>& other)
+    {
+        return !(*this == other);
+    }
 };
 
 template<class RealType = float>
 class uniform_real_distribution
 {
+    static_assert(
+            std::is_same<float, RealType>::value
+            || std::is_same<double, RealType>::value,
+            "Only float and double types are supported in uniform_real_distribution"
+    );
+
 public:
     typedef RealType result_type;
 
     uniform_real_distribution()
     {
-        static_assert(
-             std::is_same<float, RealType>::value
-                || std::is_same<double, RealType>::value,
-             "Only float and double types are supported in uniform_real_distribution"
-        );
     }
 
     void reset()
     {
+    }
+
+    RealType min() const
+    {
+        return std::nextafter(RealType(0.0), RealType(1.0));
+    }
+
+    RealType max() const
+    {
+        return 1.0;
     }
 
     template<class Generator>
@@ -145,6 +177,16 @@ public:
         rocrand_status status;
         status = this->generate(g, output, size);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    bool operator==(const uniform_real_distribution<RealType>& other)
+    {
+        return true;
+    }
+
+    bool operator!=(const uniform_real_distribution<RealType>& other)
+    {
+        return !(*this == other);
     }
 
 private:
@@ -164,6 +206,12 @@ private:
 template<class RealType = float>
 class normal_distribution
 {
+    static_assert(
+            std::is_same<float, RealType>::value
+            || std::is_same<double, RealType>::value,
+            "Only float and double types are supported in normal_distribution"
+    );
+
 public:
     typedef RealType result_type;
 
@@ -174,7 +222,6 @@ public:
         param_type(RealType mean = 0.0, RealType stddev = 1.0)
             : m_mean(mean), m_stddev(stddev)
         {
-
         }
 
         RealType mean() const
@@ -196,7 +243,7 @@ public:
         {
             return !(*this == other);
         }
-
+    private:
         RealType m_mean;
         RealType m_stddev;
     };
@@ -204,11 +251,6 @@ public:
     normal_distribution(RealType mean = 0.0, RealType stddev = 1.0)
         : m_params(mean, stddev)
     {
-        static_assert(
-             std::is_same<float, RealType>::value
-                || std::is_same<double, RealType>::value,
-             "Only float and double types are supported in normal_distribution"
-        );
     }
 
     void reset()
@@ -223,6 +265,16 @@ public:
     RealType stddev() const
     {
         return m_params.stddev();
+    }
+
+    RealType min() const
+    {
+        return std::numeric_limits<RealType>::lowest();
+    }
+
+    RealType max() const
+    {
+        return std::numeric_limits<RealType>::max();
     }
 
     param_type param() const
@@ -241,6 +293,16 @@ public:
         rocrand_status status;
         status = this->generate(g, output, size);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    bool operator==(const normal_distribution<RealType>& other)
+    {
+        return this->m_params == other.m_params;
+    }
+
+    bool operator!=(const normal_distribution<RealType>& other)
+    {
+        return !(*this == other);
     }
 
 private:
@@ -266,6 +328,12 @@ private:
 template<class RealType = float>
 class lognormal_distribution
 {
+    static_assert(
+            std::is_same<float, RealType>::value
+            || std::is_same<double, RealType>::value,
+            "Only float and double types are supported in lognormal_distribution"
+    );
+
 public:
     typedef RealType result_type;
 
@@ -276,7 +344,6 @@ public:
         param_type(RealType m = 0.0, RealType s = 1.0)
             : m_mean(m), m_stddev(s)
         {
-
         }
 
         RealType m() const
@@ -298,7 +365,7 @@ public:
         {
             return !(*this == other);
         }
-
+    private:
         RealType m_mean;
         RealType m_stddev;
     };
@@ -306,11 +373,6 @@ public:
     lognormal_distribution(RealType m = 0.0, RealType s = 1.0)
         : m_params(m, s)
     {
-        static_assert(
-             std::is_same<float, RealType>::value
-                || std::is_same<double, RealType>::value,
-             "Only float and double types are supported in lognormal_distribution"
-        );
     }
 
     void reset()
@@ -332,6 +394,16 @@ public:
         return m_params;
     }
 
+    RealType min() const
+    {
+        return 0;
+    }
+
+    RealType max() const
+    {
+        return std::numeric_limits<RealType>::max();
+    }
+
     void param(const param_type& params)
     {
         m_params = params;
@@ -343,6 +415,16 @@ public:
         rocrand_status status;
         status = this->generate(g, output, size);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    bool operator==(const lognormal_distribution<RealType>& other)
+    {
+        return this->m_params == other.m_params;
+    }
+
+    bool operator!=(const lognormal_distribution<RealType>& other)
+    {
+        return !(*this == other);
     }
 
 private:
@@ -368,6 +450,11 @@ private:
 template<class IntType = unsigned int>
 class poisson_distribution
 {
+    static_assert(
+        std::is_same<unsigned int, IntType>::value,
+        "Only unsigned int type is supported in poisson_distribution"
+    );
+
 public:
     typedef IntType result_type;
 
@@ -378,7 +465,6 @@ public:
         param_type(double mean = 1)
             : m_mean(mean)
         {
-
         }
 
         double mean() const
@@ -403,10 +489,6 @@ public:
     poisson_distribution(double mean = 1.0)
         : m_params(mean)
     {
-        static_assert(
-             std::is_same<unsigned int, IntType>::value,
-             "Only unsigned int type is supported in poisson_distribution"
-        );
     }
 
     void reset()
@@ -416,6 +498,16 @@ public:
     double mean() const
     {
         return m_params.mean();
+    }
+
+    IntType min() const
+    {
+        return 0;
+    }
+
+    IntType max() const
+    {
+        return std::numeric_limits<IntType>::max();
     }
 
     param_type param() const
@@ -434,6 +526,16 @@ public:
         rocrand_status status;
         status = rocrand_generate_poisson(g.m_generator, output, size, this->mean());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    bool operator==(const poisson_distribution<IntType>& other)
+    {
+        return this->m_params == other.m_params;
+    }
+
+    bool operator!=(const poisson_distribution<IntType>& other)
+    {
+        return !(*this == other);
     }
 
 private:
@@ -465,6 +567,16 @@ public:
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    result_type min() const
+    {
+        return 0;
+    }
+
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
     }
 
 protected:
