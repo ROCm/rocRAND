@@ -38,6 +38,9 @@ void rocrand_prng_ctor_template()
     T();
     T(11ULL); // seed
     T(11ULL, 2ULL); // seed, offset
+
+    rocrand_cpp::random_device rd;
+    T(rd(), 2ULL); // seed, offset
 }
 
 TEST(rocrand_cpp_wrapper, rocrand_prng_ctor)
@@ -46,6 +49,21 @@ TEST(rocrand_cpp_wrapper, rocrand_prng_ctor)
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::xorwow_engine>());
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mrg32k3a_engine>());
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mtgp32_engine>());
+}
+
+template<class T>
+void is_uint()
+{
+    ::testing::StaticAssertTypeEq<unsigned int, T>();
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_rng_result_type)
+{
+    is_uint<rocrand_cpp::philox4x32_10_engine::result_type>();
+    is_uint<rocrand_cpp::xorwow_engine::result_type>();
+    is_uint<rocrand_cpp::mrg32k3a_engine::result_type>();
+    is_uint<rocrand_cpp::mtgp32_engine::result_type>();
+    is_uint<rocrand_cpp::sobol32_engine::result_type>();
 }
 
 template<class T>

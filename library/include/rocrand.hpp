@@ -106,6 +106,9 @@ private:
     std::string m_error_string;
 };
 
+// TODO: document
+typedef std::random_device random_device;
+
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
