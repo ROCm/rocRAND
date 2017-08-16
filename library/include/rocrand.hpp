@@ -631,11 +631,11 @@ class prng_engine : public rng_engine<GeneratorType>
 
 public:
     typedef unsigned long long seed_type; // 64bit uint
-    typedef typename base_type::result_type result_type;
-    typedef typename base_type::offset_type offset_type;
+
+    static constexpr seed_type default_seed = DefaultSeed;
 
     prng_engine(seed_type seed_value = DefaultSeed,
-                offset_type offset_value = 0)
+                typename base_type::offset_type offset_value = 0)
         : base_type(offset_value)
     {
         this->seed(seed_value);
@@ -652,18 +652,22 @@ public:
     }
 };
 
-template<rocrand_rng_type GeneratorType, unsigned long long DefaultDimensions = 1>
+template<rocrand_rng_type GeneratorType, unsigned long long DefaultSeed>
+constexpr typename prng_engine<GeneratorType, DefaultSeed>::seed_type
+prng_engine<GeneratorType, DefaultSeed>::default_seed;
+
+template<rocrand_rng_type GeneratorType, unsigned int DefaultNumDimensions = 1>
 class qrng_engine : public rng_engine<GeneratorType>
 {
     typedef rng_engine<GeneratorType> base_type;
 
 public:
     typedef unsigned int dimensions_num_type; // 32-bit uint
-    typedef typename base_type::result_type result_type;
-    typedef typename base_type::offset_type offset_type;
 
-    qrng_engine(dimensions_num_type num_of_dimensions = DefaultDimensions,
-                offset_type offset_value = 0)
+    static constexpr dimensions_num_type default_num_dimensions = DefaultNumDimensions;
+
+    qrng_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
+                typename base_type::offset_type offset_value = 0)
         : base_type(offset_value)
     {
         this->dimensions(num_of_dimensions);
@@ -675,47 +679,63 @@ public:
 
     void dimensions(dimensions_num_type value)
     {
-        rocrand_status status = rocrand_set_quasi_random_generator_dimensions(this->m_generator, value);
+        rocrand_status status =
+            rocrand_set_quasi_random_generator_dimensions(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 };
 
+template<rocrand_rng_type GeneratorType, unsigned int DefaultNumDimensions>
+constexpr typename qrng_engine<GeneratorType, DefaultNumDimensions>::dimensions_num_type
+qrng_engine<GeneratorType, DefaultNumDimensions>::default_num_dimensions;
+
 } // end detail namespace
 
-class philox4x32_10_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED>
+template<unsigned long long DefaultSeed = ROCRAND_PHILOX4x32_DEFAULT_SEED>
+class philox4x32_10_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, DefaultSeed>
 {
-    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_PHILOX4x32_DEFAULT_SEED> base_type;
+    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, DefaultSeed> base_type;
 public:
     using base_type::base_type;
 };
 
-class xorwow_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, ROCRAND_XORWOW_DEFAULT_SEED>
+template<unsigned long long DefaultSeed = ROCRAND_XORWOW_DEFAULT_SEED>
+class xorwow_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, DefaultSeed>
 {
-    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, ROCRAND_XORWOW_DEFAULT_SEED> base_type;
+    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_XORWOW, DefaultSeed> base_type;
 public:
     using base_type::base_type;
 };
 
-class mrg32k3a_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, ROCRAND_MRG32K3A_DEFAULT_SEED>
+template<unsigned long long DefaultSeed = ROCRAND_MRG32K3A_DEFAULT_SEED>
+class mrg32k3a_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, DefaultSeed>
 {
-    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, ROCRAND_MRG32K3A_DEFAULT_SEED> base_type;
+    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_MRG32K3A, DefaultSeed> base_type;
 public:
     using base_type::base_type;
 };
 
-class mtgp32_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, 0>
+template<unsigned long long DefaultSeed = 0>
+class mtgp32_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, DefaultSeed>
 {
-    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, 0> base_type;
+    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, DefaultSeed> base_type;
 public:
     using base_type::base_type;
 };
 
-class sobol32_engine : public detail::qrng_engine<ROCRAND_RNG_QUASI_SOBOL32, 1>
+template<unsigned int DefaultNumDimensions = 1>
+class sobol32_engine : public detail::qrng_engine<ROCRAND_RNG_QUASI_SOBOL32, DefaultNumDimensions>
 {
-    typedef detail::qrng_engine<ROCRAND_RNG_QUASI_SOBOL32, 1> base_type;
+    typedef detail::qrng_engine<ROCRAND_RNG_QUASI_SOBOL32, DefaultNumDimensions> base_type;
 public:
     using base_type::base_type;
 };
+
+typedef philox4x32_10_engine<> philox4x32_10;
+typedef xorwow_engine<> xorwow;
+typedef mrg32k3a_engine<> mrg32k3a;
+typedef mtgp32_engine<> mtgp32;
+typedef sobol32_engine<> sobol32;
 
 } // end namespace rocrand
 
