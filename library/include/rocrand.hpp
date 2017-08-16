@@ -89,6 +89,18 @@ public:
         }
     }
 
+    friend
+    bool operator==(const error& l, const error& r)
+    {
+        return l.error_code() == r.error_code();
+    }
+
+    friend
+    bool operator!=(const error& l, const error& r)
+    {
+        return !(l == r);
+    }
+
 private:
     error_type m_error;
     std::string m_error_string;
@@ -549,12 +561,17 @@ class rng_engine
 {
 public:
     typedef unsigned int result_type; // 32bit uint
+    typedef unsigned long long offset_type;
 
-    rng_engine()
+    rng_engine(offset_type offset_value)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, GeneratorType);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(offset_value > 0)
+        {
+            this->offset(offset_value);
+        }
     }
 
     ~rng_engine()
@@ -566,6 +583,12 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 
@@ -604,20 +627,15 @@ class prng_engine : public rng_engine<GeneratorType>
     typedef rng_engine<GeneratorType> base_type;
 
 public:
-
     typedef unsigned long long seed_type; // 64bit uint
-    typedef unsigned long long offset_type;
     typedef typename base_type::result_type result_type;
+    typedef typename base_type::offset_type offset_type;
 
     prng_engine(seed_type seed_value = DefaultSeed,
                 offset_type offset_value = 0)
-        : base_type()
+        : base_type(offset_value)
     {
         this->seed(seed_value);
-        if(offset_value > 0)
-        {
-            this->offset(offset_value);
-        }
     }
 
     ~prng_engine()
@@ -629,10 +647,32 @@ public:
         rocrand_status status = rocrand_set_seed(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
+};
 
-    void offset(offset_type value)
+template<rocrand_rng_type GeneratorType, unsigned long long DefaultDimensions = 1>
+class qrng_engine : public rng_engine<GeneratorType>
+{
+    typedef rng_engine<GeneratorType> base_type;
+
+public:
+    typedef unsigned int dimensions_num_type; // 32-bit uint
+    typedef typename base_type::result_type result_type;
+    typedef typename base_type::offset_type offset_type;
+
+    qrng_engine(dimensions_num_type num_of_dimensions = DefaultDimensions,
+                offset_type offset_value = 0)
+        : base_type(offset_value)
     {
-        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        this->dimensions(num_of_dimensions);
+    }
+
+    ~qrng_engine()
+    {
+    }
+
+    void dimensions(dimensions_num_type value)
+    {
+        rocrand_status status = rocrand_set_quasi_random_generator_dimensions(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 };
@@ -663,6 +703,13 @@ public:
 class mtgp32_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, 0>
 {
     typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, 0> base_type;
+public:
+    using base_type::base_type;
+};
+
+class sobol32_engine : public detail::qrng_engine<ROCRAND_RNG_QUASI_SOBOL32, 1>
+{
+    typedef detail::qrng_engine<ROCRAND_RNG_QUASI_SOBOL32, 1> base_type;
 public:
     using base_type::base_type;
 };

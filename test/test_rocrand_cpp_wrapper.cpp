@@ -26,6 +26,12 @@
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
 
+TEST(rocrand_cpp_wrapper, rocrand_error)
+{
+    rocrand_cpp::error e(ROCRAND_STATUS_SUCCESS);
+    EXPECT_EQ(e.error_code(), ROCRAND_STATUS_SUCCESS);
+}
+
 template<class T>
 void rocrand_prng_ctor_template()
 {
@@ -40,6 +46,31 @@ TEST(rocrand_cpp_wrapper, rocrand_prng_ctor)
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::xorwow_engine>());
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mrg32k3a_engine>());
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mtgp32_engine>());
+}
+
+template<class T>
+void rocrand_qrng_ctor_template()
+{
+    T();
+    T(11U); // dimensions
+    T(11U, 2ULL); // dimensions, offset
+    T(20000, 2ULL); // dimensions, offset
+
+    try {
+        T(20001, 2ULL);
+        FAIL() << "Expected rocrand_cpp::error";
+    }
+    catch(const rocrand_cpp::error& err) {
+        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_OUT_OF_RANGE);
+    }
+    catch(...) {
+        FAIL() << "Expected rocrand_cpp::error";
+    }
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_qrng_ctor)
+{
+    ASSERT_NO_THROW(rocrand_qrng_ctor_template<rocrand_cpp::sobol32_engine>());
 }
 
 template<class T>
@@ -59,19 +90,44 @@ TEST(rocrand_cpp_wrapper, rocrand_prng_seed)
 }
 
 template<class T>
-void rocrand_prng_offset_template()
+void rocrand_qrng_dims_template()
+{
+    T engine;
+    engine.dimensions(11U);
+    engine.dimensions(20000U);
+
+    try {
+        engine.dimensions(20001U);
+        FAIL() << "Expected rocrand_cpp::error";
+    }
+    catch(const rocrand_cpp::error& err) {
+        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_OUT_OF_RANGE);
+    }
+    catch(...) {
+        FAIL() << "Expected rocrand_cpp::error";
+    }
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_qrng_dims)
+{
+    ASSERT_NO_THROW(rocrand_qrng_dims_template<rocrand_cpp::sobol32_engine>());
+}
+
+template<class T>
+void rocrand_rng_offset_template()
 {
     T engine;
     engine.offset(11ULL);
     engine.offset(12ULL);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_prng_offset)
+TEST(rocrand_cpp_wrapper, rocrand_rng_offset)
 {
-    ASSERT_NO_THROW(rocrand_prng_offset_template<rocrand_cpp::philox4x32_10_engine>());
-    ASSERT_NO_THROW(rocrand_prng_offset_template<rocrand_cpp::xorwow_engine>());
-    ASSERT_NO_THROW(rocrand_prng_offset_template<rocrand_cpp::mrg32k3a_engine>());
-    ASSERT_NO_THROW(rocrand_prng_offset_template<rocrand_cpp::mtgp32_engine>());
+    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::philox4x32_10_engine>());
+    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::xorwow_engine>());
+    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::mrg32k3a_engine>());
+    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::mtgp32_engine>());
+    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::sobol32_engine>());
 }
 
 template<class T>
@@ -90,6 +146,7 @@ TEST(rocrand_cpp_wrapper, rocrand_rng_stream)
     ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::xorwow_engine>());
     ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::mrg32k3a_engine>());
     ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::mtgp32_engine>());
+    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::sobol32_engine>());
 }
 
 template<class T, class IntType>
@@ -144,6 +201,9 @@ TEST(rocrand_cpp_wrapper, rocrand_uniform_int_dist)
     ));
     ASSERT_NO_THROW((
         rocrand_uniform_int_dist_template<rocrand_cpp::mtgp32_engine, unsigned int>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_uniform_int_dist_template<rocrand_cpp::sobol32_engine, unsigned int>()
     ));
 }
 
@@ -200,6 +260,9 @@ TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_float)
     ASSERT_NO_THROW((
         rocrand_uniform_real_dist_template<rocrand_cpp::mtgp32_engine, float>()
     ));
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::sobol32_engine, float>()
+    ));
 }
 
 TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_double)
@@ -215,6 +278,9 @@ TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_double)
     ));
     ASSERT_NO_THROW((
         rocrand_uniform_real_dist_template<rocrand_cpp::mtgp32_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_uniform_real_dist_template<rocrand_cpp::sobol32_engine, double>()
     ));
 }
 
@@ -279,6 +345,9 @@ TEST(rocrand_cpp_wrapper, rocrand_normal_dist_float)
     ASSERT_NO_THROW((
         rocrand_normal_dist_template<rocrand_cpp::mtgp32_engine, float>()
     ));
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::sobol32_engine, float>()
+    ));
 }
 
 TEST(rocrand_cpp_wrapper, rocrand_normal_dist_double)
@@ -294,6 +363,9 @@ TEST(rocrand_cpp_wrapper, rocrand_normal_dist_double)
     ));
     ASSERT_NO_THROW((
         rocrand_normal_dist_template<rocrand_cpp::mtgp32_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_normal_dist_template<rocrand_cpp::sobol32_engine, double>()
     ));
 }
 
@@ -376,6 +448,9 @@ TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_float)
     ASSERT_NO_THROW((
         rocrand_lognormal_dist_template<rocrand_cpp::mtgp32_engine, float>()
     ));
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::sobol32_engine, float>()
+    ));
 }
 
 TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_double)
@@ -391,6 +466,9 @@ TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_double)
     ));
     ASSERT_NO_THROW((
         rocrand_lognormal_dist_template<rocrand_cpp::mtgp32_engine, double>()
+    ));
+    ASSERT_NO_THROW((
+        rocrand_lognormal_dist_template<rocrand_cpp::sobol32_engine, double>()
     ));
 }
 
@@ -477,6 +555,9 @@ TEST_P(poisson_dist, rocrand_poisson_dist)
     ));
     ASSERT_NO_THROW((
         rocrand_poisson_dist_template<rocrand_cpp::mtgp32_engine, unsigned int>(lambda)
+    ));
+    ASSERT_NO_THROW((
+        rocrand_poisson_dist_template<rocrand_cpp::sobol32_engine, unsigned int>(lambda)
     ));
 }
 
