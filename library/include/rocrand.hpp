@@ -548,6 +548,13 @@ public:
     using base_type::base_type;
 };
 
+class mtgp32_engine : public detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, 0>
+{
+    typedef detail::prng_engine<ROCRAND_RNG_PSEUDO_MTGP32, 0> base_type;
+public:
+    using base_type::base_type;
+};
+
 } // end namespace rocrand
 
 #endif // #if __cplusplus >= 201103L
