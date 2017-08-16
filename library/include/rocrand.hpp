@@ -737,6 +737,8 @@ typedef mrg32k3a_engine<> mrg32k3a;
 typedef mtgp32_engine<> mtgp32;
 typedef sobol32_engine<> sobol32;
 
+typedef xorwow default_random_engine;
+
 } // end namespace rocrand
 
 #endif // #if __cplusplus >= 201103L
