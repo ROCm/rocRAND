@@ -39,15 +39,17 @@ namespace rocrand_cpp {
 /// \class error
 /// \brief A run-time rocRAND error.
 ///
-/// The error class represents an error returned from an rocRAND
-/// function.
-///
-/// \see context_error
+/// The error class represents an error returned
+/// by a rocRAND function.
 class error : public std::exception
 {
 public:
+    /// rocRAND error code type
     typedef rocrand_status error_type;
 
+    /// Constructs new error object from error code \p error.
+    ///
+    /// \param error - error code
     error(error_type error) noexcept
         : m_error(error),
           m_error_string(to_string(error))
@@ -76,14 +78,39 @@ public:
         return m_error_string.c_str();
     }
 
+    /// Static function which converts the numeric rocRAND
+    /// error code \p error to a human-readable string.
+    ///
+    /// If the error code is unknown, a string containing
+    /// "Unknown rocRAND error" along with the error code
+    /// \p error will be returned.
     static std::string to_string(error_type error)
     {
         switch(error)
         {
-            // TODO
+            case ROCRAND_STATUS_SUCCESS:
+                return "Success";
+            case ROCRAND_STATUS_VERSION_MISMATCH:
+                return "Header file and linked library version do not match";
+            case ROCRAND_STATUS_NOT_CREATED:
+                return "Generator was not created using rocrand_create_generator";
+            case ROCRAND_STATUS_ALLOCATION_FAILED:
+                return "Memory allocation failed during execution";
+            case ROCRAND_STATUS_TYPE_ERROR:
+                return "Generator type is wrong";
+            case ROCRAND_STATUS_OUT_OF_RANGE:
+                return "Argument out of range";
+            case ROCRAND_STATUS_LENGTH_NOT_MULTIPLE:
+                return "Length requested is not a multple of dimension";
+            case ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED:
+                return "GPU does not have double precision";
+            case ROCRAND_STATUS_LAUNCH_FAILURE:
+                return "Kernel launch failure";
+            case ROCRAND_STATUS_INTERNAL_ERROR:
+                return "Internal library error";
             default: {
                 std::stringstream s;
-                s << "Unknown rocRAND Error (" << error << ")";
+                s << "Unknown rocRAND error (" << error << ")";
                 return s.str();
             }
         }
