@@ -33,6 +33,36 @@ TEST(rocrand_cpp_wrapper, rocrand_error)
 }
 
 template<class T>
+void rocrand_rng_ctor_template()
+{
+    rocrand_generator generator = NULL;
+    ASSERT_EQ(rocrand_create_generator(&generator, T::type()), ROCRAND_STATUS_SUCCESS);
+    ASSERT_NE(generator, (rocrand_generator)NULL);
+    T x(generator);
+    ASSERT_EQ(generator, (rocrand_generator)NULL);
+
+    try {
+        T y(generator);
+        FAIL() << "Expected rocrand_cpp::error";
+    }
+    catch(const rocrand_cpp::error& err) {
+        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_NOT_CREATED);
+    }
+    catch(...) {
+        FAIL() << "Expected rocrand_cpp::error";
+    }
+}
+
+TEST(rocrand_cpp_wrapper, rocrand_rng_ctor)
+{
+    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::philox4x32_10>());
+    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::xorwow>());
+    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::mrg32k3a>());
+    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::mtgp32>());
+    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::sobol32>());
+}
+
+template<class T>
 void rocrand_prng_ctor_template()
 {
     T();
