@@ -114,20 +114,68 @@ double2 mrg_box_muller_double(double x, double y)
     #endif
     return result;
 }
+    
+FQUALIFIERS
+float roc_f_erfinv(float x)
+{
+    float tt1, tt2, lnx, sgn;
+    sgn = (x < 0.0f) ? -1.0f : 1.0f;
 
-// inverse CDF
-// TODO: find alternative as performance is low
+    x = (1.0f - x) * (1.0f + x);        
+    lnx = logf(x);
+    
+    #ifdef __HIP_DEVICE_COMPILE__
+    if (isnan(lnx))
+    #else
+    if (std::isnan(lnx))
+    #endif
+        return 1.0f;
+    #ifdef __HIP_DEVICE_COMPILE__
+    else if (isinf(lnx))
+    #else
+    else if (std::isinf(lnx))
+    #endif
+        return 0.0f;
+
+    tt1 = 2.0f / (ROCRAND_PI * 0.147f) + 0.5f * lnx;
+    tt2 = 1.0f / (0.147f) * lnx;
+
+    return(sgn * sqrtf(-tt1 + sqrtf(tt1 * tt1 - tt2)));
+}
+
+FQUALIFIERS
+double roc_d_erfinv(double x)
+{
+    double tt1, tt2, lnx, sgn;
+    sgn = (x < 0.0) ? -1.0 : 1.0;
+
+    x = (1.0 - x) * (1.0 + x);        
+    lnx = log(x);
+    
+    #ifdef __HIP_DEVICE_COMPILE__
+    if (isnan(lnx))
+    #else
+    if (std::isnan(lnx))
+    #endif
+        return 1.0;
+    #ifdef __HIP_DEVICE_COMPILE__
+    else if (isinf(lnx))
+    #else
+    else if (std::isinf(lnx))
+    #endif
+        return 0.0;
+
+    tt1 = 2.0 / (ROCRAND_PI_DOUBLE * 0.147) + 0.5 * lnx;
+    tt2 = 1.0 / (0.147) * lnx;
+
+    return(sgn * sqrt(-tt1 + sqrt(tt1 * tt1 - tt2)));
+}
+
 FQUALIFIERS
 float normal_distribution(unsigned int x)
 {
-    float s = -ROCRAND_SQRT2;
-    unsigned int z = x;
-    if(z > 0x80000000) {
-        z = 0xffffffff - z;
-        s = -s;
-    }
-    float p = ::rocrand_device::detail::uniform_distribution(z);
-    float v = s * erfcinvf(2.0f * p);
+    float p = ::rocrand_device::detail::uniform_distribution(x);
+    float v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_f_erfinv(2.0f * p - 1.0f);
     return v;
 }
 
@@ -151,19 +199,11 @@ float4 normal_distribution4(uint4 v)
     };
 }
 
-// inverse CDF
-// TODO: find alternative as performance is low
 FQUALIFIERS
 double normal_distribution_double(unsigned int x)
 {
-    double s = -ROCRAND_SQRT2_DOUBLE;
-    unsigned int z = x;
-    if(z > 0x80000000) {
-        z = 0xffffffff - z;
-        s = -s;
-    }
-    double p = ::rocrand_device::detail::uniform_distribution_double(z);
-    double v = s * erfcinv(2.0 * p);
+    double p = ::rocrand_device::detail::uniform_distribution_double(x);
+    double v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_d_erfinv(2.0 * p - 1.0);
     return v;
 }
 
