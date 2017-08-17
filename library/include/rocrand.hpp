@@ -577,6 +577,16 @@ public:
         }
     }
 
+    rng_engine(rocrand_generator& generator)
+        : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
     ~rng_engine()
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
@@ -603,6 +613,11 @@ public:
     result_type max() const
     {
         return std::numeric_limits<unsigned int>::max();
+    }
+
+    static constexpr rocrand_rng_type type()
+    {
+        return GeneratorType;
     }
 
 protected:
@@ -641,6 +656,11 @@ public:
         this->seed(seed_value);
     }
 
+    prng_engine(rocrand_generator& generator)
+        : base_type(generator)
+    {
+    }
+
     ~prng_engine()
     {
     }
@@ -671,6 +691,11 @@ public:
         : base_type(offset_value)
     {
         this->dimensions(num_of_dimensions);
+    }
+
+    qrng_engine(rocrand_generator& generator)
+        : base_type(generator)
+    {
     }
 
     ~qrng_engine()
@@ -738,6 +763,17 @@ typedef mtgp32_engine<> mtgp32;
 typedef sobol32_engine<> sobol32;
 
 typedef xorwow default_random_engine;
+
+int version()
+{
+    int x;
+    rocrand_status status = rocrand_get_version(&x);
+    if(status != ROCRAND_STATUS_SUCCESS)
+    {
+        throw rocrand_cpp::error(status);
+    }
+    return x;
+}
 
 } // end namespace rocrand
 
