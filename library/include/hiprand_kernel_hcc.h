@@ -44,6 +44,9 @@ typedef unsigned int hiprandDirectionVectors32_t[32];
 typedef mtgp32_param mtgp32_kernel_params_t;
 typedef mtgp32_fast_param mtgp32_fast_param_t;
 
+/// \cond
+namespace detail {
+
 template<typename T, typename... R>
 struct is_any_of : std::false_type { };
 
@@ -57,6 +60,9 @@ struct is_any_of<T, F, R...>
         std::is_same<T, F>::value || is_any_of<T, R...>::value
       >
 { };
+
+} // end namespace detail
+/// \endcond
 
 hiprandStatus_t to_hiprand_status(rocrand_status status)
 {
@@ -98,7 +104,7 @@ QUALIFIERS
 void check_state_type()
 {
     static_assert(
-        is_any_of<
+        detail::is_any_of<
             StateType,
             hiprandState_t,
             hiprandStateXORWOW_t,
@@ -113,7 +119,7 @@ void check_state_type()
 
 __host__
 hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
-                                           mtgp32_kernel_params_t * p) 
+                                           mtgp32_kernel_params_t * p)
 {
     return to_hiprand_status(
         rocrand_make_constant(params, p)
@@ -125,7 +131,7 @@ hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
                                              mtgp32_params_fast_t params[],
                                              mtgp32_kernel_params_t *k,
                                              int n,
-                                             unsigned long long seed) 
+                                             unsigned long long seed)
 {
     return to_hiprand_status(
         rocrand_make_state_mtgp32(s, params, n, seed)
@@ -148,7 +154,7 @@ void hiprand_init(const unsigned long long seed,
         "check hiprandMakeMTGP32KernelState() host function"
     );
     static_assert(
-        !is_any_of<
+        !detail::is_any_of<
             StateType,
             hiprandStateSobol32_t
         >::value,
@@ -186,7 +192,7 @@ QUALIFIERS
 void skipahead_sequence(unsigned long long n, StateType * state)
 {
     static_assert(
-        !is_any_of<
+        !detail::is_any_of<
             StateType,
             hiprandStateMtgp32_t,
             hiprandStateSobol32_t
@@ -202,7 +208,7 @@ QUALIFIERS
 void skipahead_subsequence(unsigned long long n, StateType * state)
 {
     static_assert(
-        is_any_of<
+        detail::is_any_of<
             StateType,
             hiprandStateMRG32k3a_t
         >::value,
@@ -273,7 +279,7 @@ float2 hiprand_normal2(StateType * state)
 {
     check_state_type<StateType>();
     static_assert(
-        is_any_of<
+        detail::is_any_of<
             StateType,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
@@ -304,7 +310,7 @@ double2 hiprand_normal2_double(StateType * state)
 {
     check_state_type<StateType>();
     static_assert(
-        is_any_of<
+        detail::is_any_of<
             StateType,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
@@ -337,7 +343,7 @@ float2 hiprand_log_normal2(StateType * state,
 {
     check_state_type<StateType>();
     static_assert(
-        is_any_of<
+        detail::is_any_of<
             StateType,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
@@ -371,7 +377,7 @@ double2 hiprand_log_normal2_double(StateType * state,
 {
     check_state_type<StateType>();
     static_assert(
-        is_any_of<
+        detail::is_any_of<
             StateType,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
