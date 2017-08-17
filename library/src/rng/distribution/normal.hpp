@@ -72,18 +72,12 @@ struct normal_distribution<float>
         };
     }
 
-    // inverse CDF
-    // TODO: find alternative as performance is low
     __forceinline__ __host__ __device__
     float operator()(const unsigned int x)
     {
         uniform_distribution<float> uniform;
         float p = uniform(x);
-        float v;
-        if (p < 0.5f)
-            v = -inverse_f_cdf(sqrtf(-2.0f * logf(p)));
-        else
-            v =  inverse_f_cdf(sqrtf(-2.0f * logf(1.0f - p)));
+        float v = ROCRAND_SQRT2 * roc_f_erfinv(2.0f * p - 1.0f);
         v = mean + v * stddev;
         return v;
     }
@@ -108,18 +102,12 @@ struct normal_distribution<double>
         return v;
     }
 
-    // inverse CDF
-    // TODO: find alternative as performance is low
     __forceinline__ __host__ __device__
     double operator()(const unsigned int x)
     {
         uniform_distribution<double> uniform;
         double p = uniform(x);
-        double v;
-        if (p < 0.5)
-            v = -inverse_d_cdf(sqrt(-2.0 * log(p)));
-        else
-            v =  inverse_d_cdf(sqrt(-2.0 * log(1.0 - p)));
+        double v = ROCRAND_SQRT2 * roc_d_erfinv(2.0 * p - 1.0);
         v = mean + v * stddev;
         return v;
     }
