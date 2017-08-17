@@ -177,6 +177,7 @@ void rocrand_rng_stream_template()
     ASSERT_EQ(hipStreamCreate(&stream), hipSuccess);
     engine.stream(stream);
     engine.stream(NULL);
+    ASSERT_EQ(hipStreamDestroy(stream), hipSuccess);
 }
 
 TEST(rocrand_cpp_wrapper, rocrand_rng_stream)
