@@ -66,7 +66,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ROCRAND_PHILOX_W32_0   0x9E3779B9U
 #define ROCRAND_PHILOX_W32_1   0xBB67AE85U
 
+/** \addtogroup device
+ *
+ *  @{
+ */
+ /**
+ * \def ROCRAND_PHILOX4x32_DEFAULT_SEED
+ * \brief Default seed for PHILOX4x32 PRNG.
+ */
 #define ROCRAND_PHILOX4x32_DEFAULT_SEED 0xdeadbeefdeadbeefULL
+/** @} */ // end of group device
 
 namespace rocrand_device {
 namespace detail {
