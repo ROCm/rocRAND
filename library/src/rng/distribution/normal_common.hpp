@@ -103,21 +103,59 @@ double2 box_muller_double_mrg(double x, double y)
 }
 
 __forceinline__ __host__ __device__
-float inverse_f_cdf(float t)
+float roc_f_erfinv(float x)
 {
-    // Abramowitz and Stegun formula 26.2.23.
-    // The absolute value of the error should be less than 4.5 e-4.
-    return t - ((0.010328f * t + 0.802853f) * t + 2.515517f) /
-                (((0.001308f * t + 0.189269f) * t + 1.432788f) * t + 1.0f);
+    float tt1, tt2, lnx, sgn;
+    sgn = (x < 0.0f) ? -1.0f : 1.0f;
+
+    x = (1.0f - x) * (1.0f + x);        
+    lnx = logf(x);
+    
+    #ifdef __HIP_DEVICE_COMPILE__
+    if (isnan(lnx))
+    #else
+    if (std::isnan(lnx))
+    #endif
+        return 1.0f;
+    #ifdef __HIP_DEVICE_COMPILE__
+    else if (isinf(lnx))
+    #else
+    else if (std::isinf(lnx))
+    #endif
+        return 0.0f;
+
+    tt1 = 2.0f / (ROCRAND_PI * 0.147f) + 0.5f * lnx;
+    tt2 = 1.0f / (0.147f) * lnx;
+
+    return(sgn * sqrtf(-tt1 + sqrtf(tt1 * tt1 - tt2)));
 }
 
 __forceinline__ __host__ __device__
-double inverse_d_cdf(double t)
+double roc_d_erfinv(double x)
 {
-    // Abramowitz and Stegun formula 26.2.23.
-    // The absolute value of the error should be less than 4.5 e-4.
-    return t - ((0.010328 * t + 0.802853) * t + 2.515517) /
-                (((0.001308 * t + 0.189269) * t + 1.432788) * t + 1.0);
+    double tt1, tt2, lnx, sgn;
+    sgn = (x < 0.0) ? -1.0 : 1.0;
+
+    x = (1.0 - x) * (1.0 + x);        
+    lnx = log(x);
+    
+    #ifdef __HIP_DEVICE_COMPILE__
+    if (isnan(lnx))
+    #else
+    if (std::isnan(lnx))
+    #endif
+        return 1.0;
+    #ifdef __HIP_DEVICE_COMPILE__
+    else if (isinf(lnx))
+    #else
+    else if (std::isinf(lnx))
+    #endif
+        return 0.0;
+
+    tt1 = 2.0 / (ROCRAND_PI_DOUBLE * 0.147) + 0.5 * lnx;
+    tt2 = 1.0 / (0.147) * lnx;
+
+    return(sgn * sqrt(-tt1 + sqrt(tt1 * tt1 - tt2)));
 }
 
 // TODO: Improve implementation
