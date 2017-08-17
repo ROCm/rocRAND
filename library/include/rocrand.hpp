@@ -739,6 +739,17 @@ typedef sobol32_engine<> sobol32;
 
 typedef xorwow default_random_engine;
 
+int version()
+{
+    int x;
+    rocrand_status status = rocrand_get_version(&x);
+    if(status != ROCRAND_STATUS_SUCCESS)
+    {
+        throw rocrand_cpp::error(status);
+    }
+    return x;
+}
+
 } // end namespace rocrand
 
 #endif // #if __cplusplus >= 201103L
