@@ -1,0 +1,10 @@
+/**
+@brief rocRAND Host API C++ Wrapper.
+@author
+@file
+*/
+
+/**
+ *  @defgroup rocrandhostcpp rocRAND Host API C++ Wrapper
+ *
+ */
