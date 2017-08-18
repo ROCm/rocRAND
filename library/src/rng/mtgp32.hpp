@@ -106,6 +106,48 @@ namespace detail {
             data[index] = distribution(engine());
             // Next position
             index += stride;
+            if(index < n)
+            {
+                data[index] = distribution(engine());
+                // Next position
+                index += stride;
+            }
+            if(index < n)
+            {
+                data[index] = distribution(engine());
+                // Next position
+                index += stride;
+            }
+            if(index < n)
+            {
+                data[index] = distribution(engine());
+                // Next position
+                index += stride;
+            }
+            if(index < n)
+            {
+                data[index] = distribution(engine());
+                // Next position
+                index += stride;
+            }
+            if(index < n)
+            {
+                data[index] = distribution(engine());
+                // Next position
+                index += stride;
+            }
+            if(index < n)
+            {
+                data[index] = distribution(engine());
+                // Next position
+                index += stride;
+            }
+            if(index < n)
+            {
+                data[index] = distribution(engine());
+                // Next position
+                index += stride;
+            }
         }
         __syncthreads();
         
