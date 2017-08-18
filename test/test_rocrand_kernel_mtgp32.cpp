@@ -174,7 +174,7 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
 
 TEST(rocrand_kernel_mtgp32, rocrand_state_mtgp32_type)
 {
-    EXPECT_EQ(sizeof(rocrand_state_mtgp32), 1078 * sizeof(unsigned int));
+    EXPECT_EQ(sizeof(rocrand_state_mtgp32), 566 * sizeof(unsigned int));
     EXPECT_EQ(sizeof(rocrand_state_mtgp32[32]), 32 * sizeof(rocrand_state_mtgp32));
 }
 
