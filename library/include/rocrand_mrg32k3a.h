@@ -44,7 +44,16 @@
 #define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
 #define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
 
-#define ROCRAND_MRG32K3A_DEFAULT_SEED 0x12345ULL
+/** \addtogroup device
+ *
+ *  @{
+ */
+ /**
+ * \def ROCRAND_MRG32K3A_DEFAULT_SEED
+ * \brief Default seed for MRG32K3A PRNG.
+ */
+ #define ROCRAND_MRG32K3A_DEFAULT_SEED 0x12345ULL
+ /** @} */ // end of group device
 
 namespace rocrand_device {
 

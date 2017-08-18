@@ -31,7 +31,16 @@
 // G. Marsaglia, Xorshift RNGs, 2003
 // http://www.jstatsoft.org/v08/i14/paper
 
-#define ROCRAND_XORWOW_DEFAULT_SEED 0ULL
+/** \addtogroup device
+ *
+ *  @{
+ */
+ /**
+ * \def ROCRAND_XORWOW_DEFAULT_SEED
+ * \brief Default seed for XORWOW PRNG.
+ */
+ #define ROCRAND_XORWOW_DEFAULT_SEED 0ULL
+ /** @} */ // end of group device
 
 namespace rocrand_device {
 namespace detail {
