@@ -43,8 +43,8 @@ FQUALIFIERS
 float2 box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafterf(x * ROCRAND_2POW32_INV, 1.0f);
-    float v = nextafterf(y * ROCRAND_2POW32_INV_2PI, ROCRAND_2PI);
+    float u = ROCRAND_2POW32_INV + (x * ROCRAND_2POW32_INV);
+    float v = ROCRAND_2POW32_INV_2PI + (y * ROCRAND_2POW32_INV_2PI);
     float s = sqrtf(-2.0f * logf(u));
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
@@ -63,10 +63,11 @@ double2 box_muller_double(uint4 v)
     double2 result;
     unsigned long long v1 = (unsigned long long)v.x ^
         ((unsigned long long)v.y << (53 - 32));
-    double u = nextafter(v1 * ROCRAND_2POW53_INV_DOUBLE, 1.0);
+    double u = ROCRAND_2POW53_INV_DOUBLE + (v1 * ROCRAND_2POW53_INV_DOUBLE);
     unsigned long long v2 = (unsigned long long)v.z ^
         ((unsigned long long)v.w << (53 - 32));
-    double w = nextafter(v2 * (ROCRAND_2POW53_INV_DOUBLE * 2.0), 2.0);
+    double w = (ROCRAND_2POW53_INV_DOUBLE * 2.0) +
+        (v2 * (ROCRAND_2POW53_INV_DOUBLE * 2.0));
     double s = sqrt(-2.0 * log(u));
     #ifdef __HIP_DEVICE_COMPILE__
         sincospi(w, &result.x, &result.y);
@@ -114,16 +115,16 @@ double2 mrg_box_muller_double(double x, double y)
     #endif
     return result;
 }
-    
+
 FQUALIFIERS
 float roc_f_erfinv(float x)
 {
     float tt1, tt2, lnx, sgn;
     sgn = (x < 0.0f) ? -1.0f : 1.0f;
 
-    x = (1.0f - x) * (1.0f + x);        
+    x = (1.0f - x) * (1.0f + x);
     lnx = logf(x);
-    
+
     #ifdef __HIP_DEVICE_COMPILE__
     if (isnan(lnx))
     #else
@@ -149,9 +150,9 @@ double roc_d_erfinv(double x)
     double tt1, tt2, lnx, sgn;
     sgn = (x < 0.0) ? -1.0 : 1.0;
 
-    x = (1.0 - x) * (1.0 + x);        
+    x = (1.0 - x) * (1.0 + x);
     lnx = log(x);
-    
+
     #ifdef __HIP_DEVICE_COMPILE__
     if (isnan(lnx))
     #else
@@ -572,13 +573,13 @@ double2 rocrand_normal_double2(rocrand_state_xorwow * state)
 /**
  * \brief Return a normally distributed float from a MTGP32 Generator.
  *
- * Return a normally distributed float with mean \p 0.0f and 
- * standard deviation \p 1.0f from \p state, and increments 
- * position of generator by one. 
+ * Return a normally distributed float with mean \p 0.0f and
+ * standard deviation \p 1.0f from \p state, and increments
+ * position of generator by one.
  *
  * \param state - Pointer to state to update
  *
- * \return normally distributed float with mean \p 0.0f and 
+ * \return normally distributed float with mean \p 0.0f and
  * standard deviation \p 1.0f
  */
 FQUALIFIERS
@@ -590,13 +591,13 @@ float rocrand_normal(rocrand_state_mtgp32 * state)
 /**
  * \brief Return a normally distributed double from a MTGP32 Generator.
  *
- * Return a normally distributed double with mean \p 0.0 and 
- * standard deviation \p 1.0 from \p state, and increments 
- * position of generator by one. 
+ * Return a normally distributed double with mean \p 0.0 and
+ * standard deviation \p 1.0 from \p state, and increments
+ * position of generator by one.
  *
  * \param state - Pointer to state to update
  *
- * \return normally distributed double with mean \p 0.0 and 
+ * \return normally distributed double with mean \p 0.0 and
  * standard deviation \p 1.0
  */
 FQUALIFIERS
