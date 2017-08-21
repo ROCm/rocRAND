@@ -179,6 +179,48 @@ public:
             single_temper_tbl[j] = params->single_temper_tbl[bid][j];
         }
     }
+    
+    FQUALIFIERS
+    mtgp32_engine operator=(const mtgp32_engine &m_engine)
+    {
+        #if defined(__HIP_DEVICE_COMPILE__)
+        const unsigned int thread_id = hipThreadIdx_x;
+        for (int i = thread_id; i < MTGP_STATE; i += hipBlockDim_x) 
+            m_state.status[i] = m_engine.m_state.status[i];
+            
+        if (thread_id == 0)
+        {
+            m_state.offset = m_engine.m_state.offset;
+            m_state.id = m_engine.m_state.id;
+            pos_tbl = m_engine.pos_tbl;
+            sh1_tbl = m_engine.sh1_tbl;
+            sh2_tbl = m_engine.sh2_tbl;
+            mask = m_engine.mask;
+        }
+        if (thread_id < MTGP_TS)
+        {
+            param_tbl[thread_id] = m_engine.param_tbl[thread_id];
+            temper_tbl[thread_id] = m_engine.temper_tbl[thread_id];
+            single_temper_tbl[thread_id] = m_engine.single_temper_tbl[thread_id];
+        }
+        __syncthreads();
+        
+        return *this;
+        #else
+        this->m_state = m_engine.m_state;
+        pos_tbl = m_engine.pos_tbl;
+        sh1_tbl = m_engine.sh1_tbl;
+        sh2_tbl = m_engine.sh2_tbl;
+        mask = m_engine.mask;
+        for (int j = 0; j < MTGP_TS; j++) {
+            param_tbl[j] = m_engine.param_tbl[j];
+            temper_tbl[j] = m_engine.temper_tbl[j];
+            single_temper_tbl[j] = m_engine.single_temper_tbl[j];
+        }
+        
+        return *this;
+        #endif
+    }
 
     FQUALIFIERS
     ~mtgp32_engine() { }
@@ -193,9 +235,8 @@ public:
     unsigned int next()
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) +
-                         (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
-        unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
+        unsigned int t = hipThreadIdx_x;
+        unsigned int d = hipBlockDim_x;
         int pos = pos_tbl;
         unsigned int r;
         unsigned int o;
@@ -220,9 +261,8 @@ public:
     unsigned int next_single()
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) +
-                         (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
-        unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
+        unsigned int t = hipThreadIdx_x;
+        unsigned int d = hipBlockDim_x;
         int pos = pos_tbl;
         unsigned int r;
         unsigned int o;

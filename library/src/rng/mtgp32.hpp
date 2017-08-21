@@ -87,8 +87,7 @@ namespace detail {
         // Load device engine
         __shared__ mtgp32_device_engine engine;
         
-        if (thread_id == 0)
-            engine = engines[engine_id];
+        engine = engines[engine_id];
         __syncthreads();
         
         while(index < n)
@@ -96,54 +95,11 @@ namespace detail {
             data[index] = distribution(engine());
             // Next position
             index += stride;
-            if(index < n)
-            {
-                data[index] = distribution(engine());
-                // Next position
-                index += stride;
-            }
-            if(index < n)
-            {
-                data[index] = distribution(engine());
-                // Next position
-                index += stride;
-            }
-            if(index < n)
-            {
-                data[index] = distribution(engine());
-                // Next position
-                index += stride;
-            }
-            if(index < n)
-            {
-                data[index] = distribution(engine());
-                // Next position
-                index += stride;
-            }
-            if(index < n)
-            {
-                data[index] = distribution(engine());
-                // Next position
-                index += stride;
-            }
-            if(index < n)
-            {
-                data[index] = distribution(engine());
-                // Next position
-                index += stride;
-            }
-            if(index < n)
-            {
-                data[index] = distribution(engine());
-                // Next position
-                index += stride;
-            }
         }
         __syncthreads();
         
         // Save engine with its state
-        if (thread_id == 0)
-            engines[engine_id] = engine;
+        engines[engine_id] = engine;
     }
     
 } // end namespace detail
