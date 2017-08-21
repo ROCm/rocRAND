@@ -75,6 +75,8 @@ curandRngType_t to_curand_rng_type(hiprandRngType_t rng_type)
             return CURAND_RNG_PSEUDO_MRG32K3A;
         case HIPRAND_RNG_PSEUDO_MTGP32:
             return CURAND_RNG_PSEUDO_MTGP32;
+        case HIPRAND_RNG_PSEUDO_PHILOX4_32_10:
+            return CURAND_RNG_PSEUDO_PHILOX4_32_10;
         case HIPRAND_RNG_PSEUDO_MT19937:
             return CURAND_RNG_PSEUDO_MT19937;
         case HIPRAND_RNG_QUASI_DEFAULT:
