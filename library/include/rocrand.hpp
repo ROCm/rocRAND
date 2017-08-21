@@ -1247,17 +1247,18 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
-    mtgp32_engine(seed_type seed_value = DefaultSeed,
-                  offset_type offset_value = 0)
+    /// \brief Constructs the pseudo-random number engine.
+    ///
+    /// MTGP32 engine does not accept offset.
+    ///
+    /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
+    ///
+    /// See also: hiprandCreateGenerator()
+    mtgp32_engine(seed_type seed_value = DefaultSeed)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-        if(offset_value > 0)
-        {
-            this->offset(offset_value);
-        }
         this->seed(seed_value);
     }
 
@@ -1283,13 +1284,6 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-    }
-
-    /// \copydoc philox4x32_10_engine::offset()
-    void offset(offset_type value)
-    {
-        rocrand_status status = rocrand_set_offset(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 
