@@ -408,12 +408,17 @@ hiprandSetPseudoRandomGeneratorSeed(hiprandGenerator_t generator, unsigned long 
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's seed.
  *
+ * Absolute offset cannot be set if generator's type is
+ * HIPRAND_RNG_PSEUDO_MTGP32 or HIPRAND_RNG_PSEUDO_MT19937.
+ *
  * \param generator - Random number generator
  * \param offset - New absolute offset
  *
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_SUCCESS if offset was successfully set \n
+ * - HIPRAND_STATUS_TYPE_ERROR if generator's type is HIPRAND_RNG_PSEUDO_MTGP32
+ * or HIPRAND_RNG_PSEUDO_MT19937 \n
  */
 hiprandStatus_t HIPRANDAPI
 hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offset);

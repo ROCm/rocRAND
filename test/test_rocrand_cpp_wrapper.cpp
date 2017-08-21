@@ -78,7 +78,10 @@ TEST(rocrand_cpp_wrapper, rocrand_prng_ctor)
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::philox4x32_10>());
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::xorwow>());
     ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mtgp32>());
+
+    // mtgp32 does not have ctor with offset
+    rocrand_cpp::mtgp32();
+    rocrand_cpp::mtgp32(11ULL);
 }
 
 template<class T1, class T2>
@@ -195,7 +198,6 @@ TEST(rocrand_cpp_wrapper, rocrand_rng_offset)
     ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::philox4x32_10>());
     ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::xorwow>());
     ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::mtgp32>());
     ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::sobol32>());
 }
 

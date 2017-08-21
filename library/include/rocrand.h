@@ -364,12 +364,15 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's seed.
  *
+ * Absolute offset cannot be set if generator's type is ROCRAND_RNG_PSEUDO_MTGP32.
+ *
  * \param generator - Random number generator
  * \param offset - New absolute offset
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_SUCCESS if offset was successfully set \n
+ * - ROCRAND_STATUS_TYPE_ERROR if generator's type is ROCRAND_RNG_PSEUDO_MTGP32
  */
 rocrand_status ROCRANDAPI
 rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
