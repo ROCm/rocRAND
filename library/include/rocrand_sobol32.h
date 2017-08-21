@@ -33,51 +33,66 @@
 
 namespace rocrand_device {
 
+template<bool UseSharedVectors>
+struct sobol32_state
+{
+    unsigned int d;
+    unsigned int i;
+    unsigned int vectors[32];
+
+    FQUALIFIERS
+    sobol32_state() { }
+
+    FQUALIFIERS
+    sobol32_state(const unsigned int d,
+                  const unsigned int i,
+                  const unsigned int * vectors)
+        : d(d), i(i)
+    {
+        for(int k = 0; k < 32; k++)
+        {
+            this->vectors[k] = vectors[k];
+        }
+    }
+};
+
+template<>
+struct sobol32_state<true>
+{
+    unsigned int d;
+    unsigned int i;
+    const unsigned int * vectors;
+
+    FQUALIFIERS
+    sobol32_state() { }
+
+    FQUALIFIERS
+    sobol32_state(const unsigned int d,
+                  const unsigned int i,
+                  const unsigned int * vectors)
+        : d(d), i(i), vectors(vectors) { }
+};
+
+template<bool UseSharedVectors>
 class sobol32_engine
 {
 public:
-    struct sobol32_state
-    {
-        unsigned int d;
-        unsigned int i;
-        unsigned int vectors[32];
 
-        FQUALIFIERS
-        ~sobol32_state() { }
-    };
+    typedef sobol32_state<UseSharedVectors> sobol32_state;
 
     FQUALIFIERS
-    sobol32_engine()
-    {
-        m_state.d = 0;
-        m_state.i = 0;
-    }
+    sobol32_engine() { }
 
     FQUALIFIERS
     sobol32_engine(const unsigned int * vectors,
                    const unsigned int offset)
+        : m_state(0, 0, vectors)
     {
-        this->init(vectors, offset);
+        discard_state(offset);
     }
 
     FQUALIFIERS
     ~sobol32_engine() { }
-
-    /// Reinitializes the internal state of the QRNG using new
-    /// direction vector \p vectors, and \p offset random numbers.
-    FQUALIFIERS
-    void init(const unsigned int * vectors,
-              const unsigned int offset)
-    {
-        #pragma unroll
-        for(int i = 0; i < 32; i++)
-        {
-            m_state.vectors[i] = vectors[i];
-        }
-        m_state.d = 0;
-        m_state.i = 0;
-        discard_state(offset);
-    }
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS
@@ -197,7 +212,7 @@ protected:
  */
 
 /// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
-typedef rocrand_device::sobol32_engine rocrand_state_sobol32;
+typedef rocrand_device::sobol32_engine<false> rocrand_state_sobol32;
 /// \endcond
 
 /**
