@@ -56,7 +56,7 @@ TEST(uniform_distribution_tests, float_test)
         EXPECT_GT(u(x), 0.0f);
     }
 
-    EXPECT_LE(u(UINT_MAX), 1.0f);
+    EXPECT_EQ(u(UINT_MAX), 1.0f);
     EXPECT_GT(u(0), 0.0f);
 }
 
@@ -74,7 +74,7 @@ TEST(uniform_distribution_tests, double_test)
         EXPECT_GT(u(x), 0.0);
     }
 
-    EXPECT_LE(u(ULLONG_MAX), 1.0);
-    EXPECT_LE(u(UINT_MAX), 1.0);
+    EXPECT_EQ(u(ULLONG_MAX), 1.0);
+    EXPECT_EQ(u(UINT_MAX), 1.0);
     EXPECT_GT(u(0U), 0.0);
 }
