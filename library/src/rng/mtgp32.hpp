@@ -80,7 +80,6 @@ namespace detail {
                          Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x;
-        const unsigned int thread_id = hipThreadIdx_x;
         unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
         
@@ -115,7 +114,7 @@ public:
                    unsigned long long offset = 0,
                    hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(200)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(512)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
@@ -158,7 +157,15 @@ public:
         
         rocrand_status status;
             
-        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
+        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, 200, m_seed);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            
+        status = rocrand_make_state_mtgp32(m_engines + 200, mtgp32dc_params_fast_11213, 200, m_seed + 11213);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            
+        status = rocrand_make_state_mtgp32(m_engines + 400, mtgp32dc_params_fast_11213, 112, m_seed + 22426);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
             
