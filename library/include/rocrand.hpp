@@ -240,7 +240,11 @@ public:
     /// Returns the smallest possible value that can be generated.
     RealType min() const
     {
-        return std::nextafter(RealType(0.0), RealType(1.0));
+        if(std::is_same<float, RealType>::value)
+        {
+            return static_cast<RealType>(ROCRAND_2POW32_INV);
+        }
+        return static_cast<RealType>(ROCRAND_2POW32_INV_DOUBLE);
     }
 
     /// Returns the largest possible value that can be generated.

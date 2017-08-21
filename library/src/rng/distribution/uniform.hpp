@@ -53,7 +53,7 @@ struct uniform_distribution<float>
     __forceinline__ __host__ __device__
     float operator()(const unsigned int v) const
     {
-        return nextafterf(v * ROCRAND_2POW32_INV, 1.0f);
+        return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
     }
 
     __forceinline__ __host__ __device__
@@ -76,16 +76,16 @@ struct uniform_distribution<double>
     __forceinline__ __host__ __device__
     double operator()(const unsigned int v) const
     {
-        return nextafter(v * static_cast<double>(ROCRAND_2POW32_INV), 1.0);
+        return ROCRAND_2POW32_INV_DOUBLE + (v * ROCRAND_2POW32_INV_DOUBLE);
     }
 
     __forceinline__ __host__ __device__
     double operator()(const unsigned long long v) const
     {
-        return nextafter(
+        return ROCRAND_2POW53_INV_DOUBLE + (
             // 2^53 is the biggest int that can be stored in double, such
             // that it and all smaller integers can be stored in double
-            (v >> 11) * ROCRAND_2POW53_INV_DOUBLE, 1.0
+            (v >> 11) * ROCRAND_2POW53_INV_DOUBLE
         );
     }
 

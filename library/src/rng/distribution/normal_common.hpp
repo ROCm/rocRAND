@@ -30,8 +30,8 @@ __forceinline__ __host__ __device__
 float2 box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = nextafterf(x * ROCRAND_2POW32_INV, 1.0f);
-    float v = nextafterf(y * ROCRAND_2POW32_INV_2PI, ROCRAND_2PI);
+    float u = ROCRAND_2POW32_INV + (x * ROCRAND_2POW32_INV);
+    float v = ROCRAND_2POW32_INV_2PI + (y * ROCRAND_2POW32_INV_2PI);
     float s = sqrtf(-2.0f * logf(u));
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
@@ -50,10 +50,10 @@ double2 box_muller_double(uint4 xy)
     double2 result;
     unsigned long long zx = (unsigned long long)xy.x ^
         ((unsigned long long)xy.y << (53 - 32));
-    double u = nextafter(zx * ROCRAND_2POW53_INV_DOUBLE, 1.0);
+    double u = ROCRAND_2POW53_INV_DOUBLE + (zx * ROCRAND_2POW53_INV_DOUBLE);
     unsigned long long zy = (unsigned long long)xy.z ^
         ((unsigned long long)xy.w << (53 - 32));
-    double v = nextafter(zy * (ROCRAND_2POW53_INV_DOUBLE * 2.0), 2.0);
+    double v = (ROCRAND_2POW53_INV_DOUBLE * 2.0) + (zy * (ROCRAND_2POW53_INV_DOUBLE * 2.0));
     double s = sqrt(-2.0 * log(u));
     #ifdef __HIP_DEVICE_COMPILE__
         sincospi(v, &result.x, &result.y);
@@ -108,9 +108,9 @@ float roc_f_erfinv(float x)
     float tt1, tt2, lnx, sgn;
     sgn = (x < 0.0f) ? -1.0f : 1.0f;
 
-    x = (1.0f - x) * (1.0f + x);        
+    x = (1.0f - x) * (1.0f + x);
     lnx = logf(x);
-    
+
     #ifdef __HIP_DEVICE_COMPILE__
     if (isnan(lnx))
     #else
@@ -136,9 +136,9 @@ double roc_d_erfinv(double x)
     double tt1, tt2, lnx, sgn;
     sgn = (x < 0.0) ? -1.0 : 1.0;
 
-    x = (1.0 - x) * (1.0 + x);        
+    x = (1.0 - x) * (1.0 + x);
     lnx = log(x);
-    
+
     #ifdef __HIP_DEVICE_COMPILE__
     if (isnan(lnx))
     #else

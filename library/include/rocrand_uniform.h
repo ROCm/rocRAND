@@ -42,17 +42,17 @@ namespace detail {
 FQUALIFIERS
 float uniform_distribution(unsigned int v)
 {
-    return nextafterf(v * ROCRAND_2POW32_INV, 1.0f);
+    return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
 }
 
 FQUALIFIERS
 float4 uniform_distribution4(uint4 v)
 {
    return float4 {
-       nextafterf(v.x * ROCRAND_2POW32_INV, 1.0f),
-       nextafterf(v.y * ROCRAND_2POW32_INV, 1.0f),
-       nextafterf(v.z * ROCRAND_2POW32_INV, 1.0f),
-       nextafterf(v.w * ROCRAND_2POW32_INV, 1.0f)
+       ROCRAND_2POW32_INV + (v.x * ROCRAND_2POW32_INV),
+       ROCRAND_2POW32_INV + (v.y * ROCRAND_2POW32_INV),
+       ROCRAND_2POW32_INV + (v.z * ROCRAND_2POW32_INV),
+       ROCRAND_2POW32_INV + (v.w * ROCRAND_2POW32_INV)
    };
 }
 
@@ -61,16 +61,16 @@ float4 uniform_distribution4(uint4 v)
 FQUALIFIERS
 double uniform_distribution_double(unsigned int v)
 {
-    return nextafter(v * static_cast<double>(ROCRAND_2POW32_INV), 1.0);
+    return ROCRAND_2POW32_INV_DOUBLE + (v * ROCRAND_2POW32_INV_DOUBLE);
 }
 
 FQUALIFIERS
 double uniform_distribution_double(unsigned long long v)
 {
-    return nextafter(
+    return ROCRAND_2POW53_INV_DOUBLE + (
         // 2^53 is the biggest int that can be stored in double, such
         // that it and all smaller integers can be stored in double
-        (v >> 11) * ROCRAND_2POW53_INV_DOUBLE, 1.0
+        (v >> 11) * ROCRAND_2POW53_INV_DOUBLE
     );
 }
 
@@ -78,10 +78,10 @@ FQUALIFIERS
 double4 uniform_distribution_double4(uint4 v)
 {
    return double4 {
-       nextafter(v.x * static_cast<double>(ROCRAND_2POW32_INV), 1.0),
-       nextafter(v.y * static_cast<double>(ROCRAND_2POW32_INV), 1.0),
-       nextafter(v.z * static_cast<double>(ROCRAND_2POW32_INV), 1.0),
-       nextafter(v.w * static_cast<double>(ROCRAND_2POW32_INV), 1.0)
+       ROCRAND_2POW32_INV_DOUBLE + (v.x * ROCRAND_2POW32_INV_DOUBLE),
+       ROCRAND_2POW32_INV_DOUBLE + (v.y * ROCRAND_2POW32_INV_DOUBLE),
+       ROCRAND_2POW32_INV_DOUBLE + (v.z * ROCRAND_2POW32_INV_DOUBLE),
+       ROCRAND_2POW32_INV_DOUBLE + (v.w * ROCRAND_2POW32_INV_DOUBLE)
    };
 }
 
@@ -283,9 +283,9 @@ double rocrand_uniform_double(rocrand_state_xorwow * state)
 /**
  * \brief Return a uniformly distributed float from a MTGP32 Generator.
  *
- * Return a uniformly distributed float between \p 0.0f and \p 1.0f 
+ * Return a uniformly distributed float between \p 0.0f and \p 1.0f
  * from \p state, and increments position of generator by one.
- * Output range excludes \p 0.0f but includes \p 1.0f.  
+ * Output range excludes \p 0.0f but includes \p 1.0f.
  *
  * \param state - Pointer to state to update
  *
@@ -300,9 +300,9 @@ float rocrand_uniform(rocrand_state_mtgp32 * state)
 /**
  * \brief Return a uniformly distributed double from a MTGP32 Generator.
  *
- * Return a uniformly distributed double between \p 0.0 and \p 1.0 
+ * Return a uniformly distributed double between \p 0.0 and \p 1.0
  * from \p state, and increments position of generator by one.
- * Output range excludes \p 0.0 but includes \p 1.0.  
+ * Output range excludes \p 0.0 but includes \p 1.0.
  *
  * \param state - Pointer to state to update
  *
