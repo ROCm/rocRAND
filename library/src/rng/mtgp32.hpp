@@ -73,16 +73,6 @@ namespace detail {
     typedef ::rocrand_device::mtgp32_state mtgp32_state;
     typedef ::rocrand_device::mtgp32_param mtgp32_param;
     
-    __global__
-    void init_mtgp32_engines_kernel(mtgp32_device_engine * engines,
-                                    mtgp32_state * states,
-                                    mtgp32_param * param)
-    {
-        const unsigned int engine_id = hipThreadIdx_x;
-        mtgp32_device_engine engine = mtgp32_device_engine(states[engine_id], param, engine_id);
-        engines[engine_id] = engine;
-    }
-
     template<class Type, class Distribution>
     __global__
     void generate_kernel(mtgp32_device_engine * engines,
@@ -271,7 +261,6 @@ public:
         return generate(data, data_size, distribution);
     }
 
-    
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
         try
@@ -284,7 +273,6 @@ public:
         }
         return generate(data, data_size, poisson.dis);
     }
-
 
 private:
     bool m_engines_initialized;

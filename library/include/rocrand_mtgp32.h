@@ -157,20 +157,6 @@ void rocrand_mtgp32_init_state(unsigned int array[],
 class mtgp32_engine
 {
 public:
-    struct mtgp32_kernel_param
-    {
-        unsigned int pos_tbl;
-        unsigned int param_tbl[MTGP_TS];
-        unsigned int temper_tbl[MTGP_TS];
-        unsigned int single_temper_tbl[MTGP_TS];
-        unsigned int sh1_tbl;
-        unsigned int sh2_tbl;
-        unsigned int mask;
-
-        FQUALIFIERS
-        ~mtgp32_kernel_param() { }
-    };
-
     FQUALIFIERS
     mtgp32_engine()
     {
@@ -183,14 +169,14 @@ public:
                   int bid)
     {
         this->m_state = m_state;
-        m_param.pos_tbl = params->pos_tbl[bid];
-        m_param.sh1_tbl = params->sh1_tbl[bid];
-        m_param.sh2_tbl = params->sh2_tbl[bid];
-        m_param.mask = params->mask[0];
+        pos_tbl = params->pos_tbl[bid];
+        sh1_tbl = params->sh1_tbl[bid];
+        sh2_tbl = params->sh2_tbl[bid];
+        mask = params->mask[0];
         for (int j = 0; j < MTGP_TS; j++) {
-            m_param.param_tbl[j] = params->param_tbl[bid][j];
-            m_param.temper_tbl[j] = params->temper_tbl[bid][j];
-            m_param.single_temper_tbl[j] = params->single_temper_tbl[bid][j];
+            param_tbl[j] = params->param_tbl[bid][j];
+            temper_tbl[j] = params->temper_tbl[bid][j];
+            single_temper_tbl[j] = params->single_temper_tbl[bid][j];
         }
     }
 
@@ -210,7 +196,7 @@ public:
         unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) +
                          (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
         unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
-        int pos = m_param.pos_tbl;
+        int pos = pos_tbl;
         unsigned int r;
         unsigned int o;
 
@@ -237,7 +223,7 @@ public:
         unsigned int t = (hipBlockDim_z * hipBlockDim_y * hipThreadIdx_z) +
                          (hipBlockDim_x * hipThreadIdx_y) + hipThreadIdx_x;
         unsigned int d = hipBlockDim_z * hipBlockDim_y * hipBlockDim_x;
-        int pos = m_param.pos_tbl;
+        int pos = pos_tbl;
         unsigned int r;
         unsigned int o;
 
@@ -261,12 +247,12 @@ private:
     FQUALIFIERS
     unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y)
     {
-        unsigned int X = (X1 & m_param.mask) ^ X2;
+        unsigned int X = (X1 & mask) ^ X2;
         unsigned int MAT;
 
-        X ^= X << m_param.sh1_tbl;
-        Y = X ^ (Y >> m_param.sh2_tbl);
-        MAT = m_param.param_tbl[Y & 0x0f];
+        X ^= X << sh1_tbl;
+        Y = X ^ (Y >> sh2_tbl);
+        MAT = param_tbl[Y & 0x0f];
         return Y ^ MAT;
     }
 
@@ -277,7 +263,7 @@ private:
 
         T ^= T >> 16;
         T ^= T >> 8;
-        MAT = m_param.temper_tbl[T & 0x0f];
+        MAT = temper_tbl[T & 0x0f];
         return V ^ MAT;
     }
 
@@ -289,7 +275,7 @@ private:
 
         T ^= T >> 16;
         T ^= T >> 8;
-        MAT = m_param.single_temper_tbl[T & 0x0f];
+        MAT = single_temper_tbl[T & 0x0f];
         r = (V >> 9) ^ MAT;
         return r;
     }
@@ -297,7 +283,14 @@ private:
 public:
     // State
     mtgp32_state m_state;
-    mtgp32_kernel_param m_param;
+    // Parameters
+    unsigned int pos_tbl;
+    unsigned int param_tbl[MTGP_TS];
+    unsigned int temper_tbl[MTGP_TS];
+    unsigned int single_temper_tbl[MTGP_TS];
+    unsigned int sh1_tbl;
+    unsigned int sh2_tbl;
+    unsigned int mask;
 
 }; // mtgp32_engine class
 
@@ -347,14 +340,14 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
         rocrand_device::rocrand_mtgp32_init_state(&(h_state[i].m_state.status[0]), &params[i], (unsigned int)seed + i + 1);
         h_state[i].m_state.offset = 0;
         h_state[i].m_state.id = i;
-        h_state[i].m_param.pos_tbl = params[i].pos;
-        h_state[i].m_param.sh1_tbl = params[i].sh1;
-        h_state[i].m_param.sh2_tbl = params[i].sh2;
-        h_state[i].m_param.mask = params[0].mask;
+        h_state[i].pos_tbl = params[i].pos;
+        h_state[i].sh1_tbl = params[i].sh1;
+        h_state[i].sh2_tbl = params[i].sh2;
+        h_state[i].mask = params[0].mask;
         for (int j = 0; j < MTGP_TS; j++) {
-            h_state[i].m_param.param_tbl[j] = params[i].tbl[j];
-            h_state[i].m_param.temper_tbl[j] = params[i].tmp_tbl[j];
-            h_state[i].m_param.single_temper_tbl[j] = params[i].flt_tmp_tbl[j];
+            h_state[i].param_tbl[j] = params[i].tbl[j];
+            h_state[i].temper_tbl[j] = params[i].tmp_tbl[j];
+            h_state[i].single_temper_tbl[j] = params[i].flt_tmp_tbl[j];
         }
     }
 
