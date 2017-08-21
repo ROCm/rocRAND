@@ -1,0 +1,10 @@
+/**
+@brief hipRAND device functions.
+@author
+@file
+*/
+
+/**
+ *  @defgroup hipranddevice hipRAND device functions
+ *
+ */

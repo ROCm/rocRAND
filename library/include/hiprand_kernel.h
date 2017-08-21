@@ -28,6 +28,28 @@
 #include <hip/hip_runtime.h>
 #include <hiprand.h>
 
+/** \addtogroup hipranddevice
+ *
+ *  @{
+ */
+
+ /**
+ * \def HIPRAND_PHILOX4x32_DEFAULT_SEED
+ * \brief Default seed for PHILOX4x32 PRNG.
+ */
+#define HIPRAND_PHILOX4x32_DEFAULT_SEED 0ULL
+ /**
+ * \def HIPRAND_XORWOW_DEFAULT_SEED
+ * \brief Default seed for XORWOW PRNG.
+ */
+#define HIPRAND_XORWOW_DEFAULT_SEED 0ULL
+ /**
+ * \def HIPRAND_MRG32K3A_DEFAULT_SEED
+ * \brief Default seed for MRG32K3A PRNG.
+ */
+#define HIPRAND_MRG32K3A_DEFAULT_SEED 12345ULL
+/** @} */ // end of group device
+
 #ifdef __HIP_PLATFORM_HCC__
 #include "hiprand_kernel_hcc.h"
 #else
