@@ -49,7 +49,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 /**
- * rocRAND function call status types
+ * \brief rocRAND function call status type
  */
 typedef enum rocrand_status {
     ROCRAND_STATUS_SUCCESS = 0, ///< No errors
@@ -65,7 +65,7 @@ typedef enum rocrand_status {
 } rocrand_status;
 
 /**
- * rocRAND generator types
+ * \brief rocRAND generator type
  */
 typedef enum rocrand_rng_type {
     ROCRAND_RNG_PSEUDO_DEFAULT = 400, ///< Default pseudorandom generator

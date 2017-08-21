@@ -83,7 +83,8 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = mainpage.dox host.dox device.dox rocrandhostcpp.dox ../library/include
+INPUT                  = mainpage.dox host.dox device.dox rocrandhostcpp.dox hiprandhost.dox \
+                         hipranddevice.dox hiprandhostcpp.dox  ../library/include
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = YES

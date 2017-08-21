@@ -30,6 +30,7 @@
 #define FQUALIFIERS QUALIFIERS
 #include "rocrand_kernel.h"
 
+/// \cond
 typedef rocrand_state_xorwow hiprandState_t;
 typedef rocrand_state_xorwow hiprandStateXORWOW_t;
 typedef rocrand_state_philox4x32_10 hiprandStatePhilox4_32_10_t;
@@ -43,10 +44,7 @@ typedef unsigned int hiprandDirectionVectors32_t[32];
 
 typedef mtgp32_param mtgp32_kernel_params_t;
 typedef mtgp32_fast_param mtgp32_fast_param_t;
-
-#define HIPRAND_PHILOX4x32_DEFAULT_SEED 0xdeadbeefdeadbeefULL
-#define HIPRAND_XORWOW_DEFAULT_SEED 0ULL
-#define HIPRAND_MRG32K3A_DEFAULT_SEED 12345ULL
+/// \endcond
 
 /// \cond
 namespace detail {
