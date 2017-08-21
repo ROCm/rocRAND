@@ -44,6 +44,10 @@ typedef unsigned int hiprandDirectionVectors32_t[32];
 typedef mtgp32_param mtgp32_kernel_params_t;
 typedef mtgp32_fast_param mtgp32_fast_param_t;
 
+#define HIPRAND_PHILOX4x32_DEFAULT_SEED 0xdeadbeefdeadbeefULL
+#define HIPRAND_XORWOW_DEFAULT_SEED 0ULL
+#define HIPRAND_MRG32K3A_DEFAULT_SEED 12345ULL
+
 /// \cond
 namespace detail {
 

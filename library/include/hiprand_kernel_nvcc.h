@@ -45,6 +45,10 @@ typedef curandDiscreteDistribution_t hiprandDiscreteDistribution_t;
 
 typedef curandDirectionVectors32_t hiprandDirectionVectors32_t;
 
+#define HIPRAND_PHILOX4x32_DEFAULT_SEED 0xdeadbeefdeadbeefULL
+#define HIPRAND_XORWOW_DEFAULT_SEED 0ULL
+#define HIPRAND_MRG32K3A_DEFAULT_SEED 12345ULL
+
 /// \cond
 namespace detail {
 
