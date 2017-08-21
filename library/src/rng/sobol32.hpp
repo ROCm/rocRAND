@@ -38,7 +38,7 @@
 namespace rocrand_host {
 namespace detail {
 
-    typedef ::rocrand_device::sobol32_engine sobol32_device_engine;
+    typedef ::rocrand_device::sobol32_engine<true> sobol32_device_engine;
 
     template<class Type, class Distribution>
     __global__
@@ -51,7 +51,16 @@ namespace detail {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         const unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        sobol32_device_engine engine = sobol32_device_engine(&direction_vectors[dimension * 32], offset + engine_id);
+        // Each thread of the current block use the same direction vectors
+        // (the dimension is determined by hipBlockIdx_y)
+        __shared__ unsigned int vectors[32];
+        if (hipThreadIdx_x < 32)
+        {
+            vectors[hipThreadIdx_x] = direction_vectors[dimension * 32 + hipThreadIdx_x];
+        }
+        __syncthreads();
+
+        sobol32_device_engine engine(vectors, offset + engine_id);
 
         const unsigned int start = dimension * n;
         unsigned int index = engine_id;
