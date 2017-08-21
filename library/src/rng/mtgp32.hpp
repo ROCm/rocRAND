@@ -159,7 +159,7 @@ public:
                    unsigned long long offset = 0,
                    hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(128)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(200)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
