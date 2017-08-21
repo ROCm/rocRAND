@@ -72,8 +72,8 @@
 #define MTGP_LS (MTGP_TN * 3)
 #define MTGP_BN_MAX 200
 #define MTGP_TS 16
-#define MTGP_STATE 512
-#define MTGP_MASK 511
+#define MTGP_STATE 1024
+#define MTGP_MASK 1023
 
 // Source: https://github.com/MersenneTwister-Lab/MTGP/blob/master/mtgp32-fast.h
 /**
