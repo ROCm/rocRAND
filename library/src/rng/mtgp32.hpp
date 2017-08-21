@@ -73,16 +73,6 @@ namespace detail {
     typedef ::rocrand_device::mtgp32_state mtgp32_state;
     typedef ::rocrand_device::mtgp32_param mtgp32_param;
     
-    __global__
-    void init_mtgp32_engines_kernel(mtgp32_device_engine * engines,
-                                    mtgp32_state * states,
-                                    mtgp32_param * param)
-    {
-        const unsigned int engine_id = hipThreadIdx_x;
-        mtgp32_device_engine engine = mtgp32_device_engine(states[engine_id], param, engine_id);
-        engines[engine_id] = engine;
-    }
-
     template<class Type, class Distribution>
     __global__
     void generate_kernel(mtgp32_device_engine * engines,
@@ -90,15 +80,13 @@ namespace detail {
                          Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x;
-        const unsigned int thread_id = hipThreadIdx_x;
         unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
         
         // Load device engine
         __shared__ mtgp32_device_engine engine;
         
-        if (thread_id == 0)
-            engine = engines[engine_id];
+        engine = engines[engine_id];
         __syncthreads();
         
         while(index < n)
@@ -110,8 +98,7 @@ namespace detail {
         __syncthreads();
         
         // Save engine with its state
-        if (thread_id == 0)
-            engines[engine_id] = engine;
+        engines[engine_id] = engine;
     }
     
 } // end namespace detail
@@ -127,7 +114,7 @@ public:
                    unsigned long long offset = 0,
                    hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(128)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(512)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
@@ -170,7 +157,15 @@ public:
         
         rocrand_status status;
             
-        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
+        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, 200, m_seed);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            
+        status = rocrand_make_state_mtgp32(m_engines + 200, mtgp32dc_params_fast_11213, 200, m_seed + 11213);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            
+        status = rocrand_make_state_mtgp32(m_engines + 400, mtgp32dc_params_fast_11213, 112, m_seed + 22426);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
             
@@ -229,7 +224,6 @@ public:
         return generate(data, data_size, distribution);
     }
 
-    
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
         try
@@ -242,7 +236,6 @@ public:
         }
         return generate(data, data_size, poisson.dis);
     }
-
 
 private:
     bool m_engines_initialized;
