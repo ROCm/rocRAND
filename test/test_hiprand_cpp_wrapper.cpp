@@ -22,66 +22,66 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.hpp>
+#include <hiprand.hpp>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
 
-TEST(rocrand_cpp_wrapper, rocrand_error)
+TEST(hiprand_cpp_wrapper, hiprand_error)
 {
-    rocrand_cpp::error e(ROCRAND_STATUS_SUCCESS);
-    EXPECT_EQ(e.error_code(), ROCRAND_STATUS_SUCCESS);
+    hiprand_cpp::error e(HIPRAND_STATUS_SUCCESS);
+    EXPECT_EQ(e.error_code(), HIPRAND_STATUS_SUCCESS);
 }
 
 template<class T>
-void rocrand_rng_ctor_template()
+void hiprand_rng_ctor_template()
 {
-    rocrand_generator generator = NULL;
-    ASSERT_EQ(rocrand_create_generator(&generator, T::type()), ROCRAND_STATUS_SUCCESS);
-    ASSERT_NE(generator, (rocrand_generator)NULL);
+    hiprandGenerator_t generator = NULL;
+    ASSERT_EQ(hiprandCreateGenerator(&generator, T::type()), HIPRAND_STATUS_SUCCESS);
+    ASSERT_NE(generator, (hiprandGenerator_t)NULL);
     T x(generator);
-    ASSERT_EQ(generator, (rocrand_generator)NULL);
+    ASSERT_EQ(generator, (hiprandGenerator_t)NULL);
 
     try {
         T y(generator);
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected hiprand_cpp::error";
     }
-    catch(const rocrand_cpp::error& err) {
-        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_NOT_CREATED);
+    catch(const hiprand_cpp::error& err) {
+        EXPECT_EQ(err.error_code(), HIPRAND_STATUS_NOT_INITIALIZED);
     }
     catch(...) {
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected hiprand_cpp::error";
     }
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_ctor)
+TEST(hiprand_cpp_wrapper, hiprand_rng_ctor)
 {
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::mtgp32>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::sobol32>());
+    ASSERT_NO_THROW(hiprand_rng_ctor_template<hiprand_cpp::philox4x32_10>());
+    ASSERT_NO_THROW(hiprand_rng_ctor_template<hiprand_cpp::xorwow>());
+    ASSERT_NO_THROW(hiprand_rng_ctor_template<hiprand_cpp::mrg32k3a>());
+    ASSERT_NO_THROW(hiprand_rng_ctor_template<hiprand_cpp::mtgp32>());
+    ASSERT_NO_THROW(hiprand_rng_ctor_template<hiprand_cpp::sobol32>());
 }
 
 template<class T>
-void rocrand_prng_ctor_template()
+void hiprand_prng_ctor_template()
 {
     T();
     T(11ULL); // seed
     T(11ULL, 2ULL); // seed, offset
 
-    rocrand_cpp::random_device rd;
+    hiprand_cpp::random_device rd;
     T(rd(), 2ULL); // seed, offset
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_prng_ctor)
+TEST(hiprand_cpp_wrapper, hiprand_prng_ctor)
 {
-    ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mrg32k3a>());
+    ASSERT_NO_THROW(hiprand_prng_ctor_template<hiprand_cpp::philox4x32_10>());
+    ASSERT_NO_THROW(hiprand_prng_ctor_template<hiprand_cpp::xorwow>());
+    ASSERT_NO_THROW(hiprand_prng_ctor_template<hiprand_cpp::mrg32k3a>());
 
     // mtgp32 does not have ctor with offset
-    rocrand_cpp::mtgp32();
-    rocrand_cpp::mtgp32(11ULL);
+    hiprand_cpp::mtgp32();
+    hiprand_cpp::mtgp32(11ULL);
 }
 
 template<class T1, class T2>
@@ -90,38 +90,38 @@ void assert_same_types()
     ::testing::StaticAssertTypeEq<T1, T2>();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_result_type)
+TEST(hiprand_cpp_wrapper, hiprand_rng_result_type)
 {
-    assert_same_types<unsigned int, rocrand_cpp::philox4x32_10::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::xorwow::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::mrg32k3a::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::mtgp32::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::sobol32::result_type>();
+    assert_same_types<unsigned int, hiprand_cpp::philox4x32_10::result_type>();
+    assert_same_types<unsigned int, hiprand_cpp::xorwow::result_type>();
+    assert_same_types<unsigned int, hiprand_cpp::mrg32k3a::result_type>();
+    assert_same_types<unsigned int, hiprand_cpp::mtgp32::result_type>();
+    assert_same_types<unsigned int, hiprand_cpp::sobol32::result_type>();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_offset_type)
+TEST(hiprand_cpp_wrapper, hiprand_rng_offset_type)
 {
-    assert_same_types<unsigned long long, rocrand_cpp::philox4x32_10::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::xorwow::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::mrg32k3a::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::mtgp32::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::sobol32::offset_type>();
+    assert_same_types<unsigned long long, hiprand_cpp::philox4x32_10::offset_type>();
+    assert_same_types<unsigned long long, hiprand_cpp::xorwow::offset_type>();
+    assert_same_types<unsigned long long, hiprand_cpp::mrg32k3a::offset_type>();
+    assert_same_types<unsigned long long, hiprand_cpp::mtgp32::offset_type>();
+    assert_same_types<unsigned long long, hiprand_cpp::sobol32::offset_type>();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_prng_default_seed)
+TEST(hiprand_cpp_wrapper, hiprand_prng_default_seed)
 {
-    EXPECT_EQ(rocrand_cpp::philox4x32_10::default_seed, ROCRAND_PHILOX4x32_DEFAULT_SEED);
-    EXPECT_EQ(rocrand_cpp::xorwow::default_seed, ROCRAND_XORWOW_DEFAULT_SEED);
-    EXPECT_EQ(rocrand_cpp::mrg32k3a::default_seed, ROCRAND_MRG32K3A_DEFAULT_SEED);
+    EXPECT_EQ(hiprand_cpp::philox4x32_10::default_seed, HIPRAND_PHILOX4x32_DEFAULT_SEED);
+    EXPECT_EQ(hiprand_cpp::xorwow::default_seed, HIPRAND_XORWOW_DEFAULT_SEED);
+    EXPECT_EQ(hiprand_cpp::mrg32k3a::default_seed, HIPRAND_MRG32K3A_DEFAULT_SEED);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_qrng_default_num_dimensions)
+TEST(hiprand_cpp_wrapper, hiprand_qrng_default_num_dimensions)
 {
-    EXPECT_EQ(rocrand_cpp::sobol32::default_num_dimensions, 1);
+    EXPECT_EQ(hiprand_cpp::sobol32::default_num_dimensions, 1);
 }
 
 template<class T>
-void rocrand_qrng_ctor_template()
+void hiprand_qrng_ctor_template()
 {
     T();
     T(11U); // dimensions
@@ -130,39 +130,39 @@ void rocrand_qrng_ctor_template()
 
     try {
         T(20001, 2ULL);
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected hiprand_cpp::error";
     }
-    catch(const rocrand_cpp::error& err) {
-        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_OUT_OF_RANGE);
+    catch(const hiprand_cpp::error& err) {
+        EXPECT_EQ(err.error_code(), HIPRAND_STATUS_OUT_OF_RANGE);
     }
     catch(...) {
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected hiprand_cpp::error";
     }
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_qrng_ctor)
+TEST(hiprand_cpp_wrapper, hiprand_qrng_ctor)
 {
-    ASSERT_NO_THROW(rocrand_qrng_ctor_template<rocrand_cpp::sobol32>());
+    ASSERT_NO_THROW(hiprand_qrng_ctor_template<hiprand_cpp::sobol32>());
 }
 
 template<class T>
-void rocrand_prng_seed_template()
+void hiprand_prng_seed_template()
 {
     T engine;
     engine.seed(11ULL);
     engine.seed(12ULL);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_prng_seed)
+TEST(hiprand_cpp_wrapper, hiprand_prng_seed)
 {
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::mtgp32>());
+    ASSERT_NO_THROW(hiprand_prng_seed_template<hiprand_cpp::philox4x32_10>());
+    ASSERT_NO_THROW(hiprand_prng_seed_template<hiprand_cpp::xorwow>());
+    ASSERT_NO_THROW(hiprand_prng_seed_template<hiprand_cpp::mrg32k3a>());
+    ASSERT_NO_THROW(hiprand_prng_seed_template<hiprand_cpp::mtgp32>());
 }
 
 template<class T>
-void rocrand_qrng_dims_template()
+void hiprand_qrng_dims_template()
 {
     T engine;
     engine.dimensions(11U);
@@ -170,39 +170,39 @@ void rocrand_qrng_dims_template()
 
     try {
         engine.dimensions(20001U);
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected hiprand_cpp::error";
     }
-    catch(const rocrand_cpp::error& err) {
-        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_OUT_OF_RANGE);
+    catch(const hiprand_cpp::error& err) {
+        EXPECT_EQ(err.error_code(), HIPRAND_STATUS_OUT_OF_RANGE);
     }
     catch(...) {
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected hiprand_cpp::error";
     }
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_qrng_dims)
+TEST(hiprand_cpp_wrapper, hiprand_qrng_dims)
 {
-    ASSERT_NO_THROW(rocrand_qrng_dims_template<rocrand_cpp::sobol32>());
+    ASSERT_NO_THROW(hiprand_qrng_dims_template<hiprand_cpp::sobol32>());
 }
 
 template<class T>
-void rocrand_rng_offset_template()
+void hiprand_rng_offset_template()
 {
     T engine;
     engine.offset(11ULL);
     engine.offset(12ULL);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_offset)
+TEST(hiprand_cpp_wrapper, hiprand_rng_offset)
 {
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::sobol32>());
+    ASSERT_NO_THROW(hiprand_rng_offset_template<hiprand_cpp::philox4x32_10>());
+    ASSERT_NO_THROW(hiprand_rng_offset_template<hiprand_cpp::xorwow>());
+    ASSERT_NO_THROW(hiprand_rng_offset_template<hiprand_cpp::mrg32k3a>());
+    ASSERT_NO_THROW(hiprand_rng_offset_template<hiprand_cpp::sobol32>());
 }
 
 template<class T>
-void rocrand_rng_stream_template()
+void hiprand_rng_stream_template()
 {
     T engine;
     hipStream_t stream;
@@ -212,20 +212,20 @@ void rocrand_rng_stream_template()
     ASSERT_EQ(hipStreamDestroy(stream), hipSuccess);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_stream)
+TEST(hiprand_cpp_wrapper, hiprand_rng_stream)
 {
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::mtgp32>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::sobol32>());
+    ASSERT_NO_THROW(hiprand_rng_stream_template<hiprand_cpp::philox4x32_10>());
+    ASSERT_NO_THROW(hiprand_rng_stream_template<hiprand_cpp::xorwow>());
+    ASSERT_NO_THROW(hiprand_rng_stream_template<hiprand_cpp::mrg32k3a>());
+    ASSERT_NO_THROW(hiprand_rng_stream_template<hiprand_cpp::mtgp32>());
+    ASSERT_NO_THROW(hiprand_rng_stream_template<hiprand_cpp::sobol32>());
 }
 
 template<class T, class IntType>
-void rocrand_uniform_int_dist_template()
+void hiprand_uniform_int_dist_template()
 {
     T engine;
-    rocrand_cpp::uniform_int_distribution<IntType> d;
+    hiprand_cpp::uniform_int_distribution<IntType> d;
 
     const size_t output_size = 8192;
     IntType * output;
@@ -260,30 +260,30 @@ void rocrand_uniform_int_dist_template()
     EXPECT_NEAR(mean, 0.5, 0.1);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_uniform_int_dist)
+TEST(hiprand_cpp_wrapper, hiprand_uniform_int_dist)
 {
     ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::philox4x32_10, unsigned int>()
+        hiprand_uniform_int_dist_template<hiprand_cpp::philox4x32_10, unsigned int>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::xorwow, unsigned int>()
+        hiprand_uniform_int_dist_template<hiprand_cpp::xorwow, unsigned int>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::mrg32k3a, unsigned int>()
+        hiprand_uniform_int_dist_template<hiprand_cpp::mrg32k3a, unsigned int>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::mtgp32, unsigned int>()
+        hiprand_uniform_int_dist_template<hiprand_cpp::mtgp32, unsigned int>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::sobol32, unsigned int>()
+        hiprand_uniform_int_dist_template<hiprand_cpp::sobol32, unsigned int>()
     ));
 }
 
 template<class T, class RealType>
-void rocrand_uniform_real_dist_template()
+void hiprand_uniform_real_dist_template()
 {
     T engine;
-    rocrand_cpp::uniform_real_distribution<RealType> d;
+    hiprand_cpp::uniform_real_distribution<RealType> d;
 
     const size_t output_size = 8192;
     RealType * output;
@@ -318,49 +318,49 @@ void rocrand_uniform_real_dist_template()
     EXPECT_NEAR(mean, 0.5, 0.1);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_float)
+TEST(hiprand_cpp_wrapper, hiprand_uniform_real_dist_float)
 {
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::philox4x32_10, float>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::philox4x32_10, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::xorwow, float>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::xorwow, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mrg32k3a, float>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::mrg32k3a, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mtgp32, float>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::mtgp32, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::sobol32, float>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::sobol32, float>()
     ));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_double)
+TEST(hiprand_cpp_wrapper, hiprand_uniform_real_dist_double)
 {
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::philox4x32_10, double>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::philox4x32_10, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::xorwow, double>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::xorwow, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mrg32k3a, double>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::mrg32k3a, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mtgp32, double>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::mtgp32, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::sobol32, double>()
+        hiprand_uniform_real_dist_template<hiprand_cpp::sobol32, double>()
     ));
 }
 
 template<class T, class RealType>
-void rocrand_normal_dist_template()
+void hiprand_normal_dist_template()
 {
     T engine;
-    rocrand_cpp::normal_distribution<RealType> d;
+    hiprand_cpp::normal_distribution<RealType> d;
 
     const size_t output_size = 8192;
     RealType * output;
@@ -403,49 +403,49 @@ void rocrand_normal_dist_template()
     EXPECT_NEAR(stddev, 1.0, 0.2);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_normal_dist_float)
+TEST(hiprand_cpp_wrapper, hiprand_normal_dist_float)
 {
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::philox4x32_10, float>()
+        hiprand_normal_dist_template<hiprand_cpp::philox4x32_10, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::xorwow, float>()
+        hiprand_normal_dist_template<hiprand_cpp::xorwow, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mrg32k3a, float>()
+        hiprand_normal_dist_template<hiprand_cpp::mrg32k3a, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mtgp32, float>()
+        hiprand_normal_dist_template<hiprand_cpp::mtgp32, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::sobol32, float>()
+        hiprand_normal_dist_template<hiprand_cpp::sobol32, float>()
     ));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_normal_dist_double)
+TEST(hiprand_cpp_wrapper, hiprand_normal_dist_double)
 {
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::philox4x32_10, double>()
+        hiprand_normal_dist_template<hiprand_cpp::philox4x32_10, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::xorwow, double>()
+        hiprand_normal_dist_template<hiprand_cpp::xorwow, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mrg32k3a, double>()
+        hiprand_normal_dist_template<hiprand_cpp::mrg32k3a, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mtgp32, double>()
+        hiprand_normal_dist_template<hiprand_cpp::mtgp32, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::sobol32, double>()
+        hiprand_normal_dist_template<hiprand_cpp::sobol32, double>()
     ));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_normal_dist_param)
+TEST(hiprand_cpp_wrapper, hiprand_normal_dist_param)
 {
-    rocrand_cpp::normal_distribution<> d1(1.0f, 3.0f);
-    rocrand_cpp::normal_distribution<> d2(1.0f, 3.0f);
-    rocrand_cpp::normal_distribution<> d3(2.0f, 4.0f);
+    hiprand_cpp::normal_distribution<> d1(1.0f, 3.0f);
+    hiprand_cpp::normal_distribution<> d2(1.0f, 3.0f);
+    hiprand_cpp::normal_distribution<> d3(2.0f, 4.0f);
 
     ASSERT_TRUE(d1.param() == d2.param());
     ASSERT_TRUE(d1.param() == d1.param());
@@ -456,10 +456,10 @@ TEST(rocrand_cpp_wrapper, rocrand_normal_dist_param)
 }
 
 template<class T, class RealType>
-void rocrand_lognormal_dist_template()
+void hiprand_lognormal_dist_template()
 {
     T engine;
-    rocrand_cpp::lognormal_distribution<RealType> d(1.6, 0.25);
+    hiprand_cpp::lognormal_distribution<RealType> d(1.6, 0.25);
 
     const size_t output_size = 8192;
     RealType * output;
@@ -506,49 +506,49 @@ void rocrand_lognormal_dist_template()
     EXPECT_NEAR(0.25, logstd, 0.25 * 0.2);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_float)
+TEST(hiprand_cpp_wrapper, hiprand_lognormal_dist_float)
 {
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::philox4x32_10, float>()
+        hiprand_lognormal_dist_template<hiprand_cpp::philox4x32_10, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::xorwow, float>()
+        hiprand_lognormal_dist_template<hiprand_cpp::xorwow, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mrg32k3a, float>()
+        hiprand_lognormal_dist_template<hiprand_cpp::mrg32k3a, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mtgp32, float>()
+        hiprand_lognormal_dist_template<hiprand_cpp::mtgp32, float>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::sobol32, float>()
+        hiprand_lognormal_dist_template<hiprand_cpp::sobol32, float>()
     ));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_double)
+TEST(hiprand_cpp_wrapper, hiprand_lognormal_dist_double)
 {
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::philox4x32_10, double>()
+        hiprand_lognormal_dist_template<hiprand_cpp::philox4x32_10, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::xorwow, double>()
+        hiprand_lognormal_dist_template<hiprand_cpp::xorwow, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mrg32k3a, double>()
+        hiprand_lognormal_dist_template<hiprand_cpp::mrg32k3a, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mtgp32, double>()
+        hiprand_lognormal_dist_template<hiprand_cpp::mtgp32, double>()
     ));
     ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::sobol32, double>()
+        hiprand_lognormal_dist_template<hiprand_cpp::sobol32, double>()
     ));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_param)
+TEST(hiprand_cpp_wrapper, hiprand_lognormal_dist_param)
 {
-    rocrand_cpp::lognormal_distribution<> d1(1.0f, 3.0f);
-    rocrand_cpp::lognormal_distribution<> d2(1.0f, 3.0f);
-    rocrand_cpp::lognormal_distribution<> d3(2.0f, 4.0f);
+    hiprand_cpp::lognormal_distribution<> d1(1.0f, 3.0f);
+    hiprand_cpp::lognormal_distribution<> d2(1.0f, 3.0f);
+    hiprand_cpp::lognormal_distribution<> d3(2.0f, 4.0f);
 
     ASSERT_TRUE(d1.m() == d1.param().m());
     ASSERT_TRUE(d1.m() == 1.0f);
@@ -564,10 +564,10 @@ TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_param)
 }
 
 template<class T, class IntType>
-void rocrand_poisson_dist_template(const double lambda)
+void hiprand_poisson_dist_template(const double lambda)
 {
     T engine;
-    rocrand_cpp::poisson_distribution<IntType> d(lambda);
+    hiprand_cpp::poisson_distribution<IntType> d(lambda);
 
     const size_t output_size = 8192;
     IntType * output;
@@ -613,37 +613,37 @@ void rocrand_poisson_dist_template(const double lambda)
 
 class poisson_dist : public ::testing::TestWithParam<double> { };
 
-TEST_P(poisson_dist, rocrand_poisson_dist)
+TEST_P(poisson_dist, hiprand_poisson_dist)
 {
     const double lambda = GetParam();
     ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::philox4x32_10, unsigned int>(lambda)
+        hiprand_poisson_dist_template<hiprand_cpp::philox4x32_10, unsigned int>(lambda)
     ));
     ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::xorwow, unsigned int>(lambda)
+        hiprand_poisson_dist_template<hiprand_cpp::xorwow, unsigned int>(lambda)
     ));
     ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::mrg32k3a, unsigned int>(lambda)
+        hiprand_poisson_dist_template<hiprand_cpp::mrg32k3a, unsigned int>(lambda)
     ));
     ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::mtgp32, unsigned int>(lambda)
+        hiprand_poisson_dist_template<hiprand_cpp::mtgp32, unsigned int>(lambda)
     ));
     ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::sobol32, unsigned int>(lambda)
+        hiprand_poisson_dist_template<hiprand_cpp::sobol32, unsigned int>(lambda)
     ));
 }
 
 const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
 
-INSTANTIATE_TEST_CASE_P(rocrand_cpp_wrapper,
+INSTANTIATE_TEST_CASE_P(hiprand_cpp_wrapper,
                         poisson_dist,
                         ::testing::ValuesIn(lambdas));
 
-TEST(rocrand_cpp_wrapper, rocrand_poisson_dist_param)
+TEST(hiprand_cpp_wrapper, hiprand_poisson_dist_param)
 {
-    rocrand_cpp::poisson_distribution<> d1(1.0);
-    rocrand_cpp::poisson_distribution<> d2(1.0);
-    rocrand_cpp::poisson_distribution<> d3(2.0);
+    hiprand_cpp::poisson_distribution<> d1(1.0);
+    hiprand_cpp::poisson_distribution<> d2(1.0);
+    hiprand_cpp::poisson_distribution<> d3(2.0);
 
     ASSERT_TRUE(d1.mean() == d1.param().mean());
     ASSERT_TRUE(d1.mean() == 1.0);

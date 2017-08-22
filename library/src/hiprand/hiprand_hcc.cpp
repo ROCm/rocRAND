@@ -75,6 +75,8 @@ rocrand_rng_type to_rocrand_rng_type(hiprandRngType_t rng_type)
             return ROCRAND_RNG_PSEUDO_MRG32K3A;
         case HIPRAND_RNG_PSEUDO_MTGP32:
             return ROCRAND_RNG_PSEUDO_MTGP32;
+        case HIPRAND_RNG_PSEUDO_PHILOX4_32_10:
+            return ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
         case HIPRAND_RNG_PSEUDO_MT19937:
             throw HIPRAND_STATUS_NOT_IMPLEMENTED;
         case HIPRAND_RNG_QUASI_DEFAULT:

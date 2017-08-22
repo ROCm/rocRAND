@@ -1,10 +1,10 @@
 /**
-@brief hipRAND Host API Module.
+@brief rocRAND Host API Module.
 @author
 @file
 */
 
 /**
- *  @defgroup host Host API
+ *  @defgroup host rocRAND host API
  *
  */
