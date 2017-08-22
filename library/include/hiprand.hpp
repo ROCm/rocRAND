@@ -832,6 +832,14 @@ private:
     param_type m_params;
 };
 
+/// \brief Pseudorandom number engine based Philox algorithm.
+///
+/// philox4x32_10_engine implements
+/// a <a href="https://en.wikipedia.org/wiki/Counter-based_random_number_generator_(CBRNG)">
+/// Counter-based random number generator</a> called Philox, which was developed by
+/// a group at D. E. Shaw Research.
+/// It generates random numbers of type \p unsigned \p int on the interval [0; 2^32 - 1].
+/// Random numbers are generated in sets of four.
 template<unsigned long long DefaultSeed = HIPRAND_PHILOX4x32_DEFAULT_SEED>
 class philox4x32_10_engine
 {
@@ -1004,6 +1012,12 @@ template<unsigned long long DefaultSeed>
 constexpr typename philox4x32_10_engine<DefaultSeed>::seed_type philox4x32_10_engine<DefaultSeed>::default_seed;
 /// \endcond
 
+/// \brief Pseudorandom number engine based XORWOW algorithm.
+///
+/// xorwow_engine is a <a href="https://en.wikipedia.org/wiki/Xorshift">xorshift</a> pseudorandom
+/// number engine based on XORWOW algorithm, which was presented by George Marsaglia in
+/// "Xorshift RNGs" paper published in Journal of Statistical Software. It produces random numbers
+/// of type \p unsigned \p int on the interval [0; 2^32 - 1].
 template<unsigned long long DefaultSeed = HIPRAND_XORWOW_DEFAULT_SEED>
 class xorwow_engine
 {
@@ -1123,6 +1137,11 @@ template<unsigned long long DefaultSeed>
 constexpr typename xorwow_engine<DefaultSeed>::seed_type xorwow_engine<DefaultSeed>::default_seed;
 /// \endcond
 
+/// \brief Pseudorandom number engine based MRG32k3a CMRG.
+///
+/// mrg32k3a_engine is an implementation of MRG32k3a pseudorandom number generator,
+/// which is a Combined Multiple Recursive Generator (CMRG) created by Pierre L'Ecuyer.
+/// It produces random 32-bit \p unsigned \p int values on the interval [0; 2^32 - 1].
 template<unsigned long long DefaultSeed = HIPRAND_MRG32K3A_DEFAULT_SEED>
 class mrg32k3a_engine
 {
@@ -1201,7 +1220,7 @@ public:
     /// \copydoc philox4x32_10_engine::min()
     result_type min() const
     {
-        return 0;
+        return 1;
     }
 
     /// \copydoc philox4x32_10_engine::max()
@@ -1242,6 +1261,16 @@ template<unsigned long long DefaultSeed>
 constexpr typename mrg32k3a_engine<DefaultSeed>::seed_type mrg32k3a_engine<DefaultSeed>::default_seed;
 /// \endcond
 
+/// \brief Pseudorandom number engine based on
+/// <a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MTGP/">Mersenne Twister
+/// for Graphic Processors</a> algorithm.
+///
+/// mtgp32_engine is a random number engine based on
+/// <a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MTGP/">Mersenne Twister
+/// for Graphic Processors</a> algorithm, which is a version of well-known
+/// <a href="https://en.wikipedia.org/wiki/Mersenne_Twister">Mersenne Twister</a>
+/// algorithm. It produces high quality random numbers of type \p unsigned \p int
+/// on the interval [0; 2^32 - 1].
 template<unsigned long long DefaultSeed = 0>
 class mtgp32_engine
 {
@@ -1355,6 +1384,12 @@ template<unsigned long long DefaultSeed>
 constexpr typename mtgp32_engine<DefaultSeed>::seed_type mtgp32_engine<DefaultSeed>::default_seed;
 /// \endcond
 
+/// \brief Sobol's quasi-random sequence generator
+///
+/// sobol32_engine is quasi-random number engine which produced
+/// <a href="https://en.wikipedia.org/wiki/Sobol_sequence">Sobol sequences</a>.
+/// This implementation supports generating sequences in up to 20,000 dimensions.
+/// The engine produces random unsigned integers on the interval [0; 2^32 - 1].
 template<unsigned int DefaultNumDimensions = 1>
 class sobol32_engine
 {
