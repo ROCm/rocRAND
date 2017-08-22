@@ -183,6 +183,8 @@ template<class StateType>
 QUALIFIERS
 void skipahead(unsigned long long n, StateType * state)
 {
+    // skipahead() funcs are defined in curand_kernel.h
+    check_state_type<StateType>();
     static_assert(
         !std::is_same<
             StateType,
@@ -190,14 +192,14 @@ void skipahead(unsigned long long n, StateType * state)
         >::value,
         "hiprandStateMtgp32_t does not have skipahead function"
     );
-    // Defined in curand_kernel.h
-    check_state_type<StateType>();
 }
 
 template<class StateType>
 QUALIFIERS
 void skipahead_sequence(unsigned long long n, StateType * state)
 {
+    // skipahead_sequence() are defined in curand_kernel.h
+    check_state_type<StateType>();
     static_assert(
         !detail::is_any_of<
             StateType,
@@ -209,8 +211,27 @@ void skipahead_sequence(unsigned long long n, StateType * state)
         >::value,
         "StateType does not have skipahead_sequence function"
     );
-    // Defined in curand_kernel.h
+}
+
+template<class StateType>
+QUALIFIERS
+void skipahead_subsequence(unsigned long long n, StateType * state)
+{
+    // skipahead_subsequence(unsigned long long n, curandStateMRG32k3a_t *state)
+    // is defined in curand_kernel.h
     check_state_type<StateType>();
+    static_assert(
+        !detail::is_any_of<
+            StateType,
+            hiprandStateMtgp32_t,
+            hiprandStateSobol32_t,
+            hiprandStateScrambledSobol32_t,
+            hiprandStateSobol64_t,
+            hiprandStateScrambledSobol64_t
+        >::value,
+        "StateType does not have skipahead_subsequence function"
+    );
+    skipahead_sequence(n, state);
 }
 
 template<class StateType>
