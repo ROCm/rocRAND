@@ -588,8 +588,8 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
-        static_cast<rocrand_mtgp32 *>(generator)->set_offset(offset);
-        return ROCRAND_STATUS_SUCCESS;
+        // Can't set offset for MTGP32
+        return ROCRAND_STATUS_TYPE_ERROR;
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_HPP_
-#define ROCRAND_HPP_
+#ifndef HIPRAND_HPP_
+#define HIPRAND_HPP_
 
 // At least C++11 required
 #if defined(__cplusplus) && __cplusplus >= 201103L
@@ -31,24 +31,24 @@
 #include <type_traits>
 #include <limits>
 
-#include "rocrand.h"
-#include "rocrand_kernel.h"
+#include "hiprand.h"
+#include "hiprand_kernel.h"
 
-namespace rocrand_cpp {
+namespace hiprand_cpp {
 
-/// \addtogroup rocrandhostcpp
+/// \addtogroup hiprandhostcpp
 /// @{
 
 /// \class error
-/// \brief A run-time rocRAND error.
+/// \brief A run-time hipRAND error.
 ///
 /// The error class represents an error returned
-/// by a rocRAND function.
+/// by a hipRAND function.
 class error : public std::exception
 {
 public:
-    /// rocRAND error code type
-    typedef rocrand_status error_type;
+    /// hipRAND error code type
+    typedef hiprandStatus_t error_type;
 
     /// Constructs new error object from error code \p error.
     ///
@@ -81,39 +81,47 @@ public:
         return m_error_string.c_str();
     }
 
-    /// Static function which converts the numeric rocRAND
+    /// Static function which converts the numeric hipRAND
     /// error code \p error to a human-readable string.
     ///
     /// If the error code is unknown, a string containing
-    /// "Unknown rocRAND error" along with the error code
+    /// "Unknown hipRAND error" along with the error code
     /// \p error will be returned.
     static std::string to_string(error_type error)
     {
         switch(error)
         {
-            case ROCRAND_STATUS_SUCCESS:
+            case HIPRAND_STATUS_SUCCESS:
                 return "Success";
-            case ROCRAND_STATUS_VERSION_MISMATCH:
+            case HIPRAND_STATUS_VERSION_MISMATCH:
                 return "Header file and linked library version do not match";
-            case ROCRAND_STATUS_NOT_CREATED:
-                return "Generator was not created using rocrand_create_generator";
-            case ROCRAND_STATUS_ALLOCATION_FAILED:
+            case HIPRAND_STATUS_NOT_INITIALIZED:
+                return "Generator was not created using hiprandCreateGenerator";
+            case HIPRAND_STATUS_ALLOCATION_FAILED:
                 return "Memory allocation failed during execution";
-            case ROCRAND_STATUS_TYPE_ERROR:
+            case HIPRAND_STATUS_TYPE_ERROR:
                 return "Generator type is wrong";
-            case ROCRAND_STATUS_OUT_OF_RANGE:
+            case HIPRAND_STATUS_OUT_OF_RANGE:
                 return "Argument out of range";
-            case ROCRAND_STATUS_LENGTH_NOT_MULTIPLE:
+            case HIPRAND_STATUS_LENGTH_NOT_MULTIPLE:
                 return "Length requested is not a multple of dimension";
-            case ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED:
+            case HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED:
                 return "GPU does not have double precision";
-            case ROCRAND_STATUS_LAUNCH_FAILURE:
+            case HIPRAND_STATUS_LAUNCH_FAILURE:
                 return "Kernel launch failure";
-            case ROCRAND_STATUS_INTERNAL_ERROR:
+            case HIPRAND_STATUS_PREEXISTING_FAILURE:
+                return "Preexisting failure on library entry";
+            case HIPRAND_STATUS_INITIALIZATION_FAILED:
+                return "Initialization of HIP failed";
+            case HIPRAND_STATUS_ARCH_MISMATCH:
+                return "Architecture mismatch, GPU does not support requested feature";
+            case HIPRAND_STATUS_INTERNAL_ERROR:
                 return "Internal library error";
+            case HIPRAND_STATUS_NOT_IMPLEMENTED:
+                return "Feature not implemented yet";
             default: {
                 std::stringstream s;
-                s << "Unknown rocRAND error (" << error << ")";
+                s << "Unknown hipRAND error (" << error << ")";
                 return s.str();
             }
         }
@@ -189,12 +197,12 @@ public:
     /// The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p IntType type.
     ///
-    /// See also: rocrand_generate()
+    /// See also: hiprandGenerate()
     template<class Generator>
     void operator()(Generator& g, IntType * output, size_t size)
     {
-        rocrand_status status = rocrand_generate(g.m_generator, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandGenerate(g.m_generator, output, size);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// Returns \c true if the distribution is the same as \p other.
@@ -242,9 +250,9 @@ public:
     {
         if(std::is_same<float, RealType>::value)
         {
-            return static_cast<RealType>(ROCRAND_2POW32_INV);
+            return static_cast<RealType>(2.3283064e-10f);
         }
-        return static_cast<RealType>(ROCRAND_2POW32_INV_DOUBLE);
+        return static_cast<RealType>(2.3283064365386963e-10);
     }
 
     /// Returns the largest possible value that can be generated.
@@ -266,13 +274,13 @@ public:
     /// The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
     ///
-    /// See also: rocrand_generate_uniform(), rocrand_generate_uniform_double()
+    /// See also: hiprandGenerateUniform(), hiprandGenerateUniformDouble()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
-        rocrand_status status;
+        hiprandStatus_t status;
         status = this->generate(g, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// Returns \c true if the distribution is the same as \p other.
@@ -289,15 +297,15 @@ public:
 
 private:
     template<class Generator>
-    rocrand_status generate(Generator& g, float * output, size_t size)
+    hiprandStatus_t generate(Generator& g, float * output, size_t size)
     {
-        return rocrand_generate_uniform(g.m_generator, output, size);
+        return hiprandGenerateUniform(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, double * output, size_t size)
+    hiprandStatus_t generate(Generator& g, double * output, size_t size)
     {
-        return rocrand_generate_uniform_double(g.m_generator, output, size);
+        return hiprandGenerateUniformDouble(g.m_generator, output, size);
     }
 };
 
@@ -440,13 +448,13 @@ public:
     /// The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
     ///
-    /// See also: rocrand_generate_normal(), rocrand_generate_normal_double()
+    /// See also: hiprandGenerateNormal(), hiprandGenerateNormalDouble()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
-        rocrand_status status;
+        hiprandStatus_t status;
         status = this->generate(g, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Returns \c true if the distribution is the same as \p other.
@@ -467,17 +475,17 @@ public:
 
 private:
     template<class Generator>
-    rocrand_status generate(Generator& g, float * output, size_t size)
+    hiprandStatus_t generate(Generator& g, float * output, size_t size)
     {
-        return rocrand_generate_normal(
+        return hiprandGenerateNormal(
             g.m_generator, output, size, this->mean(), this->stddev()
         );
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, double * output, size_t size)
+    hiprandStatus_t generate(Generator& g, double * output, size_t size)
     {
-        return rocrand_generate_normal_double(
+        return hiprandGenerateNormalDouble(
             g.m_generator, output, size, this->mean(), this->stddev()
         );
     }
@@ -625,13 +633,13 @@ public:
     /// The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
     ///
-    /// See also: rocrand_generate_log_normal(), rocrand_generate_log_normal_double()
+    /// See also: hiprandGenerateLogNormal(), hiprandGenerateLogNormalDouble()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
-        rocrand_status status;
+        hiprandStatus_t status;
         status = this->generate(g, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Returns \c true if the distribution is the same as \p other.
@@ -652,17 +660,17 @@ public:
 
 private:
     template<class Generator>
-    rocrand_status generate(Generator& g, float * output, size_t size)
+    hiprandStatus_t generate(Generator& g, float * output, size_t size)
     {
-        return rocrand_generate_log_normal(
+        return hiprandGenerateLogNormal(
             g.m_generator, output, size, this->m(), this->s()
         );
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, double * output, size_t size)
+    hiprandStatus_t generate(Generator& g, double * output, size_t size)
     {
-        return rocrand_generate_log_normal_double(
+        return hiprandGenerateLogNormalDouble(
             g.m_generator, output, size, this->m(), this->s()
         );
     }
@@ -795,13 +803,13 @@ public:
     /// The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p IntType type.
     ///
-    /// See also: rocrand_generate_poisson()
+    /// See also: hiprandGeneratePoisson()
     template<class Generator>
     void operator()(Generator& g, IntType * output, size_t size)
     {
-        rocrand_status status;
-        status = rocrand_generate_poisson(g.m_generator, output, size, this->mean());
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandGeneratePoisson(g.m_generator, output, size, this->mean());
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Returns \c true if the distribution is the same as \p other.
@@ -832,7 +840,7 @@ private:
 /// a group at D. E. Shaw Research.
 /// It generates random numbers of type \p unsigned \p int on the interval [0; 2^32 - 1].
 /// Random numbers are generated in sets of four.
-template<unsigned long long DefaultSeed = ROCRAND_PHILOX4x32_DEFAULT_SEED>
+template<unsigned long long DefaultSeed = HIPRAND_PHILOX4x32_DEFAULT_SEED>
 class philox4x32_10_engine
 {
 public:
@@ -859,13 +867,13 @@ public:
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
     ///
-    /// See also: rocrand_create_generator()
+    /// See also: hiprandCreateGenerator()
     philox4x32_10_engine(seed_type seed_value = DefaultSeed,
                          offset_type offset_value = 0)
     {
-        rocrand_status status;
-        status = rocrand_create_generator(&m_generator, this->type());
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandCreateGenerator(&m_generator, this->type());
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
         if(offset_value > 0)
         {
             this->offset(offset_value);
@@ -880,32 +888,32 @@ public:
     /// passed reference to \p NULL. The lifetime of \p generator is now
     /// bound to the lifetime of the engine.
     ///
-    /// \param generator - rocRAND generator
-    philox4x32_10_engine(rocrand_generator& generator)
+    /// \param generator - hipRAND generator
+    philox4x32_10_engine(hiprandGenerator_t& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
         {
-            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+            throw hiprand_cpp::error(HIPRAND_STATUS_NOT_INITIALIZED);
         }
         generator = NULL;
     }
 
     /// Destructs the engine.
     ///
-    /// See also: rocrand_destroy_generator()
+    /// See also: hiprandDestroyGenerator()
     ~philox4x32_10_engine()
     {
-        rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Sets the random number engine's \p hipStream for kernel launches.
     /// \param value - new \p hipStream to use
     void stream(hipStream_t value)
     {
-        rocrand_status status = rocrand_set_stream(m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetStream(m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Sets the offset of a random number engine.
@@ -918,11 +926,11 @@ public:
     ///
     /// \param value - New absolute offset
     ///
-    /// See also: rocrand_set_offset()
+    /// See also: hiprandSetGeneratorOffset()
     void offset(offset_type value)
     {
-        rocrand_status status = rocrand_set_offset(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetGeneratorOffset(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Sets the seed of the pseudo-random number engine.
@@ -932,11 +940,11 @@ public:
     ///
     /// \param value - New seed value
     ///
-    /// See also: rocrand_set_seed()
+    /// See also: hiprandSetPseudoRandomGeneratorSeed()
     void seed(seed_type value)
     {
-        rocrand_status status = rocrand_set_seed(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetPseudoRandomGeneratorSeed(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Fills \p output with uniformly distributed random integer values.
@@ -951,13 +959,13 @@ public:
     /// The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p IntType type.
     ///
-    /// See also: rocrand_generate()
+    /// See also: hiprandGenerate()
     template<class Generator>
     void operator()(result_type * output, size_t size)
     {
-        rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandGenerate(m_generator, output, size);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// Returns the smallest possible value that can be generated by the engine.
@@ -972,30 +980,30 @@ public:
         return std::numeric_limits<unsigned int>::max();
     }
 
-    /// Returns type of the rocRAND pseudo-random number generator associated with the engine.
-    static constexpr rocrand_rng_type type()
+    /// Returns type of the hipRAND pseudo-random number generator associated with the engine.
+    static constexpr hiprandRngType type()
     {
-        return ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
+        return HIPRAND_RNG_PSEUDO_PHILOX4_32_10;
     }
 
 private:
-    rocrand_generator m_generator;
+    hiprandGenerator_t m_generator;
 
     /// \cond
     template<class T>
-    friend class ::rocrand_cpp::uniform_int_distribution;
+    friend class ::hiprand_cpp::uniform_int_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::uniform_real_distribution;
+    friend class ::hiprand_cpp::uniform_real_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::normal_distribution;
+    friend class ::hiprand_cpp::normal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::lognormal_distribution;
+    friend class ::hiprand_cpp::lognormal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::poisson_distribution;
+    friend class ::hiprand_cpp::poisson_distribution;
     /// \endcond
 };
 
@@ -1010,7 +1018,7 @@ constexpr typename philox4x32_10_engine<DefaultSeed>::seed_type philox4x32_10_en
 /// number engine based on XORWOW algorithm, which was presented by George Marsaglia in
 /// "Xorshift RNGs" paper published in Journal of Statistical Software. It produces random numbers
 /// of type \p unsigned \p int on the interval [0; 2^32 - 1].
-template<unsigned long long DefaultSeed = ROCRAND_XORWOW_DEFAULT_SEED>
+template<unsigned long long DefaultSeed = HIPRAND_XORWOW_DEFAULT_SEED>
 class xorwow_engine
 {
 public:
@@ -1027,9 +1035,9 @@ public:
     xorwow_engine(seed_type seed_value = DefaultSeed,
                   offset_type offset_value = 0)
     {
-        rocrand_status status;
-        status = rocrand_create_generator(&m_generator, this->type());
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandCreateGenerator(&m_generator, this->type());
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
         if(offset_value > 0)
         {
             this->offset(offset_value);
@@ -1037,13 +1045,13 @@ public:
         this->seed(seed_value);
     }
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    xorwow_engine(rocrand_generator& generator)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
+    xorwow_engine(hiprandGenerator_t& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
         {
-            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+            throw hiprand_cpp::error(HIPRAND_STATUS_NOT_INITIALIZED);
         }
         generator = NULL;
     }
@@ -1051,38 +1059,38 @@ public:
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~xorwow_engine()
     {
-        rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
     void stream(hipStream_t value)
     {
-        rocrand_status status = rocrand_set_stream(m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetStream(m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::offset()
     void offset(offset_type value)
     {
-        rocrand_status status = rocrand_set_offset(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetGeneratorOffset(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::seed()
     void seed(seed_type value)
     {
-        rocrand_status status = rocrand_set_seed(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetPseudoRandomGeneratorSeed(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::operator()()
     template<class Generator>
     void operator()(result_type * output, size_t size)
     {
-        rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandGenerate(m_generator, output, size);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::min()
@@ -1098,29 +1106,29 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::type()
-    static constexpr rocrand_rng_type type()
+    static constexpr hiprandRngType type()
     {
-        return ROCRAND_RNG_PSEUDO_XORWOW;
+        return HIPRAND_RNG_PSEUDO_XORWOW;
     }
 
 private:
-    rocrand_generator m_generator;
+    hiprandGenerator_t m_generator;
 
     /// \cond
     template<class T>
-    friend class ::rocrand_cpp::uniform_int_distribution;
+    friend class ::hiprand_cpp::uniform_int_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::uniform_real_distribution;
+    friend class ::hiprand_cpp::uniform_real_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::normal_distribution;
+    friend class ::hiprand_cpp::normal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::lognormal_distribution;
+    friend class ::hiprand_cpp::lognormal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::poisson_distribution;
+    friend class ::hiprand_cpp::poisson_distribution;
     /// \endcond
 };
 
@@ -1134,7 +1142,7 @@ constexpr typename xorwow_engine<DefaultSeed>::seed_type xorwow_engine<DefaultSe
 /// mrg32k3a_engine is an implementation of MRG32k3a pseudorandom number generator,
 /// which is a Combined Multiple Recursive Generator (CMRG) created by Pierre L'Ecuyer.
 /// It produces random 32-bit \p unsigned \p int values on the interval [0; 2^32 - 1].
-template<unsigned long long DefaultSeed = ROCRAND_MRG32K3A_DEFAULT_SEED>
+template<unsigned long long DefaultSeed = HIPRAND_MRG32K3A_DEFAULT_SEED>
 class mrg32k3a_engine
 {
 public:
@@ -1151,9 +1159,9 @@ public:
     mrg32k3a_engine(seed_type seed_value = DefaultSeed,
                     offset_type offset_value = 0)
     {
-        rocrand_status status;
-        status = rocrand_create_generator(&m_generator, this->type());
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandCreateGenerator(&m_generator, this->type());
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
         if(offset_value > 0)
         {
             this->offset(offset_value);
@@ -1161,13 +1169,13 @@ public:
         this->seed(seed_value);
     }
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mrg32k3a_engine(rocrand_generator& generator)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
+    mrg32k3a_engine(hiprandGenerator_t& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
         {
-            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+            throw hiprand_cpp::error(HIPRAND_STATUS_NOT_INITIALIZED);
         }
         generator = NULL;
     }
@@ -1175,44 +1183,44 @@ public:
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~mrg32k3a_engine()
     {
-        rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
     void stream(hipStream_t value)
     {
-        rocrand_status status = rocrand_set_stream(m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetStream(m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::offset()
     void offset(offset_type value)
     {
-        rocrand_status status = rocrand_set_offset(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetGeneratorOffset(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::seed()
     void seed(seed_type value)
     {
-        rocrand_status status = rocrand_set_seed(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetPseudoRandomGeneratorSeed(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::operator()()
     template<class Generator>
     void operator()(result_type * output, size_t size)
     {
-        rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandGenerate(m_generator, output, size);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::min()
     result_type min() const
     {
-        return 0;
+        return 1;
     }
 
     /// \copydoc philox4x32_10_engine::max()
@@ -1222,29 +1230,29 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::type()
-    static constexpr rocrand_rng_type type()
+    static constexpr hiprandRngType type()
     {
-        return ROCRAND_RNG_PSEUDO_MRG32K3A;
+        return HIPRAND_RNG_PSEUDO_MRG32K3A;
     }
 
 private:
-    rocrand_generator m_generator;
+    hiprandGenerator_t m_generator;
 
     /// \cond
     template<class T>
-    friend class ::rocrand_cpp::uniform_int_distribution;
+    friend class ::hiprand_cpp::uniform_int_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::uniform_real_distribution;
+    friend class ::hiprand_cpp::uniform_real_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::normal_distribution;
+    friend class ::hiprand_cpp::normal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::lognormal_distribution;
+    friend class ::hiprand_cpp::lognormal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::poisson_distribution;
+    friend class ::hiprand_cpp::poisson_distribution;
     /// \endcond
 };
 
@@ -1253,7 +1261,7 @@ template<unsigned long long DefaultSeed>
 constexpr typename mrg32k3a_engine<DefaultSeed>::seed_type mrg32k3a_engine<DefaultSeed>::default_seed;
 /// \endcond
 
-/// \brief Random number engine based on
+/// \brief Pseudorandom number engine based on
 /// <a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MTGP/">Mersenne Twister
 /// for Graphic Processors</a> algorithm.
 ///
@@ -1285,19 +1293,19 @@ public:
     /// See also: hiprandCreateGenerator()
     mtgp32_engine(seed_type seed_value = DefaultSeed)
     {
-        rocrand_status status;
-        status = rocrand_create_generator(&m_generator, this->type());
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandCreateGenerator(&m_generator, this->type());
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
         this->seed(seed_value);
     }
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mtgp32_engine(rocrand_generator& generator)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
+    mtgp32_engine(hiprandGenerator_t& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
         {
-            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+            throw hiprand_cpp::error(HIPRAND_STATUS_NOT_INITIALIZED);
         }
         generator = NULL;
     }
@@ -1305,31 +1313,31 @@ public:
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~mtgp32_engine()
     {
-        rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
     void stream(hipStream_t value)
     {
-        rocrand_status status = rocrand_set_stream(m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetStream(m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::seed()
     void seed(seed_type value)
     {
-        rocrand_status status = rocrand_set_seed(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetPseudoRandomGeneratorSeed(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::operator()()
     template<class Generator>
     void operator()(result_type * output, size_t size)
     {
-        rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandGenerate(m_generator, output, size);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::min()
@@ -1345,29 +1353,29 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::type()
-    static constexpr rocrand_rng_type type()
+    static constexpr hiprandRngType type()
     {
-        return ROCRAND_RNG_PSEUDO_MTGP32;
+        return HIPRAND_RNG_PSEUDO_MTGP32;
     }
 
 private:
-    rocrand_generator m_generator;
+    hiprandGenerator_t m_generator;
 
     /// \cond
     template<class T>
-    friend class ::rocrand_cpp::uniform_int_distribution;
+    friend class ::hiprand_cpp::uniform_int_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::uniform_real_distribution;
+    friend class ::hiprand_cpp::uniform_real_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::normal_distribution;
+    friend class ::hiprand_cpp::normal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::lognormal_distribution;
+    friend class ::hiprand_cpp::lognormal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::poisson_distribution;
+    friend class ::hiprand_cpp::poisson_distribution;
     /// \endcond
 };
 
@@ -1381,7 +1389,7 @@ constexpr typename mtgp32_engine<DefaultSeed>::seed_type mtgp32_engine<DefaultSe
 /// sobol32_engine is quasi-random number engine which produced
 /// <a href="https://en.wikipedia.org/wiki/Sobol_sequence">Sobol sequences</a>.
 /// This implementation supports generating sequences in up to 20,000 dimensions.
-/// The engine produces random unsigned integers on the interval [0, 2^32 - 1].
+/// The engine produces random unsigned integers on the interval [0; 2^32 - 1].
 template<unsigned int DefaultNumDimensions = 1>
 class sobol32_engine
 {
@@ -1403,13 +1411,13 @@ public:
     /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
     ///
-    /// See also: rocrand_create_generator()
+    /// See also: hiprandCreateGenerator()
     sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
                    offset_type offset_value = 0)
     {
-        rocrand_status status;
-        status = rocrand_create_generator(&m_generator, this->type());
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandCreateGenerator(&m_generator, this->type());
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
         if(offset_value > 0)
         {
             this->offset(offset_value);
@@ -1417,13 +1425,13 @@ public:
         this->dimensions(num_of_dimensions);
     }
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    sobol32_engine(rocrand_generator& generator)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
+    sobol32_engine(hiprandGenerator_t& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
         {
-            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+            throw hiprand_cpp::error(HIPRAND_STATUS_NOT_INITIALIZED);
         }
         generator = NULL;
     }
@@ -1431,22 +1439,22 @@ public:
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~sobol32_engine()
     {
-        rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
     void stream(hipStream_t value)
     {
-        rocrand_status status = rocrand_set_stream(m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetStream(m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::offset()
     void offset(offset_type value)
     {
-        rocrand_status status = rocrand_set_offset(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status = hiprandSetGeneratorOffset(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \brief Set the number of dimensions of a quasi-random number generator.
@@ -1458,21 +1466,21 @@ public:
     ///
     /// \param value - Number of dimensions
     ///
-    /// See also: rocrand_set_quasi_random_generator_dimensions()
+    /// See also: hiprandSetQuasiRandomGeneratorDimensions()
     void dimensions(dimensions_num_type value)
     {
-        rocrand_status status =
-            rocrand_set_quasi_random_generator_dimensions(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status =
+            hiprandSetQuasiRandomGeneratorDimensions(this->m_generator, value);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::operator()()
     template<class Generator>
     void operator()(result_type * output, size_t size)
     {
-        rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        hiprandStatus_t status;
+        status = hiprandGenerate(m_generator, output, size);
+        if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::min()
@@ -1488,29 +1496,29 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::type()
-    static constexpr rocrand_rng_type type()
+    static constexpr hiprandRngType type()
     {
-        return ROCRAND_RNG_QUASI_SOBOL32;
+        return HIPRAND_RNG_QUASI_SOBOL32;
     }
 
 private:
-    rocrand_generator m_generator;
+    hiprandGenerator_t m_generator;
 
     /// \cond
     template<class T>
-    friend class ::rocrand_cpp::uniform_int_distribution;
+    friend class ::hiprand_cpp::uniform_int_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::uniform_real_distribution;
+    friend class ::hiprand_cpp::uniform_real_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::normal_distribution;
+    friend class ::hiprand_cpp::normal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::lognormal_distribution;
+    friend class ::hiprand_cpp::lognormal_distribution;
 
     template<class T>
-    friend class ::rocrand_cpp::poisson_distribution;
+    friend class ::hiprand_cpp::poisson_distribution;
     /// \endcond
 };
 
@@ -1521,19 +1529,19 @@ sobol32_engine<DefaultNumDimensions>::default_num_dimensions;
 /// \endcond
 
 /// \typedef philox4x32_10;
-/// \brief Typedef of rocrand_cpp::philox4x32_10_engine PRNG engine with default seed (#ROCRAND_PHILOX4x32_DEFAULT_SEED).
+/// \brief Typedef of hiprand_cpp::philox4x32_10_engine PRNG engine with default seed (#HIPRAND_PHILOX4x32_DEFAULT_SEED).
 typedef philox4x32_10_engine<> philox4x32_10;
 /// \typedef xorwow
-/// \brief Typedef of rocrand_cpp::xorwow_engine PRNG engine with default seed (#ROCRAND_XORWOW_DEFAULT_SEED).
+/// \brief Typedef of hiprand_cpp::xorwow_engine PRNG engine with default seed (#HIPRAND_XORWOW_DEFAULT_SEED).
 typedef xorwow_engine<> xorwow;
 /// \typedef mrg32k3a
-/// \brief Typedef of rocrand_cpp::mrg32k3a_engine PRNG engine with default seed (#ROCRAND_MRG32K3A_DEFAULT_SEED).
+/// \brief Typedef of hiprand_cpp::mrg32k3a_engine PRNG engine with default seed (#HIPRAND_MRG32K3A_DEFAULT_SEED).
 typedef mrg32k3a_engine<> mrg32k3a;
 /// \typedef mtgp32
-/// \brief Typedef of rocrand_cpp::mtgp32_engine PRNG engine with default seed (0).
+/// \brief Typedef of hiprand_cpp::mtgp32_engine PRNG engine with default seed (0).
 typedef mtgp32_engine<> mtgp32;
 /// \typedef sobol32
-/// \brief Typedef of rocrand_cpp::sobol32_engine PRNG engine with default number of dimensions (1).
+/// \brief Typedef of hiprand_cpp::sobol32_engine PRNG engine with default number of dimensions (1).
 typedef sobol32_engine<> sobol32;
 
 /// \typedef default_random_engine
@@ -1545,17 +1553,17 @@ typedef xorwow default_random_engine;
 /// \brief A non-deterministic uniform random number generator,
 /// see <a href="http://en.cppreference.com/w/cpp/numeric/random/random_device">std::random_device</a>.
 ///
-/// rocrand_cpp::random_device is non-deterministic uniform random number generator,
+/// hiprand_cpp::random_device is non-deterministic uniform random number generator,
 /// or a pseudo-random number engine if there is no support for non-deterministic
 /// random number generation. It's implemented as a typedef of
 /// <a href="http://en.cppreference.com/w/cpp/numeric/random/random_device">std::random_device</a>.
 ///
-/// For practical use rocrand_cpp::random_device is generally only used to seed a PRNG
-/// such as \ref rocrand_cpp::mtgp32_engine.
+/// For practical use hiprand_cpp::random_device is generally only used to seed a PRNG
+/// such as \ref hiprand_cpp::mtgp32_engine.
 ///
 /// Example:
 /// \code
-/// #include <rocrand.hpp>
+/// #include <hiprand.hpp>
 ///
 /// int main()
 /// {
@@ -1563,30 +1571,30 @@ typedef xorwow default_random_engine;
 ///     unsigned int * output;
 ///     hipMalloc(&output, size * sizeof(unsigned int));
 ///
-///     rocrand_cpp::random_device rd;
-///     rocrand_cpp::mtgp32 engine(rd()); // seed engine with a real random value, if available
-///     rocrand_cpp::normal_distribution<float> dist(0.0, 1.5);
+///     hiprand_cpp::random_device rd;
+///     hiprand_cpp::mtgp32 engine(rd()); // seed engine with a real random value, if available
+///     hiprand_cpp::normal_distribution<float> dist(0.0, 1.5);
 ///     dist(engine, output, size);
 /// }
 /// \endcode
 typedef std::random_device random_device;
 
-/// \brief Returns rocRAND version.
-/// \return rocRAND version number as an \p int value.
+/// \brief Returns hipRAND version.
+/// \return hipRAND version number as an \p int value.
 int version()
 {
     int x;
-    rocrand_status status = rocrand_get_version(&x);
-    if(status != ROCRAND_STATUS_SUCCESS)
+    hiprandStatus_t status = hiprandGetVersion(&x);
+    if(status != HIPRAND_STATUS_SUCCESS)
     {
-        throw rocrand_cpp::error(status);
+        throw hiprand_cpp::error(status);
     }
     return x;
 }
 
-/// @} // end of group rocrandhostcpp
+/// @} // end of group hiprandhostcpp
 
-} // end namespace rocrand_cpp
+} // end namespace hiprand_cpp
 
 #endif // #if __cplusplus >= 201103L
-#endif // ROCRAND_HPP_
+#endif // HIPRAND_HPP_

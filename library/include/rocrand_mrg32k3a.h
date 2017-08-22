@@ -52,7 +52,7 @@
  * \def ROCRAND_MRG32K3A_DEFAULT_SEED
  * \brief Default seed for MRG32K3A PRNG.
  */
- #define ROCRAND_MRG32K3A_DEFAULT_SEED 0x12345ULL
+ #define ROCRAND_MRG32K3A_DEFAULT_SEED 12345ULL
  /** @} */ // end of group device
 
 namespace rocrand_device {
