@@ -37,14 +37,11 @@ __global__
 void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
-    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
-    
+
     __shared__ GeneratorState state;
-    
-    if (thread_id == 0)
-        state = states[state_id];
+    state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -54,10 +51,9 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
         index += stride;
     }
     __syncthreads();
-        
+
     // Save engine with its state
-    if (thread_id == 0)
-        states[state_id] = state;
+    states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -65,14 +61,11 @@ __global__
 void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
-    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
-    
+
     __shared__ GeneratorState state;
-    
-    if (thread_id == 0)
-        state = states[state_id];
+    state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -82,10 +75,9 @@ void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_
         index += stride;
     }
     __syncthreads();
-        
+
     // Save engine with its state
-    if (thread_id == 0)
-        states[state_id] = state;
+    states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -93,14 +85,11 @@ __global__
 void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
-    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
-    
+
     __shared__ GeneratorState state;
-    
-    if (thread_id == 0)
-        state = states[state_id];
+    state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -110,10 +99,9 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
         index += stride;
     }
     __syncthreads();
-        
+
     // Save engine with its state
-    if (thread_id == 0)
-        states[state_id] = state;
+    states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -121,14 +109,11 @@ __global__
 void rocrand_log_normal_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
-    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
-    
+
     __shared__ GeneratorState state;
-    
-    if (thread_id == 0)
-        state = states[state_id];
+    state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -138,10 +123,9 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
         index += stride;
     }
     __syncthreads();
-        
+
     // Save engine with its state
-    if (thread_id == 0)
-        states[state_id] = state;
+    states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -149,14 +133,11 @@ __global__
 void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, const size_t size, double lambda)
 {
     const unsigned int state_id = hipBlockIdx_x;
-    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
-    
+
     __shared__ GeneratorState state;
-    
-    if (thread_id == 0)
-        state = states[state_id];
+    state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -166,10 +147,9 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
         index += stride;
     }
     __syncthreads();
-        
+
     // Save engine with its state
-    if (thread_id == 0)
-        states[state_id] = state;
+    states[state_id] = state;
 }
 
 TEST(rocrand_kernel_mtgp32, rocrand_state_mtgp32_type)
@@ -181,10 +161,10 @@ TEST(rocrand_kernel_mtgp32, rocrand_state_mtgp32_type)
 TEST(rocrand_kernel_mtgp32, rocrand)
 {
     typedef rocrand_state_mtgp32 state_type;
-    
+
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
-        
+
     EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
 
     const size_t output_size = 8192;
@@ -210,7 +190,7 @@ TEST(rocrand_kernel_mtgp32, rocrand)
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
-    
+
     double mean = 0;
     for(auto v : output_host)
     {
@@ -223,12 +203,12 @@ TEST(rocrand_kernel_mtgp32, rocrand)
 TEST(rocrand_kernel_mtgp32, rocrand_uniform)
 {
     typedef rocrand_state_mtgp32 state_type;
-    
+
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
-        
+
     EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
-    
+
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
@@ -252,7 +232,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_uniform)
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
-    
+
     double mean = 0;
     for(auto v : output_host)
     {
@@ -265,10 +245,10 @@ TEST(rocrand_kernel_mtgp32, rocrand_uniform)
 TEST(rocrand_kernel_mtgp32, rocrand_normal)
 {
     typedef rocrand_state_mtgp32 state_type;
-    
+
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
-        
+
     EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
 
     const size_t output_size = 8192;
@@ -294,7 +274,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_normal)
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
-    
+
     double mean = 0;
     for(auto v : output_host)
     {
@@ -315,12 +295,12 @@ TEST(rocrand_kernel_mtgp32, rocrand_normal)
 TEST(rocrand_kernel_mtgp32, rocrand_log_normal)
 {
     typedef rocrand_state_mtgp32 state_type;
-    
+
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
-        
+
     EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
-    
+
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
@@ -344,7 +324,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_log_normal)
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
-    
+
     double mean = 0;
     for(auto v : output_host)
     {
@@ -376,9 +356,9 @@ TEST_P(rocrand_kernel_mtgp32_poisson, rocrand_poisson)
 
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
-        
+
     EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
-    
+
     const size_t output_size = 8192;
     unsigned int * output;
     HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
