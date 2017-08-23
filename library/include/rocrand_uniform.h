@@ -111,7 +111,7 @@ double mrg_uniform_distribution_double(unsigned int v)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0f but includes \p 1.0f.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed float between \p 0.0f and \p 1.0f
  */
@@ -128,7 +128,7 @@ float rocrand_uniform(rocrand_state_philox4x32_10 * state)
  * from \p state, and increments position of generator by two.
  * Output range excludes \p 0.0f but includes \p 1.0f.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return two uniformly distributed float between \p 0.0f and \p 1.0f
  */
@@ -148,7 +148,7 @@ float2 rocrand_uniform2(rocrand_state_philox4x32_10 * state)
  * from \p state, and increments position of generator by four.
  * Output range excludes \p 0.0f but includes \p 1.0f.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return four uniformly distributed float between \p 0.0f and \p 1.0f
  */
@@ -165,7 +165,7 @@ float4 rocrand_uniform4(rocrand_state_philox4x32_10 * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */
@@ -182,7 +182,7 @@ double rocrand_uniform_double(rocrand_state_philox4x32_10 * state)
  * from \p state, and increments position of generator by two.
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return two uniformly distributed float between \p 0.0 and \p 1.0
  */
@@ -202,7 +202,7 @@ double2 rocrand_uniform_double2(rocrand_state_philox4x32_10 * state)
  * from \p state, and increments position of generator by four.
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return four uniformly distributed doubles between \p 0.0 and \p 1.0
  */
@@ -219,7 +219,7 @@ double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0f but includes \p 1.0f.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed float between \p 0.0f and \p 1.0f
  */
@@ -236,7 +236,7 @@ float rocrand_uniform(rocrand_state_mrg32k3a * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */
@@ -253,7 +253,7 @@ double rocrand_uniform_double(rocrand_state_mrg32k3a * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0f but includes \p 1.0f.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed float between \p 0.0f and \p 1.0f
  */
@@ -270,7 +270,7 @@ float rocrand_uniform(rocrand_state_xorwow * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */
@@ -287,7 +287,7 @@ double rocrand_uniform_double(rocrand_state_xorwow * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0f but includes \p 1.0f.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed float between \p 0.0f and \p 1.0f
  */
@@ -304,7 +304,7 @@ float rocrand_uniform(rocrand_state_mtgp32 * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */
@@ -321,7 +321,7 @@ double rocrand_uniform_double(rocrand_state_mtgp32 * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0f but includes \p 1.0f.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed float between \p 0.0f and \p 1.0f
  */
@@ -338,7 +338,7 @@ float rocrand_uniform(rocrand_state_sobol32 * state)
  * from \p state, and increments position of generator by one.
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */

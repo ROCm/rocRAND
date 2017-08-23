@@ -325,7 +325,7 @@ typedef rocrand_device::xorwow_engine rocrand_state_xorwow;
  *
  * \param seed - Value to use as a seed
  * \param subsequence - Subsequence to start at
- * \param offset - Absolute offset into sequence
+ * \param offset - Absolute offset into subsequence
  * \param state - Pointer to state to initialize
  */
 FQUALIFIERS
@@ -343,7 +343,7 @@ void rocrand_init(const unsigned long long seed,
  * Return pseudorandom value (32-bit) from the XORWOW generator in \p state,
  * increment position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return pseudorandom value (32-bit) as an unsigned int
  */
@@ -381,6 +381,21 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_xorwow 
 {
     return state->discard_subsequence(subsequence);
 }
+
+/**
+ * \brief Updates XORWOW state to skip ahead by \p sequence sequences.
+ *
+ * Updates the XORWOW state \p state skipping \p sequence sequences ahead.
+ * For XORWOW each sequence is 2^67 numbers long (equal to the size of a subsequence).
+ *
+ * \param sequence - Number of sequences to skip
+ * \param state - Pointer to state to update
+ */
+ FQUALIFIERS
+ void skipahead_sequence(unsigned long long sequence, rocrand_state_xorwow * state)
+ {
+     return state->discard_subsequence(sequence);
+ }
 
 #endif // ROCRAND_XORWOW_H_
 

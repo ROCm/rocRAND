@@ -243,7 +243,7 @@ double2 mrg_normal_distribution_double2(unsigned int v1, unsigned int v2)
  * position of generator by one. Box-Muller implementation
  * is used to generate normally distributed floats.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed float with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -272,7 +272,7 @@ float rocrand_normal(rocrand_state_philox4x32_10 * state)
  * position of generator by two. Box-Muller implementation
  * is used to generate normally distributed floats.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally two distributed floats with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -291,7 +291,7 @@ float2 rocrand_normal2(rocrand_state_philox4x32_10 * state)
  * position of generator by four. Box-Muller implementation
  * is used to generate normally distributed floats.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally four distributed floats with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -310,7 +310,7 @@ float4 rocrand_normal4(rocrand_state_philox4x32_10 * state)
  * position of generator by one. Box-Muller implementation
  * is used to generate normally distributed doubles.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed double with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -339,7 +339,7 @@ double rocrand_normal_double(rocrand_state_philox4x32_10 * state)
  * position of generator by two. Box-Muller implementation
  * is used to generate normally distributed doubles.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally two distributed doubles with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -358,7 +358,7 @@ double2 rocrand_normal_double2(rocrand_state_philox4x32_10 * state)
  * position of generator by four. Box-Muller implementation
  * is used to generate normally distributed doubles.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally four distributed doubles with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -382,7 +382,7 @@ double4 rocrand_normal_double4(rocrand_state_philox4x32_10 * state)
  * position of generator by one. Box-Muller implementation
  * is used to generate normally distributed floats.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed float with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -411,7 +411,7 @@ float rocrand_normal(rocrand_state_mrg32k3a * state)
  * position of generator by two. Box-Muller implementation
  * is used to generate normally distributed floats.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally two distributed floats with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -430,7 +430,7 @@ float2 rocrand_normal2(rocrand_state_mrg32k3a * state)
  * position of generator by one. Box-Muller implementation
  * is used to generate normally distributed doubles.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed double with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -459,7 +459,7 @@ double rocrand_normal_double(rocrand_state_mrg32k3a * state)
  * position of generator by two. Box-Muller implementation
  * is used to generate normally distributed doubles.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally two distributed doubles with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -478,7 +478,7 @@ double2 rocrand_normal_double2(rocrand_state_mrg32k3a * state)
  * position of generator by one. Box-Muller implementation
  * is used to generate normally distributed floats.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed float with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -507,7 +507,7 @@ float rocrand_normal(rocrand_state_xorwow * state)
  * position of generator by two. Box-Muller implementation
  * is used to generate normally distributed floats.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally two distributed floats with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -526,7 +526,7 @@ float2 rocrand_normal2(rocrand_state_xorwow * state)
  * position of generator by one. Box-Muller implementation
  * is used to generate normally distributed doubles.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed double with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -557,7 +557,7 @@ double rocrand_normal_double(rocrand_state_xorwow * state)
  * position of generator by two. Box-Muller implementation
  * is used to generate normally distributed doubles.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally two distributed doubles with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -577,7 +577,7 @@ double2 rocrand_normal_double2(rocrand_state_xorwow * state)
  * standard deviation \p 1.0f from \p state, and increments
  * position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed float with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -595,7 +595,7 @@ float rocrand_normal(rocrand_state_mtgp32 * state)
  * standard deviation \p 1.0 from \p state, and increments
  * position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed double with mean \p 0.0 and
  * standard deviation \p 1.0
@@ -613,7 +613,7 @@ double rocrand_normal_double(rocrand_state_mtgp32 * state)
  * standard deviation \p 1.0f from \p state, and increments
  * position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed float with mean \p 0.0f and
  * standard deviation \p 1.0f
@@ -631,7 +631,7 @@ float rocrand_normal(rocrand_state_sobol32 * state)
  * standard deviation \p 1.0 from \p state, and increments
  * position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return normally distributed double with mean \p 0.0 and
  * standard deviation \p 1.0
