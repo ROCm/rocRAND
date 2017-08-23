@@ -229,13 +229,13 @@ protected:
 
         while(subsequence > 0) {
             if (subsequence % 2 == 1) {
-                mod_mat_vec(A1p67, m_state.g1, ROCRAND_MRG32K3A_M1);
-                mod_mat_vec(A2p67, m_state.g2, ROCRAND_MRG32K3A_M2);
+                mod_mat_vec_m1(A1p67, m_state.g1);
+                mod_mat_vec_m2(A2p67, m_state.g2);
             }
             subsequence = subsequence / 2;
 
-            mod_mat_sq(A1p67, ROCRAND_MRG32K3A_M1);
-            mod_mat_sq(A2p67, ROCRAND_MRG32K3A_M2);
+            mod_mat_sq_m1(A1p67);
+            mod_mat_sq_m2(A2p67);
         }
     }
 
@@ -258,13 +258,13 @@ protected:
 
         while(sequence > 0) {
             if (sequence % 2 == 1) {
-                mod_mat_vec(A1p127, m_state.g1, ROCRAND_MRG32K3A_M1);
-                mod_mat_vec(A2p127, m_state.g2, ROCRAND_MRG32K3A_M2);
+                mod_mat_vec_m1(A1p127, m_state.g1);
+                mod_mat_vec_m2(A2p127, m_state.g2);
             }
             sequence = sequence / 2;
 
-            mod_mat_sq(A1p127, ROCRAND_MRG32K3A_M1);
-            mod_mat_sq(A2p127, ROCRAND_MRG32K3A_M2);
+            mod_mat_sq_m1(A1p127);
+            mod_mat_sq_m2(A2p127);
         }
     }
 
@@ -288,13 +288,13 @@ protected:
 
         while(offset > 0) {
             if (offset % 2 == 1) {
-                mod_mat_vec(A1, m_state.g1, ROCRAND_MRG32K3A_M1);
-                mod_mat_vec(A2, m_state.g2, ROCRAND_MRG32K3A_M2);
+                mod_mat_vec_m1(A1, m_state.g1);
+                mod_mat_vec_m2(A2, m_state.g2);
             }
             offset = offset / 2;
 
-            mod_mat_sq(A1, ROCRAND_MRG32K3A_M1);
-            mod_mat_sq(A2, ROCRAND_MRG32K3A_M2);
+            mod_mat_sq_m1(A1);
+            mod_mat_sq_m2(A2);
         }
     }
 
@@ -307,44 +307,113 @@ protected:
     }
 
 private:
-    inline __device__ __host__
-    void mod_mat_vec(unsigned long long * A,
-                     unsigned long long * s,
-                     unsigned long long m)
+    FQUALIFIERS
+    void mod_mat_vec_m1(unsigned long long * A,
+                        unsigned long long * s)
     {
         unsigned long long x[3];
-        for (size_t i = 0; i < 3; ++i) {
-            x[i] = 0;
-            for (size_t j = 0; j < 3; j++)
-                x[i] = (A[3 * i + j] * s[j] + x[i]) % m;
-        }
-        for (size_t i = 0; i < 3; ++i)
-            s[i] = x[i];
+      
+        x[0] = mod_m1(mod_m1(A[0] * s[0])
+                    + mod_m1(A[1] * s[1])
+                    + mod_m1(A[2] * s[2]));
+               
+        x[1] = mod_m1(mod_m1(A[3] * s[0])
+                    + mod_m1(A[4] * s[1])
+                    + mod_m1(A[5] * s[2]));
+        
+        x[2] = mod_m1(mod_m1(A[6] * s[0])
+                    + mod_m1(A[7] * s[1])
+                    + mod_m1(A[8] * s[2]));
+        
+        s[0] = x[0];
+        s[1] = x[1];
+        s[2] = x[2];
+    }
+    
+    FQUALIFIERS
+    void mod_mat_vec_m2(unsigned long long * A,
+                        unsigned long long * s)
+    {
+        unsigned long long x[3];
+      
+        x[0] = mod_m2(mod_m2(A[0] * s[0])
+                    + mod_m2(A[1] * s[1])
+                    + mod_m2(A[2] * s[2]));
+               
+        x[1] = mod_m2(mod_m2(A[3] * s[0])
+                    + mod_m2(A[4] * s[1])
+                    + mod_m2(A[5] * s[2]));
+        
+        x[2] = mod_m2(mod_m2(A[6] * s[0])
+                    + mod_m2(A[7] * s[1])
+                    + mod_m2(A[8] * s[2]));
+        
+        s[0] = x[0];
+        s[1] = x[1];
+        s[2] = x[2];
     }
 
-    inline __device__ __host__
-    void mod_mat_sq(unsigned long long * A,
-                    unsigned long long m)
+    FQUALIFIERS
+    void mod_mat_sq_m1(unsigned long long * A)
     {
         unsigned long long x[9];
-        unsigned long long a;
+        #pragma unroll
         for (size_t i = 0; i < 3; i++) {
-            for (size_t j = 0; j < 3; j++) {
-                a = 0;
-                for (size_t k = 0; k < 3; k++) {
-                    a += (A[i + 3 * k] * A[k + 3 * j]) % m;
-                }
-                x[i + 3 * j] = a % m;
-            }
+            x[i + 0] = mod_m1(mod_m1(A[i + 0] * A[0])
+                            + mod_m1(A[i + 3] * A[1])
+                            + mod_m1(A[i + 6] * A[2]));
+                            
+            x[i + 3] = mod_m1(mod_m1(A[i + 0] * A[3])
+                            + mod_m1(A[i + 3] * A[4])
+                            + mod_m1(A[i + 6] * A[5]));
+                           
+            x[i + 6] = mod_m1(mod_m1(A[i + 0] * A[6])
+                            + mod_m1(A[i + 3] * A[7])
+                            + mod_m1(A[i + 6] * A[8]));
         }
+
+        A[0] = x[0];
+        A[1] = x[1];
+        A[2] = x[2];
+        A[3] = x[3];
+        A[4] = x[4];
+        A[5] = x[5];
+        A[6] = x[6];
+        A[7] = x[7];
+        A[8] = x[8];
+    }
+    
+    FQUALIFIERS
+    void mod_mat_sq_m2(unsigned long long * A)
+    {
+        unsigned long long x[9];
+        #pragma unroll
         for (size_t i = 0; i < 3; i++) {
-            A[i + 3 * 0] = x[i + 3 * 0];
-            A[i + 3 * 1] = x[i + 3 * 1];
-            A[i + 3 * 2] = x[i + 3 * 2];
+            x[i + 0] = mod_m2(mod_m2(A[i + 0] * A[0])
+                            + mod_m2(A[i + 3] * A[1])
+                            + mod_m2(A[i + 6] * A[2]));
+                            
+            x[i + 3] = mod_m2(mod_m2(A[i + 0] * A[3])
+                            + mod_m2(A[i + 3] * A[4])
+                            + mod_m2(A[i + 6] * A[5]));
+                           
+            x[i + 6] = mod_m2(mod_m2(A[i + 0] * A[6])
+                            + mod_m2(A[i + 3] * A[7])
+                            + mod_m2(A[i + 6] * A[8]));
         }
+        
+        A[0] = x[0];
+        A[1] = x[1];
+        A[2] = x[2];
+        A[3] = x[3];
+        A[4] = x[4];
+        A[5] = x[5];
+        A[6] = x[6];
+        A[7] = x[7];
+        A[8] = x[8];
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_mul_m1(unsigned int i,
                                   unsigned long long j)
     {
@@ -361,7 +430,7 @@ private:
         return lo;
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_m1(unsigned long long i)
     {
         unsigned long long p;
@@ -373,7 +442,7 @@ private:
         return p;
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_mul_m2(unsigned int i,
                                   unsigned long long j)
     {
@@ -390,7 +459,7 @@ private:
         return lo;
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_m2(unsigned long long i)
     {
         unsigned long long p;
