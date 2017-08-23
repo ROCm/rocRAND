@@ -439,6 +439,21 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4
     return state->discard_subsequence(subsequence);
 }
 
+/**
+ * \brief Updates Philox state to skip ahead by \p sequence sequences.
+ *
+ * Updates the Philox state \p state skipping \p sequence sequences ahead.
+ * For Philox each sequence is 4 * 2^64 numbers long (equal to the size of a subsequence).
+ *
+ * \param sequence - Number of sequences to skip
+ * \param state - Pointer to state to update
+ */
+ FQUALIFIERS
+ void skipahead_sequence(unsigned long long sequence, rocrand_state_philox4x32_10 * state)
+ {
+     return state->discard_subsequence(sequence);
+ }
+
 #endif // ROCRAND_PHILOX4X32_10_H_
 
 /** @} */ // end of group device
