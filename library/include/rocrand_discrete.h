@@ -110,7 +110,7 @@ unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribut
  * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param discrete_distribution - Related discrete distribution
  *
  * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
@@ -127,7 +127,7 @@ unsigned int rocrand_discrete(rocrand_state_philox4x32_10 * state, const rocrand
  * Return four discrete distributed unsigned ints with discrete distribution \p discrete_distribution
  * and increments the position of generator by four.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param discrete_distribution - Related Discrete distribution
  *
  * \return four discrete distributed unsigned ints with discrete distribution \p discrete_distribution
@@ -150,7 +150,7 @@ uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discr
  * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param discrete_distribution - Related Discrete distribution
  *
  * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
@@ -167,7 +167,7 @@ unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_disc
  * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param discrete_distribution - Related Discrete distribution
  *
  * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
@@ -184,7 +184,7 @@ unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discre
  * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param discrete_distribution - Related Discrete distribution
  *
  * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
@@ -201,7 +201,7 @@ unsigned int rocrand_discrete(rocrand_state_mtgp32 * state, const rocrand_discre
  * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
  * and increments the position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param discrete_distribution - Related Discrete distribution
  *
  * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution

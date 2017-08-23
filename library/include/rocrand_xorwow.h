@@ -325,7 +325,7 @@ typedef rocrand_device::xorwow_engine rocrand_state_xorwow;
  *
  * \param seed - Value to use as a seed
  * \param subsequence - Subsequence to start at
- * \param offset - Absolute offset into sequence
+ * \param offset - Absolute offset into subsequence
  * \param state - Pointer to state to initialize
  */
 FQUALIFIERS
@@ -343,7 +343,7 @@ void rocrand_init(const unsigned long long seed,
  * Return pseudorandom value (32-bit) from the XORWOW generator in \p state,
  * increment position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return pseudorandom value (32-bit) as an unsigned int
  */
