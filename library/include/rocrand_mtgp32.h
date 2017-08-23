@@ -179,15 +179,15 @@ public:
             single_temper_tbl[j] = params->single_temper_tbl[bid][j];
         }
     }
-    
+
     FQUALIFIERS
     mtgp32_engine operator=(const mtgp32_engine &m_engine)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int thread_id = hipThreadIdx_x;
-        for (int i = thread_id; i < MTGP_STATE; i += hipBlockDim_x) 
+        for (int i = thread_id; i < MTGP_STATE; i += hipBlockDim_x)
             m_state.status[i] = m_engine.m_state.status[i];
-            
+
         if (thread_id == 0)
         {
             m_state.offset = m_engine.m_state.offset;
@@ -204,7 +204,7 @@ public:
             single_temper_tbl[thread_id] = m_engine.single_temper_tbl[thread_id];
         }
         __syncthreads();
-        
+
         return *this;
         #else
         this->m_state = m_engine.m_state;
@@ -217,7 +217,7 @@ public:
             temper_tbl[j] = m_engine.temper_tbl[j];
             single_temper_tbl[j] = m_engine.single_temper_tbl[j];
         }
-        
+
         return *this;
         #endif
     }
@@ -354,10 +354,10 @@ typedef rocrand_device::mtgp32_param mtgp32_param;
  * Initializes MTGP32 states on the host-side by allocating a state array in host
  * memory, initializes that array, and copies the result to device memory.
  *
- * \param d_state - pointer to an array of states in device memory
+ * \param d_state - Pointer to an array of states in device memory
  * \param params - Pointer to an array of type mtgp32_fast_param in host memory
- * \param n - number of states to initialize
- * \param seed - seed value
+ * \param n - Number of states to initialize
+ * \param seed - Seed value
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if states could not be initialized
@@ -410,7 +410,7 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
  * state.
  *
  * \param params - Pointer to an array of type mtgp32_fast_param in host memory
- * \param p - pointer to a structure of type mtgp32_param in device memory.
+ * \param p - Pointer to a mtgp32_param structure allocated in device memory
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if parameters could not be loaded
@@ -490,7 +490,7 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
  * Return pseudorandom value (32-bit) from the MTGP32 generator in \p state,
  * increment position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return pseudorandom value (32-bit) as an unsigned int
  */
