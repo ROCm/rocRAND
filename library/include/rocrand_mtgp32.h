@@ -490,7 +490,7 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
  * Return pseudorandom value (32-bit) from the MTGP32 generator in \p state,
  * increment position of generator by one.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  *
  * \return pseudorandom value (32-bit) as an unsigned int
  */

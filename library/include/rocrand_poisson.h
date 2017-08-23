@@ -129,7 +129,7 @@ unsigned int poisson_distribution(State& state, double lambda)
         return poisson_distribution_huge(state, lambda);
     }
 }
-    
+
 template<class State>
 FQUALIFIERS
 unsigned int poisson_itr(State& state, double lambda)
@@ -147,7 +147,7 @@ unsigned int poisson_itr(State& state, double lambda)
             L = ex;
         else
             L = exp((double)(pow - lambda));
-      
+
         x *= L;
         y *= L;
         pow += 500;
@@ -160,7 +160,7 @@ unsigned int poisson_itr(State& state, double lambda)
     } while((double)pow < lambda);
     return k;
 }
-    
+
 template<class State>
 FQUALIFIERS
 unsigned int _poisson_distribution(State& state, double lambda)
@@ -184,7 +184,7 @@ unsigned int _poisson_distribution(State& state, double lambda)
  * Return a Poisson distributed unsigned int with lambda \p lambda
  * and increments the position of generator by a variable amount.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
  *
  * \return Poisson distributed unsigned int with lambda \p lambda
@@ -202,7 +202,7 @@ unsigned int rocrand_poisson(rocrand_state_philox4x32_10 * state, double lambda)
  * Return four Poisson distributed unsigned ints with lambda \p lambda
  * and increments the position of generator by a variable amount.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
  *
  * \return four Poisson distributed unsigned int with lambda \p lambda
@@ -225,7 +225,7 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
  * Return a Poisson distributed unsigned int with lambda \p lambda
  * and increments the position of generator by a variable amount.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
  *
  * \return Poisson distributed unsigned int with lambda \p lambda
@@ -244,7 +244,7 @@ unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
  * Return a Poisson distributed unsigned int with lambda \p lambda
  * and increments the position of generator by a variable amount.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
  *
  * \return Poisson distributed unsigned int with lambda \p lambda
@@ -263,7 +263,7 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
  * Return a Poisson distributed unsigned int with lambda \p lambda
  * and increments the position of generator by a variable amount.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
  *
  * \return Poisson distributed unsigned int with lambda \p lambda
@@ -280,7 +280,7 @@ unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
  * Return a Poisson distributed unsigned int with lambda \p lambda
  * and increments the position of generator by a variable amount.
  *
- * \param state - Pointer to state to update
+ * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
  *
  * \return Poisson distributed unsigned int with lambda \p lambda
