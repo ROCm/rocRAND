@@ -1,2 +1,3 @@
 add_executable(xorwow_precomputed_generator xorwow_precomputed_generator.cpp)
 add_executable(sobol_direction_vector_generator sobol_direction_vector_generator.cpp)
+add_executable(mrg32k3a_precomputed_generator mrg32k3a_precomputed_generator.cpp)
