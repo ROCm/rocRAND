@@ -28,8 +28,8 @@
 #include <hip/hip_runtime.h>
 #include <type_traits>
 
-#include "curand_kernel.h"
-#include "curand_mtgp32_host.h"
+#include <curand_kernel.h>
+#include <curand_mtgp32_host.h>
 
 typedef curandState_t hiprandState_t;
 typedef curandStateXORWOW_t hiprandStateXORWOW_t;
