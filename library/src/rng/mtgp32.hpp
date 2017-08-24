@@ -86,7 +86,7 @@ namespace detail {
         // Load device engine
         __shared__ mtgp32_device_engine engine;
         
-        engine = engines[engine_id];
+        engine.copy(engines[engine_id]);
         __syncthreads();
         
         while(index < n)
@@ -98,7 +98,7 @@ namespace detail {
         __syncthreads();
         
         // Save engine with its state
-        engines[engine_id] = engine;
+        engines[engine_id].copy(engine);
     }
     
 } // end namespace detail

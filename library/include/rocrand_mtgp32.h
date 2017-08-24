@@ -181,7 +181,7 @@ public:
     }
 
     FQUALIFIERS
-    mtgp32_engine operator=(const mtgp32_engine &m_engine)
+    void copy(const mtgp32_engine &m_engine)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int thread_id = hipThreadIdx_x;
@@ -204,8 +204,6 @@ public:
             single_temper_tbl[thread_id] = m_engine.single_temper_tbl[thread_id];
         }
         __syncthreads();
-
-        return *this;
         #else
         this->m_state = m_engine.m_state;
         pos_tbl = m_engine.pos_tbl;
@@ -217,8 +215,6 @@ public:
             temper_tbl[j] = m_engine.temper_tbl[j];
             single_temper_tbl[j] = m_engine.single_temper_tbl[j];
         }
-
-        return *this;
         #endif
     }
 
