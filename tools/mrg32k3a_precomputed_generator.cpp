@@ -120,7 +120,7 @@ int main(int argc, char const *argv[])
         return -1;
     }
     
-    unsigned int MRG323A_DIM = 128;
+    unsigned int MRG323A_DIM = 64;
     unsigned int MRG323A_N = MRG323A_DIM * 9;
     unsigned long long * A1 = new unsigned long long[MRG323A_N];
     unsigned long long * A2 = new unsigned long long[MRG323A_N];
