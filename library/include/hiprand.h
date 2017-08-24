@@ -34,6 +34,13 @@
 #endif
 /// \endcond
 
+/// \brief hipRAND library version
+///
+/// HIPRAND_VERSION % 100 is the patch level
+/// HIPRAND_VERSION / 100 % 1000 is the minor version
+/// HIPRAND_VERSION / 100000 is the major version
+#define HIPRAND_VERSION 100500
+
 #if defined(__HIP_PLATFORM_HCC__)
 #include "hiprand_hcc.h"
 #elif defined(__HIP_PLATFORM_NVCC__)

@@ -33,7 +33,7 @@
 /// \cond
 #define FQUALIFIERS QUALIFIERS
 /// \endcond
-#include "rocrand_kernel.h"
+#include <rocrand_kernel.h>
 
 /// \cond
 typedef rocrand_state_xorwow hiprandState_t;

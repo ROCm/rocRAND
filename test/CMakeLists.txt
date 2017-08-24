@@ -17,8 +17,8 @@ include_directories(SYSTEM ${GTEST_INCLUDE_DIRS})
 foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     hip_add_executable(${test_name} "${test_src}")
-    add_dependencies(${test_name} rocRAND ${ROCRAND_TEST_DEPENDENCIES})
-    get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+    add_dependencies(${test_name} rocrand ${ROCRAND_TEST_DEPENDENCIES})
+    get_target_property(rocRAND_rpath rocrand BINARY_DIR)
     if(NOT GTEST_ROOT)
         set(GTest_rpath "${PROJECT_BINARY_DIR}/gtest/lib")
     else()
@@ -27,7 +27,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     target_link_libraries(
         ${test_name}
         -Wl,-rpath,${rocRAND_rpath}:${GTest_rpath} # workaround for HIP linker
-        $<TARGET_FILE:rocRAND>
+        $<TARGET_FILE:rocrand>
         ${GTEST_BOTH_LIBRARIES})
     set_target_properties(
         ${test_name}
@@ -51,12 +51,12 @@ foreach(test_src ${hipRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     hip_add_executable(${test_name} "${test_src}")
     if(HIP_PLATFORM STREQUAL "hcc")
-        add_dependencies(${test_name} rocRAND)
+        add_dependencies(${test_name} rocrand)
     endif()
-    add_dependencies(${test_name} hipRAND ${ROCRAND_TEST_DEPENDENCIES})
-    get_target_property(hipRAND_rpath hipRAND BINARY_DIR)
+    add_dependencies(${test_name} hiprand ${ROCRAND_TEST_DEPENDENCIES})
+    get_target_property(hipRAND_rpath hiprand BINARY_DIR)
     if(HIP_PLATFORM STREQUAL "hcc")
-        get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+        get_target_property(rocRAND_rpath rocrand BINARY_DIR)
         if(NOT GTEST_ROOT)
             set(GTest_rpath "${PROJECT_BINARY_DIR}/gtest/lib")
         else()
@@ -65,13 +65,13 @@ foreach(test_src ${hipRAND_TEST_SRCS})
         target_link_libraries(
             ${test_name}
             -Wl,-rpath,${hipRAND_rpath}:${rocRAND_rpath}:${GTest_rpath} # workaround for HIP linker
-            $<TARGET_FILE:hipRAND> $<TARGET_FILE:rocRAND>
+            $<TARGET_FILE:hiprand> $<TARGET_FILE:rocrand>
             ${GTEST_BOTH_LIBRARIES}
         )
     else()
         target_link_libraries(
             ${test_name}
-            "-lcurand" hipRAND
+            "-lcurand" hiprand
             ${GTEST_BOTH_LIBRARIES}
         )
     endif()

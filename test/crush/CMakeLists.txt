@@ -22,13 +22,13 @@ endif()
 foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     get_filename_component(crush_test_name ${crush_test_src} NAME_WE)
     hip_add_executable(${crush_test_name} "${crush_test_src}")
-    add_dependencies(${crush_test_name} rocRAND ${ROCRAND_CRUSH_TEST_DEPENDENCIES})
-    get_target_property(rocRAND_rpath rocRAND BINARY_DIR)
+    add_dependencies(${crush_test_name} rocrand ${ROCRAND_CRUSH_TEST_DEPENDENCIES})
+    get_target_property(rocRAND_rpath rocrand BINARY_DIR)
     set(TestU01_rpath "${TestU01_LIBRARY_DIRS}")
     target_link_libraries(
         ${crush_test_name}
         -Wl,-rpath,${rocRAND_rpath}:${TestU01_rpath} # workaround for HIP linker
-        $<TARGET_FILE:rocRAND>
+        $<TARGET_FILE:rocrand>
         ${TestU01_LIBRARIES}
     )
     if(HIP_PLATFORM STREQUAL "nvcc")
