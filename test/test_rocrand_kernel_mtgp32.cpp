@@ -37,11 +37,13 @@ __global__
 void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
+    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     __shared__ GeneratorState state;
-    state = states[state_id];
+    if (thread_id == 0)
+        state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -53,7 +55,8 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
     __syncthreads();
 
     // Save engine with its state
-    states[state_id] = state;
+    if (thread_id == 0)
+        states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -61,11 +64,13 @@ __global__
 void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
+    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     __shared__ GeneratorState state;
-    state = states[state_id];
+    if (thread_id == 0)
+        state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -77,7 +82,8 @@ void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_
     __syncthreads();
 
     // Save engine with its state
-    states[state_id] = state;
+    if (thread_id == 0)
+        states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -85,11 +91,13 @@ __global__
 void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
+    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     __shared__ GeneratorState state;
-    state = states[state_id];
+    if (thread_id == 0)
+        state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -101,7 +109,8 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
     __syncthreads();
 
     // Save engine with its state
-    states[state_id] = state;
+    if (thread_id == 0)
+        states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -109,11 +118,13 @@ __global__
 void rocrand_log_normal_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
+    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     __shared__ GeneratorState state;
-    state = states[state_id];
+    if (thread_id == 0)
+        state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -125,7 +136,8 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
     __syncthreads();
 
     // Save engine with its state
-    states[state_id] = state;
+    if (thread_id == 0)
+        states[state_id] = state;
 }
 
 template <class GeneratorState>
@@ -133,11 +145,13 @@ __global__
 void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, const size_t size, double lambda)
 {
     const unsigned int state_id = hipBlockIdx_x;
+    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     __shared__ GeneratorState state;
-    state = states[state_id];
+    if (thread_id == 0)
+        state = states[state_id];
     __syncthreads();
 
     while(index < size)
@@ -149,7 +163,8 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
     __syncthreads();
 
     // Save engine with its state
-    states[state_id] = state;
+    if (thread_id == 0)
+        states[state_id] = state;
 }
 
 TEST(rocrand_kernel_mtgp32, rocrand_state_mtgp32_type)
