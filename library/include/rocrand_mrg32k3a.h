@@ -26,6 +26,7 @@
 #endif // FQUALIFIERS_
 
 #include "rocrand_common.h"
+#include "rocrand_mrg32k3a_precomputed.h"
 
 // Thomas Bradley, Parallelisation Techniques for Random Number Generators
 // https://www.nag.co.uk/IndustryArticles/gpu_gems_article.pdf
@@ -214,28 +215,20 @@ protected:
     FQUALIFIERS
     void discard_subsequence_impl(unsigned long long subsequence)
     {
-        unsigned long long A1p67[9] =
-        {
-            82758667, 1871391091, 4127413238,
-            3672831523, 69195019, 1871391091,
-            3672091415, 3528743235, 69195019
-        };
-        unsigned long long A2p67[9] =
-        {
-            1511326704, 3759209742, 1610795712,
-            4292754251, 1511326704, 3889917532,
-            3859662829, 4292754251, 3708466080
-        };
+        int i = 0;
 
         while(subsequence > 0) {
-            if (subsequence % 2 == 1) {
-                mod_mat_vec(A1p67, m_state.g1, ROCRAND_MRG32K3A_M1);
-                mod_mat_vec(A2p67, m_state.g2, ROCRAND_MRG32K3A_M2);
+            if (subsequence & 1) {
+                #if defined(__HIP_DEVICE_COMPILE__)
+                mod_mat_vec_m1(d_A1P67 + i, m_state.g1);
+                mod_mat_vec_m2(d_A2P67 + i, m_state.g2);
+                #else
+                mod_mat_vec_m1(h_A1P67 + i, m_state.g1);
+                mod_mat_vec_m2(h_A2P67 + i, m_state.g2);
+                #endif
             }
-            subsequence = subsequence / 2;
-
-            mod_mat_sq(A1p67, ROCRAND_MRG32K3A_M1);
-            mod_mat_sq(A2p67, ROCRAND_MRG32K3A_M2);
+            subsequence >>= 1;
+            i += 9;
         }
     }
 
@@ -243,28 +236,20 @@ protected:
     FQUALIFIERS
     void discard_sequence_impl(unsigned long long sequence)
     {
-        unsigned long long A1p127[9] =
-        {
-            2427906178, 3580155704, 949770784,
-            226153695,  1230515664, 3580155704,
-            1988835001, 986791581,  1230515664
-        };
-        unsigned long long A2p127[9] =
-        {
-            1464411153, 277697599,  1610723613,
-            32183930,   1464411153, 1022607788,
-            2824425944, 32183930,   2093834863
-        };
+        int i = 0;
 
         while(sequence > 0) {
-            if (sequence % 2 == 1) {
-                mod_mat_vec(A1p127, m_state.g1, ROCRAND_MRG32K3A_M1);
-                mod_mat_vec(A2p127, m_state.g2, ROCRAND_MRG32K3A_M2);
+            if (sequence & 1) {
+                #if defined(__HIP_DEVICE_COMPILE__)
+                mod_mat_vec_m1(d_A1P127 + i, m_state.g1);
+                mod_mat_vec_m2(d_A2P127 + i, m_state.g2);
+                #else
+                mod_mat_vec_m1(h_A1P127 + i, m_state.g1);
+                mod_mat_vec_m2(h_A2P127 + i, m_state.g2);
+                #endif
             }
-            sequence = sequence / 2;
-
-            mod_mat_sq(A1p127, ROCRAND_MRG32K3A_M1);
-            mod_mat_sq(A2p127, ROCRAND_MRG32K3A_M2);
+            sequence >>= 1;
+            i += 9;
         }
     }
 
@@ -273,28 +258,20 @@ protected:
     FQUALIFIERS
     void discard_state(unsigned long long offset)
     {
-        unsigned long long A1[9] =
-        {
-            0,                    1,   0,
-            0,                    0,   1,
-            ROCRAND_MRG32K3A_A13, ROCRAND_MRG32K3A_A12, 0
-        };
-        unsigned long long A2[9] =
-        {
-            0,                    1, 0,
-            0,                    0, 1,
-            ROCRAND_MRG32K3A_A23, 0, ROCRAND_MRG32K3A_A21
-        };
+        int i = 0;
 
         while(offset > 0) {
-            if (offset % 2 == 1) {
-                mod_mat_vec(A1, m_state.g1, ROCRAND_MRG32K3A_M1);
-                mod_mat_vec(A2, m_state.g2, ROCRAND_MRG32K3A_M2);
+            if (offset & 1) {
+                #if defined(__HIP_DEVICE_COMPILE__)
+                mod_mat_vec_m1(d_A1 + i, m_state.g1);
+                mod_mat_vec_m2(d_A2 + i, m_state.g2);
+                #else
+                mod_mat_vec_m1(h_A1 + i, m_state.g1);
+                mod_mat_vec_m2(h_A2 + i, m_state.g2);
+                #endif
             }
-            offset = offset / 2;
-
-            mod_mat_sq(A1, ROCRAND_MRG32K3A_M1);
-            mod_mat_sq(A2, ROCRAND_MRG32K3A_M2);
+            offset >>= 1;
+            i += 9;
         }
     }
 
@@ -307,44 +284,53 @@ protected:
     }
 
 private:
-    inline __device__ __host__
-    void mod_mat_vec(unsigned long long * A,
-                     unsigned long long * s,
-                     unsigned long long m)
+    FQUALIFIERS
+    void mod_mat_vec_m1(unsigned long long * A,
+                        unsigned long long * s)
     {
         unsigned long long x[3];
-        for (size_t i = 0; i < 3; ++i) {
-            x[i] = 0;
-            for (size_t j = 0; j < 3; j++)
-                x[i] = (A[3 * i + j] * s[j] + x[i]) % m;
-        }
-        for (size_t i = 0; i < 3; ++i)
-            s[i] = x[i];
+      
+        x[0] = mod_m1(mod_m1(A[0] * s[0])
+                    + mod_m1(A[1] * s[1])
+                    + mod_m1(A[2] * s[2]));
+               
+        x[1] = mod_m1(mod_m1(A[3] * s[0])
+                    + mod_m1(A[4] * s[1])
+                    + mod_m1(A[5] * s[2]));
+        
+        x[2] = mod_m1(mod_m1(A[6] * s[0])
+                    + mod_m1(A[7] * s[1])
+                    + mod_m1(A[8] * s[2]));
+        
+        s[0] = x[0];
+        s[1] = x[1];
+        s[2] = x[2];
     }
-
-    inline __device__ __host__
-    void mod_mat_sq(unsigned long long * A,
-                    unsigned long long m)
+    
+    FQUALIFIERS
+    void mod_mat_vec_m2(unsigned long long * A,
+                        unsigned long long * s)
     {
-        unsigned long long x[9];
-        unsigned long long a;
-        for (size_t i = 0; i < 3; i++) {
-            for (size_t j = 0; j < 3; j++) {
-                a = 0;
-                for (size_t k = 0; k < 3; k++) {
-                    a += (A[i + 3 * k] * A[k + 3 * j]) % m;
-                }
-                x[i + 3 * j] = a % m;
-            }
-        }
-        for (size_t i = 0; i < 3; i++) {
-            A[i + 3 * 0] = x[i + 3 * 0];
-            A[i + 3 * 1] = x[i + 3 * 1];
-            A[i + 3 * 2] = x[i + 3 * 2];
-        }
+        unsigned long long x[3];
+      
+        x[0] = mod_m2(mod_m2(A[0] * s[0])
+                    + mod_m2(A[1] * s[1])
+                    + mod_m2(A[2] * s[2]));
+               
+        x[1] = mod_m2(mod_m2(A[3] * s[0])
+                    + mod_m2(A[4] * s[1])
+                    + mod_m2(A[5] * s[2]));
+        
+        x[2] = mod_m2(mod_m2(A[6] * s[0])
+                    + mod_m2(A[7] * s[1])
+                    + mod_m2(A[8] * s[2]));
+        
+        s[0] = x[0];
+        s[1] = x[1];
+        s[2] = x[2];
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_mul_m1(unsigned int i,
                                   unsigned long long j)
     {
@@ -361,7 +347,7 @@ private:
         return lo;
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_m1(unsigned long long i)
     {
         unsigned long long p;
@@ -373,7 +359,7 @@ private:
         return p;
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_mul_m2(unsigned int i,
                                   unsigned long long j)
     {
@@ -390,7 +376,7 @@ private:
         return lo;
     }
 
-    inline __host__ __device__
+    FQUALIFIERS
     unsigned long long mod_m2(unsigned long long i)
     {
         unsigned long long p;
