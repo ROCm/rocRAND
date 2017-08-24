@@ -87,7 +87,6 @@ namespace detail {
         __shared__ mtgp32_device_engine engine;
         
         engine.copy(engines[engine_id]);
-        __syncthreads();
         
         while(index < n)
         {

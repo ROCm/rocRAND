@@ -496,6 +496,25 @@ unsigned int rocrand(rocrand_state_mtgp32 * state)
     return state->next();
 }
 
+/**
+ * \brief Copy MTGP32 state to another state using block (256 threads).
+ *
+ * Copies a MTGP32 state \p src to \p dest using a block of 256 threads
+ * efficiently. Example usage would be:
+ *
+ * __shared__ rocrand_state_mtgp32 local_state;
+ * local_state.copy(global_state);
+ *
+ * \param src - Pointer to a state to copy from
+ * \param dest - Pointer to a state to copy to
+ *
+ */
+FQUALIFIERS
+void rocrand_mtgp32_block_copy(rocrand_state_mtgp32 src, rocrand_state_mtgp32 dest)
+{
+    src.copy(dest);
+}
+
 /** @} */ // end of group device
 
 #endif // ROCRAND_MTGP32_H_
