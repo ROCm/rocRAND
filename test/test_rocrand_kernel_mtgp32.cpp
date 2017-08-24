@@ -42,9 +42,7 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     __shared__ GeneratorState state;
-    if (thread_id == 0)
-        state = states[state_id];
-    __syncthreads();
+    rocrand_mtgp32_block_copy(state, states[state_id]);
 
     while(index < size)
     {
@@ -55,8 +53,7 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
     __syncthreads();
 
     // Save engine with its state
-    if (thread_id == 0)
-        states[state_id] = state;
+    rocrand_mtgp32_block_copy(states[state_id], state);
 }
 
 template <class GeneratorState>
