@@ -70,7 +70,7 @@
 #define MTGP_CEIL_2P 512
 #define MTGP_TN MTGP_FLOOR_2P
 #define MTGP_LS (MTGP_TN * 3)
-#define MTGP_BN_MAX 200
+#define MTGP_BN_MAX 512
 #define MTGP_TS 16
 #define MTGP_STATE 1024
 #define MTGP_MASK 1023

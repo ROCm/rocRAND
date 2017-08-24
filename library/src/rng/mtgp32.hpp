@@ -157,15 +157,7 @@ public:
         
         rocrand_status status;
             
-        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, 200, m_seed);
-        if(status != ROCRAND_STATUS_SUCCESS)
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
-            
-        status = rocrand_make_state_mtgp32(m_engines + 200, mtgp32dc_params_fast_11213, 200, m_seed + 11213);
-        if(status != ROCRAND_STATUS_SUCCESS)
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
-            
-        status = rocrand_make_state_mtgp32(m_engines + 400, mtgp32dc_params_fast_11213, 112, m_seed + 22426);
+        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
             
