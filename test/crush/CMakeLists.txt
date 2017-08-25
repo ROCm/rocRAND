@@ -33,6 +33,10 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     )
     if(HIP_PLATFORM STREQUAL "nvcc")
         target_link_libraries(${crush_test_name} "-lcurand")
+    else()
+        foreach(amdgpu_target ${AMDGPU_TARGETS})
+            target_link_libraries(${crush_test_name} --amdgpu-target=${amdgpu_target})
+        endforeach()
     endif()
     set_target_properties(
         ${crush_test_name}

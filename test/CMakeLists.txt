@@ -28,7 +28,13 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         ${test_name}
         -Wl,-rpath,${rocRAND_rpath}:${GTest_rpath} # workaround for HIP linker
         $<TARGET_FILE:rocrand>
-        ${GTEST_BOTH_LIBRARIES})
+        ${GTEST_BOTH_LIBRARIES}
+    )
+    if(HIP_PLATFORM STREQUAL "hcc")
+        foreach(amdgpu_target ${AMDGPU_TARGETS})
+            target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
+        endforeach()
+    endif()
     set_target_properties(
         ${test_name}
         PROPERTIES
@@ -68,6 +74,9 @@ foreach(test_src ${hipRAND_TEST_SRCS})
             $<TARGET_FILE:hiprand> $<TARGET_FILE:rocrand>
             ${GTEST_BOTH_LIBRARIES}
         )
+        foreach(amdgpu_target ${AMDGPU_TARGETS})
+            target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
+        endforeach()
     else()
         target_link_libraries(
             ${test_name}

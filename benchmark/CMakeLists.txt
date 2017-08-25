@@ -27,7 +27,11 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
         $<TARGET_FILE:rocrand> # rocRAND
     )
     if(HIP_PLATFORM STREQUAL "nvcc")
-        target_link_libraries( ${benchmark_name} "-lcurand")
+        target_link_libraries(${benchmark_name} "-lcurand")
+    else()
+        foreach(amdgpu_target ${AMDGPU_TARGETS})
+            target_link_libraries(${benchmark_name} --amdgpu-target=${amdgpu_target})
+        endforeach()
     endif()
     set_target_properties(
         ${benchmark_name}
