@@ -85,9 +85,7 @@ namespace detail {
         
         // Load device engine
         __shared__ mtgp32_device_engine engine;
-        
-        engine = engines[engine_id];
-        __syncthreads();
+        engine.copy(&engines[engine_id]);
         
         while(index < n)
         {
@@ -95,10 +93,9 @@ namespace detail {
             // Next position
             index += stride;
         }
-        __syncthreads();
         
         // Save engine with its state
-        engines[engine_id] = engine;
+        engines[engine_id].copy(&engine);
     }
     
 } // end namespace detail
@@ -157,15 +154,7 @@ public:
         
         rocrand_status status;
             
-        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, 200, m_seed);
-        if(status != ROCRAND_STATUS_SUCCESS)
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
-            
-        status = rocrand_make_state_mtgp32(m_engines + 200, mtgp32dc_params_fast_11213, 200, m_seed + 11213);
-        if(status != ROCRAND_STATUS_SUCCESS)
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
-            
-        status = rocrand_make_state_mtgp32(m_engines + 400, mtgp32dc_params_fast_11213, 112, m_seed + 22426);
+        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
             
