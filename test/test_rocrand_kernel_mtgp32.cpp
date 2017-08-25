@@ -42,7 +42,7 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
     __shared__ GeneratorState state;
-    rocrand_mtgp32_block_copy(state, states[state_id]);
+    rocrand_mtgp32_block_copy(&states[state_id], &state);
 
     while(index < size)
     {
@@ -50,10 +50,9 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
         // Next position
         index += stride;
     }
-    __syncthreads();
 
     // Save engine with its state
-    rocrand_mtgp32_block_copy(states[state_id], state);
+    rocrand_mtgp32_block_copy(&state, &states[state_id]);
 }
 
 template <class GeneratorState>
@@ -76,7 +75,6 @@ void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_
         // Next position
         index += stride;
     }
-    __syncthreads();
 
     // Save engine with its state
     if (thread_id == 0)
@@ -103,7 +101,6 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
         // Next position
         index += stride;
     }
-    __syncthreads();
 
     // Save engine with its state
     if (thread_id == 0)
@@ -130,7 +127,6 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
         // Next position
         index += stride;
     }
-    __syncthreads();
 
     // Save engine with its state
     if (thread_id == 0)
@@ -157,7 +153,6 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
         // Next position
         index += stride;
     }
-    __syncthreads();
 
     // Save engine with its state
     if (thread_id == 0)

@@ -181,39 +181,39 @@ public:
     }
 
     FQUALIFIERS
-    void copy(const mtgp32_engine &m_engine)
+    void copy(const mtgp32_engine * m_engine)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int thread_id = hipThreadIdx_x;
         for (int i = thread_id; i < MTGP_STATE; i += hipBlockDim_x)
-            m_state.status[i] = m_engine.m_state.status[i];
+            m_state.status[i] = m_engine->m_state.status[i];
 
         if (thread_id == 0)
         {
-            m_state.offset = m_engine.m_state.offset;
-            m_state.id = m_engine.m_state.id;
-            pos_tbl = m_engine.pos_tbl;
-            sh1_tbl = m_engine.sh1_tbl;
-            sh2_tbl = m_engine.sh2_tbl;
-            mask = m_engine.mask;
+            m_state.offset = m_engine->m_state.offset;
+            m_state.id = m_engine->m_state.id;
+            pos_tbl = m_engine->pos_tbl;
+            sh1_tbl = m_engine->sh1_tbl;
+            sh2_tbl = m_engine->sh2_tbl;
+            mask = m_engine->mask;
         }
         if (thread_id < MTGP_TS)
         {
-            param_tbl[thread_id] = m_engine.param_tbl[thread_id];
-            temper_tbl[thread_id] = m_engine.temper_tbl[thread_id];
-            single_temper_tbl[thread_id] = m_engine.single_temper_tbl[thread_id];
+            param_tbl[thread_id] = m_engine->param_tbl[thread_id];
+            temper_tbl[thread_id] = m_engine->temper_tbl[thread_id];
+            single_temper_tbl[thread_id] = m_engine->single_temper_tbl[thread_id];
         }
         __syncthreads();
         #else
-        this->m_state = m_engine.m_state;
-        pos_tbl = m_engine.pos_tbl;
-        sh1_tbl = m_engine.sh1_tbl;
-        sh2_tbl = m_engine.sh2_tbl;
-        mask = m_engine.mask;
+        this->m_state = m_engine->m_state;
+        pos_tbl = m_engine->pos_tbl;
+        sh1_tbl = m_engine->sh1_tbl;
+        sh2_tbl = m_engine->sh2_tbl;
+        mask = m_engine->mask;
         for (int j = 0; j < MTGP_TS; j++) {
-            param_tbl[j] = m_engine.param_tbl[j];
-            temper_tbl[j] = m_engine.temper_tbl[j];
-            single_temper_tbl[j] = m_engine.single_temper_tbl[j];
+            param_tbl[j] = m_engine->param_tbl[j];
+            temper_tbl[j] = m_engine->temper_tbl[j];
+            single_temper_tbl[j] = m_engine->single_temper_tbl[j];
         }
         #endif
     }
@@ -497,22 +497,40 @@ unsigned int rocrand(rocrand_state_mtgp32 * state)
 }
 
 /**
- * \brief Copy MTGP32 state to another state using block (256 threads).
+ * \brief Copy MTGP32 state to another state using block of threads
  *
- * Copies a MTGP32 state \p src to \p dest using a block of 256 threads
+ * Copies a MTGP32 state \p src to \p dest using a block of threads
  * efficiently. Example usage would be:
  *
- * __shared__ rocrand_state_mtgp32 local_state;
- * local_state.copy(global_state);
+ * \code
+ * __global__
+ * void generate_kernel(hiprandStateMtgp32_t * states, unsigned int * output, const size_t size)
+ * {
+ *      const unsigned int state_id = hipBlockIdx_x;
+ *      unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+ *      unsigned int stride = hipGridDim_x * hipBlockDim_x;
+ *
+ *      __shared__ GeneratorState state; 
+ *      rocrand_mtgp32_block_copy(&states[state_id], &state);
+ *
+ *      while(index < size)
+ *      {
+ *          output[index] = rocrand(&state);
+ *          index += stride;
+ *      }
+ *
+ *      rocrand_mtgp32_block_copy(&state, &states[state_id]);
+ * }
+ * \endcode
  *
  * \param src - Pointer to a state to copy from
  * \param dest - Pointer to a state to copy to
  *
  */
 FQUALIFIERS
-void rocrand_mtgp32_block_copy(rocrand_state_mtgp32 src, rocrand_state_mtgp32 dest)
+void rocrand_mtgp32_block_copy(rocrand_state_mtgp32 * src, rocrand_state_mtgp32 * dest)
 {
-    src.copy(dest);
+    dest->copy(src);
 }
 
 /** @} */ // end of group device

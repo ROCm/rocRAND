@@ -255,7 +255,6 @@ void generate_kernel(rocrand_state_mtgp32 * states,
         data[index] = generate_func(&state, extra);
         index += stride;
     }
-    __syncthreads();
         
     if (thread_id == 0)
         states[state_id] = state;
