@@ -37,7 +37,6 @@ __global__
 void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
-    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
 

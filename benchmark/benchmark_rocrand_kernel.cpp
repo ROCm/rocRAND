@@ -235,21 +235,19 @@ void generate_kernel(rocrand_state_mtgp32 * states,
                      const Extra extra)
 {
     const unsigned int state_id = hipBlockIdx_x;
-    const unsigned int thread_id = hipThreadIdx_x;
     unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     unsigned int stride = hipGridDim_x * hipBlockDim_x;
-        
+
     __shared__ rocrand_state_mtgp32 state;
-       
-    state.copy(&states[state_id]);
-        
+    rocrand_mtgp32_block_copy(&states[state_id], &state);
+
     while(index < size)
     {
         data[index] = generate_func(&state, extra);
         index += stride;
     }
-        
-    states[state_id].copy(&state);
+
+    rocrand_mtgp32_block_copy(&state, &states[state_id]);
 }
 
 template<typename T, typename GenerateFunc, typename Extra>
@@ -278,10 +276,10 @@ void run_benchmark(const cli::Parser& parser,
     const size_t size = parser.get<size_t>("size");
     const size_t dimensions = parser.get<size_t>("dimensions");
     const size_t trials = parser.get<size_t>("trials");
-    
+
     const size_t blocks = parser.get<size_t>("blocks");
     const size_t threads = parser.get<size_t>("threads");
-    
+
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
 
@@ -495,7 +493,7 @@ int main(int argc, char *argv[])
             }
         ) +
         "\n      or all";
-    
+
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
     parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
@@ -505,7 +503,7 @@ int main(int argc, char *argv[])
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
     parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
     parser.run_and_exit_if_error();
-    
+
     std::vector<std::string> engines;
     {
         auto es = parser.get<std::vector<std::string>>("engine");
