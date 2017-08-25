@@ -19,9 +19,10 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_TEST "Build tests (requires googletest)" ON)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 
-# Version
-set(rocrand_version 1.5.0)
-set(hiprand_version 1.5.0)
+# Version vars
+include(cmake/Common.cmake)
+create_version_vars(hiprand 1 5 0)
+create_version_vars(rocrand 1 5 0)
 
 # Include cmake scripts
 include(cmake/Summary.cmake)

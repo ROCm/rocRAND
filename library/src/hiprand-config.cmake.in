@@ -58,7 +58,7 @@
 #      target_link_libraries(foo "-lcurand" ${hiprand_LIBRARIES})
 #    endif()
 
-set(hiprand_VERSION "@hiprand_version@")
+set(hiprand_VERSION "@hiprand_VERSION@")
 @PACKAGE_INIT@
 
 set_and_check(hiprand_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@" )
