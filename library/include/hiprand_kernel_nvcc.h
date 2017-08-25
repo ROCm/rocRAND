@@ -158,7 +158,7 @@ void hiprand_mtgp32_block_copy(hiprandStateMtgp32_t * src,
     }
     __syncthreads();
     #else
-    dest = src;
+    *dest = *src;
     #endif
 }
 
