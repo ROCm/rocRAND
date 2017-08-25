@@ -36,6 +36,7 @@ build:rocm:
     - cd build
     - cmake -DBUILD_BENCHMARK=ON -DBUILD_CRUSH_TEST=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
+    - make package
   artifacts:
     paths:
     - build/library/
@@ -47,6 +48,7 @@ build:rocm:
     - build/CMakeCache.txt
     - build/CTestTestfile.cmake
     - build/Makefile
+    - build/*.deb
 
 test:rocm:
   stage: test
@@ -59,3 +61,19 @@ test:rocm:
     - ctest --output-on-failure
     - ./benchmark/benchmark_rocrand_generate
     - ./test/crush_test_rocrand --help # Just check if works
+
+test:rocm_deb_package:
+  stage: test
+  variables:
+    SUDO_CMD: "sudo -E"
+  dependencies:
+    - build:rocm
+  script:
+    - cd build
+    - $SUDO_CMD dpkg -i hiprand-*.deb
+    - mkdir ../build_package_test && cd ../build_package_test
+    - cmake ../test/package/.
+    - make -j2
+    - ctest --output-on-failure
+    - ldd ./test_hiprand
+    - $SUDO_CMD dpkg -r hiprand

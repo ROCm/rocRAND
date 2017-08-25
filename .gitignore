@@ -6,8 +6,9 @@
 ### Atom ###
 .tag*
 
-### build dir ###
+### build dirs ###
 build/
+build_package_test/
 
 ### docs dir ###
 doc/html/

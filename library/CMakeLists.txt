@@ -17,6 +17,8 @@ set_target_properties(
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
+        VERSION ${rocrand_VERSION}
+        SOVERSION 1
 )
 
 # Install
@@ -24,39 +26,39 @@ set_target_properties(
 install(
     TARGETS rocrand
     EXPORT rocrand-targets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/rocrand/lib
+    LIBRARY DESTINATION rocrand/lib
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
 # headers
 install(
     DIRECTORY include/
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/rocrand/include
+    DESTINATION rocrand/include
     FILES_MATCHING PATTERN "rocrand*"
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
 install(
     EXPORT rocrand-targets
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/rocrand/lib/rocrand/cmake
+    DESTINATION rocrand/lib/cmake/rocrand
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/rocrand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
-    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/rocrand/cmake
+    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/rocrand
     PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR
 )
 write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
-    VERSION ${rocrand_version}
+    VERSION ${rocrand_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 install(
     FILES
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
-    DESTINATION ${LIB_INSTALL_DIR}/rocrand/cmake
+    DESTINATION rocrand/lib/cmake/rocrand
 )
 
 # hipRAND library
@@ -80,7 +82,10 @@ endif()
 set_target_properties(
     hiprand
     PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+        DEBUG_POSTFIX "-d"
+        VERSION ${hiprand_VERSION}
+        SOVERSION 1
 )
 
 # Install
@@ -88,37 +93,67 @@ set_target_properties(
 install(
     TARGETS hiprand
     EXPORT hiprand-targets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/hiprand/lib
+    LIBRARY DESTINATION hiprand/lib
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
 # headers
 install(
     DIRECTORY include/
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/hiprand/include
+    DESTINATION hiprand/include
     FILES_MATCHING PATTERN "hiprand*"
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
 install(
     EXPORT hiprand-targets
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/hiprand/lib/hiprand/cmake
+    DESTINATION hiprand/lib/cmake/hiprand
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/hiprand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
-    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/hiprand/cmake
+    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/hiprand
     PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR
 )
 write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
-    VERSION ${hiprand_version}
+    VERSION ${hiprand_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 install(
     FILES
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
-    DESTINATION ${LIB_INSTALL_DIR}/hiprand/cmake
+    DESTINATION hiprand/lib/cmake/hiprand
 )
+
+# Package (make package)
+# Generates .deb, .zip., and .tar.gz packages
+find_program(RPMBUILD_EXE rpmbuild)
+find_program(DPKG_EXE dpkg)
+set(CPACK_GENERATOR "TGZ;ZIP")
+if(EXISTS ${RPMBUILD_EXE})
+    list(APPEND CPACK_GENERATOR "RPM")
+endif()
+if(EXISTS ${DPKG_EXE})
+    list(APPEND CPACK_GENERATOR "DEB")
+endif()
+set(CPACK_PACKAGE_NAME "hiprand")
+set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jakub Szuppe <jakub@streamhpc.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The hipRAND library provides functions that generate pseudo-random and quasi-random numbers.")
+set(CPACK_SET_DESTDIR ON)
+set(CPACK_PACKAGE_VERSION_MAJOR ${hiprand_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${hiprand_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${hiprand_VERSION_PATCH})
+set(LIB_NAMES "hiprand" "rocrand")
+set(LIB_DIRS "${CMAKE_INSTALL_PREFIX}/hiprand/lib" "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
+package_set_postinst_prerm(
+    "hiprand;rocrand"
+    "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
+    "${CMAKE_INSTALL_PREFIX}/hiprand/include;${CMAKE_INSTALL_PREFIX}/rocrand/include"
+)
+
+# Include CPack to introduce the appropriate targets
+include(CPack)

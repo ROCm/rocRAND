@@ -49,7 +49,7 @@
 #    add_executable(foo foo.cpp)
 #    target_link_libraries(foo ${rocrand_LIBRARIES})
 
-set(rocrand_VERSION "@rocrand_version@")
+set(rocrand_VERSION "@rocrand_VERSION@")
 @PACKAGE_INIT@
 
 set_and_check(rocrand_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@" )
