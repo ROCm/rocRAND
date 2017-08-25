@@ -1,4 +1,4 @@
-image: rocm/rocm-terminal:1.6.1
+image: rocm/rocm-terminal:1.6.3
 
 variables:
   SUDO_CMD: "" # Must be "sudo" on images which dont use root user
