@@ -176,6 +176,43 @@ hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
     );
 }
 
+/**
+ * \brief Copy MTGP32 state to another state using block of threads
+ *
+ * Copies a MTGP32 state \p src to \p dest using a block of threads
+ * efficiently. Example usage would be:
+ *
+ * \code
+ * __global__
+ * void generate_kernel(hiprandStateMtgp32_t * states, unsigned int * output, const size_t size)
+ * {
+ *      const unsigned int state_id = hipBlockIdx_x;
+ *      unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+ *      unsigned int stride = hipGridDim_x * hipBlockDim_x;
+ *
+ *      __shared__ GeneratorState state; 
+ *      hiprand_mtgp32_block_copy(&states[state_id], &state);
+ *
+ *      while(index < size)
+ *      {
+ *          output[index] = rocrand(&state);
+ *          index += stride;
+ *      }
+ *
+ *      hiprand_mtgp32_block_copy(&state, &states[state_id]);
+ * }
+ * \endcode
+ *
+ * \param src - Pointer to a state to copy from
+ * \param dest - Pointer to a state to copy to
+ */
+QUALIFIERS
+void hiprand_mtgp32_block_copy(hiprandStateMtgp32_t * src,
+                               hiprandStateMtgp32_t * dest)
+{
+    rocrand_mtgp32_block_copy(src, dest);
+}
+
 /// \brief Initializes a PRNG state.
 ///
 /// \tparam StateType - Pseudorandom number generator state type.

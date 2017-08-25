@@ -241,19 +241,15 @@ void generate_kernel(rocrand_state_mtgp32 * states,
         
     __shared__ rocrand_state_mtgp32 state;
        
-    if (thread_id == 0)
-        state = states[state_id];
-    __syncthreads();
+    state.copy(&states[state_id]);
         
     while(index < size)
     {
         data[index] = generate_func(&state, extra);
         index += stride;
     }
-    __syncthreads();
         
-    if (thread_id == 0)
-        states[state_id] = state;
+    states[state_id].copy(&state);
 }
 
 template<typename T, typename GenerateFunc, typename Extra>
