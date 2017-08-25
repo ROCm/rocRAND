@@ -142,6 +142,26 @@ hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
     );
 }
 
+QUALIFIERS
+void hiprand_mtgp32_block_copy(hiprandStateMtgp32_t * src,
+                               hiprandStateMtgp32_t * dest)
+{
+    #if defined(__HIP_DEVICE_COMPILE__)
+    const unsigned int thread_id = threadIdx.x;
+    for (int i = thread_id; i < MTGP32_STATE_SIZE; i += blockDim.x)
+        dest->s[i] = src->s[i];
+
+    if (thread_id == 0)
+    {
+        dest->offset = src->offset;
+        dest->pIdx = src->pIdx;
+    }
+    __syncthreads();
+    #else
+    dest = src;
+    #endif
+}
+
 template<class StateType>
 QUALIFIERS
 void hiprand_init(const unsigned long long seed,
