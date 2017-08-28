@@ -24,6 +24,9 @@ include(cmake/Common.cmake)
 create_version_vars(hiprand 1 5 0)
 create_version_vars(rocrand 1 5 0)
 
+# AMD targets
+set(AMDGPU_TARGETS gfx803;gfx900 CACHE STRING "List of specific machine types for library to target")
+
 # Include cmake scripts
 include(cmake/Summary.cmake)
 include(cmake/Dependencies.cmake)

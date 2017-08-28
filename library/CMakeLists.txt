@@ -20,6 +20,11 @@ set_target_properties(
         VERSION ${rocrand_VERSION}
         SOVERSION 1
 )
+if(HIP_PLATFORM STREQUAL "hcc")
+    foreach(amdgpu_target ${AMDGPU_TARGETS})
+        target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
+    endforeach()
+endif()
 
 # Install
 # .so lib
@@ -75,9 +80,12 @@ else()
     add_dependencies(hiprand rocrand)
     target_link_libraries(
         hiprand
-        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
-        $<TARGET_FILE:rocrand>
+        PRIVATE -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
+                $<TARGET_FILE:rocrand>
     )
+    foreach(amdgpu_target ${AMDGPU_TARGETS})
+        target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
+    endforeach()
 endif()
 set_target_properties(
     hiprand
