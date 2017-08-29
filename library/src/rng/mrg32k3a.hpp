@@ -116,7 +116,7 @@ public:
                      unsigned long long offset = 0,
                      hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(256 * 256)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(512 * 256)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
@@ -170,7 +170,7 @@ public:
         const uint32_t max_blocks = 128;
         #else
         const uint32_t threads = 256;
-        const uint32_t max_blocks = 256;
+        const uint32_t max_blocks = 512;
         #endif
         const uint32_t blocks = max_blocks;
 
@@ -201,7 +201,7 @@ public:
         const uint32_t max_blocks = 128; // 512
         #else
         const uint32_t threads = 256;
-        const uint32_t max_blocks = 256;
+        const uint32_t max_blocks = 512;
         #endif
         const uint32_t blocks = max_blocks;
 
@@ -236,7 +236,7 @@ public:
         const uint32_t max_blocks = 128; // 512
         #else
         const uint32_t threads = 256;
-        const uint32_t max_blocks = 256;
+        const uint32_t max_blocks = 512;
         #endif
         const uint32_t blocks = max_blocks;
 
@@ -266,7 +266,7 @@ public:
         const uint32_t max_blocks = 128; // 512
         #else
         const uint32_t threads = 256;
-        const uint32_t max_blocks = 256;
+        const uint32_t max_blocks = 512;
         #endif
         const uint32_t blocks = max_blocks;
 
