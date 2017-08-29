@@ -62,7 +62,9 @@ typedef enum rocrand_status {
     ROCRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed during execution
     ROCRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
     ROCRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
-    ROCRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Length requested is not a multple of dimension
+    ROCRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multple of quasirandom generator's dimension,
+                                              ///< or requested size is not even (see rocrand_generate_normal()),
+                                              ///< or pointer is misaligned (see rocrand_generate_normal())
     ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
     ROCRAND_STATUS_LAUNCH_FAILURE = 107, ///< Kernel launch failure
     ROCRAND_STATUS_INTERNAL_ERROR = 108 ///< Internal library error
@@ -141,6 +143,8 @@ rocrand_destroy_generator(rocrand_generator generator);
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -163,6 +167,8 @@ rocrand_generate(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -185,6 +191,8 @@ rocrand_generate_uniform(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -206,6 +214,9 @@ rocrand_generate_uniform_double(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -228,6 +239,9 @@ rocrand_generate_normal(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -250,6 +264,9 @@ rocrand_generate_normal_double(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -272,6 +289,9 @@ rocrand_generate_log_normal(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI
@@ -294,6 +314,8 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI

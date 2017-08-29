@@ -221,6 +221,12 @@ rocrand_generate_normal(rocrand_generator generator,
     {
         return ROCRAND_STATUS_NOT_CREATED;
     }
+    // n must be even
+    // output_data must be aligned to sizeof(float2) bytes (8 bytes)
+    if(n%2 != 0 || ((uintptr_t)(output_data)%sizeof(float2)) != 0)
+    {
+        return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
+    }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
     {
@@ -268,6 +274,12 @@ rocrand_generate_normal_double(rocrand_generator generator,
     if(generator == NULL)
     {
         return ROCRAND_STATUS_NOT_CREATED;
+    }
+    // n must be even
+    // output_data must be aligned to sizeof(double2) bytes (16 bytes)
+    if(n%2 != 0 || ((uintptr_t)(output_data))%sizeof(double2) != 0)
+    {
+        return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
@@ -317,6 +329,12 @@ rocrand_generate_log_normal(rocrand_generator generator,
     {
         return ROCRAND_STATUS_NOT_CREATED;
     }
+    // n must be even
+    // output_data must be aligned to sizeof(float2) bytes (8 bytes)
+    if(n%2 != 0 || ((uintptr_t)(output_data)%sizeof(float2)) != 0)
+    {
+        return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
+    }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
     {
@@ -364,6 +382,12 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
     if(generator == NULL)
     {
         return ROCRAND_STATUS_NOT_CREATED;
+    }
+    // n must be even
+    // output_data must be aligned to sizeof(double2) bytes (16 bytes)
+    if(n%2 != 0 || ((uintptr_t)(output_data))%sizeof(double2) != 0 != 0)
+    {
+        return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
     }
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
