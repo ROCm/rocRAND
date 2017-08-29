@@ -104,7 +104,7 @@ public:
             case HIPRAND_STATUS_OUT_OF_RANGE:
                 return "Argument out of range";
             case HIPRAND_STATUS_LENGTH_NOT_MULTIPLE:
-                return "Length requested is not a multple of dimension";
+                return "Length requested is not a multiple of dimension";
             case HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED:
                 return "GPU does not have double precision";
             case HIPRAND_STATUS_LAUNCH_FAILURE:

@@ -62,7 +62,7 @@ typedef enum rocrand_status {
     ROCRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed during execution
     ROCRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
     ROCRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
-    ROCRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multple of quasirandom generator's dimension,
+    ROCRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multiple of quasirandom generator's dimension,
                                               ///< or requested size is not even (see rocrand_generate_normal()),
                                               ///< or pointer is misaligned (see rocrand_generate_normal())
     ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
