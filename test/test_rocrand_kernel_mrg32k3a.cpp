@@ -171,7 +171,7 @@ void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_d
 
 TEST(rocrand_kernel_mrg32k3a, rocrand_state_mrg32k3a_type)
 {
-    EXPECT_EQ(sizeof(rocrand_state_mrg32k3a), 18 * sizeof(float));
+    EXPECT_EQ(sizeof(rocrand_state_mrg32k3a), 12 * sizeof(float));
     EXPECT_EQ(sizeof(rocrand_state_mrg32k3a[32]), 32 * sizeof(rocrand_state_mrg32k3a));
 }
 
