@@ -194,8 +194,11 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
-    /// and be large enough to store at least \p size values of \p IntType type.
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
+    /// and be large enough to store at least \p size values of \p RealType type.
+    /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: hiprandGenerate()
     template<class Generator>
@@ -271,8 +274,11 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
+    /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: hiprandGenerateUniform(), hiprandGenerateUniformDouble()
     template<class Generator>
@@ -445,8 +451,13 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
+    /// * Pointer \p output must be aligned to <tt>2 * sizeof(RealType)</tt> bytes.
+    /// * \p size must be even.
+    /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: hiprandGenerateNormal(), hiprandGenerateNormalDouble()
     template<class Generator>
@@ -630,8 +641,13 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
+    /// * Pointer \p output must be aligned to <tt>2 * sizeof(RealType)</tt> bytes.
+    /// * \p size must be even.
+    /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: hiprandGenerateLogNormal(), hiprandGenerateLogNormalDouble()
     template<class Generator>
@@ -800,8 +816,11 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
-    /// and be large enough to store at least \p size values of \p IntType type.
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
+    /// and be large enough to store at least \p size values of \p RealType type.
+    /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: hiprandGeneratePoisson()
     template<class Generator>
@@ -1474,7 +1493,21 @@ public:
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
-    /// \copydoc philox4x32_10_engine::operator()()
+    /// \brief Fills \p output with uniformly distributed random integer values.
+    ///
+    /// Generates \p size random integer values uniformly distributed
+    /// on the interval [0, 2^32 - 1], and stores them into the device memory
+    /// referenced by \p output pointer.
+    ///
+    /// \param output - Pointer to device memory to store results
+    /// \param size - Number of values to generate
+    ///
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
+    /// and be large enough to store at least \p size values of \p IntType type.
+    /// * \p size must be a multiple of the engine's number of dimensions.
+    ////
+    /// See also: hiprandGenerate()
     template<class Generator>
     void operator()(result_type * output, size_t size)
     {
@@ -1541,7 +1574,7 @@ typedef mrg32k3a_engine<> mrg32k3a;
 /// \brief Typedef of hiprand_cpp::mtgp32_engine PRNG engine with default seed (0).
 typedef mtgp32_engine<> mtgp32;
 /// \typedef sobol32
-/// \brief Typedef of hiprand_cpp::sobol32_engine PRNG engine with default number of dimensions (1).
+/// \brief Typedef of hiprand_cpp::sobol32_engine QRNG engine with default number of dimensions (1).
 typedef sobol32_engine<> sobol32;
 
 /// \typedef default_random_engine
