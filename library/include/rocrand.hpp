@@ -36,7 +36,7 @@
 
 namespace rocrand_cpp {
 
-/// \addtogroup rocrandhostcpp
+/// \rocrand_internal \addtogroup rocrandhostcpp
 /// @{
 
 /// \class error

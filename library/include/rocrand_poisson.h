@@ -25,7 +25,7 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-/** @addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -293,4 +293,4 @@ unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
 
 #endif // ROCRAND_POISSON_H_
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice

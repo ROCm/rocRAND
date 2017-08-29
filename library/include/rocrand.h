@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/** @addtogroup host
+/** \rocrand_internal \addtogroup rocrandhost
  *
  *  @{
  */
@@ -503,4 +503,4 @@ rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_dis
 
 #endif // ROCRAND_H_
 
-/** @} */ // end of group host
+/** @} */ // end of group rocrandhost

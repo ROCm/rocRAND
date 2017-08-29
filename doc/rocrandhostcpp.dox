@@ -5,6 +5,6 @@
 */
 
 /**
- *  @defgroup rocrandhostcpp rocRAND host API C++ Wrapper
+ * \rocrand_internal \defgroup rocrandhostcpp rocRAND host API C++ Wrapper
  *
  */

@@ -99,7 +99,7 @@ unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribut
 } // end namespace detail
 } // end namespace rocrand_device
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -214,4 +214,4 @@ unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discr
 
 #endif // ROCRAND_DISCRETE_H_
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice

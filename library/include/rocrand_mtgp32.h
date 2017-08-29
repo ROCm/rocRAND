@@ -332,7 +332,7 @@ public:
 
 } // end namespace rocrand_device
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -510,7 +510,7 @@ unsigned int rocrand(rocrand_state_mtgp32 * state)
  *      unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
  *      unsigned int stride = hipGridDim_x * hipBlockDim_x;
  *
- *      __shared__ GeneratorState state; 
+ *      __shared__ GeneratorState state;
  *      rocrand_mtgp32_block_copy(&states[state_id], &state);
  *
  *      while(index < size)
@@ -533,6 +533,6 @@ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32 * src, rocrand_state_mtgp32 
     dest->copy(src);
 }
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice
 
 #endif // ROCRAND_MTGP32_H_

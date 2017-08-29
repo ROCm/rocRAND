@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/** @addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -350,4 +350,4 @@ double rocrand_uniform_double(rocrand_state_sobol32 * state)
 
 #endif // ROCRAND_UNIFORM_H_
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice

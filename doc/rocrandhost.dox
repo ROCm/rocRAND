@@ -5,6 +5,6 @@
 */
 
 /**
- *  @defgroup host rocRAND host API
+ * \rocrand_internal \defgroup rocrandhost rocRAND host API
  *
  */
