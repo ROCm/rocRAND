@@ -23,7 +23,7 @@
 
 #include <hip/hip_runtime.h>
 
-/** @addtogroup hiprandhost
+/** \addtogroup hiprandhost
  *
  *  @{
  */

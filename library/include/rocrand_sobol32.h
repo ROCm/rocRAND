@@ -206,7 +206,7 @@ protected:
 
 } // end namespace rocrand_device
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -262,6 +262,6 @@ void skipahead(unsigned long long offset, rocrand_state_sobol32 * state)
     return state->discard(offset);
 }
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice
 
 #endif // ROCRAND_SOBOL32_H_

@@ -66,7 +66,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ROCRAND_PHILOX_W32_0   0x9E3779B9U
 #define ROCRAND_PHILOX_W32_1   0xBB67AE85U
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -75,7 +75,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * \brief Default seed for PHILOX4x32 PRNG.
  */
 #define ROCRAND_PHILOX4x32_DEFAULT_SEED 0xdeadbeefdeadbeefULL
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice
 
 namespace rocrand_device {
 namespace detail {
@@ -349,7 +349,7 @@ protected:
 
 } // end namespace rocrand_device
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -456,4 +456,4 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4
 
 #endif // ROCRAND_PHILOX4X32_10_H_
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice

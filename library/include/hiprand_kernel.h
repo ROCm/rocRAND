@@ -48,7 +48,7 @@
  * \brief Default seed for MRG32K3A PRNG.
  */
 #define HIPRAND_MRG32K3A_DEFAULT_SEED 12345ULL
-/** @} */ // end of group device
+/** @} */ // end of group hipranddevice
 
 #ifdef __HIP_PLATFORM_HCC__
 #include "hiprand_kernel_hcc.h"

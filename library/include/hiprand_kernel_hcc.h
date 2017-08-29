@@ -190,7 +190,7 @@ hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
  *      unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
  *      unsigned int stride = hipGridDim_x * hipBlockDim_x;
  *
- *      __shared__ GeneratorState state; 
+ *      __shared__ GeneratorState state;
  *      hiprand_mtgp32_block_copy(&states[state_id], &state);
  *
  *      while(index < size)
