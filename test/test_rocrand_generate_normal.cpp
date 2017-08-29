@@ -45,6 +45,18 @@ TEST(rocrand_generate_normal_tests, float_test)
     );
     ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
 
+    // n must be even
+    EXPECT_EQ(
+        rocrand_generate_normal(generator, (float *) data, 1, mean, stddev),
+        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    );
+
+    // pointer must be aligned
+    EXPECT_EQ(
+        rocrand_generate_normal(generator, (float *)(data+1), 2, mean, stddev),
+        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    );
+
     EXPECT_EQ(
         rocrand_generate_normal(generator, (float *) data, size, mean, stddev),
         ROCRAND_STATUS_SUCCESS
@@ -77,6 +89,18 @@ TEST(rocrand_generate_normal_tests, double_test)
         hipSuccess
     );
     ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+
+    // n must be even
+    EXPECT_EQ(
+        rocrand_generate_normal_double(generator, (double *) data, 1, mean, stddev),
+        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    );
+
+    // pointer must be aligned
+    EXPECT_EQ(
+        rocrand_generate_normal_double(generator, (double *)(data+1), 2, mean, stddev),
+        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    );
 
     EXPECT_EQ(
         rocrand_generate_normal_double(generator, (double *) data, size, mean, stddev),
