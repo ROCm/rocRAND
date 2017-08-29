@@ -63,8 +63,8 @@ class mrg32k3a_engine
 public:
     struct mrg32k3a_state
     {
-        unsigned long long g1[3];
-        unsigned long long g2[3];
+        unsigned int g1[3];
+        unsigned int g2[3];
 
         #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
@@ -183,19 +183,21 @@ public:
     {
         unsigned long long p;
 
-        p = ROCRAND_MRG32K3A_A12 * m_state.g1[1] + ROCRAND_MRG32K3A_A13N
-            * (ROCRAND_MRG32K3A_M1 - m_state.g1[0]);
+        p = ROCRAND_MRG32K3A_A12 * static_cast<unsigned long long>(m_state.g1[1])
+            + ROCRAND_MRG32K3A_A13N * static_cast<unsigned long long>(ROCRAND_MRG32K3A_M1 - m_state.g1[0]);
         p = mod_m1(p);
 
-        m_state.g1[0] = m_state.g1[1]; m_state.g1[1] = m_state.g1[2]; m_state.g1[2] = p;
+        m_state.g1[0] = m_state.g1[1]; m_state.g1[1] = m_state.g1[2];
+        m_state.g1[2] = static_cast<unsigned int>(p);
 
-        p = ROCRAND_MRG32K3A_A21 * m_state.g2[2] + ROCRAND_MRG32K3A_A23N
-            * (ROCRAND_MRG32K3A_M2 - m_state.g2[0]);
+        p = ROCRAND_MRG32K3A_A21 * static_cast<unsigned long long>(m_state.g2[2])
+            + ROCRAND_MRG32K3A_A23N * static_cast<unsigned long long>(ROCRAND_MRG32K3A_M2 - m_state.g2[0]);
         p = mod_m2(p);
 
-        m_state.g2[0] = m_state.g2[1]; m_state.g2[1] = m_state.g2[2]; m_state.g2[2] = p;
+        m_state.g2[0] = m_state.g2[1]; m_state.g2[1] = m_state.g2[2];
+        m_state.g2[2] = static_cast<unsigned int>(p);
 
-        p = m_state.g1[2] - m_state.g2[2];
+        p = static_cast<unsigned long long>(m_state.g1[2]) - static_cast<unsigned long long>(m_state.g2[2]);
         if (m_state.g1[2] <= m_state.g2[2])
             p += ROCRAND_MRG32K3A_M1;  // 0 < p <= M1
 
@@ -286,45 +288,45 @@ protected:
 private:
     FQUALIFIERS
     void mod_mat_vec_m1(unsigned long long * A,
-                        unsigned long long * s)
+                        unsigned int * s)
     {
         unsigned long long x[3];
-      
+
         x[0] = mod_m1(mod_m1(A[0] * s[0])
                     + mod_m1(A[1] * s[1])
                     + mod_m1(A[2] * s[2]));
-               
+
         x[1] = mod_m1(mod_m1(A[3] * s[0])
                     + mod_m1(A[4] * s[1])
                     + mod_m1(A[5] * s[2]));
-        
+
         x[2] = mod_m1(mod_m1(A[6] * s[0])
                     + mod_m1(A[7] * s[1])
                     + mod_m1(A[8] * s[2]));
-        
+
         s[0] = x[0];
         s[1] = x[1];
         s[2] = x[2];
     }
-    
+
     FQUALIFIERS
     void mod_mat_vec_m2(unsigned long long * A,
-                        unsigned long long * s)
+                        unsigned int * s)
     {
         unsigned long long x[3];
-      
+
         x[0] = mod_m2(mod_m2(A[0] * s[0])
                     + mod_m2(A[1] * s[1])
                     + mod_m2(A[2] * s[2]));
-               
+
         x[1] = mod_m2(mod_m2(A[3] * s[0])
                     + mod_m2(A[4] * s[1])
                     + mod_m2(A[5] * s[2]));
-        
+
         x[2] = mod_m2(mod_m2(A[6] * s[0])
                     + mod_m2(A[7] * s[1])
                     + mod_m2(A[8] * s[2]));
-        
+
         s[0] = x[0];
         s[1] = x[1];
         s[2] = x[2];
