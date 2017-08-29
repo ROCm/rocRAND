@@ -71,7 +71,9 @@ typedef enum hiprandStatus {
     HIPRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
     HIPRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
     HIPRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
-    HIPRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Length requested is not a multple of dimension
+    HIPRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multple of quasirandom generator's dimension,
+                                              ///< or requested size is not even (see hiprandGenerateNormal()),
+                                              ///< or pointer is misaligned (see hiprandGenerateNormal())
     HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
     HIPRAND_STATUS_LAUNCH_FAILURE = 201, ///< Kernel launch failure
     HIPRAND_STATUS_PREEXISTING_FAILURE = 202, ///< Preexisting failure on library entry
@@ -226,6 +228,8 @@ hiprandGenerate(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
@@ -248,6 +252,8 @@ hiprandGenerateUniform(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
@@ -269,6 +275,9 @@ hiprandGenerateUniformDouble(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
@@ -291,6 +300,9 @@ hiprandGenerateNormal(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
@@ -313,6 +325,9 @@ hiprandGenerateNormalDouble(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
@@ -335,6 +350,9 @@ hiprandGenerateLogNormal(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
@@ -357,6 +375,8 @@ hiprandGenerateLogNormalDouble(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
  * - HIPRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
