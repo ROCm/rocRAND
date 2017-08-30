@@ -65,6 +65,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace rocrand_host {
 namespace detail {
 
+    struct uint4_unaligned
+    {
+        unsigned int x;
+        unsigned int y;
+        unsigned int z;
+        unsigned int w;
+    };
+
+    struct float4_unaligned
+    {
+        float x;
+        float y;
+        float z;
+        float w;
+    };
+
+    struct double4_unaligned
+    {
+        double x;
+        double y;
+        double z;
+        double w;
+    };
+
+    template<class T>
+    struct unaligned_type
+    {
+        typedef void type;
+    };
+
+    template<>
+    struct unaligned_type<uint4>
+    {
+        typedef uint4_unaligned type;
+    };
+
+    template<>
+    struct unaligned_type<float4>
+    {
+        typedef float4_unaligned type;
+    };
+
+    template<>
+    struct unaligned_type<double4>
+    {
+        typedef double4_unaligned type;
+    };
+
     struct philox4x32_10_device_engine : public ::rocrand_device::philox4x32_10_engine
     {
         typedef ::rocrand_device::philox4x32_10_engine base_type;
@@ -147,6 +195,7 @@ namespace detail {
     {
         typedef philox4x32_10_device_engine DeviceEngineType;
         typedef decltype(distribution(uint4())) Type4;
+        typedef typename unaligned_type<Type4>::type Type4_unaligned;
 
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
@@ -167,12 +216,26 @@ namespace detail {
         // generate_poisson_kernel was not called before generate_kernel
         // TODO: We need to check if ordering is so imporant, or if we can
         // skip some random numbers (which increases performance).
-        Type4 * data4 = (Type4 *)data;
-        while(index < (n/4))
+        if(((uintptr_t)data)%(sizeof(Type4)) == 0)
         {
-            data4[index] = distribution(engine.next4());
-            // Next position
-            index += stride;
+            Type4 * data4 = (Type4 *)data;
+            while(index < (n/4))
+            {
+                data4[index] = distribution(engine.next4());
+                // Next position
+                index += stride;
+            }
+        }
+        else
+        {
+            Type4_unaligned * data4 = (Type4_unaligned *)data;
+            while(index < (n/4))
+            {
+                Type4 result = distribution(engine.next4());
+                data4[index] = *(Type4_unaligned*)(&result);  // reinterpret as Type4_unaligned
+                // Next position
+                index += stride;
+            }
         }
 
         // First work-item saves the tail when n is not a multiple of 4
@@ -185,6 +248,7 @@ namespace detail {
             if(tail_size > 1) data[n - tail_size + 1] = result.y;
             if(tail_size > 2) data[n - tail_size + 2] = result.z;
         }
+
         // Save engine with its state
         engines[engine_id] = engine;
     }
@@ -267,18 +331,37 @@ namespace detail {
             engine = engines[engine_id];
         }
 
-        uint4 * data4 = (uint4 *)data;
-        while(index < (n / 4))
+        if(((uintptr_t)data)%(sizeof(uint4)) == 0)
         {
-            const uint4 u4 = engine.next4();
-            const uint4 result = uint4 {
-                distribution(u4.x),
-                distribution(u4.y),
-                distribution(u4.z),
-                distribution(u4.w)
-            };
-            data4[index] = result;
-            index += stride;
+            uint4 * data4 = (uint4 *)data;
+            while(index < (n / 4))
+            {
+                const uint4 u4 = engine.next4();
+                const uint4 result = uint4 {
+                    distribution(u4.x),
+                    distribution(u4.y),
+                    distribution(u4.z),
+                    distribution(u4.w)
+                };
+                data4[index] = result;
+                index += stride;
+            }
+        }
+        else
+        {
+            uint4_unaligned * data4 = (uint4_unaligned *)data;
+            while(index < (n / 4))
+            {
+                const uint4 u4 = engine.next4();
+                const uint4 result = uint4 {
+                    distribution(u4.x),
+                    distribution(u4.y),
+                    distribution(u4.z),
+                    distribution(u4.w)
+                };
+                data4[index] = *(uint4_unaligned*)(&result); // reinterpret as uint4_unaligned
+                index += stride;
+            }
         }
 
         // First work-item saves the tail when n is not a multiple of 4
