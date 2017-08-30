@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 #include <stdio.h>
+#include <vector>
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
@@ -264,3 +265,58 @@ TEST(rocrand_sobol32_qrng_tests, discard_stride_test)
         EXPECT_EQ(engine1(), engine2());
     }
 }
+
+class rocrand_sobol32_qrng_offset
+    : public ::testing::TestWithParam<std::tuple<unsigned int, unsigned long long>> { };
+
+TEST_P(rocrand_sobol32_qrng_offset, offsets_test)
+{
+    const unsigned int dimensions = std::get<0>(GetParam());
+    const unsigned long long offset = std::get<1>(GetParam());
+
+    const size_t size = 1313;
+
+    const size_t size0 = size * dimensions;
+    const size_t size1 = (size + offset) * dimensions;
+    unsigned int * data0;
+    unsigned int * data1;
+    hipMalloc(&data0, sizeof(unsigned int) * size0);
+    hipMalloc(&data1, sizeof(unsigned int) * size1);
+
+    rocrand_sobol32 g0;
+    g0.set_offset(offset);
+    g0.set_dimensions(dimensions);
+    g0.generate(data0, size0);
+
+    rocrand_sobol32 g1;
+    g1.set_dimensions(dimensions);
+    g1.generate(data1, size1);
+
+    std::vector<unsigned int> host_data0(size0);
+    std::vector<unsigned int> host_data1(size1);
+    hipMemcpy(host_data0.data(), data0, sizeof(unsigned int) * size0, hipMemcpyDeviceToHost);
+    hipMemcpy(host_data1.data(), data1, sizeof(unsigned int) * size1, hipMemcpyDeviceToHost);
+    hipDeviceSynchronize();
+
+    for(unsigned int d = 0; d < dimensions; d++)
+    {
+        for(size_t i = 0; i < size; i++)
+        {
+            ASSERT_EQ(
+                host_data0[d * size + i],
+                host_data1[d * (size + offset) + i + offset]
+            );
+        }
+    }
+
+    hipFree(data0);
+    hipFree(data1);
+}
+
+
+const unsigned int dimensions[] = { 1, 10, 2, 321 };
+const unsigned long long offsets[] = { 0, 1, 11, 112233 };
+
+INSTANTIATE_TEST_CASE_P(rocrand_sobol32_qrng_offset,
+                        rocrand_sobol32_qrng_offset,
+                        ::testing::Combine(::testing::ValuesIn(dimensions), ::testing::ValuesIn(offsets)));
