@@ -501,7 +501,7 @@ int main(int argc, char *argv[])
     parser.set_optional<size_t>("threads", "threads", 256, "number of threads in each block");
 	parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
-    parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
+    parser.set_optional<std::vector<double>>("lambda", "lambda", {10.0}, "space-separated list of lambdas of Poisson distribution");
     parser.run_and_exit_if_error();
 
     std::vector<std::string> engines;
