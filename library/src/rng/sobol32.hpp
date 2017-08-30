@@ -138,6 +138,9 @@ public:
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
+        if (data_size % m_dimensions != 0)
+            return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
+
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
