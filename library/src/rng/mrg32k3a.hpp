@@ -111,20 +111,12 @@ class rocrand_mrg32k3a : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_MRG32K
 public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MRG32K3A>;
     using engine_type = ::rocrand_host::detail::mrg32k3a_device_engine;
-    
-    #ifdef __HIP_PLATFORM_NVCC__
-    const uint32_t threads = 128;
-    const uint32_t max_blocks = 128; // 512
-    #else
-    const uint32_t threads = 256;
-    const uint32_t max_blocks = 512;
-    #endif
 
     rocrand_mrg32k3a(unsigned long long seed = 12345,
                      unsigned long long offset = 0,
                      hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(threads * max_blocks)
+          m_engines_initialized(false), m_engines(NULL), m_engines_size(s_threads * s_blocks)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
@@ -175,7 +167,7 @@ public:
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
-            dim3(max_blocks), dim3(threads), 0, m_stream,
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
             m_engines, m_seed, m_offset
         );
         // Check kernel status
@@ -197,7 +189,7 @@ public:
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-            dim3(max_blocks), dim3(threads), 0, m_stream,
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
             m_engines, data, data_size, distribution
         );
         // Check kernel status
@@ -225,7 +217,7 @@ public:
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(max_blocks), dim3(threads), 0, m_stream,
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
             m_engines, data, data_size, distribution
         );
         // Check kernel status
@@ -246,7 +238,7 @@ public:
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(max_blocks), dim3(threads), 0, m_stream,
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
             m_engines, data, data_size, distribution
         );
         // Check kernel status
@@ -273,6 +265,13 @@ private:
     bool m_engines_initialized;
     engine_type * m_engines;
     size_t m_engines_size;
+    #ifdef __HIP_PLATFORM_NVCC__
+    static const uint32_t s_threads = 128;
+    static const uint32_t s_blocks = 128;
+    #else
+    static const uint32_t s_threads = 256;
+    static const uint32_t s_blocks = 512;
+    #endif
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> poisson;
