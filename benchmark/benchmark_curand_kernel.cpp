@@ -220,20 +220,20 @@ void generate_kernel(curandStateMtgp32_t * states,
     const unsigned int thread_id = threadIdx.x;
     unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int stride = gridDim.x * blockDim.x;
-        
+
     __shared__ curandStateMtgp32_t state;
-       
+
     if (thread_id == 0)
         state = states[state_id];
     __syncthreads();
-        
+
     while(index < size)
     {
         data[index] = generate_func(&state, extra);
         index += stride;
     }
     __syncthreads();
-        
+
     if (thread_id == 0)
         states[state_id] = state;
 }
@@ -259,7 +259,7 @@ void run_benchmark(const cli::Parser& parser,
     const size_t size = parser.get<size_t>("size");
     const size_t dimensions = parser.get<size_t>("dimensions");
     const size_t trials = parser.get<size_t>("trials");
-    
+
     const size_t blocks = parser.get<size_t>("blocks");
     const size_t threads = parser.get<size_t>("threads");
 
@@ -469,7 +469,7 @@ int main(int argc, char *argv[])
             }
         ) +
         "\n      or all";
-    
+
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
     parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
@@ -477,9 +477,9 @@ int main(int argc, char *argv[])
     parser.set_optional<size_t>("threads", "threads", 256, "number of threads in each block");
 	parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
-    parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
+    parser.set_optional<std::vector<double>>("lambda", "lambda", {10.0}, "space-separated list of lambdas of Poisson distribution");
     parser.run_and_exit_if_error();
-    
+
     std::vector<std::string> engines;
     {
         auto es = parser.get<std::vector<std::string>>("engine");
