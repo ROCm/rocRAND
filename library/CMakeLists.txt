@@ -9,11 +9,17 @@ foreach(EXCLUDE ${tmp})
 endforeach()
 set_source_files_properties(${rocRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
+include_directories(include) # hipcc workaround
+
 # Build library
-include_directories(include)
 hip_add_library(rocrand SHARED "${rocRAND_SRCS}")
-set_target_properties(
-    rocrand
+target_include_directories(rocrand
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
+        $<INSTALL_INTERFACE:rocrand/include>
+)
+set_target_properties(rocrand
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
@@ -44,6 +50,7 @@ install(
 # .cmake files
 install(
     EXPORT rocrand-targets
+    NAMESPACE roc::
     DESTINATION rocrand/lib/cmake/rocrand
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
@@ -74,21 +81,26 @@ set_source_files_properties(${hipRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMA
 
 # Build
 hip_add_library(hiprand SHARED "${hipRAND_SRCS}")
+target_include_directories(hiprand
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
+        $<INSTALL_INTERFACE:hiprand/include>
+)
 if(HIP_PLATFORM STREQUAL "nvcc")
-    target_link_libraries(hiprand "-lcurand")
+    target_link_libraries(hiprand PRIVATE "-lcurand")
 else()
     add_dependencies(hiprand rocrand)
-    target_link_libraries(
-        hiprand
-        PRIVATE -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
-                $<TARGET_FILE:rocrand>
+    target_link_libraries(hiprand
+        PRIVATE
+            -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
+            $<TARGET_FILE:rocrand>
     )
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
 endif()
-set_target_properties(
-    hiprand
+set_target_properties(hiprand
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
@@ -114,6 +126,7 @@ install(
 # .cmake files
 install(
     EXPORT hiprand-targets
+    NAMESPACE hip::
     DESTINATION hiprand/lib/cmake/hiprand
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
