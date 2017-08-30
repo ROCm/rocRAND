@@ -22,7 +22,7 @@ MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = NO
 TAB_SIZE               = 8
-ALIASES                =
+ALIASES                = rocrand_internal="\internal"
 OPTIMIZE_OUTPUT_FOR_C  = NO
 OPTIMIZE_OUTPUT_JAVA   = NO
 OPTIMIZE_FOR_FORTRAN   = NO
@@ -83,8 +83,8 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = mainpage.dox host.dox device.dox rocrandhostcpp.dox hiprandhost.dox \
-                         hipranddevice.dox hiprandhostcpp.dox  ../library/include
+INPUT                  = mainpage.dox rocrandhost.dox rocranddevice.dox rocrandhostcpp.dox \
+                         hiprandhost.dox hipranddevice.dox hiprandhostcpp.dox  ../library/include
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = YES

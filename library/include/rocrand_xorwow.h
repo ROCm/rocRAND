@@ -31,7 +31,7 @@
 // G. Marsaglia, Xorshift RNGs, 2003
 // http://www.jstatsoft.org/v08/i14/paper
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -40,7 +40,7 @@
  * \brief Default seed for XORWOW PRNG.
  */
  #define ROCRAND_XORWOW_DEFAULT_SEED 0ULL
- /** @} */ // end of group device
+ /** @} */ // end of group rocranddevice
 
 namespace rocrand_device {
 namespace detail {
@@ -308,7 +308,7 @@ protected:
 
 } // end namespace rocrand_device
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -399,4 +399,4 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_xorwow 
 
 #endif // ROCRAND_XORWOW_H_
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice

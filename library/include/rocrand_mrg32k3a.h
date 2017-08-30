@@ -45,7 +45,7 @@
 #define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
 #define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -54,7 +54,7 @@
  * \brief Default seed for MRG32K3A PRNG.
  */
  #define ROCRAND_MRG32K3A_DEFAULT_SEED 12345ULL
- /** @} */ // end of group device
+ /** @} */ // end of group rocranddevice
 
 namespace rocrand_device {
 
@@ -404,7 +404,7 @@ protected:
 
 } // end namespace rocrand_device
 
-/** \addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -495,4 +495,4 @@ void skipahead_sequence(unsigned long long sequence, rocrand_state_mrg32k3a * st
 
 #endif // ROCRAND_MRG32K3A_H_
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice

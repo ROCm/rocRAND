@@ -5,7 +5,7 @@
 */
 
 /**
- *  @defgroup hipranddevice hipRAND device functions
+ * \defgroup hipranddevice hipRAND device functions
  * @{
  *     @page page_name hipRAND RNG's state types
  *     * \p hiprandStateXORWOW_t - XORWOW PRNG state type

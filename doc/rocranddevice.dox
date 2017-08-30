@@ -1,0 +1,10 @@
+/**
+@brief rocRAND Device API Module.
+@author
+@file
+*/
+
+/**
+ * \rocrand_internal \defgroup rocranddevice rocRAND device functions
+ *
+ */
