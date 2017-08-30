@@ -159,7 +159,7 @@ unsigned int poisson_distribution(State& state, double lambda)
 
 template<class State>
 FQUALIFIERS
-unsigned int poisson_itr(State& state, double lambda)
+unsigned int poisson_distribution_itr(State& state, double lambda)
 {
     double L;
     double x = 1.0;
@@ -190,11 +190,11 @@ unsigned int poisson_itr(State& state, double lambda)
 
 template<class State>
 FQUALIFIERS
-unsigned int _poisson_distribution(State& state, double lambda)
+unsigned int poisson_distribution_inv(State& state, double lambda)
 {
     if (lambda < 1000.0)
     {
-        return poisson_itr(state, lambda);
+        return poisson_distribution_itr(state, lambda);
     }
     else
     {
@@ -288,7 +288,7 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
  * \brief Return a Poisson distributed unsigned int from a MTGP32 Generator.
  *
  * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * and increments the position of generator by one.
  *
  * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
@@ -298,14 +298,14 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
 {
-    return rocrand_device::detail::_poisson_distribution(state, lambda);
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
 
 /**
  * \brief Return a Poisson distributed unsigned int from a SOBOL32 Generator.
  *
  * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * and increments the position of generator by one.
  *
  * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
@@ -315,7 +315,7 @@ unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
 {
-    return rocrand_device::detail::_poisson_distribution(state, lambda);
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
 
 #endif // ROCRAND_POISSON_H_
