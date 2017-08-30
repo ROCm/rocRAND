@@ -5,6 +5,6 @@
 */
 
 /**
- *  @defgroup hiprandhost hipRAND host API
+ * \defgroup hiprandhost hipRAND host API
  *
  */

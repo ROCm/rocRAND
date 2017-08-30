@@ -25,7 +25,7 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-/** @addtogroup device
+/** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
@@ -644,4 +644,4 @@ double rocrand_normal_double(rocrand_state_sobol32 * state)
 
 #endif // ROCRAND_NORMAL_H_
 
-/** @} */ // end of group device
+/** @} */ // end of group rocranddevice

@@ -5,6 +5,6 @@
 */
 
 /**
- *  @defgroup hiprandhostcpp hipRAND host API C++ Wrapper
+ * \defgroup hiprandhostcpp hipRAND host API C++ Wrapper
  *
  */

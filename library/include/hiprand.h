@@ -23,7 +23,7 @@
 
 #include <hip/hip_runtime.h>
 
-/** @addtogroup hiprandhost
+/** \addtogroup hiprandhost
  *
  *  @{
  */
@@ -71,7 +71,7 @@ typedef enum hiprandStatus {
     HIPRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
     HIPRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
     HIPRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
-    HIPRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multple of quasirandom generator's dimension,
+    HIPRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multiple of quasirandom generator's dimension,
                                               ///< or requested size is not even (see hiprandGenerateNormal()),
                                               ///< or pointer is misaligned (see hiprandGenerateNormal())
     HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
