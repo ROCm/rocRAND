@@ -158,7 +158,7 @@ uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discr
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete_alias(static_cast<unsigned int>(rocrand(state)), *discrete_distribution);
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
