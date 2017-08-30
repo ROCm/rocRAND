@@ -64,9 +64,36 @@ unsigned int poisson_distribution_small(State& state, double lambda)
 }
 
 FQUALIFIERS
-double log_factorial(const double n)
+double lgamma_approx(const double x)
 {
-    return (n <= 1.0 ? 0.0 : lgamma(n + 1.0));
+    // Lanczos approximation (g = 7, n = 9)
+
+    const double z = x - 1.0;
+
+    const int g = 7;
+    const int n = 9;
+    const double coefs[n] = {
+        0.99999999999980993227684700473478,
+        676.520368121885098567009190444019,
+        -1259.13921672240287047156078755283,
+        771.3234287776530788486528258894,
+        -176.61502916214059906584551354,
+        12.507343278686904814458936853,
+        -0.13857109526572011689554707,
+        9.984369578019570859563e-6,
+        1.50563273514931155834e-7
+    };
+    double sum = 0.0;
+    #pragma unroll
+    for (int i = n - 1; i > 0; i--)
+    {
+        sum += coefs[i] / (z + i);
+    }
+    sum += coefs[0];
+
+    const double log_sqrt_2_pi = 0.9189385332046727418;
+    const double e = 2.718281828459045090796;
+    return (log_sqrt_2_pi + log(sum) - g) + (z + 0.5) * log((z + g + 0.5) / e);
 }
 
 template<class State>
@@ -94,7 +121,7 @@ unsigned int poisson_distribution_large(State& state, double lambda)
         const double y = alpha - beta * x;
         const double t = 1.0 + exp(y);
         const double lhs = y + log(v / (t * t));
-        const double rhs = k + n * log_lambda - log_factorial(n);
+        const double rhs = k + n * log_lambda - lgamma_approx(n + 1.0);
         if (lhs <= rhs)
         {
             return static_cast<unsigned int>(n);
@@ -132,7 +159,7 @@ unsigned int poisson_distribution(State& state, double lambda)
 
 template<class State>
 FQUALIFIERS
-unsigned int poisson_itr(State& state, double lambda)
+unsigned int poisson_distribution_itr(State& state, double lambda)
 {
     double L;
     double x = 1.0;
@@ -163,11 +190,11 @@ unsigned int poisson_itr(State& state, double lambda)
 
 template<class State>
 FQUALIFIERS
-unsigned int _poisson_distribution(State& state, double lambda)
+unsigned int poisson_distribution_inv(State& state, double lambda)
 {
     if (lambda < 1000.0)
     {
-        return poisson_itr(state, lambda);
+        return poisson_distribution_itr(state, lambda);
     }
     else
     {
@@ -261,7 +288,7 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
  * \brief Return a Poisson distributed unsigned int from a MTGP32 Generator.
  *
  * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * and increments the position of generator by one.
  *
  * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
@@ -271,14 +298,14 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
 {
-    return rocrand_device::detail::_poisson_distribution(state, lambda);
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
 
 /**
  * \brief Return a Poisson distributed unsigned int from a SOBOL32 Generator.
  *
  * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * and increments the position of generator by one.
  *
  * \param state - Pointer to a state to use
  * \param lambda - Lambda of the related Poisson distribution
@@ -288,7 +315,7 @@ unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
 {
-    return rocrand_device::detail::_poisson_distribution(state, lambda);
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
 
 #endif // ROCRAND_POISSON_H_
