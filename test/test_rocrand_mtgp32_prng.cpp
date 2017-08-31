@@ -76,27 +76,27 @@ TEST(rocrand_mtgp32_prng_tests, normal_float_test)
     hipMalloc(&data, sizeof(float) * size);
 
     rocrand_mtgp32 g;
-    g.generate_normal(data, size, 5.0f, 2.0f);
+    g.generate_normal(data, size, 2.0f, 5.0f);
     hipDeviceSynchronize();
 
     float host_data[size];
     hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
-    
+
     float mean = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
-    
+
     float std = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
         std += std::pow(host_data[i] - mean, 2);
     }
     std = sqrt(std / size);
-    
+
     EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
@@ -114,14 +114,14 @@ TEST(rocrand_mtgp32_prng_tests, poisson_test)
     unsigned int host_data[size];
     hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
-    
+
     double mean = 0.0;
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
-    
+
     double var = 0.0;
     for(size_t i = 0; i < size; i++)
     {
@@ -129,7 +129,7 @@ TEST(rocrand_mtgp32_prng_tests, poisson_test)
         var += x * x;
     }
     var = var / size;
-    
+
     EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
     EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
 }

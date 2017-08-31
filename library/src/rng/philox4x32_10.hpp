@@ -461,7 +461,7 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
@@ -482,7 +482,7 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
@@ -510,7 +510,7 @@ public:
 
         try
         {
-            poisson.set_lambda(lambda);
+            m_poisson.set_lambda(lambda);
         }
         catch(rocrand_status status)
         {
@@ -520,7 +520,7 @@ public:
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel<s_threads_per_engine>),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, poisson.dis
+            m_engines, data, data_size, m_poisson.dis
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
@@ -538,7 +538,7 @@ private:
     const static uint32_t s_blocks = 1024;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<> poisson;
+    poisson_distribution_manager<> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type

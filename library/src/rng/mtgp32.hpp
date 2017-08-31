@@ -27,7 +27,7 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above
@@ -38,7 +38,7 @@
  *       its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written
  *       permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -72,7 +72,7 @@ namespace detail {
     typedef ::rocrand_device::mtgp32_engine mtgp32_device_engine;
     typedef ::rocrand_device::mtgp32_state mtgp32_state;
     typedef ::rocrand_device::mtgp32_param mtgp32_param;
-    
+
     template<class Type, class Distribution>
     __global__
     void generate_kernel(mtgp32_device_engine * engines,
@@ -82,22 +82,22 @@ namespace detail {
         const unsigned int engine_id = hipBlockIdx_x;
         unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
-        
+
         // Load device engine
         __shared__ mtgp32_device_engine engine;
         engine.copy(&engines[engine_id]);
-        
+
         while(index < n)
         {
             data[index] = distribution(engine());
             // Next position
             index += stride;
         }
-        
+
         // Save engine with its state
         engines[engine_id].copy(&engine);
     }
-    
+
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -151,13 +151,13 @@ public:
     {
         if (m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
-        
+
         rocrand_status status;
-            
+
         status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
-            
+
         m_engines_initialized = true;
 
         return ROCRAND_STATUS_SUCCESS;
@@ -191,14 +191,14 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
         normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
-    rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
         log_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
@@ -208,13 +208,13 @@ public:
     {
         try
         {
-            poisson.set_lambda(lambda);
+            m_poisson.set_lambda(lambda);
         }
         catch(rocrand_status status)
         {
             return status;
         }
-        return generate(data, data_size, poisson.dis);
+        return generate(data, data_size, m_poisson.dis);
     }
 
 private:
@@ -229,7 +229,8 @@ private:
     static const uint32_t s_blocks = 512;
     #endif
 
-    poisson_distribution_manager<> poisson;
+    // For caching of Poisson for consecutive generations with the same lambda
+    poisson_distribution_manager<> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type

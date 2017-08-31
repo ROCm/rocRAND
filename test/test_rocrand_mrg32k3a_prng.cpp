@@ -75,7 +75,7 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
     hipMalloc(&data, sizeof(float) * size);
 
     rocrand_mrg32k3a g;
-    g.generate_normal(data, size, 5.0f, 2.0f);
+    g.generate_normal(data, size, 2.0f, 5.0f);
     hipDeviceSynchronize();
 
     float host_data[size];

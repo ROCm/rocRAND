@@ -233,35 +233,35 @@ rocrand_generate_normal(rocrand_generator generator,
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_normal(output_data, n,
-                                                        stddev, mean);
+                                                        mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);
         return mrg32k3a_generator->generate_normal(output_data, n,
-                                                   stddev, mean);
+                                                   mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
         rocrand_xorwow * rocrand_xorwow_generator =
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_normal(output_data, n,
-                                                         stddev, mean);
+                                                         mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_normal(output_data, n,
-                                                          stddev, mean);
+                                                          mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_normal(output_data, n,
-                                                         stddev, mean);
+                                                         mean, stddev);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -287,35 +287,35 @@ rocrand_generate_normal_double(rocrand_generator generator,
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_normal(output_data, n,
-                                                        stddev, mean);
+                                                        mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);
         return mrg32k3a_generator->generate_normal(output_data, n,
-                                                   stddev, mean);
+                                                   mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
         rocrand_xorwow * rocrand_xorwow_generator =
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_normal(output_data, n,
-                                                         stddev, mean);
+                                                         mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_normal(output_data, n,
-                                                          stddev, mean);
+                                                          mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_normal(output_data, n,
-                                                         stddev, mean);
+                                                         mean, stddev);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -341,35 +341,35 @@ rocrand_generate_log_normal(rocrand_generator generator,
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_log_normal(output_data, n,
-                                                            stddev, mean);
+                                                            mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);
         return mrg32k3a_generator->generate_log_normal(output_data, n,
-                                                       stddev, mean);
+                                                       mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
         rocrand_xorwow * rocrand_xorwow_generator =
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_log_normal(output_data, n,
-                                                             stddev, mean);
+                                                             mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_log_normal(output_data, n,
-                                                              stddev, mean);
+                                                              mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_log_normal(output_data, n,
-                                                             stddev, mean);
+                                                             mean, stddev);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -395,35 +395,35 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_log_normal(output_data, n,
-                                                            stddev, mean);
+                                                            mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);
         return mrg32k3a_generator->generate_log_normal(output_data, n,
-                                                       stddev, mean);
+                                                       mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
     {
         rocrand_xorwow * rocrand_xorwow_generator =
             static_cast<rocrand_xorwow *>(generator);
         return rocrand_xorwow_generator->generate_log_normal(output_data, n,
-                                                             stddev, mean);
+                                                             mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_log_normal(output_data, n,
-                                                              stddev, mean);
+                                                              mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_log_normal(output_data, n,
-                                                             stddev, mean);
+                                                             mean, stddev);
     }
     return ROCRAND_STATUS_TYPE_ERROR;
 }
