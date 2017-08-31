@@ -184,14 +184,14 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
         normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
-    rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
         log_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);

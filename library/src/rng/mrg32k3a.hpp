@@ -207,7 +207,7 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
@@ -228,7 +228,7 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
+    rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
