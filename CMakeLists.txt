@@ -28,8 +28,8 @@ create_version_vars(rocrand 1 5 0)
 set(AMDGPU_TARGETS gfx803;gfx900 CACHE STRING "List of specific machine types for library to target")
 
 # Include cmake scripts
-include(cmake/Summary.cmake)
 include(cmake/Dependencies.cmake)
+include(cmake/Summary.cmake)
 
 # Build flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -fPIC -Wno-narrowing")
