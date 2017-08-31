@@ -24,10 +24,11 @@ function(hip_cuda_detect_lowest_cc out_variable)
         "  return 0;\n"
         "}\n")
 
-    execute_process(COMMAND hipcc "-Wno-deprecated-gpu-targets" "--run" "${__cufile}"
-                    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/CMakeFiles/"
-                    RESULT_VARIABLE __nvcc_res OUTPUT_VARIABLE __nvcc_out
-                    )
+    execute_process(
+        COMMAND ${HIP_HIPCC_EXECUTABLE} "-Wno-deprecated-gpu-targets" "--run" "${__cufile}"
+        WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/CMakeFiles/"
+        RESULT_VARIABLE __nvcc_res OUTPUT_VARIABLE __nvcc_out
+    )
 
     if(__nvcc_res EQUAL 0)
         set(HIP_CUDA_lowest_cc ${__nvcc_out} CACHE INTERNAL "The lowest CC of installed NV GPUs" FORCE)
@@ -45,14 +46,21 @@ endfunction()
 ###  Non macro section
 ################################################################################################
 
-if (HIP_PLATFORM STREQUAL "nvcc")
+#
+# Use NVGPU_ARCHS_FLAGS to set CUDA arch compilation flags
+# For example: -DNVGPU_ARCHS_FLAGS="--gpu-architecture=compute_50 --gpu-code=compute_50,sm_50,sm_52"
+#
+if(HIP_PLATFORM STREQUAL "nvcc")
     set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets") # Suppressing warnings
-    hip_cuda_detect_lowest_cc(lowest_cc)
-    if(lowest_cc LESS "30")
-        set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS}") # Do nothing
-    else(lowest_cc LESS "30")
-        set(HIP_NVCC_FLAGS "--gpu-architecture=sm_${lowest_cc}")
-    endif(lowest_cc LESS "30")
-    set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} -DHIP_CUDA_ARCH=${lowest_cc}0")
-    #list(INSERT HIP_FLAGS2 0 "-DHIP_CUDA_ARCH=${lowest_cc}0")
+    if("x${NVGPU_ARCHS_FLAGS}" STREQUAL "x")
+        hip_cuda_detect_lowest_cc(lowest_cc)
+        if(lowest_cc LESS "30")
+            message(WARNING "Pre-Kepler architectures are not supported.")
+            set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_30") # Kempler arch is miniumum
+        else(lowest_cc LESS "30")
+            set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_${lowest_cc}")
+        endif(lowest_cc LESS "30")
+    else()
+        set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} ${NVGPU_ARCHS_FLAGS}")
+    endif()
 endif()
