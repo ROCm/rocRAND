@@ -67,6 +67,27 @@ namespace detail {
 
     template<class Distribution>
     __global__
+    void generate_kernel(xorwow_device_engine * engines,
+                         double * data, const size_t n,
+                         const Distribution distribution)
+    {
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        xorwow_device_engine engine = engines[engine_id];
+
+        while(index < n)
+        {
+            data[index] = distribution(engine(), engine());
+            index += stride;
+        }
+
+        engines[engine_id] = engine;
+    }
+
+    template<class Distribution>
+    __global__
     void generate_normal_kernel(xorwow_device_engine * engines,
                                 float * data, const size_t n,
                                 Distribution distribution)
