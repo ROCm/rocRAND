@@ -252,13 +252,13 @@ public:
     {
         try
         {
-            poisson.set_lambda(lambda);
+            m_poisson.set_lambda(lambda);
         }
         catch(rocrand_status status)
         {
             return status;
         }
-        return generate(data, data_size, poisson.dis);
+        return generate(data, data_size, m_poisson.dis);
     }
 
 private:
@@ -274,7 +274,7 @@ private:
     #endif
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<> poisson;
+    poisson_distribution_manager<> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
