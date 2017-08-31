@@ -113,6 +113,14 @@ namespace detail {
         typedef double4_unaligned type;
     };
 
+    inline __device__ unsigned int warp_reduce_min(unsigned int val, int size) {
+      for (int offset = size/2; offset > 0; offset /= 2) {
+        unsigned int temp = __shfl_xor((int)val, offset);
+        val = (temp < val) ? temp : val;
+      }
+      return val;
+    }
+
     struct philox4x32_10_device_engine : public ::rocrand_device::philox4x32_10_engine
     {
         typedef ::rocrand_device::philox4x32_10_engine base_type;
@@ -134,41 +142,11 @@ namespace detail {
         ~philox4x32_10_device_engine () {}
 
         __forceinline__ __device__ __host__
-        uint4 nextn(unsigned int n /* n can only be 1, 2, or 3 */)
+        uint4 next4_leap(unsigned int leap)
         {
             uint4 ret = m_state.result;
-            // save old counter in case (n + m_state.substate < 4)
-            uint4 old_counter = m_state.counter;
-            this->discard_state();
+            this->discard_state(leap);
             m_state.result = this->ten_rounds(m_state.counter, m_state.key);
-            switch(m_state.substate)
-            {
-                case 0:
-                    break;
-                case 1:
-                    ret = { ret.y, ret.z, ret.w, m_state.result.x };
-                    break;
-                case 2:
-                    ret = { ret.z, ret.w, m_state.result.x, m_state.result.y };
-                    break;
-                case 3:
-                    ret = { ret.w, m_state.result.x, m_state.result.y, m_state.result.z };
-                    break;
-                default:
-                    break;
-            }
-            // Progress substate
-            m_state.substate += n;
-            // If (n + m_state.substate < 4), then set n to 1
-            n = m_state.substate < 4 ? 0 /* 1, 2, 3 */ : 1 /* 4, 5, 6 */;
-            m_state.substate -= n * 4;
-            // If (n + m_state.substate < 4), that mean we should
-            // recover previous counter
-            if(n == 0)
-            {
-                m_state.counter = old_counter;
-                m_state.result = this->ten_rounds(m_state.counter, m_state.key);
-            }
             return ret;
         }
 
@@ -177,19 +155,16 @@ namespace detail {
 
     __global__
     void init_engines_kernel(philox4x32_10_device_engine * engines,
-                             unsigned long long seed,
-                             unsigned long long offset)
+                             const unsigned long long seed,
+                             const unsigned long long offset)
     {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         engines[engine_id] = philox4x32_10_device_engine(seed, engine_id, offset);
     }
 
-    template<class Type, class Distribution>
+    template<unsigned int ThreadsPerEngine, class Type, class Distribution>
     __global__
     void generate_kernel(philox4x32_10_device_engine * engines,
-                         bool init_engines,
-                         unsigned long long seed,
-                         unsigned long long offset,
                          Type * data, const size_t n,
                          Distribution distribution)
     {
@@ -197,31 +172,24 @@ namespace detail {
         typedef decltype(distribution(uint4())) Type4;
         typedef typename unaligned_type<Type4>::type Type4_unaligned;
 
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int engine_id = index/ThreadsPerEngine;
+        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init device engine
-        DeviceEngineType engine;
-        if(init_engines)
+        // Load device engine
+        DeviceEngineType engine = engines[engine_id];
+        if(hipThreadIdx_x%ThreadsPerEngine > 0)
         {
-            engine = DeviceEngineType(seed, index, 0);
-        }
-        else
-        {
-            engine = engines[engine_id];
+            // Skips hipThreadIdx_x%ThreadsPerEngine states
+            engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
         }
 
-        // TODO: It's possible to improve performance for situations when
-        // generate_poisson_kernel was not called before generate_kernel
-        // TODO: We need to check if ordering is so imporant, or if we can
-        // skip some random numbers (which increases performance).
         if(((uintptr_t)data)%(sizeof(Type4)) == 0)
         {
             Type4 * data4 = (Type4 *)data;
             while(index < (n/4))
             {
-                data4[index] = distribution(engine.next4());
+                data4[index] = distribution(engine.next4_leap(ThreadsPerEngine));
                 // Next position
                 index += stride;
             }
@@ -231,34 +199,41 @@ namespace detail {
             Type4_unaligned * data4 = (Type4_unaligned *)data;
             while(index < (n/4))
             {
-                Type4 result = distribution(engine.next4());
+                Type4 result = distribution(engine.next4_leap(ThreadsPerEngine));
                 data4[index] = *(Type4_unaligned*)(&result);  // reinterpret as Type4_unaligned
                 // Next position
                 index += stride;
             }
         }
 
-        // First work-item saves the tail when n is not a multiple of 4
+        // Find thread with the smallest state of the engine which id is engine_id
+        unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
+        const bool smallest_state = (index == index_min);
+
+        // Check if we need to save tail (last 1,2,3 random number).
+        // Those numbers should be generated by the thread that would
+        // save next uint4 if n was equal n+3 (index < (n/4) would be
+        // true in such situation).
+        // If this condition is met, then we know that (index == index_min)
+        // is also true for that thread, so we don't need to check that.
         auto tail_size = n & 3;
-        if(engine_id == 0 && tail_size > 0)
+        if((index == n/4) && tail_size > 0)
         {
-            Type4 result = distribution(engine.nextn(tail_size));
+            Type4 result = distribution(engine.next4());
             // Save the tail
             data[n - tail_size] = result.x;
             if(tail_size > 1) data[n - tail_size + 1] = result.y;
             if(tail_size > 2) data[n - tail_size + 2] = result.z;
         }
 
-        // Save engine with its state
-        engines[engine_id] = engine;
+        // Save engine
+        if(smallest_state)
+            engines[engine_id] = engine;
     }
 
-    template<class RealType, class Distribution>
+    template<unsigned int ThreadsPerEngine, class RealType, class Distribution>
     __global__
     void generate_normal_kernel(philox4x32_10_device_engine * engines,
-                                bool init_engines,
-                                unsigned long long seed,
-                                unsigned long long offset,
                                 RealType * data, const size_t n,
                                 Distribution distribution)
     {
@@ -268,32 +243,38 @@ namespace detail {
         // x can be 2 or 4
         const unsigned x = sizeof(RealTypeX) / sizeof(RealType);
 
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int engine_id = index/ThreadsPerEngine;
+        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init device engine
-        DeviceEngineType engine;
-        if(init_engines)
+        // Load device engine
+        DeviceEngineType engine = engines[engine_id];
+        if(hipThreadIdx_x%ThreadsPerEngine > 0)
         {
-            engine = DeviceEngineType(seed, index, 0);
-        }
-        else
-        {
-            engine = engines[engine_id];
+            // Skips hipThreadIdx_x%ThreadsPerEngine states
+            engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
         }
 
         RealTypeX * dataX = (RealTypeX *)data;
         while(index < (n/x))
         {
-            dataX[index] = distribution(engine.next4());
+            dataX[index] = distribution(engine.next4_leap(ThreadsPerEngine));
             // Next position
             index += stride;
         }
 
-        // First work-item saves the tail when n is not a multiple of x
+        // Find thread with the smallest state of the engine which id is engine_id
+        unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
+        const bool smallest_state = index == index_min;
+
+        // Check if we need to save tail (last 1,..,(x-1) random number).
+        // Those numbers should be generated by the thread that would
+        // save next uint4 if n was equal n+(x-1) (index < (n/x) would be
+        // true in such situation).
+        // If this condition is met, then we know that (index == index_min)
+        // is also true for that thread, so we don't need to check that.
         auto tail_size = n & (x - 1);
-        if(engine_id == 0 && tail_size > 0)
+        if((index == n/4) && tail_size > 0)
         {
             RealTypeX result = distribution(engine.next4());
             // Save the tail
@@ -301,34 +282,30 @@ namespace detail {
             if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
             if(tail_size > 2) data[n - tail_size + 2] = (&result.x)[2]; // .z
         }
-        // Save engine with its state
-        engines[engine_id] = engine;
+
+        // Save engine
+        if(smallest_state)
+            engines[engine_id] = engine;
     }
 
-    template <class Distribution>
+    template <unsigned int ThreadsPerEngine, class Distribution>
     __global__
     void generate_poisson_kernel(philox4x32_10_device_engine * engines,
-                                 bool init_engines,
-                                 unsigned long long seed,
-                                 unsigned long long offset,
                                  unsigned int * data, const size_t n,
                                  const Distribution distribution)
     {
         typedef philox4x32_10_device_engine DeviceEngineType;
 
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int engine_id = index/ThreadsPerEngine;
+        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-        // Load or init device engine
-        DeviceEngineType engine;
-        if(init_engines)
+        // Load device engine
+        DeviceEngineType engine = engines[engine_id];
+        if(hipThreadIdx_x%ThreadsPerEngine > 0)
         {
-            engine = DeviceEngineType(seed, index, 0);
-        }
-        else
-        {
-            engine = engines[engine_id];
+            // Skips hipThreadIdx_x%ThreadsPerEngine states
+            engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
         }
 
         if(((uintptr_t)data)%(sizeof(uint4)) == 0)
@@ -364,9 +341,13 @@ namespace detail {
             }
         }
 
+        // Find thread with the smallest state of the engine which id is engine_id
+        unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
+        const bool smallest_state = index == index_min;
+
         // First work-item saves the tail when n is not a multiple of 4
         auto tail_size = n & 3;
-        if(engine_id == 0 && tail_size > 0)
+        if((index == n/4) == 0 && tail_size > 0)
         {
             const uint4 u4 = engine.next4();
             const uint4 result = uint4 {
@@ -381,7 +362,8 @@ namespace detail {
         }
 
         // Save engine with its state
-        engines[engine_id] = engine;
+        if(smallest_state)
+            engines[engine_id] = engine;
     }
 
 } // end namespace detail
@@ -389,6 +371,8 @@ namespace detail {
 
 class rocrand_philox4x32_10 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
+    static constexpr unsigned int s_threads_per_engine = 16;
+
 public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>;
     using engine_type = ::rocrand_host::detail::philox4x32_10_device_engine;
@@ -397,7 +381,8 @@ public:
                           unsigned long long offset = 0,
                           hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(1024 * 256)
+          m_engines_initialized(false), m_engines(NULL),
+          m_engines_size(s_threads * s_blocks / s_threads_per_engine)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
@@ -435,18 +420,9 @@ public:
         if(m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128;
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
-
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
+            dim3(s_blocks/s_threads_per_engine), dim3(s_threads), 0, m_stream,
             m_engines, m_seed, m_offset
         );
         // Check kernel status
@@ -461,26 +437,19 @@ public:
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
 
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, distribution
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<s_threads_per_engine>),
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -494,69 +463,50 @@ public:
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
 
         normal_distribution<T> distribution(mean, stddev);
 
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, distribution
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel<s_threads_per_engine>),
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T stddev, T mean)
     {
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
 
         log_normal_distribution<T> distribution(mean, stddev);
 
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, distribution
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel<s_threads_per_engine>),
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 128;
-        const uint32_t max_blocks = 128; // 512
-        #else
-        const uint32_t threads = 256;
-        const uint32_t max_blocks = 1024;
-        #endif
-        const uint32_t blocks = max_blocks;
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
 
         try
         {
@@ -566,24 +516,26 @@ public:
         {
             return status;
         }
+
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel),
-            dim3(blocks), dim3(threads), 0, m_stream,
-            m_engines, !m_engines_initialized, m_seed, m_offset,
-            data, data_size, poisson.dis
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel<s_threads_per_engine>),
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
+            m_engines, data, data_size, poisson.dis
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
 
 private:
     bool m_engines_initialized;
     engine_type * m_engines;
-    size_t m_engines_size;
+    const size_t m_engines_size;
+
+    const static uint32_t s_threads = 256;
+    const static uint32_t s_blocks = 1024;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> poisson;
