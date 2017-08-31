@@ -79,7 +79,8 @@ struct uniform_distribution<double>
         unsigned int y;
     };
 
-    union two_uints_to_ulong {
+    union two_uints_to_ulong
+    {
         two_uints uint2_value;
         unsigned long long ulong_value;
     };

@@ -43,7 +43,8 @@ struct two_uints
     unsigned int y;
 };
 
-union two_uints_to_ulong {
+union two_uints_to_ulong
+{
     two_uints uint2_value;
     unsigned long long ulong_value;
 };
@@ -314,7 +315,7 @@ float rocrand_uniform(rocrand_state_xorwow * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_xorwow * state)
 {
-    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state), rocrand(state));
 }
 
 /**
