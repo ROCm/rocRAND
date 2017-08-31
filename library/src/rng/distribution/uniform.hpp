@@ -73,10 +73,30 @@ struct uniform_distribution<float>
 template<>
 struct uniform_distribution<double>
 {
+    struct two_uints
+    {
+        unsigned int x;
+        unsigned int y;
+    };
+
+    union two_uints_to_ulong {
+        two_uints uint2_value;
+        unsigned long long ulong_value;
+    };
+
     __forceinline__ __host__ __device__
     double operator()(const unsigned int v) const
     {
         return ROCRAND_2POW32_INV_DOUBLE + (v * ROCRAND_2POW32_INV_DOUBLE);
+    }
+
+    __forceinline__ __host__ __device__
+    double operator()(const unsigned int v1, const unsigned int v2) const
+    {
+        two_uints_to_ulong v;
+        v.uint2_value.x = v1;
+        v.uint2_value.y = (v2 >> 11);
+        return ROCRAND_2POW53_INV_DOUBLE + (v.ulong_value * ROCRAND_2POW53_INV_DOUBLE);
     }
 
     __forceinline__ __host__ __device__
@@ -90,13 +110,22 @@ struct uniform_distribution<double>
     }
 
     __forceinline__ __host__ __device__
-    double4 operator()(const uint4 v) const
+    double2 operator()(const uint4 v) const
     {
-        return {
-            (*this)(v.x),
-            (*this)(v.y),
-            (*this)(v.z),
-            (*this)(v.w)
+        return double2 {
+            (*this)(v.x, v.y),
+            (*this)(v.z, v.w)
+        };
+    }
+
+    __forceinline__ __host__ __device__
+    double4 operator()(const uint4 v1, const uint4 v2) const
+    {
+        return double4 {
+            (*this)(v1.x, v1.y),
+            (*this)(v1.z, v1.w),
+            (*this)(v2.x, v2.y),
+            (*this)(v2.z, v2.w)
         };
     }
 };
