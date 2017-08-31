@@ -73,7 +73,7 @@ test:rocm_deb_package:
     - $SUDO_CMD dpkg -i hiprand-*.deb
     - mkdir ../build_package_test && cd ../build_package_test
     - cmake ../test/package/.
-    - make -j2
+    - make VERBOSE=1
     - ctest --output-on-failure
     - ldd ./test_hiprand
     - $SUDO_CMD dpkg -r hiprand
