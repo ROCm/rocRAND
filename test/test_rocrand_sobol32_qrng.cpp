@@ -80,7 +80,7 @@ TEST(rocrand_sobol32_qrng_tests, normal_float_test)
     hipMalloc(&data, sizeof(float) * size);
 
     rocrand_sobol32 g;
-    g.generate_normal(data, size, 5.0f, 2.0f);
+    g.generate_normal(data, size, 2.0f, 5.0f);
     hipDeviceSynchronize();
 
     float host_data[size];
