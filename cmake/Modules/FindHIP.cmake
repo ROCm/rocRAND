@@ -170,11 +170,6 @@ find_package_handle_standard_args(
     HIP_PLATFORM
     VERSION_VAR HIP_VERSION
     )
-    
-if (HIP_PLATFORM STREQUAL "nvcc")
-    find_package(CUDA QUIET REQUIRED)
-    set(HIP_HIPCC_FLAGS "-std=c++11")
-endif()
 
 ###############################################################################
 # MACRO: Locate helper files

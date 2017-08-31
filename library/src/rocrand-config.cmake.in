@@ -45,9 +45,10 @@
 #    // First find and include HIP
 #    // See https://github.com/ROCm-Developer-Tools/HIP
 #    find_package(rocrand REQUIRED CONFIG PATHS "/opt/rocm/rocrand")
-#    include_directories(${rocrand_INCLUDE_DIR})
 #    add_executable(foo foo.cpp)
-#    target_link_libraries(foo ${rocrand_LIBRARIES})
+#    // Set HIP flags, add HIP includes
+#    // Link foo against HIP or CUDA lib (see hipconfig)
+#    target_link_libraries(foo roc::rocrand)
 
 set(rocrand_VERSION "@rocrand_VERSION@")
 @PACKAGE_INIT@
@@ -58,4 +59,4 @@ set_and_check(rocrand_LIBRARY_DIRS "@PACKAGE_LIB_INSTALL_DIR@" )
 
 include("${CMAKE_CURRENT_LIST_DIR}/rocrand-targets.cmake")
 check_required_components(rocrand)
-set(rocrand_LIBRARIES rocrand)
+set(rocrand_LIBRARIES roc::rocrand)
