@@ -36,9 +36,9 @@
 
 /// \brief hipRAND library version
 ///
-/// HIPRAND_VERSION % 100 is the patch level
-/// HIPRAND_VERSION / 100 % 1000 is the minor version
-/// HIPRAND_VERSION / 100000 is the major version
+/// <tt>HIPRAND_VERSION % 100</tt> is the patch level,
+/// <tt>HIPRAND_VERSION / 100 % 1000 </tt>is the minor version,
+/// <tt>HIPRAND_VERSION / 100000</tt> is the major version.
 #define HIPRAND_VERSION 100500
 
 #if defined(__HIP_PLATFORM_HCC__)
@@ -249,6 +249,11 @@ hiprandGenerateUniform(hiprandGenerator_t generator,
  * \param output_data - Pointer to memory to store generated numbers
  * \param n - Number of floats to generate
  *
+ * Note: When \p generator is of type: \p HIPRAND_RNG_PSEUDO_MRG32K3A,
+ * \p HIPRAND_RNG_PSEUDO_MTGP32, or \p HIPRAND_RNG_QUASI_SOBOL32,
+ * then the returned \p double values are generated from only 32 random bits
+ * each (one <tt>unsigned int</tt> value per one generated \p double).
+ *
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
@@ -398,7 +403,7 @@ hiprandGeneratePoisson(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was never created \n
  * - HIPRAND_STATUS_PREEXISTING_FAILURE if there was an existing error from
- *     a previous kernel launch \n
+ *   a previous kernel launch \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if the kernel launch failed for any reason \n
  * - HIPRAND_STATUS_SUCCESS if the seeds were generated successfully \n
  */

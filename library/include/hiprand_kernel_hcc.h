@@ -419,6 +419,12 @@ float4 hiprand_uniform4(hiprandStatePhilox4_32_10_t * state)
 ///
 /// \param state - Pointer to a RNG state to use
 /// \return Uniformly distributed random <tt>double</tt> value
+///
+/// Note: When \p state is of type: \p hiprandStateMRG32k3a_t, \p hiprandStateMtgp32_t,
+/// or \p hiprandStateSobol32_t, then the returned \p double value is generated
+/// using only 32 random bits (one <tt>unsigned int</tt> value).
+/// In case of type \p hiprandStateSobol32_t, this is done to guarantee the quasirandom
+/// properties of the Sobol32 sequence.
 template<class StateType>
 QUALIFIERS
 double hiprand_uniform_double(StateType * state)

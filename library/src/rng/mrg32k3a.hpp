@@ -25,6 +25,7 @@
 #include <hip/hip_runtime.h>
 
 #include <rocrand.h>
+#include <rocrand_mrg32k3a_precomputed.h>
 
 #include "generator_type.hpp"
 #include "device_engines.hpp"
