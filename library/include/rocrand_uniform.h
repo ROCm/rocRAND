@@ -276,6 +276,9 @@ float rocrand_uniform(rocrand_state_mrg32k3a * state)
  *
  * \param state - Pointer to a state to use
  *
+ * Note: In this implementation returned \p double value is generated
+ * from only 32 random bits (one <tt>unsigned int</tt> value).
+ *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */
 FQUALIFIERS
@@ -344,6 +347,9 @@ float rocrand_uniform(rocrand_state_mtgp32 * state)
  *
  * \param state - Pointer to a state to use
  *
+ * Note: In this implementation returned \p double value is generated
+ * from only 32 random bits (one <tt>unsigned int</tt> value).
+ *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */
 FQUALIFIERS
@@ -377,6 +383,10 @@ float rocrand_uniform(rocrand_state_sobol32 * state)
  * Output range excludes \p 0.0 but includes \p 1.0.
  *
  * \param state - Pointer to a state to use
+ *
+ * Note: To guarantee the quasirandom properties of the Sobol32 sequence,
+ * this function calls rocrand() exactly once. Random number returned by this
+ * function is generated from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return uniformly distributed double between \p 0.0 and \p 1.0
  */
