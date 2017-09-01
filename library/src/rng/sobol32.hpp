@@ -29,10 +29,10 @@
 #include <hip/hip_runtime.h>
 
 #include <rocrand.h>
-#include <rocrand_kernel.h>
 #include <rocrand_sobol_precomputed.h>
 
 #include "generator_type.hpp"
+#include "device_engines.hpp"
 #include "distributions.hpp"
 
 namespace rocrand_host {
