@@ -30,7 +30,8 @@
 #include <rocrand_kernel.h>
 #include <rocrand.h>
 
-#define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
+#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
+#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
 template <class GeneratorState>
 __global__
@@ -400,7 +401,7 @@ TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_discrete)
     HIP_CHECK(hipDeviceSynchronize());
 
     rocrand_discrete_distribution discrete_distribution;
-    ASSERT_EQ(rocrand_create_poisson_distribution(lambda, &discrete_distribution), ROCRAND_STATUS_SUCCESS);
+    ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
@@ -419,7 +420,7 @@ TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_discrete)
     );
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
-    ASSERT_EQ(rocrand_destroy_discrete_distribution(discrete_distribution), ROCRAND_STATUS_SUCCESS);
+    ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
 
     double mean = 0;
     for(auto v : output_host)
