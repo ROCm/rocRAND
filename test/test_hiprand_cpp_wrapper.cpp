@@ -206,10 +206,10 @@ void hiprand_rng_stream_template()
 {
     T engine;
     hipStream_t stream;
-    ASSERT_EQ(hipStreamCreate(&stream), hipSuccess);
+    HIP_CHECK(hipStreamCreate(&stream));
     engine.stream(stream);
     engine.stream(NULL);
-    ASSERT_EQ(hipStreamDestroy(stream), hipSuccess);
+    HIP_CHECK(hipStreamDestroy(stream));
 }
 
 TEST(hiprand_cpp_wrapper, hiprand_rng_stream)
@@ -229,12 +229,11 @@ void hiprand_uniform_int_dist_template()
 
     const size_t output_size = 8192;
     IntType * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(IntType)),
-        hipSuccess
+        output_size * sizeof(IntType))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     EXPECT_NO_THROW(d(engine, output, output_size));
@@ -287,12 +286,11 @@ void hiprand_uniform_real_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(RealType)),
-        hipSuccess
+        output_size * sizeof(RealType))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     EXPECT_NO_THROW(d(engine, output, output_size));
@@ -364,12 +362,11 @@ void hiprand_normal_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(RealType)),
-        hipSuccess
+        output_size * sizeof(RealType))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     EXPECT_NO_THROW(d(engine, output, output_size));
@@ -463,12 +460,11 @@ void hiprand_lognormal_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(RealType)),
-        hipSuccess
+        output_size * sizeof(RealType))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     EXPECT_NO_THROW(d(engine, output, output_size));
@@ -571,12 +567,11 @@ void hiprand_poisson_dist_template(const double lambda)
 
     const size_t output_size = 8192;
     IntType * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(IntType)),
-        hipSuccess
+        output_size * sizeof(IntType))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     EXPECT_NO_THROW(d(engine, output, output_size));

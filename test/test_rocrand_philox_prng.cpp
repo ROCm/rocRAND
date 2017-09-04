@@ -27,14 +27,8 @@
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
 
-#define HIP_CHECK(condition)         \
-{                                  \
-  hipError_t error = condition;    \
-  if(error != hipSuccess){         \
-      std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
-      exit(error); \
-  } \
-}
+#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
+#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
 TEST(rocrand_philox_prng_tests, uniform_uint_test)
 {
@@ -43,7 +37,7 @@ TEST(rocrand_philox_prng_tests, uniform_uint_test)
     HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * (size + 1)));
 
     rocrand_philox4x32_10 g;
-    g.generate(data+1, size);
+    ROCRAND_CHECK(g.generate(data+1, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data[size];
@@ -66,7 +60,7 @@ TEST(rocrand_philox_prng_tests, uniform_float_test)
     HIP_CHECK(hipMalloc(&data, sizeof(float) * size));
 
     rocrand_philox4x32_10 g;
-    g.generate(data, size);
+    ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     float host_data[size];
@@ -93,7 +87,7 @@ TEST(rocrand_philox_prng_tests, state_progress_test)
     rocrand_philox4x32_10 g0;
 
     // Generate using g0 and copy to host
-    g0.generate(data, size);
+    ROCRAND_CHECK(g0.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data1[size];
@@ -101,7 +95,7 @@ TEST(rocrand_philox_prng_tests, state_progress_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Generate using g0 and copy to host
-    g0.generate(data, size);
+    ROCRAND_CHECK(g0.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data2[size];
@@ -137,7 +131,7 @@ TEST(rocrand_philox_prng_tests, same_seed_test)
     g1.set_seed(seed);
 
     // Generate using g0 and copy to host
-    g0.generate(data, size);
+    ROCRAND_CHECK(g0.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int g0_host_data[size];
@@ -145,7 +139,7 @@ TEST(rocrand_philox_prng_tests, same_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Generate using g1 and copy to host
-    g1.generate(data, size);
+    ROCRAND_CHECK(g1.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int g1_host_data[size];
@@ -181,7 +175,7 @@ TEST(rocrand_philox_prng_tests, different_seed_test)
     ASSERT_NE(g0.get_seed(), g1.get_seed());
 
     // Generate using g0 and copy to host
-    g0.generate(data, size);
+    ROCRAND_CHECK(g0.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int g0_host_data[size];
@@ -189,7 +183,7 @@ TEST(rocrand_philox_prng_tests, different_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Generate using g1 and copy to host
-    g1.generate(data, size);
+    ROCRAND_CHECK(g1.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int g1_host_data[size];

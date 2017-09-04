@@ -30,7 +30,8 @@
 #include <rocrand_kernel.h>
 #include <rocrand_sobol_precomputed.h>
 
-#define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
+#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
+#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
 template <class GeneratorState>
 __global__

@@ -24,26 +24,25 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
+#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
+#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+
 TEST(rocrand_generate_normal_tests, float_test)
 {
     rocrand_generator generator;
-    ASSERT_EQ(
+    ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
             ROCRAND_RNG_PSEUDO_PHILOX4_32_10
-        ),
-        ROCRAND_STATUS_SUCCESS
+        )
     );
 
     const size_t size = 256;
     float mean = 5.0f;
     float stddev = 2.0f;
     float * data;
-    ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(float)),
-        hipSuccess
-    );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(float)));
+    HIP_CHECK(hipDeviceSynchronize());
 
     // n must be even
     EXPECT_EQ(
@@ -57,38 +56,30 @@ TEST(rocrand_generate_normal_tests, float_test)
         ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
     );
 
-    EXPECT_EQ(
-        rocrand_generate_normal(generator, (float *) data, size, mean, stddev),
-        ROCRAND_STATUS_SUCCESS
+    ROCRAND_CHECK(
+        rocrand_generate_normal(generator, (float *) data, size, mean, stddev)
     );
 
-    EXPECT_EQ(hipFree(data), hipSuccess);
-    EXPECT_EQ(
-        rocrand_destroy_generator(generator),
-        ROCRAND_STATUS_SUCCESS
-    );
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
 TEST(rocrand_generate_normal_tests, double_test)
 {
     rocrand_generator generator;
-    ASSERT_EQ(
+    ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            ROCRAND_RNG_PSEUDO_PHILOX4_32_10
-        ),
-        ROCRAND_STATUS_SUCCESS
+            ROCRAND_RNG_PSEUDO_MRG32K3A
+        )
     );
 
     const size_t size = 256;
     double mean = 5.0;
     double stddev = 2.0;
     double * data;
-    ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(double)),
-        hipSuccess
-    );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(double)));
+    HIP_CHECK(hipDeviceSynchronize());
 
     // n must be even
     EXPECT_EQ(
@@ -102,16 +93,12 @@ TEST(rocrand_generate_normal_tests, double_test)
         ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
     );
 
-    EXPECT_EQ(
-        rocrand_generate_normal_double(generator, (double *) data, size, mean, stddev),
-        ROCRAND_STATUS_SUCCESS
+    ROCRAND_CHECK(
+        rocrand_generate_normal_double(generator, (double *) data, size, mean, stddev)
     );
 
-    EXPECT_EQ(hipFree(data), hipSuccess);
-    EXPECT_EQ(
-        rocrand_destroy_generator(generator),
-        ROCRAND_STATUS_SUCCESS
-    );
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
 TEST(rocrand_generate_normal_tests, neg_test)
