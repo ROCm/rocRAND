@@ -25,7 +25,7 @@
 #include <hiprand.h>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
-#define HIPRAND_CHECK(x) ASSERT_EQ(x, HIPRAND_STATUS_SUCCESS)
+#define HIPRAND_CHECK(state) ASSERT_EQ(state, HIPRAND_STATUS_SUCCESS)
 
 template<hiprandRngType_t rng_type>
 void hiprand_generate_test_func()
@@ -35,12 +35,11 @@ void hiprand_generate_test_func()
 
     const size_t output_size = 8192;
     unsigned int * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(unsigned int)),
-        hipSuccess
+        output_size * sizeof(unsigned int))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGenerate(generator, output, output_size));
@@ -101,12 +100,11 @@ void hiprand_generate_uniform_test_func()
 
     const size_t output_size = 8192;
     float * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(float)),
-        hipSuccess
+        output_size * sizeof(float))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGenerateUniform(generator, output, output_size));
@@ -167,12 +165,11 @@ void hiprand_generate_uniform_double_test_func()
 
     const size_t output_size = 8192;
     double * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(double)),
-        hipSuccess
+        output_size * sizeof(double))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGenerateUniformDouble(generator, output, output_size));
@@ -233,12 +230,11 @@ void hiprand_generate_normal_test_func()
 
     const size_t output_size = 8192;
     float * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(float)),
-        hipSuccess
+        output_size * sizeof(float))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGenerateNormal(generator, output, output_size, 0, 1));
@@ -307,12 +303,11 @@ void hiprand_generate_normal_double_test_func()
 
     const size_t output_size = 8192;
     double * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(double)),
-        hipSuccess
+        output_size * sizeof(double))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGenerateNormalDouble(generator, output, output_size, 0, 1));
@@ -381,12 +376,11 @@ void hiprand_generate_lognormal_test_func()
 
     const size_t output_size = 8192;
     float * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(float)),
-        hipSuccess
+        output_size * sizeof(float))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGenerateLogNormal(generator, output, output_size, 1.6f, 0.25f));
@@ -459,12 +453,11 @@ void hiprand_generate_lognormal_double_test_func()
 
     const size_t output_size = 8192;
     double * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(double)),
-        hipSuccess
+        output_size * sizeof(double))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGenerateLogNormalDouble(generator, output, output_size, 1.6, 0.25));
@@ -538,12 +531,11 @@ void hiprand_generate_poisson_test_func()
 
     const size_t output_size = 8192;
     unsigned int * output;
-    ASSERT_EQ(
+    HIP_CHECK(
         hipMalloc((void **)&output,
-        output_size * sizeof(unsigned int)),
-        hipSuccess
+        output_size * sizeof(unsigned int))
     );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipDeviceSynchronize());
 
     // generate
     HIPRAND_CHECK(hiprandGeneratePoisson(generator, output, output_size, lambda));
