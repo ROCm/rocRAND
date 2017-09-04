@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
             }
         ) +
         "\n      or all";
-    
+
     parser.set_optional<size_t>("size", "size", 10000, "number of samples in every first level test");
     parser.set_optional<size_t>("level1-tests", "level1-tests", 10, "number of first level tests");
     parser.set_optional<size_t>("level2-tests", "level2-tests", 10, "number of second level tests");
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
     parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
 	parser.set_optional<bool>("plots", "plots", false, "Boolean argument to save plots for GnuPlot");
     parser.run_and_exit_if_error();
-    
+
     std::vector<std::string> engines;
     {
         auto es = parser.get<std::vector<std::string>>("engine");
@@ -276,7 +276,20 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "rocRAND:" << std::endl << std::endl;
+    int version;
+    ROCRAND_CHECK(rocrand_get_version(&version));
+    int runtime_version;
+    HIP_CHECK(hipRuntimeGetVersion(&runtime_version));
+    int device_id;
+    HIP_CHECK(hipGetDevice(&device_id));
+    hipDeviceProp_t props;
+    HIP_CHECK(hipGetDeviceProperties(&props, device_id));
+
+    std::cout << "rocRAND: " << version << " ";
+    std::cout << "Runtime: " << runtime_version << " ";
+    std::cout << "Device: " << props.name;
+    std::cout << std::endl << std::endl;
+
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;
