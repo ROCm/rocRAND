@@ -161,12 +161,19 @@ template<class State>
 FQUALIFIERS
 unsigned int poisson_distribution_itr(State& state, double lambda)
 {
+    // Algorithm ITR
+    // George S. Fishman
+    // Discrete-Event Simulation: Modeling, Programming, and Analysis
+    // p. 333
     double L;
     double x = 1.0;
     double y = 1.0;
     int k = 0;
     int pow = 0;
-    double u = rocrand_uniform_double(state);
+    // Algorithm ITR uses u from (0, 1) and uniform_double returns (0, 1]
+    // Change u to ensure that 1 is never generated,
+    // otherwise the inner loop never ends.
+    double u = rocrand_uniform_double(state) - ROCRAND_2POW32_INV_DOUBLE / 2.0;
     double upow = pow + 500.0;
     double ex = exp(-500.0);
     do{
