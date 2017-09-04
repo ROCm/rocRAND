@@ -541,7 +541,20 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "cuRAND:" << std::endl << std::endl;
+    int version;
+    CURAND_CALL(curandGetVersion(&version));
+    int runtime_version;
+    CUDA_CALL(cudaRuntimeGetVersion(&runtime_version));
+    int device_id;
+    CUDA_CALL(cudaGetDevice(&device_id));
+    cudaDeviceProp props;
+    CUDA_CALL(cudaGetDeviceProperties(&props, device_id));
+
+    std::cout << "cuRAND: " << version << " ";
+    std::cout << "Runtime: " << runtime_version << " ";
+    std::cout << "Device: " << props.name;
+    std::cout << std::endl << std::endl;
+
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;
