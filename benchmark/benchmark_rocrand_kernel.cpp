@@ -566,7 +566,20 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "rocRAND:" << std::endl << std::endl;
+    int version;
+    ROCRAND_CHECK(rocrand_get_version(&version));
+    int runtime_version;
+    HIP_CHECK(hipRuntimeGetVersion(&runtime_version));
+    int device_id;
+    HIP_CHECK(hipGetDevice(&device_id));
+    hipDeviceProp_t props;
+    HIP_CHECK(hipGetDeviceProperties(&props, device_id));
+
+    std::cout << "rocRAND: " << version << " ";
+    std::cout << "Runtime: " << runtime_version << " ";
+    std::cout << "Device: " << props.name;
+    std::cout << std::endl << std::endl;
+
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;
