@@ -525,7 +525,7 @@ int main(int argc, char *argv[])
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
     parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
-    parser.set_optional<size_t>("blocks", "blocks", 64, "number of blocks");
+    parser.set_optional<size_t>("blocks", "blocks", 256, "number of blocks");
     parser.set_optional<size_t>("threads", "threads", 256, "number of threads in each block");
 	parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
