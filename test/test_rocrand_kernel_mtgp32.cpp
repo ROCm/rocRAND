@@ -30,7 +30,8 @@
 #include <rocrand_kernel.h>
 #include <rocrand_mtgp32_11213.h>
 
-#define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
+#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
+#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
 template <class GeneratorState>
 __global__
@@ -171,7 +172,7 @@ TEST(rocrand_kernel_mtgp32, rocrand)
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
 
-    EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     unsigned int * output;
@@ -213,7 +214,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_uniform)
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
 
-    EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     float * output;
@@ -255,7 +256,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_normal)
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
 
-    EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     float * output;
@@ -305,7 +306,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_log_normal)
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
 
-    EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     float * output;
@@ -363,7 +364,7 @@ TEST_P(rocrand_kernel_mtgp32_poisson, rocrand_poisson)
     state_type * states;
     hipMalloc(&states, sizeof(state_type) * 8);
 
-    EXPECT_EQ(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0), ROCRAND_STATUS_SUCCESS);
+    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     unsigned int * output;

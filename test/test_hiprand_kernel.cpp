@@ -31,6 +31,7 @@
 #include <hiprand.h>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
+#define HIPRAND_CHECK(state) ASSERT_EQ(state, HIPRAND_STATUS_SUCCESS)
 
 template <class GeneratorState>
 __global__

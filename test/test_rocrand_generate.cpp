@@ -24,66 +24,53 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
+#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
+#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+
 TEST(rocrand_generate_tests, simple_test)
 {
     rocrand_generator generator;
-    ASSERT_EQ(
+    ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
             ROCRAND_RNG_PSEUDO_PHILOX4_32_10
-        ),
-        ROCRAND_STATUS_SUCCESS
+        )
     );
 
     const size_t size = 256;
     unsigned int * data;
-    ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(unsigned int)),
-        hipSuccess
-    );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipDeviceSynchronize());
 
-    EXPECT_EQ(
-        rocrand_generate(generator, (unsigned int *) data, size),
-        ROCRAND_STATUS_SUCCESS
+    ROCRAND_CHECK(
+        rocrand_generate(generator, (unsigned int *) data, size)
     );
 
-    EXPECT_EQ(hipFree(data), hipSuccess);
-    EXPECT_EQ(
-        rocrand_destroy_generator(generator),
-        ROCRAND_STATUS_SUCCESS
-    );
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
 TEST(rocrand_generate_tests, simple_test_2)
 {
     rocrand_generator generator;
-    ASSERT_EQ(
+    ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
             ROCRAND_RNG_PSEUDO_MRG32K3A
-        ),
-        ROCRAND_STATUS_SUCCESS
+        )
     );
 
     const size_t size = 256;
     unsigned int * data;
-    ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(unsigned int)),
-        hipSuccess
-    );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipDeviceSynchronize());
 
-    EXPECT_EQ(
-        rocrand_generate(generator, (unsigned int *) data, size),
-        ROCRAND_STATUS_SUCCESS
+    ROCRAND_CHECK(
+        rocrand_generate(generator, (unsigned int *) data, size)
     );
 
-    EXPECT_EQ(hipFree(data), hipSuccess);
-    EXPECT_EQ(
-        rocrand_destroy_generator(generator),
-        ROCRAND_STATUS_SUCCESS
-    );
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
 TEST(rocrand_generate_tests, simple_neg_test)

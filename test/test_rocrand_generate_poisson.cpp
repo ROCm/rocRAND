@@ -24,36 +24,31 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
+#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
+#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+
 TEST(rocrand_generate_poisson_tests, uint_test)
 {
     rocrand_generator generator;
-    ASSERT_EQ(
+    ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
             ROCRAND_RNG_PSEUDO_PHILOX4_32_10
-        ),
-        ROCRAND_STATUS_SUCCESS
+        )
     );
 
     const size_t size = 256;
     double lambda = 100.0;
     unsigned int * data;
-    ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(unsigned int)),
-        hipSuccess
-    );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipDeviceSynchronize());
 
-    EXPECT_EQ(
-        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
-        ROCRAND_STATUS_SUCCESS
+    ROCRAND_CHECK(
+        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda)
     );
 
-    EXPECT_EQ(hipFree(data), hipSuccess);
-    EXPECT_EQ(
-        rocrand_destroy_generator(generator),
-        ROCRAND_STATUS_SUCCESS
-    );
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
 TEST(rocrand_generate_poisson_tests, neg_test)
@@ -72,31 +67,24 @@ TEST(rocrand_generate_poisson_tests, neg_test)
 TEST(rocrand_generate_poisson_tests, out_of_range_test)
 {
     rocrand_generator generator;
-    ASSERT_EQ(
+    ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            ROCRAND_RNG_PSEUDO_PHILOX4_32_10
-        ),
-        ROCRAND_STATUS_SUCCESS
+            ROCRAND_RNG_PSEUDO_MRG32K3A
+        )
     );
 
     const size_t size = 256;
     double lambda = 0.0;
     unsigned int * data;
-    ASSERT_EQ(
-        hipMalloc((void **)&data, size * sizeof(unsigned int)),
-        hipSuccess
-    );
-    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipDeviceSynchronize());
 
     EXPECT_EQ(
         rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
         ROCRAND_STATUS_OUT_OF_RANGE
     );
 
-    EXPECT_EQ(hipFree(data), hipSuccess);
-    EXPECT_EQ(
-        rocrand_destroy_generator(generator),
-        ROCRAND_STATUS_SUCCESS
-    );
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
