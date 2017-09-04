@@ -57,46 +57,6 @@
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 #endif
 
-template<typename GeneratorState>
-__global__
-void init_kernel(GeneratorState * states,
-                 const unsigned long long seed,
-                 const unsigned long long offset)
-{
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    GeneratorState state;
-    rocrand_init(seed, state_id, offset, &state);
-    states[state_id] = state;
-}
-
-template<typename GeneratorState>
-void initialize(const size_t dimensions,
-                const size_t blocks,
-                const size_t threads,
-                GeneratorState * states,
-                const unsigned long long seed,
-                const unsigned long long offset)
-{
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(init_kernel),
-        dim3(blocks), dim3(threads), 0, 0,
-        states, seed, offset
-    );
-}
-
-template<typename GeneratorState, typename Directions>
-__global__
-void init_kernel_sobol(GeneratorState * states,
-                       const Directions directions,
-                       const unsigned long long offset)
-{
-    const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    GeneratorState state;
-    rocrand_init(&directions[dimension * 32], offset + state_id, &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
-}
-
 size_t next_power2(size_t x)
 {
     size_t power = 1;
@@ -107,41 +67,16 @@ size_t next_power2(size_t x)
     return power;
 }
 
-template<>
-void initialize(const size_t dimensions,
-                const size_t blocks,
-                const size_t threads,
-                rocrand_state_sobol32 * states,
-                const unsigned long long seed,
-                const unsigned long long offset)
+template<typename GeneratorState>
+__global__
+void init_kernel(GeneratorState * states,
+                 const unsigned long long seed,
+                 const unsigned long long offset)
 {
-    unsigned int * directions;
-    const size_t size = dimensions * 32 * sizeof(unsigned int);
-    HIP_CHECK(hipMalloc((void **)&directions, size));
-    HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
-
-    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(init_kernel_sobol),
-        dim3(blocks_x, dimensions), dim3(threads), 0, 0,
-        states, directions, offset
-    );
-
-    HIP_CHECK(hipPeekAtLastError());
-    HIP_CHECK(hipDeviceSynchronize());
-
-    HIP_CHECK(hipFree(directions));
-}
-
-template<>
-void initialize(const size_t dimensions,
-                const size_t blocks,
-                const size_t threads,
-                rocrand_state_mtgp32 * states,
-                const unsigned long long seed,
-                const unsigned long long offset)
-{
-    ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, blocks, seed));
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    GeneratorState state;
+    rocrand_init(seed, state_id, offset, &state);
+    states[state_id] = state;
 }
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
@@ -165,21 +100,124 @@ void generate_kernel(GeneratorState * states,
     states[state_id] = state;
 }
 
-template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
-void generate(const size_t dimensions,
-              const size_t blocks,
-              const size_t threads,
-              GeneratorState * states,
-              T * data,
-              const size_t size,
-              const GenerateFunc& generate_func,
-              const Extra extra)
+template<typename GeneratorState>
+struct runner
 {
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(generate_kernel),
-        dim3(blocks), dim3(threads), 0, 0,
-        states, data, size, generate_func, extra
-    );
+    GeneratorState * states;
+
+    runner(const size_t dimensions,
+           const size_t blocks,
+           const size_t threads,
+           const unsigned long long seed,
+           const unsigned long long offset)
+    {
+        const size_t states_size = blocks * threads;
+        HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(GeneratorState)));
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(init_kernel),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, seed, offset
+        );
+
+        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipDeviceSynchronize());
+    }
+
+    ~runner()
+    {
+        HIP_CHECK(hipFree(states));
+    }
+
+    template<typename T, typename GenerateFunc, typename Extra>
+    void generate(const size_t blocks,
+                  const size_t threads,
+                  T * data,
+                  const size_t size,
+                  const GenerateFunc& generate_func,
+                  const Extra extra)
+    {
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(generate_kernel),
+            dim3(blocks), dim3(threads), 0, 0,
+            states, data, size, generate_func, extra
+        );
+    }
+};
+
+template<typename T, typename GenerateFunc, typename Extra>
+__global__
+void generate_kernel(rocrand_state_mtgp32 * states,
+                     T * data,
+                     const size_t size,
+                     const GenerateFunc& generate_func,
+                     const Extra extra)
+{
+    const unsigned int state_id = hipBlockIdx_x;
+    unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+    __shared__ rocrand_state_mtgp32 state;
+    rocrand_mtgp32_block_copy(&states[state_id], &state);
+
+    while(index < size)
+    {
+        data[index] = generate_func(&state, extra);
+        index += stride;
+    }
+
+    rocrand_mtgp32_block_copy(&state, &states[state_id]);
+}
+
+template<>
+struct runner<rocrand_state_mtgp32>
+{
+    rocrand_state_mtgp32 * states;
+
+    runner(const size_t dimensions,
+           const size_t blocks,
+           const size_t threads,
+           const unsigned long long seed,
+           const unsigned long long offset)
+    {
+        const size_t states_size = std::min((size_t)200, blocks);
+        HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(rocrand_state_mtgp32)));
+
+        ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, states_size, seed));
+    }
+
+    ~runner()
+    {
+        HIP_CHECK(hipFree(states));
+    }
+
+    template<typename T, typename GenerateFunc, typename Extra>
+    void generate(const size_t blocks,
+                  const size_t threads,
+                  T * data,
+                  const size_t size,
+                  const GenerateFunc& generate_func,
+                  const Extra extra)
+    {
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(generate_kernel),
+            dim3(std::min((size_t)200, blocks)), dim3(256), 0, 0,
+            states, data, size, generate_func, extra
+        );
+    }
+};
+
+template<typename Directions>
+__global__
+void init_kernel(rocrand_state_sobol32 * states,
+                 const Directions directions,
+                 const unsigned long long offset)
+{
+    const unsigned int dimension = hipBlockIdx_y;
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    rocrand_state_sobol32 state;
+    rocrand_init(&directions[dimension * 32], offset + state_id, &state);
+    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
 }
 
 template<typename T, typename GenerateFunc, typename Extra>
@@ -208,65 +246,62 @@ void generate_kernel(rocrand_state_sobol32 * states,
     states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
 }
 
-template<typename T, typename GenerateFunc, typename Extra>
-void generate(const size_t dimensions,
-              const size_t blocks,
-              const size_t threads,
-              rocrand_state_sobol32 * states,
-              T * data,
-              const size_t size,
-              const GenerateFunc& generate_func,
-              const Extra extra)
+template<>
+struct runner<rocrand_state_sobol32>
 {
-    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(generate_kernel),
-        dim3(blocks_x, dimensions), dim3(threads), 0, 0,
-        states, data, size / dimensions, generate_func, extra
-    );
-}
+    rocrand_state_sobol32 * states;
+    size_t dimensions;
 
-template<typename T, typename GenerateFunc, typename Extra>
-__global__
-void generate_kernel(rocrand_state_mtgp32 * states,
-                     T * data,
-                     const size_t size,
-                     const GenerateFunc& generate_func,
-                     const Extra extra)
-{
-    const unsigned int state_id = hipBlockIdx_x;
-    unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-    __shared__ rocrand_state_mtgp32 state;
-    rocrand_mtgp32_block_copy(&states[state_id], &state);
-
-    while(index < size)
+    runner(const size_t dimensions,
+           const size_t blocks,
+           const size_t threads,
+           const unsigned long long seed,
+           const unsigned long long offset)
     {
-        data[index] = generate_func(&state, extra);
-        index += stride;
+        this->dimensions = dimensions;
+
+        const size_t states_size = blocks * threads * dimensions;
+        HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(rocrand_state_sobol32)));
+
+        unsigned int * directions;
+        const size_t size = dimensions * 32 * sizeof(unsigned int);
+        HIP_CHECK(hipMalloc((void **)&directions, size));
+        HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
+
+        const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(init_kernel),
+            dim3(blocks_x, dimensions), dim3(threads), 0, 0,
+            states, directions, offset
+        );
+
+        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipDeviceSynchronize());
+
+        HIP_CHECK(hipFree(directions));
     }
 
-    rocrand_mtgp32_block_copy(&state, &states[state_id]);
-}
+    ~runner()
+    {
+        HIP_CHECK(hipFree(states));
+    }
 
-template<typename T, typename GenerateFunc, typename Extra>
-void generate(const size_t dimensions,
-              const size_t blocks,
-              const size_t threads,
-              rocrand_state_mtgp32 * states,
-              T * data,
-              const size_t size,
-              const GenerateFunc& generate_func,
-              const Extra extra)
-{
-    const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(generate_kernel),
-        dim3(blocks), dim3(256), 0, 0,
-        states, data, size, generate_func, extra
-    );
-}
+    template<typename T, typename GenerateFunc, typename Extra>
+    void generate(const size_t blocks,
+                  const size_t threads,
+                  T * data,
+                  const size_t size,
+                  const GenerateFunc& generate_func,
+                  const Extra extra)
+    {
+        const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(generate_kernel),
+            dim3(blocks_x, dimensions), dim3(threads), 0, 0,
+            states, data, size / dimensions, generate_func, extra
+        );
+    }
+};
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 void run_benchmark(const cli::Parser& parser,
@@ -283,18 +318,12 @@ void run_benchmark(const cli::Parser& parser,
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
 
-    const size_t states_size = blocks * threads * dimensions;
-    GeneratorState * states;
-    HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(GeneratorState)));
-
-    initialize(dimensions, blocks, threads, states, 12345ULL, 6789ULL);
-    HIP_CHECK(hipPeekAtLastError());
-    HIP_CHECK(hipDeviceSynchronize());
+    runner<GeneratorState> r(dimensions, blocks, threads, 12345ULL, 6789ULL);
 
     // Warm-up
     for (size_t i = 0; i < 5; i++)
     {
-        generate(dimensions, blocks, threads, states, data, size, generate_func, extra);
+        r.generate(blocks, threads, data, size, generate_func, extra);
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
     }
@@ -304,7 +333,7 @@ void run_benchmark(const cli::Parser& parser,
     auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < trials; i++)
     {
-        generate(dimensions, blocks, threads, states, data, size, generate_func, extra);
+        r.generate(blocks, threads, data, size, generate_func, extra);
     }
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
@@ -326,7 +355,6 @@ void run_benchmark(const cli::Parser& parser,
               << " ms, Size = " << size
               << std::endl;
 
-    HIP_CHECK(hipFree(states));
     HIP_CHECK(hipFree(data));
 }
 
@@ -461,7 +489,7 @@ const std::vector<std::string> all_engines = {
 
 const std::vector<std::string> all_distributions = {
     "uniform-uint",
-    "uniform-long-long",
+    // "uniform-long-long",
     "uniform-float",
     "uniform-double",
     "normal-float",
@@ -497,7 +525,7 @@ int main(int argc, char *argv[])
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
     parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
-    parser.set_optional<size_t>("blocks", "blocks", 64, "number of blocks");
+    parser.set_optional<size_t>("blocks", "blocks", 256, "number of blocks");
     parser.set_optional<size_t>("threads", "threads", 256, "number of threads in each block");
 	parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
@@ -538,7 +566,20 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "rocRAND:" << std::endl << std::endl;
+    int version;
+    ROCRAND_CHECK(rocrand_get_version(&version));
+    int runtime_version;
+    HIP_CHECK(hipRuntimeGetVersion(&runtime_version));
+    int device_id;
+    HIP_CHECK(hipGetDevice(&device_id));
+    hipDeviceProp_t props;
+    HIP_CHECK(hipGetDeviceProperties(&props, device_id));
+
+    std::cout << "rocRAND: " << version << " ";
+    std::cout << "Runtime: " << runtime_version << " ";
+    std::cout << "Device: " << props.name;
+    std::cout << std::endl << std::endl;
+
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;

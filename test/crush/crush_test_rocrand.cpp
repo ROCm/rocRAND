@@ -109,6 +109,20 @@ int main(int argc, char *argv[])
     const size_t size = parser.get<size_t>("size");
     const std::string& engine = parser.get<std::string>("engine");
 
+    int version;
+    ROCRAND_CHECK(rocrand_get_version(&version));
+    int runtime_version;
+    HIP_CHECK(hipRuntimeGetVersion(&runtime_version));
+    int device_id;
+    HIP_CHECK(hipGetDevice(&device_id));
+    hipDeviceProp_t props;
+    HIP_CHECK(hipGetDeviceProperties(&props, device_id));
+
+    std::cout << "rocRAND: " << version << " ";
+    std::cout << "Runtime: " << runtime_version << " ";
+    std::cout << "Device: " << props.name;
+    std::cout << std::endl << std::endl;
+
     if(engine == "philox")
     {
         std::cout << "philox4x32_10:" << std::endl;

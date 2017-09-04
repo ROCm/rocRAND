@@ -34,10 +34,10 @@
 
 #define CUDA_CALL(x) do { if((x)!=cudaSuccess) { \
     printf("Error at %s:%d\n",__FILE__,__LINE__);\
-    return exit(EXIT_FAILURE);}} while(0)
+    exit(EXIT_FAILURE);}} while(0)
 #define CURAND_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
     printf("Error at %s:%d\n",__FILE__,__LINE__);\
-    return exit(EXIT_FAILURE);}} while(0)
+    exit(EXIT_FAILURE);}} while(0)
 
 #ifndef DEFAULT_RAND_N
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
@@ -284,7 +284,20 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "cuRAND:" << std::endl << std::endl;
+    int version;
+    CURAND_CALL(curandGetVersion(&version));
+    int runtime_version;
+    CUDA_CALL(cudaRuntimeGetVersion(&runtime_version));
+    int device_id;
+    CUDA_CALL(cudaGetDevice(&device_id));
+    cudaDeviceProp props;
+    CUDA_CALL(cudaGetDeviceProperties(&props, device_id));
+
+    std::cout << "cuRAND: " << version << " ";
+    std::cout << "Runtime: " << runtime_version << " ";
+    std::cout << "Device: " << props.name;
+    std::cout << std::endl << std::endl;
+
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;
