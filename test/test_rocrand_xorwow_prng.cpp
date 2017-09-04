@@ -30,6 +30,25 @@
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
+TEST(rocrand_xorwow_prng_tests, init_test)
+{
+    rocrand_xorwow generator; // offset = 0
+    ROCRAND_CHECK(generator.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    generator.set_offset(1);
+    ROCRAND_CHECK(generator.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    generator.set_offset(1337);
+    ROCRAND_CHECK(generator.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    generator.set_offset(1048576);
+    ROCRAND_CHECK(generator.init());
+    HIP_CHECK(hipDeviceSynchronize());
+}
+
 TEST(rocrand_xorwow_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
