@@ -59,7 +59,8 @@ test:rocm:
   script:
     - cd build
     - ctest --output-on-failure
-    - ./benchmark/benchmark_rocrand_generate
+    - ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 2
+    - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 2
     - ./test/crush_test_rocrand --help # Just check if works
 
 test:rocm_deb_package:
