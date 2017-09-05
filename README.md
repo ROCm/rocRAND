@@ -58,7 +58,7 @@ cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 make -j4
 
 # Optionally, run tests if they're enabled
-ctest
+ctest --output-on-failure
 
 # Install
 [sudo] make install
