@@ -29,6 +29,7 @@
 #endif // QUALIFIERS
 
 #include <hip/hip_runtime.h>
+#include <type_traits>
 
 /// \cond
 #define FQUALIFIERS QUALIFIERS

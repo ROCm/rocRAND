@@ -63,6 +63,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ROCRAND_SQRT2 (1.4142135f)
 #define ROCRAND_SQRT2_DOUBLE (1.4142135623730951)
 
+#include <math.h>
+
 // nextafterf(float, float) is not implemented for device on HIP/HCC platform
 #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
 #ifndef ROCRAND_PLATFORM_HCC_NEXTAFTERF
