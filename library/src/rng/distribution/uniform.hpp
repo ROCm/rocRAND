@@ -21,10 +21,11 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 #define ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 
-#include <cmath>
+#include <math.h>
 #include <hip/hip_runtime.h>
 
 #include "common.hpp"
+#include "device_distributions.hpp"
 
 template<class T>
 struct uniform_distribution;
@@ -53,7 +54,7 @@ struct uniform_distribution<float>
     __forceinline__ __host__ __device__
     float operator()(const unsigned int v) const
     {
-        return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
+        return rocrand_device::detail::uniform_distribution(v);
     }
 
     __forceinline__ __host__ __device__
@@ -73,41 +74,22 @@ struct uniform_distribution<float>
 template<>
 struct uniform_distribution<double>
 {
-    struct two_uints
-    {
-        unsigned int x;
-        unsigned int y;
-    };
-
-    union two_uints_to_ulong
-    {
-        two_uints uint2_value;
-        unsigned long long ulong_value;
-    };
-
     __forceinline__ __host__ __device__
     double operator()(const unsigned int v) const
     {
-        return ROCRAND_2POW32_INV_DOUBLE + (v * ROCRAND_2POW32_INV_DOUBLE);
+        return rocrand_device::detail::uniform_distribution_double(v);
     }
 
     __forceinline__ __host__ __device__
     double operator()(const unsigned int v1, const unsigned int v2) const
     {
-        two_uints_to_ulong v;
-        v.uint2_value.x = v1;
-        v.uint2_value.y = (v2 >> 11);
-        return ROCRAND_2POW53_INV_DOUBLE + (v.ulong_value * ROCRAND_2POW53_INV_DOUBLE);
+        return rocrand_device::detail::uniform_distribution_double(v1, v2);
     }
 
     __forceinline__ __host__ __device__
     double operator()(const unsigned long long v) const
     {
-        return ROCRAND_2POW53_INV_DOUBLE + (
-            // 2^53 is the biggest int that can be stored in double, such
-            // that it and all smaller integers can be stored in double
-            (v >> 11) * ROCRAND_2POW53_INV_DOUBLE
-        );
+        return rocrand_device::detail::uniform_distribution_double(v);
     }
 
     __forceinline__ __host__ __device__
@@ -160,8 +142,7 @@ struct mrg_uniform_distribution<float>
     __forceinline__ __host__ __device__
     float operator()(const unsigned int v) const
     {
-        double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
-        return static_cast<float>(ret);
+        return rocrand_device::detail::mrg_uniform_distribution(v);
     }
 };
 
@@ -173,8 +154,7 @@ struct mrg_uniform_distribution<double>
     __forceinline__ __host__ __device__
     double operator()(const unsigned int v) const
     {
-        double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
-        return ret;
+        return rocrand_device::detail::mrg_uniform_distribution_double(v);
     }
 };
 

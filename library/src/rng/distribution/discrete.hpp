@@ -26,7 +26,8 @@
 #include <vector>
 
 #include <rocrand.h>
-#include <rocrand_discrete.h>
+
+#include "device_distributions.hpp"
 
 // Alias method
 //

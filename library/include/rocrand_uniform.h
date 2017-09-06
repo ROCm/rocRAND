@@ -33,6 +33,8 @@
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
+#include "rocrand_sobol32.h"
+#include "rocrand_mtgp32.h"
 
 namespace rocrand_device {
 namespace detail {
