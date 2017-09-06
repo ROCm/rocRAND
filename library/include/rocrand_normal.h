@@ -35,6 +35,8 @@
 #include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
+#include "rocrand_sobol32.h"
+#include "rocrand_mtgp32.h"
 
 #include "rocrand_uniform.h"
 
@@ -209,8 +211,6 @@ double normal_distribution_double(unsigned int x)
     double v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_d_erfinv(2.0 * p - 1.0);
     return v;
 }
-
-
 
 FQUALIFIERS
 double2 normal_distribution_double2(uint4 v)
