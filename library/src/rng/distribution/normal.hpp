@@ -21,12 +21,11 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
 #define ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
 
-#include <cmath>
+#include <math.h>
 #include <hip/hip_runtime.h>
 
 #include "common.hpp"
-#include "normal_common.hpp"
-#include "uniform.hpp"
+#include "device_distributions.hpp"
 
 template<class T>
 struct normal_distribution;
@@ -44,7 +43,7 @@ struct normal_distribution<float>
     __forceinline__ __host__ __device__
     float2 operator()(const unsigned int x, const unsigned int y)
     {
-        float2 v = box_muller(x, y);
+        float2 v = rocrand_device::detail::box_muller(x, y);
         v.x = mean + v.x * stddev;
         v.y = mean + v.y * stddev;
         return v;
@@ -53,7 +52,7 @@ struct normal_distribution<float>
     __forceinline__ __host__ __device__
     float2 operator()(const uint2 x)
     {
-        float2 v = box_muller(x.x, x.y);
+        float2 v = rocrand_device::detail::box_muller(x.x, x.y);
         v.x = mean + v.x * stddev;
         v.y = mean + v.y * stddev;
         return v;
@@ -62,8 +61,8 @@ struct normal_distribution<float>
     __forceinline__ __host__ __device__
     float4 operator()(const uint4 x)
     {
-        float2 v = box_muller(x.x, x.y);
-        float2 w = box_muller(x.z, x.w);
+        float2 v = rocrand_device::detail::box_muller(x.x, x.y);
+        float2 w = rocrand_device::detail::box_muller(x.z, x.w);
         return float4{
             mean + v.x * stddev,
             mean + v.y * stddev,
@@ -75,11 +74,8 @@ struct normal_distribution<float>
     __forceinline__ __host__ __device__
     float operator()(const unsigned int x)
     {
-        uniform_distribution<float> uniform;
-        float p = uniform(x);
-        float v = ROCRAND_SQRT2 * roc_f_erfinv(2.0f * p - 1.0f);
-        v = mean + v * stddev;
-        return v;
+        float v = rocrand_device::detail::normal_distribution(x);
+        return mean + v * stddev;
     }
 };
 
@@ -96,7 +92,7 @@ struct normal_distribution<double>
     __forceinline__ __host__ __device__
     double2 operator()(uint4 x)
     {
-        double2 v = box_muller_double(x);
+        double2 v = rocrand_device::detail::box_muller_double(x);
         v.x = mean + v.x * stddev;
         v.y = mean + v.y * stddev;
         return v;
@@ -105,11 +101,8 @@ struct normal_distribution<double>
     __forceinline__ __host__ __device__
     double operator()(const unsigned int x)
     {
-        uniform_distribution<double> uniform;
-        double p = uniform(x);
-        double v = ROCRAND_SQRT2 * roc_d_erfinv(2.0 * p - 1.0);
-        v = mean + v * stddev;
-        return v;
+        double v = rocrand_device::detail::normal_distribution_double(x);
+        return mean + v * stddev;
     }
 };
 
@@ -129,10 +122,7 @@ struct mrg_normal_distribution<float>
     __forceinline__ __host__ __device__
     float2 operator()(const unsigned int x, const unsigned int y)
     {
-        mrg_uniform_distribution<float> uniform;
-        float a = uniform(x);
-        float b = uniform(y);
-        float2 v = box_muller_mrg(a, b);
+        float2 v = rocrand_device::detail::mrg_normal_distribution2(x, y);
         v.x = mean + v.x * stddev;
         v.y = mean + v.y * stddev;
         return v;
@@ -152,10 +142,7 @@ struct mrg_normal_distribution<double>
     __forceinline__ __host__ __device__
     double2 operator()(const unsigned int x, const unsigned int y)
     {
-        mrg_uniform_distribution<double> uniform;
-        double a = uniform(x);
-        double b = uniform(y);
-        double2 v = box_muller_double_mrg(a, b);
+        double2 v = rocrand_device::detail::mrg_normal_distribution_double2(x, y);
         v.x = mean + v.x * stddev;
         v.y = mean + v.y * stddev;
         return v;

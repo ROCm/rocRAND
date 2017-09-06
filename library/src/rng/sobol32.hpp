@@ -21,10 +21,6 @@
 #ifndef ROCRAND_RNG_SOBOL32_H_
 #define ROCRAND_RNG_SOBOL32_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
 #include <algorithm>
 #include <hip/hip_runtime.h>
 

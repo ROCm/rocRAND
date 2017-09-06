@@ -18,9 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTION_COMMON_H_
-#define ROCRAND_RNG_DISTRIBUTION_COMMON_H_
+#ifndef ROCRAND_RNG_DISTRIBUTION_DEVICE_DISTRIBUTIONS_H_
+#define ROCRAND_RNG_DISTRIBUTION_DEVICE_DISTRIBUTIONS_H_
 
-#include "../common.hpp"
+#ifndef FQUALIFIERS
+#define FQUALIFIERS __forceinline__ __device__ __host__
+#endif
 
-#endif // ROCRAND_RNG_DISTRIBUTION_COMMON_H_
+#include "../device_engines.hpp"
+
+#include <rocrand_uniform.h>
+#include <rocrand_normal.h>
+#include <rocrand_log_normal.h>
+#include <rocrand_discrete.h>
+
+#endif // ROCRAND_RNG_DISTRIBUTION_DEVICE_DISTRIBUTIONS_H_
