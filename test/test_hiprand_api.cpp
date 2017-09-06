@@ -67,29 +67,29 @@ void hiprand_generate_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_test)
+TEST(hiprand, hiprand_generate_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_test_mrg32k3a)
+{
+    hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_test_mtgp32)
+{
+    hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_test_philox)
+{
+    hiprand_generate_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_test_sobol32)
+{
+    hiprand_generate_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
 
 template<hiprandRngType_t rng_type>
@@ -132,29 +132,29 @@ void hiprand_generate_uniform_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_uniform_test)
+TEST(hiprand, hiprand_generate_uniform_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_test_mrg32k3a)
+{
+    hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_test_mtgp32)
+{
+    hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_test_philox)
+{
+    hiprand_generate_uniform_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_test_sobol32)
+{
+    hiprand_generate_uniform_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
 
 template<hiprandRngType_t rng_type>
@@ -197,29 +197,29 @@ void hiprand_generate_uniform_double_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_uniform_double_test)
+TEST(hiprand, hiprand_generate_uniform_double_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_double_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_uniform_double_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_double_test_mrg32k3a)
+{
+    hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_double_test_mtgp32)
+{
+    hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_double_test_philox)
+{
+    hiprand_generate_uniform_double_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_uniform_double_test_sobol32)
+{
+    hiprand_generate_uniform_double_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
 
 template<hiprandRngType_t rng_type>
@@ -270,29 +270,29 @@ void hiprand_generate_normal_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_normal_test)
+TEST(hiprand, hiprand_generate_normal_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_normal_test_mrg32k3a)
+{
+    hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_normal_test_mtgp32)
+{
+    hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_normal_test_philox)
+{
+    hiprand_generate_normal_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_normal_test_sobol32)
+{
+    hiprand_generate_normal_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
 
 template<hiprandRngType_t rng_type>
@@ -343,29 +343,29 @@ void hiprand_generate_normal_double_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_normal_double_test)
+TEST(hiprand, hiprand_generate_normal_double_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_double_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_normal_double_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_normal_double_test_mrg32k3a)
+{
+    hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_normal_double_test_mtgp32)
+{
+    hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_normal_double_test_philox)
+{
+    hiprand_generate_normal_double_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_normal_double_test_sobol32)
+{
+    hiprand_generate_normal_double_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
 
 template<hiprandRngType_t rng_type>
@@ -420,29 +420,29 @@ void hiprand_generate_lognormal_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_lognormal_test)
+TEST(hiprand, hiprand_generate_lognormal_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_test_mrg32k3a)
+{
+    hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_test_mtgp32)
+{
+    hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_test_philox)
+{
+    hiprand_generate_lognormal_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_test_sobol32)
+{
+    hiprand_generate_lognormal_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
 
 template<hiprandRngType_t rng_type>
@@ -496,29 +496,29 @@ void hiprand_generate_lognormal_double_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_lognormal_double_test)
+TEST(hiprand, hiprand_generate_lognormal_double_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_double_test_mrg32k3a)
+{
+    hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_double_test_mtgp32)
+{
+    hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_double_test_philox)
+{
+    hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_lognormal_double_test_sobol32)
+{
+    hiprand_generate_lognormal_double_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
 
 template<hiprandRngType_t rng_type>
@@ -572,27 +572,27 @@ void hiprand_generate_poisson_test_func()
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
 }
 
-TEST(hiprand, hiprand_generate_poisson_test)
+TEST(hiprand, hiprand_generate_poisson_test_xorwow)
 {
-    ASSERT_NO_THROW((
-        hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_XORWOW>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_MTGP32>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_poisson_test_func<HIPRAND_RNG_QUASI_DEFAULT>()
-    ));
-    ASSERT_NO_THROW((
-        hiprand_generate_poisson_test_func<HIPRAND_RNG_QUASI_SOBOL32>()
-    ));
+    hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_XORWOW>();
+}
+
+TEST(hiprand, hiprand_generate_poisson_test_mrg32k3a)
+{
+    hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_MRG32K3A>();
+}
+
+TEST(hiprand, hiprand_generate_poisson_test_mtgp32)
+{
+    hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_MTGP32>();
+}
+
+TEST(hiprand, hiprand_generate_poisson_test_philox)
+{
+    hiprand_generate_poisson_test_func<HIPRAND_RNG_PSEUDO_PHILOX4_32_10>();
+}
+
+TEST(hiprand, hiprand_generate_poisson_test_sobol32)
+{
+    hiprand_generate_poisson_test_func<HIPRAND_RNG_QUASI_SOBOL32>();
 }
