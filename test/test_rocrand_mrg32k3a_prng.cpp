@@ -77,7 +77,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
 
 TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
 {
-    const size_t size = 1313;
+    const size_t size = 1314;
     float * data;
     hipMalloc(&data, sizeof(float) * size);
 
