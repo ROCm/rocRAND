@@ -184,7 +184,6 @@ float normal_distribution(unsigned int x)
     return v;
 }
 
-
 FQUALIFIERS
 float2 normal_distribution2(unsigned int v1, unsigned int v2)
 {
