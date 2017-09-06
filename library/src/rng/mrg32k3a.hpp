@@ -210,6 +210,13 @@ public:
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
+        // data_size must be even
+        // data must be aligned to 2 * sizeof(T) bytes
+        if(data_size%2 != 0 || ((uintptr_t)(data)%(2*sizeof(T))) != 0)
+        {
+            return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
+        }
+
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
@@ -231,6 +238,13 @@ public:
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
+        // data_size must be even
+        // data must be aligned to 2 * sizeof(T) bytes
+        if(data_size%2 != 0 || ((uintptr_t)(data)%(2*sizeof(T))) != 0)
+        {
+            return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
+        }
+
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
