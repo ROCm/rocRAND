@@ -113,7 +113,7 @@ struct mrg_log_normal_distribution<float>
                                        mean(mean), stddev(stddev) {}
 
     __forceinline__ __host__ __device__
-    float2 operator()(const unsigned long long x, const unsigned long long y)
+    float2 operator()(const unsigned int x, const unsigned int y)
     {
         float2 v = rocrand_device::detail::mrg_normal_distribution2(x, y);
         v.x = exp(mean + (stddev * v.x));
@@ -133,7 +133,7 @@ struct mrg_log_normal_distribution<double>
                                         mean(mean), stddev(stddev) {}
 
     __forceinline__ __host__ __device__
-    double2 operator()(const unsigned long long x, const unsigned long long y)
+    double2 operator()(const unsigned int x, const unsigned int y)
     {
         double2 v = rocrand_device::detail::mrg_normal_distribution_double2(x, y);
         v.x = exp(mean + (stddev * v.x));
