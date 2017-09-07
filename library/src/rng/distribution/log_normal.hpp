@@ -116,8 +116,8 @@ struct mrg_log_normal_distribution<float>
     float2 operator()(const unsigned int x, const unsigned int y)
     {
         float2 v = rocrand_device::detail::mrg_normal_distribution2(x, y);
-        v.x = exp(mean + (stddev * v.x));
-        v.y = exp(mean + (stddev * v.y));
+        v.x = expf(mean + (stddev * v.x));
+        v.y = expf(mean + (stddev * v.y));
         return v;
     }
 };
