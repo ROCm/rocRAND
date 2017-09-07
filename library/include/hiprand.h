@@ -34,12 +34,22 @@
 #endif
 /// \endcond
 
+#include "hiprand_version.h"
+#ifdef HIPRAND_DOXYGEN // Only for the documentation
+/// \def HIPRAND_VERSION
 /// \brief hipRAND library version
+///
+/// Version number may not be visible in the documentation.
 ///
 /// <tt>HIPRAND_VERSION % 100</tt> is the patch level,
 /// <tt>HIPRAND_VERSION / 100 % 1000 </tt>is the minor version,
 /// <tt>HIPRAND_VERSION / 100000</tt> is the major version.
-#define HIPRAND_VERSION 100500
+///
+/// For example, if \p HIPRAND_VERSION is \p 100500, then
+/// the major version is \p 1, the minor version is \p 5, and
+/// the patch level is \p 0.
+#define HIPRAND_VERSION
+#endif
 
 #if defined(__HIP_PLATFORM_HCC__)
 #include "hiprand_hcc.h"

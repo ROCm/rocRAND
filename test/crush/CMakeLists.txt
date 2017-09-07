@@ -10,10 +10,11 @@ endif()
 set_source_files_properties(${rocRAND_CRUSH_TEST_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
-include_directories(${PROJECT_SOURCE_DIR}/library/include)
-include_directories(${PROJECT_SOURCE_DIR}/library/src)
-include_directories(${PROJECT_SOURCE_DIR}/test/crush)
-include_directories(SYSTEM ${TestU01_INCLUDE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/library/include) # hipcc workaround
+include_directories(${PROJECT_BINARY_DIR}/library/include) # hipcc workaround
+include_directories(${PROJECT_SOURCE_DIR}/library/src) # hipcc workaround
+include_directories(${PROJECT_SOURCE_DIR}/test/crush) # hipcc workaround
+include_directories(SYSTEM ${TestU01_INCLUDE_DIR}) # hipcc workaround
 
 if(HIP_PLATFORM STREQUAL "nvcc")
     set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} --expt-extended-lambda")

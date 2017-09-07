@@ -54,5 +54,8 @@ int main(int argc, char *argv[])
 
     HIPRAND_CHECK(hiprandDestroyGenerator(generator));
     HIP_CHECK(hipFree(data));
+
+    if(HIPRAND_VERSION < 0) exit(1);
+
     return 0;
 }
