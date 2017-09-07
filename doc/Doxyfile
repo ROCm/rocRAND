@@ -209,7 +209,7 @@ EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           =
 INCLUDE_FILE_PATTERNS  =
-PREDEFINED             = "__cplusplus=201103L"
+PREDEFINED             = "__cplusplus=201103L" "HIPRAND_DOXYGEN=1"
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

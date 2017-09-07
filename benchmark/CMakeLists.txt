@@ -10,7 +10,8 @@ endif()
 set_source_files_properties(${rocRAND_BENCHMARK_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
-include_directories(${PROJECT_SOURCE_DIR}/library/include) # rocRAND
+include_directories(${PROJECT_SOURCE_DIR}/library/include) # hipcc workaround
+include_directories(${PROJECT_BINARY_DIR}/library/include) # hipcc workaround
 
 if(HIP_PLATFORM STREQUAL "nvcc")
     set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} --expt-extended-lambda")

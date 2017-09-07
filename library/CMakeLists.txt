@@ -9,7 +9,15 @@ foreach(EXCLUDE ${tmp})
 endforeach()
 set_source_files_properties(${rocRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
+# configure a header file to pass the rocRAND version
+configure_file(
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
+    @ONLY
+)
+
 include_directories(include) # hipcc workaround
+include_directories(${PROJECT_BINARY_DIR}/library/include) # hipcc workaround
 
 # Build library
 hip_add_library(rocrand SHARED "${rocRAND_SRCS}")
@@ -42,9 +50,13 @@ install(
 )
 # headers
 install(
-    DIRECTORY include/
+    DIRECTORY
+        "include/"
+        "${PROJECT_BINARY_DIR}/library/include/"
     DESTINATION rocrand/include
-    FILES_MATCHING PATTERN "rocrand*"
+    FILES_MATCHING
+    PATTERN "rocrand*h"
+    PATTERN "rocrand*hpp"
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
@@ -78,6 +90,13 @@ install(
 # Get sources
 file(GLOB hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/*_${HIP_PLATFORM}.cpp)
 set_source_files_properties(${hipRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
+
+# configure a header file to pass the hipRAND version
+configure_file(
+    "${PROJECT_SOURCE_DIR}/library/include/hiprand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/hiprand_version.h"
+    @ONLY
+)
 
 # Build
 hip_add_library(hiprand SHARED "${hipRAND_SRCS}")
@@ -118,9 +137,13 @@ install(
 )
 # headers
 install(
-    DIRECTORY include/
+    DIRECTORY
+        "include/"
+        "${PROJECT_BINARY_DIR}/library/include/"
     DESTINATION hiprand/include
-    FILES_MATCHING PATTERN "hiprand*"
+    FILES_MATCHING
+    PATTERN "hiprand*h"
+    PATTERN "hiprand*hpp"
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
