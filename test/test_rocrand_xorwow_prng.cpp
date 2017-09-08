@@ -47,6 +47,18 @@ TEST(rocrand_xorwow_prng_tests, init_test)
     generator.set_offset(1048576);
     ROCRAND_CHECK(generator.init());
     HIP_CHECK(hipDeviceSynchronize());
+
+    generator.set_offset(1 << 24);
+    ROCRAND_CHECK(generator.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    generator.set_offset(1 << 28);
+    ROCRAND_CHECK(generator.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    generator.set_offset((1ULL << 36) + 1234567ULL);
+    ROCRAND_CHECK(generator.init());
+    HIP_CHECK(hipDeviceSynchronize());
 }
 
 TEST(rocrand_xorwow_prng_tests, uniform_uint_test)
