@@ -30,6 +30,77 @@
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
+__global__
+void mad_u64_u32_kernel(const unsigned int * x,
+                        const unsigned int * y,
+                        const unsigned long long * z,
+                        unsigned long long * r)
+{
+    r[0] = mad_u64_u32(x[0], y[0], z[0]);
+    r[1] = mad_u64_u32(x[1], y[1], z[1]);
+    r[2] = mad_u64_u32(x[2], y[2], z[2]);
+    r[3] = mad_u64_u32(x[3], y[3], z[3]);
+    r[4] = mad_u64_u32(1403580UL, y[4], 5ULL);
+    r[5] = mad_u64_u32(x[5], 1370589UL, 0ULL);
+    r[6] = mad_u64_u32(0xFFFFFFFFUL, 0x87654321UL, 0x1234567890123456ULL);
+    r[7] = mad_u64_u32(23UL, 45UL, 67ULL);
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
+{
+    typedef rocrand_state_mrg32k3a state_type;
+
+    const size_t size = 8;
+
+    unsigned int * x;
+    unsigned int * y;
+    unsigned long long * z;
+    unsigned long long * r;
+    HIP_CHECK(hipMalloc((void **)&x, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMalloc((void **)&y, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMalloc((void **)&z, size * sizeof(unsigned long long)));
+    HIP_CHECK(hipMalloc((void **)&r, size * sizeof(unsigned long long)));
+
+    unsigned int h_x[size];
+    unsigned int h_y[size];
+    unsigned long long h_z[size];
+
+    h_x[0] = 3492343451UL; h_y[0] = 1234UL; h_z[0] = 1231314234234265ULL;
+    h_x[1] = 2UL; h_y[1] = UINT_MAX; h_z[1] = 10ULL;
+    h_x[2] = 0UL; h_y[2] = 2342345UL; h_z[2] = 53483747345345ULL;
+    h_x[3] = 1324423423UL; h_y[3] = 1UL; h_z[3] = 0ULL;
+    h_y[4] = 575675676UL;
+    h_x[5] = 12UL;
+
+    HIP_CHECK(hipMemcpy(x, h_x, size * sizeof(unsigned int), hipMemcpyDefault));
+    HIP_CHECK(hipMemcpy(y, h_y, size * sizeof(unsigned int), hipMemcpyDefault));
+    HIP_CHECK(hipMemcpy(z, h_z, size * sizeof(unsigned long long), hipMemcpyDefault));
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(mad_u64_u32_kernel),
+        dim3(1), dim3(1), 0, 0,
+        x, y, z, r
+    );
+    HIP_CHECK(hipPeekAtLastError());
+
+    unsigned long long h_r[size];
+    HIP_CHECK(hipMemcpy(h_r, r, size * sizeof(unsigned long long), hipMemcpyDefault));
+
+    EXPECT_EQ(h_r[0], mad_u64_u32(h_x[0], h_y[0], h_z[0]));
+    EXPECT_EQ(h_r[1], mad_u64_u32(h_x[1], h_y[1], h_z[1]));
+    EXPECT_EQ(h_r[2], mad_u64_u32(h_x[2], h_y[2], h_z[2]));
+    EXPECT_EQ(h_r[3], mad_u64_u32(h_x[3], h_y[3], h_z[3]));
+    EXPECT_EQ(h_r[4], mad_u64_u32(1403580UL, h_y[4], 5ULL));
+    EXPECT_EQ(h_r[5], mad_u64_u32(h_x[5], 1370589UL, 0ULL));
+    EXPECT_EQ(h_r[6], mad_u64_u32(0xFFFFFFFFUL, 0x87654321UL, 0x1234567890123456ULL));
+    EXPECT_EQ(h_r[7], mad_u64_u32(23UL, 45UL, 67ULL));
+
+    HIP_CHECK(hipFree(x));
+    HIP_CHECK(hipFree(y));
+    HIP_CHECK(hipFree(z));
+    HIP_CHECK(hipFree(r));
+}
+
 TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
