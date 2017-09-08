@@ -11,9 +11,11 @@ endforeach()
 set_source_files_properties(${rocRAND_TEST_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # Build
-include_directories(${PROJECT_SOURCE_DIR}/library/include)
-include_directories(${PROJECT_SOURCE_DIR}/library/src)
-include_directories(SYSTEM ${GTEST_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/library/include) # hipcc workaround
+include_directories(${PROJECT_BINARY_DIR}/library/include) # hipcc workaround
+include_directories(${PROJECT_SOURCE_DIR}/library/src) # hipcc workaround
+include_directories(SYSTEM ${GTEST_INCLUDE_DIRS}) # hipcc workaround
+
 foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     hip_add_executable(${test_name} "${test_src}")

@@ -36,12 +36,7 @@
 #endif
 /// \endcond
 
-/// \brief rocRAND library version
-///
-/// ROCRAND_VERSION % 100 is the patch level
-/// ROCRAND_VERSION / 100 % 1000 is the minor version
-/// ROCRAND_VERSION / 100000 is the major version
-#define ROCRAND_VERSION 100500
+#include "rocrand_version.h"
 
 /// \cond ROCRAND_DOCS_TYPEDEFS
 /// rocRAND random number generator (opaque)

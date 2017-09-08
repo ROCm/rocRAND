@@ -18,44 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
+#ifndef HIPRAND_VERSION_H_
+#define HIPRAND_VERSION_H_
 
-#include <hip/hip_runtime.h>
-#include <rocrand.h>
+/// \def HIPRAND_VERSION
+/// \brief hipRAND library version
+///
+/// Version number may not be visible in the documentation.
+///
+/// HIPRAND_VERSION % 100 is the patch level,
+/// HIPRAND_VERSION / 100 % 1000 is the minor version,
+/// HIPRAND_VERSION / 100000 is the major version.
+///
+/// For example, if HIPRAND_VERSION is 100500, then
+/// the major version is 1, the minor version is 5, and
+/// the patch level is 0.
+#define HIPRAND_VERSION @hiprand_VERSION_NUMBER@
 
-#define HIP_CHECK(condition)         \
-  {                                  \
-    hipError_t error = condition;    \
-    if(error != hipSuccess){         \
-        std::cout << error << std::endl; \
-        exit(error); \
-    } \
-  }
-
-#define ROCRAND_CHECK(condition)                 \
-  {                                              \
-    rocrand_status status = condition;           \
-    if(status != ROCRAND_STATUS_SUCCESS) {       \
-        std::cout << status << std::endl; \
-        exit(status); \
-    } \
-  }
-
-int main(int argc, char *argv[])
-{
-    rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator(&generator, ROCRAND_RNG_PSEUDO_DEFAULT));
-
-    const size_t size = 128;
-    unsigned int * data = NULL;
-    HIP_CHECK(hipMalloc(&data, size * sizeof(unsigned int)));
-    ROCRAND_CHECK(rocrand_generate(generator, (unsigned int *) data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
-    HIP_CHECK(hipFree(data));
-
-    if(ROCRAND_VERSION < 0) exit(1);
-
-    return 0;
-}
+#endif // HIPRAND_VERSION_H_
