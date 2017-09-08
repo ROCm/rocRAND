@@ -67,34 +67,18 @@ FQUALIFIERS
 void mul_mat_vec_inplace(const unsigned int * m, unsigned int * v)
 {
     unsigned int r[XORWOW_N] = { 0 };
-    // WORKAROUND: on HCC kernel fails with
-    //   Memory access fault by GPU node-2 on address 0x1a14257000.
-    //   Reason: Page not present or supervisor privilege.
-    // Perhaps, the kernel's size is too big and disabled unrolling reduces it.
-    #pragma unroll 1
     for (int i = 0; i < XORWOW_N; i++)
     {
         for (int j = 0; j < XORWOW_M; j++)
         {
-            if (v[i] & (1 << j))
+            const unsigned int b = (v[i] & (1 << j)) ? 0xffffffff : 0x0;
+            for (int k = 0; k < XORWOW_N; k++)
             {
-                for (int k = 0; k < XORWOW_N; k++)
-                {
-                    r[k] ^= m[i * XORWOW_M * XORWOW_N + j * XORWOW_N + k];
-                }
+                r[k] ^= b & m[i * XORWOW_M * XORWOW_N + j * XORWOW_N + k];
             }
         }
     }
     copy_vec(v, r);
-}
-
-FQUALIFIERS
-void mul_mat_mat_inplace(unsigned int * a, const unsigned int * b)
-{
-    for (int i = 0; i < XORWOW_N * XORWOW_M; i++)
-    {
-        mul_mat_vec_inplace(b, a + i * XORWOW_N);
-    }
 }
 
 } // end detail namespace
@@ -239,60 +223,16 @@ protected:
         //   A^(1 * 2^67), A^(4 * 2^67), A^(16 * 2^67)...
         //
         // Intermediate powers can calculated as multiplication of the powers above.
-        // Powers after the last precomputed matrix can be calculated using
-        // Exponentiation by squaring method.
 
         int mi = 0;
-        while (v > 0 && mi < XORWOW_JUMP_MATRICES)
+        while (v > 0)
         {
-            const int l = ((mi < XORWOW_JUMP_MATRICES - 1) ? XORWOW_JUMP_LOG2 : 1);
-            for (int i = 0; i < (v & ((1 << l) - 1)); i++)
+            for (int i = 0; i < (v & ((1 << XORWOW_JUMP_LOG2) - 1)); i++)
             {
                 detail::mul_mat_vec_inplace(jump_matrices[mi], m_state.x);
             }
             mi++;
-            v >>= l;
-        }
-
-        if (v > 0)
-        {
-            // All precomputed matrices are used, we need to use the last one
-            // to create matrices of next powers of 2
-
-            // WORKAROUND: this workaround is needed on HCC when unrolling
-            // is not disabled in mul_mat_vec_inplace (more details there).
-            #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
-            // Linear version is used here instead of matrix squaring.
-            // This means that large offsets will need a lot of time to process.
-
-            for (v = v << 1; v > 0; v--)
-            {
-                detail::mul_mat_vec_inplace(jump_matrices[XORWOW_JUMP_MATRICES - 1], m_state.x);
-            }
-            #else // NVCC and host code
-
-            unsigned int a[XORWOW_SIZE];
-            unsigned int b[XORWOW_SIZE];
-
-            detail::copy_mat(a, jump_matrices[XORWOW_JUMP_MATRICES - 1]);
-            detail::copy_mat(b, a);
-
-            // Exponentiation by squaring
-            do
-            {
-                // Square the matrix
-                detail::mul_mat_mat_inplace(a, b);
-                detail::copy_mat(b, a);
-
-                if (v & 1)
-                {
-                    detail::mul_mat_vec_inplace(b, m_state.x);
-                }
-
-                v >>= 1;
-            } while (v > 0);
-
-            #endif
+            v >>= XORWOW_JUMP_LOG2;
         }
     }
 
