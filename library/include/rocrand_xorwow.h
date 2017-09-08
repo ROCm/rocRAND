@@ -147,11 +147,11 @@ public:
 
         m_state.d = 6615241UL;
 
-        // TODO all constants below are from cuRAND
-        const unsigned int s0 = static_cast<unsigned int>(seed) ^ 0xaad26b49UL;
-        const unsigned int s1 = static_cast<unsigned int>(seed >> 32) ^ 0xf7dcefddUL;
-        const unsigned int t0 = 1099087573UL * s0;
-        const unsigned int t1 = 2591861531UL * s1;
+        // Constants are arbitrary prime numbers
+        const unsigned int s0 = static_cast<unsigned int>(seed) ^ 0x2c7f967fUL;
+        const unsigned int s1 = static_cast<unsigned int>(seed >> 32) ^ 0xa03697cbUL;
+        const unsigned int t0 = 1228688033UL * s0;
+        const unsigned int t1 = 2073658381UL * s1;
         m_state.x[0] += t0;
         m_state.x[1] ^= t0;
         m_state.x[2] += t1;
