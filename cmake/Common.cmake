@@ -7,6 +7,8 @@ function(create_version_vars PREFIX VERSION_MAJOR VERSION_MINOR VERSION_PATCH)
         "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
         PARENT_SCOPE
     )
+    math(EXPR temp "${VERSION_MAJOR} * 100000 + ${VERSION_MINOR} * 100 + ${VERSION_PATCH}")
+    set(${PREFIX}_VERSION_NUMBER ${temp} PARENT_SCOPE)
 endfunction()
 
 #
