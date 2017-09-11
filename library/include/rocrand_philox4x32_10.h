@@ -80,24 +80,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace rocrand_device {
 namespace detail {
 
-// HCC
-#ifdef __HIP_DEVICE_COMPILE__
-__forceinline__ __device__
+FQUALIFIERS
 unsigned int mulhilo32(unsigned int x, unsigned int y, unsigned int& z)
 {
-    z = __umulhi(x, y);
-    return x * y;
-}
-#else
-inline __host__
-unsigned int mulhilo32(unsigned int x, unsigned int y, unsigned int& z)
-{
-    unsigned long long xy =
-        static_cast<unsigned long long>(x) * static_cast<unsigned long long>(y);
-    z = xy >> 32;
+    unsigned long long xy = mad_u64_u32(x, y, 0);
+    z = static_cast<unsigned int>(xy >> 32);
     return static_cast<unsigned int>(xy);
 }
-#endif
 
 } // end detail namespace
 
