@@ -33,22 +33,39 @@
 
 #include <math.h>
 
-// nextafterf(float, float) is not implemented for device on HIP/HCC platform
-#if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
-#ifndef ROCRAND_PLATFORM_HCC_NEXTAFTERF
-#define ROCRAND_PLATFORM_HCC_NEXTAFTERF
-inline __forceinline__ __device__
-float nextafterf(const float from, const float to)
-{
-    if(from == to) return to;
-    // (2.3283064e-10f) is float min value
-    return fminf(from + (2.3283064e-10f), to);
-}
-#endif
-#endif // defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
-
 namespace rocrand_device {
 namespace detail {
+
+FQUALIFIERS
+unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
+{
+    #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
+
+    unsigned long long r;
+    unsigned long long c; // carry bits, SGPR, unused
+    // x has "r" constraint. This allows to use both VGPR and SGPR
+    // (to save VGPR) as input.
+    // y and z have "v" constraints, because only one SGPR or literal
+    // can be read by the instruction.
+    asm("v_mad_u64_u32 %0, %1, %2, %3, %4"
+        : "=v"(r), "=s"(c) : "r"(x), "v"(y), "v"(z)
+    );
+    return r;
+
+    #elif defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__)
+
+    unsigned long long r;
+    asm("mad.wide.u32 %0, %1, %2, %3;"
+        : "=l"(r) : "r"(x), "r"(y), "l"(z)
+    );
+    return r;
+
+    #else // host code
+
+    return static_cast<unsigned long long>(x) * static_cast<unsigned long long>(y) + z;
+
+    #endif
+}
 
 // This helps access fields of engine's internal state which
 // saves floats and doubles generated using the Box–Muller transform
