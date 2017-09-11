@@ -83,7 +83,7 @@ void run_crush_test(const size_t size, const rocrand_rng_type rng_type)
 
     for(size_t i = 0; i < size; i++)
     {
-        h_data_double[i] = static_cast<double>(h_data[i]) / (UINT_MAX + 1UL);
+        h_data_double[i] = static_cast<double>(h_data[i]) / (UINT_MAX + 1ULL);
     }
     delete[] h_data;
 

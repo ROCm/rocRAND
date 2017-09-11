@@ -237,7 +237,7 @@ TEST(hiprand_kernel_h_philox4x32_10, hiprand_init_nvcc)
     typedef hiprandStatePhilox4_32_10_t state_type;
 
     unsigned long long seed = 0xdeadbeefbeefdeadULL;
-    unsigned long long offset = 4 * ((UINT_MAX * 17UL) + 17);
+    unsigned long long offset = 4 * ((UINT_MAX * 17ULL) + 17);
 
     const size_t states_size = 256;
     state_type * states;
@@ -292,7 +292,7 @@ TEST(hiprand_kernel_h_philox4x32_10, hiprand_skip_nvcc)
     typedef hiprandStatePhilox4_32_10_t state_type;
 
     unsigned long long seed = 0xdeadbeefbeefdeadULL;
-    unsigned long long offset = 4 * ((UINT_MAX * 17UL) + 17);
+    unsigned long long offset = 4 * ((UINT_MAX * 17ULL) + 17);
 
     const size_t states_size = 256;
     state_type * states;
