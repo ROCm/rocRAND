@@ -30,6 +30,8 @@
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
+using rocrand_device::detail::mad_u64_u32;
+
 __global__
 void mad_u64_u32_kernel(const unsigned int * x,
                         const unsigned int * y,
@@ -40,10 +42,10 @@ void mad_u64_u32_kernel(const unsigned int * x,
     r[1] = mad_u64_u32(x[1], y[1], z[1]);
     r[2] = mad_u64_u32(x[2], y[2], z[2]);
     r[3] = mad_u64_u32(x[3], y[3], z[3]);
-    r[4] = mad_u64_u32(1403580UL, y[4], 5ULL);
-    r[5] = mad_u64_u32(x[5], 1370589UL, 0ULL);
-    r[6] = mad_u64_u32(0xFFFFFFFFUL, 0x87654321UL, 0x1234567890123456ULL);
-    r[7] = mad_u64_u32(23UL, 45UL, 67ULL);
+    r[4] = mad_u64_u32(1403580, y[4], 5ULL);
+    r[5] = mad_u64_u32(x[5], 1370589, 0ULL);
+    r[6] = mad_u64_u32(0xFFFFFFFF, 0x87654321, 0x1234567890123456ULL);
+    r[7] = mad_u64_u32(23, 45, 67ULL);
 }
 
 TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
@@ -65,12 +67,12 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
     unsigned int h_y[size];
     unsigned long long h_z[size];
 
-    h_x[0] = 3492343451UL; h_y[0] = 1234UL; h_z[0] = 1231314234234265ULL;
-    h_x[1] = 2UL; h_y[1] = UINT_MAX; h_z[1] = 10ULL;
-    h_x[2] = 0UL; h_y[2] = 2342345UL; h_z[2] = 53483747345345ULL;
-    h_x[3] = 1324423423UL; h_y[3] = 1UL; h_z[3] = 0ULL;
-    h_y[4] = 575675676UL;
-    h_x[5] = 12UL;
+    h_x[0] = 3492343451; h_y[0] = 1234; h_z[0] = 1231314234234265ULL;
+    h_x[1] = 2; h_y[1] = UINT_MAX; h_z[1] = 10ULL;
+    h_x[2] = 0; h_y[2] = 2342345; h_z[2] = 53483747345345ULL;
+    h_x[3] = 1324423423; h_y[3] = 1; h_z[3] = 0ULL;
+    h_y[4] = 575675676;
+    h_x[5] = 12;
 
     HIP_CHECK(hipMemcpy(x, h_x, size * sizeof(unsigned int), hipMemcpyDefault));
     HIP_CHECK(hipMemcpy(y, h_y, size * sizeof(unsigned int), hipMemcpyDefault));
@@ -90,10 +92,10 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
     EXPECT_EQ(h_r[1], mad_u64_u32(h_x[1], h_y[1], h_z[1]));
     EXPECT_EQ(h_r[2], mad_u64_u32(h_x[2], h_y[2], h_z[2]));
     EXPECT_EQ(h_r[3], mad_u64_u32(h_x[3], h_y[3], h_z[3]));
-    EXPECT_EQ(h_r[4], mad_u64_u32(1403580UL, h_y[4], 5ULL));
-    EXPECT_EQ(h_r[5], mad_u64_u32(h_x[5], 1370589UL, 0ULL));
-    EXPECT_EQ(h_r[6], mad_u64_u32(0xFFFFFFFFUL, 0x87654321UL, 0x1234567890123456ULL));
-    EXPECT_EQ(h_r[7], mad_u64_u32(23UL, 45UL, 67ULL));
+    EXPECT_EQ(h_r[4], mad_u64_u32(1403580, h_y[4], 5ULL));
+    EXPECT_EQ(h_r[5], mad_u64_u32(h_x[5], 1370589, 0ULL));
+    EXPECT_EQ(h_r[6], mad_u64_u32(0xFFFFFFFF, 0x87654321, 0x1234567890123456ULL));
+    EXPECT_EQ(h_r[7], mad_u64_u32(23, 45, 67ULL));
 
     HIP_CHECK(hipFree(x));
     HIP_CHECK(hipFree(y));

@@ -182,10 +182,10 @@ public:
     unsigned int next()
     {
         const unsigned int p1 = mod_m1(
-            mad_u64_u32(
+            detail::mad_u64_u32(
                 ROCRAND_MRG32K3A_A12,
                 m_state.g1[1],
-                mad_u64_u32(
+                detail::mad_u64_u32(
                     ROCRAND_MRG32K3A_A13N,
                     (ROCRAND_MRG32K3A_M1 - m_state.g1[0]),
                     0
@@ -197,10 +197,10 @@ public:
         m_state.g1[2] = p1;
 
         const unsigned int p2 = mod_m2(
-            mad_u64_u32(
+            detail::mad_u64_u32(
                 ROCRAND_MRG32K3A_A21,
                 m_state.g2[2],
-                mad_u64_u32(
+                detail::mad_u64_u32(
                     ROCRAND_MRG32K3A_A23N,
                     (ROCRAND_MRG32K3A_M2 - m_state.g2[0]),
                     0
@@ -362,7 +362,7 @@ private:
     FQUALIFIERS
     unsigned long long mod_m1(unsigned long long p)
     {
-        p = mad_u64_u32(ROCRAND_MRG32K3A_M1C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M1C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         if (p >= ROCRAND_MRG32K3A_M1)
             p -= ROCRAND_MRG32K3A_M1;
 
@@ -389,8 +389,8 @@ private:
     FQUALIFIERS
     unsigned long long mod_m2(unsigned long long p)
     {
-        p = mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
-        p = mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         if (p >= ROCRAND_MRG32K3A_M2)
             p -= ROCRAND_MRG32K3A_M2;
 

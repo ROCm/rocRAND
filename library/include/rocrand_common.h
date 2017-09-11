@@ -33,6 +33,9 @@
 
 #include <math.h>
 
+namespace rocrand_device {
+namespace detail {
+
 FQUALIFIERS
 unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
 {
@@ -63,9 +66,6 @@ unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const
 
     #endif
 }
-
-namespace rocrand_device {
-namespace detail {
 
 // This helps access fields of engine's internal state which
 // saves floats and doubles generated using the Box–Muller transform
