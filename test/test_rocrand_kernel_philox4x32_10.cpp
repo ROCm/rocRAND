@@ -207,7 +207,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
     typedef rocrand_state_philox4x32_10_test state_type_test;
 
     unsigned long long seed = 0xdeadbeefbeefdeadULL;
-    unsigned long long offset = 4 * ((UINT_MAX * 17UL) + 17);
+    unsigned long long offset = 4 * ((UINT_MAX * 17ULL) + 17);
 
     const size_t states_size = 256;
     state_type * states;
