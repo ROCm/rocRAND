@@ -124,8 +124,8 @@ public:
         {
             seed_value = ROCRAND_MRG32K3A_DEFAULT_SEED;
         }
-        unsigned int x = (unsigned int) seed_value ^ 0x55555555UL;
-        unsigned int y = (unsigned int) ((seed_value >> 32) ^ 0xAAAAAAAAUL);
+        unsigned int x = (unsigned int) seed_value ^ 0x55555555U;
+        unsigned int y = (unsigned int) ((seed_value >> 32) ^ 0xAAAAAAAAU);
         m_state.g1[0] = mod_mul_m1(x, seed_value);
         m_state.g1[1] = mod_mul_m1(y, seed_value);
         m_state.g1[2] = mod_mul_m1(x, seed_value);

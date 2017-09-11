@@ -139,19 +139,19 @@ public:
                   const unsigned long long subsequence,
                   const unsigned long long offset)
     {
-        m_state.x[0] = 123456789UL;
-        m_state.x[1] = 362436069UL;
-        m_state.x[2] = 521288629UL;
-        m_state.x[3] = 88675123UL;
-        m_state.x[4] = 5783321UL;
+        m_state.x[0] = 123456789U;
+        m_state.x[1] = 362436069U;
+        m_state.x[2] = 521288629U;
+        m_state.x[3] = 88675123U;
+        m_state.x[4] = 5783321U;
 
-        m_state.d = 6615241UL;
+        m_state.d = 6615241U;
 
         // Constants are arbitrary prime numbers
-        const unsigned int s0 = static_cast<unsigned int>(seed) ^ 0x2c7f967fUL;
-        const unsigned int s1 = static_cast<unsigned int>(seed >> 32) ^ 0xa03697cbUL;
-        const unsigned int t0 = 1228688033UL * s0;
-        const unsigned int t1 = 2073658381UL * s1;
+        const unsigned int s0 = static_cast<unsigned int>(seed) ^ 0x2c7f967fU;
+        const unsigned int s1 = static_cast<unsigned int>(seed >> 32) ^ 0xa03697cbU;
+        const unsigned int t0 = 1228688033U * s0;
+        const unsigned int t1 = 2073658381U * s1;
         m_state.x[0] += t0;
         m_state.x[1] ^= t0;
         m_state.x[2] += t1;
