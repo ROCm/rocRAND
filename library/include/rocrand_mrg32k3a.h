@@ -181,27 +181,37 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        unsigned long long p;
-
-        p = ROCRAND_MRG32K3A_A12 * static_cast<unsigned long long>(m_state.g1[1])
-            + ROCRAND_MRG32K3A_A13N * static_cast<unsigned long long>(ROCRAND_MRG32K3A_M1 - m_state.g1[0]);
-        p = mod_m1(p);
+        const unsigned int p1 = mod_m1(
+            detail::mad_u64_u32(
+                ROCRAND_MRG32K3A_A12,
+                m_state.g1[1],
+                detail::mad_u64_u32(
+                    ROCRAND_MRG32K3A_A13N,
+                    (ROCRAND_MRG32K3A_M1 - m_state.g1[0]),
+                    0
+                )
+            )
+        );
 
         m_state.g1[0] = m_state.g1[1]; m_state.g1[1] = m_state.g1[2];
-        m_state.g1[2] = static_cast<unsigned int>(p);
+        m_state.g1[2] = p1;
 
-        p = ROCRAND_MRG32K3A_A21 * static_cast<unsigned long long>(m_state.g2[2])
-            + ROCRAND_MRG32K3A_A23N * static_cast<unsigned long long>(ROCRAND_MRG32K3A_M2 - m_state.g2[0]);
-        p = mod_m2(p);
+        const unsigned int p2 = mod_m2(
+            detail::mad_u64_u32(
+                ROCRAND_MRG32K3A_A21,
+                m_state.g2[2],
+                detail::mad_u64_u32(
+                    ROCRAND_MRG32K3A_A23N,
+                    (ROCRAND_MRG32K3A_M2 - m_state.g2[0]),
+                    0
+                )
+            )
+        );
 
         m_state.g2[0] = m_state.g2[1]; m_state.g2[1] = m_state.g2[2];
-        m_state.g2[2] = static_cast<unsigned int>(p);
+        m_state.g2[2] = p2;
 
-        p = static_cast<unsigned long long>(m_state.g1[2]) - static_cast<unsigned long long>(m_state.g2[2]);
-        if (m_state.g1[2] <= m_state.g2[2])
-            p += ROCRAND_MRG32K3A_M1;  // 0 < p <= M1
-
-        return p;
+        return (p1 - p2) + (p1 <= p2 ? ROCRAND_MRG32K3A_M1 : 0);
     }
 
 protected:
@@ -350,11 +360,9 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_m1(unsigned long long i)
+    unsigned long long mod_m1(unsigned long long p)
     {
-        unsigned long long p;
-        p = (i & (ROCRAND_MRG32K3A_POW32 - 1)) + (i >> 32)
-            * ROCRAND_MRG32K3A_M1C;
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M1C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         if (p >= ROCRAND_MRG32K3A_M1)
             p -= ROCRAND_MRG32K3A_M1;
 
@@ -379,13 +387,10 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_m2(unsigned long long i)
+    unsigned long long mod_m2(unsigned long long p)
     {
-        unsigned long long p;
-        p = (i & (ROCRAND_MRG32K3A_POW32 - 1)) + (i >> 32)
-            * ROCRAND_MRG32K3A_M2C;
-        p = (p & (ROCRAND_MRG32K3A_POW32 - 1)) + (p >> 32)
-            * ROCRAND_MRG32K3A_M2C;
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         if (p >= ROCRAND_MRG32K3A_M2)
             p -= ROCRAND_MRG32K3A_M2;
 
