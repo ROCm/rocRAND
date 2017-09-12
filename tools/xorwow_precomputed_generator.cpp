@@ -9,7 +9,7 @@ const int XORWOW_M = 32; // 32-bit each
 
 const int XORWOW_SIZE = XORWOW_M * XORWOW_N * XORWOW_N;
 
-const int XORWOW_JUMP_MATRICES = 10;
+const int XORWOW_JUMP_MATRICES = 32;
 const int XORWOW_JUMP_LOG2 = 2;
 
 const int XORWOW_SEQUENCE_JUMP_LOG2 = 67;
@@ -182,7 +182,7 @@ void write_matrices(std::ofstream& fout, const std::string name, unsigned int * 
             fout << "        ";
             for (int j = 0; j < XORWOW_N * XORWOW_N; j++)
             {
-                fout << a[k * XORWOW_SIZE + i * XORWOW_N * XORWOW_N + j] << "UL, ";
+                fout << a[k * XORWOW_SIZE + i * XORWOW_N * XORWOW_N + j] << ", ";
             }
             fout << std::endl;
         }
