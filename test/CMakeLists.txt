@@ -45,6 +45,11 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
 endforeach()
 
+# Fortran Wrapper Tests
+if (BUILD_FORTRAN_WRAPPER)
+    add_subdirectory(fortran)
+endif()
+
 # Crush Tests
 if(BUILD_CRUSH_TEST)
     add_subdirectory(crush)

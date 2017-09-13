@@ -20,6 +20,11 @@ else()
     set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED TRUE")
 endif()
 
+# Fortran Wrapper
+if (BUILD_FORTRAN_WRAPPER)
+    enable_language(Fortran)
+endif()
+
 # Test dependencies
 if(BUILD_TEST)
     if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
