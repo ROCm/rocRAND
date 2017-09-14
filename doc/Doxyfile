@@ -2,7 +2,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = hipRAND
+PROJECT_NAME           = rocRAND
 PROJECT_NUMBER         =
 OUTPUT_DIRECTORY       =
 CREATE_SUBDIRS         = NO
@@ -22,7 +22,7 @@ MULTILINE_CPP_IS_BRIEF = NO
 INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = NO
 TAB_SIZE               = 8
-ALIASES                = rocrand_internal="\internal"
+ALIASES                = rocrand_internal=""
 OPTIMIZE_OUTPUT_FOR_C  = NO
 OPTIMIZE_OUTPUT_JAVA   = NO
 OPTIMIZE_FOR_FORTRAN   = NO

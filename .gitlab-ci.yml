@@ -43,12 +43,12 @@ build:rocm:
     - build/test/
     - build/benchmark/
     - build/gtest/
-    - build/boost/
     - build/testu01/
     - build/CMakeCache.txt
     - build/CTestTestfile.cmake
     - build/Makefile
     - build/*.deb
+    - build/*.zip
 
 test:rocm:
   stage: test
@@ -59,8 +59,8 @@ test:rocm:
   script:
     - cd build
     - ctest --output-on-failure
-    - ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 2
-    - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 2
+    - ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
+    - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
     - ./test/crush_test_rocrand --help # Just check if works
 
 test:rocm_deb_package:
@@ -71,10 +71,10 @@ test:rocm_deb_package:
     - build:rocm
   script:
     - cd build
-    - $SUDO_CMD dpkg -i hiprand-*.deb
+    - $SUDO_CMD dpkg -i rocrand-*.deb
     - mkdir ../build_package_test && cd ../build_package_test
     - cmake ../test/package/.
     - make VERBOSE=1
     - ctest --output-on-failure
     - ldd ./test_hiprand
-    - $SUDO_CMD dpkg -r hiprand
+    - $SUDO_CMD dpkg -r rocrand
