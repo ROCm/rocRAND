@@ -217,15 +217,15 @@ unsigned int poisson_distribution_inv(State& state, double lambda)
 } // end namespace rocrand_device
 
 /**
- * \brief Return a Poisson distributed unsigned int from a Philox Generator.
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using Philox generator.
  *
- * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using Philox generator in \p state. State is incremented by a variable amount.
  *
  * \param state - Pointer to a state to use
- * \param lambda - Lambda of the related Poisson distribution
+ * \param lambda - Lambda parameter of the Poisson distribution
  *
- * \return Poisson distributed unsigned int with lambda \p lambda
+ * \return Poisson-distributed <tt>unsigned int</tt>
  */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -235,15 +235,15 @@ unsigned int rocrand_poisson(rocrand_state_philox4x32_10 * state, double lambda)
 }
 
 /**
- * \brief Return four Poisson distributed unsigned ints from a Philox Generator.
+ * \brief Returns four Poisson-distributed <tt>unsigned int</tt> values using Philox generator.
  *
- * Return four Poisson distributed unsigned ints with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using Philox generator in \p state. State is incremented by a variable amount.
  *
  * \param state - Pointer to a state to use
- * \param lambda - Lambda of the related Poisson distribution
+ * \param lambda - Lambda parameter of the Poisson distribution
  *
- * \return four Poisson distributed unsigned int with lambda \p lambda
+ * \return Four Poisson-distributed <tt>unsigned int</tt> values as \p uint4
  */
 FQUALIFIERS
 uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
@@ -258,15 +258,15 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 /**
- * \brief Return a Poisson distributed unsigned int from a MRG32K3A Generator.
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using MRG32k3a generator.
  *
- * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using MRG32k3a generator in \p state. State is incremented by a variable amount.
  *
  * \param state - Pointer to a state to use
- * \param lambda - Lambda of the related Poisson distribution
+ * \param lambda - Lambda parameter of the Poisson distribution
  *
- * \return Poisson distributed unsigned int with lambda \p lambda
+ * \return Poisson-distributed <tt>unsigned int</tt>
  */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -277,15 +277,15 @@ unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 /**
- * \brief Return a Poisson distributed unsigned int from a XORWOW Generator.
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using XORWOW generator.
  *
- * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by a variable amount.
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using XORWOW generator in \p state. State is incremented by a variable amount.
  *
  * \param state - Pointer to a state to use
- * \param lambda - Lambda of the related Poisson distribution
+ * \param lambda - Lambda parameter of the Poisson distribution
  *
- * \return Poisson distributed unsigned int with lambda \p lambda
+ * \return Poisson-distributed <tt>unsigned int</tt>
  */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -296,15 +296,15 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 /**
- * \brief Return a Poisson distributed unsigned int from a MTGP32 Generator.
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using MTGP32 generator.
  *
- * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by one.
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using MTGP32 generator in \p state. State is incremented by one position.
  *
  * \param state - Pointer to a state to use
- * \param lambda - Lambda of the related Poisson distribution
+ * \param lambda - Lambda parameter of the Poisson distribution
  *
- * \return Poisson distributed unsigned int with lambda \p lambda
+ * \return Poisson-distributed <tt>unsigned int</tt>
  */
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
@@ -313,15 +313,15 @@ unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
 }
 
 /**
- * \brief Return a Poisson distributed unsigned int from a SOBOL32 Generator.
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using SOBOL32 generator.
  *
- * Return a Poisson distributed unsigned int with lambda \p lambda
- * and increments the position of generator by one.
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using SOBOL32 generator in \p state. State is incremented by one position.
  *
  * \param state - Pointer to a state to use
- * \param lambda - Lambda of the related Poisson distribution
+ * \param lambda - Lambda parameter of the Poisson distribution
  *
- * \return Poisson distributed unsigned int with lambda \p lambda
+ * \return Poisson-distributed <tt>unsigned int</tt>
  */
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)

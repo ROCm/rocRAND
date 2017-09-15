@@ -260,8 +260,8 @@ typedef rocrand_device::xorwow_engine rocrand_state_xorwow;
 /**
  * \brief Initialize XORWOW state.
  *
- * Initialize XORWOW state in \p state with the given \p seed, \p subsequence,
- * and \p offset.
+ * Initializes the XORWOW generator \p state with the given
+ * \p seed, \p subsequence, and \p offset.
  *
  * \param seed - Value to use as a seed
  * \param subsequence - Subsequence to start at
@@ -278,14 +278,16 @@ void rocrand_init(const unsigned long long seed,
 }
 
 /**
- * \brief Return pseudorandom value (32-bit) from XORWOW generator.
+ * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * from [0; 2^32 - 1] range.
  *
- * Return pseudorandom value (32-bit) from the XORWOW generator in \p state,
- * increment position of generator by one.
+ * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * value from [0; 2^32 - 1] range using XORWOW generator in \p state.
+ * State is incremented by one position.
  *
  * \param state - Pointer to a state to use
  *
- * \return pseudorandom value (32-bit) as an unsigned int
+ * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_xorwow * state)
@@ -294,9 +296,9 @@ unsigned int rocrand(rocrand_state_xorwow * state)
 }
 
 /**
- * \brief Update XORWOW state to skip ahead by \p offset elements.
+ * \brief Updates XORWOW state to skip ahead by \p offset elements.
  *
- * Update the XORWOW state in \p state to skip ahead by \p offset elements.
+ * Updates the XORWOW state in \p state to skip ahead by \p offset elements.
  *
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
@@ -308,9 +310,9 @@ void skipahead(unsigned long long offset, rocrand_state_xorwow * state)
 }
 
 /**
- * \brief Update XORWOW state to skip ahead by \p subsequence subsequences.
+ * \brief Updates XORWOW state to skip ahead by \p subsequence subsequences.
  *
- * Update the XORWOW state in \p state to skip ahead by \p subsequence subsequences.
+ * Updates the XORWOW \p state to skip ahead by \p subsequence subsequences.
  * Each subsequence is 2^67 numbers long.
  *
  * \param subsequence - Number of subsequences to skip
@@ -325,7 +327,7 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_xorwow 
 /**
  * \brief Updates XORWOW state to skip ahead by \p sequence sequences.
  *
- * Updates the XORWOW state \p state skipping \p sequence sequences ahead.
+ * Updates the XORWOW \p state skipping \p sequence sequences ahead.
  * For XORWOW each sequence is 2^67 numbers long (equal to the size of a subsequence).
  *
  * \param sequence - Number of sequences to skip
