@@ -33,3 +33,4 @@ set_target_properties(
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
 )
+add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
