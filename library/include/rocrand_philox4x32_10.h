@@ -348,10 +348,10 @@ typedef rocrand_device::philox4x32_10_engine rocrand_state_philox4x32_10;
 /// \endcond
 
 /**
- * \brief Initialize Philox state.
+ * \brief Initializes Philox state.
  *
- * Initialize Philox state in \p state with the given \p seed, \p subsequence,
- * and \p offset.
+ * Initializes the Philox generator \p state with the given
+ * \p seed, \p subsequence, and \p offset.
  *
  * \param seed - Value to use as a seed
  * \param subsequence - Subsequence to start at
@@ -368,14 +368,16 @@ void rocrand_init(const unsigned long long seed,
 }
 
 /**
- * \brief Return pseudorandom value (32-bit) from Philox generator.
+ * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * from [0; 2^32 - 1] range.
  *
- * Return pseudorandom value (32-bit) from the Philox generator in \p state,
- * increment position of generator by one.
+ * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * value from [0; 2^32 - 1] range using Philox generator in \p state.
+ * State is incremented by one position.
  *
  * \param state - Pointer to a state to use
  *
- * \return pseudorandom value (32-bit) as an unsigned int
+ * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_philox4x32_10 * state)
@@ -384,14 +386,16 @@ unsigned int rocrand(rocrand_state_philox4x32_10 * state)
 }
 
 /**
- * \brief Return four pseudorandom value (32-bit) from Philox generator.
+ * \brief Returns four uniformly distributed random <tt>unsigned int</tt> values
+ * from [0; 2^32 - 1] range.
  *
- * Return four pseudorandom value (32-bit) from the Philox generator in \p state,
- * increment position of generator by four.
+ * Generates and returns four uniformly distributed random <tt>unsigned int</tt>
+ * values from [0; 2^32 - 1] range using Philox generator in \p state.
+ * State is incremented by four positions.
  *
  * \param state - Pointer to a state to use
  *
- * \return pseudorandom value (32-bit) as an uint4
+ * \return Four pseudorandom values (32-bit) as an <tt>uint4</tt>
  */
 FQUALIFIERS
 uint4 rocrand4(rocrand_state_philox4x32_10 * state)
@@ -400,9 +404,9 @@ uint4 rocrand4(rocrand_state_philox4x32_10 * state)
 }
 
 /**
- * \brief Update Philox state to skip ahead by \p offset elements.
+ * \brief Updates Philox state to skip ahead by \p offset elements.
  *
- * Update the Philox state in \p state to skip ahead by \p offset elements.
+ * Updates the Philox generator state in \p state to skip ahead by \p offset elements.
  *
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
@@ -414,9 +418,9 @@ void skipahead(unsigned long long offset, rocrand_state_philox4x32_10 * state)
 }
 
 /**
- * \brief Update Philox state to skip ahead by \p subsequence subsequences.
+ * \brief Updates Philox state to skip ahead by \p subsequence subsequences.
  *
- * Update the Philox state in \p state to skip ahead by \p subsequence subsequences.
+ * Updates the Philox generator state in \p state to skip ahead by \p subsequence subsequences.
  * Each subsequence is 4 * 2^64 numbers long.
  *
  * \param subsequence - Number of subsequences to skip
@@ -431,7 +435,7 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4
 /**
  * \brief Updates Philox state to skip ahead by \p sequence sequences.
  *
- * Updates the Philox state \p state skipping \p sequence sequences ahead.
+ * Updates the Philox generator state in \p state skipping \p sequence sequences ahead.
  * For Philox each sequence is 4 * 2^64 numbers long (equal to the size of a subsequence).
  *
  * \param sequence - Number of sequences to skip

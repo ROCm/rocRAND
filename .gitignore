@@ -13,7 +13,7 @@ build_package_test/
 ### docs dir ###
 doc/html/
 doc/xml/
-doc/hipRAND.tag
+doc/*.tag
 
 ### C++ ###
 # Compiled Object files

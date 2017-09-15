@@ -345,7 +345,7 @@ typedef rocrand_device::mtgp32_param mtgp32_param;
 /// \endcond
 
 /**
- * \brief Initialize MTGP32 states
+ * \brief Initializes MTGP32 states
  *
  * Initializes MTGP32 states on the host-side by allocating a state array in host
  * memory, initializes that array, and copies the result to device memory.
@@ -481,14 +481,16 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_pa
 }
 
 /**
- * \brief Return pseudorandom value (32-bit) from MTGP32 generator.
+ * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * from [0; 2^32 - 1] range.
  *
- * Return pseudorandom value (32-bit) from the MTGP32 generator in \p state,
- * increment position of generator by one.
+ * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * value from [0; 2^32 - 1] range using MTGP32 generator in \p state.
+ * State is incremented by one position.
  *
  * \param state - Pointer to a state to use
  *
- * \return pseudorandom value (32-bit) as an unsigned int
+ * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_mtgp32 * state)
@@ -497,7 +499,7 @@ unsigned int rocrand(rocrand_state_mtgp32 * state)
 }
 
 /**
- * \brief Copy MTGP32 state to another state using block of threads
+ * \brief Copies MTGP32 state to another state using block of threads
  *
  * Copies a MTGP32 state \p src to \p dest using a block of threads
  * efficiently. Example usage would be:

@@ -109,15 +109,16 @@ unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribut
  */
 
 /**
- * \brief Return a discrete distributed unsigned int from a Philox Generator.
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
  *
- * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
- * and increments the position of generator by one.
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using Philox generator in \p state, and increments
+ * the position of the generator by one.
  *
  * \param state - Pointer to a state to use
  * \param discrete_distribution - Related discrete distribution
  *
- * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_philox4x32_10 * state, const rocrand_discrete_distribution discrete_distribution)
@@ -126,15 +127,16 @@ unsigned int rocrand_discrete(rocrand_state_philox4x32_10 * state, const rocrand
 }
 
 /**
- * \brief Return four discrete distributed unsigned ints from a Philox Generator.
+ * \brief Returns four discrete distributed <tt>unsigned int</tt> values.
  *
- * Return four discrete distributed unsigned ints with discrete distribution \p discrete_distribution
- * and increments the position of generator by four.
+ * Returns four <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using Philox generator in \p state, and increments
+ * the position of the generator by four.
  *
  * \param state - Pointer to a state to use
- * \param discrete_distribution - Related Discrete distribution
+ * \param discrete_distribution - Related discrete distribution
  *
- * \return four discrete distributed unsigned ints with discrete distribution \p discrete_distribution
+ * \return Four <tt>unsigned int</tt> values distributed according to \p discrete_distribution as \p uint4
  */
 FQUALIFIERS
 uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discrete_distribution discrete_distribution)
@@ -149,15 +151,16 @@ uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discr
 }
 
 /**
- * \brief Return a discrete distributed unsigned int from a MRG32K3A Generator.
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
  *
- * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
- * and increments the position of generator by one.
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using MRG32k3a generator in \p state, and increments
+ * the position of the generator by one.
  *
  * \param state - Pointer to a state to use
- * \param discrete_distribution - Related Discrete distribution
+ * \param discrete_distribution - Related discrete distribution
  *
- * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_discrete_distribution discrete_distribution)
@@ -166,15 +169,16 @@ unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_disc
 }
 
 /**
- * \brief Return a discrete distributed unsigned int from a XORWOW Generator.
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
  *
- * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
- * and increments the position of generator by one.
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using XORWOW generator in \p state, and increments
+ * the position of the generator by one.
  *
  * \param state - Pointer to a state to use
- * \param discrete_distribution - Related Discrete distribution
+ * \param discrete_distribution - Related discrete distribution
  *
- * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discrete_distribution discrete_distribution)
@@ -183,15 +187,16 @@ unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discre
 }
 
 /**
- * \brief Return a discrete distributed unsigned int from a MTGP32 Generator.
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
  *
- * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
- * and increments the position of generator by one.
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using MTGP32 generator in \p state, and increments
+ * the position of the generator by one.
  *
  * \param state - Pointer to a state to use
- * \param discrete_distribution - Related Discrete distribution
+ * \param discrete_distribution - Related discrete distribution
  *
- * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_mtgp32 * state, const rocrand_discrete_distribution discrete_distribution)
@@ -200,15 +205,16 @@ unsigned int rocrand_discrete(rocrand_state_mtgp32 * state, const rocrand_discre
 }
 
 /**
- * \brief Return a discrete distributed unsigned int from a SOBOL32 Generator.
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
  *
- * Return a discrete distributed unsigned int with discrete distribution \p discrete_distribution
- * and increments the position of generator by one.
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using SOBOL32 generator in \p state, and increments
+ * the position of the generator by one.
  *
  * \param state - Pointer to a state to use
- * \param discrete_distribution - Related Discrete distribution
+ * \param discrete_distribution - Related discrete distribution
  *
- * \return discrete distributed unsigned int with discrete distribution \p discrete_distribution
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discrete_distribution discrete_distribution)
