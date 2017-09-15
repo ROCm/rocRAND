@@ -7,7 +7,7 @@
 /**
  * \rocrand_internal \defgroup rocranddevice rocRAND device functions
  * @{
- *     @page page_name hipRAND RNG's state types
+ *     @page rocranddevice_page rocRAND RNG's state types
  *     * \p rocrandStateXORWOW_t - XORWOW PRNG state type
  *     * \p rocrandStatePhilox4_32_10_t - PHILOX PRNG state type
  *     * \p rocrandStateMRG32k3a_t - MRG32k3a PRNG state type

@@ -147,7 +147,7 @@ rocrand_generate(rocrand_generator generator,
                  unsigned int * output_data, size_t n);
 
 /**
- * \brief Generates uniformly distributed floats.
+ * \brief Generates uniformly distributed \p float values.
  *
  * Generates \p n uniformly distributed 32-bit floating-point values
  * and saves them to \p output_data.
@@ -157,7 +157,7 @@ rocrand_generate(rocrand_generator generator,
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of floats to generate
+ * \param n - Number of <tt>float</tt>s to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -181,7 +181,7 @@ rocrand_generate_uniform(rocrand_generator generator,
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of floats to generate
+ * \param n - Number of <tt>float</tt>s to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -195,14 +195,14 @@ rocrand_generate_uniform_double(rocrand_generator generator,
                                 double * output_data, size_t n);
 
 /**
- * \brief Generates normally distributed floats.
+ * \brief Generates normally distributed \p float values.
  *
  * Generates \p n normally distributed distributed 32-bit floating-point
  * values and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of floats to generate
+ * \param n - Number of <tt>float</tt>s to generate
  * \param mean - Mean value of normal distribution
  * \param stddev - Standard deviation value of normal distribution
  *
@@ -220,14 +220,14 @@ rocrand_generate_normal(rocrand_generator generator,
                         float mean, float stddev);
 
 /**
- * \brief Generates normally distributed doubles.
+ * \brief Generates normally distributed \p double values.
  *
  * Generates \p n normally distributed 64-bit double-precision floating-point
  * numbers and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of doubles to generate
+ * \param n - Number of <tt>double</tt>s to generate
  * \param mean - Mean value of normal distribution
  * \param stddev - Standard deviation value of normal distribution
  *
@@ -245,14 +245,14 @@ rocrand_generate_normal_double(rocrand_generator generator,
                                double mean, double stddev);
 
 /**
- * \brief Generates log-normally distributed floats.
+ * \brief Generates log-normally distributed \p float values.
  *
  * Generates \p n log-normally distributed 32-bit floating-point values
  * and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of floats to generate
+ * \param n - Number of <tt>float</tt>s to generate
  * \param mean - Mean value of log normal distribution
  * \param stddev - Standard deviation value of log normal distribution
  *
@@ -270,14 +270,14 @@ rocrand_generate_log_normal(rocrand_generator generator,
                             float mean, float stddev);
 
 /**
- * \brief Generates log-normally distributed doubles.
+ * \brief Generates log-normally distributed \p double values.
  *
  * Generates \p n log-normally distributed 64-bit double-precision floating-point
  * values and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of doubles to generate
+ * \param n - Number of <tt>double</tt>s to generate
  * \param mean - Mean value of log normal distribution
  * \param stddev - Standard deviation value of log normal distribution
  *

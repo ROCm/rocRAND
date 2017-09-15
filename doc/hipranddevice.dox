@@ -7,7 +7,7 @@
 /**
  * \defgroup hipranddevice hipRAND device functions
  * @{
- *     @page page_name hipRAND RNG's state types
+ *     @page hipranddevice_page hipRAND RNG's state types
  *     * \p hiprandStateXORWOW_t - XORWOW PRNG state type
  *     * \p hiprandStatePhilox4_32_10_t - PHILOX PRNG state type
  *     * \p hiprandStateMRG32k3a_t - MRG32k3a PRNG state type
