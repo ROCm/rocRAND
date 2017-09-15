@@ -186,8 +186,11 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p IntType type.
+    /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: rocrand_generate()
     template<class Generator>
@@ -263,8 +266,11 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
+    /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: rocrand_generate_uniform(), rocrand_generate_uniform_double()
     template<class Generator>
@@ -437,8 +443,13 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
+    /// * Pointer \p output must be aligned to <tt>2 * sizeof(RealType)</tt> bytes.
+    /// * \p size must be even.
+    /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: rocrand_generate_normal(), rocrand_generate_normal_double()
     template<class Generator>
@@ -622,8 +633,13 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p RealType type.
+    /// * Pointer \p output must be aligned to <tt>2 * sizeof(RealType)</tt> bytes.
+    /// * \p size must be even.
+    /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: rocrand_generate_log_normal(), rocrand_generate_log_normal_double()
     template<class Generator>
@@ -792,8 +808,11 @@ public:
     /// \param output - Pointer to device memory to store results
     /// \param size - Number of values to generate
     ///
-    /// The device memory pointed by \p output must have been previously allocated
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p IntType type.
+    /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
+    /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: rocrand_generate_poisson()
     template<class Generator>
@@ -1212,7 +1231,7 @@ public:
     /// \copydoc philox4x32_10_engine::min()
     result_type min() const
     {
-        return 0;
+        return 1;
     }
 
     /// \copydoc philox4x32_10_engine::max()
@@ -1466,7 +1485,21 @@ public:
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 
-    /// \copydoc philox4x32_10_engine::operator()()
+    /// \brief Fills \p output with uniformly distributed random integer values.
+    ///
+    /// Generates \p size random integer values uniformly distributed
+    /// on the interval [0, 2^32 - 1], and stores them into the device memory
+    /// referenced by \p output pointer.
+    ///
+    /// \param output - Pointer to device memory to store results
+    /// \param size - Number of values to generate
+    ///
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
+    /// and be large enough to store at least \p size values of \p IntType type.
+    /// * \p size must be a multiple of the engine's number of dimensions.
+    ////
+    /// See also: rocrand_generate()
     template<class Generator>
     void operator()(result_type * output, size_t size)
     {
