@@ -1,14 +1,15 @@
-# hipRAND
+# rocRAND
 
-The hipRAND project provides functions that generate pseudo-random and quasi-random numbers.
+The rocRAND project provides functions that generate pseudo-random and quasi-random numbers.
 
 The rocRAND library is implemented in the [HIP](https://github.com/ROCm-Developer-Tools/HIP)
 programming language and optimised for AMD's latest discrete GPUs. It is designed to run on top
 of AMD's Radeon Open Compute [ROCm](https://rocm.github.io/) runtime, but it also works on
 CUDA enabled GPUs.
-The hipRAND works as wrapper library which allows user to easily port CUDA applications
-that use cuRAND library to the [HIP](https://github.com/ROCm-Developer-Tools/HIP) layer.
-In [ROCm](https://rocm.github.io/) environment hipRAND uses rocRAND, however in CUDA
+
+Additonaly, the project includes a wrapper library called hipRAND which allows user to easily port
+CUDA applications that use cuRAND library to the [HIP](https://github.com/ROCm-Developer-Tools/HIP)
+layer. In [ROCm](https://rocm.github.io/) environment hipRAND uses rocRAND, however in CUDA
 environment cuRAND is used instead.
 
 ## Requirements
@@ -43,12 +44,12 @@ not to use system-installed libraries, and to download all dependencies.
 ## Build and Install
 
 ```
-git clone https://github.com/ROCmSoftwarePlatform/hipRAND.git
+git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
-# Go to hipRAND directory, create and go to build directory
-cd hipRAND; mkdir build; cd build
+# Go to rocRAND directory, create and go to build directory
+cd rocRAND; mkdir build; cd build
 
-# Configure hipRAND, setup options for your system
+# Configure rocRAND, setup options for your system
 # Build options: BUILD_TEST, BUILD_BENCHMARK (off by default), BUILD_CRUSH_TEST (off by default)
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
@@ -67,8 +68,8 @@ ctest --output-on-failure
 ## Running Unit Tests
 
 ```
-# Go to hipRAND build directory
-cd hipRAND; cd build
+# Go to rocRAND build directory
+cd rocRAND; cd build
 
 # To run all tests
 ctest
@@ -80,8 +81,8 @@ ctest
 ## Running Benchmarks
 
 ```
-# Go to hipRAND build directory
-cd hipRAND; cd build
+# Go to rocRAND build directory
+cd rocRAND; cd build
 
 # To run benchmark for generate functions:
 # engine -> all, xorwow, mrg32k3a, mtgp32, philox, sobol32
@@ -105,8 +106,8 @@ cd hipRAND; cd build
 ## Running Statistical Tests
 
 ```
-# Go to hipRAND build directory
-cd hipRAND; cd build
+# Go to rocRAND build directory
+cd rocRAND; cd build
 
 # To run "crush" test, which verifies that generated pseudorandom
 # numbers are of high quality:
@@ -124,8 +125,8 @@ cd hipRAND; cd build
 ## Documentation
 
 ```
-# go to hipRAND doc directory
-cd hipRAND; cd doc
+# go to rocRAND doc directory
+cd rocRAND; cd doc
 
 # run doxygen
 doxygen Doxyfile
@@ -136,7 +137,7 @@ doxygen Doxyfile
 
 ## Support
 
-Bugs and feature requests can be reported through [the issue tracker](https://github.com/ROCmSoftwarePlatform/hipRAND/issues).
+Bugs and feature requests can be reported through [the issue tracker](https://github.com/ROCmSoftwarePlatform/rocRAND/issues).
 
 ## Contributions and License
 

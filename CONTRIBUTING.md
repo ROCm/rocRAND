@@ -1,4 +1,4 @@
-# Contributing to hipRAND
+# Contributing to rocRAND
 
 ## Reporting Issues
 

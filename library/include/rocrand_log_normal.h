@@ -41,19 +41,19 @@
 #include "rocrand_normal.h"
 
 /**
- * \brief Return a log-normally distributed float from a Philox Generator.
+ * \brief Returns a log-normally distributed \p float value.
  *
- * Return a log-normally distributed float with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one. Box-Muller implementation
- * is used to generate log-normally distributed floats.
+ * Generates and returns a log-normally distributed \p float value using Philox
+ * generator in \p state, and increments position of the generator by one.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, returns first of them, and saves
+ * the second to be returned on the next call.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed float with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p float value
  */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -72,19 +72,18 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 /**
- * \brief Return two log-normally distributed floats from a Philox Generator.
+ * \brief Returns two log-normally distributed \p float values.
  *
- * Return two log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by two. Box-Muller implementation
- * is used to generate log-normally distributed floats.
+ * Generates and returns two log-normally distributed \p float values using Philox
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return two log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev
+ * \return Two log-normally distributed \p float value as \p float2
  */
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, float stddev)
@@ -97,19 +96,18 @@ float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, floa
 }
 
 /**
- * \brief Return four log-normally distributed floats from a Philox Generator.
+ * \brief Returns four log-normally distributed \p float values.
  *
- * Return four log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by four. Box-Muller implementation
- * is used to generate log-normally distributed floats.
+ * Generates and returns four log-normally distributed \p float values using Philox
+ * generator in \p state, and increments position of the generator by four.
+ * The function uses the Box-Muller transform method to generate four normally distributed
+ * values, transforms them to log-normally distributed values, and returns them.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return four log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev
+ * \return Four log-normally distributed \p float value as \p float4
  */
 FQUALIFIERS
 float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, float stddev)
@@ -124,19 +122,19 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
 }
 
 /**
- * \brief Return a log-normally distributed double from a Philox Generator.
+ * \brief Returns a log-normally distributed \p double values.
  *
- * Return a log-normally distributed double with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one. Box-Muller implementation
- * is used to generate log-normally distributed doubles.
+ * Generates and returns a log-normally distributed \p double value using Philox
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * \p double values, transforms them to log-normally distributed \p double values, returns
+ * first of them, and saves the second to be returned on the next call.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed double with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p double value
  */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -155,19 +153,18 @@ double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mea
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 /**
- * \brief Return two log-normally distributed doubles from a Philox Generator.
+ * \brief Returns two log-normally distributed \p double values.
  *
- * Return two log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by two. Box-Muller implementation
- * is used to generate log-normally distributed doubles.
+ * Generates and returns two log-normally distributed \p double values using Philox
+ * generator in \p state, and increments position of the generator by four.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return two log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev
+ * \return Two log-normally distributed \p double values as \p double2
  */
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double mean, double stddev)
@@ -180,19 +177,18 @@ double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double m
 }
 
 /**
- * \brief Return four log-normally distributed doubles from a Philox Generator.
+ * \brief Returns four log-normally distributed \p double values.
  *
- * Return four log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by four. Box-Muller implementation
- * is used to generate log-normally distributed doubles.
+ * Generates and returns four log-normally distributed \p double values using Philox
+ * generator in \p state, and increments position of the generator by eight.
+ * The function uses the Box-Muller transform method to generate four normally distributed
+ * values, transforms them to log-normally distributed values, and returns them.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return four log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev
+ * \return Four log-normally distributed \p double values as \p double4
  */
 FQUALIFIERS
 double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double mean, double stddev)
@@ -206,19 +202,19 @@ double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double m
 }
 
 /**
- * \brief Return a log-normally distributed float from a MRG32K3A Generator.
+ * \brief Returns a log-normally distributed \p float value.
  *
- * Return a log-normally distributed float with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one. Box-Muller implementation
- * is used to generate log-normally distributed floats.
+ * Generates and returns a log-normally distributed \p float value using MRG32k3a
+ * generator in \p state, and increments position of the generator by one.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, returns first of them,
+ * and saves the second to be returned on the next call.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed float with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p float value
  */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -237,19 +233,18 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 /**
- * \brief Return two log-normally distributed floats from a MRG32K3A Generator.
+ * \brief Returns two log-normally distributed \p float values.
  *
- * Return two log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by two. Box-Muller implementation
- * is used to generate log-normally distributed floats.
+ * Generates and returns two log-normally distributed \p float values using MRG32k3a
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return two log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev
+ * \return Two log-normally distributed \p float value as \p float2
  */
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float stddev)
@@ -262,19 +257,19 @@ float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float std
 }
 
 /**
- * \brief Return a log-normally distributed double from a MRG32K3A Generator.
+ * \brief Returns a log-normally distributed \p double value.
  *
- * Return a log-normally distributed double with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one. Box-Muller implementation
- * is used to generate log-normally distributed doubles.
+ * Generates and returns a log-normally distributed \p double value using MRG32k3a
+ * generator in \p state, and increments position of the generator by one.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * \p double values, transforms them to log-normally distributed \p double values, returns
+ * first of them, and saves the second to be returned on the next call.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed double with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p double value
  */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -293,19 +288,18 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 /**
- * \brief Return two log-normally distributed doubles from a MRG32K3A Generator.
+ * \brief Returns two log-normally distributed \p double values.
  *
- * Return two log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by two. Box-Muller implementation
- * is used to generate log-normally distributed doubles.
+ * Generates and returns two log-normally distributed \p double values using MRG32k3a
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return two log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev
+ * \return Two log-normally distributed \p double values as \p double2
  */
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, double stddev)
@@ -318,19 +312,19 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
 }
 
 /**
- * \brief Return a log-normally distributed float from a XORWOW Generator.
+ * \brief Returns a log-normally distributed \p float value.
  *
- * Return a log-normally distributed float with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one. Box-Muller implementation
- * is used to generate log-normally distributed floats.
+ * Generates and returns a log-normally distributed \p float value using XORWOW
+ * generator in \p state, and increments position of the generator by one.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, returns first of them,
+ * and saves the second to be returned on the next call.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed float with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p float value
  */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -349,19 +343,18 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 /**
- * \brief Return two log-normally distributed floats from a XORWOW Generator.
+ * \brief Returns two log-normally distributed \p float values.
  *
- * Return two log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by two. Box-Muller implementation
- * is used to generate log-normally distributed floats.
+ * Generates and returns two log-normally distributed \p float values using XORWOW
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return two log-normally distributed floats with mean \p mean and
- * standard deviation \p stddev
+ * \return Two log-normally distributed \p float value as \p float2
  */
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stddev)
@@ -374,19 +367,19 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
 }
 
 /**
- * \brief Return a log-normally distributed double from a XORWOW Generator.
+ * \brief Returns a log-normally distributed \p double value.
  *
- * Return a log-normally distributed double with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one. Box-Muller implementation
- * is used to generate log-normally distributed doubles.
+ * Generates and returns a log-normally distributed \p double value using XORWOW
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * \p double values, transforms them to log-normally distributed \p double values, returns
+ * first of them, and saves the second to be returned on the next call.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed double with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p double value
  */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
@@ -407,19 +400,18 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 /**
- * \brief Return two log-normally distributed doubles from a XORWOW Generator.
+ * \brief Returns two log-normally distributed \p double values.
  *
- * Return two log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by two. Box-Muller implementation
- * is used to generate log-normally distributed doubles.
+ * Generates and returns two log-normally distributed \p double values using XORWOW
+ * generator in \p state, and increments position of the generator by four.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return double log-normally distributed doubles with mean \p mean and
- * standard deviation \p stddev
+ * \return Two log-normally distributed \p double values as \p double2
  */
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, double stddev)
@@ -434,18 +426,16 @@ double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, do
 }
 
 /**
- * \brief Return a log-normally distributed float from a MTGP32 Generator.
+ * \brief Returns a log-normally distributed \p float value.
  *
- * Return a log-normally distributed float with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one.
+ * Generates and returns a log-normally distributed \p float value using MTGP32
+ * generator in \p state, and increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed float with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p float value
  */
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_mtgp32 * state, float mean, float stddev)
@@ -455,18 +445,16 @@ float rocrand_log_normal(rocrand_state_mtgp32 * state, float mean, float stddev)
 }
 
 /**
- * \brief Return a log-normally distributed double from a MTGP32 Generator.
+ * \brief Returns a log-normally distributed \p double value.
  *
- * Return a log-normally distributed double with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one.
+ * Generates and returns a log-normally distributed \p double value using MTGP32
+ * generator in \p state, and increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed double with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p double value
  */
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_mtgp32 * state, double mean, double stddev)
@@ -476,18 +464,16 @@ double rocrand_log_normal_double(rocrand_state_mtgp32 * state, double mean, doub
 }
 
 /**
- * \brief Return a log-normally distributed float from a SOBOL32 Generator.
+ * \brief Returns a log-normally distributed \p float value.
  *
- * Return a log-normally distributed float with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one.
+ * Generates and returns a log-normally distributed \p float value using SOBOL32
+ * generator in \p state, and increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed float with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p float value
  */
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_sobol32 * state, float mean, float stddev)
@@ -497,18 +483,16 @@ float rocrand_log_normal(rocrand_state_sobol32 * state, float mean, float stddev
 }
 
 /**
- * \brief Return a log-normally distributed double from a SOBOL32 Generator.
+ * \brief Returns a log-normally distributed \p double value.
  *
- * Return a log-normally distributed double with mean \p mean and
- * standard deviation \p stddev from \p state, and increments
- * position of generator by one.
+ * Generates and returns a log-normally distributed \p double value using SOBOL32
+ * generator in \p state, and increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
  * \param stddev - Standard deviation of the related log-normal distribution
  *
- * \return log-normally distributed double with mean \p mean and
- * standard deviation \p stddev
+ * \return Log-normally distributed \p double value
  */
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_sobol32 * state, double mean, double stddev)

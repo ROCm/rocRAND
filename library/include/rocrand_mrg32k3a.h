@@ -419,10 +419,10 @@ typedef rocrand_device::mrg32k3a_engine rocrand_state_mrg32k3a;
 /// \endcond
 
 /**
- * \brief Initialize MRG32K3A state.
+ * \brief Initializes MRG32K3A state.
  *
- * Initialize MRG32K3A state in \p state with the given \p seed, \p subsequence,
- * and \p offset.
+ * Initializes the MRG32K3A generator \p state with the given
+ * \p seed, \p subsequence, and \p offset.
  *
  * \param seed - Value to use as a seed
  * \param subsequence - Subsequence to start at
@@ -439,14 +439,16 @@ void rocrand_init(const unsigned long long seed,
 }
 
 /**
- * \brief Return pseudorandom value (32-bit) from MRG32K3A generator.
+ * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * from [0; 2^32 - 1] range.
  *
- * Return pseudorandom value (32-bit) from the MRG32K3A generator in \p state,
- * increment position of generator by one.
+ * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * value from [0; 2^32 - 1] range using MRG32K3A generator in \p state.
+ * State is incremented by one position.
  *
  * \param state - Pointer to a state to use
  *
- * \return pseudorandom value (32-bit) as an unsigned int
+ * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_mrg32k3a * state)
@@ -455,9 +457,9 @@ unsigned int rocrand(rocrand_state_mrg32k3a * state)
 }
 
 /**
- * \brief Update MRG32K3A state to skip ahead by \p offset elements.
+ * \brief Updates MRG32K3A state to skip ahead by \p offset elements.
  *
- * Update the MRG32K3A state in \p state to skip ahead by \p offset elements.
+ * Updates the MRG32K3A state in \p state to skip ahead by \p offset elements.
  *
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
@@ -469,9 +471,9 @@ void skipahead(unsigned long long offset, rocrand_state_mrg32k3a * state)
 }
 
 /**
- * \brief Update MRG32K3A state to skip ahead by \p subsequence subsequences.
+ * \brief Updates MRG32K3A state to skip ahead by \p subsequence subsequences.
  *
- * Update the MRG32K3A state in \p state to skip ahead by \p subsequence subsequences.
+ * Updates the MRG32K3A state in \p state to skip ahead by \p subsequence subsequences.
  * Each subsequence is 2^67 numbers long.
  *
  * \param subsequence - Number of subsequences to skip
@@ -484,9 +486,9 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_mrg32k3
 }
 
 /**
- * \brief Update MRG32K3A state to skip ahead by \p sequence sequences.
+ * \brief Updates MRG32K3A state to skip ahead by \p sequence sequences.
  *
- * Update the MRG32K3A state in \p state to skip ahead by \p sequence sequences.
+ * Updates the MRG32K3A state in \p state to skip ahead by \p sequence sequences.
  * Each sequence is 2^127 numbers long.
  *
  * \param sequence - Number of sequences to skip

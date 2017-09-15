@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
-project(hipRAND CXX C)
+project(rocrand CXX C)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
