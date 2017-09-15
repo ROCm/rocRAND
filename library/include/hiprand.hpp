@@ -196,7 +196,7 @@ public:
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
-    /// and be large enough to store at least \p size values of \p RealType type.
+    /// and be large enough to store at least \p size values of \p IntType type.
     /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
@@ -818,7 +818,7 @@ public:
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
-    /// and be large enough to store at least \p size values of \p RealType type.
+    /// and be large enough to store at least \p size values of \p IntType type.
     /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
