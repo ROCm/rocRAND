@@ -1,36 +1,77 @@
 # Fortran Wrapper Tests
+
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/fruit/*.f90)
 set(FRUIT_SRCS ${tmp})
-file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*.F90)
+file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/fruit_helpers.f90)
 set(FRUIT_HELPER_SRCS ${tmp})
-file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/hip_fortran/*.f90)
-set(HIP_FORTRAN_SRCS ${tmp})
-file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*.f90)
+file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*_rocrand.f90)
 set(FORTRAN_ROCRAND_TEST ${tmp})
-set(FORTRAN_ROCRAND_CPP ${CMAKE_CURRENT_SOURCE_DIR}/hip_fortran/hip_fortran.cpp)
-set_source_files_properties(${FORTRAN_ROCRAND_CPP} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
+file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/*_hiprand.f90)
+set(FORTRAN_HIPRAND_TEST ${tmp})
 
-hip_add_library(hip_fortran SHARED "${FORTRAN_ROCRAND_CPP}")
-include_directories(${PROJECT_BINARY_DIR}/library)
-set(test_name "test_rocrand_fortran_wrapper")
-add_executable(${test_name} "${FRUIT_SRCS}" "${FRUIT_HELPER_SRCS}" "${HIP_FORTRAN_SRCS}" "${FORTRAN_ROCRAND_TEST}")
-add_dependencies(${test_name} rocrand rocrand_fortran hip_fortran)
-get_target_property(rocRAND_fortran_rpath rocrand_fortran BINARY_DIR)
-get_target_property(rocRAND_rpath rocrand BINARY_DIR)
-get_target_property(hip_fortran_rpath hip_fortran BINARY_DIR)
+set(test_rocrand "test_rocrand_fortran_wrapper")
+set(test_hiprand "test_hiprand_fortran_wrapper")
+
+# Build unit test (rocrand)
+add_executable(${test_rocrand} "${FRUIT_SRCS}" "${FRUIT_HELPER_SRCS}" "${FORTRAN_ROCRAND_TEST}")
+add_dependencies(${test_rocrand} rocrand rocrand_fortran)
+target_include_directories(
+    ${test_rocrand}
+    PRIVATE
+        "${PROJECT_BINARY_DIR}/library/fortran"
+)
 target_link_libraries(
-    ${test_name}
-    -Wl,-rpath,${rocRAND_fortran_rpath}:${rocRAND_rpath}:${hip_fortran_rpath} # workaround for HIP linker
-    $<TARGET_FILE:rocrand_fortran>
-    $<TARGET_FILE:rocrand>
-    $<TARGET_FILE:hip_fortran>
+    ${test_rocrand}
+        rocrand_fortran
+        rocrand
 )
 if(HIP_PLATFORM STREQUAL "nvcc")
-    target_link_libraries(${test_name} "-lcuda -lcudart")
+    target_link_libraries(
+        ${test_rocrand}
+        "-lcuda -lcudart -lcurand"
+    )
+else()
+    target_link_libraries(
+        ${test_rocrand}
+        "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
+    )
 endif()
 set_target_properties(
-    ${test_name} 
+    ${test_rocrand}
     PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
 )
-add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
+
+# Build unit test (hiprand)
+add_executable(${test_hiprand} "${FRUIT_SRCS}" "${FRUIT_HELPER_SRCS}" "${FORTRAN_HIPRAND_TEST}")
+add_dependencies(${test_hiprand} hiprand hiprand_fortran)
+target_include_directories(
+    ${test_hiprand}
+    PRIVATE
+        "${PROJECT_BINARY_DIR}/library/fortran"
+)
+target_link_libraries(
+    ${test_hiprand}
+        hiprand_fortran
+        hiprand
+)
+if(HIP_PLATFORM STREQUAL "nvcc")
+    target_link_libraries(
+        ${test_hiprand}
+        "-lcuda -lcudart -lcurand"
+    )
+else()
+    target_link_libraries(
+        ${test_hiprand}
+        "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
+    )
+endif()
+set_target_properties(
+    ${test_hiprand}
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
+)
+
+
+add_test(NAME ${test_rocrand} COMMAND $<TARGET_FILE:${test_rocrand}>)
+add_test(NAME ${test_hiprand} COMMAND $<TARGET_FILE:${test_hiprand}>)

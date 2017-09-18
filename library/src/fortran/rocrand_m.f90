@@ -19,6 +19,8 @@
 !! THE SOFTWARE.
 
 module rocrand_m
+    use hipfor
+
     integer, public :: ROCRAND_RNG_PSEUDO_DEFAULT = 400
     integer, public :: ROCRAND_RNG_PSEUDO_XORWOW = 401
     integer, public :: ROCRAND_RNG_PSEUDO_MRG32K3A = 402
@@ -26,7 +28,7 @@ module rocrand_m
     integer, public :: ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
     integer, public :: ROCRAND_RNG_QUASI_DEFAULT = 500
     integer, public :: ROCRAND_RNG_QUASI_SOBOL32 = 501
-    
+
     integer, public :: ROCRAND_STATUS_SUCCESS = 0
     integer, public :: ROCRAND_STATUS_VERSION_MISMATCH  = 100
     integer, public :: ROCRAND_STATUS_NOT_CREATED  = 101
@@ -38,7 +40,7 @@ module rocrand_m
     integer, public :: ROCRAND_STATUS_LAUNCH_FAILURE  = 107
     integer, public :: ROCRAND_STATUS_INTERNAL_ERROR  = 108
 
-    interface 
+    interface
         function rocrand_create_generator(generator, rng_type) &
         bind(C, name="rocrand_create_generator")
             use iso_c_binding
@@ -47,7 +49,7 @@ module rocrand_m
             integer(c_size_t) :: generator
             integer(c_int), value :: rng_type
         end function
-    
+
         function rocrand_destroy_generator(generator) &
         bind(C, name="rocrand_destroy_generator")
             use iso_c_binding
@@ -55,7 +57,7 @@ module rocrand_m
             integer(c_int) :: rocrand_destroy_generator
             integer(c_size_t), value :: generator
         end function
-        
+
         function rocrand_generate(generator, output_data, n) &
         bind(C, name="rocrand_generate")
             use iso_c_binding
@@ -65,7 +67,7 @@ module rocrand_m
             type(c_ptr), value :: output_data
             integer(c_size_t), value :: n
         end function
-        
+
         function rocrand_generate_uniform(generator, output_data, n) &
         bind(C, name="rocrand_generate_uniform")
             use iso_c_binding
@@ -75,7 +77,7 @@ module rocrand_m
             type(c_ptr), value :: output_data
             integer(c_size_t), value :: n
         end function
-        
+
         function rocrand_generate_uniform_double(generator, output_data, n) &
         bind(C, name="rocrand_generate_uniform_double")
             use iso_c_binding
@@ -85,7 +87,7 @@ module rocrand_m
             type(c_ptr), value :: output_data
             integer(c_size_t), value :: n
         end function
-        
+
         function rocrand_generate_normal(generator, output_data, n, mean, &
         stddev) bind(C, name="rocrand_generate_normal")
             use iso_c_binding
@@ -97,7 +99,7 @@ module rocrand_m
             real(c_float), value :: mean
             real(c_float), value :: stddev
         end function
-        
+
         function rocrand_generate_normal_double(generator, output_data, n, &
         mean, stddev) bind(C, name="rocrand_generate_normal_double")
             use iso_c_binding
@@ -109,7 +111,7 @@ module rocrand_m
             real(c_double), value :: mean
             real(c_double), value :: stddev
         end function
-        
+
         function rocrand_generate_log_normal(generator, output_data, n, mean, &
         stddev) bind(C, name="rocrand_generate_log_normal")
             use iso_c_binding
@@ -121,7 +123,7 @@ module rocrand_m
             real(c_float), value :: mean
             real(c_float), value :: stddev
         end function
-        
+
         function rocrand_generate_log_normal_double(generator, output_data, n, &
         mean, stddev) bind(C, name="rocrand_generate_log_normal_double")
             use iso_c_binding
@@ -133,7 +135,7 @@ module rocrand_m
             real(c_double), value :: mean
             real(c_double), value :: stddev
         end function
-        
+
         function rocrand_generate_poisson(generator, output_data, n, lambda) &
         bind(C, name="rocrand_generate_poisson")
             use iso_c_binding
@@ -144,7 +146,7 @@ module rocrand_m
             integer(c_size_t), value :: n
             real(c_double), value :: lambda
         end function
-        
+
         function rocrand_initialize_generator(generator) &
         bind(C, name="rocrand_initialize_generator")
             use iso_c_binding
@@ -152,7 +154,7 @@ module rocrand_m
             integer(c_int) :: rocrand_initialize_generator
             integer(c_size_t), value :: generator
         end function
-        
+
         function rocrand_set_stream(generator, stream) &
         bind(C, name="rocrand_set_stream")
             use iso_c_binding
@@ -161,7 +163,7 @@ module rocrand_m
             integer(c_size_t), value :: generator
             integer(c_size_t), value :: stream
         end function
-        
+
         function rocrand_set_seed(generator, seed) &
         bind(C, name="rocrand_set_seed")
             use iso_c_binding
@@ -170,7 +172,7 @@ module rocrand_m
             integer(c_size_t), value :: generator
             integer(kind =8), value :: seed
         end function
-        
+
         function rocrand_set_offset(generator, offset) &
         bind(C, name="rocrand_set_offset")
             use iso_c_binding
@@ -179,7 +181,7 @@ module rocrand_m
             integer(c_size_t), value :: generator
             integer(kind =8), value :: offset
         end function
-        
+
         function rocrand_set_quasi_random_generator_dimensions(generator, &
         dimensions) bind(C, name="rocrand_set_quasi_random_generator_dimensions")
             use iso_c_binding
@@ -188,7 +190,7 @@ module rocrand_m
             integer(c_size_t), value :: generator
             integer(c_int), value :: dimensions
         end function
-        
+
         function rocrand_get_version(version) &
         bind(C, name="rocrand_get_version")
             use iso_c_binding
@@ -196,7 +198,7 @@ module rocrand_m
             integer(c_int) :: rocrand_get_version
             integer(c_int) :: version
         end function
-        
+
         function rocrand_create_poisson_distribution(lambda, &
         discrete_distribution) bind(C, name="rocrand_create_poisson_distribution")
             use iso_c_binding
@@ -205,7 +207,7 @@ module rocrand_m
             real(c_double), value :: lambda
             integer(c_size_t) :: discrete_distribution
         end function
-        
+
         function rocrand_create_discrete_distribution(probabilities, size, offset, &
         discrete_distribution) bind(C, name="rocrand_create_discrete_distribution")
             use iso_c_binding
@@ -216,7 +218,7 @@ module rocrand_m
             integer(c_int), value :: offset
             integer(c_size_t), value :: discrete_distribution
         end function
-        
+
         function rocrand_destroy_discrete_distribution(discrete_distribution) &
         bind(C, name="rocrand_destroy_discrete_distribution")
             use iso_c_binding

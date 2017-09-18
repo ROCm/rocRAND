@@ -18,10 +18,10 @@
 !! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 !! THE SOFTWARE.
 
-module rocrand_test
+module test_rocrand
     use fruit
     use fruit_helpers
-    use hipfor
+    ! use hipfor
     use rocrand_m
 
     implicit none
@@ -47,7 +47,7 @@ contains
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_set_offset(gen, offset))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_init
-    
+
     !> Test rocrand_generate.
     subroutine test_rocrand_generate()
         integer(kind =8) :: gen
@@ -63,7 +63,7 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate
-    
+
     !> Test rocrand_generate_uniform.
     subroutine test_rocrand_generate_uniform()
         integer(kind =8) :: gen
@@ -81,7 +81,7 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate_uniform
-    
+
     !> Test rocrand_generate_uniform_double.
     subroutine test_rocrand_generate_uniform_double()
         integer(kind =8) :: gen
@@ -100,7 +100,7 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate_uniform_double
-    
+
     !> Test rocrand_generate_normal.
     subroutine test_rocrand_generate_normal()
         integer(kind =8) :: gen
@@ -120,7 +120,7 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate_normal
-    
+
     !> Test rocrand_generate_normal_double.
     subroutine test_rocrand_generate_normal_double()
         integer(kind =8) :: gen
@@ -140,7 +140,7 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate_normal_double
-    
+
     !> Test rocrand_generate_log_normal.
     subroutine test_rocrand_generate_log_normal()
         integer(kind =8) :: gen
@@ -163,7 +163,7 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate_log_normal
-    
+
     !> Test rocrand_generate_log_normal_double.
     subroutine test_rocrand_generate_log_normal_double()
         integer(kind =8) :: gen
@@ -186,7 +186,7 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate_log_normal_double
-    
+
     !> Test rocrand_generate_poisson.
     subroutine test_rocrand_generate_poisson()
         integer(kind =8) :: gen, distribution
@@ -211,36 +211,36 @@ contains
 
     !> Call each test.
     subroutine rocrand_basket()
-    character(len=*) :: suite_name 
-    parameter(suite_name='rocrand_test')
+    character(len=*) :: suite_name
+    parameter(suite_name='test_rocrand')
 
     call run_fruit_test_case(test_init,'test_init',&
         setup,teardown,suite_name)
-      
+
     call run_fruit_test_case(test_rocrand_generate,'test_rocrand_generate',&
         setup,teardown,suite_name)
-        
+
     call run_fruit_test_case(test_rocrand_generate_uniform,'test_rocrand_generate_uniform',&
         setup,teardown,suite_name)
-        
+
     call run_fruit_test_case(test_rocrand_generate_uniform_double, &
         'test_rocrand_generate_uniform_double',setup,teardown,suite_name)
-        
+
     call run_fruit_test_case(test_rocrand_generate_normal,'test_rocrand_generate_normal',&
         setup,teardown,suite_name)
-        
+
     call run_fruit_test_case(test_rocrand_generate_normal_double, &
         'test_rocrand_generate_normal_double',setup,teardown,suite_name)
-        
+
     call run_fruit_test_case(test_rocrand_generate_log_normal,'test_rocrand_generate_log_normal',&
         setup,teardown,suite_name)
-        
+
     call run_fruit_test_case(test_rocrand_generate_log_normal_double, &
         'test_rocrand_generate_log_normal_double',setup,teardown,suite_name)
-        
+
     call run_fruit_test_case(test_rocrand_generate_poisson,'test_rocrand_generate_poisson',&
         setup,teardown,suite_name)
 
     end subroutine rocrand_basket
 
-end module rocrand_test
+end module test_rocrand

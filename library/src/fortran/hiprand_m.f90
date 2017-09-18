@@ -19,6 +19,8 @@
 !! THE SOFTWARE.
 
 module hiprand_m
+    use hipfor
+
     integer, public :: HIPRAND_RNG_PSEUDO_DEFAULT = 400
     integer, public :: HIPRAND_RNG_PSEUDO_XORWOW = 401
     integer, public :: HIPRAND_RNG_PSEUDO_MRG32K3A = 402
@@ -30,7 +32,7 @@ module hiprand_m
     integer, public :: HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502
     integer, public :: HIPRAND_RNG_QUASI_SOBOL64 = 503
     integer, public :: HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504
-    
+
     integer, public :: HIPRAND_STATUS_SUCCESS = 0
     integer, public :: HIPRAND_STATUS_VERSION_MISMATCH  = 100
     integer, public :: HIPRAND_STATUS_NOT_INITIALIZED  = 101
@@ -46,7 +48,7 @@ module hiprand_m
     integer, public :: HIPRAND_STATUS_INTERNAL_ERROR  = 999
     integer, public :: HIPRAND_STATUS_NOT_IMPLEMENTED  = 1000
 
-    interface 
+    interface
         function hiprandCreateGenerator(generator, rng_type) &
         bind(C, name="hiprandCreateGenerator")
             use iso_c_binding
@@ -55,7 +57,7 @@ module hiprand_m
             integer(c_size_t) :: generator
             integer(c_int), value :: rng_type
         end function
-    
+
         function hiprandDestroyGenerator(generator) &
         bind(C, name="hiprandDestroyGenerator")
             use iso_c_binding
@@ -63,7 +65,7 @@ module hiprand_m
             integer(c_int) :: hiprandDestroyGenerator
             integer(c_size_t), value :: generator
         end function
-        
+
         function hiprandGenerate(generator, output_data, n) &
         bind(C, name="hiprandGenerate")
             use iso_c_binding
@@ -73,7 +75,7 @@ module hiprand_m
             type(c_ptr), value :: output_data
             integer(c_size_t), value :: n
         end function
-        
+
         function hiprandGenerateUniform(generator, output_data, n) &
         bind(C, name="hiprandGenerateUniform")
             use iso_c_binding
@@ -83,7 +85,7 @@ module hiprand_m
             type(c_ptr), value :: output_data
             integer(c_size_t), value :: n
         end function
-        
+
         function hiprandGenerateUniformDouble(generator, output_data, n) &
         bind(C, name="hiprandGenerateUniformDouble")
             use iso_c_binding
@@ -93,19 +95,19 @@ module hiprand_m
             type(c_ptr), value :: output_data
             integer(c_size_t), value :: n
         end function
-        
+
         function hiprandGenerateNormal(generator, output_data, n, mean, &
         stddev) bind(C, name="hiprandGenerateNormal")
             use iso_c_binding
             implicit none
-            integer(c_int) :: rocrand_generate_normal
+            integer(c_int) :: hiprandGenerateNormal
             integer(c_size_t), value :: generator
             type(c_ptr), value :: output_data
             integer(c_size_t), value :: n
             real(c_float), value :: mean
             real(c_float), value :: stddev
         end function
-        
+
         function hiprandGenerateNormalDouble(generator, output_data, n, &
         mean, stddev) bind(C, name="hiprandGenerateNormalDouble")
             use iso_c_binding
@@ -117,7 +119,7 @@ module hiprand_m
             real(c_double), value :: mean
             real(c_double), value :: stddev
         end function
-        
+
         function hiprandGenerateLogNormal(generator, output_data, n, mean, &
         stddev) bind(C, name="hiprandGenerateLogNormal")
             use iso_c_binding
@@ -129,7 +131,7 @@ module hiprand_m
             real(c_float), value :: mean
             real(c_float), value :: stddev
         end function
-        
+
         function hiprandGenerateLogNormalDouble(generator, output_data, n, &
         mean, stddev) bind(C, name="hiprandGenerateLogNormalDouble")
             use iso_c_binding
@@ -141,7 +143,7 @@ module hiprand_m
             real(c_double), value :: mean
             real(c_double), value :: stddev
         end function
-        
+
         function hiprandGeneratePoisson(generator, output_data, n, lambda) &
         bind(C, name="hiprandGeneratePoisson")
             use iso_c_binding
@@ -152,7 +154,7 @@ module hiprand_m
             integer(c_size_t), value :: n
             real(c_double), value :: lambda
         end function
-        
+
         function hiprandGenerateSeeds(generator) &
         bind(C, name="hiprandGenerateSeeds")
             use iso_c_binding
@@ -160,7 +162,7 @@ module hiprand_m
             integer(c_int) :: hiprandGenerateSeeds
             integer(c_size_t), value :: generator
         end function
-        
+
         function hiprandSetStream(generator, stream) &
         bind(C, name="hiprandSetStream")
             use iso_c_binding
@@ -169,7 +171,7 @@ module hiprand_m
             integer(c_size_t), value :: generator
             integer(c_size_t), value :: stream
         end function
-        
+
         function hiprandSetPseudoRandomGeneratorSeed(generator, seed) &
         bind(C, name="hiprandSetPseudoRandomGeneratorSeed")
             use iso_c_binding
@@ -178,7 +180,7 @@ module hiprand_m
             integer(c_size_t), value :: generator
             integer(kind =8), value :: seed
         end function
-        
+
         function hiprandSetGeneratorOffset(generator, offset) &
         bind(C, name="hiprandSetGeneratorOffset")
             use iso_c_binding
@@ -187,7 +189,7 @@ module hiprand_m
             integer(c_size_t), value :: generator
             integer(kind =8), value :: offset
         end function
-        
+
         function hiprandSetQuasiRandomGeneratorDimensions(generator, &
         dimensions) bind(C, name="hiprandSetQuasiRandomGeneratorDimensions")
             use iso_c_binding
@@ -196,7 +198,7 @@ module hiprand_m
             integer(c_size_t), value :: generator
             integer(c_int), value :: dimensions
         end function
-        
+
         function hiprandGetVersion(version) &
         bind(C, name="hiprandGetVersion")
             use iso_c_binding
@@ -204,7 +206,7 @@ module hiprand_m
             integer(c_int) :: hiprandGetVersion
             integer(c_int) :: version
         end function
-        
+
         function hiprandCreatePoissonDistribution(lambda, &
         discrete_distribution) bind(C, name="hiprandCreatePoissonDistribution")
             use iso_c_binding
@@ -213,7 +215,7 @@ module hiprand_m
             real(c_double), value :: lambda
             integer(c_size_t) :: discrete_distribution
         end function
-        
+
         function hiprandDestroyDistribution(discrete_distribution) &
         bind(C, name="hiprandDestroyDistribution")
             use iso_c_binding
@@ -222,4 +224,4 @@ module hiprand_m
             integer(c_size_t), value :: discrete_distribution
         end function
     end interface
-end module rocrand_m
+end module hiprand_m
