@@ -9,8 +9,6 @@ foreach(EXCLUDE ${tmp})
 endforeach()
 set_source_files_properties(${rocRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
-set(FORTRAN_ROCRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/fortran/rocrand_m.f90)
-
 # configure a header file to pass the rocRAND version
 configure_file(
     "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
@@ -175,15 +173,7 @@ install(
 )
 
 if (BUILD_FORTRAN_WRAPPER)
-    add_library(rocrand_fortran SHARED "${FORTRAN_ROCRAND_SRCS}")
-    set_target_properties(rocrand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
-    add_dependencies(rocrand_fortran rocrand)
-    get_target_property(rocRAND_rpath rocrand BINARY_DIR)
-    target_link_libraries(
-        rocrand_fortran
-        -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
-        $<TARGET_FILE:rocrand>
-    )
+    add_subdirectory(src/fortran)
 endif()
 
 # Package (make package)

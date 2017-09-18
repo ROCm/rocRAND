@@ -21,21 +21,21 @@
 module hipfor
     use iso_c_binding
     implicit none
-    
+
     integer, public :: hipSuccess = 0
-    
+
     integer, public :: hipMemcpyHostToHost = 0
     integer, public :: hipMemcpyHostToDevice = 1
     integer, public :: hipMemcpyDeviceToHost = 2
     integer, public :: hipMemcpyDeviceToDevice = 3
     integer, public :: hipMemcpyDefault = 4
-                  
+
     type, bind(C) :: dim3
         integer(c_int) :: x, y, z
     end type dim3
-    
+
     interface
-        function hipMalloc(ptr, length) bind(C, name = "_hipMalloc")
+        function hipMalloc(ptr, length) bind(C, name = "cudaMalloc")
             use iso_c_binding
             implicit none
             type(c_ptr) :: ptr
@@ -43,7 +43,7 @@ module hipfor
             integer(c_int) :: hipMalloc
         end function
 
-        function hipMemcpy(dst, src, length, dir) bind(C, name = "_hipMemcpy")
+        function hipMemcpy(dst, src, length, dir) bind(C, name = "cudaMemcpy")
             use iso_c_binding
             implicit none
             type(c_ptr), value :: dst, src
@@ -52,7 +52,7 @@ module hipfor
             integer(c_int) :: hipMemcpy
             end function
 
-        function hipFree(ptr) bind(C, name = "_hipFree")
+        function hipFree(ptr) bind(C, name = "cudaFree")
             use iso_c_binding
             implicit none
             type(c_ptr), value :: ptr

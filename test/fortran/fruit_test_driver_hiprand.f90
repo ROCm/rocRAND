@@ -21,21 +21,21 @@
 !! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 !! THE SOFTWARE.
 
-program fruit_test_driver
+program fruit_test_driver_hiprand
 
     use fruit
 
     ! Add modules here...
-    use rocrand_test
+    use test_hiprand
 
     call init_fruit()
     call init_fruit_xml()
 
     ! Add module basket calls here..
-    call rocrand_basket()
+    call hiprand_basket()
 
     call fruit_summary()
     call fruit_summary_xml()
     call fruit_finalize()
 
-end program fruit_test_driver
+end program fruit_test_driver_hiprand
