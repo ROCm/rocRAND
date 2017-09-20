@@ -65,6 +65,10 @@ ctest --output-on-failure
 [sudo] make install
 ```
 
+Note: To disable inline assembly optimisations in rocRAND (for both the host library and
+the device functions provided in `rocrand_kernel.h`) set cmake option `ENABLE_INLINE_ASM`
+to `OFF`.
+
 ## Running Unit Tests
 
 ```

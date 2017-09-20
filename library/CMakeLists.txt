@@ -9,6 +9,20 @@ foreach(EXCLUDE ${tmp})
 endforeach()
 set_source_files_properties(${rocRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
+# When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
+# turns on inline asm in rocRAND (for both compiled library and device functions).
+option(ENABLE_INLINE_ASM "Enable inline asm optimisations in rocRAND" ON)
+if(ENABLE_INLINE_ASM)
+    set(
+        rocrand_ENABLE_INLINE_ASM
+        "\n// Enables inline asm optimisations\n"
+        "#if !defined(ROCRAND_ENABLE_INLINE_ASM) && !defined(ROCRAND_DISABLE_INLINE_ASM)\n"
+        "    #define ROCRAND_ENABLE_INLINE_ASM\n"
+        "#endif"
+    )
+    string(REPLACE ";" "" rocrand_ENABLE_INLINE_ASM "${rocrand_ENABLE_INLINE_ASM}")
+endif()
+
 # configure a header file to pass the rocRAND version
 configure_file(
     "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
