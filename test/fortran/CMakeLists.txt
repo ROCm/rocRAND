@@ -22,8 +22,8 @@ target_include_directories(
 )
 target_link_libraries(
     ${test_rocrand}
-        rocrand_fortran
-        rocrand
+        $<TARGET_FILE:rocrand_fortran>
+        $<TARGET_FILE:rocrand>
 )
 if(HIP_PLATFORM STREQUAL "nvcc")
     target_link_libraries(
@@ -52,8 +52,8 @@ target_include_directories(
 )
 target_link_libraries(
     ${test_hiprand}
-        hiprand_fortran
-        hiprand
+        $<TARGET_FILE:hiprand_fortran>
+        $<TARGET_FILE:hiprand>
 )
 if(HIP_PLATFORM STREQUAL "nvcc")
     target_link_libraries(
@@ -63,6 +63,7 @@ if(HIP_PLATFORM STREQUAL "nvcc")
 else()
     target_link_libraries(
         ${test_hiprand}
+        $<TARGET_FILE:rocrand>
         "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
     )
 endif()
