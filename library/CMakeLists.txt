@@ -4,10 +4,9 @@
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 set(rocRAND_SRCS ${tmp})
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/*.cpp)
-foreach(EXCLUDE ${tmp})
-    list(REMOVE_ITEM rocRAND_SRCS "${EXCLUDE}")
+foreach(to_exclude ${tmp})
+    list(REMOVE_ITEM rocRAND_SRCS "${to_exclude}")
 endforeach()
-set_source_files_properties(${rocRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
 
 # When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
 # turns on inline asm in rocRAND (for both compiled library and device functions).
@@ -23,18 +22,35 @@ if(ENABLE_INLINE_ASM)
     string(REPLACE ";" "" rocrand_ENABLE_INLINE_ASM "${rocrand_ENABLE_INLINE_ASM}")
 endif()
 
-# configure a header file to pass the rocRAND version
+# Configure a header file to pass the rocRAND version
 configure_file(
     "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
     "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
     @ONLY
 )
 
-include_directories(include) # hipcc workaround
-include_directories(${PROJECT_BINARY_DIR}/library/include) # hipcc workaround
-
 # Build library
-hip_add_library(rocrand SHARED "${rocRAND_SRCS}")
+if(HIP_PLATFORM STREQUAL "nvcc")
+    set_source_files_properties(${rocRAND_SRCS}
+        PROPERTIES
+            CUDA_SOURCE_PROPERTY_FORMAT OBJ
+    )
+    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+    CUDA_ADD_LIBRARY(rocrand ${rocRAND_SRCS})
+else()
+    add_library(rocrand ${rocRAND_SRCS})
+    target_link_libraries(rocrand
+        PRIVATE
+            # We keep hip::hip_hcc private, because otherwise it's not possible
+            # to link to roc::rocrand when using different compiler than hcc,
+            # hip::hip_hcc adds hcc-specific compilation flags.
+            hip::hip_hcc
+            hip::hip_device
+            hcc::hccshared
+    )
+    set(rocrand_DEPENDENCIES "hip")
+endif()
+
 target_include_directories(rocrand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
@@ -48,6 +64,7 @@ set_target_properties(rocrand
         VERSION ${rocrand_VERSION}
         SOVERSION 1
 )
+# Set AMD targets
 if(HIP_PLATFORM STREQUAL "hcc")
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
@@ -102,11 +119,10 @@ install(
 
 # hipRAND library
 
-# Get sources
-file(GLOB hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/*_${HIP_PLATFORM}.cpp)
-set_source_files_properties(${hipRAND_SRCS} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT TRUE)
+# Get hipRAND sources
+set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_${HIP_PLATFORM}.cpp)
 
-# configure a header file to pass the hipRAND version
+# Configure a header file to pass the hipRAND version
 configure_file(
     "${PROJECT_SOURCE_DIR}/library/include/hiprand_version.h.in"
     "${PROJECT_BINARY_DIR}/library/include/hiprand_version.h"
@@ -114,7 +130,16 @@ configure_file(
 )
 
 # Build
-hip_add_library(hiprand SHARED "${hipRAND_SRCS}")
+if(HIP_PLATFORM STREQUAL "nvcc")
+    set_source_files_properties(${hipRAND_SRCS}
+        PROPERTIES
+            CUDA_SOURCE_PROPERTY_FORMAT OBJ
+    )
+    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+    CUDA_ADD_LIBRARY(hiprand ${hipRAND_SRCS})
+else()
+    add_library(hiprand ${hipRAND_SRCS})
+endif()
 target_include_directories(hiprand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
@@ -122,13 +147,16 @@ target_include_directories(hiprand
         $<INSTALL_INTERFACE:hiprand/include>
 )
 if(HIP_PLATFORM STREQUAL "nvcc")
-    target_link_libraries(hiprand PRIVATE "-lcurand")
+    target_link_libraries(hiprand
+        ${CUDA_curand_LIBRARY}
+    )
 else()
-    add_dependencies(hiprand rocrand)
     target_link_libraries(hiprand
         PRIVATE
-            -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
-            $<TARGET_FILE:rocrand>
+            rocrand
+            hip::hip_hcc
+            hip::hip_device
+            hcc::hccshared
     )
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
@@ -169,8 +197,8 @@ install(
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
+set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
-include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/hiprand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
     INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/hiprand
@@ -189,7 +217,9 @@ install(
 )
 
 # Fortran wrappers for hipRAND and rocRAND
-add_subdirectory(src/fortran)
+if(BUILD_FORTRAN_WRAPPER)
+    add_subdirectory(src/fortran)
+endif()
 
 # Package (make package)
 # Generates .deb, .zip., and .tar.gz packages
