@@ -172,6 +172,10 @@ install(
     DESTINATION hiprand/lib/cmake/hiprand
 )
 
+if (BUILD_FORTRAN_WRAPPER)
+    add_subdirectory(src/fortran)
+endif()
+
 # Package (make package)
 # Generates .deb, .zip., and .tar.gz packages
 find_program(RPMBUILD_EXE rpmbuild)

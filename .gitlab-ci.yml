@@ -18,7 +18,7 @@ before_script:
   - hipconfig
   - $SUDO_CMD apt-get update -qq
   - $SUDO_CMD apt-get install -y -qq git wget tar xz-utils bzip2 build-essential xterm
-  - $SUDO_CMD apt-get install -y -qq g++
+  - $SUDO_CMD apt-get install -y -qq g++ gfortran
   # cmake
   - mkdir -p $DEPS_DIR/cmake
   - wget --no-check-certificate --quiet -O - $CMAKE_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
@@ -34,7 +34,7 @@ build:rocm:
   script:
     - mkdir build
     - cd build
-    - cmake -DBUILD_BENCHMARK=ON -DBUILD_CRUSH_TEST=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - cmake -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
