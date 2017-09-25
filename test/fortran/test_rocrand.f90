@@ -21,7 +21,7 @@
 module test_rocrand
     use fruit
     use fruit_helpers
-    ! use hipfor
+    use hipfor
     use rocrand_m
 
     implicit none
