@@ -6,10 +6,19 @@ if (NOT Git_FOUND)
     message(FATAL_ERROR "Please ensure Git is installed on the system")
 endif()
 
-# HIP
+# HIP and nvcc configuration
 find_package(HIP REQUIRED)
-include_directories(SYSTEM ${HIP_INCLUDE_DIRECTORIES})
-include(cmake/HIP.cmake)
+if(HIP_PLATFORM STREQUAL "nvcc")
+    include(cmake/NVCC.cmake)
+elseif(HIP_PLATFORM STREQUAL "hcc")
+    # Workaround until hcc & hip cmake modules fixes symlink logic in their config files.
+    # (Thanks to rocBLAS devs for finding workaround for this problem!)
+    list(APPEND CMAKE_PREFIX_PATH /opt/rocm/hcc /opt/rocm/hip)
+    # Ignore hcc warning: argument unused during compilation: '-isystem /opt/rocm/hip/include'
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
+    find_package(hcc REQUIRED CONFIG PATHS /opt/rocm)
+    find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
+endif()
 
 # For downloading, building, and installing required dependencies
 include(cmake/DownloadProject.cmake)

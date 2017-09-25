@@ -1,25 +1,32 @@
 # Package test
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 
-project(hiprand_package_test CXX C)
+project(hiprand_package_test CXX)
+
+# CMake modules
+list(APPEND CMAKE_MODULE_PATH
+    ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
+)
 
 # Find HIP
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../cmake/Modules)
 find_package(HIP REQUIRED)
+# Get HIP options
 execute_process(
     COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
     OUTPUT_VARIABLE HIP_CPP_CONFIG
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_STRIP_TRAILING_WHITESPACE
 )
-string(REPLACE " " ";" HIP_CPP_CONFIG ${HIP_CPP_CONFIG})
-include(${PROJECT_SOURCE_DIR}/../../cmake/HIP.cmake)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CPP_CONFIG}")
 
 # CUDA
 if(HIP_PLATFORM STREQUAL "nvcc")
     set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
     find_package(CUDA REQUIRED)
-    set(HIP_HIPCC_FLAGS "-std=c++11")
 endif()
 
 # Find rocRAND
@@ -52,7 +59,6 @@ enable_testing()
 foreach(test_src ${rocrand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    target_compile_options(${test_name} PRIVATE "${HIP_CPP_CONFIG}")
     if(HIP_PLATFORM STREQUAL "nvcc")
         target_link_libraries(${test_name}
             PRIVATE
@@ -72,7 +78,6 @@ endforeach()
 foreach(test_src ${hiprand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    target_compile_options(${test_name} PRIVATE "${HIP_CPP_CONFIG}")
     if(HIP_PLATFORM STREQUAL "hcc")
         target_link_libraries(${test_name}
             PRIVATE
