@@ -1,33 +1,61 @@
 # Fortran Wrapper
 
 if(HIP_PLATFORM STREQUAL "nvcc")
-    set(FORTRAN_ROCRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/rocrand_m.f90 ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_nvcc_m.f90)
-    set(FORTRAN_HIPRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/hiprand_m.f90 ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_nvcc_m.f90)
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_nvcc_m.f90"
+        "${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90"
+        COPYONLY
+    )
 else()
-set(FORTRAN_ROCRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/rocrand_m.f90 ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_hcc_m.f90)
-set(FORTRAN_HIPRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/hiprand_m.f90 ${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_hcc_m.f90)
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_hcc_m.f90"
+        "${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90"
+        COPYONLY
+    )
 endif()
 
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/library/fortran)
 
-# Rocrand Fortran Wrapper
-add_library(rocrand_fortran SHARED "${FORTRAN_ROCRAND_SRCS}")
-set_target_properties(rocrand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
-add_dependencies(rocrand_fortran rocrand)
-get_target_property(rocRAND_rpath rocrand BINARY_DIR)
-target_link_libraries(
-    rocrand_fortran
-    -Wl,-rpath,${rocRAND_rpath} # workaround for HIP linker
-    $<TARGET_FILE:rocrand>
+# rocRAND Fortran wrapper
+set(FORTRAN_ROCRAND_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/rocrand_m.f90
+    ${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90
+)
+if(BUILD_FORTRAN_WRAPPER)
+    add_library(rocrand_fortran STATIC "${FORTRAN_ROCRAND_SRCS}")
+    set_target_properties(rocrand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
+    add_dependencies(rocrand_fortran rocrand)
+    target_link_libraries(rocrand_fortran
+        PUBLIC
+            rocrand
+    )
+endif()
+
+# install Fortran sources
+install(
+    FILES ${FORTRAN_ROCRAND_SRCS}
+    DESTINATION rocrand/src/fortran
+    PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 
-# Hiprand Fortran Wrapper
-add_library(hiprand_fortran SHARED "${FORTRAN_HIPRAND_SRCS}")
-set_target_properties(hiprand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
-add_dependencies(hiprand_fortran hiprand)
-get_target_property(hipRAND_rpath hiprand BINARY_DIR)
-target_link_libraries(
-    hiprand_fortran
-    -Wl,-rpath,${hipRAND_rpath} # workaround for HIP linker
-    $<TARGET_FILE:hiprand>
+# hipRAND Fortran wrapper
+set(FORTRAN_HIPRAND_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/hiprand_m.f90
+    ${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90
+)
+if(BUILD_FORTRAN_WRAPPER)
+    add_library(hiprand_fortran STATIC "${FORTRAN_HIPRAND_SRCS}")
+    set_target_properties(hiprand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
+    add_dependencies(hiprand_fortran hiprand)
+    target_link_libraries(hiprand_fortran
+        PUBLIC
+            hiprand
+    )
+endif()
+
+# install Fortran sources
+install(
+    FILES ${FORTRAN_HIPRAND_SRCS}
+    DESTINATION hiprand/src/fortran
+    PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )

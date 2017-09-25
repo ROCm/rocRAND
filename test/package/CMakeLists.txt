@@ -27,6 +27,20 @@ find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "/opt/rocm/rocra
 # Find hipRAND
 find_package(hiprand REQUIRED CONFIG HINTS ${hiprand_DIR} PATHS "/opt/rocm/hiprand")
 
+# Check if Fortran wrapper is installed
+if(NOT EXISTS "${hiprand_FORTRAN_SRC_DIRS}/hiprand_m.f90")
+    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/hiprand_m.f90 does not exist")
+endif()
+if(NOT EXISTS "${hiprand_FORTRAN_SRC_DIRS}/hip_m.f90")
+    message(FATAL_ERROR "${hiprand_FORTRAN_SRC_DIRS}/hip_m.f90 does not exist")
+endif()
+if(NOT EXISTS "${rocrand_FORTRAN_SRC_DIRS}/rocrand_m.f90")
+    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/rocrand_m.f90 does not exist")
+endif()
+if(NOT EXISTS "${rocrand_FORTRAN_SRC_DIRS}/hip_m.f90")
+    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/hip_m.f90 does not exist")
+endif()
+
 # Get sources
 file(GLOB rocrand_pkg_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_rocrand*.cpp)
 file(GLOB hiprand_pkg_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_hiprand*.cpp)

@@ -67,11 +67,12 @@ install(
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
+set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/rocrand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
     INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/rocrand
-    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR
+    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR FORTRAN_SRCS_INSTALL_DIR
 )
 write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
@@ -154,11 +155,12 @@ install(
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
+set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/hiprand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
     INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/hiprand
-    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR
+    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR FORTRAN_SRCS_INSTALL_DIR
 )
 write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
@@ -172,9 +174,8 @@ install(
     DESTINATION hiprand/lib/cmake/hiprand
 )
 
-if (BUILD_FORTRAN_WRAPPER)
-    add_subdirectory(src/fortran)
-endif()
+# Fortran wrappers for hipRAND and rocRAND
+add_subdirectory(src/fortran)
 
 # Package (make package)
 # Generates .deb, .zip., and .tar.gz packages

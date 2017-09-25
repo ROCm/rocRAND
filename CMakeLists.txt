@@ -22,8 +22,8 @@ option(BUILD_BENCHMARK "Build benchmarks" OFF)
 
 # Version vars
 include(cmake/Common.cmake)
-create_version_vars(hiprand 1 5 2)
-create_version_vars(rocrand 1 5 2)
+create_version_vars(hiprand 1 6 0)
+create_version_vars(rocrand 1 6 0)
 
 # AMD targets
 set(AMDGPU_TARGETS gfx803;gfx900 CACHE STRING "List of specific machine types for library to target")
