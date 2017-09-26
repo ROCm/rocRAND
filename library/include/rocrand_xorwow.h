@@ -241,7 +241,7 @@ protected:
     xorwow_state m_state;
 
     #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
-    friend class detail::engine_boxmuller_helper<xorwow_engine>;
+    friend struct detail::engine_boxmuller_helper<xorwow_engine>;
     #endif
 
 }; // xorwow_engine class
