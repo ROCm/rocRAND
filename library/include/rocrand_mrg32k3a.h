@@ -402,7 +402,7 @@ protected:
     mrg32k3a_state m_state;
 
     #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
-    friend class detail::engine_boxmuller_helper<mrg32k3a_engine>;
+    friend struct detail::engine_boxmuller_helper<mrg32k3a_engine>;
     #endif
 
 }; // mrg32k3a_engine class
