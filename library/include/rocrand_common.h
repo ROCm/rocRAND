@@ -39,7 +39,8 @@ namespace detail {
 FQUALIFIERS
 unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
 {
-    #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__)
+    #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__) \
+        && defined(ROCRAND_ENABLE_INLINE_ASM)
 
     unsigned long long r;
     unsigned long long c; // carry bits, SGPR, unused
@@ -52,7 +53,8 @@ unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const
     );
     return r;
 
-    #elif defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__)
+    #elif defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__) \
+        && defined(ROCRAND_ENABLE_INLINE_ASM)
 
     unsigned long long r;
     asm("mad.wide.u32 %0, %1, %2, %3;"
