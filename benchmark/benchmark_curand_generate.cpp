@@ -300,8 +300,7 @@ int main(int argc, char *argv[])
 
     for (auto engine : engines)
     {
-        std::cout << engine << ":" << std::endl;
-        rng_type_t rng_type;
+        rng_type_t rng_type = CURAND_RNG_PSEUDO_XORWOW;
         if (engine == "xorwow")
             rng_type = CURAND_RNG_PSEUDO_XORWOW;
         else if (engine == "mrg32k3a")
@@ -320,6 +319,13 @@ int main(int argc, char *argv[])
             rng_type = CURAND_RNG_QUASI_SOBOL64;
         else if (engine == "scrambled_sobol64")
             rng_type = CURAND_RNG_QUASI_SCRAMBLED_SOBOL64;
+        else
+        {
+            std::cout << "Wrong engine name" << std::endl;
+            exit(1);
+        }
+
+        std::cout << engine << ":" << std::endl;
 
         for (auto distribution : distributions)
         {
