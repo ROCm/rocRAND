@@ -27,5 +27,6 @@
 /// ROCRAND_VERSION / 100 % 1000 is the minor version,
 /// ROCRAND_VERSION / 100000 is the major version.
 #define ROCRAND_VERSION @rocrand_VERSION_NUMBER@
+@rocrand_ENABLE_INLINE_ASM@
 
 #endif // ROCRAND_VERSION_H_
