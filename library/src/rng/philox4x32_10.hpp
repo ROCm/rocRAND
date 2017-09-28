@@ -127,7 +127,11 @@ namespace detail {
 
     inline __device__ unsigned int warp_reduce_min(unsigned int val, int size) {
       for (int offset = size/2; offset > 0; offset /= 2) {
+        #if defined(__HIP_PLATFORM_NVCC__) && __CUDACC_VER_MAJOR__ >= 9
+        unsigned int temp = __shfl_xor_sync(0xffffffff, (int)val, offset);
+        #else
         unsigned int temp = __shfl_xor((int)val, offset);
+        #endif
         val = (temp < val) ? temp : val;
       }
       return val;
