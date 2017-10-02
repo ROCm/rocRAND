@@ -30,12 +30,8 @@ def make_test(BaseClass, subname, **kwargs):
         def setUp(self):
             super(Class, self).setUp()
 
-    for key in kwargs:
-        setattr(Class, key, kwargs[key])
-
     name = BaseClass.__name__ + subname
-    Class.__name__ = name
-    globals()[name] = Class
+    globals()[name] = type(name, (Class,), kwargs)
 
 class TestVersion(unittest.TestCase):
     def test_version(self):

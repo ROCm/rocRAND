@@ -35,6 +35,7 @@ import numbers
 import numpy as np
 
 from .utils import find_library
+from .finalize import track_for_finalization
 
 
 ## Run-time HIP error.
@@ -93,25 +94,15 @@ def load_hip():
         raise ImportError("both libcudart.so and libhip_hcc.so cannot be loaded: " +
                 ", ".join(loading_errors))
 
-def hip_malloc(nbytes):
-    ptr = c_void_p()
-    check_hip(hip.hipMalloc(byref(ptr), c_size_t(nbytes)))
-    return ptr
-
-def hip_free(ptr):
-    check_hip(hip.hipFree(ptr))
-
-def hip_copy_to_host(dst, src, nbytes):
-    check_hip(hip.hipMemcpy(dst, src, c_size_t(nbytes), hipMemcpyDeviceToHost))
-
 class MemoryPointer(object):
     def __init__(self, nbytes):
-        self.ptr = None
-        self.ptr = hip_malloc(nbytes)
+        self.ptr = c_void_p()
+        check_hip(hip.hipMalloc(byref(self.ptr), c_size_t(nbytes)))
+        track_for_finalization(self, self.ptr, MemoryPointer._finalize)
 
-    def __del__(self):
-        if self.ptr:
-            hip_free(self.ptr)
+    @classmethod
+    def _finalize(cls, ptr):
+        check_hip(hip.hipFree(ptr))
 
 def device_pointer(dary):
     return dary.data.ptr
@@ -150,7 +141,7 @@ class DeviceNDArray(object):
 
         dst = ary.ctypes.data_as(c_void_p)
         src = device_pointer(self)
-        hip_copy_to_host(dst, src, self.nbytes)
+        check_hip(hip.hipMemcpy(dst, src, c_size_t(self.nbytes), hipMemcpyDeviceToHost))
 
         return ary
 
