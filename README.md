@@ -15,14 +15,16 @@ environment cuRAND is used instead.
 ## Requirements
 
 * Git
-* [GTest](https://github.com/google/googletest) (required for tests)
+* [GTest](https://github.com/google/googletest) (optional, required only for tests)
   * Use `GTEST_ROOT` to specify GTest location (also see [FindGTest](https://cmake.org/cmake/help/latest/module/FindGTest.html))
   * Note: If GTest is not already installed, it will be automatically downloaded and built
-* [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (Optional: for crush_tests)
+* [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (optional, required only for crush tests)
   * Use `TESTU01_ROOT_DIR` to specify TestU01 location
   * Note: If TestU01 is not already installed, it will be automatically downloaded and built
 * cmake (2.8.12 or later)
 * C++ compiler with C++11 support
+* Fortran compiler (optional, required only for Fortran wrapper)
+  * `gfortran` is recommended
 * For AMD platforms:
     * [ROCm](https://rocm.github.io/install.html) (1.5 or later)
 * For CUDA platforms:
@@ -138,6 +140,12 @@ doxygen Doxyfile
 # open html/index.html
 
 ```
+
+## Wrappers
+
+* C++ wrappers for host API of rocRAND and hipRAND are in files [`rocrand.hpp`](./library/include/rocrand.hpp)
+and [`hiprand.hpp`](./library/include/hiprand.hpp).
+* [Fortran wrapper](./library/src/fortran/).
 
 ## Support
 
