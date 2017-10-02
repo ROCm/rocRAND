@@ -38,6 +38,7 @@ from .hip import load_hip, HIP_PATHS
 from .hip import empty, device_pointer
 
 from .utils import find_library, expand_paths
+from .finalize import track_for_finalization
 
 ## @cond INCLUDE_INTERNAL
 
@@ -154,6 +155,7 @@ class RNG(object):
     def __init__(self, rngtype, offset=None, stream=None):
         self._gen = c_void_p()
         check_rocrand(rocrand.rocrand_create_generator(byref(self._gen), rngtype))
+        track_for_finalization(self, self._gen, RNG._finalize)
 
         self._offset = 0
         if offset is not None:
@@ -165,9 +167,9 @@ class RNG(object):
 
     ## @cond INCLUDE_INTERNAL
 
-    def __del__(self):
-        if self._gen:
-            check_rocrand(rocrand.rocrand_destroy_generator(self._gen))
+    @classmethod
+    def _finalize(cls, gen):
+        check_rocrand(rocrand.rocrand_destroy_generator(gen))
 
     @property
     def offset(self):
