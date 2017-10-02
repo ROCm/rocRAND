@@ -37,15 +37,15 @@ import numpy as np
 from .hip import load_hip, HIP_PATHS
 from .hip import empty, device_pointer
 
-from .utils import find_library
+from .utils import find_library, expand_paths
 
 ## @cond INCLUDE_INTERNAL
 
 rocrand = None
 
 ROCRAND_PATHS = [
-    os.getenv("ROCRAND_PATH")
-] + HIP_PATHS
+        os.getenv("ROCRAND_PATH")
+    ] + expand_paths(HIP_PATHS, ["", "rocrand"])
 
 def load_rocrand():
     global rocrand

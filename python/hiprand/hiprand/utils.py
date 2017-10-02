@@ -20,12 +20,20 @@
 
 import os
 
-def find_library(paths, name):
-    subpaths = ["", "lib", "lib64"]
+def expand_paths(paths, subpaths):
+    results = []
     for path in paths:
         if path:
             for subpath in subpaths:
-                full_path = os.path.join(path, subpath, name)
+                full_path = os.path.join(path, subpath)
                 if os.path.exists(full_path):
-                    return full_path
+                    results.append(full_path)
+    return results
+
+def find_library(paths, name):
+    paths = expand_paths(paths, ["", "lib", "lib64"])
+    for path in paths:
+        full_path = os.path.join(path, name)
+        if os.path.exists(full_path):
+            return full_path
     return name
