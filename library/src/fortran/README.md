@@ -1,6 +1,6 @@
 # rocRAND Fortran
 
-This library provides a pure Fortran interface for the rocRAND/hipRAND API. 
+This library provides a pure Fortran interface for the rocRAND/hipRAND API.
 
 This interface is intended to target only Host API functions, and provides a 1:1 mapping to
 the C Host API functions in rocRAND and hipRAND. For documentation of these functions, please
@@ -12,7 +12,7 @@ The Fortran interface is installed as part of the rocRAND package. Simply add th
 option `-DBUILD_FORTRAN_WRAPPER=ON` when configuring cmake, as below:
 
 ```
-cmake -DBUILD_FORTRAN_WRAPPER=ON ../. # or cmake-gui ../.
+cmake -DBUILD_FORTRAN_WRAPPER=ON ../.
 ```
 
 ## Running Unit Tests
