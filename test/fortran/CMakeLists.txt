@@ -14,27 +14,11 @@ set(test_hiprand "test_hiprand_fortran_wrapper")
 
 # Build unit test (rocrand)
 add_executable(${test_rocrand} "${FRUIT_SRCS}" "${FRUIT_HELPER_SRCS}" "${FORTRAN_ROCRAND_TEST}")
-add_dependencies(${test_rocrand} rocrand rocrand_fortran)
 target_include_directories(${test_rocrand}
     PRIVATE
         "${PROJECT_BINARY_DIR}/library/fortran"
 )
-target_link_libraries(${test_rocrand}
-    rocrand_fortran
-    $<TARGET_FILE:rocrand>
-)
-get_target_property(rocRAND_rpath rocrand BINARY_DIR)
-if(HIP_PLATFORM STREQUAL "nvcc")
-    target_link_libraries(${test_rocrand}
-        "-lcuda -lcudart -lcurand"
-        "-Wl,-rpath,${rocRAND_rpath}"
-    )
-else()
-    target_link_libraries(${test_rocrand}
-        "-L${HIP_ROOT_DIR}/lib -lhip_hcc"
-        "-Wl,-rpath,${HIP_ROOT_DIR}/lib:${rocRAND_rpath}"
-    )
-endif()
+target_link_libraries(${test_rocrand} rocrand_fortran)
 set_target_properties(${test_rocrand}
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
@@ -42,28 +26,11 @@ set_target_properties(${test_rocrand}
 
 # Build unit test (hiprand)
 add_executable(${test_hiprand} "${FRUIT_SRCS}" "${FRUIT_HELPER_SRCS}" "${FORTRAN_HIPRAND_TEST}")
-add_dependencies(${test_hiprand} hiprand hiprand_fortran)
 target_include_directories(${test_hiprand}
     PRIVATE
         "${PROJECT_BINARY_DIR}/library/fortran"
 )
-target_link_libraries(${test_hiprand}
-    hiprand_fortran
-    $<TARGET_FILE:hiprand>
-)
-get_target_property(hipRAND_rpath hiprand BINARY_DIR)
-if(HIP_PLATFORM STREQUAL "nvcc")
-    target_link_libraries(${test_hiprand}
-        "-lcuda -lcudart -lcurand"
-        "-Wl,-rpath,${hipRAND_rpath}"
-    )
-else()
-    target_link_libraries(${test_hiprand}
-        $<TARGET_FILE:rocrand>
-        "-L${HIP_ROOT_DIR}/lib -lhip_hcc"
-        "-Wl,-rpath,${HIP_ROOT_DIR}/lib:${rocRAND_rpath}:${hipRAND_rpath}"
-    )
-endif()
+target_link_libraries(${test_hiprand} hiprand_fortran)
 set_target_properties(${test_hiprand}
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"

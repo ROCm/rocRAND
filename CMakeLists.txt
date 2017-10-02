@@ -1,8 +1,23 @@
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 
+# Install prefix
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
-project(rocrand CXX C)
+# CMake modules
+list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
+    ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
+)
+
+# Identify HIP platform (nvcc or hcc), and select C++ compiler:
+# ROCm - hcc
+# CUDA - g++ (nvcc is used via functions from CUDA package)
+include(cmake/SetToolchain.cmake)
+
+#
+# hipRAND project
+#
+project(hipRAND CXX)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -11,41 +26,39 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# CMake modules
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
+# Build CXX flags
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-variadic-macros -Wno-sign-compare")
 
-# Options
+# Build options
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" ON)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 
-# Version vars
-include(cmake/Common.cmake)
-create_version_vars(hiprand 1 6 0)
-create_version_vars(rocrand 1 6 0)
-
-# AMD targets
-set(AMDGPU_TARGETS gfx803;gfx900 CACHE STRING "List of specific machine types for library to target")
-
 # Include cmake scripts
 include(cmake/Dependencies.cmake)
 include(cmake/Summary.cmake)
 
-# Build flags
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -fPIC -Wno-narrowing")
-if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Werror -Wno-variadic-macros")
-
 # Print configuration summary
 print_configuration_summary()
 
+# Set version variables
+include(cmake/Common.cmake)
+create_version_vars(hiprand 1 6 1)
+create_version_vars(rocrand 1 6 1)
+
+# AMD targets
+set(AMDGPU_TARGETS gfx803;gfx900 CACHE STRING "List of specific machine types for library to target")
+
+# Tools
 add_subdirectory(tools)
 
-# rocRAND library
-# This adds library target rocRAND
+# rocRAND and hipRAND libraries
+# This adds library targets: rocrand, hiprand,
+# also includes Fortran wrapper
 add_subdirectory(library)
 
 # Tests

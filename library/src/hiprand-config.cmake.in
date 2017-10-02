@@ -40,6 +40,7 @@
 #   hiprand_LIBRARIES        - hipRAND library to be linked.
 #   hiprand_VERSION          - HIPRAND_VERSION value from hiprand.h.
 #
+#   hiprand_FORTRAN_FOUND    - True if hipRAND was built with Fortran wrapper; otherwise - false.
 #   hiprand_FORTRAN_SRC_DIRS - Directory with hipRAND Fortran wrapper sources hiprand_m.f90
 #                              and hip_m.f90. Include those source files, and add "use hiprand_m"
 #                              statement into your Fortran code.
@@ -89,8 +90,13 @@ set_and_check(hiprand_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@" )
 set_and_check(hiprand_LIBRARY_DIRS "@PACKAGE_LIB_INSTALL_DIR@" )
 
 # Fortran wrapper
-set_and_check(hiprand_FORTRAN_SRC_DIR "@PACKAGE_FORTRAN_SRCS_INSTALL_DIR@")
-set_and_check(hiprand_FORTRAN_SRC_DIRS "@PACKAGE_FORTRAN_SRCS_INSTALL_DIR@")
+if(@BUILD_FORTRAN_WRAPPER@)
+    set_and_check(hiprand_FORTRAN_SRC_DIR "@PACKAGE_FORTRAN_SRCS_INSTALL_DIR@")
+    set_and_check(hiprand_FORTRAN_SRC_DIRS "@PACKAGE_FORTRAN_SRCS_INSTALL_DIR@")
+    set(hiprand_FORTRAN_FOUND YES)
+else()
+    set(hiprand_FORTRAN_FOUND NOTFOUND)
+endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/hiprand-targets.cmake")
 check_required_components(hiprand)

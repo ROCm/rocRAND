@@ -43,29 +43,37 @@ function(hip_cuda_detect_lowest_cc out_variable)
 endfunction()
 
 ################################################################################################
-###  Non macro section
+###  Non macro/function section
 ################################################################################################
 
 #
 # Use NVGPU_TARGETS to set CUDA arch compilation flags
 # For example: -DNVGPU_TARGETS="--gpu-architecture=compute_50 --gpu-code=compute_50,sm_50,sm_52"
 #
-if (HIP_PLATFORM STREQUAL "nvcc")
-    find_package(CUDA REQUIRED)
-    set(HIP_HIPCC_FLAGS "-std=c++11")
+
+find_package(CUDA REQUIRED)
+
+set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets") # Suppressing warnings
+if("x${NVGPU_TARGETS}" STREQUAL "x")
+    hip_cuda_detect_lowest_cc(lowest_cc)
+    if(lowest_cc LESS "30")
+        message(WARNING "Pre-Kepler architectures are not supported.")
+        set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_30") # Kempler arch is miniumum
+    else(lowest_cc LESS "30")
+        set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_${lowest_cc}")
+    endif(lowest_cc LESS "30")
+else()
+    set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} ${NVGPU_TARGETS}")
 endif()
 
-if (HIP_PLATFORM STREQUAL "nvcc")
-    set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets") # Suppressing warnings
-    if("x${NVGPU_TARGETS}" STREQUAL "x")
-        hip_cuda_detect_lowest_cc(lowest_cc)
-        if(lowest_cc LESS "30")
-            message(WARNING "Pre-Kepler architectures are not supported.")
-            set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_30") # Kempler arch is miniumum
-        else(lowest_cc LESS "30")
-            set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_${lowest_cc}")
-        endif(lowest_cc LESS "30")
-    else()
-        set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} ${NVGPU_TARGETS}")
-    endif()
-endif()
+execute_process(
+    COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
+    OUTPUT_VARIABLE HIP_CPP_CONFIG_FLAGS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE
+)
+string(REPLACE " " ";" HIP_CPP_CONFIG_FLAGS ${HIP_CPP_CONFIG_FLAGS})
+list(APPEND CUDA_NVCC_FLAGS "-std=c++11 ${HIP_CPP_CONFIG_FLAGS} ${HIP_NVCC_FLAGS}")
+
+# ignore warnings about #pragma unroll
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")

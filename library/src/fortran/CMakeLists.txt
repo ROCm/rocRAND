@@ -21,17 +21,23 @@ set(FORTRAN_ROCRAND_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/rocrand_m.f90
     ${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90
 )
-if(BUILD_FORTRAN_WRAPPER)
-    add_library(rocrand_fortran STATIC "${FORTRAN_ROCRAND_SRCS}")
-    set_target_properties(rocrand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
-    add_dependencies(rocrand_fortran rocrand)
+add_library(rocrand_fortran STATIC "${FORTRAN_ROCRAND_SRCS}")
+set_target_properties(rocrand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
+if(HIP_PLATFORM STREQUAL "nvcc")
     target_link_libraries(rocrand_fortran
-        PUBLIC
+        PRIVATE
             rocrand
+            ${CUDA_LIBRARIES}
+    )
+else()
+    target_link_libraries(rocrand_fortran
+        PRIVATE
+            rocrand
+            "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
     )
 endif()
 
-# install Fortran sources
+# Install Fortran sources
 install(
     FILES ${FORTRAN_ROCRAND_SRCS}
     DESTINATION rocrand/src/fortran
@@ -43,17 +49,25 @@ set(FORTRAN_HIPRAND_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/hiprand_m.f90
     ${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90
 )
-if(BUILD_FORTRAN_WRAPPER)
-    add_library(hiprand_fortran STATIC "${FORTRAN_HIPRAND_SRCS}")
-    set_target_properties(hiprand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
-    add_dependencies(hiprand_fortran hiprand)
+add_library(hiprand_fortran STATIC "${FORTRAN_HIPRAND_SRCS}")
+set_target_properties(hiprand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
+if(HIP_PLATFORM STREQUAL "nvcc")
     target_link_libraries(hiprand_fortran
-        PUBLIC
+        PRIVATE
             hiprand
+            ${CUDA_LIBRARIES}
+            ${CUDA_curand_LIBRARY}
+    )
+else()
+    target_link_libraries(hiprand_fortran
+        PRIVATE
+            hiprand
+            rocrand
+            "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
     )
 endif()
 
-# install Fortran sources
+# Install Fortran sources
 install(
     FILES ${FORTRAN_HIPRAND_SRCS}
     DESTINATION hiprand/src/fortran
