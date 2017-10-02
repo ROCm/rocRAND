@@ -331,7 +331,7 @@ protected:
     philox4x32_10_state m_state;
 
     #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
-    friend class detail::engine_boxmuller_helper<philox4x32_10_engine>;
+    friend struct detail::engine_boxmuller_helper<philox4x32_10_engine>;
     #endif
 
 }; // philox4x32_10_engine class

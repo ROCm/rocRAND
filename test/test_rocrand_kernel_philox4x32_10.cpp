@@ -190,7 +190,6 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
     // Just get access to internal state
     class rocrand_state_philox4x32_10_test : public rocrand_state_philox4x32_10
     {
-        typedef rocrand_state_philox4x32_10 base_type;
         typedef rocrand_state_philox4x32_10::philox4x32_10_state internal_state_type;
 
     public:

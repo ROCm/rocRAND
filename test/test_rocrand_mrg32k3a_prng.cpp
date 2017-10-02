@@ -50,8 +50,6 @@ void mad_u64_u32_kernel(const unsigned int * x,
 
 TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
 {
-    typedef rocrand_state_mrg32k3a state_type;
-
     const size_t size = 8;
 
     unsigned int * x;
