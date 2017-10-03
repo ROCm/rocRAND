@@ -7,6 +7,16 @@ if(HIP_PLATFORM STREQUAL "nvcc")
     set(rocRAND_CRUSH_TEST_SRCS ${rocRAND_CRUSH_TEST_SRCS} ${tmp})
 endif()
 
+# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
+# for nvcc if cmake version is less than 3.9.3
+if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
+    CUDA_INCLUDE_DIRECTORIES(
+        "${PROJECT_BINARY_DIR}/library/include/"
+        "${PROJECT_SOURCE_DIR}/library/include/"
+        ${TestU01_INCLUDE_DIR}
+    )
+endif()
+
 # Build tests
 foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     get_filename_component(crush_test_name ${crush_test_src} NAME_WE)
@@ -28,10 +38,6 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
     target_include_directories(${crush_test_name} SYSTEM
         PUBLIC
             ${TestU01_INCLUDE_DIR}
-    )
-    target_include_directories(${crush_test_name}
-        PUBLIC
-            ${CMAKE_CURRENT_SOURCE_DIR}
     )
     if(HIP_PLATFORM STREQUAL "nvcc")
         target_link_libraries(${crush_test_name}
