@@ -30,7 +30,8 @@
 
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
-#include <file_common.hpp>
+
+#include "file_common.hpp"
 #include "cmdparser.hpp"
 
 extern "C" {
