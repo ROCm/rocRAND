@@ -18,13 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-## @addtogroup hiprandpython
-# @{
-
-## @namespace hiprand.hip
-# Minimal HIP wrapper
-
-## @}
+"""Minimal HIP wrapper"""
 
 import os
 import ctypes
@@ -38,16 +32,14 @@ from .utils import find_library
 from .finalize import track_for_finalization
 
 
-## Run-time HIP error.
 class HipError(Exception):
+    """Run-time HIP error."""
 
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return str(self.value)
-
-## @cond INCLUDE_INTERNAL
 
 hipSuccess = 0
 hipMemcpyDeviceToHost = 2
@@ -107,11 +99,21 @@ class MemoryPointer(object):
 def device_pointer(dary):
     return dary.data.ptr
 
-## @endcond # INCLUDE_INTERNAL
-
-## Device-side array
 class DeviceNDArray(object):
+    """Device-side array.
+
+    This class is a limited version of :class:`numpy.ndarray` for device-side
+    arrays.
+    """
+
     def __init__(self, shape, dtype, data=None):
+        """Create an empty device-side array.
+
+        :param shape: Shape of the array (see :attr:`numpy.ndarray.shape`)
+        :param dtype: Type of the array (see :attr:`numpy.ndarray.dtype`)
+        :param data:  existing HIP device-side memory pointer
+        """
+
         dtype = np.dtype(dtype)
 
         if isinstance(shape, numbers.Integral):
@@ -131,6 +133,18 @@ class DeviceNDArray(object):
             self.data = data
 
     def copy_to_host(self, ary=None):
+        """Copy from data device memory to host memory.
+
+        If **ary** is passed then **ary** must have the same **dtype**
+        and greater or equal **size** as **self** has.
+
+        If **ary** is not passed then a new :class:`numpy.ndarray` will be
+        created.
+
+        :param ary: NumPy array (:class:`numpy.ndarray`)
+
+        :returns: a new array or **ary**
+        """
         if ary is None:
             ary = np.empty(self.shape, self.dtype)
         else:
@@ -145,9 +159,13 @@ class DeviceNDArray(object):
 
         return ary
 
-## Create an empty device-side array
-#
-# @param shape Shape of the array (see @c numpy.ndarray.shape)
-# @param dtype Type of the array (see @c numpy.ndarray.dtype)
 def empty(shape, dtype):
+    """Create an empty device-side array.
+
+    This function is a limited version of :func:`numpy:empty` for device-side
+    arrays.
+
+    :param shape: Shape of the array (see :attr:`numpy.ndarray.shape`)
+    :param dtype: Type of the array (see :attr:`numpy.ndarray.dtype`)
+    """
     return DeviceNDArray(shape, dtype)

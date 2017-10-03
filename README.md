@@ -7,7 +7,7 @@ programming language and optimised for AMD's latest discrete GPUs. It is designe
 of AMD's Radeon Open Compute [ROCm](https://rocm.github.io/) runtime, but it also works on
 CUDA enabled GPUs.
 
-Additonaly, the project includes a wrapper library called hipRAND which allows user to easily port
+Additionally, the project includes a wrapper library called hipRAND which allows user to easily port
 CUDA applications that use cuRAND library to the [HIP](https://github.com/ROCm-Developer-Tools/HIP)
 layer. In [ROCm](https://rocm.github.io/) environment hipRAND uses rocRAND, however in CUDA
 environment cuRAND is used instead.
@@ -31,7 +31,7 @@ environment cuRAND is used instead.
     * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
     * Latest CUDA SDK
 
-If some dependencies are misssing, cmake script automatically downloads, builds and
+If some dependencies are missing, cmake script automatically downloads, builds and
 installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
 not to use system-installed libraries, and to download all dependencies.
 
