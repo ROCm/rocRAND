@@ -8,6 +8,15 @@ if(HIP_PLATFORM STREQUAL "nvcc")
     set(rocRAND_BENCHMARK_SRCS ${rocRAND_BENCHMARK_SRCS} ${tmp})
 endif()
 
+# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
+# for nvcc if cmake version is less than 3.9.3# Use CUDA_INCLUDE_DIRS if cmake version is less than 3.9.3
+if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
+    CUDA_INCLUDE_DIRECTORIES(
+        "${PROJECT_BINARY_DIR}/library/include/"
+        "${PROJECT_SOURCE_DIR}/library/include/"
+    )
+endif()
+
 # Build benchmarks
 foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     get_filename_component(benchmark_name ${benchmark_src} NAME_WE)
@@ -29,13 +38,11 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
         target_link_libraries(${benchmark_name}
             rocrand
             ${CUDA_curand_LIBRARY}
-            ${TestU01_LIBRARIES}
         )
     else()
         target_link_libraries(${benchmark_name}
             rocrand
             hip::hip_hcc hip::hip_device
-            ${TestU01_LIBRARIES}
         )
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${benchmark_name} --amdgpu-target=${amdgpu_target})

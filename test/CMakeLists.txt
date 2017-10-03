@@ -8,6 +8,17 @@ foreach(to_exclude ${tmp})
     list(REMOVE_ITEM rocRAND_TEST_SRCS "${to_exclude}")
 endforeach()
 
+# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
+# for nvcc if cmake version is less than 3.9.3
+if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
+    CUDA_INCLUDE_DIRECTORIES(
+        "${PROJECT_BINARY_DIR}/library/include/"
+        "${PROJECT_SOURCE_DIR}/library/include/"
+        "${PROJECT_SOURCE_DIR}/library/src"
+        ${GTEST_INCLUDE_DIRS}
+    )
+endif()
+
 # Build rocRAND tests
 foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
