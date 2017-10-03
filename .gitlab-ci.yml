@@ -73,6 +73,7 @@ test:rocm_python:
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y -qq python python-pip python-numpy
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
+    - pip install Sphinx
   script:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
     # rocRAND Wrapper
@@ -85,6 +86,7 @@ test:rocm_python:
     - pip3 install .
     - python3 tests/rocrand_test.py
     - pip3 uninstall --yes rocrand
+    - python setup.py build_sphinx
     # hipRAND Wrapper
     - cd $CI_PROJECT_DIR/python/hiprand
     - python setup.py test
@@ -95,6 +97,7 @@ test:rocm_python:
     - pip3 install .
     - python3 tests/hiprand_test.py
     - pip3 uninstall --yes hiprand
+    - python setup.py build_sphinx
 
 test:rocm_deb_package:
   stage: test

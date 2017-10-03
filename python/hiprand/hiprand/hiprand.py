@@ -18,13 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-## @addtogroup hiprandpython
-# @{
-
-## @namespace hiprand.hiprand
-# hipRAND wrapper
-
-## @}
+"""hipRAND Python Wrapper"""
 
 import os
 import ctypes
@@ -40,7 +34,6 @@ from .hip import empty, device_pointer
 from .utils import find_library, expand_paths
 from .finalize import track_for_finalization
 
-## @cond INCLUDE_INTERNAL
 
 hiprand = None
 
@@ -149,10 +142,9 @@ def check_hiprand(status):
     if status != HIPRAND_STATUS_SUCCESS:
         raise HipRandError(status)
 
-## @endcond # INCLUDE_INTERNAL
 
-## Run-time hipRAND error.
 class HipRandError(Exception):
+    """Run-time hipRAND error."""
 
     def __init__(self, value):
         self.value = value
@@ -165,18 +157,8 @@ class HipRandError(Exception):
         return "{} ({})".format(s, v)
 
 
-## Random number generator base class.
 class RNG(object):
-    ## @property offset
-    # Mutatable attribute of the offset of random numbers sequence.
-    #
-    # Setting this attribute resets the sequence.
-
-    ## @property stream
-    # Mutatable attribute of HIP stream for all kernel launches of the generator.
-    #
-    # All functions will use this stream.
-    # @c None means default stream.
+    """Random number generator base class."""
 
     def __init__(self, rngtype, offset=None, stream=None):
         self._gen = c_void_p()
@@ -191,18 +173,25 @@ class RNG(object):
         if stream is not None:
             self.stream = stream
 
-    ## @cond INCLUDE_INTERNAL
-
     @classmethod
     def _finalize(cls, gen):
         check_hiprand(hiprand.hiprandDestroyGenerator(gen))
 
     @property
     def offset(self):
+        """Mutable attribute of the offset of random numbers sequence.
+
+        Setting this attribute resets the sequence.
+        """
         return self._offset
 
     @offset.setter
     def offset(self, offset):
+        """Mutable attribute of HIP stream for all kernel launches of the generator.
+
+        All functions will use this stream.
+        *None* means default stream.
+        """
         check_hiprand(hiprand.hiprandSetGeneratorOffset(self._gen, c_ulonglong(offset)))
         self._offset = offset
 
@@ -214,8 +203,6 @@ class RNG(object):
     def stream(self, stream):
         check_hiprand(hiprand.hiprandSetStream(self._gen, stream))
         self._stream = stream
-
-    ## @endcond # INCLUDE_INTERNAL
 
     def _generate(self, gen_func, ary, size, *args):
         if size is not None:
@@ -236,18 +223,18 @@ class RNG(object):
         if needs_conversion:
             dary.copy_to_host(ary)
 
-    ## Generates uniformly distributed integers.
-    #
-    # Generates @p size (if present) or @p ary.size uniformly distributed
-    # integers and saves them to @p ary.
-    #
-    # Supported @c dtype of @p ary: @c numpy.uint32, @c numpy.int32.
-    #
-    # @param ary  NumPy array (@c numpy.ndarray) or
-    #   HIP device-side array (@c DeviceNDArray)
-    # @param size Number of samples to generate, default to @p ary.size
-    #
     def generate(self, ary, size=None):
+        """Generates uniformly distributed integers.
+
+        Generates **size** (if present) or **ary.size** uniformly distributed
+        integers and saves them to **ary**.
+
+        Supported **dtype** of **ary**: :class:`numpy.uint32`, :class:`numpy.int32`.
+
+        :param ary:  NumPy array (:class:`numpy.ndarray`) or
+                     HIP device-side array (:class:`DeviceNDArray`)
+        :param size: Number of samples to generate, default to **ary.size**
+        """
         if ary.dtype in (np.uint32, np.int32):
             self._generate(
                 hiprand.hiprandGenerate,
@@ -255,21 +242,21 @@ class RNG(object):
         else:
             raise TypeError("unsupported type {}".format(ary.dtype))
 
-    ## Generates uniformly distributed floats.
-    #
-    # Generates @p size (if present) or @p ary.size uniformly distributed
-    # floats and saves them to @p ary.
-    #
-    # Supported @c dtype of @p ary: @c numpy.float32, @c numpy.float64.
-    #
-    # Generated numbers are between \c 0.0 and \c 1.0, excluding \c 0.0 and
-    # including \c 1.0.
-    #
-    # @param ary  NumPy array (@c numpy.ndarray) or
-    #   HIP device-side array (@c DeviceNDArray)
-    # @param size Number of samples to generate, default to @p ary.size
-    #
     def uniform(self, ary, size=None):
+        """Generates uniformly distributed floats.
+
+        Generates **size** (if present) or **ary.size** uniformly distributed
+        floats and saves them to **ary**.
+
+        Supported **dtype** of **ary**: :class:`numpy.float32`, :class:`numpy.float64`.
+
+        Generated numbers are between 0.0 and 1.0, excluding 0.0 and
+        including 1.0.
+
+        :param ary:  NumPy array (:class:`numpy.ndarray`) or
+                     HIP device-side array (:class:`DeviceNDArray`)
+        :param size: Number of samples to generate, default to **ary.size**
+        """
         if ary.dtype == np.float32:
             self._generate(
                 hiprand.hiprandGenerateUniform,
@@ -281,20 +268,20 @@ class RNG(object):
         else:
             raise TypeError("unsupported type {}".format(ary.dtype))
 
-    ## Generates normally distributed floats.
-    #
-    # Generates @p size (if present) or @p ary.size normally distributed
-    # floats and saves them to @p ary.
-    #
-    # Supported @c dtype of @p ary: @c numpy.float32, @c numpy.float64.
-    #
-    # @param ary    NumPy array (@c numpy.ndarray) or
-    #   HIP device-side array (@c DeviceNDArray)
-    # @param mean   Mean value of normal distribution
-    # @param stddev Standard deviation value of normal distribution
-    # @param size   Number of samples to generate, default to @p ary.size
-    #
     def normal(self, ary, mean, stddev, size=None):
+        """Generates normally distributed floats.
+
+        Generates **size** (if present) or **ary.size** normally distributed
+        floats and saves them to **ary**.
+
+        Supported **dtype** of **ary**: :class:`numpy.float32`, :class:`numpy.float64`.
+
+        :param ary:    NumPy array (:class:`numpy.ndarray`) or
+                       HIP device-side array (:class:`DeviceNDArray`)
+        :param mean:   Mean value of normal distribution
+        :param stddev: Standard deviation value of normal distribution
+        :param size:   Number of samples to generate, default to **ary.size**
+        """
         if ary.dtype == np.float32:
             self._generate(
                 hiprand.hiprandGenerateNormal,
@@ -308,20 +295,20 @@ class RNG(object):
         else:
             raise TypeError("unsupported type {}".format(ary.dtype))
 
-    ## Generates log-normally distributed floats.
-    #
-    # Generates @p size (if present) or @p ary.size log-normally distributed
-    # floats and saves them to @p ary.
-    #
-    # Supported @c dtype of @p ary: @c numpy.float32, @c numpy.float64.
-    #
-    # @param ary    NumPy array (@c numpy.ndarray) or
-    #   HIP device-side array (@c DeviceNDArray)
-    # @param mean   Mean value of log normal distribution
-    # @param stddev Standard deviation value of log normal distribution
-    # @param size   Number of samples to generate, default to @p ary.size
-    #
     def lognormal(self, ary, mean, stddev, size=None):
+        """Generates log-normally distributed floats.
+
+        Generates **size** (if present) or **ary.size** log-normally distributed
+        floats and saves them to **ary**.
+
+        Supported **dtype** of **ary**: :class:`numpy.float32`, :class:`numpy.float64`.
+
+        :param ary:    NumPy array (:class:`numpy.ndarray`) or
+                       HIP device-side array (:class:`DeviceNDArray`)
+        :param mean:   Mean value of log normal distribution
+        :param stddev: Standard deviation value of log normal distribution
+        :param size:   Number of samples to generate, default to **ary.size**
+        """
         if ary.dtype == np.float32:
             self._generate(
                 hiprand.hiprandGenerateLogNormal,
@@ -335,19 +322,19 @@ class RNG(object):
         else:
             raise TypeError("unsupported type {}".format(ary.dtype))
 
-    ## Generates Poisson-distributed integers.
-    #
-    # Generates @p size (if present) or @p ary.size Poisson-distributed
-    # integers and saves them to @p ary.
-    #
-    # Supported @c dtype of @p ary: @c numpy.uint32, @c numpy.int32.
-    #
-    # @param ary   NumPy array (@c numpy.ndarray) or
-    #   HIP device-side array (@c DeviceNDArray)
-    # @param lmbd  lambda for the Poisson distribution
-    # @param size  Number of samples to generate, default to @p ary.size
-    #
     def poisson(self, ary, lmbd, size=None):
+        """Generates Poisson-distributed integers.
+
+        Generates **size** (if present) or **ary.size** Poisson-distributed
+        integers and saves them to **ary**.
+
+        Supported **dtype** of **ary**: :class:`numpy.uint32`, :class:`numpy.int32`.
+
+        :param ary:   NumPy array (:class:`numpy.ndarray`) or
+                      HIP device-side array (:class:`DeviceNDArray`)
+        :param lmbd:  lambda for the Poisson distribution
+        :param size:  Number of samples to generate, default to **ary.size**
+        """
         if ary.dtype in (np.uint32, np.int32):
             self._generate(
                 hiprand.hiprandGeneratePoisson,
@@ -357,69 +344,66 @@ class RNG(object):
             raise TypeError("unsupported type {}".format(ary.dtype))
 
 
-## Pseudo-random number generator.
-#
-# Example:
-#
-# @code{.py}
-#
-#   import hiprand
-#   import numpy as np
-#
-#   gen = hiprand.PRNG(hiprand.PRNG.PHILOX4_32_10, seed=123456)
-#   a = np.empty(1000, np.int32)
-#   gen.poisson(a, 10.0)
-#   print(a)
-#
-# @endcode
 class PRNG(RNG):
-    ## Default pseudo-random generator type, @ref XORWOW
+    """Pseudo-random number generator.
+
+    Example::
+
+        import hiprand
+        import numpy as np
+
+        gen = hiprand.PRNG(hiprand.PRNG.PHILOX4_32_10, seed=123456)
+        a = np.empty(1000, np.int32)
+        gen.poisson(a, 10.0)
+        print(a)
+    """
+
     DEFAULT       = HIPRAND_RNG_PSEUDO_DEFAULT
-    ## XORWOW pseudo-random generator type
+    """Default pseudo-random generator type, :const:`XORWOW`"""
     XORWOW        = HIPRAND_RNG_PSEUDO_XORWOW
-    ## MRG32k3a pseudo-random generator type
+    """XORWOW pseudo-random generator type"""
     MRG32K3A      = HIPRAND_RNG_PSEUDO_MRG32K3A
-    ## Mersenne Twister MTGP32 pseudo-random generator type
+    """MRG32k3a pseudo-random generator type"""
     MTGP32        = HIPRAND_RNG_PSEUDO_MTGP32
-    ## Mersenne Twister 19937 pseudo-random generator type
+    """Mersenne Twister MTGP32 pseudo-random generator type"""
     MT19937       = HIPRAND_RNG_PSEUDO_MT19937
-    ## PHILOX_4x32 (10 rounds) pseudo-random generator type
+    """Mersenne Twister 19937 pseudo-random generator type"""
     PHILOX4_32_10 = HIPRAND_RNG_PSEUDO_PHILOX4_32_10
+    """PHILOX_4x32 (10 rounds) pseudo-random generator type"""
 
-    ## @property seed
-    # Mutatable attribute of the seed of random numbers sequence.
-    #
-    # Setting this attribute resets the sequence.
-
-    ## @brief Creates a new pseudo-random number generator.
-    #
-    # A new pseudo-random number generator of type @p rngtype is initialized
-    # with given @p seed, @p offset and @p stream.
-    #
-    # Values of @p rngtype:
-    # - @ref DEFAULT
-    # - @ref XORWOW
-    # - @ref MRG32K3A
-    # - @ref MTGP32
-    # - @ref MT19937
-    # - @ref PHILOX4_32_10
-    #
-    # @param rngtype Type of pseudo-random number generator to create
-    # @param seed    Initial seed value
-    # @param offset  Initial offset of random numbers sequence
-    # @param stream  HIP stream for all kernel launches of the generator
-    #
     def __init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None):
+        """__init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None)
+        Creates a new pseudo-random number generator.
+
+        A new pseudo-random number generator of type **rngtype** is initialized
+        with given **seed**, **offset** and **stream**.
+
+        Values of **rngtype**:
+
+        * :const:`DEFAULT`
+        * :const:`XORWOW`
+        * :const:`MRG32K3A`
+        * :const:`MTGP32`
+        * :const:`MT19937`
+        * :const:`PHILOX4_32_10`
+
+        :param rngtype: Type of pseudo-random number generator to create
+        :param seed:    Initial seed value
+        :param offset:  Initial offset of random numbers sequence
+        :param stream:  HIP stream for all kernel launches of the generator
+        """
         super(PRNG, self).__init__(rngtype, offset=offset, stream=stream)
 
         self._seed = None
         if seed is not None:
             self.seed = seed
 
-    ## @cond INCLUDE_INTERNAL
-
     @property
     def seed(self):
+        """Mutable attribute of the seed of random numbers sequence.
+
+        Setting this attribute resets the sequence.
+        """
         return self._seed
 
     @seed.setter
@@ -427,72 +411,68 @@ class PRNG(RNG):
         check_hiprand(hiprand.hiprandSetPseudoRandomGeneratorSeed(self._gen, c_ulonglong(seed)))
         self._seed = seed
 
-    ## @endcond # INCLUDE_INTERNAL
 
-
-## Quasi-random number generator.
-#
-# Example:
-#
-# @code{.py}
-#
-#   import hiprand
-#   import numpy as np
-#
-#   gen = hiprand.QRNG(hiprand.QRNG.SOBOL32, ndim=4)
-#   a = np.empty(1000, np.float32)
-#   gen.normal(a, 0.0, 1.0)
-#   print(a)
-#
-# @endcode
 class QRNG(RNG):
-    ## Default quasi-random generator type, @ref SOBOL32
+    """Quasi-random number generator.
+
+    Example::
+
+        import hiprand
+        import numpy as np
+
+        gen = hiprand.QRNG(hiprand.QRNG.SOBOL32, ndim=4)
+        a = np.empty(1000, np.float32)
+        gen.normal(a, 0.0, 1.0)
+        print(a)
+    """
+
     DEFAULT           = HIPRAND_RNG_QUASI_DEFAULT
-    ## Sobol32 quasi-random generator type
+    """Default quasi-random generator type, :const:`SOBOL32`"""
     SOBOL32           = HIPRAND_RNG_QUASI_SOBOL32
-    ## Scrambled Sobol32 quasi-random generator type
+    """Sobol32 quasi-random generator type"""
     SCRAMBLED_SOBOL32 = HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL32
-    ## Sobol64 quasi-random generator type
+    """Scrambled Sobol32 quasi-random generator type"""
     SOBOL64           = HIPRAND_RNG_QUASI_SOBOL64
-    ## Scrambled Sobol64 quasi-random generator type
+    """Sobol64 quasi-random generator type"""
     SCRAMBLED_SOBOL64 = HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64
+    """Scrambled Sobol64 quasi-random generator type"""
 
-    ## @property ndim
-    # Mutatable attribute of the number of dimensions of random numbers sequence.
-    #
-    # Supported values are 1 to 20000.
-    # Setting this attribute resets the sequence.
-
-    ## @brief Creates a new quasi-random number generator.
-    #
-    # A new quasi-random number generator of type @p rngtype is initialized
-    # with given @p ndim, @p offset and @p stream.
-    #
-    # Values of @p rngtype:
-    # - @ref DEFAULT
-    # - @ref SOBOL32
-    # - @ref SCRAMBLED_SOBOL32
-    # - @ref SOBOL64
-    # - @ref SCRAMBLED_SOBOL64
-    #
-    # Values if @p ndim are 1 to 20000.
-    #
-    # @param rngtype Type of quasi-random number generator to create
-    # @param ndim    Number of dimensions
-    # @param offset  Initial offset of random numbers sequence
-    # @param stream  HIP stream for all kernel launches of the generator
-    #
     def __init__(self, rngtype=DEFAULT, ndim=None, offset=None, stream=None):
+        """__init__(self, rngtype=DEFAULT, ndim=None, offset=None, stream=None)
+        Creates a new quasi-random number generator.
+
+        A new quasi-random number generator of type **rngtype** is initialized
+        with given **ndim**, **offset** and **stream**.
+
+        Values of **rngtype**:
+
+        * :const:`DEFAULT`
+        * :const:`SOBOL32`
+        * :const:`SCRAMBLED_SOBOL32`
+        * :const:`SOBOL64`
+        * :const:`SCRAMBLED_SOBOL64`
+
+        Values if **ndim** are 1 to 20000.
+
+        :param rngtype: Type of quasi-random number generator to create
+        :param ndim:    Number of dimensions
+        :param offset:  Initial offset of random numbers sequence
+        :param stream:  HIP stream for all kernel launches of the generator
+        """
+
         super(QRNG, self).__init__(rngtype, offset=offset, stream=stream)
 
         self._ndim = 1
         if ndim is not None:
             self.ndim = ndim
 
-    ## @cond INCLUDE_INTERNAL
-
     @property
     def ndim(self):
+        """Mutable attribute of the number of dimensions of random numbers sequence.
+
+        Supported values are 1 to 20000.
+        Setting this attribute resets the sequence.
+        """
         return self._ndim
 
     @ndim.setter
@@ -500,10 +480,9 @@ class QRNG(RNG):
         check_hiprand(hiprand.hiprandSetQuasiRandomGeneratorDimensions(self._gen, c_uint(ndim)))
         self._ndim = ndim
 
-    ## @endcond # INCLUDE_INTERNAL
 
-## Returns the version number of the cuRAND or rocRAND library.
 def get_version():
+    """Returns the version number of the rocRAND or cuRAND library."""
     version = c_int(0)
     check_hiprand(hiprand.hiprandGetVersion(byref(version)))
     return version.value

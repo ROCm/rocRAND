@@ -18,4 +18,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from .rocrand import RocRandError, PRNG, QRNG, empty, get_version
+from .rocrand import RocRandError, PRNG, QRNG, get_version
+from .hip import HipError, DeviceNDArray, empty
