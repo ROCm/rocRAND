@@ -29,6 +29,15 @@ configure_file(
     @ONLY
 )
 
+# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
+# for nvcc if cmake version is less than 3.9.3
+if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
+    CUDA_INCLUDE_DIRECTORIES(
+        "${PROJECT_BINARY_DIR}/library/include/"
+        "${PROJECT_SOURCE_DIR}/library/include/"
+    )
+endif()
+
 # Build library
 if(HIP_PLATFORM STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
