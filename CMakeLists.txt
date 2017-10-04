@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 # Install prefix
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOLEAN "Add paths to linker search and installed rpath")
+
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
