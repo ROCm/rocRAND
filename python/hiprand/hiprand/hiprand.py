@@ -45,24 +45,12 @@ HIPRAND_PATHS = [
 def load_hiprand():
     global hiprand
 
-    # Try to load libraries to resolve all dependencies
-    # (e.g. libhip_hcc.so and its dependencies)
-    try:
-        CDLL(find_library(HIPRAND_PATHS, "librocrand.so"), mode=RTLD_GLOBAL)
-    except OSError as e:
-        pass
-
-    try:
-        CDLL(find_library(HIPRAND_PATHS, "libhiprand.so"))
-    except OSError as e:
-        pass
-
-    load_hip()
-
     try:
         hiprand = CDLL(find_library(HIPRAND_PATHS, "libhiprand.so"))
     except OSError as e:
         raise ImportError("libhiprand.so cannot be loaded: " + str(e))
+
+    load_hip()
 
 load_hiprand()
 
