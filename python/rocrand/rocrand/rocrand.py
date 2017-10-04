@@ -44,19 +44,12 @@ ROCRAND_PATHS = [
 def load_rocrand():
     global rocrand
 
-    # Try to load libraries to resolve all dependencies
-    # (e.g. libhip_hcc.so and its dependencies)
-    try:
-        CDLL(find_library(ROCRAND_PATHS, "librocrand.so"))
-    except OSError as e:
-        pass
-
-    load_hip()
-
     try:
         rocrand = CDLL(find_library(ROCRAND_PATHS, "librocrand.so"))
     except OSError as e:
         raise ImportError("librocrand.so cannot be loaded: " + str(e))
+
+    load_hip()
 
 load_rocrand()
 
