@@ -38,6 +38,8 @@ if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
     )
 endif()
 
+include(CMakePackageConfigHelpers)
+
 # Build library
 if(HIP_PLATFORM STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
@@ -108,7 +110,6 @@ install(
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
-include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/rocrand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
     INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/rocrand
@@ -177,6 +178,7 @@ set_target_properties(hiprand
         DEBUG_POSTFIX "-d"
         VERSION ${hiprand_VERSION}
         SOVERSION 1
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/rocrand/lib"
 )
 
 # Install
@@ -206,7 +208,6 @@ install(
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
-set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
 configure_package_config_file(
     src/hiprand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
@@ -249,8 +250,6 @@ set(CPACK_SET_DESTDIR ON)
 set(CPACK_PACKAGE_VERSION_MAJOR ${rocrand_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${rocrand_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${rocrand_VERSION_PATCH})
-set(LIB_NAMES "hiprand" "rocrand")
-set(LIB_DIRS "${CMAKE_INSTALL_PREFIX}/hiprand/lib" "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
 package_set_postinst_prerm(
     "hiprand;rocrand"
     "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
