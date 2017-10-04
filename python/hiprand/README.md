@@ -32,6 +32,20 @@ It is also possible to test the wrapper without installing:
 python setup.py test
 ```
 
+## Creating a source distribution
+
+```
+cd python/hiprand
+python setup.py sdist
+```
+
+The package `hiprand-<version>.tar.gz` will be placed into `dist/`.
+It can be installed later using this command:
+
+```
+pip install hiprand-<version>.tar.gz
+```
+
 ## Building documentation
 
 Install Sphinx (http://www.sphinx-doc.org/en/stable/index.html):
