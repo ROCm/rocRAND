@@ -32,6 +32,12 @@ It is also possible to test the wrapper without installing:
 python setup.py test
 ```
 
+Run examples:
+
+```
+python examples/pi.py
+```
+
 ## Creating a source distribution
 
 ```
