@@ -171,8 +171,9 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-
-autodoc_member_order = 'bysource'
+# Use groupwise, because bysource doesn't work correctly with inherited members
+autodoc_member_order = 'groupwise'
+# Class docs uses both class and __init__ docstrings
 autoclass_content = 'both'
 
 intersphinx_mapping = { 'numpy': ('https://docs.scipy.org/doc/numpy', None) }
