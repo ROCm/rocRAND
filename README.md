@@ -145,7 +145,7 @@ doxygen Doxyfile
 
 * C++ wrappers for host API of rocRAND and hipRAND are in files [`rocrand.hpp`](./library/include/rocrand.hpp)
 and [`hiprand.hpp`](./library/include/hiprand.hpp).
-* [Fortran wrapper](./library/src/fortran/).
+* [Fortran wrappers](./library/src/fortran/).
 * [Python wrappers](./python/).
 
 ## Support

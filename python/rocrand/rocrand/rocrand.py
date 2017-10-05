@@ -47,8 +47,7 @@ def load_rocrand():
     try:
         rocrand = CDLL(find_library(ROCRAND_PATHS, "librocrand.so"))
     except OSError as e:
-        pass
-        # raise ImportError("librocrand.so cannot be loaded: " + str(e))
+        raise ImportError("librocrand.so cannot be loaded: " + str(e))
 
     load_hip()
 

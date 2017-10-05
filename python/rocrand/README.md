@@ -68,3 +68,8 @@ python setup.py build_sphinx
 ```
 
 The documentation will be placed into `docs/build/html`.
+
+Note: Sphinx requires that the module is properly loaded to generate
+documentation from sources. Consider to install rocRAND first
+or set `ROCRAND_PATH` if you see error messages like
+"ImportError: librocrand.so cannot be loaded..."
