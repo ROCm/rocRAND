@@ -15,9 +15,9 @@ list(APPEND CMAKE_MODULE_PATH
 include(cmake/SetToolchain.cmake)
 
 #
-# hipRAND project
+# rocRAND project
 #
-project(hipRAND CXX)
+project(rocRAND CXX)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
