@@ -184,6 +184,12 @@ class TestGenerate(TestRNGBase):
         with self.assertRaises(TypeError):
             self.rng.poisson(np.empty(100, np.float32), 100.0)
 
+        self.rng.generate(np.empty(100, np.uint32))
+        self.rng.generate(np.empty((10, 100), np.uint32))
+
+        self.rng.uniform(empty(100, np.float32))
+        self.rng.uniform(empty((10, 100), np.float32))
+
     def test_generate_uint32(self):
         output = np.empty(OUTPUT_SIZE, np.uint32)
         self.rng.generate(output)
