@@ -58,7 +58,7 @@ class TestCtorPRNG(TestRNGBase):
         PRNG(self.rngtype, offset=987654)
         PRNG(self.rngtype, seed=2345678, offset=7654)
 
-make_test(TestCtorPRNG, "PDEFAULT",      rngtype=PRNG.DEFAULT)
+make_test(TestCtorPRNG, "DEFAULT",       rngtype=PRNG.DEFAULT)
 make_test(TestCtorPRNG, "XORWOW",        rngtype=PRNG.XORWOW)
 make_test(TestCtorPRNG, "MRG32K3A",      rngtype=PRNG.MRG32K3A)
 make_test(TestCtorPRNG, "PHILOX4_32_10", rngtype=PRNG.PHILOX4_32_10)
@@ -81,8 +81,8 @@ class TestCtorQRNG(TestRNGBase):
         QRNG(self.rngtype, offset=987654)
         QRNG(self.rngtype, ndim=123, offset=7654)
 
-make_test(TestCtorQRNG, "DEFAULT", rngtype = QRNG.DEFAULT)
-make_test(TestCtorQRNG, "SOBOL32", rngtype = QRNG.SOBOL32)
+make_test(TestCtorQRNG, "DEFAULT", rngtype=QRNG.DEFAULT)
+make_test(TestCtorQRNG, "SOBOL32", rngtype=QRNG.SOBOL32)
 
 class TestParamsPRNG(TestRNGBase):
     def setUp(self):
@@ -106,7 +106,7 @@ class TestParamsPRNG(TestRNGBase):
         self.rng.offset = 2323423
         self.assertEqual(self.rng.offset, 2323423)
 
-make_test(TestParamsPRNG, "PDEFAULT",      rngtype=PRNG.DEFAULT)
+make_test(TestParamsPRNG, "DEFAULT",       rngtype=PRNG.DEFAULT)
 make_test(TestParamsPRNG, "XORWOW",        rngtype=PRNG.XORWOW)
 make_test(TestParamsPRNG, "MRG32K3A",      rngtype=PRNG.MRG32K3A)
 make_test(TestParamsPRNG, "PHILOX4_32_10", rngtype=PRNG.PHILOX4_32_10)
@@ -161,8 +161,8 @@ class TestParamsQRNG(TestRNGBase):
         self.rng.offset = 2323423
         self.assertEqual(self.rng.offset, 2323423)
 
-make_test(TestParamsQRNG, "QDEFAULT", rngtype=QRNG.DEFAULT)
-make_test(TestParamsQRNG, "SOBOL32",  rngtype=QRNG.SOBOL32)
+make_test(TestParamsQRNG, "DEFAULT", rngtype=QRNG.DEFAULT)
+make_test(TestParamsQRNG, "SOBOL32", rngtype=QRNG.SOBOL32)
 
 OUTPUT_SIZE = 8192
 
@@ -263,13 +263,13 @@ class TestGenerate(TestRNGBase):
         self.assertTrue((output[:OUTPUT_SIZE] <= 1.0).all())
         self.assertTrue((output[OUTPUT_SIZE:] == 10.0).all())
 
-make_test(TestGenerate, "PDEFAULT",      klass=PRNG, rngtype=PRNG.DEFAULT)
-make_test(TestGenerate, "XORWOW",        klass=PRNG, rngtype=PRNG.XORWOW)
-make_test(TestGenerate, "MRG32K3A",      klass=PRNG, rngtype=PRNG.MRG32K3A)
-make_test(TestGenerate, "MTGP32",        klass=PRNG, rngtype=PRNG.MTGP32)
-make_test(TestGenerate, "PHILOX4_32_10", klass=PRNG, rngtype=PRNG.PHILOX4_32_10)
-make_test(TestGenerate, "QDEFAULT",      klass=QRNG, rngtype=QRNG.DEFAULT)
-make_test(TestGenerate, "SOBOL32",       klass=QRNG, rngtype=QRNG.SOBOL32)
+make_test(TestGenerate, "PRNG" + "DEFAULT",       klass=PRNG, rngtype=PRNG.DEFAULT)
+make_test(TestGenerate, "PRNG" + "XORWOW",        klass=PRNG, rngtype=PRNG.XORWOW)
+make_test(TestGenerate, "PRNG" + "MRG32K3A",      klass=PRNG, rngtype=PRNG.MRG32K3A)
+make_test(TestGenerate, "PRNG" + "MTGP32",        klass=PRNG, rngtype=PRNG.MTGP32)
+make_test(TestGenerate, "PRNG" + "PHILOX4_32_10", klass=PRNG, rngtype=PRNG.PHILOX4_32_10)
+make_test(TestGenerate, "QRNG" + "DEFAULT",       klass=QRNG, rngtype=QRNG.DEFAULT)
+make_test(TestGenerate, "QRNG" + "SOBOL32",       klass=QRNG, rngtype=QRNG.SOBOL32)
 
 
 if __name__ == "__main__":
