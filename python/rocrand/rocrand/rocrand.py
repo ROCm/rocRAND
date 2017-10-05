@@ -29,7 +29,7 @@ import numbers
 import numpy as np
 
 from .hip import load_hip, HIP_PATHS
-from .hip import empty, device_pointer
+from .hip import empty, DeviceNDArray, device_pointer
 
 from .utils import find_library, expand_paths
 from .finalize import track_for_finalization
@@ -47,7 +47,8 @@ def load_rocrand():
     try:
         rocrand = CDLL(find_library(ROCRAND_PATHS, "librocrand.so"))
     except OSError as e:
-        raise ImportError("librocrand.so cannot be loaded: " + str(e))
+        pass
+        # raise ImportError("librocrand.so cannot be loaded: " + str(e))
 
     load_hip()
 

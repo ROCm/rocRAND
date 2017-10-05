@@ -29,7 +29,7 @@ import numbers
 import numpy as np
 
 from .hip import load_hip, HIP_PATHS
-from .hip import empty, device_pointer
+from .hip import empty, DeviceNDArray, device_pointer
 
 from .utils import find_library, expand_paths
 from .finalize import track_for_finalization

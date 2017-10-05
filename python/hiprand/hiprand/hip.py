@@ -104,6 +104,8 @@ class DeviceNDArray(object):
 
     This class is a limited version of :class:`numpy.ndarray` for device-side
     arrays.
+
+    See :func:`empty`
     """
 
     def __init__(self, shape, dtype, data=None):
@@ -160,12 +162,26 @@ class DeviceNDArray(object):
         return ary
 
 def empty(shape, dtype):
-    """Create an empty device-side array.
+    """Create a new device-side array of given shape and type, without initializing entries.
 
-    This function is a limited version of :func:`numpy:empty` for device-side
+    This function is a limited version of :func:`numpy.empty` for device-side
     arrays.
 
+    Example::
+
+        import hiprand
+        import numpy as np
+
+        gen = hiprand.QRNG(ndim=5)
+        d_a = hiprand.empty((5, 10000), dtype=np.float32)
+        gen.uniform(d_a)
+        a = d_a.copy_to_host()
+        print(a)
+
+    See :class:`DeviceNDArray`
+
     :param shape: Shape of the array (see :attr:`numpy.ndarray.shape`)
+    :type shape: int or tuple of int
     :param dtype: Type of the array (see :attr:`numpy.ndarray.dtype`)
     """
     return DeviceNDArray(shape, dtype)
