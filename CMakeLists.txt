@@ -32,7 +32,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOLEAN "Add paths to linker se
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-variadic-macros -Wno-sign-compare")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare")
 
 # Build options
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -49,8 +49,8 @@ print_configuration_summary()
 
 # Set version variables
 include(cmake/Common.cmake)
-create_version_vars(hiprand 1 6 1)
-create_version_vars(rocrand 1 6 1)
+create_version_vars(hiprand 1 7 0)
+create_version_vars(rocrand 1 7 0)
 
 # AMD targets
 set(AMDGPU_TARGETS gfx803;gfx900 CACHE STRING "List of specific machine types for library to target")
