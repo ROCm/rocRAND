@@ -21,15 +21,17 @@ environment cuRAND is used instead.
 * [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (optional, required only for crush tests)
   * Use `TESTU01_ROOT_DIR` to specify TestU01 location
   * Note: If TestU01 is not already installed, it will be automatically downloaded and built
-* cmake (2.8.12 or later)
+* cmake (3.0.2 or later)
 * C++ compiler with C++11 support
-* Fortran compiler (optional, required only for Fortran wrapper)
-  * `gfortran` is recommended
 * For AMD platforms:
     * [ROCm](https://rocm.github.io/install.html) (1.5 or later)
 * For CUDA platforms:
     * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
     * Latest CUDA SDK
+
+* Fortran compiler (optional, required only for Fortran wrapper)
+  * `gfortran` is recommended
+* Python 2.7+ or 3.5+ (optional, required only for Python wrapper)
 
 If some dependencies are missing, cmake script automatically downloads, builds and
 installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
@@ -146,7 +148,7 @@ doxygen Doxyfile
 * C++ wrappers for host API of rocRAND and hipRAND are in files [`rocrand.hpp`](./library/include/rocrand.hpp)
 and [`hiprand.hpp`](./library/include/hiprand.hpp).
 * [Fortran wrappers](./library/src/fortran/).
-* [Python wrappers](./python/).
+* [Python wrappers](./python/): [rocRAND](./python/rocrand) and [hipRAND](./python/hiprand).
 
 ## Support
 
