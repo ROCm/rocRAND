@@ -12,38 +12,40 @@ CUDA applications that use cuRAND library to the [HIP](https://github.com/ROCm-D
 layer. In [ROCm](https://rocm.github.io/) environment hipRAND uses rocRAND, however in CUDA
 environment cuRAND is used instead.
 
-## Requirements
-
-* Git
-* [GTest](https://github.com/google/googletest) (optional, required only for tests)
-  * Use `GTEST_ROOT` to specify GTest location (also see [FindGTest](https://cmake.org/cmake/help/latest/module/FindGTest.html))
-  * Note: If GTest is not already installed, it will be automatically downloaded and built
-* [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (optional, required only for crush tests)
-  * Use `TESTU01_ROOT_DIR` to specify TestU01 location
-  * Note: If TestU01 is not already installed, it will be automatically downloaded and built
-* cmake (3.0.2 or later)
-* C++ compiler with C++11 support
-* For AMD platforms:
-    * [ROCm](https://rocm.github.io/install.html) (1.5 or later)
-* For CUDA platforms:
-    * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
-    * Latest CUDA SDK
-
-* Fortran compiler (optional, required only for Fortran wrapper)
-  * `gfortran` is recommended
-* Python 2.7+ or 3.5+ (optional, required only for Python wrapper)
-
-If some dependencies are missing, cmake script automatically downloads, builds and
-installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
-not to use system-installed libraries, and to download all dependencies.
-
-# Supported Random Number Generators
+## Supported Random Number Generators
 
 * XORWOW
 * MRG32k3a
 * Mersenne Twister for Graphic Processors (MTGP32)
 * Philox (4x32, 10 rounds)
 * Sobol32
+
+## Requirements
+
+* Git
+* cmake (3.0.2 or later)
+* C++ compiler with C++11 support
+* For AMD platforms:
+  * [ROCm](https://rocm.github.io/install.html) (1.5 or later)
+* For CUDA platforms:
+  * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
+  * Latest CUDA SDK
+
+Optional:
+
+* [GTest](https://github.com/google/googletest) (required only for tests; building tests is enabled by default)
+  * Use `GTEST_ROOT` to specify GTest location (also see [FindGTest](https://cmake.org/cmake/help/latest/module/FindGTest.html))
+  * Note: If GTest is not already installed, it will be automatically downloaded and built
+* [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (required only for crush tests)
+  * Use `TESTU01_ROOT_DIR` to specify TestU01 location
+  * Note: If TestU01 is not already installed, it will be automatically downloaded and built
+* Fortran compiler (required only for Fortran wrapper)
+  * `gfortran` is recommended.
+* Python 2.7+ or 3.5+ (required only for Python wrapper)
+
+If some dependencies are missing, cmake script automatically downloads, builds and
+installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
+not to use system-installed libraries, and to download all dependencies.
 
 ## Build and Install
 
