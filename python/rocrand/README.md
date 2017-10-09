@@ -4,6 +4,7 @@
 
 * rocRAND
 * Python 2.7 or 3.5
+* pip (only for installing)
 * NumPy (will be installed automatically as a dependency if necessary)
 
 If rocRAND is built from sources but not installed or installed in non-standard
