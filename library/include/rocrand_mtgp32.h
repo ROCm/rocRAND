@@ -97,14 +97,14 @@
  * just Mersenne Prime. This is redundant.
  */
 struct mtgp32_params_fast_t {
-    int mexp;			/**< Mersenne exponent. This is redundant. */
-    int pos;			/**< pick up position. */
-    int sh1;			/**< Shift value 1. 0 < sh1 < 32. */
-    int sh2;			/**< Shift value 2. 0 < sh2 < 32. */
-    uint32_t tbl[16];		/**< A small matrix. */
-    uint32_t tmp_tbl[16];	/**< A small matrix for tempering. */
-    uint32_t flt_tmp_tbl[16];	/**< A small matrix for tempering and converting to float. */
-    uint32_t mask;		/**< This is a mask for state space. */
+    int mexp;            /**< Mersenne exponent. This is redundant. */
+    int pos;            /**< pick up position. */
+    int sh1;            /**< Shift value 1. 0 < sh1 < 32. */
+    int sh2;            /**< Shift value 2. 0 < sh2 < 32. */
+    uint32_t tbl[16];        /**< A small matrix. */
+    uint32_t tmp_tbl[16];    /**< A small matrix for tempering. */
+    uint32_t flt_tmp_tbl[16];    /**< A small matrix for tempering and converting to float. */
+    uint32_t mask;        /**< This is a mask for state space. */
     unsigned char poly_sha1[21]; /**< SHA1 digest. */
 };
 
