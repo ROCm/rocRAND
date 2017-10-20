@@ -158,5 +158,7 @@ Bugs and feature requests can be reported through [the issue tracker](https://gi
 
 ## Contributions and License
 
-Contributions of any kind are most welcome! More details are found
-at [CONTRIBUTING](./CONTRIBUTING.md) and [LICENSE](./LICENSE.txt).
+Contributions of any kind are most welcome! More details are found at [CONTRIBUTING](./CONTRIBUTING.md)
+and [LICENSE](./LICENSE.txt). Please note that [statistical tests](./test/crush) link to TestU01 library
+distributed under GNU General Public License (GPL) version 3, thus GPL version 3 license applies to
+that part of the project.
