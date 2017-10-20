@@ -236,10 +236,10 @@ int main(int argc, char *argv[])
     parser.set_optional<size_t>("size", "size", 10000, "number of samples in every first level test");
     parser.set_optional<size_t>("level1-tests", "level1-tests", 10, "number of first level tests");
     parser.set_optional<size_t>("level2-tests", "level2-tests", 10, "number of second level tests");
-	parser.set_optional<std::vector<std::string>>("dis", "dis", {"all"}, distribution_desc.c_str());
+    parser.set_optional<std::vector<std::string>>("dis", "dis", {"all"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
     parser.set_optional<std::vector<double>>("lambda", "lambda", {100.0}, "space-separated list of lambdas of Poisson distribution");
-	parser.set_optional<bool>("plots", "plots", false, "Boolean argument to save plots for GnuPlot");
+    parser.set_optional<bool>("plots", "plots", false, "Boolean argument to save plots for GnuPlot");
     parser.run_and_exit_if_error();
 
     std::vector<std::string> engines;
