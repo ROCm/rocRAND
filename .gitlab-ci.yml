@@ -1,4 +1,4 @@
-image: rocm/rocm-terminal:1.6.3
+image: rocm/rocm-terminal:latest
 
 variables:
   SUDO_CMD: "" # Must be "sudo" on images which dont use root user
@@ -17,7 +17,7 @@ before_script:
   # We had to add sudo because rocm image does not use root as user
   - hipconfig
   - $SUDO_CMD apt-get update -qq
-  - $SUDO_CMD apt-get install -y -qq git wget tar xz-utils bzip2 build-essential xterm
+  - $SUDO_CMD apt-get install -y -qq git wget tar xz-utils bzip2 build-essential xterm pkg-config
   - $SUDO_CMD apt-get install -y -qq g++ gfortran
   # cmake
   - mkdir -p $DEPS_DIR/cmake
