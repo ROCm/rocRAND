@@ -913,7 +913,7 @@ public:
     /// Destructs the engine.
     ///
     /// See also: rocrand_destroy_generator()
-    ~philox4x32_10_engine()
+    ~philox4x32_10_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
@@ -1068,7 +1068,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~xorwow_engine()
+    ~xorwow_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
@@ -1192,7 +1192,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~mrg32k3a_engine()
+    ~mrg32k3a_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
@@ -1322,7 +1322,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~mtgp32_engine()
+    ~mtgp32_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
@@ -1448,7 +1448,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~sobol32_engine()
+    ~sobol32_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
