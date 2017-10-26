@@ -921,7 +921,7 @@ public:
     /// Destructs the engine.
     ///
     /// See also: hiprandDestroyGenerator()
-    ~philox4x32_10_engine()
+    ~philox4x32_10_engine() noexcept(false)
     {
         hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
@@ -1076,7 +1076,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~xorwow_engine()
+    ~xorwow_engine() noexcept(false)
     {
         hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
@@ -1200,7 +1200,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~mrg32k3a_engine()
+    ~mrg32k3a_engine() noexcept(false)
     {
         hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
@@ -1330,7 +1330,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~mtgp32_engine()
+    ~mtgp32_engine() noexcept(false)
     {
         hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
@@ -1456,7 +1456,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
-    ~sobol32_engine()
+    ~sobol32_engine() noexcept(false)
     {
         hiprandStatus_t status = hiprandDestroyGenerator(m_generator);
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
