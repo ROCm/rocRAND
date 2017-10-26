@@ -46,15 +46,6 @@ namespace rocrand_device {
 namespace detail {
 
 FQUALIFIERS
-void copy_mat(unsigned int * dst, const unsigned int * src)
-{
-    for (int i = 0; i < XORWOW_SIZE; i++)
-    {
-        dst[i] = src[i];
-    }
-}
-
-FQUALIFIERS
 void copy_vec(unsigned int * dst, const unsigned int * src)
 {
     for (int i = 0; i < XORWOW_N; i++)
@@ -67,15 +58,14 @@ FQUALIFIERS
 void mul_mat_vec_inplace(const unsigned int * m, unsigned int * v)
 {
     unsigned int r[XORWOW_N] = { 0 };
-    for (int i = 0; i < XORWOW_N; i++)
+    for (int ij = 0; ij < XORWOW_N * XORWOW_M; ij++)
     {
-        for (int j = 0; j < XORWOW_M; j++)
+        const int i = ij / XORWOW_M;
+        const int j = ij % XORWOW_M;
+        const unsigned int b = (v[i] & (1 << j)) ? 0xffffffff : 0x0;
+        for (int k = 0; k < XORWOW_N; k++)
         {
-            const unsigned int b = (v[i] & (1 << j)) ? 0xffffffff : 0x0;
-            for (int k = 0; k < XORWOW_N; k++)
-            {
-                r[k] ^= b & m[i * XORWOW_M * XORWOW_N + j * XORWOW_N + k];
-            }
+            r[k] ^= b & m[i * XORWOW_M * XORWOW_N + j * XORWOW_N + k];
         }
     }
     copy_vec(v, r);
