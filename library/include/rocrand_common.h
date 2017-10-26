@@ -33,6 +33,10 @@
 
 #include <math.h>
 
+#ifndef FQUALIFIERS
+#define FQUALIFIERS __forceinline__ __device__
+#endif // FQUALIFIERS
+
 namespace rocrand_device {
 namespace detail {
 
@@ -48,7 +52,7 @@ unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const
     // (to save VGPR) as input.
     // y and z have "v" constraints, because only one SGPR or literal
     // can be read by the instruction.
-    asm("v_mad_u64_u32 %0, %1, %2, %3, %4"
+    asm volatile("v_mad_u64_u32 %0, %1, %2, %3, %4"
         : "=v"(r), "=s"(c) : "r"(x), "v"(y), "v"(z)
     );
     return r;
