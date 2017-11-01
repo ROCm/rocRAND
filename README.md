@@ -72,8 +72,8 @@ ctest --output-on-failure
 ```
 
 Note: Existing gtest library in the system (especially static gtest libraries built with other compilers) 
-may conflict with the build process; if errors are encountered with already existing gtest library,
-uninstalling or temporarily renaming gtest will force cmake to download and build gtest and solve the problem
+may cause build failure; if errors are encountered with existing gtest library or other dependencies, 
+`DEPENDENCIES_FORCE_DOWNLOAD` flag can be passed to cmake, as mentioned before, to help solve the problem.
 
 Note: To disable inline assembly optimisations in rocRAND (for both the host library and
 the device functions provided in `rocrand_kernel.h`) set cmake option `ENABLE_INLINE_ASM`
