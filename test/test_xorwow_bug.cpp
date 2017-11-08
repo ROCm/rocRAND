@@ -31,6 +31,14 @@
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
 #define HIPRAND_CHECK(state) ASSERT_EQ(state, HIPRAND_STATUS_SUCCESS)
 
+#ifdef __AMDGCN__
+#define READ_EXEC() __builtin_amdgcn_read_exec()
+#else
+#define READ_EXEC() -1
+#endif
+
+typedef uint64_t exec_mask_t;
+
 __global__
 void kernel1(unsigned int * output, const size_t size, unsigned long long * execs)
 {
@@ -68,8 +76,7 @@ void kernel1(unsigned int * output, const size_t size, unsigned long long * exec
     while(index < size)
     {
         {
-            unsigned long long r;
-            asm volatile("s_mov_b64 %0, exec" : "=s"(r) :);
+            exec_mask_t r = READ_EXEC();
             if (state_id == 2) execs[i] = r;
         }
 
