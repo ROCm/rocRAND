@@ -165,9 +165,13 @@ void generate_kernel(rocrand_state_mtgp32 * states,
     __shared__ rocrand_state_mtgp32 state;
     rocrand_mtgp32_block_copy(&states[state_id], &state);
 
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        data[index] = generate_func(&state, extra);
+        auto value = generate_func(&state, extra);
+        if(index < size)
+            data[index] = value;
         index += stride;
     }
 

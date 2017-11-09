@@ -81,9 +81,13 @@ void hiprand_kernel(unsigned int * output, const size_t size)
     hiprand_init(12345, subsequence, 0, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = hiprand(&state);
+        auto value = hiprand(&state);
+        if(index < size)
+            output[index] = value;
         index += global_size;
     }
 }
@@ -100,9 +104,13 @@ void hiprand_uniform_kernel(float * output, const size_t size)
     hiprand_init(12345, subsequence, 0, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = hiprand_uniform(&state);
+        auto value = hiprand_uniform(&state);
+        if(index < size)
+            output[index] = value;
         index += global_size;
     }
 }
@@ -119,12 +127,18 @@ void hiprand_normal_kernel(float * output, const size_t size)
     hiprand_init(12345, subsequence, 0, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        if(state_id % 2 == 0)
-            output[index] = hiprand_normal2(&state).x;
+        float value;
+        if(hipBlockIdx_x % 2 == 0)
+            value = hiprand_normal2(&state).x;
         else
-            output[index] = hiprand_normal(&state);
+            value = hiprand_normal(&state);
+
+        if(index < size)
+            output[index] = value;
         index += global_size;
     }
 }
@@ -141,12 +155,18 @@ void hiprand_log_normal_kernel(float * output, const size_t size)
     hiprand_init(12345, subsequence, 0, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        if(state_id % 2 == 0)
-            output[index] = hiprand_log_normal2(&state, 1.6f, 0.25f).x;
+        float value;
+        if(hipBlockIdx_x % 2 == 0)
+            value = hiprand_log_normal2(&state, 1.6f, 0.25f).x;
         else
-            output[index] = hiprand_log_normal(&state, 1.6f, 0.25f);
+            value = hiprand_log_normal(&state, 1.6f, 0.25f);
+
+        if(index < size)
+            output[index] = value;
         index += global_size;
     }
 }
@@ -163,9 +183,13 @@ void hiprand_poisson_kernel(unsigned int * output, const size_t size, double lam
     hiprand_init(12345, subsequence, 0, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = hiprand_poisson(&state, lambda);
+        auto value = hiprand_poisson(&state, lambda);
+        if(index < size)
+            output[index] = value;
         index += global_size;
     }
 }
@@ -182,9 +206,13 @@ void hiprand_discrete_kernel(unsigned int * output, const size_t size, hiprandDi
     hiprand_init(12345, subsequence, 0, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = hiprand_discrete(&state, discrete_distribution);
+        auto value = hiprand_discrete(&state, discrete_distribution);
+        if(index < size)
+            output[index] = value;
         index += global_size;
     }
 }
