@@ -75,7 +75,10 @@ namespace detail {
     template<class Type, class Distribution>
     __global__
     void generate_kernel(mtgp32_device_engine * engines,
-                         Type * data, const size_t n,
+                         Type * data,
+                         const size_t size,
+                         const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
+                         const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
                          Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x;
@@ -86,9 +89,17 @@ namespace detail {
         __shared__ mtgp32_device_engine engine;
         engine.copy(&engines[engine_id]);
 
-        while(index < n)
+        while(index < size_down)
         {
             data[index] = distribution(engine());
+            // Next position
+            index += stride;
+        }
+        while(index < size_up)
+        {
+            auto value = distribution(engine());
+            if(index < size)
+                data[index] = value;
             // Next position
             index += stride;
         }
@@ -170,10 +181,18 @@ public:
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
+        const size_t remainder_value = data_size%s_threads;
+        const size_t size_rounded_down = data_size - remainder_value;
+        // if remainder is 0, then data_size is a multiple of s_threads, and
+        // in this case size_rounded_up must be data_size
+        const size_t size_rounded_up =
+            remainder_value == 0 ? data_size : size_rounded_down + s_threads;
+
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
+            m_engines, data, data_size, size_rounded_up,
+            size_rounded_down, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)

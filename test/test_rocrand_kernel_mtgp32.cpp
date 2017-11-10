@@ -44,9 +44,13 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
     __shared__ GeneratorState state;
     rocrand_mtgp32_block_copy(&states[state_id], &state);
 
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = rocrand(&state);
+        auto value = rocrand(&state);
+        if(index < size)
+            output[index] = value;
         // Next position
         index += stride;
     }
@@ -69,9 +73,13 @@ void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_
         state = states[state_id];
     __syncthreads();
 
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = rocrand_uniform(&state);
+        auto value = rocrand_uniform(&state);
+        if(index < size)
+            output[index] = value;
         // Next position
         index += stride;
     }
@@ -95,9 +103,13 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
         state = states[state_id];
     __syncthreads();
 
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = rocrand_normal(&state);
+        auto value = rocrand_normal(&state);
+        if(index < size)
+            output[index] = value;
         // Next position
         index += stride;
     }
@@ -121,9 +133,13 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
         state = states[state_id];
     __syncthreads();
 
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = rocrand_log_normal(&state, 1.6f, 0.25f);
+        auto value = rocrand_log_normal(&state, 1.6f, 0.25f);
+        if(index < size)
+            output[index] = value;
         // Next position
         index += stride;
     }
@@ -147,9 +163,13 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
         state = states[state_id];
     __syncthreads();
 
-    while(index < size)
+    const size_t r = size%hipBlockDim_x;
+    const size_t size_rounded_up = r == 0 ? size : size + (hipBlockDim_x - r);
+    while(index < size_rounded_up)
     {
-        output[index] = rocrand_poisson(&state, lambda);
+        auto value = rocrand_poisson(&state, lambda);
+        if(index < size)
+            output[index] = value;
         // Next position
         index += stride;
     }
