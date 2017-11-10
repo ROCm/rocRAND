@@ -148,9 +148,13 @@ void generate_kernel(curandStateMtgp32_t * states,
         state = states[state_id];
     __syncthreads();
 
-    while(index < size)
+    const size_t r = size%blockDim.x;
+    const size_t size_rounded_up = r == 0 ? size : size + (blockDim.x - r);
+    while(index < size_rounded_up)
     {
-        data[index] = generate_func(&state, extra);
+        auto value = generate_func(&state, extra);
+        if(index < size)
+            data[index] = value;
         index += stride;
     }
     __syncthreads();
