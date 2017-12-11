@@ -76,7 +76,7 @@ __global__
 void generate_kernel(GeneratorState * states,
                      T * data,
                      const size_t size,
-                     const GenerateFunc& generate_func,
+                     GenerateFunc generate_func,
                      const Extra extra)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -134,7 +134,7 @@ __global__
 void generate_kernel(curandStateMtgp32_t * states,
                      T * data,
                      const size_t size,
-                     const GenerateFunc& generate_func,
+                     GenerateFunc generate_func,
                      const Extra extra)
 {
     const unsigned int state_id = blockIdx.x;
@@ -219,7 +219,7 @@ __global__
 void generate_kernel(curandStateSobol32_t * states,
                      T * data,
                      const size_t size,
-                     const GenerateFunc& generate_func,
+                     GenerateFunc generate_func,
                      const Extra extra)
 {
     const unsigned int dimension = blockIdx.y;
