@@ -89,7 +89,7 @@ __global__
 void generate_kernel(GeneratorState * states,
                      T * data,
                      const size_t size,
-                     const GenerateFunc& generate_func,
+                     GenerateFunc generate_func,
                      const Extra extra)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -155,7 +155,7 @@ __global__
 void generate_kernel(rocrand_state_mtgp32 * states,
                      T * data,
                      const size_t size,
-                     const GenerateFunc& generate_func,
+                     GenerateFunc generate_func,
                      const Extra extra)
 {
     const unsigned int state_id = hipBlockIdx_x;
@@ -234,7 +234,7 @@ __global__
 void generate_kernel(rocrand_state_sobol32 * states,
                      T * data,
                      const size_t size,
-                     const GenerateFunc& generate_func,
+                     GenerateFunc generate_func,
                      const Extra extra)
 {
     const unsigned int dimension = hipBlockIdx_y;
