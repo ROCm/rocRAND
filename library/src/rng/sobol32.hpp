@@ -160,7 +160,8 @@ public:
             HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(blocks_x, blocks_y), dim3(threads), 0, m_stream,
             data, size,
-            m_direction_vectors, m_current_offset,
+            static_cast<const unsigned int * >(m_direction_vectors),
+	    static_cast<const unsigned int>(m_current_offset),
             distribution
         );
         // Check kernel status
