@@ -49,8 +49,8 @@ print_configuration_summary()
 
 # Set version variables
 include(cmake/Common.cmake)
-create_version_vars(hiprand 1 7 0)
-create_version_vars(rocrand 1 7 0)
+create_version_vars(hiprand 1 7 1)
+create_version_vars(rocrand 1 7 1)
 
 # AMD targets
 set(AMDGPU_TARGETS gfx803;gfx900 CACHE STRING "List of specific machine types for library to target")
