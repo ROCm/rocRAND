@@ -119,3 +119,6 @@ foreach(test_src ${hipRAND_TEST_SRCS})
     )
     add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
 endforeach()
+
+# Checks for simple linkage problems
+add_subdirectory(linkage)
