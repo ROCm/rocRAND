@@ -43,7 +43,7 @@ function(add_rocrand_link_test TEST_SOURCES)
     if(HIP_PLATFORM STREQUAL "hcc")
         target_link_libraries(${TEST_TARGET} hip::hip_hcc hip::hip_device)
         foreach(amdgpu_target ${AMDGPU_TARGETS})
-            target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
+            target_link_libraries(${TEST_TARGET} --amdgpu-target=${amdgpu_target})
         endforeach()
     endif()
     set_target_properties(
@@ -82,8 +82,8 @@ function(add_hiprand_link_test TEST_SOURCES)
     )
     if(HIP_PLATFORM STREQUAL "nvcc")
         target_link_libraries(${TEST_TARGET}
-            hiprand rocrand
-            # ${CUDA_curand_LIBRARY}
+            hiprand
+            ${CUDA_curand_LIBRARY}
             ${GTEST_BOTH_LIBRARIES}
         )
     else()

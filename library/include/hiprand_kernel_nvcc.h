@@ -65,6 +65,7 @@ struct is_any_of<T, F, R...>
 } // end namespace detail
 /// \endcond
 
+inline
 hiprandStatus_t to_hiprand_status(curandStatus_t status)
 {
     switch(status)
@@ -121,7 +122,7 @@ void check_state_type()
     );
 }
 
-__host__
+static inline __host__
 hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
                                            mtgp32_kernel_params_t * p)
 {
@@ -130,7 +131,7 @@ hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
     );
 }
 
-__host__
+static inline __host__
 hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
                                              mtgp32_params_fast_t params[],
                                              mtgp32_kernel_params_t *k,

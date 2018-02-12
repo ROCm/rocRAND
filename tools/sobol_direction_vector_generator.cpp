@@ -61,6 +61,7 @@ void init_direction_vectors(struct sobol_set * inputs, unsigned int * directions
 
 void write_matrices(std::ofstream& fout, const std::string name, unsigned int * a, int n, int bits, bool is_device)
 {
+    fout << "static const ";
     fout << (is_device ? "__device__ " : "") << "unsigned int " << name << "[SOBOL_N] = " << std::endl;
     fout << "    {" << std::endl;
     fout << "        ";
