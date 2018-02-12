@@ -22,7 +22,11 @@
 #define ROCRAND_KERNEL_H_
 
 #ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
+#ifdef __HIP_PLATFORM_HCC__
+    #define FQUALIFIERS inline __forceinline__ __device__
+#else
+    #define FQUALIFIERS __forceinline__ __device__
+#endif // __HIP_PLATFORM_HCC__
 #endif // FQUALIFIERS
 
 #include "rocrand_common.h"

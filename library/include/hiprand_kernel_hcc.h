@@ -25,7 +25,7 @@
 /// @{
 
 #ifndef QUALIFIERS
-#define QUALIFIERS __forceinline__ __device__
+#define QUALIFIERS inline __forceinline__ __device__
 #endif // QUALIFIERS
 
 #include <hip/hip_runtime.h>
@@ -73,6 +73,7 @@ struct is_any_of<T, F, R...>
 /// \endcond
 
 /// \cond
+inline
 hiprandStatus_t to_hiprand_status(rocrand_status status)
 {
     switch(status)
@@ -140,7 +141,7 @@ void check_state_type()
  * - HIPRAND_STATUS_ALLOCATION_FAILED if parameters could not be loaded
  * - HIPRAND_STATUS_SUCCESS if parameters are loaded
  */
-__host__
+inline __host__
 hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
                                            mtgp32_kernel_params_t * p)
 {
@@ -165,7 +166,7 @@ hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
  * - HIPRAND_STATUS_ALLOCATION_FAILED if states could not be initialized
  * - HIPRAND_STATUS_SUCCESS if states are initialized
  */
-__host__
+inline __host__
 hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
                                              mtgp32_params_fast_t params[],
                                              mtgp32_kernel_params_t *k,
