@@ -29,7 +29,7 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above
@@ -40,7 +40,7 @@
  *       its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written
  *       permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -60,7 +60,7 @@
 #include <stdint.h>
 #include "rocrand_mtgp32.h"
 
-rocrand_device::mtgp32_fast_param mtgp32dc_params_fast_11213[]
+static rocrand_device::mtgp32_fast_param mtgp32dc_params_fast_11213[]
  = {
     {
         /* No.0 delta:1924 weight:1595 */
@@ -29760,7 +29760,7 @@ rocrand_device::mtgp32_fast_param mtgp32dc_params_fast_11213[]
     }
 };
 extern const int mtgpdc_params_11213_num;
-const int mtgpdc_params_11213_num  = 512;
+const int mtgpdc_params_11213_num = 512;
 
 #endif // ROCRAND_MTGP32_11213_H_
 

@@ -85,7 +85,7 @@ void init_matrices(unsigned long long * matrix, unsigned long long * A, int n, u
     unsigned long long x[9];
     for (int i = 0; i < 9; i++)
         x[i] = A[i];
-    
+
     for (int i = 0 ; i < n ; i++) {
         if (i > 0) {
             mod_mat_sq(x, m);
@@ -97,6 +97,7 @@ void init_matrices(unsigned long long * matrix, unsigned long long * A, int n, u
 
 void write_matrices(std::ofstream& fout, const std::string name, unsigned long long * a, int n, int bits, bool is_device)
 {
+    fout << "static const ";
     fout << (is_device ? "__device__ " : "") << "unsigned long long " << name << "[MRG323A_N] = " << std::endl;
     fout << "    {" << std::endl;
     fout << "        ";
@@ -119,7 +120,7 @@ int main(int argc, char const *argv[])
         std::cout << "  ./mrg32k3a_precomputed_generator ../../library/include/rocrand_mrg32k3a_precomputed.h" << std::endl;
         return -1;
     }
-    
+
     unsigned int MRG323A_DIM = 64;
     unsigned int MRG323A_N = MRG323A_DIM * 9;
     unsigned long long * A1 = new unsigned long long[MRG323A_N];
@@ -185,7 +186,7 @@ int main(int argc, char const *argv[])
     fout << R"(
 #endif // ROCRAND_MRG32K3A_PRECOMPUTED_H_
 )";
-    
+
 
     delete[] A1;
     delete[] A2;

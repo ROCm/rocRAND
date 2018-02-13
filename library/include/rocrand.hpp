@@ -1606,7 +1606,7 @@ typedef std::random_device random_device;
 
 /// \brief Returns rocRAND version.
 /// \return rocRAND version number as an \p int value.
-int version()
+inline int version()
 {
     int x;
     rocrand_status status = rocrand_get_version(&x);

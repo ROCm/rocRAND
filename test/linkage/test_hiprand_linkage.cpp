@@ -18,28 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_KERNEL_H_
-#define ROCRAND_KERNEL_H_
+#include <stdio.h>
+#include <gtest/gtest.h>
 
-#ifndef FQUALIFIERS
-#ifdef __HIP_PLATFORM_HCC__
-    #define FQUALIFIERS inline __forceinline__ __device__
-#else
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // __HIP_PLATFORM_HCC__
-#endif // FQUALIFIERS
+#include <hip/hip_runtime.h>
 
-#include "rocrand_common.h"
-#include "rocrand_philox4x32_10.h"
-#include "rocrand_mrg32k3a.h"
-#include "rocrand_xorwow.h"
-#include "rocrand_sobol32.h"
-#include "rocrand_mtgp32.h"
+#include <hiprand.h>
+#include <hiprand_kernel.h>
+#include <hiprand.hpp>
 
-#include "rocrand_uniform.h"
-#include "rocrand_normal.h"
-#include "rocrand_log_normal.h"
-#include "rocrand_poisson.h"
-#include "rocrand_discrete.h"
+#include "get_hiprand_version.hpp"
 
-#endif // ROCRAND_KERNEL_H_
+TEST(hiprand_linkage_tests, get_version_test)
+{
+    #ifdef __HIP_PLATFORM_HCC__
+    EXPECT_EQ(get_hiprand_version(), HIPRAND_VERSION);
+    #else
+    EXPECT_EQ(get_hiprand_version(), CUDART_VERSION);
+    #endif
+}

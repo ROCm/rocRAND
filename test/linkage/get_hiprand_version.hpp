@@ -17,29 +17,16 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+#ifndef TEST_LINKAGE_GET_ROCRAND_VERSION_HPP_
+#define TEST_LINKAGE_GET_ROCRAND_VERSION_HPP_
 
-#ifndef ROCRAND_KERNEL_H_
-#define ROCRAND_KERNEL_H_
+#include <stdio.h>
+#include <hip/hip_runtime.h>
 
-#ifndef FQUALIFIERS
-#ifdef __HIP_PLATFORM_HCC__
-    #define FQUALIFIERS inline __forceinline__ __device__
-#else
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // __HIP_PLATFORM_HCC__
-#endif // FQUALIFIERS
+#include <hiprand.h>
+#include <hiprand_kernel.h>
+#include <hiprand.hpp>
 
-#include "rocrand_common.h"
-#include "rocrand_philox4x32_10.h"
-#include "rocrand_mrg32k3a.h"
-#include "rocrand_xorwow.h"
-#include "rocrand_sobol32.h"
-#include "rocrand_mtgp32.h"
+int get_hiprand_version();
 
-#include "rocrand_uniform.h"
-#include "rocrand_normal.h"
-#include "rocrand_log_normal.h"
-#include "rocrand_poisson.h"
-#include "rocrand_discrete.h"
-
-#endif // ROCRAND_KERNEL_H_
+#endif // TEST_LINKAGE_GET_ROCRAND_VERSION_HPP_
