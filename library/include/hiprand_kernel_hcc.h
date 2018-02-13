@@ -129,56 +129,6 @@ void check_state_type()
 /// \endcond
 
 /**
- * \brief Loads parameters for MTGP32
- *
- * Loads parameters for use by kernel functions on the host-side and copies the
- * results to the specified location in device memory.
- *
- * \param params - Pointer to an array of type mtgp32_params_fast_t allocated in host memory
- * \param p - Pointer to a mtgp32_kernel_params_t structure allocated in device memory
- *
- * \return
- * - HIPRAND_STATUS_ALLOCATION_FAILED if parameters could not be loaded
- * - HIPRAND_STATUS_SUCCESS if parameters are loaded
- */
-inline __host__
-hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
-                                           mtgp32_kernel_params_t * p)
-{
-    return to_hiprand_status(
-        rocrand_make_constant(params, p)
-    );
-}
-
-/**
- * \brief Initializes MTGP32 states
- *
- * Initializes MTGP32 states on the host-side by allocating a state array in host
- * memory, initializes that array, and copies the result to device memory.
- *
- * \param s - Pointer to an array of states in device memory
- * \param params - Pointer to an array of type mtgp32_params_fast_t in host memory
- * \param k - Pointer to a mtgp32_kernel_params_t structure allocated in device memory
- * \param n - Number of states to initialize
- * \param seed - Seed value
- *
- * \return
- * - HIPRAND_STATUS_ALLOCATION_FAILED if states could not be initialized
- * - HIPRAND_STATUS_SUCCESS if states are initialized
- */
-inline __host__
-hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
-                                             mtgp32_params_fast_t params[],
-                                             mtgp32_kernel_params_t *k,
-                                             int n,
-                                             unsigned long long seed)
-{
-    return to_hiprand_status(
-        rocrand_make_state_mtgp32(s, params, n, seed)
-    );
-}
-
-/**
  * \brief Copy MTGP32 state to another state using block of threads
  *
  * Copies a MTGP32 state \p src to \p dest using a block of threads
