@@ -1614,7 +1614,7 @@ typedef std::random_device random_device;
 
 /// \brief Returns hipRAND version.
 /// \return hipRAND version number as an \p int value.
-int version()
+inline int version()
 {
     int x;
     hiprandStatus_t status = hiprandGetVersion(&x);
