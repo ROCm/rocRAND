@@ -29,7 +29,6 @@
 #include <type_traits>
 
 #include <curand_kernel.h>
-#include <curand_mtgp32_host.h>
 
 typedef curandState_t hiprandState_t;
 typedef curandStateXORWOW_t hiprandStateXORWOW_t;
@@ -119,27 +118,6 @@ void check_state_type()
             hiprandStateScrambledSobol64_t
         >::value,
         "StateType is not a hipRAND generator state"
-    );
-}
-
-static inline __host__
-hiprandStatus_t hiprandMakeMTGP32Constants(const mtgp32_params_fast_t params[],
-                                           mtgp32_kernel_params_t * p)
-{
-    return to_hiprand_status(
-        curandMakeMTGP32Constants(params, p)
-    );
-}
-
-static inline __host__
-hiprandStatus_t hiprandMakeMTGP32KernelState(hiprandStateMtgp32_t *s,
-                                             mtgp32_params_fast_t params[],
-                                             mtgp32_kernel_params_t *k,
-                                             int n,
-                                             unsigned long long seed)
-{
-    return to_hiprand_status(
-        curandMakeMTGP32KernelState(s, params, k, n, seed)
     );
 }
 
