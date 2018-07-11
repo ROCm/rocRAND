@@ -78,8 +78,6 @@ class sobol32_engine
 {
 public:
 
-    typedef sobol32_state<UseSharedVectors> sobol32_state;
-
     FQUALIFIERS
     sobol32_engine() { }
 
@@ -200,7 +198,7 @@ protected:
 
 protected:
     // State
-    sobol32_state m_state;
+    sobol32_state<UseSharedVectors> m_state;
 
 }; // sobol32_engine class
 
