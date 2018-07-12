@@ -114,6 +114,8 @@ hiprandCreateGenerator(hiprandGenerator_t * generator, hiprandRngType_t rng_type
 hiprandStatus_t HIPRANDAPI
 hiprandCreateGeneratorHost(hiprandGenerator_t * generator, hiprandRngType_t rng_type)
 {
+    (void) generator;
+    (void) rng_type;
     return HIPRAND_STATUS_NOT_IMPLEMENTED;
 }
 

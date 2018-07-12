@@ -203,6 +203,7 @@ public:
     /// Returns \c true if the distribution is the same as \p other.
     bool operator==(const uniform_int_distribution<IntType>& other)
     {
+        (void) other;
         return true;
     }
 
@@ -284,6 +285,7 @@ public:
     /// Returns \c true if the distribution is the same as \p other.
     bool operator==(const uniform_real_distribution<RealType>& other)
     {
+        (void) other;
         return true;
     }
 
