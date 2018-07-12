@@ -53,9 +53,9 @@ else()
 
     # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
     if(TARGET hip::device)
-      target_link_libraries( rocrand PRIVATE hip::device )
+      target_link_libraries(rocrand PRIVATE hip::device)
     else()
-      target_link_libraries( rocrand
+      target_link_libraries(rocrand
           PRIVATE
               # We keep hip::hip_hcc private, because otherwise it's not possible
               # to link to roc::rocrand when using different compiler than hcc,
@@ -169,11 +169,10 @@ if(HIP_PLATFORM STREQUAL "nvcc")
 else()
     # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
     if(TARGET hip::device)
-      target_link_libraries( hiprand PRIVATE rocrand hip::device )
+      target_link_libraries(hiprand PRIVATE rocrand hip::device)
     else()
-      target_link_libraries( hiprand PRIVATE rocrand hip::hip_hcc hip::hip_device hcc::hccshared )
+      target_link_libraries(hiprand PRIVATE rocrand hip::hip_hcc hip::hip_device hcc::hccshared)
     endif()
-
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()

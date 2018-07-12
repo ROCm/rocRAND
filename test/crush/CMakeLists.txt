@@ -46,11 +46,20 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
             ${TestU01_LIBRARIES}
         )
     else()
-        target_link_libraries(${crush_test_name}
-            rocrand
-            hip::hip_hcc hip::hip_device
-            ${TestU01_LIBRARIES}
-        )
+        # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
+        if(TARGET hip::device)
+            target_link_libraries(${crush_test_name}
+                rocrand
+                hip::device
+                ${TestU01_LIBRARIES}
+            )
+        else()
+            target_link_libraries(${crush_test_name}
+                rocrand
+                hip::hip_hcc hip::hip_device
+                ${TestU01_LIBRARIES}
+            )
+        endif()
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${crush_test_name} --amdgpu-target=${amdgpu_target})
         endforeach()

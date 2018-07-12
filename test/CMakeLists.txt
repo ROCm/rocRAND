@@ -47,7 +47,12 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         ${GTEST_BOTH_LIBRARIES}
     )
     if(HIP_PLATFORM STREQUAL "hcc")
-        target_link_libraries(${test_name} hip::hip_hcc hip::hip_device)
+        # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
+        if(TARGET hip::device)
+            target_link_libraries(${test_name} hip::device)
+        else()
+            target_link_libraries(${test_name} hip::hip_hcc hip::hip_device)
+        endif()
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
         endforeach()
@@ -106,9 +111,14 @@ foreach(test_src ${hipRAND_TEST_SRCS})
         target_link_libraries(${test_name}
             hiprand
             rocrand
-            hip::hip_hcc hip::hip_device
             ${GTEST_BOTH_LIBRARIES}
         )
+        # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
+        if(TARGET hip::device)
+            target_link_libraries(${test_name} hip::device)
+        else()
+            target_link_libraries(${test_name} hip::hip_hcc hip::hip_device)
+        endif()
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
         endforeach()
