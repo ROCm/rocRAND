@@ -212,12 +212,13 @@ protected:
         // xorwow_sequence_jump_matrices contains precomputed matrices:
         //   A^(1 * 2^67), A^(4 * 2^67), A^(16 * 2^67)...
         //
-        // Intermediate powers can calculated as multiplication of the powers above.
+        // Intermediate powers can be calculated as multiplication of the powers above.
 
-        int mi = 0;
+        unsigned int mi = 0;
         while (v > 0)
         {
-            for (int i = 0; i < (v & ((1 << XORWOW_JUMP_LOG2) - 1)); i++)
+            const unsigned int is = static_cast<unsigned int>(v) & ((1 << XORWOW_JUMP_LOG2) - 1);
+            for (unsigned int i = 0; i < is; i++)
             {
                 detail::mul_mat_vec_inplace(jump_matrices[mi], m_state.x);
             }
