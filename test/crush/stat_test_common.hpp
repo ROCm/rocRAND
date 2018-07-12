@@ -192,7 +192,7 @@ void analyze(const size_t size,
         gofs_MinExpected = 5.0;
         gofs_MergeClasses(t.nb_exp.data(), t.loc.data(), &t.smin, &t.smax, &t.nb_classes);
 
-        for (long s = 0; s < cells_count; s++)
+        for (long s = 0; s < static_cast<long>(cells_count); s++)
         {
             const long j = t.loc[s];
             if (j != s)
@@ -264,13 +264,13 @@ void analyze(const size_t size,
             for (size_t si = 0; si < size; si++)
             {
                 const double v = data[level1_test * size + si];
-                const int cell = static_cast<int>((v - start) / t.cell_width);
-                if (cell >= 0 && cell < cells_count)
+                const long cell = static_cast<long>((v - start) / t.cell_width);
+                if (cell >= 0 && cell < static_cast<long>(cells_count))
                 {
                     count[cell]++;
                 }
             }
-            for (long s = 0; s < cells_count; s++)
+            for (long s = 0; s < static_cast<long>(cells_count); s++)
             {
                 const long j = t.loc[s];
                 if (j != s)
