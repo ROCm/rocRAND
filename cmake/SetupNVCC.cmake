@@ -1,3 +1,25 @@
+# MIT License
+#
+# Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 ################################################################################################
 # A function for automatic detection of the lowest CC of the installed NV GPUs
 function(hip_cuda_detect_lowest_cc out_variable)
@@ -46,22 +68,17 @@ endfunction()
 ###  Non macro/function section
 ################################################################################################
 
-#
-# Use NVGPU_TARGETS to set CUDA arch compilation flags
-# For example: -DNVGPU_TARGETS="--gpu-architecture=compute_50 --gpu-code=compute_50,sm_50,sm_52"
-#
-
+# Get CUDA
 find_package(CUDA REQUIRED)
 
+# Finds lowest supported CUDA CC
+#
+# Use NVGPU_TARGETS to set CUDA arch compilation flags
+# For example: -DNVGPU_TARGETS="--gpu-architecture=sm_50"
 set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets") # Suppressing warnings
 if("x${NVGPU_TARGETS}" STREQUAL "x")
     hip_cuda_detect_lowest_cc(lowest_cc)
-    if(lowest_cc LESS "30")
-        message(WARNING "Pre-Kepler architectures are not supported.")
-        set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_30") # Kempler arch is miniumum
-    else(lowest_cc LESS "30")
-        set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_${lowest_cc}")
-    endif(lowest_cc LESS "30")
+    set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_${lowest_cc}")
 else()
     set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} ${NVGPU_TARGETS}")
 endif()
