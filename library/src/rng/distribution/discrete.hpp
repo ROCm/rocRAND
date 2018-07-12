@@ -189,12 +189,12 @@ protected:
     void normalize(std::vector<double>& p)
     {
         double sum = 0.0;
-        for (int i = 0; i < size; i++)
+        for (unsigned int i = 0; i < size; i++)
         {
             sum += p[i];
         }
         // Normalize probabilities
-        for (int i = 0; i < size; i++)
+        for (unsigned int i = 0; i < size; i++)
         {
             p[i] /= sum;
         }
@@ -214,13 +214,13 @@ protected:
         //
         // The algorithm is O(n).
 
-        std::vector<int> small;
-        std::vector<int> large;
+        std::vector<unsigned int> small;
+        std::vector<unsigned int> large;
 
         small.reserve(size);
         large.reserve(size);
 
-        for (int i = 0; i < size; i++)
+        for (unsigned int i = 0; i < size; i++)
         {
             if (p[i] >= average)
                 large.push_back(i);
@@ -230,9 +230,9 @@ protected:
 
         while (!small.empty() && !large.empty())
         {
-            const int less = small.back();
+            const unsigned int less = small.back();
             small.pop_back();
-            const int more = large.back();
+            const unsigned int more = large.back();
             large.pop_back();
 
             h_probability[less] = p[less] * size;
@@ -246,11 +246,11 @@ protected:
                 small.push_back(more);
         }
 
-        for (int i : small)
+        for (unsigned int i : small)
         {
             h_probability[i] = 1.0;
         }
-        for (int i : large)
+        for (unsigned int i : large)
         {
             h_probability[i] = 1.0;
         }
@@ -281,7 +281,7 @@ protected:
         std::vector<double> h_cdf(size);
 
         double sum = 0.0;
-        for (int i = 0; i < size; i++)
+        for (unsigned int i = 0; i < size; i++)
         {
             sum += p[i];
             h_cdf[i] = sum;

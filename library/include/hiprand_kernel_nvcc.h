@@ -182,6 +182,8 @@ template<class StateType>
 QUALIFIERS
 void skipahead(unsigned long long n, StateType * state)
 {
+    (void) n;
+    (void) state;
     // skipahead() funcs are defined in curand_kernel.h
     check_state_type<StateType>();
     static_assert(
@@ -197,6 +199,8 @@ template<class StateType>
 QUALIFIERS
 void skipahead_sequence(unsigned long long n, StateType * state)
 {
+    (void) n;
+    (void) state;
     // skipahead_sequence() are defined in curand_kernel.h
     check_state_type<StateType>();
     static_assert(
