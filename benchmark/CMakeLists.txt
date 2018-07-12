@@ -40,10 +40,18 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
             ${CUDA_curand_LIBRARY}
         )
     else()
-        target_link_libraries(${benchmark_name}
-            rocrand
-            hip::hip_hcc hip::hip_device
-        )
+        # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
+        if(TARGET hip::device)
+            target_link_libraries(${benchmark_name}
+                rocrand
+                hip::device
+            )
+        else()
+            target_link_libraries(${benchmark_name}
+                rocrand
+                hip::hip_hcc hip::hip_device
+            )
+        endif()
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${benchmark_name} --amdgpu-target=${amdgpu_target})
         endforeach()
