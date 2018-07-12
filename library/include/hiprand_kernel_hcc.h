@@ -231,6 +231,8 @@ template<class StateType>
 QUALIFIERS
 void skipahead(unsigned long long n, StateType * state)
 {
+    (void) n;
+    (void) state;
     // Defined in rocrand_kernel.h
     check_state_type<StateType>();
     static_assert(
@@ -292,6 +294,8 @@ template<class StateType>
 QUALIFIERS
 void skipahead_subsequence(unsigned long long n, StateType * state)
 {
+    (void) n;
+    (void) state;
     // defined in rocrand_kernel.h
     check_state_type<StateType>();
     static_assert(

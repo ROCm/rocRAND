@@ -110,7 +110,7 @@ struct runner
 {
     GeneratorState * states;
 
-    runner(const size_t dimensions,
+    runner(const size_t /* dimensions */,
            const size_t blocks,
            const size_t threads,
            const unsigned long long seed,
@@ -183,11 +183,11 @@ struct runner<rocrand_state_mtgp32>
 {
     rocrand_state_mtgp32 * states;
 
-    runner(const size_t dimensions,
+    runner(const size_t /* dimensions */,
            const size_t blocks,
-           const size_t threads,
+           const size_t /* threads */,
            const unsigned long long seed,
-           const unsigned long long offset)
+           const unsigned long long /* offset */)
     {
         const size_t states_size = std::min((size_t)200, blocks);
         HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(rocrand_state_mtgp32)));
@@ -202,7 +202,7 @@ struct runner<rocrand_state_mtgp32>
 
     template<typename T, typename GenerateFunc, typename Extra>
     void generate(const size_t blocks,
-                  const size_t threads,
+                  const size_t /* threads */,
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
@@ -264,7 +264,7 @@ struct runner<rocrand_state_sobol32>
     runner(const size_t dimensions,
            const size_t blocks,
            const size_t threads,
-           const unsigned long long seed,
+           const unsigned long long /* seed */,
            const unsigned long long offset)
     {
         this->dimensions = dimensions;

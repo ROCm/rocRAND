@@ -34,7 +34,7 @@ void rocrand_file_write_results(std::string file_name, RealType * data, size_t n
     if(fout.is_open())
     {
         fout << std::setprecision(std::numeric_limits<long double>::digits10 + 1);
-        for(int i = 0; i < n; i++)
+        for(size_t i = 0; i < n; i++)
         {
             if (i == n - 1)
                 fout << data[i];

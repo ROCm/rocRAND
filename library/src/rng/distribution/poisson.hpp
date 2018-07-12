@@ -87,7 +87,7 @@ protected:
         }
 
         int hi = capacity - 1;
-        for (int i = capacity / 2 + 1; i < capacity; i++)
+        for (int i = capacity / 2 + 1; i < static_cast<int>(capacity); i++)
         {
             const double x = left + i;
             const double pp = std::exp(x * log_lambda - std::lgamma(x + 1.0) - lambda);
