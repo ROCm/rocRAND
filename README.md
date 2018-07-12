@@ -26,7 +26,9 @@ environment cuRAND is used instead.
 * cmake (3.0.2 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
-  * [ROCm](https://rocm.github.io/install.html) (1.5 or later)
+  * [ROCm](https://rocm.github.io/install.html) (1.7 or later)
+  * [HCC](https://github.com/RadeonOpenCompute/hcc) compiler, which must be
+    set as C++ compiler on ROCm platform.
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
   * Latest CUDA SDK
@@ -57,6 +59,11 @@ cd rocRAND; mkdir build; cd build
 
 # Configure rocRAND, setup options for your system
 # Build options: BUILD_TEST, BUILD_BENCHMARK (off by default), BUILD_CRUSH_TEST (off by default)
+#
+# ! IMPORTANT !
+# On ROCm platform set C++ compiler to HCC. You can do it by adding 'CXX=<path-to-hcc>' or just
+# `CXX=hcc` before 'cmake', or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HCC compiler.
+#
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
@@ -71,8 +78,8 @@ ctest --output-on-failure
 [sudo] make install
 ```
 
-Note: Existing gtest library in the system (especially static gtest libraries built with other compilers) 
-may cause build failure; if errors are encountered with existing gtest library or other dependencies, 
+Note: Existing gtest library in the system (especially static gtest libraries built with other compilers)
+may cause build failure; if errors are encountered with existing gtest library or other dependencies,
 `DEPENDENCIES_FORCE_DOWNLOAD` flag can be passed to cmake, as mentioned before, to help solve the problem.
 
 Note: To disable inline assembly optimisations in rocRAND (for both the host library and
