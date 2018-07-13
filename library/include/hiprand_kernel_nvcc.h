@@ -30,18 +30,26 @@
 
 #include <curand_kernel.h>
 
-typedef curandState_t hiprandState_t;
-typedef curandStateXORWOW_t hiprandStateXORWOW_t;
-typedef curandStatePhilox4_32_10_t hiprandStatePhilox4_32_10_t;
-typedef curandStateMRG32k3a_t hiprandStateMRG32k3a_t;
-typedef curandStateMtgp32_t hiprandStateMtgp32_t;
-typedef curandStateSobol32_t hiprandStateSobol32_t;
-typedef curandStateScrambledSobol32_t hiprandStateScrambledSobol32_t;
-typedef curandStateSobol64_t hiprandStateSobol64_t;
-typedef curandStateScrambledSobol64_t hiprandStateScrambledSobol64_t;
+#define DEFINE_HIPRAND_STATE(hiprand_name, curand_name) \
+    struct hiprand_name : public curand_name \
+    { \
+        typedef curand_name base; \
+    }; \
+    typedef struct hiprand_name hiprand_name ## _t;
+
+DEFINE_HIPRAND_STATE(hiprandState, curandState)
+DEFINE_HIPRAND_STATE(hiprandStateXORWOW, curandStateXORWOW)
+DEFINE_HIPRAND_STATE(hiprandStatePhilox4_32_10, curandStatePhilox4_32_10)
+DEFINE_HIPRAND_STATE(hiprandStateMRG32k3a, curandStateMRG32k3a)
+DEFINE_HIPRAND_STATE(hiprandStateMtgp32, curandStateMtgp32)
+DEFINE_HIPRAND_STATE(hiprandStateSobol32, curandStateSobol32)
+DEFINE_HIPRAND_STATE(hiprandStateScrambledSobol32, curandStateScrambledSobol32)
+DEFINE_HIPRAND_STATE(hiprandStateSobol64, curandStateSobol64)
+DEFINE_HIPRAND_STATE(hiprandStateScrambledSobol64, curandStateScrambledSobol64)
+
+#undef DEFINE_HIPRAND_STATE
 
 typedef curandDiscreteDistribution_t hiprandDiscreteDistribution_t;
-
 typedef curandDirectionVectors32_t hiprandDirectionVectors32_t;
 
 /// \cond
@@ -182,9 +190,6 @@ template<class StateType>
 QUALIFIERS
 void skipahead(unsigned long long n, StateType * state)
 {
-    (void) n;
-    (void) state;
-    // skipahead() funcs are defined in curand_kernel.h
     check_state_type<StateType>();
     static_assert(
         !std::is_same<
@@ -193,15 +198,14 @@ void skipahead(unsigned long long n, StateType * state)
         >::value,
         "hiprandStateMtgp32_t does not have skipahead function"
     );
+    typedef typename StateType::base base_type;
+    skipahead(n, static_cast<base_type*>(state));
 }
 
 template<class StateType>
 QUALIFIERS
 void skipahead_sequence(unsigned long long n, StateType * state)
 {
-    (void) n;
-    (void) state;
-    // skipahead_sequence() are defined in curand_kernel.h
     check_state_type<StateType>();
     static_assert(
         !detail::is_any_of<
@@ -214,6 +218,8 @@ void skipahead_sequence(unsigned long long n, StateType * state)
         >::value,
         "StateType does not have skipahead_sequence function"
     );
+    typedef typename StateType::base base_type;
+    skipahead_sequence(n, static_cast<base_type*>(state));
 }
 
 template<class StateType>
@@ -234,7 +240,8 @@ void skipahead_subsequence(unsigned long long n, StateType * state)
         >::value,
         "StateType does not have skipahead_subsequence function"
     );
-    skipahead_sequence(n, state);
+    typedef typename StateType::base base_type;
+    skipahead_sequence(n, static_cast<base_type*>(state));
 }
 
 template<class StateType>
