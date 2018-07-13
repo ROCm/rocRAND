@@ -64,7 +64,7 @@ cd rocRAND; mkdir build; cd build
 # On ROCm platform set C++ compiler to HCC. You can do it by adding 'CXX=<path-to-hcc>' or just
 # `CXX=hcc` before 'cmake', or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HCC compiler.
 #
-cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+[CXX=hcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
 # For ROCM-1.6, if a HCC runtime error is caught, consider setting
