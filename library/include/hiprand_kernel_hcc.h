@@ -37,15 +37,23 @@
 #include <rocrand_kernel.h>
 
 /// \cond
-typedef rocrand_state_xorwow hiprandState_t;
-typedef rocrand_state_xorwow hiprandStateXORWOW_t;
-typedef rocrand_state_philox4x32_10 hiprandStatePhilox4_32_10_t;
-typedef rocrand_state_mrg32k3a hiprandStateMRG32k3a_t;
-typedef rocrand_state_mtgp32 hiprandStateMtgp32_t;
-typedef rocrand_state_sobol32 hiprandStateSobol32_t;
+#define DEFINE_HIPRAND_STATE(hiprand_name, rocrand_name) \
+    struct hiprand_name : public rocrand_name \
+    { \
+        typedef rocrand_name base; \
+    }; \
+    typedef struct hiprand_name hiprand_name ## _t;
+
+DEFINE_HIPRAND_STATE(hiprandState, rocrand_state_xorwow)
+DEFINE_HIPRAND_STATE(hiprandStateXORWOW, rocrand_state_xorwow)
+DEFINE_HIPRAND_STATE(hiprandStatePhilox4_32_10, rocrand_state_philox4x32_10)
+DEFINE_HIPRAND_STATE(hiprandStateMRG32k3a, rocrand_state_mrg32k3a)
+DEFINE_HIPRAND_STATE(hiprandStateMtgp32, rocrand_state_mtgp32)
+DEFINE_HIPRAND_STATE(hiprandStateSobol32, rocrand_state_sobol32)
+
+#undef DEFINE_HIPRAND_STATE
 
 typedef rocrand_discrete_distribution hiprandDiscreteDistribution_t;
-
 typedef unsigned int hiprandDirectionVectors32_t[32];
 
 typedef mtgp32_param mtgp32_kernel_params_t;
@@ -231,9 +239,6 @@ template<class StateType>
 QUALIFIERS
 void skipahead(unsigned long long n, StateType * state)
 {
-    (void) n;
-    (void) state;
-    // Defined in rocrand_kernel.h
     check_state_type<StateType>();
     static_assert(
         !std::is_same<
@@ -242,6 +247,8 @@ void skipahead(unsigned long long n, StateType * state)
         >::value,
         "hiprandStateMtgp32_t does not have skipahead function"
     );
+    typedef typename StateType::base base_type;
+    skipahead(n, static_cast<base_type*>(state));
 }
 
 /// \brief Updates PRNG state skipping \p n sequences ahead.
@@ -272,7 +279,8 @@ void skipahead_sequence(unsigned long long n, StateType * state)
         >::value,
         "StateType does not have skipahead_sequence function"
     );
-    skipahead_subsequence(n, state);
+    typedef typename StateType::base base_type;
+    skipahead_subsequence(n, static_cast<base_type*>(state));
 }
 
 /// \brief Updates PRNG state skipping \p n subsequences ahead.
@@ -294,9 +302,6 @@ template<class StateType>
 QUALIFIERS
 void skipahead_subsequence(unsigned long long n, StateType * state)
 {
-    (void) n;
-    (void) state;
-    // defined in rocrand_kernel.h
     check_state_type<StateType>();
     static_assert(
         !detail::is_any_of<
@@ -306,6 +311,8 @@ void skipahead_subsequence(unsigned long long n, StateType * state)
         >::value,
         "StateType does not have skipahead_subsequence function"
     );
+    typedef typename StateType::base base_type;
+    skipahead_subsequence(n, static_cast<base_type*>(state));
 }
 
 /// \brief Generates uniformly distributed random <tt>unsigned int</tt>

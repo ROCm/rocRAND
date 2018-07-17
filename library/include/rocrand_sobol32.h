@@ -78,7 +78,7 @@ class sobol32_engine
 {
 public:
 
-    typedef sobol32_state<UseSharedVectors> sobol32_state;
+    typedef struct sobol32_state<UseSharedVectors> sobol32_state;
 
     FQUALIFIERS
     sobol32_engine() { }
