@@ -74,12 +74,14 @@ TEST(rocrand_xorwow_prng_tests, uniform_uint_test)
     unsigned int host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
+
+    unsigned long long sum = 0;
     for(size_t i = 0; i < size; i++)
     {
-        const unsigned int max = UINT_MAX;
-        ASSERT_GE(host_data[i], 0U);
-        ASSERT_LE(host_data[i], max);
+        sum += host_data[i];
     }
+    const unsigned int mean = sum / size;
+    ASSERT_NEAR(mean, UINT_MAX / 2, UINT_MAX / 20);
 
     HIP_CHECK(hipFree(data));
 }
@@ -97,11 +99,16 @@ TEST(rocrand_xorwow_prng_tests, uniform_float_test)
     float host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
+
+    double sum = 0;
     for(size_t i = 0; i < size; i++)
     {
         ASSERT_GT(host_data[i], 0.0f);
         ASSERT_LE(host_data[i], 1.0f);
+        sum += host_data[i];
     }
+    const float mean = sum / size;
+    ASSERT_NEAR(mean, 0.5f, 0.05f);
 
     HIP_CHECK(hipFree(data));
 }
