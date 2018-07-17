@@ -46,7 +46,7 @@ TEST(rocrand_philox_prng_tests, uniform_uint_test)
     for(size_t i = 0; i < size; i++)
     {
         const unsigned int max = UINT_MAX;
-        ASSERT_GE(host_data[i], 0);
+        ASSERT_GE(host_data[i], 0U);
         ASSERT_LE(host_data[i], max);
     }
 
@@ -224,22 +224,22 @@ TEST(rocrand_philox_prng_state_tests, seed_test)
     rocrand_philox4x32_10_engine_type_test engine;
     rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 
     engine.discard(1 * 4ULL);
-    EXPECT_EQ(state.counter.x, 1);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.x, 1U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 
     engine.seed(3331, 0, 5 * 4ULL);
-    EXPECT_EQ(state.counter.x, 5);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.x, 5U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 }
 
 // Check if the philox state counter is calculated correctly during
@@ -249,76 +249,76 @@ TEST(rocrand_philox_prng_state_tests, discard_test)
     rocrand_philox4x32_10_engine_type_test engine;
     rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 
     engine.discard(UINT_MAX * 4ULL);
     EXPECT_EQ(state.counter.x, UINT_MAX);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 
     engine.discard(UINT_MAX * 4ULL);
     EXPECT_EQ(state.counter.x, UINT_MAX - 1);
-    EXPECT_EQ(state.counter.y, 1);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.y, 1U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 
     engine.discard(2 * 4ULL);
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 2);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 2U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 
     state.counter.x = UINT_MAX;
     state.counter.y = UINT_MAX;
     state.counter.z = UINT_MAX;
     engine.discard(1 * 4ULL);
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 1);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 1U);
 
     state.counter.x = UINT_MAX;
     state.counter.y = UINT_MAX;
     state.counter.z = UINT_MAX;
     engine.discard(1 * 4ULL);
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 2);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 2U);
 
     state.counter.x = 123;
     state.counter.y = 456;
     state.counter.z = 789;
     state.counter.w = 999;
     engine.discard(1 * 4ULL);
-    EXPECT_EQ(state.counter.x, 124);
-    EXPECT_EQ(state.counter.y, 456);
-    EXPECT_EQ(state.counter.z, 789);
-    EXPECT_EQ(state.counter.w, 999);
+    EXPECT_EQ(state.counter.x, 124U);
+    EXPECT_EQ(state.counter.y, 456U);
+    EXPECT_EQ(state.counter.z, 789U);
+    EXPECT_EQ(state.counter.w, 999U);
 
     state.counter.x = 123;
     state.counter.y = 0;
     state.counter.z = 0;
     state.counter.w = 0;
     engine.discard(1 * 4ULL);
-    EXPECT_EQ(state.counter.x, 124);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.x, 124U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 0U);
 
     state.counter.x = UINT_MAX - 1;
     state.counter.y = 2;
     state.counter.z = 3;
     state.counter.w = 4;
     engine.discard(((1ull << 32) + 2ull) * 4ULL);
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 4);
-    EXPECT_EQ(state.counter.z, 3);
-    EXPECT_EQ(state.counter.w, 4);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 4U);
+    EXPECT_EQ(state.counter.z, 3U);
+    EXPECT_EQ(state.counter.w, 4U);
 }
 
 TEST(rocrand_philox_prng_state_tests, discard_sequence_test)
@@ -327,40 +327,40 @@ TEST(rocrand_philox_prng_state_tests, discard_sequence_test)
     rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
     engine.discard_subsequence(UINT_MAX);
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 0);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 0U);
     EXPECT_EQ(state.counter.z, UINT_MAX);
-    EXPECT_EQ(state.counter.w, 0);
+    EXPECT_EQ(state.counter.w, 0U);
 
     engine.discard_subsequence(UINT_MAX);
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 0);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 0U);
     EXPECT_EQ(state.counter.z, UINT_MAX - 1);
-    EXPECT_EQ(state.counter.w, 1);
+    EXPECT_EQ(state.counter.w, 1U);
 
     engine.discard_subsequence(2);
-    EXPECT_EQ(state.counter.x, 0);
-    EXPECT_EQ(state.counter.y, 0);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 2);
+    EXPECT_EQ(state.counter.x, 0U);
+    EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 2U);
 
     state.counter.x = 123;
     state.counter.y = 456;
     state.counter.z = 789;
     state.counter.w = 999;
     engine.discard_subsequence(1);
-    EXPECT_EQ(state.counter.x, 123);
-    EXPECT_EQ(state.counter.y, 456);
-    EXPECT_EQ(state.counter.z, 790);
-    EXPECT_EQ(state.counter.w, 999);
+    EXPECT_EQ(state.counter.x, 123U);
+    EXPECT_EQ(state.counter.y, 456U);
+    EXPECT_EQ(state.counter.z, 790U);
+    EXPECT_EQ(state.counter.w, 999U);
 
     state.counter.x = 1;
     state.counter.y = 2;
     state.counter.z = UINT_MAX - 1;
     state.counter.w = 4;
     engine.discard_subsequence((1ull << 32) + 2ull);
-    EXPECT_EQ(state.counter.x, 1);
-    EXPECT_EQ(state.counter.y, 2);
-    EXPECT_EQ(state.counter.z, 0);
-    EXPECT_EQ(state.counter.w, 6);
+    EXPECT_EQ(state.counter.x, 1U);
+    EXPECT_EQ(state.counter.y, 2U);
+    EXPECT_EQ(state.counter.z, 0U);
+    EXPECT_EQ(state.counter.w, 6U);
 }

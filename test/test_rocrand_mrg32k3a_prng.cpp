@@ -117,7 +117,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
     for(size_t i = 0; i < size; i++)
     {
         const unsigned int max = UINT_MAX;
-        ASSERT_GE(host_data[i], 0);
+        ASSERT_GE(host_data[i], 0U);
         ASSERT_LE(host_data[i], max);
     }
 
