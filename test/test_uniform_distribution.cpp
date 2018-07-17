@@ -39,7 +39,7 @@ TEST(uniform_distribution_tests, uint_test)
     }
 
     EXPECT_EQ(u(UINT_MAX), UINT_MAX);
-    EXPECT_EQ(u(0), 0);
+    EXPECT_EQ(u(0), 0U);
 }
 
 TEST(uniform_distribution_tests, float_test)
