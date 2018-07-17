@@ -117,7 +117,7 @@ TEST(hiprand_cpp_wrapper, hiprand_prng_default_seed)
 
 TEST(hiprand_cpp_wrapper, hiprand_qrng_default_num_dimensions)
 {
-    EXPECT_EQ(hiprand_cpp::sobol32::default_num_dimensions, 1);
+    EXPECT_EQ(hiprand_cpp::sobol32::default_num_dimensions, 1U);
 }
 
 template<class T>
