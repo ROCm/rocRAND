@@ -149,6 +149,14 @@ void hiprand_mtgp32_block_copy(hiprandStateMtgp32_t * src,
     #endif
 }
 
+QUALIFIERS
+void hiprand_mtgp32_set_params(hiprandStateMtgp32_t * state,
+                               mtgp32_kernel_params_t * params)
+{
+    typedef typename hiprandStateMtgp32_t::base base_type;
+    static_cast<base_type*>(state)->k = params;
+}
+
 template<class StateType>
 QUALIFIERS
 void hiprand_init(const unsigned long long seed,

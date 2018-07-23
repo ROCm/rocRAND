@@ -110,7 +110,7 @@ struct mtgp32_params_fast_t {
 
 namespace rocrand_device {
 
-struct mtgp32_param
+struct mtgp32_params
 {
     unsigned int pos_tbl[MTGP_BN_MAX];
     unsigned int param_tbl[MTGP_BN_MAX][MTGP_TS];
@@ -121,10 +121,10 @@ struct mtgp32_param
     unsigned int mask[1];
 
     FQUALIFIERS
-    ~mtgp32_param() { }
+    ~mtgp32_params() { }
 };
 
-typedef mtgp32_params_fast_t mtgp32_fast_param;
+typedef mtgp32_params_fast_t mtgp32_fast_params;
 
 struct mtgp32_state
 {
@@ -138,7 +138,7 @@ struct mtgp32_state
 
 inline
 void rocrand_mtgp32_init_state(unsigned int array[],
-                               const mtgp32_fast_param *para, unsigned int seed)
+                               const mtgp32_fast_params *para, unsigned int seed)
 {
     int i;
     int size = para->mexp / 32 + 1;
@@ -166,7 +166,7 @@ public:
 
     FQUALIFIERS
     mtgp32_engine(const mtgp32_state m_state,
-                  const mtgp32_param * params,
+                  const mtgp32_params * params,
                   int bid)
     {
         this->m_state = m_state;
@@ -180,6 +180,9 @@ public:
             single_temper_tbl[j] = params->single_temper_tbl[bid][j];
         }
     }
+
+    FQUALIFIERS
+    ~mtgp32_engine() { }
 
     FQUALIFIERS
     void copy(const mtgp32_engine * m_engine)
@@ -220,7 +223,18 @@ public:
     }
 
     FQUALIFIERS
-    ~mtgp32_engine() { }
+    void set_params(mtgp32_params * params)
+    {
+        pos_tbl = params->pos_tbl[m_state.id];
+        sh1_tbl = params->sh1_tbl[m_state.id];
+        sh2_tbl = params->sh2_tbl[m_state.id];
+        mask = params->mask[0];
+        for (int j = 0; j < MTGP_TS; j++) {
+            param_tbl[j] = params->param_tbl[m_state.id][j];
+            temper_tbl[j] = params->temper_tbl[m_state.id][j];
+            single_temper_tbl[j] = params->single_temper_tbl[m_state.id][j];
+        }
+    }
 
     FQUALIFIERS
     unsigned int operator()()
@@ -341,8 +355,8 @@ public:
 /// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::mtgp32_engine rocrand_state_mtgp32;
 typedef rocrand_device::mtgp32_state mtgp32_state;
-typedef rocrand_device::mtgp32_fast_param mtgp32_fast_param;
-typedef rocrand_device::mtgp32_param mtgp32_param;
+typedef rocrand_device::mtgp32_fast_params mtgp32_fast_params;
+typedef rocrand_device::mtgp32_params mtgp32_params;
 /// \endcond
 
 /**
@@ -352,7 +366,7 @@ typedef rocrand_device::mtgp32_param mtgp32_param;
  * memory, initializes that array, and copies the result to device memory.
  *
  * \param d_state - Pointer to an array of states in device memory
- * \param params - Pointer to an array of type mtgp32_fast_param in host memory
+ * \param params - Pointer to an array of type mtgp32_fast_params in host memory
  * \param n - Number of states to initialize
  * \param seed - Seed value
  *
@@ -362,7 +376,7 @@ typedef rocrand_device::mtgp32_param mtgp32_param;
  */
 __host__ inline
 rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
-                                         mtgp32_fast_param params[],
+                                         mtgp32_fast_params params[],
                                          int n,
                                          unsigned long long seed)
 {
@@ -406,15 +420,15 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
  * NOTE: Not used as rocrand_make_state_mtgp32 handles loading parameters into
  * state.
  *
- * \param params - Pointer to an array of type mtgp32_fast_param in host memory
- * \param p - Pointer to a mtgp32_param structure allocated in device memory
+ * \param params - Pointer to an array of type mtgp32_fast_params in host memory
+ * \param p - Pointer to a mtgp32_params structure allocated in device memory
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if parameters could not be loaded
  * - ROCRAND_STATUS_SUCCESS if parameters are loaded
  */
 __host__ inline
-rocrand_status rocrand_make_constant(const mtgp32_fast_param params[], mtgp32_param * p)
+rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_params * p)
 {
     const int block_num = MTGP_BN_MAX;
     const int size1 = sizeof(uint32_t) * block_num;
@@ -534,6 +548,18 @@ FQUALIFIERS
 void rocrand_mtgp32_block_copy(rocrand_state_mtgp32 * src, rocrand_state_mtgp32 * dest)
 {
     dest->copy(src);
+}
+
+/**
+ * \brief Changes parameters of a MTGP32 state.
+ *
+ * \param state - Pointer to a MTGP32 state
+ * \param params - Pointer to new parameters
+ */
+FQUALIFIERS
+void rocrand_mtgp32_set_params(rocrand_state_mtgp32 * state, mtgp32_params * params)
+{
+    state->set_params(params);
 }
 
 /** @} */ // end of group rocranddevice

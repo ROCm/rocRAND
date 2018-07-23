@@ -60,7 +60,7 @@
 #include <stdint.h>
 #include "rocrand_mtgp32.h"
 
-static rocrand_device::mtgp32_fast_param mtgp32dc_params_fast_11213[]
+static rocrand_device::mtgp32_fast_params mtgp32dc_params_fast_11213[]
  = {
     {
         /* No.0 delta:1924 weight:1595 */
