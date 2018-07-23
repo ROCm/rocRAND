@@ -28,8 +28,8 @@
 #include "hiprand_kernel.h"
 
 /// \cond
-typedef mtgp32_param mtgp32_kernel_params_t;
-typedef mtgp32_fast_param mtgp32_fast_param_t;
+typedef mtgp32_params mtgp32_kernel_params_t;
+typedef mtgp32_fast_params mtgp32_fast_param_t;
 /// \endcond
 
 /**

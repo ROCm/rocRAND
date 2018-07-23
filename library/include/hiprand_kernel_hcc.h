@@ -56,8 +56,8 @@ DEFINE_HIPRAND_STATE(hiprandStateSobol32, rocrand_state_sobol32)
 typedef rocrand_discrete_distribution hiprandDiscreteDistribution_t;
 typedef unsigned int hiprandDirectionVectors32_t[32];
 
-typedef mtgp32_param mtgp32_kernel_params_t;
-typedef mtgp32_fast_param mtgp32_fast_param_t;
+typedef mtgp32_params mtgp32_kernel_params_t;
+typedef mtgp32_fast_params mtgp32_fast_param_t;
 /// \endcond
 
 /// \cond
@@ -171,6 +171,19 @@ void hiprand_mtgp32_block_copy(hiprandStateMtgp32_t * src,
                                hiprandStateMtgp32_t * dest)
 {
     rocrand_mtgp32_block_copy(src, dest);
+}
+
+/**
+ * \brief Changes parameters of a MTGP32 state.
+ *
+ * \param state - Pointer to a MTGP32 state
+ * \param params - Pointer to new parameters
+ */
+QUALIFIERS
+void hiprand_mtgp32_set_params(hiprandStateMtgp32_t * state,
+                               mtgp32_kernel_params_t * params)
+{
+    rocrand_mtgp32_set_params(state, params);
 }
 
 /// \brief Initializes a PRNG state.

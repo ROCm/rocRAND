@@ -70,7 +70,6 @@ namespace detail {
 
     typedef ::rocrand_device::mtgp32_engine mtgp32_device_engine;
     typedef ::rocrand_device::mtgp32_state mtgp32_state;
-    typedef ::rocrand_device::mtgp32_param mtgp32_param;
 
     template<class Type, class Distribution>
     __global__
