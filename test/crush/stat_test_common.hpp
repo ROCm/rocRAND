@@ -118,7 +118,7 @@ void analyze(const size_t size,
              const bool save_plots,
              const std::string plot_name,
              const double mean, const double stddev,
-             const distribution_func_type& distribution_func)
+             const distribution_func_type& distribution_func)__attribute__((cpu))
 {
     if (save_plots)
     {
