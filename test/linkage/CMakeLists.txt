@@ -50,6 +50,10 @@ function(add_rocrand_link_test TEST_SOURCES)
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${TEST_TARGET} --amdgpu-target=${amdgpu_target})
         endforeach()
+        if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$")
+            # hip-clang needs specific flag to turn on pthread and m
+            target_link_libraries(${TEST_TARGET} -lpthread -lm)
+        endif()
     endif()
     set_target_properties(
         ${TEST_TARGET}
@@ -106,6 +110,10 @@ function(add_hiprand_link_test TEST_SOURCES)
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${TEST_TARGET} --amdgpu-target=${amdgpu_target})
         endforeach()
+        if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$")
+            # hip-clang needs specific flag to turn on pthread and m
+            target_link_libraries(${TEST_TARGET} -lpthread -lm)
+        endif()
     endif()
     set_target_properties(${TEST_TARGET}
         PROPERTIES
