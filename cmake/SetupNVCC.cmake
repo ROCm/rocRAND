@@ -57,7 +57,7 @@ function(hip_cuda_detect_lowest_cc out_variable)
     endif()
 
     if(NOT HIP_CUDA_lowest_cc)
-        set(HIP_CUDA_lowest_cc "20")
+        set(HIP_CUDA_lowest_cc "30")
         set(${out_variable} ${HIP_CUDA_lowest_cc} PARENT_SCOPE)
     else()
         set(${out_variable} ${HIP_CUDA_lowest_cc} PARENT_SCOPE)
@@ -71,17 +71,25 @@ endfunction()
 # Get CUDA
 find_package(CUDA REQUIRED)
 
-# Finds lowest supported CUDA CC
-#
-# Use NVGPU_TARGETS to set CUDA arch compilation flags
-# For example: -DNVGPU_TARGETS="--gpu-architecture=sm_50"
-set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets") # Suppressing warnings
+# Suppressing warnings
+set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets")
+
+# Use NVGPU_TARGETS to set CUDA architectures (compute capabilities)
+# For example: -DNVGPU_TARGETS="50;61;62"
+set(DEFAULT_NVGPU_TARGETS "")
+# If NVGPU_TARGETS is empty get default value for it
 if("x${NVGPU_TARGETS}" STREQUAL "x")
     hip_cuda_detect_lowest_cc(lowest_cc)
-    set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} --gpu-architecture=sm_${lowest_cc}")
-else()
-    set(HIP_NVCC_FLAGS "${HIP_NVCC_FLAGS} ${NVGPU_TARGETS}")
+    set(DEFAULT_NVGPU_TARGETS "${lowest_cc}")
 endif()
+set(NVGPU_TARGETS "${DEFAULT_NVGPU_TARGETS}"
+    CACHE STRING "List of NVIDIA GPU targets (compute capabilities), for example \"30;35;50\""
+)
+# Generate compiler flags based on targeted CUDA architectures
+foreach(CUDA_ARCH ${NVGPU_TARGETS})
+    list(APPEND HIP_NVCC_FLAGS "--generate-code arch=compute_${CUDA_ARCH},code=sm_${CUDA_ARCH}")
+    list(APPEND HIP_NVCC_FLAGS "--generate-code arch=compute_${CUDA_ARCH},code=compute_${CUDA_ARCH}")
+endforeach()
 
 execute_process(
     COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
