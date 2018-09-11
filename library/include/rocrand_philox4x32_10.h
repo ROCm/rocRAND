@@ -195,7 +195,22 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        unsigned int ret = (&m_state.result.x)[m_state.substate];
+        unsigned int ret;
+        switch(m_state.substate)
+        {
+            case 0:
+                ret = m_state.result.x;
+                break;
+            case 1:
+                ret = m_state.result.y;
+                break;
+            case 2:
+                ret = m_state.result.z;
+                break;
+            default:
+                ret = m_state.result.w;
+                break;
+        }
         m_state.substate++;
         if(m_state.substate == 4)
         {
