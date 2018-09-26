@@ -48,6 +48,8 @@ before_script:
 
 build:rocm:
   stage: build
+  tags:
+    - rocm
   variables:
     SUDO_CMD: "sudo -E"
   script:
@@ -72,7 +74,7 @@ build:rocm:
     - build/*.zip
     expire_in: 4 weeks
 
-test:rocm:
+.unittest:
   stage: test
   variables:
     SUDO_CMD: "sudo -E"
@@ -84,9 +86,13 @@ test:rocm:
     - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
     - $SUDO_CMD ./test/crush_test_rocrand --help # Just check if works
+    
+include: '.gitlab-ci-gputest.yml'
 
 test:rocm_python:
   stage: test
+  tags:
+    - rocm
   variables:
     SUDO_CMD: "sudo -E"
   dependencies:
@@ -120,6 +126,8 @@ test:rocm_python:
 
 test:rocm_deb_package:
   stage: test
+  tags:
+    - rocm
   variables:
     SUDO_CMD: "sudo -E"
   dependencies:
