@@ -25,7 +25,7 @@
 /// @{
 
 #ifndef QUALIFIERS
-#define QUALIFIERS inline __forceinline__ __device__
+#define QUALIFIERS __forceinline__ __device__
 #endif // QUALIFIERS
 
 #include <hip/hip_runtime.h>
