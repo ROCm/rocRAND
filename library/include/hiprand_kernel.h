@@ -22,11 +22,7 @@
 #define HIPRAND_KERNEL_H_
 
 #ifndef QUALIFIERS
-#ifdef __HIP_PLATFORM_HCC__
-    #define QUALIFIERS inline __forceinline__ __device__
-#else
-    #define QUALIFIERS __forceinline__ __device__
-#endif // __HIP_PLATFORM_HCC__
+#define QUALIFIERS __forceinline__ __device__
 #endif // QUALIFIERS
 
 #include <hip/hip_runtime.h>
