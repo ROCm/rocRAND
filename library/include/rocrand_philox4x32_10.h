@@ -195,7 +195,11 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        unsigned int ret = m_state.result.data[m_state.substate];
+        #if defined(HIPCC_PLATFORM_HCC)
+            unsigned int ret = m_state.result.data[m_state.substate];
+        #else
+            unsigned int ret = (&m_state.result.x)[m_state.substate];
+        #endif
         m_state.substate++;
         if(m_state.substate == 4)
         {
