@@ -195,22 +195,11 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        unsigned int ret;
-        switch(m_state.substate)
-        {
-            case 0:
-                ret = m_state.result.x;
-                break;
-            case 1:
-                ret = m_state.result.y;
-                break;
-            case 2:
-                ret = m_state.result.z;
-                break;
-            default:
-                ret = m_state.result.w;
-                break;
-        }
+        #if defined(__HIP_PLATFORM_HCC__)
+            unsigned int ret = m_state.result.data[m_state.substate];
+        #else
+            unsigned int ret = (&m_state.result.x)[m_state.substate];
+        #endif
         m_state.substate++;
         if(m_state.substate == 4)
         {
