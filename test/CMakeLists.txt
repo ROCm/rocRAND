@@ -1,5 +1,4 @@
 # Tests
-option(BUILD_CRUSH_TEST "Build Crush tests (requires testu01)" OFF)
 
 # Get rocRAND tests source files
 file(GLOB rocRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
