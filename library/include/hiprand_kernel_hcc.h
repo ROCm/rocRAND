@@ -471,6 +471,7 @@ float2 hiprand_normal2(StateType * state)
     static_assert(
         detail::is_any_of<
             StateType,
+            hiprandState_t,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
             hiprandStateMRG32k3a_t
@@ -533,6 +534,7 @@ double2 hiprand_normal2_double(StateType * state)
     static_assert(
         detail::is_any_of<
             StateType,
+            hiprandState_t,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
             hiprandStateMRG32k3a_t
@@ -595,6 +597,7 @@ float2 hiprand_log_normal2(StateType * state,
     static_assert(
         detail::is_any_of<
             StateType,
+            hiprandState_t,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
             hiprandStateMRG32k3a_t
@@ -657,6 +660,7 @@ double2 hiprand_log_normal2_double(StateType * state,
     static_assert(
         detail::is_any_of<
             StateType,
+            hiprandState_t,
             hiprandStateXORWOW_t,
             hiprandStatePhilox4_32_10_t,
             hiprandStateMRG32k3a_t

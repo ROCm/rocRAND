@@ -259,6 +259,12 @@ TEST(hiprand_kernel_h_xorwow, hiprand_init)
     hiprand_kernel_h_hiprand_init_test<state_type>();
 }
 
+TEST(hiprand_kernel_h_default, hiprand_init)
+{
+    typedef hiprandState_t state_type;
+    hiprand_kernel_h_hiprand_init_test<state_type>();
+}
+
 #ifdef __HIP_PLATFORM_NVCC__
 TEST(hiprand_kernel_h_philox4x32_10, hiprand_init_nvcc)
 {
@@ -414,6 +420,12 @@ TEST(hiprand_kernel_h_xorwow, hiprand)
     hiprand_kernel_h_hiprand_test<state_type>();
 }
 
+TEST(hiprand_kernel_h_default, hiprand)
+{
+    typedef hiprandState_t state_type;
+    hiprand_kernel_h_hiprand_test<state_type>();
+}
+
 template<class T>
 void hiprand_kernel_h_hiprand_uniform_test()
 {
@@ -466,6 +478,12 @@ TEST(hiprand_kernel_h_mrg32k3a, hiprand_uniform)
 TEST(hiprand_kernel_h_xorwow, hiprand_uniform)
 {
     typedef hiprandStateXORWOW_t state_type;
+    hiprand_kernel_h_hiprand_uniform_test<state_type>();
+}
+
+TEST(hiprand_kernel_h_default, hiprand_uniform)
+{
+    typedef hiprandState_t state_type;
     hiprand_kernel_h_hiprand_uniform_test<state_type>();
 }
 
@@ -529,6 +547,12 @@ TEST(hiprand_kernel_h_mrg32k3a, hiprand_normal)
 TEST(hiprand_kernel_h_xorwow, hiprand_normal)
 {
     typedef hiprandStateXORWOW_t state_type;
+    hiprand_kernel_h_hiprand_normal_test<state_type>();
+}
+
+TEST(hiprand_kernel_h_default, hiprand_normal)
+{
+    typedef hiprandState_t state_type;
     hiprand_kernel_h_hiprand_normal_test<state_type>();
 }
 
@@ -596,6 +620,12 @@ TEST(hiprand_kernel_h_mrg32k3a, hiprand_log_normal)
 TEST(hiprand_kernel_h_xorwow, hiprand_log_normal)
 {
     typedef hiprandStateXORWOW_t state_type;
+    hiprand_kernel_h_hiprand_log_normal_test<state_type>();
+}
+
+TEST(hiprand_kernel_h_default, hiprand_log_normal)
+{
+    typedef hiprandState_t state_type;
     hiprand_kernel_h_hiprand_log_normal_test<state_type>();
 }
 
@@ -749,4 +779,22 @@ TEST_P(hiprand_kernel_h_xorwow_poisson, hiprand_discrete)
 
 INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_xorwow_poisson,
                         hiprand_kernel_h_xorwow_poisson,
+                        ::testing::ValuesIn(lambdas));
+
+class hiprand_kernel_h_default_poisson : public ::testing::TestWithParam<double> { };
+
+TEST_P(hiprand_kernel_h_default_poisson, hiprand_poisson)
+{
+    typedef hiprandState_t state_type;
+    hiprand_kernel_h_hiprand_poisson_test<state_type>(GetParam());
+}
+
+TEST_P(hiprand_kernel_h_default_poisson, hiprand_discrete)
+{
+    typedef hiprandState_t state_type;
+    hiprand_kernel_h_hiprand_discrete_test<state_type>(GetParam());
+}
+
+INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_default_poisson,
+                        hiprand_kernel_h_default_poisson,
                         ::testing::ValuesIn(lambdas));
