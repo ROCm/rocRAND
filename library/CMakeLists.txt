@@ -250,6 +250,8 @@ endif()
 set(CPACK_PACKAGE_NAME "rocrand")
 set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Stream HPC Maintainers <maintainer@streamhpc.com>")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip_hcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
+set(CPACK_RPM_PACKAGE_REQUIRES "hip_hcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers.")
 set(CPACK_SET_DESTDIR ON)
 set(CPACK_RPM_PACKAGE_RELOCATABLE OFF)
