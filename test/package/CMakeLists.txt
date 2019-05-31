@@ -1,5 +1,5 @@
 # Package test
-cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
 project(hiprand_package_test CXX)
 
