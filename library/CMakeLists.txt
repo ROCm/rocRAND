@@ -48,22 +48,7 @@ if(HIP_PLATFORM STREQUAL "nvcc")
     CUDA_ADD_LIBRARY(rocrand ${rocRAND_SRCS})
 else()
     add_library(rocrand ${rocRAND_SRCS})
-
-    # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
-    if(TARGET hip::device)
-      target_link_libraries(rocrand PRIVATE hip::device)
-    else()
-      target_link_libraries(rocrand
-          PRIVATE
-              # We keep hip::hip_hcc private, because otherwise it's not possible
-              # to link to roc::rocrand when using different compiler than hcc,
-              # hip::hip_hcc adds hcc-specific compilation flags.
-              hip::hip_hcc
-              hip::hip_device
-              hcc::hccshared
-      )
-    endif()
-    set(rocrand_DEPENDENCIES "hip")
+    target_link_libraries(rocrand PRIVATE hip::device)
 endif()
 
 target_include_directories(rocrand
@@ -163,12 +148,7 @@ if(HIP_PLATFORM STREQUAL "nvcc")
         ${CUDA_curand_LIBRARY}
     )
 else()
-    # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
-    if(TARGET hip::device)
-      target_link_libraries(hiprand PRIVATE rocrand hip::device)
-    else()
-      target_link_libraries(hiprand PRIVATE rocrand hip::hip_hcc hip::hip_device hcc::hccshared)
-    endif()
+    target_link_libraries(hiprand PRIVATE rocrand hip::device)
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
