@@ -25,7 +25,7 @@ find_package(HIP REQUIRED)
 
 if(HIP_PLATFORM STREQUAL "nvcc")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        include(cmake/SetupNVCC.cmake)
+        include(SetupNVCC)
     else()
         message(WARNING "On CUDA platform 'g++' is recommended C++ compiler.")
     endif()

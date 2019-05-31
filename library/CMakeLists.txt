@@ -38,8 +38,6 @@ if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
     )
 endif()
 
-include(CMakePackageConfigHelpers)
-
 # Build library
 if(HIP_PLATFORM STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
@@ -50,22 +48,7 @@ if(HIP_PLATFORM STREQUAL "nvcc")
     CUDA_ADD_LIBRARY(rocrand ${rocRAND_SRCS})
 else()
     add_library(rocrand ${rocRAND_SRCS})
-
-    # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
-    if(TARGET hip::device)
-      target_link_libraries(rocrand PRIVATE hip::device)
-    else()
-      target_link_libraries(rocrand
-          PRIVATE
-              # We keep hip::hip_hcc private, because otherwise it's not possible
-              # to link to roc::rocrand when using different compiler than hcc,
-              # hip::hip_hcc adds hcc-specific compilation flags.
-              hip::hip_hcc
-              hip::hip_device
-              hcc::hccshared
-      )
-    endif()
-    set(rocrand_DEPENDENCIES "hip")
+    target_link_libraries(rocrand PRIVATE hip::device)
 endif()
 
 target_include_directories(rocrand
@@ -90,11 +73,10 @@ endif()
 
 # Install
 # .so lib
-install(
+rocm_install_targets(
     TARGETS rocrand
     EXPORT rocrand-targets
-    LIBRARY DESTINATION rocrand/lib
-    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    PREFIX rocrand
 )
 # headers
 install(
@@ -108,30 +90,29 @@ install(
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
-install(
-    EXPORT rocrand-targets
+rocm_export_targets(
+    NAME rocrand
+    TARGETS roc::rocrand
+    PREFIX rocrand
+    DEPENDS PACKAGE HIP
     NAMESPACE roc::
-    DESTINATION rocrand/lib/cmake/rocrand
 )
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
-configure_package_config_file(
-    src/rocrand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
-    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/rocrand
-    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR FORTRAN_SRCS_INSTALL_DIR
-)
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
-    VERSION ${rocrand_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-install(
-    FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
-    DESTINATION rocrand/lib/cmake/rocrand
-)
+# Append Fortran wrapper path to the config file  genereated by rocm_export_targets
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake "
+# Fortran wrapper
+if(${BUILD_FORTRAN_WRAPPER})
+    set_and_check(rocrand_FORTRAN_SRC_DIR \"${FORTRAN_SRCS_INSTALL_DIR}\")
+    set_and_check(rocrand_FORTRAN_SRC_DIRS \"${FORTRAN_SRCS_INSTALL_DIR}\")
+    set(rocrand_FORTRAN_FOUND YES)
+else()
+    set(rocrand_FORTRAN_FOUND NOTFOUND)
+endif()
+")
+
+# Create symlinks
+rocm_install_symlink_subdir(rocrand)
+
 
 # hipRAND library
 
@@ -167,12 +148,7 @@ if(HIP_PLATFORM STREQUAL "nvcc")
         ${CUDA_curand_LIBRARY}
     )
 else()
-    # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
-    if(TARGET hip::device)
-      target_link_libraries(hiprand PRIVATE rocrand hip::device)
-    else()
-      target_link_libraries(hiprand PRIVATE rocrand hip::hip_hcc hip::hip_device hcc::hccshared)
-    endif()
+    target_link_libraries(hiprand PRIVATE rocrand hip::device)
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
@@ -187,12 +163,11 @@ set_target_properties(hiprand
 )
 
 # Install
-# .so library
-install(
+# .so lib
+rocm_install_targets(
     TARGETS hiprand
     EXPORT hiprand-targets
-    LIBRARY DESTINATION hiprand/lib
-    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    PREFIX hiprand
 )
 # headers
 install(
@@ -206,64 +181,52 @@ install(
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
-install(
-    EXPORT hiprand-targets
+rocm_export_targets(
+    NAME hiprand
+    TARGETS hip::hiprand
+    PREFIX hiprand
+    DEPENDS PACKAGE HIP
     NAMESPACE hip::
-    DESTINATION hiprand/lib/cmake/hiprand
 )
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
-configure_package_config_file(
-    src/hiprand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
-    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/hiprand
-    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR FORTRAN_SRCS_INSTALL_DIR
-)
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
-    VERSION ${hiprand_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-install(
-    FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
-    DESTINATION hiprand/lib/cmake/hiprand
-)
+# Append Fortran wrapper path to the config file  genereated by rocm_export_targets
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake "
+# Fortran wrapper
+if(${BUILD_FORTRAN_WRAPPER})
+    set_and_check(hiprand_FORTRAN_SRC_DIR \"${FORTRAN_SRCS_INSTALL_DIR}\")
+    set_and_check(hiprand_FORTRAN_SRC_DIRS \"${FORTRAN_SRCS_INSTALL_DIR}\")
+    set(hiprand_FORTRAN_FOUND YES)
+else()
+    set(hiprand_FORTRAN_FOUND NOTFOUND)
+endif()
+")
+
+# Create symlinks
+rocm_install_symlink_subdir(hiprand)
+
 
 # Fortran wrappers for hipRAND and rocRAND
 if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
 
+
 # Package (make package)
 # Generates .deb, .zip., and .tar.gz packages
-find_program(RPMBUILD_EXE rpmbuild)
-find_program(DPKG_EXE dpkg)
-set(CPACK_GENERATOR "TGZ;ZIP")
-if(EXISTS ${RPMBUILD_EXE})
-    list(APPEND CPACK_GENERATOR "RPM")
+if(HIP_PLATFORM STREQUAL "hcc")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip_hcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
+    set(CPACK_RPM_PACKAGE_REQUIRES "hip_hcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
+    rocm_create_package(
+        NAME rocrand
+        DESCRIPTION "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers."
+        MAINTAINER "Saad Rahim <saad.rahim@amd.com>"
+    )
+else()
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip_nvcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
+    set(CPACK_RPM_PACKAGE_REQUIRES "hip_nvcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
+    rocm_create_package(
+        NAME rocrand
+        DESCRIPTION "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers."
+        MAINTAINER "Saad Rahim <saad.rahim@amd.com>"
+    )
 endif()
-if(EXISTS ${DPKG_EXE})
-    list(APPEND CPACK_GENERATOR "DEB")
-endif()
-set(CPACK_PACKAGE_NAME "rocrand")
-set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Stream HPC Maintainers <maintainer@streamhpc.com>")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip_hcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
-set(CPACK_RPM_PACKAGE_REQUIRES "hip_hcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers.")
-set(CPACK_SET_DESTDIR ON)
-set(CPACK_RPM_PACKAGE_RELOCATABLE OFF)
-set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF CACHE BOOL "")
-set(CPACK_PACKAGE_VERSION_MAJOR ${rocrand_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${rocrand_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${rocrand_VERSION_PATCH})
-package_set_postinst_prerm(
-    "hiprand;rocrand"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/include;${CMAKE_INSTALL_PREFIX}/rocrand/include"
-)
-
-# Include CPack to introduce the appropriate targets
-include(CPack)

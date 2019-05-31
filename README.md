@@ -51,7 +51,7 @@ not to use system-installed libraries, and to download all dependencies.
 
 ## Build and Install
 
-```
+```sh
 git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
 # Go to rocRAND directory, create and go to build directory
@@ -88,7 +88,7 @@ to `OFF`.
 
 ## Running Unit Tests
 
-```
+```sh
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -101,7 +101,7 @@ ctest
 
 ## Running Benchmarks
 
-```
+```sh
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -126,7 +126,7 @@ cd rocRAND; cd build
 
 ## Running Statistical Tests
 
-```
+```sh
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -143,9 +143,124 @@ cd rocRAND; cd build
 ./test/stat_test_rocrand_generate --engine <engine> --dis <distribution>
 ```
 
+## Using rocRAND with CMake
+
+rocrand-config.cmake finds rocRAND include directory and library.
+
+Use this module by invoking `find_package` with the form:
+
+```cmake
+find_package(rocrand
+    [version] [EXACT]           # Minimum or EXACT version e.g. 0.5.0
+    [REQUIRED]                  # Fail with error if rocRAND is not found
+    CONFIG                      # Enable Config mode (might be required)
+    [PATHS path1 [path2 ... ]]  # Path to install dir (e.g. /opt/rocm/rocrand)
+)
+```
+
+The following variables are defined when rocRAND is found:
+
+* rocrand_FOUND            - True if rocRAND headers and library were found.
+* rocrand_INCLUDE_DIRS     - rocRAND include directory.
+* rocrand_LIBRARY_DIRS     - Link directory for rocRAND library.
+* rocrand_LIBRARIES        - rocRAND library to be linked.
+* rocrand_VERSION          - ROCRAND_VERSION value from rocrand.h.
+
+* rocrand_FORTRAN_FOUND    - True if rocRAND was built with Fortran wrapper; otherwise - false.
+* rocrand_FORTRAN_SRC_DIRS - Directory with rocRAND Fortran wrapper sources rocrand_m.f90
+                             and hip_m.f90. Include those source files, and add "use rocrand_m"
+                             statement into your Fortran code.
+
+Example (requires HIP):
+
+```cmake
+# First find and include HIP
+# See https://github.com/ROCm-Developer-Tools/HIP
+find_package(rocrand REQUIRED CONFIG PATHS "/opt/rocm/rocrand")
+
+add_executable(foo foo.cpp)
+# Set HIP flags, add HIP includes
+# Link foo against HIP or CUDA lib (see hipconfig)
+target_link_libraries(foo roc::rocrand)
+
+# or using Fortran wrapper
+set(bar_SRCS
+    bar.f90
+    ${rocrand_FORTRAN_SRC_DIRS}/hip_m.f90
+    ${rocrand_FORTRAN_SRC_DIRS}/rocrand_m.f90
+)
+add_executable(bar ${bar_SRCS})
+# Link bar against HIP or CUDA library (see hipconfig)
+target_link_libraries(bar roc::rocrand)
+```
+
+## Using hipRAND with CMake
+
+hiprand-config.cmake finds hipRAND include directory and library.
+
+Use this module by invoking find_package with the form:
+
+```cmake
+find_package(hiprand
+    [version] [EXACT]           # Minimum or EXACT version e.g. 0.5.0
+    [REQUIRED]                  # Fail with error if hipRAND is not found
+    CONFIG                      # Enable Config mode (might be required)
+    [PATHS path1 [path2 ... ]]  # Path to install dir (e.g. /opt/rocm/hiprand)
+)
+```
+
+The following variables are defined when hipRAND is found:
+
+* hiprand_FOUND            - True if hipRAND headers and library were found.
+* hiprand_INCLUDE_DIRS     - hipRAND include directory.
+* hiprand_LIBRARY_DIRS     - Link directory for hipRAND library.
+* hiprand_LIBRARIES        - hipRAND library to be linked.
+* hiprand_VERSION          - HIPRAND_VERSION value from hiprand.h.
+
+* hiprand_FORTRAN_FOUND    - True if hipRAND was built with Fortran wrapper; otherwise - false.
+* hiprand_FORTRAN_SRC_DIRS - Directory with hipRAND Fortran wrapper sources hiprand_m.f90
+                             and hip_m.f90. Include those source files, and add "use hiprand_m"
+                             statement into your Fortran code.
+
+Example (requires HIP, and rocRAND or cuRAND):
+
+```cmake
+# Remember to first find and include HIP
+# See https://github.com/ROCm-Developer-Tools/HIP
+find_package(hiprand REQUIRED CONFIG PATHS "/opt/rocm/hiprand")
+if(HIP_PLATFORM STREQUAL "hcc")
+    find_package(rocrand REQUIRED CONFIG PATHS "/opt/rocm/rocrand")
+endif()
+
+add_executable(foo foo.cpp)
+# Set HIP flags, includes (see hipconfig)
+if(HIP_PLATFORM STREQUAL "hcc")
+    # Link foo against HIP library
+    target_link_libraries(foo roc::rocrand hip::hiprand)
+else()
+    # Link foo against CUDA library
+    target_link_libraries(foo "-lcurand" hip::hiprand)
+endif()
+
+# or using Fortran wrapper
+set(bar_SRCS
+    bar.f90
+    ${hiprand_FORTRAN_SRC_DIRS}/hip_m.f90
+    ${hiprand_FORTRAN_SRC_DIRS}/hiprand_m.f90
+)
+add_executable(bar ${bar_SRCS})
+if(HIP_PLATFORM STREQUAL "hcc")
+    # Link bar against HIP library
+    target_link_libraries(bar roc::rocrand hip::hiprand)
+else()
+    # Link bar against CUDA libraries
+    target_link_libraries(bar "-lcurand" hip::hiprand)
+endif()
+```
+
 ## Documentation
 
-```
+```sh
 # go to rocRAND doc directory
 cd rocRAND; cd doc
 
