@@ -587,6 +587,7 @@ int main(int argc, char *argv[])
                 run_benchmarks<curandStateMtgp32_t>(parser, distribution);
             }
         }
+        std::cout << std::endl;
     }
 
     return 0;

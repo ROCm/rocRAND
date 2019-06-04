@@ -618,6 +618,7 @@ int main(int argc, char *argv[])
                 run_benchmarks<rocrand_state_mtgp32>(parser, distribution);
             }
         }
+        std::cout << std::endl;
     }
 
     return 0;
