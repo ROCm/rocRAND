@@ -142,13 +142,15 @@ private:
 ///
 /// \brief Produces random integer values uniformly distributed on the interval [0, 2^32 - 1].
 ///
-/// \tparam IntType - type of generated values. Only \p unsigned \p int type is supported.
+/// \tparam IntType - type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int type is supported.
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
     static_assert(
-        std::is_same<unsigned int, IntType>::value,
-            "Only unsigned int type is supported in uniform_int_distribution"
+        std::is_same<unsigned char, IntType>::value
+        || std::is_same<unsigned short, IntType>::value
+        || std::is_same<unsigned int, IntType>::value,
+        "Only unsigned char, unsigned short, and unsigned int types is supported in uniform_int_distribution"
     );
 
 public:
@@ -192,11 +194,12 @@ public:
     /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
-    /// See also: rocrand_generate()
+    /// See also: rocrand_generate(), rocrand_generate_char(), rocrand_generate_short()
     template<class Generator>
     void operator()(Generator& g, IntType * output, size_t size)
     {
-        rocrand_status status = rocrand_generate(g.m_generator, output, size);
+        rocrand_status status;
+        status = this->generate(g, output, size);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 
@@ -212,20 +215,40 @@ public:
     {
         return !(*this == other);
     }
+
+private:
+    template<class Generator>
+    rocrand_status generate(Generator& g, unsigned char * output, size_t size)
+    {
+        return rocrand_generate_char(g.m_generator, output, size);
+    }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, unsigned short * output, size_t size)
+    {
+        return rocrand_generate_short(g.m_generator, output, size);
+    }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, unsigned int * output, size_t size)
+    {
+        return rocrand_generate(g.m_generator, output, size);
+    }
 };
 
 /// \class uniform_real_distribution
 ///
 /// \brief Produces random floating-point values uniformly distributed on the interval (0, 1].
 ///
-/// \tparam RealType - type of generated values. Only \p float and \p double types are supported.
+/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
 template<class RealType = float>
 class uniform_real_distribution
 {
     static_assert(
-            std::is_same<float, RealType>::value
-            || std::is_same<double, RealType>::value,
-            "Only float and double types are supported in uniform_real_distribution"
+        std::is_same<float, RealType>::value
+        || std::is_same<double, RealType>::value
+        || std::is_same<half, RealType>::value,
+        "Only float, double, and half types are supported in uniform_real_distribution"
     );
 
 public:
@@ -273,7 +296,7 @@ public:
     /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
-    /// See also: rocrand_generate_uniform(), rocrand_generate_uniform_double()
+    /// See also: rocrand_generate_uniform(), rocrand_generate_uniform_double(), rocrand_generate_uniform_half()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
@@ -307,22 +330,29 @@ private:
     {
         return rocrand_generate_uniform_double(g.m_generator, output, size);
     }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, half * output, size_t size)
+    {
+        return rocrand_generate_uniform_half(g.m_generator, output, size);
+    }
 };
 
 /// \class normal_distribution
 ///
 /// \brief Produces random numbers according to a normal distribution.
 ///
-/// \tparam RealType - type of generated values. Only \p float and \p double types are supported.
+/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
 ///
 /// See also: <a href="https://en.wikipedia.org/wiki/Normal_distribution">Wikipedia:Normal distribution</a>.
 template<class RealType = float>
 class normal_distribution
 {
     static_assert(
-            std::is_same<float, RealType>::value
-            || std::is_same<double, RealType>::value,
-            "Only float and double types are supported in normal_distribution"
+        std::is_same<float, RealType>::value
+        || std::is_same<double, RealType>::value
+        || std::is_same<half, RealType>::value,
+        "Only float, double and half types are supported in normal_distribution"
     );
 
 public:
@@ -453,7 +483,7 @@ public:
     /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
-    /// See also: rocrand_generate_normal(), rocrand_generate_normal_double()
+    /// See also: rocrand_generate_normal(), rocrand_generate_normal_double(), rocrand_generate_normal_half()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
@@ -495,6 +525,14 @@ private:
         );
     }
 
+    template<class Generator>
+    rocrand_status generate(Generator& g, half * output, size_t size)
+    {
+        return rocrand_generate_normal_half(
+            g.m_generator, output, size, this->mean(), this->stddev()
+        );
+    }
+
     param_type m_params;
 };
 
@@ -502,16 +540,17 @@ private:
 ///
 /// \brief Produces positive random numbers according to a log-normal distribution.
 ///
-/// \tparam RealType - type of generated values. Only \p float and \p double types are supported.
+/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
 ///
 /// See also: <a href="https://en.wikipedia.org/wiki/Log-normal_distribution">Wikipedia:Log-normal distribution</a>.
 template<class RealType = float>
 class lognormal_distribution
 {
     static_assert(
-            std::is_same<float, RealType>::value
-            || std::is_same<double, RealType>::value,
-            "Only float and double types are supported in lognormal_distribution"
+        std::is_same<float, RealType>::value
+        || std::is_same<double, RealType>::value
+        || std::is_same<half, RealType>::value,
+        "Only float, double and half types are supported in lognormal_distribution"
     );
 
 public:
@@ -681,6 +720,14 @@ private:
     rocrand_status generate(Generator& g, double * output, size_t size)
     {
         return rocrand_generate_log_normal_double(
+            g.m_generator, output, size, this->m(), this->s()
+        );
+    }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, half * output, size_t size)
+    {
+        return rocrand_generate_log_normal_half(
             g.m_generator, output, size, this->m(), this->s()
         );
     }

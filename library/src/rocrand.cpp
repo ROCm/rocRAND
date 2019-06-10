@@ -129,6 +129,36 @@ rocrand_generate(rocrand_generator generator,
 }
 
 rocrand_status ROCRANDAPI
+rocrand_generate_char(rocrand_generator generator,
+                      unsigned char * output_data, size_t n)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+
+    (void) output_data;
+    (void) n;
+
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
+rocrand_generate_short(rocrand_generator generator,
+                       unsigned short * output_data, size_t n)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+
+    (void) output_data;
+    (void) n;
+
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
 rocrand_generate_uniform(rocrand_generator generator,
                          float * output_data, size_t n)
 {
@@ -209,6 +239,21 @@ rocrand_generate_uniform_double(rocrand_generator generator,
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_uniform(output_data, n);
     }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
+rocrand_generate_uniform_half(rocrand_generator generator,
+                              half * output_data, size_t n)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+
+    (void) output_data;
+    (void) n;
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -309,6 +354,24 @@ rocrand_generate_normal_double(rocrand_generator generator,
 }
 
 rocrand_status ROCRANDAPI
+rocrand_generate_normal_half(rocrand_generator generator,
+                             half * output_data, size_t n,
+                             half mean, half stddev)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+
+    (void) output_data;
+    (void) n;
+    (void) mean;
+    (void) stddev;
+
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
 rocrand_generate_log_normal(rocrand_generator generator,
                             float * output_data, size_t n,
                             float mean, float stddev)
@@ -401,6 +464,24 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
         return rocrand_mtgp32_generator->generate_log_normal(output_data, n,
                                                              mean, stddev);
     }
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
+rocrand_status ROCRANDAPI
+rocrand_generate_log_normal_half(rocrand_generator generator,
+                                 half * output_data, size_t n,
+                                 half mean, half stddev)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+
+    (void) output_data;
+    (void) n;
+    (void) mean;
+    (void) stddev;
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
