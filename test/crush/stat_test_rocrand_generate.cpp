@@ -112,6 +112,26 @@ void run_tests(const cli::Parser& parser,
                const std::string& distribution,
                const std::string plot_name)
 {
+    if (distribution == "uniform-uchar")
+    {
+        run_test<unsigned char>(parser, rng_type, plot_name,
+            [](rocrand_generator gen, unsigned char * data, size_t size) {
+                return rocrand_generate_char(gen, data, size);
+            },
+            UCHAR_MAX / 2, UCHAR_MAX * std::sqrt(1.0 / 12.0),
+            [](double x) { return fdist_Unif(x / UCHAR_MAX); }
+        );
+    }
+    if (distribution == "uniform-ushort")
+    {
+        run_test<unsigned short>(parser, rng_type, plot_name,
+            [](rocrand_generator gen, unsigned short * data, size_t size) {
+                return rocrand_generate_short(gen, data, size);
+            },
+            USHRT_MAX / 2, USHRT_MAX * std::sqrt(1.0 / 12.0),
+            [](double x) { return fdist_Unif(x / USHRT_MAX); }
+        );
+    }
     if (distribution == "uniform-float")
     {
         run_test<float>(parser, rng_type, plot_name,
@@ -203,6 +223,8 @@ const std::vector<std::string> all_engines = {
 };
 
 const std::vector<std::string> all_distributions = {
+    "uniform-uchar",
+    "uniform-ushort",
     "uniform-float",
     "uniform-double",
     "normal-float",

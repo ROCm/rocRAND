@@ -137,8 +137,12 @@ rocrand_generate_char(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    (void) output_data;
-    (void) n;
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        rocrand_mrg32k3a * mrg32k3a_generator =
+            static_cast<rocrand_mrg32k3a *>(generator);
+        return mrg32k3a_generator->generate(output_data, n);
+    }
 
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -152,8 +156,12 @@ rocrand_generate_short(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    (void) output_data;
-    (void) n;
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        rocrand_mrg32k3a * mrg32k3a_generator =
+            static_cast<rocrand_mrg32k3a *>(generator);
+        return mrg32k3a_generator->generate(output_data, n);
+    }
 
     return ROCRAND_STATUS_TYPE_ERROR;
 }
