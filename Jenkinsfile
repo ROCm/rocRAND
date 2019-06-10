@@ -25,7 +25,7 @@ rocrandCI:
                   cd ${project.paths.project_build_prefix}
                   mkdir build && cd build
                   export PATH=/opt/rocm/bin:$PATH
-                  CMAKE_CXX_COMPILER=hcc ${project.paths.build_command}
+                  CXX=hcc ${project.paths.build_command}
                   make -j4
                 """
         platform.runCommand(this, command)
