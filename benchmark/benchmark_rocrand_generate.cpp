@@ -128,6 +128,22 @@ void run_benchmarks(const cli::Parser& parser,
             }
         );
     }
+    if (distribution == "uniform-uchar")
+    {
+        run_benchmark<unsigned char>(parser, rng_type,
+            [](rocrand_generator gen, unsigned char * data, size_t size) {
+                return rocrand_generate_char(gen, data, size);
+            }
+        );
+    }
+    if (distribution == "uniform-ushort")
+    {
+        run_benchmark<unsigned short>(parser, rng_type,
+            [](rocrand_generator gen, unsigned short * data, size_t size) {
+                return rocrand_generate_short(gen, data, size);
+            }
+        );
+    }
     if (distribution == "uniform-float")
     {
         run_benchmark<float>(parser, rng_type,
@@ -200,8 +216,25 @@ const std::vector<std::string> all_engines = {
     "sobol32",
 };
 
+// TODO: Remove once implemented properly
+const std::vector<std::string> temp_distributions = {
+    "uniform-uint",
+    "uniform-uchar",
+    "uniform-ushort",
+    // "uniform-long-long",
+    "uniform-float",
+    "uniform-double",
+    "normal-float",
+    "normal-double",
+    "log-normal-float",
+    "log-normal-double",
+    "poisson"
+};
+
 const std::vector<std::string> all_distributions = {
     "uniform-uint",
+    //"uniform-uchar",
+    //"uniform-ushort",
     // "uniform-long-long",
     "uniform-float",
     "uniform-double",
@@ -267,7 +300,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            for (auto d : all_distributions)
+            for (auto d : temp_distributions)
             {
                 if (std::find(ds.begin(), ds.end(), d) != ds.end())
                     distributions.push_back(d);

@@ -134,6 +134,36 @@ struct mrg_uniform_distribution<unsigned int>
     }
 };
 
+template<>
+struct mrg_uniform_distribution<unsigned char>
+{
+    __forceinline__ __host__ __device__
+    uchar4 operator()(const unsigned int v) const
+    {
+        unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
+        return {
+            (unsigned char)(w),
+            (unsigned char)(w >> 8),
+            (unsigned char)(w >> 16),
+            (unsigned char)(w >> 24)
+        };
+    }
+};
+
+template<>
+struct mrg_uniform_distribution<unsigned short>
+{
+    __forceinline__ __host__ __device__
+    ushort2 operator()(const unsigned int v) const
+    {
+        unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
+        return {
+            (unsigned short)(w),
+            (unsigned short)(w >> 16)
+        };
+    }
+};
+
 // For unsigned integer between 0 and UINT_MAX, returns value between
 // 0.0f and 1.0f, excluding 0.0f and including 1.0f.
 template<>
