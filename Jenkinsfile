@@ -36,18 +36,15 @@ rocrandCI:
         platform, project->
 
         def ctest = 'ctest --output-on-failure'
-        def utest = './test/test_hiprand_api'
 
         def command = """#!/usr/bin/env bash
                         set -x
                         cd ${project.paths.project_build_prefix}
                         cd build
                         ${ctest}
-                        ${utest}
                   """
 
         platform.runCommand(this, command)
-        junit "${project.paths.project_build_prefix}/build/*.xml"
     }
 
     def packageCommand =
