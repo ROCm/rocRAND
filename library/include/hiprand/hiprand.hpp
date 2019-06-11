@@ -1598,7 +1598,7 @@ typedef xorwow default_random_engine;
 ///
 /// Example:
 /// \code
-/// #include <hiprand.hpp>
+/// #include <hiprand/hiprand.hpp>
 ///
 /// int main()
 /// {
