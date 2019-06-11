@@ -20,12 +20,14 @@ rocrandCI:
         platform, project->
 
         project.paths.construct_build_prefix()
+        
         def command = """#!/usr/bin/env bash
                   set -x
                   cd ${project.paths.project_build_prefix}
                   export PATH=/opt/rocm/bin:$PATH
                   CXX=hcc ${project.paths.build_command}
                 """
+        
         platform.runCommand(this, command)
     }
 
@@ -34,14 +36,21 @@ rocrandCI:
         platform, project->
 
         def ctest = 'ctest --output-on-failure'
+        
+        try
+        {
+            def command = """#!/usr/bin/env bash
+                            set -x
+                            cd ${project.paths.project_build_prefix}/build/release
+                            ${ctest}
+                    """
 
-        def command = """#!/usr/bin/env bash
-                        set -x
-                        cd ${project.paths.project_build_prefix}/build/release
-                        ${ctest}
-                  """
-
-        platform.runCommand(this, command)
+            platform.runCommand(this, command)
+        }
+        finally
+        {
+            junit "${project.paths.project_build_prefix}/build/release/*_tests.xml"
+        }
     }
 
     def packageCommand =
@@ -56,7 +65,7 @@ rocrandCI:
                     set -x
                     cd ${project.paths.project_build_prefix}
                     ./install -p
-                    cd ${project.paths.project_build_prefix}/build/release
+                    cd build/release
                     rm -rf package && mkdir -p package
                     mv *.rpm package/
                     rpm -qlp package/*.rpm
@@ -71,7 +80,7 @@ rocrandCI:
                     set -x
                     cd ${project.paths.project_build_prefix}
                     ./install -p
-                    cd ${project.paths.project_build_prefix}/build/release
+                    cd build/release
                     rm -rf package && mkdir -p package
                     mv *.deb package/
                     dpkg -c package/*.deb
