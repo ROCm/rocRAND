@@ -23,9 +23,9 @@
 #include <stdio.h>
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
-#include <rocrand_kernel.h>
-#include <rocrand.hpp>
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_kernel.h>
+#include <rocrand/rocrand.hpp>
 
 int get_rocrand_version();
 

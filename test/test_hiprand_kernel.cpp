@@ -27,8 +27,8 @@
 #include <hip/hip_runtime.h>
 
 #define QUALIFIERS __forceinline__ __host__ __device__
-#include <hiprand_kernel.h>
-#include <hiprand.h>
+#include <hiprand/hiprand_kernel.h>
+#include <hiprand/hiprand.h>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
 #define HIPRAND_CHECK(state) ASSERT_EQ(state, HIPRAND_STATUS_SUCCESS)

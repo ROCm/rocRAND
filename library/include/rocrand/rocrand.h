@@ -36,7 +36,7 @@
 #endif
 /// \endcond
 
-#include "rocrand_version.h"
+#include <rocrand/rocrand_version.h>
 
 /// \cond ROCRAND_DOCS_TYPEDEFS
 /// rocRAND random number generator (opaque)

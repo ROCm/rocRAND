@@ -29,6 +29,6 @@
 #define ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 #define ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
-#include <rocrand_kernel.h>
+#include <rocrand/rocrand_kernel.h>
 
 #endif // ROCRAND_RNG_DEVICE_ENGINES_H_

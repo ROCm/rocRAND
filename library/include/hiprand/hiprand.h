@@ -34,7 +34,7 @@
 #endif
 /// \endcond
 
-#include "hiprand_version.h"
+#include <hiprand/hiprand_version.h>
 #ifdef HIPRAND_DOXYGEN // Only for the documentation
 /// \def HIPRAND_VERSION
 /// \brief hipRAND library version

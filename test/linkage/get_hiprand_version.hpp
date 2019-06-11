@@ -23,9 +23,9 @@
 #include <stdio.h>
 #include <hip/hip_runtime.h>
 
-#include <hiprand.h>
-#include <hiprand_kernel.h>
-#include <hiprand.hpp>
+#include <hiprand/hiprand.h>
+#include <hiprand/hiprand_kernel.h>
+#include <hiprand/hiprand.hpp>
 
 int get_hiprand_version();
 

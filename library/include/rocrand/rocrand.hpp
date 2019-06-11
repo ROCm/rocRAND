@@ -1590,7 +1590,7 @@ typedef xorwow default_random_engine;
 ///
 /// Example:
 /// \code
-/// #include <rocrand.hpp>
+/// #include <rocrand/rocrand.hpp>
 ///
 /// int main()
 /// {
