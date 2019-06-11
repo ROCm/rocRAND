@@ -52,12 +52,12 @@ struct uniform_distribution<unsigned char>
     __forceinline__ __host__ __device__
     uchar4 operator()(const unsigned int v) const
     {
-        return {
+        return make_uchar4(
             (unsigned char)(v),
             (unsigned char)(v >> 8),
             (unsigned char)(v >> 16),
             (unsigned char)(v >> 24)
-        };
+        );
     }
 };
 
@@ -67,10 +67,10 @@ struct uniform_distribution<unsigned short>
     __forceinline__ __host__ __device__
     ushort2 operator()(const unsigned int v) const
     {
-        return {
+        return make_ushort2(
             (unsigned short)(v),
             (unsigned short)(v >> 16)
-        };
+        );
     }
 };
 
@@ -169,12 +169,12 @@ struct mrg_uniform_distribution<unsigned char>
     uchar4 operator()(const unsigned int v) const
     {
         unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
-        return {
+        return make_uchar4(
             (unsigned char)(w),
             (unsigned char)(w >> 8),
             (unsigned char)(w >> 16),
             (unsigned char)(w >> 24)
-        };
+        );
     }
 };
 
@@ -185,10 +185,10 @@ struct mrg_uniform_distribution<unsigned short>
     ushort2 operator()(const unsigned int v) const
     {
         unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
-        return {
+        return make_ushort2(
             (unsigned short)(w),
             (unsigned short)(w >> 16)
-        };
+        );
     }
 };
 
