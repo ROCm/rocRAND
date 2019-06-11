@@ -118,7 +118,7 @@ void run_tests(const cli::Parser& parser,
             [](rocrand_generator gen, unsigned char * data, size_t size) {
                 return rocrand_generate_char(gen, data, size);
             },
-            UCHAR_MAX / 2, UCHAR_MAX * std::sqrt(1.0 / 12.0),
+            UCHAR_MAX / 2.0, (UCHAR_MAX + 1) * std::sqrt(1.0 / 12.0),
             [](double x) { return fdist_Unif(x / UCHAR_MAX); }
         );
     }
@@ -128,7 +128,7 @@ void run_tests(const cli::Parser& parser,
             [](rocrand_generator gen, unsigned short * data, size_t size) {
                 return rocrand_generate_short(gen, data, size);
             },
-            USHRT_MAX / 2, USHRT_MAX * std::sqrt(1.0 / 12.0),
+            USHRT_MAX / 2.0, (USHRT_MAX + 1) * std::sqrt(1.0 / 12.0),
             [](double x) { return fdist_Unif(x / USHRT_MAX); }
         );
     }

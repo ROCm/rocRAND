@@ -72,17 +72,93 @@ namespace detail {
     typedef ::rocrand_device::mtgp32_state mtgp32_state;
 
     template<class Type, class Distribution>
-    __global__
+    inline __device__
     typename std::enable_if<std::is_same<Type, unsigned int>::value
                             || std::is_same<Type, float>::value
                             || std::is_same<Type, double>::value>::type
-    generate_kernel(mtgp32_device_engine * engines,
-                    Type * data,
-                    const size_t size,
-                    const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
-                    const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
-                    Distribution distribution)
+    tail(__shared__ mtgp32_device_engine& engine,
+         Type * data,
+         const size_t size,
+         const size_t size_up,
+         Distribution distribution,
+         unsigned int index,
+         unsigned int engine_id)
     {
+        (void) engine;
+        (void) data;
+        (void) size;
+        (void) size_up;
+        (void) distribution;
+        (void) index;
+        (void) engine_id;
+    }
+
+    template<class Type, class Distribution>
+    inline __device__
+    typename std::enable_if<std::is_same<Type, unsigned char>::value>::type
+    tail(__shared__ mtgp32_device_engine& engine,
+         Type * data,
+         const size_t size,
+         const size_t size_up,
+         Distribution distribution,
+         unsigned int index,
+         unsigned int engine_id)
+    {
+        typedef decltype(distribution(uint())) TypeN;
+
+        (void) engine_id;
+
+        auto tail_size = size & 3;
+        if(tail_size > 0)
+        {
+            TypeN value = distribution(engine());
+            if(index == size_up)
+            {
+                // Save the tail
+                data[size - tail_size] = value.x;
+                if(tail_size > 1) data[size - tail_size + 1] = value.y;
+                if(tail_size > 2) data[size - tail_size + 2] = value.z;
+            }
+        }
+    }
+
+    template<class Type, class Distribution>
+    inline __device__
+    typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
+    tail(__shared__ mtgp32_device_engine& engine,
+         Type * data,
+         const size_t size,
+         const size_t size_up,
+         Distribution distribution,
+         unsigned int index,
+         unsigned int engine_id)
+    {
+        typedef decltype(distribution(uint())) TypeN;
+
+        (void) index;
+        (void) size_up;
+
+        if((size & 1) > 0)
+        {
+            TypeN value = distribution(engine());
+            if(engine_id == 0)
+            {
+                data[size - 1] = value.x;
+            }
+        }
+    }
+
+    template<class Type, class Distribution>
+    __global__
+    void generate_kernel(mtgp32_device_engine * engines,
+                         Type * data,
+                         const size_t size,
+                         const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
+                         const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
+                         Distribution distribution)
+    {
+        typedef decltype(distribution(uint())) TypeN;
+
         const unsigned int engine_id = hipBlockIdx_x;
         unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
@@ -91,9 +167,10 @@ namespace detail {
         __shared__ mtgp32_device_engine engine;
         engine.copy(&engines[engine_id]);
 
+        TypeN * data_n = (TypeN *) data;
         while(index < size_down)
         {
-            data[index] = distribution(engine());
+            data_n[index] = distribution(engine());
             // Next position
             index += stride;
         }
@@ -101,92 +178,14 @@ namespace detail {
         {
             auto value = distribution(engine());
             if(index < size)
-                data[index] = value;
+                data_n[index] = value;
             // Next position
             index += stride;
         }
 
-        // Save engine with its state
-        engines[engine_id].copy(&engine);
-    }
-
-    template<class Type, class Distribution>
-    __global__
-    typename std::enable_if<std::is_same<Type, unsigned char>::value>::type
-    generate_kernel(mtgp32_device_engine * engines,
-                    Type * data,
-                    const size_t size,
-                    const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
-                    const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
-                    Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x;
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        (void) size_up;
-        (void) size_down;
-
-        // Load device engine
-        __shared__ mtgp32_device_engine engine;
-        engine.copy(&engines[engine_id]);
-
-        uchar4 * data4 = (uchar4 *) data;
-        while(index < (size / 4))
-        {
-            data4[index] = distribution(engine());
-            index += stride;
-        }
-
-        auto tail_size = size & 3;
-        if((index == size/4) && tail_size > 0)
-        {
-            uchar4 result = distribution(engine());
-            // Save the tail
-            data[size - tail_size] = result.x;
-            if(tail_size > 1) data[size - tail_size + 1] = result.y;
-            if(tail_size > 2) data[size - tail_size + 2] = result.z;
-        }
-
-        // Save engine with its state
-        engines[engine_id].copy(&engine);
-    }
-
-    template<class Type, class Distribution>
-    __global__
-    typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
-    generate_kernel(mtgp32_device_engine * engines,
-                    Type * data,
-                    const size_t size,
-                    const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
-                    const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
-                    Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x;
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        (void) size_up;
-        (void) size_down;
-
-        // Load device engine
-        __shared__ mtgp32_device_engine engine;
-        engine.copy(&engines[engine_id]);
-
-        ushort2 * data2 = (ushort2 *) data;
-        while(index < (size / 2))
-        {
-            data2[index] = distribution(engine());
-            index += stride;
-        }
-
-        // First work-item saves the tail when n is not a multiple of 2
-        if(engine_id == 0 && (size & 1) > 0)
-        {
-            ushort2 result = distribution(engine());
-            // Save the tail
-            data[size - 1] = result.x;
-        }
+        tail(
+            engine, data, size, size_up, distribution, index, engine_id
+        );
 
         // Save engine with its state
         engines[engine_id].copy(&engine);
@@ -258,14 +257,18 @@ public:
     }
 
     template<class T, class Distribution = uniform_distribution<T> >
-    rocrand_status generate(T * data, size_t data_size,
-                            const Distribution& distribution = Distribution())
+    typename std::enable_if<std::is_same<T, unsigned int>::value
+                            || std::is_same<T, float>::value
+                            || std::is_same<T, double>::value,
+                            rocrand_status>::type
+    generate(T * data, size_t data_size,
+             const Distribution& distribution = Distribution())
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        const size_t remainder_value = data_size%s_threads;
+        const size_t remainder_value = data_size % s_threads;
         const size_t size_rounded_down = data_size - remainder_value;
         // if remainder is 0, then data_size is a multiple of s_threads, and
         // in this case size_rounded_up must be data_size
@@ -276,6 +279,66 @@ public:
             HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
             m_engines, data, data_size, size_rounded_up,
+            size_rounded_down, distribution
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    template<class T, class Distribution = uniform_distribution<T> >
+    typename std::enable_if<std::is_same<T, unsigned char>::value, rocrand_status>::type
+    generate(T * data, size_t data_size,
+             const Distribution& distribution = Distribution())
+    {
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
+        const size_t size = data_size / 4;
+        const size_t remainder_value = size % s_threads;
+        const size_t size_rounded_down = size - remainder_value;
+        // if remainder is 0, then data_size is a multiple of s_threads, and
+        // in this case size_rounded_up must be data_size
+        const size_t size_rounded_up =
+            remainder_value == 0 ? size : size_rounded_down + s_threads;
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
+            m_engines, data, size, size_rounded_up,
+            size_rounded_down, distribution
+        );
+        // Check kernel status
+        if(hipPeekAtLastError() != hipSuccess)
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    template<class T, class Distribution = uniform_distribution<T> >
+    typename std::enable_if<std::is_same<T, unsigned short>::value, rocrand_status>::type
+    generate(T * data, size_t data_size,
+             const Distribution& distribution = Distribution())
+    {
+        rocrand_status status = init();
+        if (status != ROCRAND_STATUS_SUCCESS)
+            return status;
+
+        const size_t size = data_size / 2;
+        const size_t remainder_value = size % s_threads;
+        const size_t size_rounded_down = size - remainder_value;
+        // if remainder is 0, then data_size is a multiple of s_threads, and
+        // in this case size_rounded_up must be data_size
+        const size_t size_rounded_up =
+            remainder_value == 0 ? size : size_rounded_down + s_threads;
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
+            dim3(s_blocks), dim3(s_threads), 0, m_stream,
+            m_engines, data, size, size_rounded_up,
             size_rounded_down, distribution
         );
         // Check kernel status
