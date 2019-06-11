@@ -81,8 +81,8 @@ rocm_install_targets(
 # headers
 install(
     DIRECTORY
-        "include/"
-        "${PROJECT_BINARY_DIR}/library/include/"
+        "include/rocrand"
+        "${PROJECT_BINARY_DIR}/library/include/rocrand"
     DESTINATION rocrand/include
     FILES_MATCHING
     PATTERN "rocrand*h"
@@ -172,8 +172,8 @@ rocm_install_targets(
 # headers
 install(
     DIRECTORY
-        "include/"
-        "${PROJECT_BINARY_DIR}/library/include/"
+        "include/hiprand"
+        "${PROJECT_BINARY_DIR}/library/include/hiprand"
     DESTINATION hiprand/include
     FILES_MATCHING
     PATTERN "hiprand*h"

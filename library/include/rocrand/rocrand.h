@@ -28,7 +28,7 @@
 
 #include <hip/hip_runtime.h>
 
-#include <rocrand/rocrand_discrete_types.h>
+#include "rocrand_discrete_types.h"
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI

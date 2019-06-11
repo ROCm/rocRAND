@@ -26,7 +26,8 @@
 #endif // QUALIFIERS
 
 #include <hip/hip_runtime.h>
-#include <hiprand/hiprand.h>
+
+#include "hiprand.h"
 
 /** \addtogroup hipranddevice
  *
