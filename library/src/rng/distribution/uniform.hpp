@@ -59,6 +59,12 @@ struct uniform_distribution<unsigned char>
             (unsigned char)(v >> 24)
         );
     }
+
+    __forceinline__ __host__ __device__
+    uint4 operator()(const uint4 v) const
+    {
+        return v;
+    }
 };
 
 template<>
@@ -71,6 +77,12 @@ struct uniform_distribution<unsigned short>
             (unsigned short)(v),
             (unsigned short)(v >> 16)
         );
+    }
+
+    __forceinline__ __host__ __device__
+    uint4 operator()(const uint4 v) const
+    {
+        return v;
     }
 };
 

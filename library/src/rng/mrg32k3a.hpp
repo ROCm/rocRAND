@@ -79,6 +79,8 @@ namespace detail {
                     Type * data, const size_t n,
                     const Distribution distribution)
     {
+        typedef decltype(distribution(uint())) Type4;
+
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
@@ -86,7 +88,7 @@ namespace detail {
         // Load device engine
         mrg32k3a_device_engine engine = engines[engine_id];
 
-        uchar4 * data4 = (uchar4 *) data;
+        Type4 * data4 = (Type4 *) data;
         while(index < (n / 4))
         {
             data4[index] = distribution(engine());
@@ -97,7 +99,7 @@ namespace detail {
         auto tail_size = n & 3;
         if((index == n/4) && tail_size > 0)
         {
-            uchar4 result = distribution(engine());
+            Type4 result = distribution(engine());
             // Save the tail
             data[n - tail_size] = result.x;
             if(tail_size > 1) data[n - tail_size + 1] = result.y;
@@ -115,6 +117,8 @@ namespace detail {
                     Type * data, const size_t n,
                     const Distribution distribution)
     {
+        typedef decltype(distribution(uint())) Type2;
+
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
         unsigned int stride = hipGridDim_x * hipBlockDim_x;
@@ -122,7 +126,7 @@ namespace detail {
         // Load device engine
         mrg32k3a_device_engine engine = engines[engine_id];
 
-        ushort2 * data2 = (ushort2 *) data;
+        Type2 * data2 = (Type2 *) data;
         while(index < (n / 2))
         {
             data2[index] = distribution(engine());
@@ -133,7 +137,7 @@ namespace detail {
         // First work-item saves the tail when n is not a multiple of 2
         if(engine_id == 0 && (n & 1) > 0)
         {
-            ushort2 result = distribution(engine());
+            Type2 result = distribution(engine());
             // Save the tail
             data[n - 1] = result.x;
         }
