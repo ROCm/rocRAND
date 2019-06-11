@@ -73,12 +73,15 @@ namespace detail {
 
     template<class Type, class Distribution>
     __global__
-    void generate_kernel(mtgp32_device_engine * engines,
-                         Type * data,
-                         const size_t size,
-                         const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
-                         const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
-                         Distribution distribution)
+    typename std::enable_if<std::is_same<Type, unsigned int>::value
+                            || std::is_same<Type, float>::value
+                            || std::is_same<Type, double>::value>::type
+    generate_kernel(mtgp32_device_engine * engines,
+                    Type * data,
+                    const size_t size,
+                    const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
+                    const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
+                    Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x;
         unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -101,6 +104,88 @@ namespace detail {
                 data[index] = value;
             // Next position
             index += stride;
+        }
+
+        // Save engine with its state
+        engines[engine_id].copy(&engine);
+    }
+
+    template<class Type, class Distribution>
+    __global__
+    typename std::enable_if<std::is_same<Type, unsigned char>::value>::type
+    generate_kernel(mtgp32_device_engine * engines,
+                    Type * data,
+                    const size_t size,
+                    const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
+                    const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
+                    Distribution distribution)
+    {
+        const unsigned int engine_id = hipBlockIdx_x;
+        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        (void) size_up;
+        (void) size_down;
+
+        // Load device engine
+        __shared__ mtgp32_device_engine engine;
+        engine.copy(&engines[engine_id]);
+
+        uchar4 * data4 = (uchar4 *) data;
+        while(index < (size / 4))
+        {
+            data4[index] = distribution(engine());
+            index += stride;
+        }
+
+        auto tail_size = size & 3;
+        if((index == size/4) && tail_size > 0)
+        {
+            uchar4 result = distribution(engine());
+            // Save the tail
+            data[size - tail_size] = result.x;
+            if(tail_size > 1) data[size - tail_size + 1] = result.y;
+            if(tail_size > 2) data[size - tail_size + 2] = result.z;
+        }
+
+        // Save engine with its state
+        engines[engine_id].copy(&engine);
+    }
+
+    template<class Type, class Distribution>
+    __global__
+    typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
+    generate_kernel(mtgp32_device_engine * engines,
+                    Type * data,
+                    const size_t size,
+                    const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
+                    const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
+                    Distribution distribution)
+    {
+        const unsigned int engine_id = hipBlockIdx_x;
+        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        (void) size_up;
+        (void) size_down;
+
+        // Load device engine
+        __shared__ mtgp32_device_engine engine;
+        engine.copy(&engines[engine_id]);
+
+        ushort2 * data2 = (ushort2 *) data;
+        while(index < (size / 2))
+        {
+            data2[index] = distribution(engine());
+            index += stride;
+        }
+
+        // First work-item saves the tail when n is not a multiple of 2
+        if(engine_id == 0 && (size & 1) > 0)
+        {
+            ushort2 result = distribution(engine());
+            // Save the tail
+            data[size - 1] = result.x;
         }
 
         // Save engine with its state
