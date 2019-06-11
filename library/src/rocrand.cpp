@@ -143,6 +143,12 @@ rocrand_generate_char(rocrand_generator generator,
             static_cast<rocrand_mrg32k3a *>(generator);
         return mrg32k3a_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+    {
+        rocrand_xorwow * rocrand_xorwow_generator =
+            static_cast<rocrand_xorwow *>(generator);
+        return rocrand_xorwow_generator->generate(output_data, n);
+    }
 
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -161,6 +167,12 @@ rocrand_generate_short(rocrand_generator generator,
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);
         return mrg32k3a_generator->generate(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+    {
+        rocrand_xorwow * rocrand_xorwow_generator =
+            static_cast<rocrand_xorwow *>(generator);
+        return rocrand_xorwow_generator->generate(output_data, n);
     }
 
     return ROCRAND_STATUS_TYPE_ERROR;
