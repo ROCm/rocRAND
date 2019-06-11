@@ -24,8 +24,8 @@ endif()
 
 # Configure a header file to pass the rocRAND version
 configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_version.h"
     @ONLY
 )
 
@@ -81,8 +81,8 @@ rocm_install_targets(
 # headers
 install(
     DIRECTORY
-        "include/"
-        "${PROJECT_BINARY_DIR}/library/include/"
+        "include/rocrand"
+        "${PROJECT_BINARY_DIR}/library/include/rocrand"
     DESTINATION rocrand/include
     FILES_MATCHING
     PATTERN "rocrand*h"
@@ -121,8 +121,8 @@ set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_${HIP_PLATFORM}
 
 # Configure a header file to pass the hipRAND version
 configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/hiprand_version.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/hiprand_version.h"
+    "${PROJECT_SOURCE_DIR}/library/include/hiprand/hiprand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/hiprand/hiprand_version.h"
     @ONLY
 )
 
@@ -172,8 +172,8 @@ rocm_install_targets(
 # headers
 install(
     DIRECTORY
-        "include/"
-        "${PROJECT_BINARY_DIR}/library/include/"
+        "include/hiprand"
+        "${PROJECT_BINARY_DIR}/library/include/hiprand"
     DESTINATION hiprand/include
     FILES_MATCHING
     PATTERN "hiprand*h"

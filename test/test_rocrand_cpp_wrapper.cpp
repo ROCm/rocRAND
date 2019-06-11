@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.hpp>
+#include <rocrand/rocrand.hpp>
 
 #define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
 

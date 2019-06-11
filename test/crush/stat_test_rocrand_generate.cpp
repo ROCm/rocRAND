@@ -29,7 +29,7 @@
 #include <algorithm>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "stat_test_common.hpp"
 #include "cmdparser.hpp"
