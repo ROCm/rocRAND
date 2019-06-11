@@ -22,10 +22,10 @@ rocrandCI:
         project.paths.construct_build_prefix()
         
         def command = """#!/usr/bin/env bash
-                  set -x
-                  cd ${project.paths.project_build_prefix}
-                  export PATH=/opt/rocm/bin:$PATH
-                  CXX=hcc ${project.paths.build_command}
+                    set -x
+                    cd ${project.paths.project_build_prefix}
+                    export PATH=/opt/rocm/bin:$PATH
+                    CXX=hcc ${project.paths.build_command}
                 """
         
         platform.runCommand(this, command)
@@ -36,21 +36,18 @@ rocrandCI:
         platform, project->
 
         def ctest = 'ctest --output-on-failure'
-        
-        try
-        {
-            def command = """#!/usr/bin/env bash
-                            set -x
-                            cd ${project.paths.project_build_prefix}/build/release
-                            ${ctest}
-                    """
 
-            platform.runCommand(this, command)
-        }
-        finally
-        {
-            junit "${project.paths.project_build_prefix}/build/release/*_tests.xml"
-        }
+        def command = """#!/usr/bin/env bash
+                    set -x
+                    cd ${project.paths.project_build_prefix}
+                    ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
+                    ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
+                    ./test/crush_test_rocrand --help
+                    cd build/release
+                    ${ctest}
+                """
+
+        platform.runCommand(this, command)
     }
 
     def packageCommand =
