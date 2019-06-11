@@ -46,9 +46,11 @@ namespace detail {
 
     template<class Type, class Distribution>
     __global__
-    void generate_kernel(xorwow_device_engine * engines,
-                         Type * data, const size_t n,
-                         const Distribution distribution)
+    typename std::enable_if<std::is_same<Type, unsigned int>::value
+                            || std::is_same<Type, float>::value>::type
+    generate_kernel(xorwow_device_engine * engines,
+                    Type * data, const size_t n,
+                    const Distribution distribution)
     {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
@@ -60,6 +62,70 @@ namespace detail {
         {
             data[index] = distribution(engine());
             index += stride;
+        }
+
+        engines[engine_id] = engine;
+    }
+
+    template<class Type, class Distribution>
+    __global__
+    typename std::enable_if<std::is_same<Type, unsigned char>::value>::type
+    generate_kernel(xorwow_device_engine * engines,
+                    Type * data, const size_t n,
+                    const Distribution distribution)
+    {
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        xorwow_device_engine engine = engines[engine_id];
+
+        uchar4 * data4 = (uchar4 *) data;
+        while(index < (n / 4))
+        {
+            data4[index] = distribution(engine());
+            index += stride;
+        }
+
+        auto tail_size = n & 3;
+        if((index == n/4) && tail_size > 0)
+        {
+            uchar4 result = distribution(engine());
+            // Save the tail
+            data[n - tail_size] = result.x;
+            if(tail_size > 1) data[n - tail_size + 1] = result.y;
+            if(tail_size > 2) data[n - tail_size + 2] = result.z;
+        }
+
+        engines[engine_id] = engine;
+    }
+
+    template<class Type, class Distribution>
+    __global__
+    typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
+    generate_kernel(xorwow_device_engine * engines,
+                    Type * data, const size_t n,
+                    const Distribution distribution)
+    {
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        xorwow_device_engine engine = engines[engine_id];
+
+        ushort2 * data2 = (ushort2 *) data;
+        while(index < (n / 2))
+        {
+            data2[index] = distribution(engine());
+            index += stride;
+        }
+
+        // First work-item saves the tail when n is not a multiple of 2
+        if(engine_id == 0 && (n & 1) > 0)
+        {
+            ushort2 result = distribution(engine());
+            // Save the tail
+            data[n - 1] = result.x;
         }
 
         engines[engine_id] = engine;
