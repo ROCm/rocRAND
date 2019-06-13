@@ -99,4 +99,54 @@ struct log_normal_distribution<double>
     }
 };
 
+template<>
+struct log_normal_distribution<__half>
+{
+    const __half mean;
+    const __half stddev;
+
+    __host__ __device__
+    log_normal_distribution<__half>(const __half mean, const __half stddev) :
+                                    mean(mean), stddev(stddev) {}
+
+    __forceinline__ __host__ __device__
+    rocrand_half8 operator()(const uint4 x)
+    {
+        float4 m = make_float4(
+            static_cast<float>(x.x & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.x >> 16) & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>(x.y & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.y >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+        );
+        float4 n = make_float4(
+            static_cast<float>(x.z & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.z >> 16) & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>(x.w & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.w >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+        );
+        float2 t = ::rocrand_device::detail::mrg_box_muller(m.x, m.y);
+        float2 u = ::rocrand_device::detail::mrg_box_muller(m.z, m.w);
+        float2 v = ::rocrand_device::detail::mrg_box_muller(n.x, n.y);
+        float2 w = ::rocrand_device::detail::mrg_box_muller(n.z, n.w);
+        return rocrand_half8 {
+            rocrand_half2 {
+                expf(mean + (stddev * (__half)(t.x))),
+                expf(mean + (stddev * (__half)(t.y)))
+            },
+            rocrand_half2 {
+                expf(mean + (stddev * (__half)(u.x))),
+                expf(mean + (stddev * (__half)(u.y)))
+            },
+            rocrand_half2 {
+                expf(mean + (stddev * (__half)(v.x))),
+                expf(mean + (stddev * (__half)(v.y)))
+            },
+            rocrand_half2 {
+                expf(mean + (stddev * (__half)(w.x))),
+                expf(mean + (stddev * (__half)(w.y)))
+            }
+        };
+    }
+};
+
 #endif // ROCRAND_RNG_DISTRIBUTION_LOG_NORMAL_H_
