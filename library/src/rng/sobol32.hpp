@@ -68,6 +68,183 @@ namespace detail {
         }
     }
 
+    template<class T>
+    struct sobol_uniform_distribution;
+
+    template<>
+    struct sobol_uniform_distribution<unsigned int>
+    {
+        __device__
+        unsigned int operator()(const unsigned int v) const
+        {
+            return v;
+        }
+    };
+
+    template<>
+    struct sobol_uniform_distribution<unsigned char>
+    {
+        __device__
+        unsigned char operator()(const unsigned int v) const
+        {
+            return static_cast<unsigned char>(v >> 24);
+        }
+    };
+
+    template<>
+    struct sobol_uniform_distribution<unsigned short>
+    {
+        __device__
+        unsigned short operator()(const unsigned int v) const
+        {
+            return static_cast<unsigned short>(v >> 16);
+        }
+    };
+
+    template<>
+    struct sobol_uniform_distribution<float>
+    {
+        __device__
+        float operator()(const unsigned int v) const
+        {
+            return rocrand_device::detail::uniform_distribution(v);
+        }
+    };
+
+    template<>
+    struct sobol_uniform_distribution<double>
+    {
+        __device__
+        double operator()(const unsigned int v) const
+        {
+            return rocrand_device::detail::uniform_distribution_double(v);
+        }
+    };
+
+    template<>
+    struct sobol_uniform_distribution<__half>
+    {
+        __device__
+        __half operator()(const unsigned int v) const
+        {
+            return rocrand_device::detail::uniform_distribution(v);
+        }
+    };
+
+    template<class T>
+    struct sobol_normal_distribution;
+
+    template<>
+    struct sobol_normal_distribution<float>
+    {
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        sobol_normal_distribution(float mean, float stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        float operator()(const unsigned int x) const
+        {
+            float v = rocrand_device::detail::normal_distribution(x);
+            return mean + v * stddev;
+        }
+    };
+
+    template<>
+    struct sobol_normal_distribution<double>
+    {
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        sobol_normal_distribution(double mean, double stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        double operator()(const unsigned int x) const
+        {
+            double v = rocrand_device::detail::normal_distribution_double(x);
+            return mean + v * stddev;
+        }
+    };
+
+    template<>
+    struct sobol_normal_distribution<__half>
+    {
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        sobol_normal_distribution(__half mean, __half stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        __half operator()(const unsigned int x) const
+        {
+            float v = rocrand_device::detail::normal_distribution(x);
+            return mean + v * stddev;
+        }
+    };
+
+    template<class T>
+    struct sobol_log_normal_distribution;
+
+    template<>
+    struct sobol_log_normal_distribution<float>
+    {
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        sobol_log_normal_distribution(float mean, float stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        float operator()(const unsigned int x) const
+        {
+            float v = rocrand_device::detail::normal_distribution(x);
+            return expf(mean + (stddev * v));
+        }
+    };
+
+    template<>
+    struct sobol_log_normal_distribution<double>
+    {
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        sobol_log_normal_distribution(double mean, double stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        double operator()(const unsigned int x) const
+        {
+            double v = rocrand_device::detail::normal_distribution_double(x);
+            return exp(mean + (stddev * v));
+        }
+    };
+
+    template<>
+    struct sobol_log_normal_distribution<__half>
+    {
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        sobol_log_normal_distribution(__half mean, __half stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        __half operator()(const unsigned int x) const
+        {
+            float v = rocrand_device::detail::normal_distribution(x);
+            return expf(mean + (stddev * v));
+        }
+    };
+
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -130,9 +307,9 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = uniform_distribution<T> >
+    template<class T, class Distribution = rocrand_host::detail::sobol_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
-                            const Distribution& distribution = Distribution())
+                            Distribution distribution = Distribution())
     {
         if (data_size % m_dimensions != 0)
             return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
@@ -175,21 +352,21 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        uniform_distribution<T> distribution;
+        rocrand_host::detail::sobol_uniform_distribution<T> distribution;
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        normal_distribution<T> distribution(mean, stddev);
+        rocrand_host::detail::sobol_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        log_normal_distribution<T> distribution(mean, stddev);
+        rocrand_host::detail::sobol_log_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
