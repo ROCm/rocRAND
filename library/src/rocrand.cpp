@@ -331,6 +331,12 @@ rocrand_generate_uniform_half(rocrand_generator generator,
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
+    {
+        rocrand_mtgp32 * rocrand_mtgp32_generator =
+            static_cast<rocrand_mtgp32 *>(generator);
+        return rocrand_mtgp32_generator->generate_uniform(output_data, n);
+    }
 
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -469,6 +475,13 @@ rocrand_generate_normal_half(rocrand_generator generator,
         return rocrand_sobol32_generator->generate_normal(output_data, n,
                                                           mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
+    {
+        rocrand_mtgp32 * rocrand_mtgp32_generator =
+            static_cast<rocrand_mtgp32 *>(generator);
+        return rocrand_mtgp32_generator->generate_normal(output_data, n,
+                                                         mean, stddev);
+    }
 
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -606,6 +619,13 @@ rocrand_generate_log_normal_half(rocrand_generator generator,
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_log_normal(output_data, n,
                                                               mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
+    {
+        rocrand_mtgp32 * rocrand_mtgp32_generator =
+            static_cast<rocrand_mtgp32 *>(generator);
+        return rocrand_mtgp32_generator->generate_log_normal(output_data, n,
+                                                             mean, stddev);
     }
 
     return ROCRAND_STATUS_TYPE_ERROR;

@@ -425,11 +425,11 @@ namespace detail {
     {
         data[n - tail_size] = result.x.x;
         if(tail_size > 1) data[n - tail_size + 1] = result.x.y;
-        if(tail_size > 2) data[n - tail_size + 2] = result.y.x;
-        if(tail_size > 3) data[n - tail_size + 3] = result.y.y;
-        if(tail_size > 4) data[n - tail_size + 4] = result.z.x;
-        if(tail_size > 5) data[n - tail_size + 5] = result.z.y;
-        if(tail_size > 6) data[n - tail_size + 6] = result.w.x;
+        if(tail_size > 2) data[n - tail_size + 2] = result.x.z;
+        if(tail_size > 3) data[n - tail_size + 3] = result.x.w;
+        if(tail_size > 4) data[n - tail_size + 4] = result.y.x;
+        if(tail_size > 5) data[n - tail_size + 5] = result.y.y;
+        if(tail_size > 6) data[n - tail_size + 6] = result.y.z;
     }
 
     template<unsigned int ThreadsPerEngine, class Type, class Distribution>
