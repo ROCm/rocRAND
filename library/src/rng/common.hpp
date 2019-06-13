@@ -25,6 +25,72 @@
 #define FQUALIFIERS __forceinline__ __device__ __host__
 #endif
 
+#include <hip/hip_fp16.h>
+
 #include <rocrand/rocrand_common.h>
+
+struct __attribute__((__packed__)) rocrand_half2
+{
+    __half x;
+    __half y;
+
+    FQUALIFIERS
+    rocrand_half2() = default;
+
+    FQUALIFIERS
+    ~rocrand_half2() = default;
+
+
+    FQUALIFIERS
+    rocrand_half2(const __half x,
+                  const __half y) : x(x), y(y)
+    {
+    }
+
+    #if __hcc_major__ < 1 || __hcc_major__ == 1 && __hcc_minor__ < 2
+    FQUALIFIERS
+    rocrand_half2& operator =(const rocrand_half2& h2)
+    {
+        x = h2.x;
+        y = h2.y;
+        return *this;
+    }
+    #endif
+};
+
+struct __attribute__((__packed__)) rocrand_half4
+{
+    __half x;
+    __half y;
+    __half z;
+    __half w;
+
+    FQUALIFIERS
+    rocrand_half4() = default;
+
+    FQUALIFIERS
+    ~rocrand_half4() = default;
+
+
+    FQUALIFIERS
+    rocrand_half4(const __half x,
+                  const __half y,
+                  const __half z,
+                  const __half w) : x(x), y(y), z(z), w(w)
+    {
+    }
+
+    #if __hcc_major__ < 1 || __hcc_major__ == 1 && __hcc_minor__ < 2
+    FQUALIFIERS
+    rocrand_half4& operator =(const rocrand_half4& h4)
+    {
+        x = h4.x;
+        y = h4.y;
+        z = h4.z;
+        w = h4.w;
+        return *this;
+    }
+    #endif
+};
 
 #endif // ROCRAND_RNG_COMMON_H_

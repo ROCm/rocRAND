@@ -106,47 +106,4 @@ struct normal_distribution<double>
     }
 };
 
-template<class T>
-struct mrg_normal_distribution;
-
-template<>
-struct mrg_normal_distribution<float>
-{
-    const float mean;
-    const float stddev;
-
-    __host__ __device__
-    mrg_normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
-                                   mean(mean), stddev(stddev) {}
-
-    __forceinline__ __host__ __device__
-    float2 operator()(const unsigned int x, const unsigned int y)
-    {
-        float2 v = rocrand_device::detail::mrg_normal_distribution2(x, y);
-        v.x = mean + v.x * stddev;
-        v.y = mean + v.y * stddev;
-        return v;
-    }
-};
-
-template<>
-struct mrg_normal_distribution<double>
-{
-    const double mean;
-    const double stddev;
-
-    __host__ __device__
-    mrg_normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
-                                    mean(mean), stddev(stddev) {}
-
-    __forceinline__ __host__ __device__
-    double2 operator()(const unsigned int x, const unsigned int y)
-    {
-        double2 v = rocrand_device::detail::mrg_normal_distribution_double2(x, y);
-        v.x = mean + v.x * stddev;
-        v.y = mean + v.y * stddev;
-        return v;
-    }
-};
-
 #endif // ROCRAND_RNG_DISTRIBUTION_NORMAL_H_

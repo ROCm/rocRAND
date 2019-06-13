@@ -307,7 +307,13 @@ rocrand_generate_uniform_half(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        rocrand_mrg32k3a * mrg32k3a_generator =
+            static_cast<rocrand_mrg32k3a *>(generator);
+        return mrg32k3a_generator->generate_uniform(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
@@ -423,7 +429,14 @@ rocrand_generate_normal_half(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        rocrand_mrg32k3a * mrg32k3a_generator =
+            static_cast<rocrand_mrg32k3a *>(generator);
+        return mrg32k3a_generator->generate_normal(output_data, n,
+                                                   mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
@@ -540,7 +553,14 @@ rocrand_generate_log_normal_half(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        rocrand_mrg32k3a * mrg32k3a_generator =
+            static_cast<rocrand_mrg32k3a *>(generator);
+        return mrg32k3a_generator->generate_log_normal(output_data, n,
+                                                       mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
