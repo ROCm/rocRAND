@@ -109,6 +109,30 @@ struct uniform_distribution<float>
     }
 };
 
+template<>
+struct uniform_distribution<__half>
+{
+    __forceinline__ __host__ __device__
+    rocrand_half2 operator()(const unsigned int v) const
+    {
+        return rocrand_half2 {
+            static_cast<float>(v & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((v >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+        };
+    }
+
+    __forceinline__ __host__ __device__
+    rocrand_half8 operator()(const uint4 v) const
+    {
+        return rocrand_half8 {
+            (*this)(v.x),
+            (*this)(v.y),
+            (*this)(v.z),
+            (*this)(v.w)
+        };
+    }
+};
+
 // For unsigned integer between 0 and UINT_MAX, returns value between
 // 0.0 and 1.0, excluding 0.0 and including 1.0.
 template<>

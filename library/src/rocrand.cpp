@@ -307,7 +307,13 @@ rocrand_generate_uniform_half(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_uniform(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);
@@ -429,7 +435,14 @@ rocrand_generate_normal_half(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_normal(output_data, n,
+                                                        mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);
@@ -553,7 +566,14 @@ rocrand_generate_log_normal_half(rocrand_generator generator,
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        rocrand_philox4x32_10 * philox4x32_10_generator =
+            static_cast<rocrand_philox4x32_10 *>(generator);
+        return philox4x32_10_generator->generate_log_normal(output_data, n,
+                                                            mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
             static_cast<rocrand_mrg32k3a *>(generator);

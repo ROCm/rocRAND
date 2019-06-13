@@ -106,4 +106,54 @@ struct normal_distribution<double>
     }
 };
 
+template<>
+struct normal_distribution<__half>
+{
+    const __half mean;
+    const __half stddev;
+
+    __host__ __device__
+    normal_distribution<__half>(__half mean = 0.0f, __half stddev = 1.0f) :
+                                mean(mean), stddev(stddev) {}
+
+    __forceinline__ __host__ __device__
+    rocrand_half8 operator()(const uint4 x)
+    {
+        float4 m = make_float4(
+            static_cast<float>(x.x & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.x >> 16) & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>(x.y & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.y >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+        );
+        float4 n = make_float4(
+            static_cast<float>(x.z & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.z >> 16) & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>(x.w & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x.w >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+        );
+        float2 t = ::rocrand_device::detail::mrg_box_muller(m.x, m.y);
+        float2 u = ::rocrand_device::detail::mrg_box_muller(m.z, m.w);
+        float2 v = ::rocrand_device::detail::mrg_box_muller(n.x, n.y);
+        float2 w = ::rocrand_device::detail::mrg_box_muller(n.z, n.w);
+        return rocrand_half8 {
+            rocrand_half2 {
+                mean + (__half)(t.x) * stddev,
+                mean + (__half)(t.y) * stddev
+            },
+            rocrand_half2 {
+                mean + (__half)(u.x) * stddev,
+                mean + (__half)(u.y) * stddev
+            },
+            rocrand_half2 {
+                mean + (__half)(v.x) * stddev,
+                mean + (__half)(v.y) * stddev
+            },
+            rocrand_half2 {
+                mean + (__half)(w.x) * stddev,
+                mean + (__half)(w.y) * stddev
+            }
+        };
+    }
+};
+
 #endif // ROCRAND_RNG_DISTRIBUTION_NORMAL_H_

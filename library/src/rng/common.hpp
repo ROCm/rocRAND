@@ -80,6 +80,13 @@ struct __attribute__((__packed__)) rocrand_half4
     {
     }
 
+    FQUALIFIERS
+    rocrand_half4(const rocrand_half2 x,
+                  const rocrand_half2 y)
+                  : x(x.x), y(x.y), z(y.x), w(y.y)
+    {
+    }
+
     #if __hcc_major__ < 1 || __hcc_major__ == 1 && __hcc_minor__ < 2
     FQUALIFIERS
     rocrand_half4& operator =(const rocrand_half4& h4)
@@ -88,6 +95,41 @@ struct __attribute__((__packed__)) rocrand_half4
         y = h4.y;
         z = h4.z;
         w = h4.w;
+        return *this;
+    }
+    #endif
+};
+
+struct __attribute__((__packed__)) rocrand_half8
+{
+    rocrand_half2 x;
+    rocrand_half2 y;
+    rocrand_half2 z;
+    rocrand_half2 w;
+
+    FQUALIFIERS
+    rocrand_half8() = default;
+
+    FQUALIFIERS
+    ~rocrand_half8() = default;
+
+    FQUALIFIERS
+    rocrand_half8(const rocrand_half2 x,
+                  const rocrand_half2 y,
+                  const rocrand_half2 z,
+                  const rocrand_half2 w)
+                  : x(x), y(y), z(z), w(w)
+    {
+    }
+
+    #if __hcc_major__ < 1 || __hcc_major__ == 1 && __hcc_minor__ < 2
+    FQUALIFIERS
+    rocrand_half8& operator =(const rocrand_half8& h8)
+    {
+        x = h8.x;
+        y = h8.y;
+        z = h8.z;
+        w = h8.w;
         return *this;
     }
     #endif
