@@ -64,8 +64,10 @@ void run_benchmark(const cli::Parser& parser,
                    const rng_type_t rng_type,
                    generate_func_type<T> generate_func)
 {
-    const size_t size = parser.get<size_t>("size");
+    const size_t size0 = parser.get<size_t>("size");
     const size_t trials = parser.get<size_t>("trials");
+    const size_t dimensions = parser.get<size_t>("dimensions");
+    const size_t size = (size0 / dimensions) * dimensions;
 
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
@@ -73,7 +75,6 @@ void run_benchmark(const cli::Parser& parser,
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
 
-    const size_t dimensions = parser.get<size_t>("dimensions");
     rocrand_status status = rocrand_set_quasi_random_generator_dimensions(generator, dimensions);
     if (status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
     {
