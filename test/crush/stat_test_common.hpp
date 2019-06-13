@@ -40,12 +40,24 @@ extern "C" {
 using distribution_func_type = std::function<double(double)>;
 
 template<typename T>
+double to_double(T x)
+{
+    return static_cast<double>(x);
+}
+
+template<>
+double to_double(__half x)
+{
+    return static_cast<double>(__half2float(x));
+}
+
+template<typename T>
 double get_mean(const T * values, const size_t size)
 {
     double mean = 0.0f;
     for (size_t i = 0; i < size; i++)
     {
-        mean += static_cast<double>(values[i]);
+        mean += to_double(values[i]);
     }
     return mean / size;
 }
@@ -56,7 +68,7 @@ double get_stddev(const T * values, const size_t size, double mean)
     double variance = 0.0f;
     for (size_t i = 0; i < size; i++)
     {
-        const double x = static_cast<double>(values[i]) - mean;
+        const double x = to_double(values[i]) - mean;
         variance += x * x;
     }
     return std::sqrt(variance / size);
@@ -86,8 +98,8 @@ void save_points_plots(const size_t size,
             {
                 const double r = 0.25;
                 const double a = 2.0 * M_PI * si / size;
-                const double x = data[x_offset + si] + r * std::cos(a);
-                const double y = data[y_offset + si] + r * std::sin(a);
+                const double x = to_double(data[x_offset + si]) + r * std::cos(a);
+                const double y = to_double(data[y_offset + si]) + r * std::sin(a);
                 fout << x << '\t' << y << std::endl;
             }
             fout << "e" << std::endl;
@@ -100,8 +112,8 @@ void save_points_plots(const size_t size,
             const size_t y_offset = ((level1_test + 1 + level1_tests) % level1_tests) * size;
             for (size_t si = 0; si < size; si++)
             {
-                const double x = data[x_offset + si];
-                const double y = data[y_offset + si];
+                const double x = to_double(data[x_offset + si]);
+                const double y = to_double(data[y_offset + si]);
                 fout << x << '\t' << y << std::endl;
             }
             fout << "e" << std::endl;
@@ -263,7 +275,7 @@ void analyze(const size_t size,
 
             for (size_t si = 0; si < size; si++)
             {
-                const double v = data[level1_test * size + si];
+                const double v = to_double(data[level1_test * size + si]);
                 const long cell = static_cast<long>((v - start) / t.cell_width);
                 if (cell >= 0 && cell < static_cast<long>(cells_count))
                 {
@@ -303,7 +315,7 @@ void analyze(const size_t size,
                 {
                     if (t.nb_exp[s] > 0.0)
                     {
-                        const double v = count[s] / static_cast<double>(size) / t.merged_count[s];
+                        const double v = count[s] / to_double(size) / t.merged_count[s];
                         if (s == t.smin)
                             fout << start << '\t' << v << std::endl;
                         fout << t.xs[s] << '\t' << v << std::endl;
@@ -317,7 +329,7 @@ void analyze(const size_t size,
                 {
                     if (t.nb_exp[s] > 0.0)
                     {
-                        const double v = t.nb_exp[s] / static_cast<double>(size) / t.merged_count[s];
+                        const double v = t.nb_exp[s] / to_double(size) / t.merged_count[s];
                         if (s == t.smin)
                             fout << start << '\t' << v << std::endl;
                         fout << t.xs[s] << '\t' << v << std::endl;
