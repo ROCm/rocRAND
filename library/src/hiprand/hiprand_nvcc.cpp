@@ -155,6 +155,7 @@ hiprandStatus_t HIPRANDAPI
 hiprandGenerateChar(hiprandGenerator_t generator,
                     unsigned char * output_data, size_t n)
 {
+    (void) generator;
     (void) output_data;
     (void) n;
     return HIPRAND_STATUS_NOT_IMPLEMENTED;
@@ -164,6 +165,7 @@ hiprandStatus_t HIPRANDAPI
 hiprandGenerateShort(hiprandGenerator_t generator,
                      unsigned short * output_data, size_t n)
 {
+    (void) generator;
     (void) output_data;
     (void) n;
     return HIPRAND_STATUS_NOT_IMPLEMENTED;
@@ -197,6 +199,7 @@ hiprandStatus_t HIPRANDAPI
 hiprandGenerateUniformHalf(hiprandGenerator_t generator,
                            half * output_data, size_t n)
 {
+    (void) generator;
     (void) output_data;
     (void) n;
     return HIPRAND_STATUS_NOT_IMPLEMENTED;
@@ -235,6 +238,7 @@ hiprandGenerateNormalHalf(hiprandGenerator_t generator,
                           half * output_data, size_t n,
                           half mean, half stddev)
 {
+    (void) generator;
     (void) output_data;
     (void) n;
     (void) mean;
@@ -275,6 +279,7 @@ hiprandGenerateLogNormalHalf(hiprandGenerator_t generator,
                              half * output_data, size_t n,
                              half mean, half stddev)
 {
+    (void) generator;
     (void) output_data;
     (void) n;
     (void) mean;
