@@ -241,8 +241,7 @@ const std::vector<std::string> all_engines = {
     "sobol32",
 };
 
-// TODO: Remove once implemented properly
-const std::vector<std::string> temp_distributions = {
+const std::vector<std::string> all_distributions = {
     "uniform-uint",
     "uniform-uchar",
     "uniform-ushort",
@@ -254,20 +253,6 @@ const std::vector<std::string> temp_distributions = {
     "normal-float",
     "normal-double",
     "log-normal-half",
-    "log-normal-float",
-    "log-normal-double",
-    "poisson"
-};
-
-const std::vector<std::string> all_distributions = {
-    "uniform-uint",
-    "uniform-uchar",
-    "uniform-ushort",
-    // "uniform-long-long",
-    "uniform-float",
-    "uniform-double",
-    "normal-float",
-    "normal-double",
     "log-normal-float",
     "log-normal-double",
     "poisson"
@@ -328,7 +313,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            for (auto d : temp_distributions)
+            for (auto d : all_distributions)
             {
                 if (std::find(ds.begin(), ds.end(), d) != ds.end())
                     distributions.push_back(d);

@@ -304,8 +304,8 @@ namespace detail {
         {
             unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
             return rocrand_half2 {
-                static_cast<float>(w & 0xffff) * (1.0f / USHRT_MAX),
-                static_cast<float>((w >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+                uniform_distribution_half(static_cast<short>(w)),
+                uniform_distribution_half(static_cast<short>(w >> 16))
             };
         }
     };
@@ -368,20 +368,41 @@ namespace detail {
         {
             unsigned int a = static_cast<unsigned int>(x * ROCRAND_MRG32K3A_UINT_NORM);
             unsigned int b = static_cast<unsigned int>(y * ROCRAND_MRG32K3A_UINT_NORM);
-            float4 m = make_float4(
-                static_cast<float>(a & 0xffff) * (1.0f / USHRT_MAX),
-                static_cast<float>((a >> 16) & 0xffff) * (1.0f / USHRT_MAX),
-                static_cast<float>(b & 0xffff) * (1.0f / USHRT_MAX),
-                static_cast<float>((b >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+            rocrand_half4 m = rocrand_half4 (
+                rocrand_half2 {
+                    uniform_distribution_half(static_cast<short>(a)),
+                    uniform_distribution_half(static_cast<short>(a >> 16))
+                },
+                rocrand_half2 {
+                    uniform_distribution_half(static_cast<short>(b)),
+                    uniform_distribution_half(static_cast<short>(b >> 16))
+                }
             );
-            float2 v = ::rocrand_device::detail::mrg_box_muller(m.x, m.y);
-            float2 w = ::rocrand_device::detail::mrg_box_muller(m.z, m.w);
+            rocrand_half2 v = mrg_box_muller_half(m.x, m.y);
+            rocrand_half2 w = mrg_box_muller_half(m.z, m.w);
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
             return rocrand_half4 {
-                mean + (__half)(v.x) * stddev,
-                mean + (__half)(v.y) * stddev,
-                mean + (__half)(w.x) * stddev,
-                mean + (__half)(w.y) * stddev
+                rocrand_half2 {
+                    __hadd(mean, __hmul(v.x, stddev)),
+                    __hadd(mean, __hmul(v.y, stddev))
+                },
+                rocrand_half2 {
+                    __hadd(mean, __hmul(w.x, stddev)),
+                    __hadd(mean, __hmul(w.y, stddev))
+                }
             };
+            #else
+            return rocrand_half4 {
+                rocrand_half2 {
+                    __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.x))),
+                    __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.y)))
+                },
+                rocrand_half2 {
+                    __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(w.x))),
+                    __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(w.y)))
+                }
+            };
+            #endif
         }
     };
 
@@ -443,20 +464,41 @@ namespace detail {
         {
             unsigned int a = static_cast<unsigned int>(x * ROCRAND_MRG32K3A_UINT_NORM);
             unsigned int b = static_cast<unsigned int>(y * ROCRAND_MRG32K3A_UINT_NORM);
-            float4 m = make_float4(
-                static_cast<float>(a & 0xffff) * (1.0f / USHRT_MAX),
-                static_cast<float>((a >> 16) & 0xffff) * (1.0f / USHRT_MAX),
-                static_cast<float>(b & 0xffff) * (1.0f / USHRT_MAX),
-                static_cast<float>((b >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+            rocrand_half4 m = rocrand_half4 (
+                rocrand_half2 {
+                    uniform_distribution_half(static_cast<short>(a)),
+                    uniform_distribution_half(static_cast<short>(a >> 16))
+                },
+                rocrand_half2 {
+                    uniform_distribution_half(static_cast<short>(b)),
+                    uniform_distribution_half(static_cast<short>(b >> 16))
+                }
             );
-            float2 v = ::rocrand_device::detail::mrg_box_muller(m.x, m.y);
-            float2 w = ::rocrand_device::detail::mrg_box_muller(m.z, m.w);
+            rocrand_half2 v = mrg_box_muller_half(m.x, m.y);
+            rocrand_half2 w = mrg_box_muller_half(m.z, m.w);
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
             return rocrand_half4 {
-                expf(mean + (stddev * (__half)(v.x))),
-                expf(mean + (stddev * (__half)(v.y))),
-                expf(mean + (stddev * (__half)(w.x))),
-                expf(mean + (stddev * (__half)(w.y)))
+                rocrand_half2 {
+                    hexp(__hadd(mean, __hmul(stddev, (v.x)))),
+                    hexp(__hadd(mean, __hmul(stddev, (v.y))))
+                },
+                rocrand_half2 {
+                    hexp(__hadd(mean, __hmul(stddev, (w.x)))),
+                    hexp(__hadd(mean, __hmul(stddev, (w.y))))
+                }
             };
+            #else
+            return rocrand_half4 {
+                rocrand_half2 {
+                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.x)))),
+                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.y))))
+                },
+                rocrand_half2 {
+                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(w.x)))),
+                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(w.y))))
+                }
+            };
+            #endif
         }
     };
 

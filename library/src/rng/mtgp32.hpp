@@ -124,7 +124,8 @@ namespace detail {
 
     template<class Type, class Distribution>
     inline __device__
-    typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
+    typename std::enable_if<std::is_same<Type, unsigned short>::value
+                            || std::is_same<Type, __half>::value>::type
     tail(mtgp32_device_engine& engine,
          Type * data,
          const size_t size,
@@ -319,7 +320,8 @@ public:
     }
 
     template<class T, class Distribution = uniform_distribution<T> >
-    typename std::enable_if<std::is_same<T, unsigned short>::value, rocrand_status>::type
+    typename std::enable_if<std::is_same<T, unsigned short>::value
+                            || std::is_same<T, __half>::value, rocrand_status>::type
     generate(T * data, size_t data_size,
              const Distribution& distribution = Distribution())
     {

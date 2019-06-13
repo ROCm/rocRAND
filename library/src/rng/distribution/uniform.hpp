@@ -116,8 +116,8 @@ struct uniform_distribution<__half>
     rocrand_half2 operator()(const unsigned int v) const
     {
         return rocrand_half2 {
-            static_cast<float>(v & 0xffff) * (1.0f / USHRT_MAX),
-            static_cast<float>((v >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+            uniform_distribution_half(static_cast<short>(v)),
+            uniform_distribution_half(static_cast<short>(v >> 16))
         };
     }
 
@@ -125,10 +125,14 @@ struct uniform_distribution<__half>
     rocrand_half8 operator()(const uint4 v) const
     {
         return rocrand_half8 {
-            (*this)(v.x),
-            (*this)(v.y),
-            (*this)(v.z),
-            (*this)(v.w)
+            rocrand_half4 {
+                (*this)(v.x),
+                (*this)(v.y)
+            },
+            rocrand_half4 {
+                (*this)(v.z),
+                (*this)(v.w)
+            }
         };
     }
 };
