@@ -145,6 +145,14 @@ void run_benchmarks(const cli::Parser& parser,
             }
         );
     }
+    if (distribution == "uniform-half")
+    {
+        run_benchmark<__half>(parser, rng_type,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_uniform_half(gen, data, size);
+            }
+        );
+    }
     if (distribution == "uniform-float")
     {
         run_benchmark<float>(parser, rng_type,
@@ -161,6 +169,14 @@ void run_benchmarks(const cli::Parser& parser,
             }
         );
     }
+    if (distribution == "normal-half")
+    {
+        run_benchmark<__half>(parser, rng_type,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_normal_half(gen, data, size, 0.0f, 1.0f);
+            }
+        );
+    }
     if (distribution == "normal-float")
     {
         run_benchmark<float>(parser, rng_type,
@@ -174,6 +190,14 @@ void run_benchmarks(const cli::Parser& parser,
         run_benchmark<double>(parser, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
+            }
+        );
+    }
+    if (distribution == "log-normal-half")
+    {
+        run_benchmark<__half>(parser, rng_type,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_log_normal_half(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
@@ -222,11 +246,14 @@ const std::vector<std::string> temp_distributions = {
     "uniform-uint",
     "uniform-uchar",
     "uniform-ushort",
+    "uniform-half",
     // "uniform-long-long",
     "uniform-float",
     "uniform-double",
+    "normal-half",
     "normal-float",
     "normal-double",
+    "log-normal-half",
     "log-normal-float",
     "log-normal-double",
     "poisson"
@@ -234,8 +261,8 @@ const std::vector<std::string> temp_distributions = {
 
 const std::vector<std::string> all_distributions = {
     "uniform-uint",
-    //"uniform-uchar",
-    //"uniform-ushort",
+    "uniform-uchar",
+    "uniform-ushort",
     // "uniform-long-long",
     "uniform-float",
     "uniform-double",

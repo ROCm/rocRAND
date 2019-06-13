@@ -31,6 +31,14 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 
+// MRG32K3A constants
+#ifndef ROCRAND_MRG32K3A_NORM_DOUBLE
+#define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
+#endif
+#ifndef ROCRAND_MRG32K3A_UINT_NORM
+#define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
+#endif
+
 namespace rocrand_host {
 namespace detail {
 
@@ -79,7 +87,7 @@ namespace detail {
                     Type * data, const size_t n,
                     const Distribution distribution)
     {
-        typedef decltype(distribution(uint())) Type4;
+        typedef decltype(distribution(engines->next())) Type4;
 
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
@@ -112,12 +120,13 @@ namespace detail {
 
     template<class Type, class Distribution>
     __global__
-    typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
+    typename std::enable_if<std::is_same<Type, unsigned short>::value
+                            || std::is_same<Type, __half>::value>::type
     generate_kernel(mrg32k3a_device_engine * engines,
                     Type * data, const size_t n,
                     const Distribution distribution)
     {
-        typedef decltype(distribution(uint())) Type2;
+        typedef decltype(distribution(engines->next())) Type2;
 
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         unsigned int index = engine_id;
@@ -148,9 +157,10 @@ namespace detail {
 
     template<class RealType, class Distribution>
     __global__
-    void generate_normal_kernel(mrg32k3a_device_engine * engines,
-                                RealType * data, const size_t n,
-                                Distribution distribution)
+    typename std::enable_if<!std::is_same<RealType, __half>::value>::type
+    generate_normal_kernel(mrg32k3a_device_engine * engines,
+                           RealType * data, const size_t n,
+                           Distribution distribution)
     {
         typedef decltype(distribution(engines->next(), engines->next())) RealType2;
 
@@ -161,7 +171,7 @@ namespace detail {
         // Load device engine
         mrg32k3a_device_engine engine = engines[engine_id];
 
-        RealType2 * data2 = (RealType2 *)data;
+        RealType2 * data2 = (RealType2 *) data;
         while(index < (n / 2))
         {
             data2[index] = distribution(engine(), engine());
@@ -180,6 +190,275 @@ namespace detail {
         // Save engine with its state
         engines[engine_id] = engine;
     }
+
+    template<class RealType, class Distribution>
+    __global__
+    typename std::enable_if<std::is_same<RealType, __half>::value>::type
+    generate_normal_kernel(mrg32k3a_device_engine * engines,
+                           RealType * data, const size_t n,
+                           Distribution distribution)
+    {
+        typedef decltype(distribution(engines->next(), engines->next())) RealType4;
+
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load device engine
+        mrg32k3a_device_engine engine = engines[engine_id];
+
+        RealType4 * data4 = (RealType4 *) data;
+        while(index < (n / 4))
+        {
+            data4[index] = distribution(engine(), engine());
+            // Next position
+            index += stride;
+        }
+
+        auto tail_size = n & 3;
+        if((index == n / 4) && tail_size > 0)
+        {
+            RealType4 result = distribution(engine(), engine());
+            // Save the tail
+            data[n - tail_size] = result.x;
+            if(tail_size > 1) data[n - tail_size + 1] = result.y;
+            if(tail_size > 2) data[n - tail_size + 2] = result.z;
+        }
+
+        // Save engine with its state
+        engines[engine_id] = engine;
+    }
+
+    template<class T>
+    struct mrg_uniform_distribution;
+
+    template<>
+    struct mrg_uniform_distribution<unsigned int>
+    {
+        __forceinline__ __host__ __device__
+        unsigned int operator()(const unsigned int v) const
+        {
+            return static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
+        }
+    };
+
+    template<>
+    struct mrg_uniform_distribution<unsigned char>
+    {
+        __forceinline__ __host__ __device__
+        uchar4 operator()(const unsigned int v) const
+        {
+            unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
+            return make_uchar4(
+                (unsigned char)(w),
+                (unsigned char)(w >> 8),
+                (unsigned char)(w >> 16),
+                (unsigned char)(w >> 24)
+            );
+        }
+    };
+
+    template<>
+    struct mrg_uniform_distribution<unsigned short>
+    {
+        __forceinline__ __host__ __device__
+        ushort2 operator()(const unsigned int v) const
+        {
+            unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
+            return make_ushort2(
+                (unsigned short)(w),
+                (unsigned short)(w >> 16)
+            );
+        }
+    };
+
+    // For unsigned integer between 0 and UINT_MAX, returns value between
+    // 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+    template<>
+    struct mrg_uniform_distribution<float>
+    {
+        __forceinline__ __host__ __device__
+        float operator()(const unsigned int v) const
+        {
+            return rocrand_device::detail::mrg_uniform_distribution(v);
+        }
+    };
+
+    // For unsigned integer between 0 and UINT_MAX, returns value between
+    // 0.0 and 1.0, excluding 0.0 and including 1.0.
+    template<>
+    struct mrg_uniform_distribution<double>
+    {
+        __forceinline__ __host__ __device__
+        double operator()(const unsigned int v) const
+        {
+            return rocrand_device::detail::mrg_uniform_distribution_double(v);
+        }
+    };
+
+    template<>
+    struct mrg_uniform_distribution<__half>
+    {
+        __forceinline__ __host__ __device__
+        rocrand_half2 operator()(const unsigned int v) const
+        {
+            unsigned int w = static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
+            return rocrand_half2 {
+                static_cast<float>(w & 0xffff) * (1.0f / USHRT_MAX),
+                static_cast<float>((w >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+            };
+        }
+    };
+
+    template<class T>
+    struct mrg_normal_distribution;
+
+    template<>
+    struct mrg_normal_distribution<float>
+    {
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        mrg_normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
+                                       mean(mean), stddev(stddev) {}
+
+        __forceinline__ __host__ __device__
+        float2 operator()(const unsigned int x, const unsigned int y)
+        {
+            float2 v = rocrand_device::detail::mrg_normal_distribution2(x, y);
+            v.x = mean + v.x * stddev;
+            v.y = mean + v.y * stddev;
+            return v;
+        }
+    };
+
+    template<>
+    struct mrg_normal_distribution<double>
+    {
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        mrg_normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
+                                        mean(mean), stddev(stddev) {}
+
+        __forceinline__ __host__ __device__
+        double2 operator()(const unsigned int x, const unsigned int y)
+        {
+            double2 v = rocrand_device::detail::mrg_normal_distribution_double2(x, y);
+            v.x = mean + v.x * stddev;
+            v.y = mean + v.y * stddev;
+            return v;
+        }
+    };
+
+    template<>
+    struct mrg_normal_distribution<__half>
+    {
+        const __half mean;
+        const __half stddev;
+
+        __host__ __device__
+        mrg_normal_distribution<__half>(__half mean = 0.0f, __half stddev = 1.0f) :
+                                        mean(mean), stddev(stddev) {}
+
+        __forceinline__ __host__ __device__
+        rocrand_half4 operator()(const unsigned int x, const unsigned int y)
+        {
+            unsigned int a = static_cast<unsigned int>(x * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int b = static_cast<unsigned int>(y * ROCRAND_MRG32K3A_UINT_NORM);
+            float4 m = make_float4(
+                static_cast<float>(a & 0xffff) * (1.0f / USHRT_MAX),
+                static_cast<float>((a >> 16) & 0xffff) * (1.0f / USHRT_MAX),
+                static_cast<float>(b & 0xffff) * (1.0f / USHRT_MAX),
+                static_cast<float>((b >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+            );
+            float2 v = ::rocrand_device::detail::mrg_box_muller(m.x, m.y);
+            float2 w = ::rocrand_device::detail::mrg_box_muller(m.z, m.w);
+            return rocrand_half4 {
+                mean + (__half)(v.x) * stddev,
+                mean + (__half)(v.y) * stddev,
+                mean + (__half)(w.x) * stddev,
+                mean + (__half)(w.y) * stddev
+            };
+        }
+    };
+
+    template<class T>
+    struct mrg_log_normal_distribution;
+
+    template<>
+    struct mrg_log_normal_distribution<float>
+    {
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        mrg_log_normal_distribution<float>(float mean = 0.0f, float stddev = 1.0f) :
+                                           mean(mean), stddev(stddev) {}
+
+        __forceinline__ __host__ __device__
+        float2 operator()(const unsigned int x, const unsigned int y)
+        {
+            float2 v = rocrand_device::detail::mrg_normal_distribution2(x, y);
+            v.x = expf(mean + (stddev * v.x));
+            v.y = expf(mean + (stddev * v.y));
+            return v;
+        }
+    };
+
+    template<>
+    struct mrg_log_normal_distribution<double>
+    {
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        mrg_log_normal_distribution<double>(double mean = 0.0, double stddev = 1.0) :
+                                            mean(mean), stddev(stddev) {}
+
+        __forceinline__ __host__ __device__
+        double2 operator()(const unsigned int x, const unsigned int y)
+        {
+            double2 v = rocrand_device::detail::mrg_normal_distribution_double2(x, y);
+            v.x = exp(mean + (stddev * v.x));
+            v.y = exp(mean + (stddev * v.y));
+            return v;
+        }
+    };
+
+    template<>
+    struct mrg_log_normal_distribution<__half>
+    {
+        const __half mean;
+        const __half stddev;
+
+        __host__ __device__
+        mrg_log_normal_distribution<__half>(__half mean = 0.0f, __half stddev = 1.0f) :
+                                            mean(mean), stddev(stddev) {}
+
+        __forceinline__ __host__ __device__
+        rocrand_half4 operator()(const unsigned int x, const unsigned int y)
+        {
+            unsigned int a = static_cast<unsigned int>(x * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int b = static_cast<unsigned int>(y * ROCRAND_MRG32K3A_UINT_NORM);
+            float4 m = make_float4(
+                static_cast<float>(a & 0xffff) * (1.0f / USHRT_MAX),
+                static_cast<float>((a >> 16) & 0xffff) * (1.0f / USHRT_MAX),
+                static_cast<float>(b & 0xffff) * (1.0f / USHRT_MAX),
+                static_cast<float>((b >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+            );
+            float2 v = ::rocrand_device::detail::mrg_box_muller(m.x, m.y);
+            float2 w = ::rocrand_device::detail::mrg_box_muller(m.z, m.w);
+            return rocrand_half4 {
+                expf(mean + (stddev * (__half)(v.x))),
+                expf(mean + (stddev * (__half)(v.y))),
+                expf(mean + (stddev * (__half)(w.x))),
+                expf(mean + (stddev * (__half)(w.y)))
+            };
+        }
+    };
 
 } // end namespace detail
 } // end namespace rocrand_host
@@ -257,7 +536,7 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = mrg_uniform_distribution<T> >
+    template<class T, class Distribution = rocrand_host::detail::mrg_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             const Distribution& distribution = Distribution())
     {
@@ -280,7 +559,7 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        mrg_uniform_distribution<T> udistribution;
+        rocrand_host::detail::mrg_uniform_distribution<T> udistribution;
         return generate(data, data_size, udistribution);
     }
 
@@ -298,7 +577,7 @@ public:
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        mrg_normal_distribution<T> distribution(mean, stddev);
+        rocrand_host::detail::mrg_normal_distribution<T> distribution(mean, stddev);
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
@@ -326,7 +605,7 @@ public:
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        mrg_log_normal_distribution<T> distribution(mean, stddev);
+        rocrand_host::detail::mrg_log_normal_distribution<T> distribution(mean, stddev);
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
