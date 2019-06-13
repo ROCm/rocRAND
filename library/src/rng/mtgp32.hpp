@@ -76,7 +76,7 @@ namespace detail {
     typename std::enable_if<std::is_same<Type, unsigned int>::value
                             || std::is_same<Type, float>::value
                             || std::is_same<Type, double>::value>::type
-    tail(__shared__ mtgp32_device_engine& engine,
+    tail(mtgp32_device_engine& engine,
          Type * data,
          const size_t size,
          const size_t size_up,
@@ -96,7 +96,7 @@ namespace detail {
     template<class Type, class Distribution>
     inline __device__
     typename std::enable_if<std::is_same<Type, unsigned char>::value>::type
-    tail(__shared__ mtgp32_device_engine& engine,
+    tail(mtgp32_device_engine& engine,
          Type * data,
          const size_t size,
          const size_t size_up,
@@ -125,7 +125,7 @@ namespace detail {
     template<class Type, class Distribution>
     inline __device__
     typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
-    tail(__shared__ mtgp32_device_engine& engine,
+    tail(mtgp32_device_engine& engine,
          Type * data,
          const size_t size,
          const size_t size_up,
