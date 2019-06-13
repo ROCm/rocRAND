@@ -104,7 +104,8 @@ namespace detail {
 
     template<class Type, class Distribution>
     __global__
-    typename std::enable_if<std::is_same<Type, unsigned short>::value>::type
+    typename std::enable_if<std::is_same<Type, unsigned short>::value
+                            || std::is_same<Type, __half>::value>::type
     generate_kernel(xorwow_device_engine * engines,
                     Type * data, const size_t n,
                     const Distribution distribution)
@@ -185,6 +186,43 @@ namespace detail {
             RealType2 result = distribution(engine(), engine());
             // Save the tail
             data[n - 1] = result.x;
+        }
+
+        // Save engine with its state
+        engines[engine_id] = engine;
+    }
+
+    template<class Distribution>
+    __global__
+    void generate_normal_kernel(xorwow_device_engine * engines,
+                                __half * data, const size_t n,
+                                Distribution distribution)
+    {
+        typedef decltype(distribution(engines->next(), engines->next())) RealType4;
+
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        unsigned int index = engine_id;
+        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+        // Load device engine
+        xorwow_device_engine engine = engines[engine_id];
+
+        RealType4 * data4 = (RealType4 *)data;
+        while(index < (n / 4))
+        {
+            data4[index] = distribution(engine(), engine());
+            // Next position
+            index += stride;
+        }
+
+        auto tail_size = n & 3;
+        if((index == n/4) && tail_size > 0)
+        {
+            RealType4 result = distribution(engine(), engine());
+            // Save the tail
+            data[n - tail_size] = result.x;
+            if(tail_size > 1) data[n - tail_size + 1] = result.y;
+            if(tail_size > 2) data[n - tail_size + 2] = result.z;
         }
 
         // Save engine with its state
