@@ -110,6 +110,25 @@ struct log_normal_distribution<__half>
                                     mean(mean), stddev(stddev) {}
 
     __forceinline__ __host__ __device__
+    rocrand_half4 operator()(const unsigned int x, const unsigned int y)
+    {
+        float4 m = make_float4(
+            static_cast<float>(x & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((x >> 16) & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>(y & 0xffff) * (1.0f / USHRT_MAX),
+            static_cast<float>((y >> 16) & 0xffff) * (1.0f / USHRT_MAX)
+        );
+        float2 v = ::rocrand_device::detail::mrg_box_muller(m.x, m.y);
+        float2 w = ::rocrand_device::detail::mrg_box_muller(m.z, m.w);
+        return rocrand_half4 {
+            expf(mean + (stddev * (__half)(v.x))),
+            expf(mean + (stddev * (__half)(v.y))),
+            expf(mean + (stddev * (__half)(w.x))),
+            expf(mean + (stddev * (__half)(w.y)))
+        };
+    }
+
+    __forceinline__ __host__ __device__
     rocrand_half8 operator()(const uint4 x)
     {
         float4 m = make_float4(
