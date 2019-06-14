@@ -162,10 +162,10 @@ TEST(rocrand_sobol32_qrng_tests, dimesions_test)
 
     ROCRAND_CHECK(g.generate(data, size));
 
-    g.set_dimensions(4);
+    ROCRAND_CHECK(g.set_dimensions(4));
     EXPECT_EQ(g.generate(data, size), ROCRAND_STATUS_LENGTH_NOT_MULTIPLE);
 
-    g.set_dimensions(15);
+    ROCRAND_CHECK(g.set_dimensions(15));
     ROCRAND_CHECK(g.generate(data, size));
 
     HIP_CHECK(hipDeviceSynchronize());
