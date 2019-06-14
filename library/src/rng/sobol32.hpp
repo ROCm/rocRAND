@@ -323,10 +323,17 @@ public:
         m_initialized = false;
     }
 
-    void set_dimensions(unsigned int dimensions)
+    rocrand_status set_dimensions(unsigned int dimensions)
     {
+        if(dimensions < 1 || dimensions > SOBOL_DIM)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+
         m_dimensions = dimensions;
         m_initialized = false;
+
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
