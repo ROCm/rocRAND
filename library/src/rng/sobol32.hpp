@@ -206,8 +206,8 @@ namespace detail {
     template<>
     struct sobol_normal_distribution<__half>
     {
-        const float mean;
-        const float stddev;
+        const __half mean;
+        const __half stddev;
 
         __host__ __device__
         sobol_normal_distribution(__half mean, __half stddev)
@@ -217,7 +217,11 @@ namespace detail {
         __half operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);
-            return mean + v * stddev;
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            return __hadd(mean, __hmul(__float2half(v), stddev));
+            #else
+            return __half2float(mean) + v * __half2float(stddev);
+            #endif
         }
     };
 
@@ -263,8 +267,8 @@ namespace detail {
     template<>
     struct sobol_log_normal_distribution<__half>
     {
-        const float mean;
-        const float stddev;
+        const __half mean;
+        const __half stddev;
 
         __host__ __device__
         sobol_log_normal_distribution(__half mean, __half stddev)
@@ -274,7 +278,11 @@ namespace detail {
         __half operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);
-            return expf(mean + (stddev * v));
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            return hexp(__hadd(mean, __hmul(stddev, __float2half(v))));
+            #else
+            return expf(__half2float(mean) + (__half2float(stddev) * v));
+            #endif
         }
     };
 
