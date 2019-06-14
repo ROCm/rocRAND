@@ -29,10 +29,10 @@
 #include <algorithm>
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
-#include <rocrand/rocrand_kernel.h>
-#include <rocrand/rocrand_mtgp32_11213.h>
-#include <rocrand/rocrand_sobol_precomputed.h>
+#include <rocrand.h>
+#include <rocrand_kernel.h>
+#include <rocrand_mtgp32_11213.h>
+#include <rocrand_sobol_precomputed.h>
 
 #include "stat_test_common.hpp"
 #include "cmdparser.hpp"

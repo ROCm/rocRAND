@@ -25,6 +25,6 @@
 #define FQUALIFIERS __forceinline__ __device__ __host__
 #endif
 
-#include <rocrand/rocrand_common.h>
+#include <rocrand_common.h>
 
 #endif // ROCRAND_RNG_COMMON_H_

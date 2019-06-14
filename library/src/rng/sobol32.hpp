@@ -24,8 +24,8 @@
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
-#include <rocrand/rocrand.h>
-#include <rocrand/rocrand_sobol_precomputed.h>
+#include <rocrand.h>
+#include <rocrand_sobol_precomputed.h>
 
 #include "generator_type.hpp"
 #include "device_engines.hpp"
