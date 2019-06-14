@@ -36,7 +36,7 @@ namespace detail {
 
     typedef ::rocrand_device::sobol32_engine<true> sobol32_device_engine;
 
-    template<class Type, class Distribution>
+    template<class VecType, unsigned int VecWidth, class Type, class Distribution>
     __global__
     void generate_kernel(Type * data, const size_t n,
                          const unsigned int * direction_vectors,
@@ -45,7 +45,7 @@ namespace detail {
     {
         const unsigned int dimension = hipBlockIdx_y;
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        const unsigned int stride = hipGridDim_x * hipBlockDim_x * VecWidth;
 
         // Each thread of the current block use the same direction vectors
         // (the dimension is determined by hipBlockIdx_y)
@@ -56,15 +56,48 @@ namespace detail {
         }
         __syncthreads();
 
-        sobol32_device_engine engine(vectors, offset + engine_id);
+        data += dimension * n;
 
-        const unsigned int start = dimension * n;
-        unsigned int index = engine_id;
-        while(index < n)
+        unsigned int index = engine_id * VecWidth;
+        sobol32_device_engine engine(vectors, offset + index);
+
+        if(VecWidth == 1)
         {
-            data[start + index] = distribution(engine.current());
-            engine.discard_stride(stride);
-            index += stride;
+            while(index < n)
+            {
+                data[index] = distribution(engine.current());
+                engine.discard_stride(stride);
+                index += stride;
+            }
+        }
+        else
+        {
+            const unsigned int nv = (n / VecWidth) * VecWidth;
+            while(index < nv)
+            {
+                sobol32_device_engine engine_copy = engine;
+
+                Type vs[VecWidth];
+                for(unsigned int i = 0; i < VecWidth; i++)
+                {
+                    vs[i] = distribution(engine.current());
+                    engine.discard();
+                }
+                *(reinterpret_cast<VecType *>(&data[index])) = *reinterpret_cast<VecType *>(vs);
+
+                // Restore from a copy and use fast discard_stride with power of 2 stride
+                engine = engine_copy;
+                engine.discard_stride(stride);
+                index += stride;
+            }
+
+            // Fill tail values (up to VecWidth-1)
+            while(index < n)
+            {
+                data[index] = distribution(engine.current());
+                engine.discard();
+                index += 1;
+            }
         }
     }
 
@@ -311,6 +344,9 @@ public:
     rocrand_status generate(T * data, size_t data_size,
                             Distribution distribution = Distribution())
     {
+        using vec_type = typename std::conditional<sizeof(T) >= sizeof(int), T, int>::type;
+        constexpr unsigned int vec_width = sizeof(vec_type) / sizeof(T);
+
         if (data_size % m_dimensions != 0)
             return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
 
@@ -327,14 +363,17 @@ public:
         #endif
 
         const size_t size = data_size / m_dimensions;
-        const uint32_t blocks = std::min(max_blocks, static_cast<uint32_t>((size + threads - 1) / threads));
+        const uint32_t blocks = std::min(
+            max_blocks,
+            static_cast<uint32_t>((size + (threads * vec_width) - 1) / (threads * vec_width))
+        );
 
         // blocks_x must be power of 2 because strided discard (leap frog)
         // supports only power of 2 jumps
         const uint32_t blocks_x = next_power2((blocks + m_dimensions - 1) / m_dimensions);
         const uint32_t blocks_y = m_dimensions;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<vec_type, vec_width>),
             dim3(blocks_x, blocks_y), dim3(threads), 0, m_stream,
             data, size,
             static_cast<const unsigned int*>(m_direction_vectors), m_current_offset,
