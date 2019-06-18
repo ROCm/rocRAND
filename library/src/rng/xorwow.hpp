@@ -44,230 +44,338 @@ namespace detail {
         engines[engine_id] = xorwow_device_engine(seed, engine_id, offset);
     }
 
-    template<class Type, class Distribution>
-    __global__
-    typename std::enable_if<std::is_same<Type, unsigned int>::value
-                            || std::is_same<Type, float>::value>::type
-    generate_kernel(xorwow_device_engine * engines,
-                    Type * data, const size_t n,
-                    const Distribution distribution)
-    {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        xorwow_device_engine engine = engines[engine_id];
-
-        while(index < n)
-        {
-            data[index] = distribution(engine());
-            index += stride;
-        }
-
-        engines[engine_id] = engine;
-    }
-
-    template<class Type, class Distribution>
-    __global__
-    typename std::enable_if<std::is_same<Type, unsigned char>::value>::type
-    generate_kernel(xorwow_device_engine * engines,
-                    Type * data, const size_t n,
-                    const Distribution distribution)
-    {
-        typedef decltype(distribution(uint())) Type4;
-
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        xorwow_device_engine engine = engines[engine_id];
-
-        Type4 * data4 = (Type4 *) data;
-        while(index < (n / 4))
-        {
-            data4[index] = distribution(engine());
-            index += stride;
-        }
-
-        auto tail_size = n & 3;
-        if((index == n/4) && tail_size > 0)
-        {
-            Type4 result = distribution(engine());
-            // Save the tail
-            data[n - tail_size] = result.x;
-            if(tail_size > 1) data[n - tail_size + 1] = result.y;
-            if(tail_size > 2) data[n - tail_size + 2] = result.z;
-        }
-
-        engines[engine_id] = engine;
-    }
-
-    template<class Type, class Distribution>
-    __global__
-    typename std::enable_if<std::is_same<Type, unsigned short>::value
-                            || std::is_same<Type, __half>::value>::type
-    generate_kernel(xorwow_device_engine * engines,
-                    Type * data, const size_t n,
-                    const Distribution distribution)
-    {
-        typedef decltype(distribution(uint())) Type2;
-
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        xorwow_device_engine engine = engines[engine_id];
-
-        Type2 * data2 = (Type2 *) data;
-        while(index < (n / 2))
-        {
-            data2[index] = distribution(engine());
-            index += stride;
-        }
-
-        // First work-item saves the tail when n is not a multiple of 2
-        if(engine_id == 0 && (n & 1) > 0)
-        {
-            Type2 result = distribution(engine());
-            // Save the tail
-            data[n - 1] = result.x;
-        }
-
-        engines[engine_id] = engine;
-    }
-
-    template<class Distribution>
+    template<class T, class Distribution>
     __global__
     void generate_kernel(xorwow_device_engine * engines,
-                         double * data, const size_t n,
-                         const Distribution distribution)
+                         T * data, const size_t n,
+                         Distribution distribution)
     {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        constexpr unsigned int input_width = Distribution::input_width;
+        constexpr unsigned int output_width = Distribution::output_width;
 
-        xorwow_device_engine engine = engines[engine_id];
-
-        while(index < n)
-        {
-            data[index] = distribution(engine(), engine());
-            index += stride;
-        }
-
-        engines[engine_id] = engine;
-    }
-
-    template<class Distribution>
-    __global__
-    void generate_normal_kernel(xorwow_device_engine * engines,
-                                float * data, const size_t n,
-                                Distribution distribution)
-    {
-        typedef decltype(distribution(engines->next(), engines->next())) RealType2;
+        using vec_type = aligned_vec_type<T, output_width>;
 
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        size_t index = engine_id;
 
         // Load device engine
         xorwow_device_engine engine = engines[engine_id];
 
-        RealType2 * data2 = (RealType2 *)data;
-        while(index < (n / 2))
+        unsigned int input[input_width];
+        T output[output_width];
+
+        T * aligned_data = reinterpret_cast<T *>(
+            (reinterpret_cast<uintptr_t>(data) + sizeof(vec_type) - 1) / sizeof(vec_type) * sizeof(vec_type)
+        );
+        const unsigned int head_size = min(n, aligned_data - data);
+        const size_t vec_n = (n - head_size) / output_width;
+        const unsigned int tail_size = (n - head_size) - vec_n * output_width;
+
+        vec_type * vec_data = reinterpret_cast<vec_type *>(aligned_data);
+        while(index < vec_n)
         {
-            data2[index] = distribution(engine(), engine());
+            for(unsigned int i = 0; i < input_width; i++)
+            {
+                input[i] = engine();
+            }
+            distribution(input, output);
+
+            vec_data[index] = *reinterpret_cast<vec_type *>(output);
             // Next position
             index += stride;
         }
 
-        // First work-item saves the tail when n is not a multiple of 2
-        if(engine_id == 0 && (n & 1) > 0)
+        // Check if we need to save head and tail.
+        // Those numbers should be generated by the thread that would
+        // save next vec_type.
+        if(output_width > 1 && index == vec_n)
         {
-            RealType2 result = distribution(engine(), engine());
-            // Save the tail
-            data[n - 1] = result.x;
+            // If data is not aligned by sizeof(vec_type)
+            if(head_size > 0)
+            {
+                for(unsigned int i = 0; i < input_width; i++)
+                {
+                    input[i] = engine();
+                }
+                distribution(input, output);
+
+                for(unsigned int o = 0; o < output_width; o++)
+                {
+                    if(o < head_size)
+                    {
+                        data[o] = output[o];
+                    }
+                }
+            }
+
+            if(tail_size > 0)
+            {
+                for(unsigned int i = 0; i < input_width; i++)
+                {
+                    input[i] = engine();
+                }
+                distribution(input, output);
+
+                for(unsigned int o = 0; o < output_width; o++)
+                {
+                    if(o < tail_size)
+                    {
+                        data[n - tail_size + o] = output[o];
+                    }
+                }
+            }
         }
 
         // Save engine with its state
         engines[engine_id] = engine;
     }
 
-    template<class Distribution>
-    __global__
-    void generate_normal_kernel(xorwow_device_engine * engines,
-                                __half * data, const size_t n,
-                                Distribution distribution)
+    template<class T>
+    struct xorwow_uniform_distribution;
+
+    template<>
+    struct xorwow_uniform_distribution<unsigned int>
     {
-        typedef decltype(distribution(engines->next(), engines->next())) RealType4;
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 1;
 
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        xorwow_device_engine engine = engines[engine_id];
-
-        RealType4 * data4 = (RealType4 *)data;
-        while(index < (n / 4))
+        __device__
+        void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
         {
-            data4[index] = distribution(engine(), engine());
-            // Next position
-            index += stride;
+            unsigned int v = input[0];
+            output[0] = v;
         }
+    };
 
-        auto tail_size = n & 3;
-        if((index == n/4) && tail_size > 0)
-        {
-            RealType4 result = distribution(engine(), engine());
-            // Save the tail
-            data[n - tail_size] = result.x;
-            if(tail_size > 1) data[n - tail_size + 1] = result.y;
-            if(tail_size > 2) data[n - tail_size + 2] = result.z;
-        }
-
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
-
-    // TODO: combine with generate_normal_kernel<float> after refactoring of distributions
-    template<class Distribution>
-    __global__
-    void generate_normal_kernel(xorwow_device_engine * engines,
-                                double * data, const size_t n,
-                                Distribution distribution)
+    template<>
+    struct xorwow_uniform_distribution<unsigned char>
     {
-        typedef decltype(distribution(uint4())) RealType2;
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 4;
 
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int index = engine_id;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        xorwow_device_engine engine = engines[engine_id];
-
-        RealType2 * data2 = (RealType2 *)data;
-        while(index < (n / 2))
+        __device__
+        void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
         {
-            data2[index] = distribution(
-                uint4 { engine(), engine(), engine(), engine() }
+            unsigned int v = input[0];
+            *reinterpret_cast<unsigned int *>(output) = v;
+        }
+    };
+
+    template<>
+    struct xorwow_uniform_distribution<unsigned short>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
+        {
+            unsigned int v = input[0];
+            *reinterpret_cast<unsigned int *>(output) = v;
+        }
+    };
+
+    template<>
+    struct xorwow_uniform_distribution<float>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 1;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], float (&output)[1]) const
+        {
+            output[0] = rocrand_device::detail::uniform_distribution(input[0]);
+        }
+    };
+
+    template<>
+    struct xorwow_uniform_distribution<double>
+    {
+        static constexpr unsigned int input_width = 2;
+        static constexpr unsigned int output_width = 1;
+
+        __device__
+        void operator()(const unsigned int (&input)[2], double (&output)[1]) const
+        {
+            output[0] = rocrand_device::detail::uniform_distribution_double(input[0], input[1]);
+        }
+    };
+
+    template<>
+    struct xorwow_uniform_distribution<__half>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+        {
+            unsigned int v = input[0];
+            output[0] = uniform_distribution_half(static_cast<short>(v));
+            output[1] = uniform_distribution_half(static_cast<short>(v >> 16));
+        }
+    };
+
+    template<class T>
+    struct xorwow_normal_distribution;
+
+    template<>
+    struct xorwow_normal_distribution<float>
+    {
+        static constexpr unsigned int input_width = 2;
+        static constexpr unsigned int output_width = 2;
+
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        xorwow_normal_distribution(float mean, float stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[2], float (&output)[2]) const
+        {
+            float2 v = rocrand_device::detail::normal_distribution2(input[0], input[1]);
+            output[0] = mean + v.x * stddev;
+            output[1] = mean + v.y * stddev;
+        }
+    };
+
+    template<>
+    struct xorwow_normal_distribution<double>
+    {
+        static constexpr unsigned int input_width = 4;
+        static constexpr unsigned int output_width = 2;
+
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        xorwow_normal_distribution(double mean, double stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[4], double (&output)[2]) const
+        {
+            double2 v = rocrand_device::detail::normal_distribution_double2(
+                make_uint4(input[0], input[1], input[2], input[3])
             );
-            // Next position
-            index += stride;
+            output[0] = mean + v.x * stddev;
+            output[1] = mean + v.y * stddev;
         }
+    };
 
-        // First work-item saves the tail when n is not a multiple of 2
-        if(engine_id == 0 && (n & 1) > 0)
+    template<>
+    struct xorwow_normal_distribution<__half>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        const __half mean;
+        const __half stddev;
+
+        __host__ __device__
+        xorwow_normal_distribution(__half mean, __half stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
         {
-            RealType2 result = distribution(
-                uint4 { engine(), engine(), engine(), engine() }
+            unsigned int a = input[0];
+            rocrand_half2 v = box_muller_half(
+                static_cast<unsigned short>(a),
+                static_cast<unsigned short>(a >> 16)
             );
-            // Save the tail
-            data[n - 1] = result.x;
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            output[0] = __hadd(mean, __hmul(v.x, stddev));
+            output[1] = __hadd(mean, __hmul(v.y, stddev));
+            #else
+            output[0] = __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.x)));
+            output[1] = __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.y)));
+            #endif
         }
+    };
 
-        // Save engine with its state
-        engines[engine_id] = engine;
-    }
+    template<class T>
+    struct xorwow_log_normal_distribution;
+
+    template<>
+    struct xorwow_log_normal_distribution<float>
+    {
+        static constexpr unsigned int input_width = 2;
+        static constexpr unsigned int output_width = 2;
+
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        xorwow_log_normal_distribution(float mean, float stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[2], float (&output)[2]) const
+        {
+            float2 v = rocrand_device::detail::normal_distribution2(input[0], input[1]);
+            output[0] = expf(mean + v.x * stddev);
+            output[1] = expf(mean + v.y * stddev);
+        }
+    };
+
+    template<>
+    struct xorwow_log_normal_distribution<double>
+    {
+        static constexpr unsigned int input_width = 4;
+        static constexpr unsigned int output_width = 2;
+
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        xorwow_log_normal_distribution(double mean, double stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[4], double (&output)[2]) const
+        {
+            double2 v = rocrand_device::detail::normal_distribution_double2(
+                make_uint4(input[0], input[1], input[2], input[3])
+            );
+            output[0] = exp(mean + v.x * stddev);
+            output[1] = exp(mean + v.y * stddev);
+        }
+    };
+
+    template<>
+    struct xorwow_log_normal_distribution<__half>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        const __half mean;
+        const __half stddev;
+
+        __host__ __device__
+        xorwow_log_normal_distribution(__half mean, __half stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+        {
+            unsigned int a = input[0];
+            rocrand_half2 v = box_muller_half(
+                static_cast<unsigned short>(a),
+                static_cast<unsigned short>(a >> 16)
+            );
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            output[0] = hexp(__hadd(mean, __hmul(v.x, stddev)));
+            output[1] = hexp(__hadd(mean, __hmul(v.y, stddev)));
+            #else
+            output[0] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.x))));
+            output[1] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.y))));
+            #endif
+        }
+    };
 
 } // end namespace detail
 } // end namespace rocrand_host
@@ -329,9 +437,9 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = uniform_distribution<T> >
+    template<class T, class Distribution = rocrand_host::detail::xorwow_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
-                            const Distribution& distribution = Distribution())
+                            Distribution distribution = Distribution())
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
@@ -352,64 +460,22 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        uniform_distribution<T> udistribution;
-        return generate(data, data_size, udistribution);
+        rocrand_host::detail::xorwow_uniform_distribution<T> distribution;
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        // data_size must be even
-        // data must be aligned to 2 * sizeof(T) bytes
-        if(data_size%2 != 0 || ((uintptr_t)(data)%(2*sizeof(T))) != 0)
-        {
-            return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
-        }
-
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        rocrand_host::detail::xorwow_normal_distribution<T> distribution(mean, stddev);
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        // data_size must be even
-        // data must be aligned to 2 * sizeof(T) bytes
-        if(data_size%2 != 0 || ((uintptr_t)(data)%(2*sizeof(T))) != 0)
-        {
-            return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
-        }
-
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        log_normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        rocrand_host::detail::xorwow_log_normal_distribution<T> distribution(mean, stddev);
+        return generate(data, data_size, distribution);
     }
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
