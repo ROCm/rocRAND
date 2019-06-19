@@ -129,6 +129,7 @@ namespace detail {
 
         static_assert(4 % input_width == 0 && input_width <= 4, "Incorrect input_width");
         constexpr unsigned int output_per_thread = 4 / input_width;
+        constexpr unsigned int full_output_width = output_per_thread * output_width;
 
         using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
 
@@ -148,15 +149,17 @@ namespace detail {
         unsigned int input[input_width];
         T output[output_per_thread][output_width];
 
-        T * aligned_data = reinterpret_cast<T *>(
-            (reinterpret_cast<uintptr_t>(data) + sizeof(vec_type) - 1) / sizeof(vec_type) * sizeof(vec_type)
-        );
-        const unsigned int head_size = min(n, aligned_data - data);
-        const size_t vec_n = (n - head_size) / (output_per_thread * output_width);
-        const unsigned int tail_size = (n - head_size) - vec_n * (output_per_thread * output_width);
+        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
+        const size_t misalignment =
+            (
+                full_output_width - uintptr / sizeof(T) % full_output_width
+            ) % full_output_width;
+        const unsigned int head_size = min(n, misalignment);
+        const unsigned int tail_size = (n - head_size) % full_output_width;
+        const size_t vec_n = (n - head_size) / full_output_width;
 
         // Save multiple values as one vec_type
-        vec_type * vec_data = reinterpret_cast<vec_type *>(data + head_size);
+        vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
         while(index < vec_n)
         {
             const uint4 v = engine.next4_leap(ThreadsPerEngine);

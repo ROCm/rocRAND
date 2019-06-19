@@ -74,14 +74,16 @@ namespace detail {
         unsigned int input[input_width];
         T output[output_width];
 
-        T * aligned_data = reinterpret_cast<T *>(
-            (reinterpret_cast<uintptr_t>(data) + sizeof(vec_type) - 1) / sizeof(vec_type) * sizeof(vec_type)
-        );
-        const unsigned int head_size = min(n, aligned_data - data);
+        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
+        const size_t misalignment =
+            (
+                output_width - uintptr / sizeof(T) % output_width
+            ) % output_width;
+        const unsigned int head_size = min(n, misalignment);
+        const unsigned int tail_size = (n - head_size) % output_width;
         const size_t vec_n = (n - head_size) / output_width;
-        const unsigned int tail_size = (n - head_size) - vec_n * output_width;
 
-        vec_type * vec_data = reinterpret_cast<vec_type *>(aligned_data);
+        vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
         while(index < vec_n)
         {
             for(unsigned int i = 0; i < input_width; i++)
