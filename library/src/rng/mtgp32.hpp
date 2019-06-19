@@ -69,128 +69,356 @@ namespace rocrand_host {
 namespace detail {
 
     typedef ::rocrand_device::mtgp32_engine mtgp32_device_engine;
-    typedef ::rocrand_device::mtgp32_state mtgp32_state;
 
-    template<class Type, class Distribution>
-    inline __device__
-    typename std::enable_if<std::is_same<Type, unsigned int>::value
-                            || std::is_same<Type, float>::value
-                            || std::is_same<Type, double>::value>::type
-    tail(mtgp32_device_engine& engine,
-         Type * data,
-         const size_t size,
-         const size_t size_up,
-         Distribution distribution,
-         unsigned int index,
-         unsigned int engine_id)
-    {
-        (void) engine;
-        (void) data;
-        (void) size;
-        (void) size_up;
-        (void) distribution;
-        (void) index;
-        (void) engine_id;
-    }
-
-    template<class Type, class Distribution>
-    inline __device__
-    typename std::enable_if<std::is_same<Type, unsigned char>::value>::type
-    tail(mtgp32_device_engine& engine,
-         Type * data,
-         const size_t size,
-         const size_t size_up,
-         Distribution distribution,
-         unsigned int index,
-         unsigned int engine_id)
-    {
-        typedef decltype(distribution(uint())) TypeN;
-
-        (void) engine_id;
-
-        auto tail_size = size & 3;
-        if(tail_size > 0)
-        {
-            TypeN value = distribution(engine());
-            if(index == size_up)
-            {
-                // Save the tail
-                data[size - tail_size] = value.x;
-                if(tail_size > 1) data[size - tail_size + 1] = value.y;
-                if(tail_size > 2) data[size - tail_size + 2] = value.z;
-            }
-        }
-    }
-
-    template<class Type, class Distribution>
-    inline __device__
-    typename std::enable_if<std::is_same<Type, unsigned short>::value
-                            || std::is_same<Type, __half>::value>::type
-    tail(mtgp32_device_engine& engine,
-         Type * data,
-         const size_t size,
-         const size_t size_up,
-         Distribution distribution,
-         unsigned int index,
-         unsigned int engine_id)
-    {
-        typedef decltype(distribution(uint())) TypeN;
-
-        (void) index;
-        (void) size_up;
-
-        if((size & 1) > 0)
-        {
-            TypeN value = distribution(engine());
-            if(engine_id == 0)
-            {
-                data[size - 1] = value.x;
-            }
-        }
-    }
-
-    template<class Type, class Distribution>
+    template<unsigned int BlockSize, class T, class Distribution>
     __global__
     void generate_kernel(mtgp32_device_engine * engines,
-                         Type * data,
-                         const size_t size,
-                         const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
-                         const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
+                         T * data,
+                         const size_t n,
                          Distribution distribution)
     {
-        typedef decltype(distribution(uint())) TypeN;
+        constexpr unsigned int input_width = Distribution::input_width;
+        constexpr unsigned int output_width = Distribution::output_width;
+
+        using vec_type = aligned_vec_type<T, output_width>;
 
         const unsigned int engine_id = hipBlockIdx_x;
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        const unsigned int stride = hipGridDim_x * BlockSize;
+        size_t index = hipBlockIdx_x * BlockSize + hipThreadIdx_x;
 
         // Load device engine
         __shared__ mtgp32_device_engine engine;
         engine.copy(&engines[engine_id]);
 
-        TypeN * data_n = (TypeN *) data;
-        while(index < size_down)
+        unsigned int input[input_width];
+        T output[output_width];
+
+        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
+        const size_t misalignment =
+            (
+                output_width - uintptr / sizeof(T) % output_width
+            ) % output_width;
+        const unsigned int head_size = min(n, misalignment);
+        const unsigned int tail_size = (n - head_size) % output_width;
+        const size_t vec_n = (n - head_size) / output_width;
+
+        // vec_n rounded up and down to the nearest multiple of BlockSize
+        const size_t remainder_value = vec_n % BlockSize;
+        const size_t vec_n_down = vec_n - remainder_value;
+        const size_t vec_n_up = remainder_value == 0 ? vec_n_down : (vec_n_down + BlockSize);
+
+        vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
+        while(index < vec_n_down)
         {
-            data_n[index] = distribution(engine());
+            for(unsigned int i = 0; i < input_width; i++)
+            {
+                input[i] = engine();
+            }
+            distribution(input, output);
+
+            vec_data[index] = *reinterpret_cast<vec_type *>(output);
             // Next position
             index += stride;
         }
-        while(index < size_up)
+        if(index < vec_n_up)
         {
-            auto value = distribution(engine());
-            if(index < size)
-                data_n[index] = value;
+            for(unsigned int i = 0; i < input_width; i++)
+            {
+                input[i] = engine();
+            }
+            distribution(input, output);
+
+            // All threads generate (hence call __syncthreads) but not all write
+            if(index < vec_n)
+            {
+                vec_data[index] = *reinterpret_cast<vec_type *>(output);
+            }
             // Next position
             index += stride;
         }
 
-        tail(
-            engine, data, size, size_up, distribution, index, engine_id
-        );
+        // Check if we need to save head and tail.
+        if(output_width > 1 && (head_size > 0 || tail_size > 0))
+        {
+            for(unsigned int i = 0; i < input_width; i++)
+            {
+                input[i] = engine();
+            }
+            distribution(input, output);
+
+            // If data is not aligned by sizeof(vec_type)
+            if(index == vec_n_up)
+            {
+                for(unsigned int o = 0; o < output_width; o++)
+                {
+                    if(o < head_size)
+                    {
+                        data[o] = output[o];
+                    }
+                }
+            }
+
+            if(index == vec_n_up + 1)
+            {
+                for(unsigned int o = 0; o < output_width; o++)
+                {
+                    if(o < tail_size)
+                    {
+                        data[n - tail_size + o] = output[o];
+                    }
+                }
+            }
+        }
 
         // Save engine with its state
         engines[engine_id].copy(&engine);
     }
+
+    template<class T>
+    struct mtgp_uniform_distribution;
+
+    template<>
+    struct mtgp_uniform_distribution<unsigned int>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 1;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
+        {
+            unsigned int v = input[0];
+            output[0] = v;
+        }
+    };
+
+    template<>
+    struct mtgp_uniform_distribution<unsigned char>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 4;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
+        {
+            unsigned int v = input[0];
+            *reinterpret_cast<unsigned int *>(output) = v;
+        }
+    };
+
+    template<>
+    struct mtgp_uniform_distribution<unsigned short>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
+        {
+            unsigned int v = input[0];
+            *reinterpret_cast<unsigned int *>(output) = v;
+        }
+    };
+
+    template<>
+    struct mtgp_uniform_distribution<float>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 1;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], float (&output)[1]) const
+        {
+            output[0] = rocrand_device::detail::uniform_distribution(input[0]);
+        }
+    };
+
+    template<>
+    struct mtgp_uniform_distribution<double>
+    {
+        static constexpr unsigned int input_width = 2;
+        static constexpr unsigned int output_width = 1;
+
+        __device__
+        void operator()(const unsigned int (&input)[2], double (&output)[1]) const
+        {
+            output[0] = rocrand_device::detail::uniform_distribution_double(input[0], input[1]);
+        }
+    };
+
+    template<>
+    struct mtgp_uniform_distribution<__half>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        __device__
+        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+        {
+            unsigned int v = input[0];
+            output[0] = uniform_distribution_half(static_cast<short>(v));
+            output[1] = uniform_distribution_half(static_cast<short>(v >> 16));
+        }
+    };
+
+    template<class T>
+    struct mtgp_normal_distribution;
+
+    template<>
+    struct mtgp_normal_distribution<float>
+    {
+        static constexpr unsigned int input_width = 2;
+        static constexpr unsigned int output_width = 2;
+
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        mtgp_normal_distribution(float mean, float stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[2], float (&output)[2]) const
+        {
+            float2 v = rocrand_device::detail::normal_distribution2(input[0], input[1]);
+            output[0] = mean + v.x * stddev;
+            output[1] = mean + v.y * stddev;
+        }
+    };
+
+    template<>
+    struct mtgp_normal_distribution<double>
+    {
+        static constexpr unsigned int input_width = 4;
+        static constexpr unsigned int output_width = 2;
+
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        mtgp_normal_distribution(double mean, double stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[4], double (&output)[2]) const
+        {
+            double2 v = rocrand_device::detail::normal_distribution_double2(
+                make_uint4(input[0], input[1], input[2], input[3])
+            );
+            output[0] = mean + v.x * stddev;
+            output[1] = mean + v.y * stddev;
+        }
+    };
+
+    template<>
+    struct mtgp_normal_distribution<__half>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        const __half mean;
+        const __half stddev;
+
+        __host__ __device__
+        mtgp_normal_distribution(__half mean, __half stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+        {
+            unsigned int a = input[0];
+            rocrand_half2 v = box_muller_half(
+                static_cast<unsigned short>(a),
+                static_cast<unsigned short>(a >> 16)
+            );
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            output[0] = __hadd(mean, __hmul(v.x, stddev));
+            output[1] = __hadd(mean, __hmul(v.y, stddev));
+            #else
+            output[0] = __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.x)));
+            output[1] = __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.y)));
+            #endif
+        }
+    };
+
+    template<class T>
+    struct mtgp_log_normal_distribution;
+
+    template<>
+    struct mtgp_log_normal_distribution<float>
+    {
+        static constexpr unsigned int input_width = 2;
+        static constexpr unsigned int output_width = 2;
+
+        const float mean;
+        const float stddev;
+
+        __host__ __device__
+        mtgp_log_normal_distribution(float mean, float stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[2], float (&output)[2]) const
+        {
+            float2 v = rocrand_device::detail::normal_distribution2(input[0], input[1]);
+            output[0] = expf(mean + v.x * stddev);
+            output[1] = expf(mean + v.y * stddev);
+        }
+    };
+
+    template<>
+    struct mtgp_log_normal_distribution<double>
+    {
+        static constexpr unsigned int input_width = 4;
+        static constexpr unsigned int output_width = 2;
+
+        const double mean;
+        const double stddev;
+
+        __host__ __device__
+        mtgp_log_normal_distribution(double mean, double stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[4], double (&output)[2]) const
+        {
+            double2 v = rocrand_device::detail::normal_distribution_double2(
+                make_uint4(input[0], input[1], input[2], input[3])
+            );
+            output[0] = exp(mean + v.x * stddev);
+            output[1] = exp(mean + v.y * stddev);
+        }
+    };
+
+    template<>
+    struct mtgp_log_normal_distribution<__half>
+    {
+        static constexpr unsigned int input_width = 1;
+        static constexpr unsigned int output_width = 2;
+
+        const __half mean;
+        const __half stddev;
+
+        __host__ __device__
+        mtgp_log_normal_distribution(__half mean, __half stddev)
+            : mean(mean), stddev(stddev) {}
+
+        __device__
+        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+        {
+            unsigned int a = input[0];
+            rocrand_half2 v = box_muller_half(
+                static_cast<unsigned short>(a),
+                static_cast<unsigned short>(a >> 16)
+            );
+            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            output[0] = hexp(__hadd(mean, __hmul(v.x, stddev)));
+            output[1] = hexp(__hadd(mean, __hmul(v.y, stddev)));
+            #else
+            output[0] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.x))));
+            output[1] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.y))));
+            #endif
+        }
+    };
 
 } // end namespace detail
 } // end namespace rocrand_host
@@ -248,6 +476,9 @@ public:
 
         rocrand_status status;
 
+        if (m_engines_size > mtgpdc_params_11213_num)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+
         status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -257,91 +488,18 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = uniform_distribution<T> >
-    typename std::enable_if<std::is_same<T, unsigned int>::value
-                            || std::is_same<T, float>::value
-                            || std::is_same<T, double>::value,
-                            rocrand_status>::type
-    generate(T * data, size_t data_size,
-             const Distribution& distribution = Distribution())
+    template<class T, class Distribution = rocrand_host::detail::mtgp_uniform_distribution<T> >
+    rocrand_status generate(T * data, size_t data_size,
+                            Distribution distribution = Distribution())
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        const size_t remainder_value = data_size % s_threads;
-        const size_t size_rounded_down = data_size - remainder_value;
-        // if remainder is 0, then data_size is a multiple of s_threads, and
-        // in this case size_rounded_up must be data_size
-        const size_t size_rounded_up =
-            remainder_value == 0 ? data_size : size_rounded_down + s_threads;
-
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<s_threads>),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, size_rounded_up,
-            size_rounded_down, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
-    }
-
-    template<class T, class Distribution = uniform_distribution<T> >
-    typename std::enable_if<std::is_same<T, unsigned char>::value, rocrand_status>::type
-    generate(T * data, size_t data_size,
-             const Distribution& distribution = Distribution())
-    {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        const size_t size = data_size / 4;
-        const size_t remainder_value = size % s_threads;
-        const size_t size_rounded_down = size - remainder_value;
-        // if remainder is 0, then data_size is a multiple of s_threads, and
-        // in this case size_rounded_up must be data_size
-        const size_t size_rounded_up =
-            remainder_value == 0 ? size : size_rounded_down + s_threads;
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, size, size_rounded_up,
-            size_rounded_down, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
-    }
-
-    template<class T, class Distribution = uniform_distribution<T> >
-    typename std::enable_if<std::is_same<T, unsigned short>::value
-                            || std::is_same<T, __half>::value, rocrand_status>::type
-    generate(T * data, size_t data_size,
-             const Distribution& distribution = Distribution())
-    {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
-        const size_t size = data_size / 2;
-        const size_t remainder_value = size % s_threads;
-        const size_t size_rounded_down = size - remainder_value;
-        // if remainder is 0, then data_size is a multiple of s_threads, and
-        // in this case size_rounded_up must be data_size
-        const size_t size_rounded_up =
-            remainder_value == 0 ? size : size_rounded_down + s_threads;
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, size, size_rounded_up,
-            size_rounded_down, distribution
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
@@ -353,21 +511,21 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        uniform_distribution<T> distribution;
+        rocrand_host::detail::mtgp_uniform_distribution<T> distribution;
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        normal_distribution<T> distribution(mean, stddev);
+        rocrand_host::detail::mtgp_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        log_normal_distribution<T> distribution(mean, stddev);
+        rocrand_host::detail::mtgp_log_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
@@ -389,11 +547,11 @@ private:
     engine_type * m_engines;
     size_t m_engines_size;
     #ifdef __HIP_PLATFORM_NVCC__
-    static const uint32_t s_threads = 256;
-    static const uint32_t s_blocks = 64;
+    static constexpr uint32_t s_threads = 256;
+    static constexpr uint32_t s_blocks = 64;
     #else
-    static const uint32_t s_threads = 256;
-    static const uint32_t s_blocks = 512;
+    static constexpr uint32_t s_threads = 256;
+    static constexpr uint32_t s_blocks = 512;
     #endif
 
     // For caching of Poisson for consecutive generations with the same lambda
