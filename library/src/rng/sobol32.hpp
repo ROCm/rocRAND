@@ -36,16 +36,20 @@ namespace detail {
 
     typedef ::rocrand_device::sobol32_engine<true> sobol32_device_engine;
 
-    template<class VecType, unsigned int VecWidth, class Type, class Distribution>
+    template<unsigned int OutputPerThread, class T, class Distribution>
     __global__
-    void generate_kernel(Type * data, const size_t n,
+    void generate_kernel(T * data, const size_t n,
                          const unsigned int * direction_vectors,
                          const unsigned int offset,
                          Distribution distribution)
     {
+        constexpr unsigned int output_per_thread = OutputPerThread;
+        using vec_type = aligned_vec_type<T, output_per_thread>;
+
         const unsigned int dimension = hipBlockIdx_y;
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x * VecWidth;
+        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        size_t index = engine_id;
 
         // Each thread of the current block use the same direction vectors
         // (the dimension is determined by hipBlockIdx_y)
@@ -58,11 +62,11 @@ namespace detail {
 
         data += dimension * n;
 
-        unsigned int index = engine_id * VecWidth;
-        sobol32_device_engine engine(vectors, offset + index);
-
-        if(VecWidth == 1)
+        if(output_per_thread == 1)
         {
+            const unsigned int engine_offset = engine_id * output_per_thread;
+            sobol32_device_engine engine(vectors, offset + engine_offset);
+
             while(index < n)
             {
                 data[index] = distribution(engine.current());
@@ -72,31 +76,58 @@ namespace detail {
         }
         else
         {
-            const unsigned int nv = (n / VecWidth) * VecWidth;
-            while(index < nv)
+            const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
+            const size_t misalignment =
+                (
+                    output_per_thread - uintptr / sizeof(T) % output_per_thread
+                ) % output_per_thread;
+            const unsigned int head_size = min(n, misalignment);
+            const unsigned int tail_size = (n - head_size) % output_per_thread;
+            const size_t vec_n = (n - head_size) / output_per_thread;
+
+            const unsigned int engine_offset =
+                engine_id * output_per_thread +
+                (engine_id == 0 ? 0 : head_size); // The first engine writes head_size values
+            sobol32_device_engine engine(vectors, offset + engine_offset);
+
+            if(engine_id == 0)
+            {
+                // If data is not aligned by sizeof(vec_type)
+                for(unsigned int o = 0; o < head_size; o++)
+                {
+                    data[o] = distribution(engine.current());
+                    engine.discard();
+                }
+            }
+
+            vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
+            while(index < vec_n)
             {
                 sobol32_device_engine engine_copy = engine;
 
-                Type vs[VecWidth];
-                for(unsigned int i = 0; i < VecWidth; i++)
+                T output[output_per_thread];
+                for(unsigned int i = 0; i < output_per_thread; i++)
                 {
-                    vs[i] = distribution(engine.current());
+                    output[i] = distribution(engine.current());
                     engine.discard();
                 }
-                *(reinterpret_cast<VecType *>(&data[index])) = *reinterpret_cast<VecType *>(vs);
+
+                vec_data[index] = *reinterpret_cast<vec_type *>(output);
 
                 // Restore from a copy and use fast discard_stride with power of 2 stride
                 engine = engine_copy;
-                engine.discard_stride(stride);
+                engine.discard_stride(stride * output_per_thread);
                 index += stride;
             }
 
-            // Fill tail values (up to VecWidth-1)
-            while(index < n)
+            if(index == vec_n)
             {
-                data[index] = distribution(engine.current());
-                engine.discard();
-                index += 1;
+                // Fill tail values (up to output_per_thread-1)
+                for(unsigned int o = 0; o < tail_size; o++)
+                {
+                    data[n - tail_size + o] = distribution(engine.current());
+                    engine.discard();
+                }
             }
         }
     }
@@ -359,8 +390,8 @@ public:
     rocrand_status generate(T * data, size_t data_size,
                             Distribution distribution = Distribution())
     {
-        using vec_type = typename std::conditional<sizeof(T) >= sizeof(int), T, int>::type;
-        constexpr unsigned int vec_width = sizeof(vec_type) / sizeof(T);
+        constexpr unsigned int output_per_thread =
+            sizeof(T) >= sizeof(int) ? 1 : sizeof(int) / sizeof(T);
 
         if (data_size % m_dimensions != 0)
             return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
@@ -378,9 +409,10 @@ public:
         #endif
 
         const size_t size = data_size / m_dimensions;
+        const uint32_t output_per_block = threads * output_per_thread;
         const uint32_t blocks = std::min(
             max_blocks,
-            static_cast<uint32_t>((size + (threads * vec_width) - 1) / (threads * vec_width))
+            static_cast<uint32_t>((size + output_per_block - 1) / output_per_block)
         );
 
         // blocks_x must be power of 2 because strided discard (leap frog)
@@ -388,7 +420,7 @@ public:
         const uint32_t blocks_x = next_power2((blocks + m_dimensions - 1) / m_dimensions);
         const uint32_t blocks_y = m_dimensions;
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<vec_type, vec_width>),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<output_per_thread>),
             dim3(blocks_x, blocks_y), dim3(threads), 0, m_stream,
             data, size,
             static_cast<const unsigned int*>(m_direction_vectors), m_current_offset,
