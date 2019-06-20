@@ -132,13 +132,19 @@ namespace detail {
         }
     }
 
+    // All distributions generate one output from one input
+    // Generation of, for example, 2 shorts from 1 uint or
+    // 2 floats from 2 uints using Box-Muller transformation
+    // is impossible because the resulting sequence is not
+    // quasi-random anymore.
+
     template<class T>
     struct sobol_uniform_distribution;
 
     template<>
     struct sobol_uniform_distribution<unsigned int>
     {
-        __device__
+        __host__ __device__
         unsigned int operator()(const unsigned int v) const
         {
             return v;
@@ -148,7 +154,7 @@ namespace detail {
     template<>
     struct sobol_uniform_distribution<unsigned char>
     {
-        __device__
+        __host__ __device__
         unsigned char operator()(const unsigned int v) const
         {
             return static_cast<unsigned char>(v >> 24);
@@ -158,7 +164,7 @@ namespace detail {
     template<>
     struct sobol_uniform_distribution<unsigned short>
     {
-        __device__
+        __host__ __device__
         unsigned short operator()(const unsigned int v) const
         {
             return static_cast<unsigned short>(v >> 16);
@@ -168,7 +174,7 @@ namespace detail {
     template<>
     struct sobol_uniform_distribution<float>
     {
-        __device__
+        __host__ __device__
         float operator()(const unsigned int v) const
         {
             return rocrand_device::detail::uniform_distribution(v);
@@ -178,7 +184,7 @@ namespace detail {
     template<>
     struct sobol_uniform_distribution<double>
     {
-        __device__
+        __host__ __device__
         double operator()(const unsigned int v) const
         {
             return rocrand_device::detail::uniform_distribution_double(v);
@@ -188,10 +194,10 @@ namespace detail {
     template<>
     struct sobol_uniform_distribution<__half>
     {
-        __device__
+        __host__ __device__
         __half operator()(const unsigned int v) const
         {
-            return rocrand_device::detail::uniform_distribution(v);
+            return uniform_distribution_half(static_cast<unsigned short>(v >> 16));
         }
     };
 
@@ -208,7 +214,7 @@ namespace detail {
         sobol_normal_distribution(float mean, float stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         float operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);
@@ -226,7 +232,7 @@ namespace detail {
         sobol_normal_distribution(double mean, double stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         double operator()(const unsigned int x) const
         {
             double v = rocrand_device::detail::normal_distribution_double(x);
@@ -244,7 +250,7 @@ namespace detail {
         sobol_normal_distribution(__half mean, __half stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         __half operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);
@@ -269,7 +275,7 @@ namespace detail {
         sobol_log_normal_distribution(float mean, float stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         float operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);
@@ -287,7 +293,7 @@ namespace detail {
         sobol_log_normal_distribution(double mean, double stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         double operator()(const unsigned int x) const
         {
             double v = rocrand_device::detail::normal_distribution_double(x);
@@ -305,7 +311,7 @@ namespace detail {
         sobol_log_normal_distribution(__half mean, __half stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         __half operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);

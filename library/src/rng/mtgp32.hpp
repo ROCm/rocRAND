@@ -183,7 +183,7 @@ namespace detail {
         static constexpr unsigned int input_width = 1;
         static constexpr unsigned int output_width = 1;
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
         {
             unsigned int v = input[0];
@@ -197,7 +197,7 @@ namespace detail {
         static constexpr unsigned int input_width = 1;
         static constexpr unsigned int output_width = 4;
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
         {
             unsigned int v = input[0];
@@ -211,7 +211,7 @@ namespace detail {
         static constexpr unsigned int input_width = 1;
         static constexpr unsigned int output_width = 2;
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
         {
             unsigned int v = input[0];
@@ -225,7 +225,7 @@ namespace detail {
         static constexpr unsigned int input_width = 1;
         static constexpr unsigned int output_width = 1;
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[1], float (&output)[1]) const
         {
             output[0] = rocrand_device::detail::uniform_distribution(input[0]);
@@ -238,7 +238,7 @@ namespace detail {
         static constexpr unsigned int input_width = 2;
         static constexpr unsigned int output_width = 1;
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[2], double (&output)[1]) const
         {
             output[0] = rocrand_device::detail::uniform_distribution_double(input[0], input[1]);
@@ -251,7 +251,7 @@ namespace detail {
         static constexpr unsigned int input_width = 1;
         static constexpr unsigned int output_width = 2;
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
         {
             unsigned int v = input[0];
@@ -276,7 +276,7 @@ namespace detail {
         mtgp_normal_distribution(float mean, float stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[2], float (&output)[2]) const
         {
             float2 v = rocrand_device::detail::normal_distribution2(input[0], input[1]);
@@ -298,7 +298,7 @@ namespace detail {
         mtgp_normal_distribution(double mean, double stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[4], double (&output)[2]) const
         {
             double2 v = rocrand_device::detail::normal_distribution_double2(
@@ -322,7 +322,7 @@ namespace detail {
         mtgp_normal_distribution(__half mean, __half stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
         {
             unsigned int a = input[0];
@@ -356,7 +356,7 @@ namespace detail {
         mtgp_log_normal_distribution(float mean, float stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[2], float (&output)[2]) const
         {
             float2 v = rocrand_device::detail::normal_distribution2(input[0], input[1]);
@@ -378,7 +378,7 @@ namespace detail {
         mtgp_log_normal_distribution(double mean, double stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[4], double (&output)[2]) const
         {
             double2 v = rocrand_device::detail::normal_distribution_double2(
@@ -402,7 +402,7 @@ namespace detail {
         mtgp_log_normal_distribution(__half mean, __half stddev)
             : mean(mean), stddev(stddev) {}
 
-        __device__
+        __host__ __device__
         void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
         {
             unsigned int a = input[0];

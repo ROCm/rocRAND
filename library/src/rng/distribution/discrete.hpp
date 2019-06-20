@@ -126,7 +126,7 @@ public:
         }
     }
 
-    __device__
+    __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int output[1]) const
     {
         output[0] = (*this)(input[0]);
