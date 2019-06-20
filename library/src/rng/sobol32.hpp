@@ -254,7 +254,7 @@ namespace detail {
         __half operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);
-            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
             return __hadd(mean, __hmul(__float2half(v), stddev));
             #else
             return __half2float(mean) + v * __half2float(stddev);
@@ -315,7 +315,7 @@ namespace detail {
         __half operator()(const unsigned int x) const
         {
             float v = rocrand_device::detail::normal_distribution(x);
-            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
             return hexp(__hadd(mean, __hmul(stddev, __float2half(v))));
             #else
             return expf(__half2float(mean) + (__half2float(stddev) * v));

@@ -395,7 +395,7 @@ namespace detail {
                 static_cast<unsigned short>(a),
                 static_cast<unsigned short>(a >> 16)
             );
-            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
             output[0] = __hadd(mean, __hmul(v.x, stddev));
             output[1] = __hadd(mean, __hmul(v.y, stddev));
             #else
@@ -475,7 +475,7 @@ namespace detail {
                 static_cast<unsigned short>(a),
                 static_cast<unsigned short>(a >> 16)
             );
-            #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
             output[0] = hexp(__hadd(mean, __hmul(v.x, stddev)));
             output[1] = hexp(__hadd(mean, __hmul(v.y, stddev)));
             #else
