@@ -25,6 +25,10 @@
 
 #include "../common.hpp"
 
+#if __HIP_DEVICE_COMPILE__ && (defined(__HIP_PLATFORM_HCC__) || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
+#define ROCRAND_HALF_MATH_SUPPORTED
+#endif
+
 struct rocrand_half2
 {
     __half x;
@@ -123,7 +127,7 @@ __half uniform_distribution_half(unsigned short v)
 FQUALIFIERS
 rocrand_half2 box_muller_half(unsigned short x, unsigned short y)
 {
-    #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+    #if defined(ROCRAND_HALF_MATH_SUPPORTED)
     rocrand_half2 result;
     __half u = __float2half(ROCRAND_2POW16_INV + (x * ROCRAND_2POW16_INV));
     __half v = __float2half(ROCRAND_2POW16_INV_2PI + (y * ROCRAND_2POW16_INV_2PI));
@@ -154,10 +158,10 @@ rocrand_half2 box_muller_half(unsigned short x, unsigned short y)
 FQUALIFIERS
 rocrand_half2 mrg_box_muller_half(__half x, __half y)
 {
-    #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
+    #if defined(ROCRAND_HALF_MATH_SUPPORTED)
     rocrand_half2 result;
     __half u = x;
-    __half v = __hmul(__float2half(y), __float2half(ROCRAND_2PI));
+    __half v = __hmul(y, __float2half(ROCRAND_2PI));
     __half s = hsqrt(__hmul(__float2half(-2.0f), hlog(u)));
     result.x = __hmul(hsin(v), s);
     result.y = __hmul(hcos(v), s);
