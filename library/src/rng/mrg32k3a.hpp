@@ -31,14 +31,6 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 
-// MRG32K3A constants
-#ifndef ROCRAND_MRG32K3A_NORM_DOUBLE
-#define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
-#endif
-#ifndef ROCRAND_MRG32K3A_UINT_NORM
-#define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
-#endif
-
 namespace rocrand_host {
 namespace detail {
 
@@ -154,7 +146,7 @@ namespace detail {
         __device__
         void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
         {
-            unsigned int v = static_cast<unsigned int>(input[0] * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
             output[0] = v;
         }
     };
@@ -168,7 +160,7 @@ namespace detail {
         __device__
         void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
         {
-            unsigned int v = static_cast<unsigned int>(input[0] * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
             *reinterpret_cast<unsigned int *>(output) = v;
         }
     };
@@ -182,7 +174,7 @@ namespace detail {
         __device__
         void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
         {
-            unsigned int v = static_cast<unsigned int>(input[0] * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
             *reinterpret_cast<unsigned int *>(output) = v;
         }
     };
@@ -222,7 +214,7 @@ namespace detail {
         __device__
         void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
         {
-            unsigned int v = static_cast<unsigned int>(input[0] * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
             output[0] = uniform_distribution_half(static_cast<short>(v));
             output[1] = uniform_distribution_half(static_cast<short>(v >> 16));
         }
@@ -291,7 +283,7 @@ namespace detail {
         __device__
         void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
         {
-            unsigned int a = static_cast<unsigned int>(input[0] * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int a = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
             rocrand_half2 v = mrg_box_muller_half(
                 uniform_distribution_half(static_cast<short>(a)),
                 uniform_distribution_half(static_cast<short>(a >> 16))
@@ -369,7 +361,7 @@ namespace detail {
         __device__
         void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
         {
-            unsigned int a = static_cast<unsigned int>(input[0] * ROCRAND_MRG32K3A_UINT_NORM);
+            unsigned int a = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
             rocrand_half2 v = mrg_box_muller_half(
                 uniform_distribution_half(static_cast<short>(a)),
                 uniform_distribution_half(static_cast<short>(a >> 16))

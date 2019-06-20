@@ -128,6 +128,13 @@ double4 uniform_distribution_double4(uint4 v1, uint4 v2)
     };
 }
 
+FQUALIFIERS
+unsigned int mrg_uniform_distribution_uint(unsigned int v)
+{
+    // v in (0; ROCRAND_MRG32K3A_M1]
+    return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
+}
+
 // For unsigned integer between 0 and UINT_MAX, returns value between
 // 0.0f and 1.0f, excluding 0.0f and including 1.0f (MRG32K3A).
 FQUALIFIERS
