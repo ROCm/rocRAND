@@ -24,7 +24,6 @@
 #include <math.h>
 #include <hip/hip_runtime.h>
 
-#include "common.hpp"
 #include "device_distributions.hpp"
 
 
@@ -111,8 +110,8 @@ struct uniform_distribution<__half>
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
         unsigned int v = input[0];
-        output[0] = uniform_distribution_half(static_cast<short>(v));
-        output[1] = uniform_distribution_half(static_cast<short>(v >> 16));
+        output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
+        output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
     }
 };
 
@@ -200,8 +199,8 @@ struct mrg_uniform_distribution<__half>
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
         unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-        output[0] = uniform_distribution_half(static_cast<short>(v));
-        output[1] = uniform_distribution_half(static_cast<short>(v >> 16));
+        output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
+        output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
     }
 };
 
@@ -267,7 +266,7 @@ struct sobol_uniform_distribution<__half>
     __host__ __device__
     __half operator()(const unsigned int v) const
     {
-        return uniform_distribution_half(static_cast<unsigned short>(v >> 16));
+        return rocrand_device::detail::uniform_distribution_half(static_cast<unsigned short>(v >> 16));
     }
 };
 

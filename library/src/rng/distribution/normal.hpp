@@ -24,7 +24,6 @@
 #include <math.h>
 #include <hip/hip_runtime.h>
 
-#include "common.hpp"
 #include "device_distributions.hpp"
 
 
@@ -95,11 +94,7 @@ struct normal_distribution<__half>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
-        unsigned int a = input[0];
-        __half2 v = box_muller_half(
-            static_cast<unsigned short>(a),
-            static_cast<unsigned short>(a >> 16)
-        );
+        __half2 v = rocrand_device::detail::normal_distribution_half2(input[0]);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)
         output[0] = __hadd(mean, __hmul(__low2float(v), stddev));
         output[1] = __hadd(mean, __hmul(__high2float(v), stddev));
@@ -176,11 +171,7 @@ struct mrg_normal_distribution<__half>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
-        unsigned int a = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-        __half2 v = box_muller_half(
-            static_cast<unsigned short>(a),
-            static_cast<unsigned short>(a >> 16)
-        );
+        __half2 v = rocrand_device::detail::mrg_normal_distribution_half2(input[0]);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)
         output[0] = __hadd(mean, __hmul(__low2float(v), stddev));
         output[1] = __hadd(mean, __hmul(__high2float(v), stddev));

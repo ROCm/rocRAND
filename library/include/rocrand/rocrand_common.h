@@ -39,6 +39,10 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
+#if __HIP_DEVICE_COMPILE__ && (defined(__HIP_PLATFORM_HCC__) || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
+#define ROCRAND_HALF_MATH_SUPPORTED
+#endif
+
 namespace rocrand_device {
 namespace detail {
 
