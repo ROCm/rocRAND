@@ -140,7 +140,38 @@ void analyze(const size_t size,
     const double alpha = 0.05;
 
     double start = (mean - 6.0 * stddev);
-    if (std::is_integral<T>::value)
+    std::vector<size_t> max_cells_counts({ 1000, 100, 25 });
+    std::vector<double> cell_widths;
+
+    const size_t tests = max_cells_counts.size();
+
+    for (size_t test = 0; test < tests; test++)
+    {
+        const size_t cells_count = max_cells_counts[test];
+        double cell_width = 12.0 * stddev / cells_count;
+        if (std::is_same<T, unsigned int>::value)
+        {
+            // Use integral values for discrete distributions (e.g. Poisson)
+            cell_width = std::ceil(cell_width);
+        }
+        cell_widths.push_back(cell_width);
+    }
+
+    // Use power-of-2 values for uniform uchar and short
+    // otherwise classes will be uneven (unlike floating point uniform)
+    if (std::is_same<T, unsigned char>::value)
+    {
+        start = 0.0;
+        max_cells_counts = { 256, 64, 16 };
+        cell_widths = { 1, 4, 16 };
+    }
+    else if (std::is_same<T, unsigned short>::value)
+    {
+        start = 0.0;
+        max_cells_counts = { 256, 64, 16 };
+        cell_widths = { 256, 1024, 4096 };
+    }
+    else if (std::is_same<T, unsigned int>::value)
     {
         // Use integral values for discrete distributions (e.g. Poisson)
         start = std::floor(start);
@@ -162,9 +193,6 @@ void analyze(const size_t size,
         long nb_classes;
     };
 
-    const std::vector<size_t> max_cells_counts({ 1000, 100, 25 });
-    const size_t tests = max_cells_counts.size();
-
     std::vector<test_param> ts(tests);
 
     for (size_t test = 0; test < tests; test++)
@@ -173,12 +201,7 @@ void analyze(const size_t size,
 
         const size_t cells_count = max_cells_counts[test];
 
-        t.cell_width = 12.0 * stddev / cells_count;
-        if (std::is_integral<T>::value)
-        {
-            // Use integral values for discrete distributions (e.g. Poisson)
-            t.cell_width = std::ceil(t.cell_width);
-        }
+        t.cell_width = cell_widths[test];
 
         t.nb_exp.resize(cells_count);
         t.xs.resize(cells_count);
