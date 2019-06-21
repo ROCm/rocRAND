@@ -261,7 +261,8 @@ public:
         {
             return status;
         }
-        return generate(data, data_size, m_poisson.dis);
+        mrg_poisson_distribution distribution(m_poisson.dis);
+        return generate(data, data_size, distribution);
     }
 
 private:

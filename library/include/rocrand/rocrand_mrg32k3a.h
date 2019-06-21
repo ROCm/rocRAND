@@ -176,7 +176,7 @@ public:
         return this->next();
     }
 
-    // Returned value is in range (0; ROCRAND_MRG32K3A_M1],
+    // Returned value is in range [1, ROCRAND_MRG32K3A_M1],
     // where ROCRAND_MRG32K3A_M1 < UINT_MAX
     FQUALIFIERS
     unsigned int next()
@@ -453,7 +453,7 @@ void rocrand_init(const unsigned long long seed,
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_mrg32k3a * state)
 {
-    // next() in (0; ROCRAND_MRG32K3A_M1]
+    // next() in [1, ROCRAND_MRG32K3A_M1]
     return static_cast<unsigned int>((state->next() - 1) * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
