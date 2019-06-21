@@ -221,13 +221,8 @@ public:
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        #ifdef __HIP_PLATFORM_NVCC__
-        const uint32_t threads = 64;
-        const uint32_t max_blocks = 4096;
-        #else
         const uint32_t threads = 256;
         const uint32_t max_blocks = 4096;
-        #endif
 
         const size_t size = data_size / m_dimensions;
         const uint32_t output_per_block = threads * output_per_thread;

@@ -300,13 +300,9 @@ private:
     bool m_engines_initialized;
     engine_type * m_engines;
     size_t m_engines_size;
-    #ifdef __HIP_PLATFORM_NVCC__
-    static constexpr uint32_t s_threads = 256;
-    static constexpr uint32_t s_blocks = 64;
-    #else
+
     static constexpr uint32_t s_threads = 256;
     static constexpr uint32_t s_blocks = 512;
-    #endif
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> m_poisson;
