@@ -119,7 +119,7 @@ void run_tests(const cli::Parser& parser,
                 return rocrand_generate_char(gen, data, size);
             },
             UCHAR_MAX / 2.0, (UCHAR_MAX + 1) * std::sqrt(1.0 / 12.0),
-            [](double x) { return fdist_Unif(x / UCHAR_MAX); }
+            [](double x) { return fdist_Unif(x / (UCHAR_MAX + 1)); }
         );
     }
     if (distribution == "uniform-ushort")
@@ -129,7 +129,7 @@ void run_tests(const cli::Parser& parser,
                 return rocrand_generate_short(gen, data, size);
             },
             USHRT_MAX / 2.0, (USHRT_MAX + 1) * std::sqrt(1.0 / 12.0),
-            [](double x) { return fdist_Unif(x / USHRT_MAX); }
+            [](double x) { return fdist_Unif(x / (USHRT_MAX + 1)); }
         );
     }
     if (distribution == "uniform-float")
