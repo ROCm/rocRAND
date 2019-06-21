@@ -62,6 +62,12 @@ namespace detail {
 
         data += dimension * n;
 
+        // All distributions generate one output from one input
+        // Generation of, for example, 2 shorts from 1 uint or
+        // 2 floats from 2 uints using Box-Muller transformation
+        // is impossible because the resulting sequence is not
+        // quasi-random anymore.
+
         if(output_per_thread == 1)
         {
             const unsigned int engine_offset = engine_id * output_per_thread;
@@ -132,197 +138,6 @@ namespace detail {
         }
     }
 
-    // All distributions generate one output from one input
-    // Generation of, for example, 2 shorts from 1 uint or
-    // 2 floats from 2 uints using Box-Muller transformation
-    // is impossible because the resulting sequence is not
-    // quasi-random anymore.
-
-    template<class T>
-    struct sobol_uniform_distribution;
-
-    template<>
-    struct sobol_uniform_distribution<unsigned int>
-    {
-        __host__ __device__
-        unsigned int operator()(const unsigned int v) const
-        {
-            return v;
-        }
-    };
-
-    template<>
-    struct sobol_uniform_distribution<unsigned char>
-    {
-        __host__ __device__
-        unsigned char operator()(const unsigned int v) const
-        {
-            return static_cast<unsigned char>(v >> 24);
-        }
-    };
-
-    template<>
-    struct sobol_uniform_distribution<unsigned short>
-    {
-        __host__ __device__
-        unsigned short operator()(const unsigned int v) const
-        {
-            return static_cast<unsigned short>(v >> 16);
-        }
-    };
-
-    template<>
-    struct sobol_uniform_distribution<float>
-    {
-        __host__ __device__
-        float operator()(const unsigned int v) const
-        {
-            return rocrand_device::detail::uniform_distribution(v);
-        }
-    };
-
-    template<>
-    struct sobol_uniform_distribution<double>
-    {
-        __host__ __device__
-        double operator()(const unsigned int v) const
-        {
-            return rocrand_device::detail::uniform_distribution_double(v);
-        }
-    };
-
-    template<>
-    struct sobol_uniform_distribution<__half>
-    {
-        __host__ __device__
-        __half operator()(const unsigned int v) const
-        {
-            return uniform_distribution_half(static_cast<unsigned short>(v >> 16));
-        }
-    };
-
-    template<class T>
-    struct sobol_normal_distribution;
-
-    template<>
-    struct sobol_normal_distribution<float>
-    {
-        const float mean;
-        const float stddev;
-
-        __host__ __device__
-        sobol_normal_distribution(float mean, float stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        float operator()(const unsigned int x) const
-        {
-            float v = rocrand_device::detail::normal_distribution(x);
-            return mean + v * stddev;
-        }
-    };
-
-    template<>
-    struct sobol_normal_distribution<double>
-    {
-        const double mean;
-        const double stddev;
-
-        __host__ __device__
-        sobol_normal_distribution(double mean, double stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        double operator()(const unsigned int x) const
-        {
-            double v = rocrand_device::detail::normal_distribution_double(x);
-            return mean + v * stddev;
-        }
-    };
-
-    template<>
-    struct sobol_normal_distribution<__half>
-    {
-        const __half mean;
-        const __half stddev;
-
-        __host__ __device__
-        sobol_normal_distribution(__half mean, __half stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        __half operator()(const unsigned int x) const
-        {
-            float v = rocrand_device::detail::normal_distribution(x);
-            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
-            return __hadd(mean, __hmul(__float2half(v), stddev));
-            #else
-            return __half2float(mean) + v * __half2float(stddev);
-            #endif
-        }
-    };
-
-    template<class T>
-    struct sobol_log_normal_distribution;
-
-    template<>
-    struct sobol_log_normal_distribution<float>
-    {
-        const float mean;
-        const float stddev;
-
-        __host__ __device__
-        sobol_log_normal_distribution(float mean, float stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        float operator()(const unsigned int x) const
-        {
-            float v = rocrand_device::detail::normal_distribution(x);
-            return expf(mean + (stddev * v));
-        }
-    };
-
-    template<>
-    struct sobol_log_normal_distribution<double>
-    {
-        const double mean;
-        const double stddev;
-
-        __host__ __device__
-        sobol_log_normal_distribution(double mean, double stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        double operator()(const unsigned int x) const
-        {
-            double v = rocrand_device::detail::normal_distribution_double(x);
-            return exp(mean + (stddev * v));
-        }
-    };
-
-    template<>
-    struct sobol_log_normal_distribution<__half>
-    {
-        const __half mean;
-        const __half stddev;
-
-        __host__ __device__
-        sobol_log_normal_distribution(__half mean, __half stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        __half operator()(const unsigned int x) const
-        {
-            float v = rocrand_device::detail::normal_distribution(x);
-            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
-            return hexp(__hadd(mean, __hmul(stddev, __float2half(v))));
-            #else
-            return expf(__half2float(mean) + (__half2float(stddev) * v));
-            #endif
-        }
-    };
-
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -392,7 +207,7 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = rocrand_host::detail::sobol_uniform_distribution<T> >
+    template<class T, class Distribution = sobol_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             Distribution distribution = Distribution())
     {
@@ -444,21 +259,21 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        rocrand_host::detail::sobol_uniform_distribution<T> distribution;
+        sobol_uniform_distribution<T> distribution;
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        rocrand_host::detail::sobol_normal_distribution<T> distribution(mean, stddev);
+        sobol_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        rocrand_host::detail::sobol_log_normal_distribution<T> distribution(mean, stddev);
+        sobol_log_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 

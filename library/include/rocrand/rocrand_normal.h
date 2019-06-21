@@ -85,11 +85,11 @@ double2 box_muller_double(uint4 v)
 }
 
 FQUALIFIERS
-float2 mrg_box_muller(float x, float y)
+float2 mrg_box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
-    float u = x;
-    float v = y * ROCRAND_2PI;
+    float u = rocrand_device::detail::mrg_uniform_distribution(x);
+    float v = rocrand_device::detail::mrg_uniform_distribution(y) * ROCRAND_2PI;
     float s = sqrtf(-2.0f * logf(u));
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
@@ -103,11 +103,11 @@ float2 mrg_box_muller(float x, float y)
 }
 
 FQUALIFIERS
-double2 mrg_box_muller_double(double x, double y)
+double2 mrg_box_muller_double(unsigned int x, unsigned int y)
 {
     double2 result;
-    double u = x;
-    double v = y * 2.0;
+    double u = rocrand_device::detail::mrg_uniform_distribution(x);
+    double v = rocrand_device::detail::mrg_uniform_distribution(y) * 2.0;
     double s = sqrt(-2.0 * log(u));
     #ifdef __HIP_DEVICE_COMPILE__
         sincospi(v, &result.x, &result.y);
@@ -220,17 +220,13 @@ double2 normal_distribution_double2(uint4 v)
 FQUALIFIERS
 float2 mrg_normal_distribution2(unsigned int v1, unsigned int v2)
 {
-    float x = rocrand_device::detail::mrg_uniform_distribution(v1);
-    float y = rocrand_device::detail::mrg_uniform_distribution(v2);
-    return ::rocrand_device::detail::mrg_box_muller(x, y);
+    return ::rocrand_device::detail::mrg_box_muller(v1, v2);
 }
 
 FQUALIFIERS
 double2 mrg_normal_distribution_double2(unsigned int v1, unsigned int v2)
 {
-    double x = rocrand_device::detail::mrg_uniform_distribution(v1);
-    double y = rocrand_device::detail::mrg_uniform_distribution(v2);
-    return ::rocrand_device::detail::mrg_box_muller_double(x, y);
+    return ::rocrand_device::detail::mrg_box_muller_double(v1, v2);
 }
 
 } // end namespace detail
