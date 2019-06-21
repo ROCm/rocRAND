@@ -120,7 +120,7 @@ double4 uniform_distribution_double4(uint4 v1, uint4 v2)
 FQUALIFIERS
 unsigned int mrg_uniform_distribution_uint(unsigned int v)
 {
-    // v in (0; ROCRAND_MRG32K3A_M1]
+    // v in [1, ROCRAND_MRG32K3A_M1]
     return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
