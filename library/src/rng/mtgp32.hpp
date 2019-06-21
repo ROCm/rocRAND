@@ -61,6 +61,7 @@
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_mtgp32_11213.h>
 
+#include "common.hpp"
 #include "generator_type.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"

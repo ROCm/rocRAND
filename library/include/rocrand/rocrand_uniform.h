@@ -118,6 +118,12 @@ double4 uniform_distribution_double4(uint4 v1, uint4 v2)
 }
 
 FQUALIFIERS
+__half uniform_distribution_half(unsigned short v)
+{
+    return __float2half(ROCRAND_2POW16_INV + (v * ROCRAND_2POW16_INV));
+}
+
+FQUALIFIERS
 unsigned int mrg_uniform_distribution_uint(unsigned int v)
 {
     // v in [1, ROCRAND_MRG32K3A_M1]

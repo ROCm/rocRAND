@@ -27,8 +27,6 @@
 
 #include "../device_engines.hpp"
 
-#include "common.hpp"
-
 #include <rocrand/rocrand_uniform.h>
 #include <rocrand/rocrand_normal.h>
 #include <rocrand/rocrand_log_normal.h>

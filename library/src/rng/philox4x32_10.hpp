@@ -58,6 +58,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rocrand/rocrand.h>
 
+#include "common.hpp"
 #include "generator_type.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
