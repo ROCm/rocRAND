@@ -84,23 +84,22 @@ struct log_normal_distribution<__half>
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 2;
 
-    const __half mean;
-    const __half stddev;
+    const __half2 mean;
+    const __half2 stddev;
 
     __host__ __device__
     log_normal_distribution(__half mean, __half stddev)
-        : mean(mean), stddev(stddev) {}
+        : mean(mean, mean), stddev(stddev, stddev) {}
 
     __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
         __half2 v = rocrand_device::detail::normal_distribution_half2(input[0]);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)
-        output[0] = hexp(__hadd(mean, __hmul(__low2float(v), stddev)));
-        output[1] = hexp(__hadd(mean, __hmul(__high2float(v), stddev)));
+        *reinterpret_cast<__half2 *>(output) = h2exp(__hfma2(v, stddev, mean));
         #else
-        output[0] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __low2float(v))));
-        output[1] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __high2float(v))));
+        output[0] = __float2half(expf(__low2float(mean) + (__low2float(stddev) * __low2float(v))));
+        output[1] = __float2half(expf(__low2float(mean) + (__low2float(stddev) * __high2float(v))));
         #endif
     }
 };
@@ -161,23 +160,22 @@ struct mrg_log_normal_distribution<__half>
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 2;
 
-    const __half mean;
-    const __half stddev;
+    const __half2 mean;
+    const __half2 stddev;
 
     __host__ __device__
     mrg_log_normal_distribution(__half mean, __half stddev)
-        : mean(mean), stddev(stddev) {}
+        : mean(mean, mean), stddev(stddev, stddev) {}
 
     __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
         __half2 v = rocrand_device::detail::mrg_normal_distribution_half2(input[0]);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)
-        output[0] = hexp(__hadd(mean, __hmul(__low2float(v), stddev)));
-        output[1] = hexp(__hadd(mean, __hmul(__high2float(v), stddev)));
+        *reinterpret_cast<__half2 *>(output) = h2exp(__hfma2(v, stddev, mean));
         #else
-        output[0] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __low2float(v))));
-        output[1] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __high2float(v))));
+        output[0] = __float2half(expf(__low2float(mean) + (__low2float(stddev) * __low2float(v))));
+        output[1] = __float2half(expf(__low2float(mean) + (__low2float(stddev) * __high2float(v))));
         #endif
     }
 };
@@ -239,7 +237,7 @@ struct sobol_log_normal_distribution<__half>
     {
         float v = rocrand_device::detail::normal_distribution(x);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)
-        return hexp(__hadd(mean, __hmul(stddev, __float2half(v))));
+        return hexp(__hfma(__float2half(v), stddev, mean));
         #else
         return expf(__half2float(mean) + (__half2float(stddev) * v));
         #endif
