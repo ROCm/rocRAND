@@ -107,17 +107,6 @@ double2 uniform_distribution_double2(uint4 v)
 }
 
 FQUALIFIERS
-double4 uniform_distribution_double4(uint4 v)
-{
-   return double4 {
-       ROCRAND_2POW32_INV_DOUBLE + (v.x * ROCRAND_2POW32_INV_DOUBLE),
-       ROCRAND_2POW32_INV_DOUBLE + (v.y * ROCRAND_2POW32_INV_DOUBLE),
-       ROCRAND_2POW32_INV_DOUBLE + (v.z * ROCRAND_2POW32_INV_DOUBLE),
-       ROCRAND_2POW32_INV_DOUBLE + (v.w * ROCRAND_2POW32_INV_DOUBLE)
-   };
-}
-
-FQUALIFIERS
 double4 uniform_distribution_double4(uint4 v1, uint4 v2)
 {
     return double4 {

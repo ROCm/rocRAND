@@ -27,195 +27,230 @@
 #include "common.hpp"
 #include "device_distributions.hpp"
 
+
+// Universal
+
 template<class T>
 struct log_normal_distribution;
 
 template<>
 struct log_normal_distribution<float>
 {
+    static constexpr unsigned int input_width = 2;
+    static constexpr unsigned int output_width = 2;
+
     const float mean;
     const float stddev;
 
     __host__ __device__
-    log_normal_distribution<float>(const float mean, const float stddev) :
-                                   mean(mean), stddev(stddev) {}
+    log_normal_distribution(float mean, float stddev)
+        : mean(mean), stddev(stddev) {}
 
-    __forceinline__ __host__ __device__
-    float2 operator()(const unsigned int x, const unsigned int y)
+    __host__ __device__
+    void operator()(const unsigned int (&input)[2], float (&output)[2]) const
     {
-        float2 v = rocrand_device::detail::box_muller(x, y);
-        v.x = expf(mean + (stddev * v.x));
-        v.y = expf(mean + (stddev * v.y));
-        return v;
-    }
-
-    __forceinline__ __host__ __device__
-    float4 operator()(const uint4 x)
-    {
-        float2 v = rocrand_device::detail::box_muller(x.x, x.y);
-        float2 w = rocrand_device::detail::box_muller(x.z, x.w);
-        return float4 {
-            expf(mean + (stddev * v.x)),
-            expf(mean + (stddev * v.y)),
-            expf(mean + (stddev * w.x)),
-            expf(mean + (stddev * w.y))
-        };
-    }
-
-    __forceinline__ __host__ __device__
-    float operator()(unsigned int x)
-    {
-        float v = rocrand_device::detail::normal_distribution(x);
-        v = expf(mean + (stddev * v));
-        return v;
+        float2 v = rocrand_device::detail::normal_distribution2(input[0], input[1]);
+        output[0] = expf(mean + v.x * stddev);
+        output[1] = expf(mean + v.y * stddev);
     }
 };
 
 template<>
 struct log_normal_distribution<double>
 {
+    static constexpr unsigned int input_width = 4;
+    static constexpr unsigned int output_width = 2;
+
     const double mean;
     const double stddev;
 
     __host__ __device__
-    log_normal_distribution<double>(const double mean, const double stddev) :
-                                    mean(mean), stddev(stddev) {}
+    log_normal_distribution(double mean, double stddev)
+        : mean(mean), stddev(stddev) {}
 
-    __forceinline__ __host__ __device__
-    double2 operator()(const uint4 x)
+    __host__ __device__
+    void operator()(const unsigned int (&input)[4], double (&output)[2]) const
     {
-        double2 v = rocrand_device::detail::box_muller_double(x);
-        v.x = exp(mean + (stddev * v.x));
-        v.y = exp(mean + (stddev * v.y));
-        return v;
-    }
-
-    __forceinline__ __host__ __device__
-    double operator()(unsigned int x)
-    {
-        double v = rocrand_device::detail::normal_distribution_double(x);
-        v = exp(mean + (stddev * v));
-        return v;
+        double2 v = rocrand_device::detail::normal_distribution_double2(
+            make_uint4(input[0], input[1], input[2], input[3])
+        );
+        output[0] = exp(mean + v.x * stddev);
+        output[1] = exp(mean + v.y * stddev);
     }
 };
 
 template<>
 struct log_normal_distribution<__half>
 {
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
     const __half mean;
     const __half stddev;
 
     __host__ __device__
-    log_normal_distribution<__half>(const __half mean, const __half stddev) :
-                                    mean(mean), stddev(stddev) {}
+    log_normal_distribution(__half mean, __half stddev)
+        : mean(mean), stddev(stddev) {}
 
-    __forceinline__ __device__
-    rocrand_half2 operator()(const unsigned int x)
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
-        rocrand_half2 v =
-            box_muller_half(static_cast<short>(x), static_cast<short>(x >> 16));
-        #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
-        return rocrand_half2 {
-            hexp(__hadd(mean, __hmul(stddev, v.x))),
-            hexp(__hadd(mean, __hmul(stddev, v.y)))
-        };
+        unsigned int a = input[0];
+        __half2 v = box_muller_half(
+            static_cast<unsigned short>(a),
+            static_cast<unsigned short>(a >> 16)
+        );
+        #if defined(ROCRAND_HALF_MATH_SUPPORTED)
+        output[0] = hexp(__hadd(mean, __hmul(__low2float(v), stddev)));
+        output[1] = hexp(__hadd(mean, __hmul(__high2float(v), stddev)));
         #else
-        return rocrand_half2 {
-            __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.x)))),
-            __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.y))))
-        };
+        output[0] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __low2float(v))));
+        output[1] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __high2float(v))));
         #endif
     }
+};
 
-    __forceinline__ __device__
-    rocrand_half4 operator()(const unsigned int x, const unsigned int y)
+
+// Mrg32k3a
+
+template<class T>
+struct mrg_log_normal_distribution;
+
+template<>
+struct mrg_log_normal_distribution<float>
+{
+    static constexpr unsigned int input_width = 2;
+    static constexpr unsigned int output_width = 2;
+
+    const float mean;
+    const float stddev;
+
+    __host__ __device__
+    mrg_log_normal_distribution(float mean, float stddev)
+        : mean(mean), stddev(stddev) {}
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[2], float (&output)[2]) const
     {
-        rocrand_half2 v =
-            box_muller_half(static_cast<short>(x), static_cast<short>(x >> 16));
-        rocrand_half2 w =
-            box_muller_half(static_cast<short>(y), static_cast<short>(y >> 16));
-        #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
-        return rocrand_half4 {
-            rocrand_half2 {
-                hexp(__hadd(mean, __hmul(stddev, v.x))),
-                hexp(__hadd(mean, __hmul(stddev, v.y)))
-            },
-            rocrand_half2 {
-                hexp(__hadd(mean, __hmul(stddev, w.x))),
-                hexp(__hadd(mean, __hmul(stddev, w.y)))
-            }
-        };
+        float2 v = rocrand_device::detail::mrg_normal_distribution2(input[0], input[1]);
+        output[0] = expf(mean + v.x * stddev);
+        output[1] = expf(mean + v.y * stddev);
+    }
+};
+
+template<>
+struct mrg_log_normal_distribution<double>
+{
+    static constexpr unsigned int input_width = 2;
+    static constexpr unsigned int output_width = 2;
+
+    const double mean;
+    const double stddev;
+
+    __host__ __device__
+    mrg_log_normal_distribution(double mean, double stddev)
+        : mean(mean), stddev(stddev) {}
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[2], double (&output)[2]) const
+    {
+        double2 v = rocrand_device::detail::mrg_normal_distribution_double2(input[0], input[1]);
+        output[0] = exp(mean + v.x * stddev);
+        output[1] = exp(mean + v.y * stddev);
+    }
+};
+
+template<>
+struct mrg_log_normal_distribution<__half>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    const __half mean;
+    const __half stddev;
+
+    __host__ __device__
+    mrg_log_normal_distribution(__half mean, __half stddev)
+        : mean(mean), stddev(stddev) {}
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+    {
+        unsigned int a = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        __half2 v = box_muller_half(
+            static_cast<unsigned short>(a),
+            static_cast<unsigned short>(a >> 16)
+        );
+        #if defined(ROCRAND_HALF_MATH_SUPPORTED)
+        output[0] = hexp(__hadd(mean, __hmul(__low2float(v), stddev)));
+        output[1] = hexp(__hadd(mean, __hmul(__high2float(v), stddev)));
         #else
-        return rocrand_half4 {
-            rocrand_half2 {
-                __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.x)))),
-                __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.y))))
-            },
-            rocrand_half2 {
-                __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(w.x)))),
-                __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(w.y))))
-            }
-        };
+        output[0] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __low2float(v))));
+        output[1] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __high2float(v))));
         #endif
     }
+};
 
-    __forceinline__ __device__
-    rocrand_half8 operator()(const uint4 x)
+
+// Sobol
+
+template<class T>
+struct sobol_log_normal_distribution;
+
+template<>
+struct sobol_log_normal_distribution<float>
+{
+    const float mean;
+    const float stddev;
+
+    __host__ __device__
+    sobol_log_normal_distribution(float mean, float stddev)
+        : mean(mean), stddev(stddev) {}
+
+    __host__ __device__
+    float operator()(const unsigned int x) const
     {
-        rocrand_half2 t =
-            box_muller_half(static_cast<short>(x.x), static_cast<short>(x.x >> 16));
-        rocrand_half2 u =
-            box_muller_half(static_cast<short>(x.y), static_cast<short>(x.y >> 16));
-        rocrand_half2 v =
-            box_muller_half(static_cast<short>(x.z), static_cast<short>(x.z >> 16));
-        rocrand_half2 w =
-            box_muller_half(static_cast<short>(x.w), static_cast<short>(x.w >> 16));
-        #if defined(__HIP_PLATFORM_HCC__) || ((__CUDA_ARCH__ >= 530) && defined(__HIP_PLATFORM_NVCC__))
-        return rocrand_half8 {
-            rocrand_half4 {
-                rocrand_half2 {
-                    hexp(__hadd(mean, __hmul(stddev, t.x))),
-                    hexp(__hadd(mean, __hmul(stddev, t.y)))
-                },
-                rocrand_half2 {
-                    hexp(__hadd(mean, __hmul(stddev, u.x))),
-                    hexp(__hadd(mean, __hmul(stddev, u.y)))
-                }
-            },
-            rocrand_half4 {
-                rocrand_half2 {
-                    hexp(__hadd(mean, __hmul(stddev, v.x))),
-                    hexp(__hadd(mean, __hmul(stddev, v.y)))
-                },
-                rocrand_half2 {
-                    hexp(__hadd(mean, __hmul(stddev, w.x))),
-                    hexp(__hadd(mean, __hmul(stddev, w.y)))
-                }
-            }
-        };
+        float v = rocrand_device::detail::normal_distribution(x);
+        return expf(mean + (stddev * v));
+    }
+};
+
+template<>
+struct sobol_log_normal_distribution<double>
+{
+    const double mean;
+    const double stddev;
+
+    __host__ __device__
+    sobol_log_normal_distribution(double mean, double stddev)
+        : mean(mean), stddev(stddev) {}
+
+    __host__ __device__
+    double operator()(const unsigned int x) const
+    {
+        double v = rocrand_device::detail::normal_distribution_double(x);
+        return exp(mean + (stddev * v));
+    }
+};
+
+template<>
+struct sobol_log_normal_distribution<__half>
+{
+    const __half mean;
+    const __half stddev;
+
+    __host__ __device__
+    sobol_log_normal_distribution(__half mean, __half stddev)
+        : mean(mean), stddev(stddev) {}
+
+    __host__ __device__
+    __half operator()(const unsigned int x) const
+    {
+        float v = rocrand_device::detail::normal_distribution(x);
+        #if defined(ROCRAND_HALF_MATH_SUPPORTED)
+        return hexp(__hadd(mean, __hmul(stddev, __float2half(v))));
         #else
-        return rocrand_half8 {
-            rocrand_half4 {
-                rocrand_half2 {
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(t.x)))),
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(t.y))))
-                },
-                rocrand_half2 {
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(u.x)))),
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(u.y))))
-                }
-            },
-            rocrand_half4 {
-                rocrand_half2 {
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.x)))),
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.y))))
-                },
-                rocrand_half2 {
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(w.x)))),
-                    __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(w.y))))
-                }
-            }
-        };
+        return expf(__half2float(mean) + (__half2float(stddev) * v));
         #endif
     }
 };

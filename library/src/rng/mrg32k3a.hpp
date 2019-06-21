@@ -134,248 +134,6 @@ namespace detail {
         engines[engine_id] = engine;
     }
 
-    template<class T>
-    struct mrg_uniform_distribution;
-
-    template<>
-    struct mrg_uniform_distribution<unsigned int>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 1;
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
-        {
-            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-            output[0] = v;
-        }
-    };
-
-    template<>
-    struct mrg_uniform_distribution<unsigned char>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 4;
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
-        {
-            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-            *reinterpret_cast<unsigned int *>(output) = v;
-        }
-    };
-
-    template<>
-    struct mrg_uniform_distribution<unsigned short>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 2;
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
-        {
-            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-            *reinterpret_cast<unsigned int *>(output) = v;
-        }
-    };
-
-    template<>
-    struct mrg_uniform_distribution<float>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 1;
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], float (&output)[1]) const
-        {
-            output[0] = rocrand_device::detail::mrg_uniform_distribution(input[0]);
-        }
-    };
-
-    template<>
-    struct mrg_uniform_distribution<double>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 1;
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], double (&output)[1]) const
-        {
-            output[0] = rocrand_device::detail::mrg_uniform_distribution_double(input[0]);
-        }
-    };
-
-    template<>
-    struct mrg_uniform_distribution<__half>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 2;
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
-        {
-            unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-            output[0] = uniform_distribution_half(static_cast<short>(v));
-            output[1] = uniform_distribution_half(static_cast<short>(v >> 16));
-        }
-    };
-
-    template<class T>
-    struct mrg_normal_distribution;
-
-    template<>
-    struct mrg_normal_distribution<float>
-    {
-        static constexpr unsigned int input_width = 2;
-        static constexpr unsigned int output_width = 2;
-
-        const float mean;
-        const float stddev;
-
-        __host__ __device__
-        mrg_normal_distribution(float mean, float stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[2], float (&output)[2]) const
-        {
-            float2 v = rocrand_device::detail::mrg_normal_distribution2(input[0], input[1]);
-            output[0] = mean + v.x * stddev;
-            output[1] = mean + v.y * stddev;
-        }
-    };
-
-    template<>
-    struct mrg_normal_distribution<double>
-    {
-        static constexpr unsigned int input_width = 2;
-        static constexpr unsigned int output_width = 2;
-
-        const double mean;
-        const double stddev;
-
-        __host__ __device__
-        mrg_normal_distribution(double mean, double stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[2], double (&output)[2]) const
-        {
-            double2 v = rocrand_device::detail::mrg_normal_distribution_double2(input[0], input[1]);
-            output[0] = mean + v.x * stddev;
-            output[1] = mean + v.y * stddev;
-        }
-    };
-
-    template<>
-    struct mrg_normal_distribution<__half>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 2;
-
-        const __half mean;
-        const __half stddev;
-
-        __host__ __device__
-        mrg_normal_distribution(__half mean, __half stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
-        {
-            unsigned int a = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-            rocrand_half2 v = mrg_box_muller_half(
-                uniform_distribution_half(static_cast<short>(a)),
-                uniform_distribution_half(static_cast<short>(a >> 16))
-            );
-            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
-            output[0] = __hadd(mean, __hmul(v.x, stddev));
-            output[1] = __hadd(mean, __hmul(v.y, stddev));
-            #else
-            output[0] = __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.x)));
-            output[1] = __float2half(__half2float(mean) + (__half2float(stddev) * __half2float(v.y)));
-            #endif
-        }
-    };
-
-    template<class T>
-    struct mrg_log_normal_distribution;
-
-    template<>
-    struct mrg_log_normal_distribution<float>
-    {
-        static constexpr unsigned int input_width = 2;
-        static constexpr unsigned int output_width = 2;
-
-        const float mean;
-        const float stddev;
-
-        __host__ __device__
-        mrg_log_normal_distribution(float mean, float stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[2], float (&output)[2]) const
-        {
-            float2 v = rocrand_device::detail::mrg_normal_distribution2(input[0], input[1]);
-            output[0] = expf(mean + v.x * stddev);
-            output[1] = expf(mean + v.y * stddev);
-        }
-    };
-
-    template<>
-    struct mrg_log_normal_distribution<double>
-    {
-        static constexpr unsigned int input_width = 2;
-        static constexpr unsigned int output_width = 2;
-
-        const double mean;
-        const double stddev;
-
-        __host__ __device__
-        mrg_log_normal_distribution(double mean, double stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[2], double (&output)[2]) const
-        {
-            double2 v = rocrand_device::detail::mrg_normal_distribution_double2(input[0], input[1]);
-            output[0] = exp(mean + v.x * stddev);
-            output[1] = exp(mean + v.y * stddev);
-        }
-    };
-
-    template<>
-    struct mrg_log_normal_distribution<__half>
-    {
-        static constexpr unsigned int input_width = 1;
-        static constexpr unsigned int output_width = 2;
-
-        const __half mean;
-        const __half stddev;
-
-        __host__ __device__
-        mrg_log_normal_distribution(__half mean, __half stddev)
-            : mean(mean), stddev(stddev) {}
-
-        __host__ __device__
-        void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
-        {
-            unsigned int a = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
-            rocrand_half2 v = mrg_box_muller_half(
-                uniform_distribution_half(static_cast<short>(a)),
-                uniform_distribution_half(static_cast<short>(a >> 16))
-            );
-            #if defined(ROCRAND_HALF_MATH_SUPPORTED)
-            output[0] = hexp(__hadd(mean, __hmul(v.x, stddev)));
-            output[1] = hexp(__hadd(mean, __hmul(v.y, stddev)));
-            #else
-            output[0] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.x))));
-            output[1] = __float2half(expf(__half2float(mean) + (__half2float(stddev) * __half2float(v.y))));
-            #endif
-        }
-    };
-
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -452,7 +210,7 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = rocrand_host::detail::mrg_uniform_distribution<T> >
+    template<class T, class Distribution = mrg_uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
                             Distribution distribution = Distribution())
     {
@@ -475,21 +233,21 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        rocrand_host::detail::mrg_uniform_distribution<T> distribution;
+        mrg_uniform_distribution<T> distribution;
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        rocrand_host::detail::mrg_normal_distribution<T> distribution(mean, stddev);
+        mrg_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        rocrand_host::detail::mrg_log_normal_distribution<T> distribution(mean, stddev);
+        mrg_log_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 

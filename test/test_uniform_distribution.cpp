@@ -23,11 +23,122 @@
 
 #include <random>
 
-#include <rng/generators.hpp>
+#include <rng/distribution/uniform.hpp>
+
+TEST(uniform_distribution_tests, uint_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    uniform_distribution<unsigned int> u;
+    unsigned int input[1];
+    unsigned int output[1];
+    for(size_t i = 0; i < 1000000; i++)
+    {
+        unsigned int x = dis(gen);
+        input[0] = x;
+        u(input, output);
+        EXPECT_EQ(output[0], x);
+    }
+
+    input[0] = UINT_MAX;
+    u(input, output);
+    EXPECT_EQ(output[0], UINT_MAX);
+    input[0] = 0U;
+    u(input, output);
+    EXPECT_EQ(output[0], 0U);
+}
+
+TEST(uniform_distribution_tests, float_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    uniform_distribution<float> u;
+    unsigned int input[1];
+    float output[1];
+    for(size_t i = 0; i < 1000000; i++)
+    {
+        input[0] = dis(gen);
+        u(input, output);
+        EXPECT_LE(output[0], 1.0f);
+        EXPECT_GT(output[0], 0.0f);
+    }
+
+    input[0] = UINT_MAX;
+    u(input, output);
+    EXPECT_EQ(output[0], 1.0f);
+    input[0] = 0U;
+    u(input, output);
+    EXPECT_GT(output[0], 0.0f);
+    EXPECT_LT(output[0], 1e-9f);
+}
+
+TEST(uniform_distribution_tests, double_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    uniform_distribution<double> u;
+    unsigned int input[2];
+    double output[1];
+    for(size_t i = 0; i < 1000000; i++)
+    {
+        input[0] = dis(gen);
+        input[1] = dis(gen);
+        u(input, output);
+        EXPECT_LE(output[0], 1.0);
+        EXPECT_GT(output[0], 0.0);
+    }
+
+    input[0] = UINT_MAX;
+    input[1] = UINT_MAX;
+    u(input, output);
+    EXPECT_EQ(output[0], 1.0);
+    input[0] = 0U;
+    input[1] = 0U;
+    u(input, output);
+    EXPECT_GT(output[0], 0.0);
+    EXPECT_LT(output[0], 1e-9);
+}
+
+TEST(uniform_distribution_tests, half_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    uniform_distribution<half> u;
+    unsigned int input[1];
+    half output[2];
+    for(size_t i = 0; i < 1000000; i++)
+    {
+        input[0] = dis(gen);
+        u(input, output);
+        EXPECT_LE(__half2float(output[0]), 1.0f);
+        EXPECT_LE(__half2float(output[1]), 1.0f);
+        EXPECT_GT(__half2float(output[0]), 0.0f);
+        EXPECT_GT(__half2float(output[1]), 0.0f);
+    }
+
+    input[0] = UINT_MAX;
+    u(input, output);
+    EXPECT_EQ(__half2float(output[0]), 1.0f);
+    EXPECT_EQ(__half2float(output[1]), 1.0f);
+    input[0] = 0U;
+    u(input, output);
+    EXPECT_GT(__half2float(output[0]), 0.0f);
+    EXPECT_LT(__half2float(output[0]), 1e-4f);
+    EXPECT_GT(__half2float(output[1]), 0.0f);
+    EXPECT_LT(__half2float(output[1]), 1e-4f);
+}
 
 TEST(mrg_uniform_distribution_tests, uint_test)
 {
-    rocrand_host::detail::mrg_uniform_distribution<unsigned int> u;
+    mrg_uniform_distribution<unsigned int> u;
     unsigned int input[1];
     unsigned int output[1];
 
@@ -45,7 +156,7 @@ TEST(mrg_uniform_distribution_tests, float_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
 
-    rocrand_host::detail::mrg_uniform_distribution<float> u;
+    mrg_uniform_distribution<float> u;
     unsigned int input[1];
     float output[1];
     for(size_t i = 0; i < 1000000; i++)
@@ -71,7 +182,7 @@ TEST(mrg_uniform_distribution_tests, double_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
 
-    rocrand_host::detail::mrg_uniform_distribution<double> u;
+    mrg_uniform_distribution<double> u;
     unsigned int input[1];
     double output[1];
     for(size_t i = 0; i < 1000000; i++)
@@ -97,7 +208,7 @@ TEST(mrg_uniform_distribution_tests, half_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
 
-    rocrand_host::detail::mrg_uniform_distribution<half> u;
+    mrg_uniform_distribution<half> u;
     unsigned int input[1];
     half output[2];
     for(size_t i = 0; i < 1000000; i++)
@@ -122,235 +233,13 @@ TEST(mrg_uniform_distribution_tests, half_test)
     EXPECT_LT(__half2float(output[1]), 1e-4f);
 }
 
-TEST(mtgp_uniform_distribution_tests, uint_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::mtgp_uniform_distribution<unsigned int> u;
-    unsigned int input[1];
-    unsigned int output[1];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        unsigned int x = dis(gen);
-        input[0] = x;
-        u(input, output);
-        EXPECT_EQ(output[0], x);
-    }
-
-    input[0] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(output[0], UINT_MAX);
-    input[0] = 0U;
-    u(input, output);
-    EXPECT_EQ(output[0], 0U);
-}
-
-TEST(mtgp_uniform_distribution_tests, float_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::mtgp_uniform_distribution<float> u;
-    unsigned int input[1];
-    float output[1];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        input[0] = dis(gen);
-        u(input, output);
-        EXPECT_LE(output[0], 1.0f);
-        EXPECT_GT(output[0], 0.0f);
-    }
-
-    input[0] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(output[0], 1.0f);
-    input[0] = 0U;
-    u(input, output);
-    EXPECT_GT(output[0], 0.0f);
-    EXPECT_LT(output[0], 1e-9f);
-}
-
-TEST(mtgp_uniform_distribution_tests, double_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::mtgp_uniform_distribution<double> u;
-    unsigned int input[2];
-    double output[1];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        input[0] = dis(gen);
-        input[1] = dis(gen);
-        u(input, output);
-        EXPECT_LE(output[0], 1.0);
-        EXPECT_GT(output[0], 0.0);
-    }
-
-    input[0] = UINT_MAX;
-    input[1] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(output[0], 1.0);
-    input[0] = 0U;
-    input[1] = 0U;
-    u(input, output);
-    EXPECT_GT(output[0], 0.0);
-    EXPECT_LT(output[0], 1e-9);
-}
-
-TEST(mtgp_uniform_distribution_tests, half_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::mtgp_uniform_distribution<half> u;
-    unsigned int input[1];
-    half output[2];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        input[0] = dis(gen);
-        u(input, output);
-        EXPECT_LE(__half2float(output[0]), 1.0f);
-        EXPECT_LE(__half2float(output[1]), 1.0f);
-        EXPECT_GT(__half2float(output[0]), 0.0f);
-        EXPECT_GT(__half2float(output[1]), 0.0f);
-    }
-
-    input[0] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(__half2float(output[0]), 1.0f);
-    EXPECT_EQ(__half2float(output[1]), 1.0f);
-    input[0] = 0U;
-    u(input, output);
-    EXPECT_GT(__half2float(output[0]), 0.0f);
-    EXPECT_LT(__half2float(output[0]), 1e-4f);
-    EXPECT_GT(__half2float(output[1]), 0.0f);
-    EXPECT_LT(__half2float(output[1]), 1e-4f);
-}
-
-TEST(philox_uniform_distribution_tests, uint_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::philox_uniform_distribution<unsigned int> u;
-    unsigned int input[1];
-    unsigned int output[1];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        unsigned int x = dis(gen);
-        input[0] = x;
-        u(input, output);
-        EXPECT_EQ(output[0], x);
-    }
-
-    input[0] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(output[0], UINT_MAX);
-    input[0] = 0U;
-    u(input, output);
-    EXPECT_EQ(output[0], 0U);
-}
-
-TEST(philox_uniform_distribution_tests, float_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::philox_uniform_distribution<float> u;
-    unsigned int input[1];
-    float output[1];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        input[0] = dis(gen);
-        u(input, output);
-        EXPECT_LE(output[0], 1.0f);
-        EXPECT_GT(output[0], 0.0f);
-    }
-
-    input[0] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(output[0], 1.0f);
-    input[0] = 0U;
-    u(input, output);
-    EXPECT_GT(output[0], 0.0f);
-    EXPECT_LT(output[0], 1e-9f);
-}
-
-TEST(philox_uniform_distribution_tests, double_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::philox_uniform_distribution<double> u;
-    unsigned int input[2];
-    double output[1];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        input[0] = dis(gen);
-        input[1] = dis(gen);
-        u(input, output);
-        EXPECT_LE(output[0], 1.0);
-        EXPECT_GT(output[0], 0.0);
-    }
-
-    input[0] = UINT_MAX;
-    input[1] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(output[0], 1.0);
-    input[0] = 0U;
-    input[1] = 0U;
-    u(input, output);
-    EXPECT_GT(output[0], 0.0);
-    EXPECT_LT(output[0], 1e-9);
-}
-
-TEST(philox_uniform_distribution_tests, half_test)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
-
-    rocrand_host::detail::philox_uniform_distribution<half> u;
-    unsigned int input[1];
-    half output[2];
-    for(size_t i = 0; i < 1000000; i++)
-    {
-        input[0] = dis(gen);
-        u(input, output);
-        EXPECT_LE(__half2float(output[0]), 1.0f);
-        EXPECT_LE(__half2float(output[1]), 1.0f);
-        EXPECT_GT(__half2float(output[0]), 0.0f);
-        EXPECT_GT(__half2float(output[1]), 0.0f);
-    }
-
-    input[0] = UINT_MAX;
-    u(input, output);
-    EXPECT_EQ(__half2float(output[0]), 1.0f);
-    EXPECT_EQ(__half2float(output[1]), 1.0f);
-    input[0] = 0U;
-    u(input, output);
-    EXPECT_GT(__half2float(output[0]), 0.0f);
-    EXPECT_LT(__half2float(output[0]), 1e-4f);
-    EXPECT_GT(__half2float(output[1]), 0.0f);
-    EXPECT_LT(__half2float(output[1]), 1e-4f);
-}
-
 TEST(sobol_uniform_distribution_tests, uint_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    rocrand_host::detail::sobol_uniform_distribution<unsigned int> u;
+    sobol_uniform_distribution<unsigned int> u;
     unsigned int input[1];
     unsigned int output[1];
     for(size_t i = 0; i < 1000000; i++)
@@ -375,7 +264,7 @@ TEST(sobol_uniform_distribution_tests, float_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    rocrand_host::detail::sobol_uniform_distribution<float> u;
+    sobol_uniform_distribution<float> u;
     unsigned int input[1];
     float output[1];
     for(size_t i = 0; i < 1000000; i++)
@@ -401,7 +290,7 @@ TEST(sobol_uniform_distribution_tests, double_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    rocrand_host::detail::sobol_uniform_distribution<double> u;
+    sobol_uniform_distribution<double> u;
     unsigned int input[1];
     double output[1];
     for(size_t i = 0; i < 1000000; i++)
@@ -427,7 +316,7 @@ TEST(sobol_uniform_distribution_tests, half_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    rocrand_host::detail::sobol_uniform_distribution<half> u;
+    sobol_uniform_distribution<half> u;
     unsigned int input[1];
     half output[1];
     for(size_t i = 0; i < 1000000; i++)
