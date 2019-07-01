@@ -111,10 +111,19 @@ if ($build_hip_clang); then
 fi
 
 if [ -e /etc/redhat-release ] ; then
-    CXX=$rocm_path/$compiler cmake3 -DBUILD_BENCHMARK=ON ../../. # or cmake-gui ../.
-else 
-    CXX=$rocm_path/$compiler cmake -DBUILD_BENCHMARK=ON ../../. # or cmake-gui ../.
+    distro='centos'
+else
+    distro='ubuntu'
 fi
+
+case "$distro" in
+    centos)
+        CXX=$rocm_path/$compiler cmake3 -DBUILD_BENCHMARK=ON ../../. # or cmake-gui ../.
+    ;;
+    ubuntu)
+        CXX=$rocm_path/$compiler cmake -DBUILD_BENCHMARK=ON ../../. # or cmake-gui ../.
+    ;;
+esac
 
 # Build
 make -j$(nproc)
