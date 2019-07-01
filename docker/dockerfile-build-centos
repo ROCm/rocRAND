@@ -1,6 +1,6 @@
-# This Dockerfile provides a starting point for a ROCm installation of hipSPARSE.
+# This Dockerfile provides a starting point for a ROCm installation of rocRAND.
 
-# Parameters related to building hip
+# Parameters related to building rocRAND
 ARG base_image
 
 FROM ${base_image}
@@ -13,7 +13,6 @@ ARG user_uid
 RUN yum install -y \
     sudo \
     rock-dkms \
-    rocprim \
     centos-release-scl \
     devtoolset-7 \
     ca-certificates \
@@ -36,23 +35,3 @@ RUN useradd --create-home -u ${user_uid} -o -G video --shell /bin/bash jenkins &
     echo '%video ALL=(ALL) NOPASSWD:ALL' | tee /etc/sudoers.d/sudo-nopasswd && \
     chmod 400 /etc/sudoers.d/sudo-nopasswd
 
-ARG ROCSPARSE_SRC_ROOT=/usr/local/src/rocSPARSE
-ARG HIPSPARSE_SRC_ROOT=/usr/local/src/hipSPARSE
-
-# Clone rocsparse repo
-# Build rocsparse and install into /usr/local
-RUN mkdir -p ${ROCSPARSE_SRC_ROOT} && cd ${ROCSPARSE_SRC_ROOT} && \
-    git clone -b develop --depth=1 https://github.com/ROCmSoftwarePlatform/rocSPARSE . && \
-    mkdir -p build && cd build && \
-    HIP_PLATFORM=hcc cmake3 -DBUILD_CLIENTS_SAMPLES=OFF .. && \
-    HIP_PLATFORM=hcc make -j $(nproc) install && \
-    rm -rf ${ROCSPARSE_SRC_ROOT}
-
-# Clone hipsparse repo
-# Build client dependencies and install into /usr/local
-RUN mkdir -p ${HIPSPARSE_SRC_ROOT} && cd ${HIPSPARSE_SRC_ROOT} && \
-    git clone -b develop --depth=1 https://github.com/ROCmSoftwarePlatform/hipSPARSE . && \
-    mkdir -p build/deps && cd build/deps && \
-    HIP_PLATFORM=hcc cmake3 ${HIPSPARSE_SRC_ROOT}/deps && \
-    HIP_PLATFORM=hcc make -j $(nproc) install && \
-    rm -rf ${HIPSPARSE_SRC_ROOT}
