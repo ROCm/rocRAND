@@ -21,6 +21,8 @@
 #ifndef ROCRAND_COMMON_H_
 #define ROCRAND_COMMON_H_
 
+#define ROCRAND_2POW16_INV (1.5258789e-05f)
+#define ROCRAND_2POW16_INV_2PI (1.5258789e-05f * 6.2831855f)
 #define ROCRAND_2POW32_INV (2.3283064e-10f)
 #define ROCRAND_2POW32_INV_DOUBLE (2.3283064365386963e-10)
 #define ROCRAND_2POW32_INV_2PI (2.3283064e-10f * 6.2831855f)
@@ -36,6 +38,10 @@
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
+
+#if __HIP_DEVICE_COMPILE__ && (defined(__HIP_PLATFORM_HCC__) || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
+#define ROCRAND_HALF_MATH_SUPPORTED
+#endif
 
 namespace rocrand_device {
 namespace detail {

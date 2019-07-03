@@ -107,17 +107,6 @@ double2 uniform_distribution_double2(uint4 v)
 }
 
 FQUALIFIERS
-double4 uniform_distribution_double4(uint4 v)
-{
-   return double4 {
-       ROCRAND_2POW32_INV_DOUBLE + (v.x * ROCRAND_2POW32_INV_DOUBLE),
-       ROCRAND_2POW32_INV_DOUBLE + (v.y * ROCRAND_2POW32_INV_DOUBLE),
-       ROCRAND_2POW32_INV_DOUBLE + (v.z * ROCRAND_2POW32_INV_DOUBLE),
-       ROCRAND_2POW32_INV_DOUBLE + (v.w * ROCRAND_2POW32_INV_DOUBLE)
-   };
-}
-
-FQUALIFIERS
 double4 uniform_distribution_double4(uint4 v1, uint4 v2)
 {
     return double4 {
@@ -126,6 +115,19 @@ double4 uniform_distribution_double4(uint4 v1, uint4 v2)
         uniform_distribution_double(v2.x, v2.y),
         uniform_distribution_double(v2.z, v2.w)
     };
+}
+
+FQUALIFIERS
+__half uniform_distribution_half(unsigned short v)
+{
+    return __float2half(ROCRAND_2POW16_INV + (v * ROCRAND_2POW16_INV));
+}
+
+FQUALIFIERS
+unsigned int mrg_uniform_distribution_uint(unsigned int v)
+{
+    // v in [1, ROCRAND_MRG32K3A_M1]
+    return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
 // For unsigned integer between 0 and UINT_MAX, returns value between

@@ -64,8 +64,10 @@ void run_benchmark(const cli::Parser& parser,
                    const rng_type_t rng_type,
                    generate_func_type<T> generate_func)
 {
-    const size_t size = parser.get<size_t>("size");
+    const size_t size0 = parser.get<size_t>("size");
     const size_t trials = parser.get<size_t>("trials");
+    const size_t dimensions = parser.get<size_t>("dimensions");
+    const size_t size = (size0 / dimensions) * dimensions;
 
     T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
@@ -73,7 +75,6 @@ void run_benchmark(const cli::Parser& parser,
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
 
-    const size_t dimensions = parser.get<size_t>("dimensions");
     rocrand_status status = rocrand_set_quasi_random_generator_dimensions(generator, dimensions);
     if (status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
     {
@@ -128,6 +129,30 @@ void run_benchmarks(const cli::Parser& parser,
             }
         );
     }
+    if (distribution == "uniform-uchar")
+    {
+        run_benchmark<unsigned char>(parser, rng_type,
+            [](rocrand_generator gen, unsigned char * data, size_t size) {
+                return rocrand_generate_char(gen, data, size);
+            }
+        );
+    }
+    if (distribution == "uniform-ushort")
+    {
+        run_benchmark<unsigned short>(parser, rng_type,
+            [](rocrand_generator gen, unsigned short * data, size_t size) {
+                return rocrand_generate_short(gen, data, size);
+            }
+        );
+    }
+    if (distribution == "uniform-half")
+    {
+        run_benchmark<__half>(parser, rng_type,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_uniform_half(gen, data, size);
+            }
+        );
+    }
     if (distribution == "uniform-float")
     {
         run_benchmark<float>(parser, rng_type,
@@ -144,6 +169,14 @@ void run_benchmarks(const cli::Parser& parser,
             }
         );
     }
+    if (distribution == "normal-half")
+    {
+        run_benchmark<__half>(parser, rng_type,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_normal_half(gen, data, size, 0.0f, 1.0f);
+            }
+        );
+    }
     if (distribution == "normal-float")
     {
         run_benchmark<float>(parser, rng_type,
@@ -157,6 +190,14 @@ void run_benchmarks(const cli::Parser& parser,
         run_benchmark<double>(parser, rng_type,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
+            }
+        );
+    }
+    if (distribution == "log-normal-half")
+    {
+        run_benchmark<__half>(parser, rng_type,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_log_normal_half(gen, data, size, 0.0f, 1.0f);
             }
         );
     }
@@ -202,11 +243,16 @@ const std::vector<std::string> all_engines = {
 
 const std::vector<std::string> all_distributions = {
     "uniform-uint",
+    "uniform-uchar",
+    "uniform-ushort",
+    "uniform-half",
     // "uniform-long-long",
     "uniform-float",
     "uniform-double",
+    "normal-half",
     "normal-float",
     "normal-double",
+    "log-normal-half",
     "log-normal-float",
     "log-normal-double",
     "poisson"

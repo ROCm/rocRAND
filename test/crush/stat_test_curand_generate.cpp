@@ -29,6 +29,7 @@
 #include <algorithm>
 
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 #include <curand.h>
 
 #include "stat_test_common.hpp"

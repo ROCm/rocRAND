@@ -65,10 +65,6 @@ option(BUILD_TOOLS "Build tools" OFF)
 
 # Include cmake scripts
 include(cmake/Dependencies.cmake)
-include(cmake/Summary.cmake)
-
-# Print configuration summary
-print_configuration_summary()
 
 # Setup VERSION
 set(VERSION_STRING "2.5.0.")
@@ -88,6 +84,10 @@ set(hiprand_VERSION_NUMBER ${temp})
 
 # AMD targets
 set(AMDGPU_TARGETS gfx803;gfx900;gfx906 CACHE STRING "List of specific machine types for library to target")
+
+# Print configuration summary
+include(cmake/Summary.cmake)
+print_configuration_summary()
 
 # Tools
 if (BUILD_TOOLS)
