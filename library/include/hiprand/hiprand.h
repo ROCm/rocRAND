@@ -22,6 +22,7 @@
 #define HIPRAND_H_
 
 #include <hip/hip_runtime.h>
+#include <hip/hip_fp16.h>
 
 /** \addtogroup hiprandhost
  *
@@ -65,6 +66,11 @@ typedef hiprandGenerator_st * hiprandGenerator_t;
 /// \cond HIPRAND_DOCS_TYPEDEFS
 /// \brief hipRAND discrete distribution
 typedef hiprandDiscreteDistribution_st * hiprandDiscreteDistribution_t;
+/// \endcond
+
+/// \cond HIPRAND_DOCS_TYPEDEFS
+/// hipRAND half type (derived from HIP)
+typedef __half half;
 /// \endcond
 
 #if defined(__cplusplus)
@@ -223,6 +229,50 @@ hiprandGenerate(hiprandGenerator_t generator,
                 unsigned int * output_data, size_t n);
 
 /**
+ * \brief Generates uniformly distributed 8-bit unsigned integers.
+ *
+ * Generates \p n uniformly distributed 8-bit unsigned integers and
+ * saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0 and \p 2^8, including \p 0 and
+ * excluding \p 2^8.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of 8-bit unsigned integers to generate
+ *
+ * \return
+ * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateChar(hiprandGenerator_t generator,
+                    unsigned char * output_data, size_t n);
+
+/**
+ * \brief Generates uniformly distributed 16-bit unsigned integers.
+ *
+ * Generates \p n uniformly distributed 16-bit unsigned integers and
+ * saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0 and \p 2^16, including \p 0 and
+ * excluding \p 2^16.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of 16-bit unsigned integers to generate
+ *
+ * \return
+ * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateShort(hiprandGenerator_t generator,
+                     unsigned short * output_data, size_t n);
+
+/**
  * \brief Generates uniformly distributed floats.
  *
  * Generates \p n uniformly distributed 32-bit floating-point values
@@ -276,6 +326,30 @@ hiprandGenerateUniformDouble(hiprandGenerator_t generator,
                              double * output_data, size_t n);
 
 /**
+* \brief Generates uniformly distributed half-precision floating-point values.
+*
+* Generates \p n uniformly distributed 16-bit half-precision floating-point
+* values and saves them to \p output_data.
+*
+* Generated numbers are between \p 0.0 and \p 1.0, excluding \p 0.0 and
+* including \p 1.0.
+*
+* \param generator - Generator to use
+* \param output_data - Pointer to memory to store generated numbers
+* \param n - Number of halfs to generate
+*
+* \return
+* - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+* - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+* - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+* of used quasi-random generator \n
+* - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+*/
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateUniformHalf(hiprandGenerator_t generator,
+                           half * output_data, size_t n);
+
+/**
  * \brief Generates normally distributed floats.
  *
  * Generates \p n normally distributed 32-bit floating-point
@@ -326,6 +400,31 @@ hiprandGenerateNormalDouble(hiprandGenerator_t generator,
                             double mean, double stddev);
 
 /**
+ * \brief Generates normally distributed halfs.
+ *
+ * Generates \p n normally distributed 16-bit half-precision floating-point
+ * numbers and saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of halfs to generate
+ * \param mean - Mean value of normal distribution
+ * \param stddev - Standard deviation value of normal distribution
+ *
+ * \return
+ * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+ * aligned to \p sizeof(half2) bytes, or \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
+ * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateNormalHalf(hiprandGenerator_t generator,
+                          half * output_data, size_t n,
+                          half mean, half stddev);
+
+/**
  * \brief Generates log-normally distributed floats.
  *
  * Generates \p n log-normally distributed 32-bit floating-point values
@@ -374,6 +473,31 @@ hiprandStatus_t HIPRANDAPI
 hiprandGenerateLogNormalDouble(hiprandGenerator_t generator,
                                double * output_data, size_t n,
                                double mean, double stddev);
+
+/**
+* \brief Generates log-normally distributed halfs.
+*
+* Generates \p n log-normally distributed 16-bit half-precision floating-point
+* values and saves them to \p output_data.
+*
+* \param generator - Generator to use
+* \param output_data - Pointer to memory to store generated numbers
+* \param n - Number of halfs to generate
+* \param mean - Mean value of log normal distribution
+* \param stddev - Standard deviation value of log normal distribution
+*
+* \return
+* - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+* - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+* - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
+* aligned to \p sizeof(half2) bytes, or \p n is not a multiple of the dimension
+* of used quasi-random generator \n
+* - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+*/
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateLogNormalHalf(hiprandGenerator_t generator,
+                             half * output_data, size_t n,
+                             half mean, half stddev);
 
 /**
  * \brief Generates Poisson-distributed 32-bit unsigned integers.

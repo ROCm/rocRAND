@@ -43,7 +43,7 @@
 #define ROCRAND_MRG32K3A_A23 (4294944443 - 1370589)
 #define ROCRAND_MRG32K3A_A23N 1370589
 #define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
-#define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
+#define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661607) // (ROCRAND_MRG32K3A_POW32 - 1)/(ROCRAND_MRG32K3A_M1 - 1)
 
 /** \rocrand_internal \addtogroup rocranddevice
  *
@@ -176,7 +176,7 @@ public:
         return this->next();
     }
 
-    // Returned value is in range (0; ROCRAND_MRG32K3A_M1],
+    // Returned value is in range [1, ROCRAND_MRG32K3A_M1],
     // where ROCRAND_MRG32K3A_M1 < UINT_MAX
     FQUALIFIERS
     unsigned int next()
@@ -453,7 +453,8 @@ void rocrand_init(const unsigned long long seed,
 FQUALIFIERS
 unsigned int rocrand(rocrand_state_mrg32k3a * state)
 {
-    return static_cast<unsigned int>(state->next() * ROCRAND_MRG32K3A_UINT_NORM);
+    // next() in [1, ROCRAND_MRG32K3A_M1]
+    return static_cast<unsigned int>((state->next() - 1) * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
 /**
