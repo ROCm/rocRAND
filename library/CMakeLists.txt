@@ -230,3 +230,11 @@ else()
         MAINTAINER "Saad Rahim <saad.rahim@amd.com>"
     )
 endif()
+file(APPEND ${PROJECT_BINARY_DIR}/debian/postinst "
+    ln -sf ${CMAKE_INSTALL_PREFIX}/rocrand/include ${CMAKE_INSTALL_PREFIX}/include/rocrand
+    ln -sf ${CMAKE_INSTALL_PREFIX}/hiprand/include ${CMAKE_INSTALL_PREFIX}/include/hiprand
+")
+file(APPEND ${PROJECT_BINARY_DIR}/debian/prerm "
+    unlink ${CMAKE_INSTALL_PREFIX}/include/rocrand
+    unlink ${CMAKE_INSTALL_PREFIX}/include/hiprand
+")
