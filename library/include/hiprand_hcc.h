@@ -21,7 +21,7 @@
 #ifndef HIPRAND_HCC_H_
 #define HIPRAND_HCC_H_
 
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
 typedef rocrand_generator_base_type hiprandGenerator_st;
 
