@@ -110,8 +110,8 @@ else()
 endif()
 ")
 
-# Create symlinks
-rocm_install_symlink_subdir(rocrand)
+# Create symlinks in postinst script below
+# rocm_install_symlink_subdir(rocrand)
 
 
 # hipRAND library
@@ -201,8 +201,8 @@ else()
 endif()
 ")
 
-# Create symlinks
-rocm_install_symlink_subdir(hiprand)
+# Create symlinks in postinst script below
+# rocm_install_symlink_subdir(hiprand)
 
 
 # Fortran wrappers for hipRAND and rocRAND
@@ -231,10 +231,26 @@ else()
     )
 endif()
 file(APPEND ${PROJECT_BINARY_DIR}/debian/postinst "
+    mkdir -p ${CMAKE_INSTALL_PREFIX}/include
+	
     ln -sf ${CMAKE_INSTALL_PREFIX}/rocrand/include ${CMAKE_INSTALL_PREFIX}/include/rocrand
+	ln -sf ${CMAKE_INSTALL_PREFIX}/rocrand/lib/librocrand.so ${CMAKE_INSTALL_PREFIX}/lib/librocrand.so
+	mkdir -p ${CMAKE_INSTALL_PREFIX}/lib/cmake/rocrand
+	ln -sf ${CMAKE_INSTALL_PREFIX}/rocrand/lib/cmake/rocrand ${CMAKE_INSTALL_PREFIX}/lib/cmake/rocrand
+	
     ln -sf ${CMAKE_INSTALL_PREFIX}/hiprand/include ${CMAKE_INSTALL_PREFIX}/include/hiprand
+	ln -sf ${CMAKE_INSTALL_PREFIX}/hiprand/lib/libhiprand.so ${CMAKE_INSTALL_PREFIX}/lib/libhiprand.so
+	mkdir -p ${CMAKE_INSTALL_PREFIX}/lib/cmake/hiprand
+	ln -sf ${CMAKE_INSTALL_PREFIX}/rocrand/lib/cmake/hiprand ${CMAKE_INSTALL_PREFIX}/lib/cmake/hiprand
 ")
 file(APPEND ${PROJECT_BINARY_DIR}/debian/prerm "
     unlink ${CMAKE_INSTALL_PREFIX}/include/rocrand
+	unlink ${CMAKE_INSTALL_PREFIX}/lib/librocrand.so
+	unlink ${CMAKE_INSTALL_PREFIX}/lib/cmake/rocrand/rocrand
+	rm -d ${CMAKE_INSTALL_PREFIX}/lib/cmake/rocrand
+	
     unlink ${CMAKE_INSTALL_PREFIX}/include/hiprand
+	unlink ${CMAKE_INSTALL_PREFIX}/lib/libhiprand.so
+	unlink ${CMAKE_INSTALL_PREFIX}/lib/cmake/hiprand/hiprand
+	rm -d ${CMAKE_INSTALL_PREFIX}/lib/cmake/hiprand
 ")
