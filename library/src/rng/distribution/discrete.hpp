@@ -49,6 +49,9 @@ class rocrand_discrete_distribution_base : public rocrand_discrete_distribution_
 {
 public:
 
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
+
     rocrand_discrete_distribution_base()
     {
         size = 0;
@@ -121,6 +124,12 @@ public:
         {
             return rocrand_device::detail::discrete_cdf(x, *this);
         }
+    }
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned int output[1]) const
+    {
+        output[0] = (*this)(input[0]);
     }
 
 protected:
