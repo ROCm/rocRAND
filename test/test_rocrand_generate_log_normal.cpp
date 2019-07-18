@@ -24,78 +24,125 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
-TEST(rocrand_generate_log_normal_tests, float_test)
+class rocrand_generate_log_normal_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
+
+TEST_P(rocrand_generate_log_normal_tests, float_test)
 {
+    const rocrand_rng_type rng_type = GetParam();
+
     rocrand_generator generator;
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+            rng_type
         )
     );
 
-    const size_t size = 256;
+    const size_t size = 12563;
     float mean = 5.0f;
     float stddev = 2.0f;
     float * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
-    // n must be even
-    EXPECT_EQ(
-        rocrand_generate_log_normal(generator, (float *) data, 1, mean, stddev),
-        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    // Any sizes
+    ROCRAND_CHECK(
+        rocrand_generate_log_normal(generator, data, 1, mean, stddev)
     );
+    HIP_CHECK(hipDeviceSynchronize());
 
-    // pointer must be aligned
-    EXPECT_EQ(
-        rocrand_generate_log_normal(generator, (float *)(data+1), 2, mean, stddev),
-        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    // Any alignment
+    ROCRAND_CHECK(
+        rocrand_generate_log_normal(generator, data+1, 2, mean, stddev)
     );
+    HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_log_normal(generator, (float *) data, size, mean, stddev)
+        rocrand_generate_log_normal(generator, data, size, mean, stddev)
     );
+    HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
-TEST(rocrand_generate_log_normal_tests, double_test)
+TEST_P(rocrand_generate_log_normal_tests, double_test)
 {
+    const rocrand_rng_type rng_type = GetParam();
+
     rocrand_generator generator;
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            ROCRAND_RNG_PSEUDO_MRG32K3A
+            rng_type
         )
     );
 
-    const size_t size = 256;
+    const size_t size = 12563;
     double mean = 5.0;
     double stddev = 2.0;
     double * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
-    // n must be even
-    EXPECT_EQ(
-        rocrand_generate_log_normal_double(generator, (double *) data, 1, mean, stddev),
-        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    // Any sizes
+    ROCRAND_CHECK(
+        rocrand_generate_log_normal_double(generator, data, 1, mean, stddev)
     );
+    HIP_CHECK(hipDeviceSynchronize());
 
-    // pointer must be aligned
-    EXPECT_EQ(
-        rocrand_generate_log_normal_double(generator, (double *)(data+1), 2, mean, stddev),
-        ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    // Any alignment
+    ROCRAND_CHECK(
+        rocrand_generate_log_normal_double(generator, data+1, 2, mean, stddev)
     );
+    HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_log_normal_double(generator, (double *) data, size, mean, stddev)
+        rocrand_generate_log_normal_double(generator, data, size, mean, stddev)
     );
+    HIP_CHECK(hipDeviceSynchronize());
+
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+}
+
+TEST_P(rocrand_generate_log_normal_tests, half_test)
+{
+    const rocrand_rng_type rng_type = GetParam();
+
+    rocrand_generator generator;
+    ROCRAND_CHECK(
+        rocrand_create_generator(
+            &generator,
+            rng_type
+        )
+    );
+
+    const size_t size = 12563;
+    half mean = 5.0f;
+    half stddev = 2.0f;
+    half * data;
+    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(half)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // Any sizes
+    ROCRAND_CHECK(
+        rocrand_generate_log_normal_half(generator, data, 1, mean, stddev)
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // Any alignment
+    ROCRAND_CHECK(
+        rocrand_generate_log_normal_half(generator, data+1, 2, mean, stddev)
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+
+    ROCRAND_CHECK(
+        rocrand_generate_log_normal_half(generator, data, size, mean, stddev)
+    );
+    HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
@@ -114,3 +161,7 @@ TEST(rocrand_generate_log_normal_tests, neg_test)
         ROCRAND_STATUS_NOT_CREATED
     );
 }
+
+INSTANTIATE_TEST_CASE_P(rocrand_generate_log_normal_tests,
+                        rocrand_generate_log_normal_tests,
+                        ::testing::ValuesIn(rng_types));

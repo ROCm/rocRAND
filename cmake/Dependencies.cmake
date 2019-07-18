@@ -34,12 +34,6 @@ endif()
 # For downloading, building, and installing required dependencies
 include(cmake/DownloadProject.cmake)
 
-if(CMAKE_VERSION VERSION_LESS 3.2)
-    set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
-else()
-    set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED TRUE")
-endif()
-
 # Fortran Wrapper
 if(BUILD_FORTRAN_WRAPPER)
     enable_language(Fortran)
@@ -64,7 +58,7 @@ if(BUILD_TEST)
                          LOG_CONFIGURE       TRUE
                          LOG_BUILD           TRUE
                          LOG_INSTALL         TRUE
-                         ${UPDATE_DISCONNECTED_IF_AVAILABLE}
+                         UPDATE_DISCONNECTED TRUE
         )
     endif()
     find_package(GTest REQUIRED)

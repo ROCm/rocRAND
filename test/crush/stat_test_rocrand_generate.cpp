@@ -112,6 +112,26 @@ void run_tests(const cli::Parser& parser,
                const std::string& distribution,
                const std::string plot_name)
 {
+    if (distribution == "uniform-uchar")
+    {
+        run_test<unsigned char>(parser, rng_type, plot_name,
+            [](rocrand_generator gen, unsigned char * data, size_t size) {
+                return rocrand_generate_char(gen, data, size);
+            },
+            UCHAR_MAX / 2.0, (UCHAR_MAX + 1) * std::sqrt(1.0 / 12.0),
+            [](double x) { return fdist_Unif(x / (UCHAR_MAX + 1)); }
+        );
+    }
+    if (distribution == "uniform-ushort")
+    {
+        run_test<unsigned short>(parser, rng_type, plot_name,
+            [](rocrand_generator gen, unsigned short * data, size_t size) {
+                return rocrand_generate_short(gen, data, size);
+            },
+            USHRT_MAX / 2.0, (USHRT_MAX + 1) * std::sqrt(1.0 / 12.0),
+            [](double x) { return fdist_Unif(x / (USHRT_MAX + 1)); }
+        );
+    }
     if (distribution == "uniform-float")
     {
         run_test<float>(parser, rng_type, plot_name,
@@ -127,6 +147,16 @@ void run_tests(const cli::Parser& parser,
         run_test<double>(parser, rng_type, plot_name,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_uniform_double(gen, data, size);
+            },
+            0.5, std::sqrt(1.0 / 12.0),
+            [](double x) { return fdist_Unif(x); }
+        );
+    }
+    if (distribution == "uniform-half")
+    {
+        run_test<__half>(parser, rng_type, plot_name,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_uniform_half(gen, data, size);
             },
             0.5, std::sqrt(1.0 / 12.0),
             [](double x) { return fdist_Unif(x); }
@@ -152,6 +182,16 @@ void run_tests(const cli::Parser& parser,
             [](double x) { return fdist_Normal2(x); }
         );
     }
+    if (distribution == "normal-half")
+    {
+        run_test<__half>(parser, rng_type, plot_name,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_normal_half(gen, data, size, 0.0, 1.0);
+            },
+            0.0, 1.0,
+            [](double x) { return fdist_Normal2(x); }
+        );
+    }
     if (distribution == "log-normal-float")
     {
         run_test<float>(parser, rng_type, plot_name,
@@ -167,6 +207,16 @@ void run_tests(const cli::Parser& parser,
         run_test<double>(parser, rng_type, plot_name,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
+            },
+            std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
+            [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
+        );
+    }
+    if (distribution == "log-normal-half")
+    {
+        run_test<__half>(parser, rng_type, plot_name,
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_log_normal_half(gen, data, size, 0.0, 1.0);
             },
             std::exp(0.5), std::sqrt((std::exp(1.0) - 1.0) * std::exp(1.0)),
             [](double x) { return fdist_LogNormal(0.0, 1.0, x); }
@@ -203,12 +253,17 @@ const std::vector<std::string> all_engines = {
 };
 
 const std::vector<std::string> all_distributions = {
+    "uniform-uchar",
+    "uniform-ushort",
     "uniform-float",
     "uniform-double",
+    "uniform-half",
     "normal-float",
     "normal-double",
+    "normal-half",
     "log-normal-float",
     "log-normal-double",
+    "log-normal-half",
     "poisson",
 };
 

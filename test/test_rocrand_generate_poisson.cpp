@@ -24,20 +24,23 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
-TEST(rocrand_generate_poisson_tests, uint_test)
+class rocrand_generate_poisson_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
+
+TEST_P(rocrand_generate_poisson_tests, uint_test)
 {
+    const rocrand_rng_type rng_type = GetParam();
+
     rocrand_generator generator;
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+            rng_type
         )
     );
 
-    const size_t size = 256;
+    const size_t size = 12563;
     double lambda = 100.0;
     unsigned int * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
@@ -64,13 +67,15 @@ TEST(rocrand_generate_poisson_tests, neg_test)
     );
 }
 
-TEST(rocrand_generate_poisson_tests, out_of_range_test)
+TEST_P(rocrand_generate_poisson_tests, out_of_range_test)
 {
+    const rocrand_rng_type rng_type = GetParam();
+
     rocrand_generator generator;
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            ROCRAND_RNG_PSEUDO_MRG32K3A
+            rng_type
         )
     );
 
@@ -88,3 +93,7 @@ TEST(rocrand_generate_poisson_tests, out_of_range_test)
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
+
+INSTANTIATE_TEST_CASE_P(rocrand_generate_poisson_tests,
+                        rocrand_generate_poisson_tests,
+                        ::testing::ValuesIn(rng_types));

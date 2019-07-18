@@ -150,6 +150,27 @@ hiprandGenerate(hiprandGenerator_t generator,
     );
 }
 
+
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateChar(hiprandGenerator_t generator,
+                    unsigned char * output_data, size_t n)
+{
+    (void) generator;
+    (void) output_data;
+    (void) n;
+    return HIPRAND_STATUS_NOT_IMPLEMENTED;
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateShort(hiprandGenerator_t generator,
+                     unsigned short * output_data, size_t n)
+{
+    (void) generator;
+    (void) output_data;
+    (void) n;
+    return HIPRAND_STATUS_NOT_IMPLEMENTED;
+}
+
 hiprandStatus_t HIPRANDAPI
 hiprandGenerateUniform(hiprandGenerator_t generator,
                        float * output_data, size_t n)
@@ -172,6 +193,16 @@ hiprandGenerateUniformDouble(hiprandGenerator_t generator,
             output_data, n
         )
     );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateUniformHalf(hiprandGenerator_t generator,
+                           half * output_data, size_t n)
+{
+    (void) generator;
+    (void) output_data;
+    (void) n;
+    return HIPRAND_STATUS_NOT_IMPLEMENTED;
 }
 
 hiprandStatus_t HIPRANDAPI
@@ -203,6 +234,19 @@ hiprandGenerateNormalDouble(hiprandGenerator_t generator,
 }
 
 hiprandStatus_t HIPRANDAPI
+hiprandGenerateNormalHalf(hiprandGenerator_t generator,
+                          half * output_data, size_t n,
+                          half mean, half stddev)
+{
+    (void) generator;
+    (void) output_data;
+    (void) n;
+    (void) mean;
+    (void) stddev;
+    return HIPRAND_STATUS_NOT_IMPLEMENTED;
+}
+
+hiprandStatus_t HIPRANDAPI
 hiprandGenerateLogNormal(hiprandGenerator_t generator,
                          float * output_data, size_t n,
                          float mean, float stddev)
@@ -228,6 +272,19 @@ hiprandGenerateLogNormalDouble(hiprandGenerator_t generator,
             mean, stddev
         )
     );
+}
+
+hiprandStatus_t HIPRANDAPI
+hiprandGenerateLogNormalHalf(hiprandGenerator_t generator,
+                             half * output_data, size_t n,
+                             half mean, half stddev)
+{
+    (void) generator;
+    (void) output_data;
+    (void) n;
+    (void) mean;
+    (void) stddev;
+    return HIPRAND_STATUS_NOT_IMPLEMENTED;
 }
 
 hiprandStatus_t HIPRANDAPI

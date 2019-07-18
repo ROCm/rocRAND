@@ -143,4 +143,28 @@ private:
     double lambda;
 };
 
+struct mrg_poisson_distribution
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
+
+    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis;
+
+    mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+        : dis(dis)
+    { }
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
+    {
+        // Alias method requires x in [0, 1), uint must be in [0, UINT_MAX],
+        // but Mrg32k3a's "raw" output is in [1, ROCRAND_MRG32K3A_M1],
+        // so probabilities are slightly different than expected,
+        // some values can not be generated at all.
+        // Hence the "raw" value is remapped to [0, UINT_MAX]:
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        output[0] = dis(v);
+    }
+};
+
 #endif // ROCRAND_RNG_DISTRIBUTION_POISSON_H_

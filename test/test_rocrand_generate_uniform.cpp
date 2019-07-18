@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,9 @@
 
 #include "test_common.hpp"
 
-class rocrand_generate_normal_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
+class rocrand_generate_uniform_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
 
-TEST_P(rocrand_generate_normal_tests, float_test)
+TEST_P(rocrand_generate_uniform_tests, float_test)
 {
     const rocrand_rng_type rng_type = GetParam();
 
@@ -41,26 +41,24 @@ TEST_P(rocrand_generate_normal_tests, float_test)
     );
 
     const size_t size = 12563;
-    float mean = 5.0f;
-    float stddev = 2.0f;
     float * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
     ROCRAND_CHECK(
-        rocrand_generate_normal(generator, data, 1, mean, stddev)
+        rocrand_generate_uniform(generator, data, 1)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
     ROCRAND_CHECK(
-        rocrand_generate_normal(generator, data+1, 2, mean, stddev)
+        rocrand_generate_uniform(generator, data+1, 2)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_normal(generator, data, size, mean, stddev)
+        rocrand_generate_uniform(generator, data, size)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -68,7 +66,7 @@ TEST_P(rocrand_generate_normal_tests, float_test)
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
-TEST_P(rocrand_generate_normal_tests, double_test)
+TEST_P(rocrand_generate_uniform_tests, double_test)
 {
     const rocrand_rng_type rng_type = GetParam();
 
@@ -81,26 +79,24 @@ TEST_P(rocrand_generate_normal_tests, double_test)
     );
 
     const size_t size = 12563;
-    double mean = 5.0;
-    double stddev = 2.0;
     double * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
     ROCRAND_CHECK(
-        rocrand_generate_normal_double(generator, data, 1, mean, stddev)
+        rocrand_generate_uniform_double(generator, data, 1)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
     ROCRAND_CHECK(
-        rocrand_generate_normal_double(generator, data+1, 2, mean, stddev)
+        rocrand_generate_uniform_double(generator, data+1, 2)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_normal_double(generator, data, size, mean, stddev)
+        rocrand_generate_uniform_double(generator, data, size)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -108,7 +104,7 @@ TEST_P(rocrand_generate_normal_tests, double_test)
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
-TEST_P(rocrand_generate_normal_tests, half_test)
+TEST_P(rocrand_generate_uniform_tests, half_test)
 {
     const rocrand_rng_type rng_type = GetParam();
 
@@ -121,26 +117,24 @@ TEST_P(rocrand_generate_normal_tests, half_test)
     );
 
     const size_t size = 12563;
-    half mean = 5.0f;
-    half stddev = 2.0f;
     half * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(half)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
     ROCRAND_CHECK(
-        rocrand_generate_normal_half(generator, data, 1, mean, stddev)
+        rocrand_generate_uniform_half(generator, data, 1)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
     ROCRAND_CHECK(
-        rocrand_generate_normal_half(generator, data+1, 2, mean, stddev)
+        rocrand_generate_uniform_half(generator, data+1, 2)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_normal_half(generator, data, size, mean, stddev)
+        rocrand_generate_uniform_half(generator, data, size)
     );
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -148,20 +142,18 @@ TEST_P(rocrand_generate_normal_tests, half_test)
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
-TEST(rocrand_generate_normal_tests, neg_test)
+TEST(rocrand_generate_uniform_tests, neg_test)
 {
     const size_t size = 256;
-    float mean = 5.0;
-    float stddev = 2.0;
     float * data = NULL;
 
     rocrand_generator generator = NULL;
     EXPECT_EQ(
-        rocrand_generate_normal(generator, (float *) data, size, mean, stddev),
+        rocrand_generate_uniform(generator, (float *) data, size),
         ROCRAND_STATUS_NOT_CREATED
     );
 }
 
-INSTANTIATE_TEST_CASE_P(rocrand_generate_normal_tests,
-                        rocrand_generate_normal_tests,
+INSTANTIATE_TEST_CASE_P(rocrand_generate_uniform_tests,
+                        rocrand_generate_uniform_tests,
                         ::testing::ValuesIn(rng_types));

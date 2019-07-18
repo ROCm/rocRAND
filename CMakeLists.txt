@@ -20,13 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
 # Install prefix
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
     ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
 )
@@ -63,10 +64,6 @@ option(BUILD_BENCHMARK "Build benchmarks" OFF)
 
 # Include cmake scripts
 include(cmake/Dependencies.cmake)
-include(cmake/Summary.cmake)
-
-# Print configuration summary
-print_configuration_summary()
 
 # Set version variables
 include(cmake/Common.cmake)
@@ -75,6 +72,10 @@ create_version_vars(rocrand 2 6 0)
 
 # AMD targets
 set(AMDGPU_TARGETS gfx803;gfx900;gfx906 CACHE STRING "List of specific machine types for library to target")
+
+# Print configuration summary
+include(cmake/Summary.cmake)
+print_configuration_summary()
 
 # Tools
 add_subdirectory(tools)

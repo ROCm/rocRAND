@@ -61,6 +61,7 @@
 #include <rocrand.h>
 #include <rocrand_mtgp32_11213.h>
 
+#include "common.hpp"
 #include "generator_type.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
@@ -69,38 +70,105 @@ namespace rocrand_host {
 namespace detail {
 
     typedef ::rocrand_device::mtgp32_engine mtgp32_device_engine;
-    typedef ::rocrand_device::mtgp32_state mtgp32_state;
 
-    template<class Type, class Distribution>
+    template<unsigned int BlockSize, class T, class Distribution>
     __global__
     void generate_kernel(mtgp32_device_engine * engines,
-                         Type * data,
-                         const size_t size,
-                         const size_t size_up, // size rounded up to the nearest multiple of hipBlockDim_x
-                         const size_t size_down, // size rounded down to the nearest multiple of hipBlockDim_x
+                         T * data,
+                         const size_t n,
                          Distribution distribution)
     {
+        constexpr unsigned int input_width = Distribution::input_width;
+        constexpr unsigned int output_width = Distribution::output_width;
+
+        using vec_type = aligned_vec_type<T, output_width>;
+
         const unsigned int engine_id = hipBlockIdx_x;
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        const unsigned int stride = hipGridDim_x * BlockSize;
+        size_t index = hipBlockIdx_x * BlockSize + hipThreadIdx_x;
 
         // Load device engine
         __shared__ mtgp32_device_engine engine;
         engine.copy(&engines[engine_id]);
 
-        while(index < size_down)
+        unsigned int input[input_width];
+        T output[output_width];
+
+        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
+        const size_t misalignment =
+            (
+                output_width - uintptr / sizeof(T) % output_width
+            ) % output_width;
+        const unsigned int head_size = min(n, misalignment);
+        const unsigned int tail_size = (n - head_size) % output_width;
+        const size_t vec_n = (n - head_size) / output_width;
+
+        // vec_n rounded up and down to the nearest multiple of BlockSize
+        const size_t remainder_value = vec_n % BlockSize;
+        const size_t vec_n_down = vec_n - remainder_value;
+        const size_t vec_n_up = remainder_value == 0 ? vec_n_down : (vec_n_down + BlockSize);
+
+        vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
+        while(index < vec_n_down)
         {
-            data[index] = distribution(engine());
+            for(unsigned int i = 0; i < input_width; i++)
+            {
+                input[i] = engine();
+            }
+            distribution(input, output);
+
+            vec_data[index] = *reinterpret_cast<vec_type *>(output);
             // Next position
             index += stride;
         }
-        while(index < size_up)
+        if(index < vec_n_up)
         {
-            auto value = distribution(engine());
-            if(index < size)
-                data[index] = value;
+            for(unsigned int i = 0; i < input_width; i++)
+            {
+                input[i] = engine();
+            }
+            distribution(input, output);
+
+            // All threads generate (hence call __syncthreads) but not all write
+            if(index < vec_n)
+            {
+                vec_data[index] = *reinterpret_cast<vec_type *>(output);
+            }
             // Next position
             index += stride;
+        }
+
+        // Check if we need to save head and tail.
+        if(output_width > 1 && (head_size > 0 || tail_size > 0))
+        {
+            for(unsigned int i = 0; i < input_width; i++)
+            {
+                input[i] = engine();
+            }
+            distribution(input, output);
+
+            // If data is not aligned by sizeof(vec_type)
+            if(index == vec_n_up)
+            {
+                for(unsigned int o = 0; o < output_width; o++)
+                {
+                    if(o < head_size)
+                    {
+                        data[o] = output[o];
+                    }
+                }
+            }
+
+            if(index == vec_n_up + 1)
+            {
+                for(unsigned int o = 0; o < output_width; o++)
+                {
+                    if(o < tail_size)
+                    {
+                        data[n - tail_size + o] = output[o];
+                    }
+                }
+            }
         }
 
         // Save engine with its state
@@ -163,6 +231,9 @@ public:
 
         rocrand_status status;
 
+        if (m_engines_size > mtgpdc_params_11213_num)
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+
         status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -174,24 +245,16 @@ public:
 
     template<class T, class Distribution = uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
-                            const Distribution& distribution = Distribution())
+                            Distribution distribution = Distribution())
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        const size_t remainder_value = data_size%s_threads;
-        const size_t size_rounded_down = data_size - remainder_value;
-        // if remainder is 0, then data_size is a multiple of s_threads, and
-        // in this case size_rounded_up must be data_size
-        const size_t size_rounded_up =
-            remainder_value == 0 ? data_size : size_rounded_down + s_threads;
-
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<s_threads>),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, size_rounded_up,
-            size_rounded_down, distribution
+            m_engines, data, data_size, distribution
         );
         // Check kernel status
         if(hipPeekAtLastError() != hipSuccess)
@@ -238,13 +301,9 @@ private:
     bool m_engines_initialized;
     engine_type * m_engines;
     size_t m_engines_size;
-    #ifdef __HIP_PLATFORM_NVCC__
-    static const uint32_t s_threads = 256;
-    static const uint32_t s_blocks = 64;
-    #else
-    static const uint32_t s_threads = 256;
-    static const uint32_t s_blocks = 512;
-    #endif
+
+    static constexpr uint32_t s_threads = 256;
+    static constexpr uint32_t s_blocks = 512;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> m_poisson;

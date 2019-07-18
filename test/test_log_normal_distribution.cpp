@@ -31,40 +31,38 @@ TEST(log_normal_distribution_tests, float_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    float mean = 0.0f;
-    float std = 0.0f;
     const size_t size = 4000;
-    const size_t half = size / 2;
-    log_normal_distribution<float> u(5.0f, 2.0f);
     float val[size];
-    size_t z = 0;
-    for(size_t i = 0; i < half; i++)
-    {
-        unsigned int x = dis(gen);
-        unsigned int y = dis(gen);
-        float2 v = u(x, y);
-        val[z] = v.x;
-        val[z + 1] = v.y;
-        mean += v.x + v.y;
-        z += 2;
-    }
+    log_normal_distribution<float> u(0.2f, 0.5f);
 
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=2)
+    {
+        unsigned int input[2];
+        float output[2];
+        input[0] = dis(gen);
+        input[1] = dis(gen);
+        u(input, output);
+        val[i] = output[0];
+        val[i + 1] = output[1];
+        mean += output[0] + output[1];
+    }
     mean = mean / size;
-    z = 0;
 
-    for(size_t i = 0; i < half; i++)
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
     {
-        std += powf(val[z] - mean, 2);
-        std += powf(val[z + 1] - mean, 2);
-        z += 2;
+        std += std::pow(val[i] - mean, 2);
     }
-    std = sqrtf(std / size);
+    std = std::sqrt(std / size);
 
-    float logmean = logf(mean * mean / sqrtf(std * std + mean * mean));
-    float logstd = sqrtf(logf(std * std / mean / mean + 1.0f));
+    float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
+    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
 
-    EXPECT_NEAR(5.0f, logmean, 1.0f);
-    EXPECT_NEAR(2.0f, logstd, 1.0f);
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
 }
 
 TEST(log_normal_distribution_tests, double_test)
@@ -73,41 +71,310 @@ TEST(log_normal_distribution_tests, double_test)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    double mean = 0.0;
-    double std = 0.0;
     const size_t size = 4000;
-    const size_t half = size / 2;
-    log_normal_distribution<double> u(5.0, 2.0);
     double val[size];
-    size_t z1 = 0;
-    for(size_t i = 0; i < half; i++)
-    {
-        unsigned int x = dis(gen);
-        unsigned int y = dis(gen);
-        unsigned int z = dis(gen);
-        unsigned int w = dis(gen);
-        uint4 t = { x, y, z, w };
-        double2 v = u(t);
-        val[z1] = v.x;
-        val[z1 + 1] = v.y;
-        mean += v.x + v.y;
-        z1 += 2;
-    }
+    log_normal_distribution<double> u(0.2, 0.5);
 
+    // Calculate mean
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i+=2)
+    {
+        unsigned int input[4];
+        double output[2];
+        input[0] = dis(gen);
+        input[1] = dis(gen);
+        input[2] = dis(gen);
+        input[3] = dis(gen);
+        u(input, output);
+        val[i] = output[0];
+        val[i + 1] = output[1];
+        mean += output[0] + output[1];
+    }
     mean = mean / size;
-    z1 = 0;
 
-    for(size_t i = 0; i < half; i++)
+    // Calculate stddev
+    double std = 0.0;
+    for(size_t i = 0; i < size; i++)
     {
-        std += pow(val[z1] - mean, 2);
-        std += pow(val[z1 + 1] - mean, 2);
-        z1 += 2;
+        std += std::pow(val[i] - mean, 2);
     }
-    std = sqrt(std / size);
+    std = std::sqrt(std / size);
 
-    double logmean = log(mean * mean / sqrt(std * std + mean * mean));
-    double logstd = sqrt(log(std * std / mean / mean + 1.0));
+    double expected_mean = std::exp(0.2 + 0.5 * 0.5 / 2);
+    double expected_std = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
 
-    EXPECT_NEAR(5.0, logmean, 1.0);
-    EXPECT_NEAR(2.0, logstd, 1.0);
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1);
+}
+
+TEST(log_normal_distribution_tests, half_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    const size_t size = 4000;
+    half val[size];
+    log_normal_distribution<half> u(0.2f, 0.5f);
+
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=2)
+    {
+        unsigned int input[1];
+        half output[2];
+        input[0] = dis(gen);
+        u(input, output);
+        val[i] = output[0];
+        val[i + 1] = output[1];
+        mean += __half2float(output[0]) + __half2float(output[1]);
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(__half2float(val[i]) - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
+    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
+}
+
+TEST(mrg_log_normal_distribution_tests, float_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+
+    const size_t size = 4000;
+    float val[size];
+    mrg_log_normal_distribution<float> u(0.2f, 0.5f);
+
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=2)
+    {
+        unsigned int input[2];
+        float output[2];
+        input[0] = dis(gen);
+        input[1] = dis(gen);
+        u(input, output);
+        val[i] = output[0];
+        val[i + 1] = output[1];
+        mean += output[0] + output[1];
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(val[i] - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
+    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
+}
+
+TEST(mrg_log_normal_distribution_tests, double_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+
+    const size_t size = 4000;
+    double val[size];
+    mrg_log_normal_distribution<double> u(0.2, 0.5);
+
+    // Calculate mean
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i+=2)
+    {
+        unsigned int input[2];
+        double output[2];
+        input[0] = dis(gen);
+        input[1] = dis(gen);
+        u(input, output);
+        val[i] = output[0];
+        val[i + 1] = output[1];
+        mean += output[0] + output[1];
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    double std = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(val[i] - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    double expected_mean = std::exp(0.2 + 0.5 * 0.5 / 2);
+    double expected_std = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
+
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1);
+}
+
+TEST(mrg_log_normal_distribution_tests, half_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+
+    const size_t size = 4000;
+    half val[size];
+    mrg_log_normal_distribution<half> u(0.2f, 0.5f);
+
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=2)
+    {
+        unsigned int input[1];
+        half output[2];
+        input[0] = dis(gen);
+        u(input, output);
+        val[i] = output[0];
+        val[i + 1] = output[1];
+        mean += __half2float(output[0]) + __half2float(output[1]);
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(__half2float(val[i]) - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
+    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
+}
+
+TEST(sobol_log_normal_distribution_tests, float_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    const size_t size = 4000;
+    float val[size];
+    sobol_log_normal_distribution<float> u(0.2f, 0.5f);
+
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=1)
+    {
+        unsigned int input[1];
+        float output[1];
+        input[0] = dis(gen);
+        output[0] = u(input[0]);
+        val[i] = output[0];
+        mean += output[0];
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(val[i] - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
+    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
+}
+
+TEST(sobol_log_normal_distribution_tests, double_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    const size_t size = 4000;
+    double val[size];
+    sobol_log_normal_distribution<double> u(0.2, 0.5);
+
+    // Calculate mean
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i+=1)
+    {
+        unsigned int input[1];
+        double output[1];
+        input[0] = dis(gen);
+        output[0] = u(input[0]);
+        val[i] = output[0];
+        mean += output[0];
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    double std = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(val[i] - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    double expected_mean = std::exp(0.2 + 0.5 * 0.5 / 2);
+    double expected_std = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
+
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1);
+}
+
+TEST(sobol_log_normal_distribution_tests, half_test)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis;
+
+    const size_t size = 4000;
+    half val[size];
+    sobol_log_normal_distribution<half> u(0.2f, 0.5f);
+
+    // Calculate mean
+    float mean = 0.0f;
+    for(size_t i = 0; i < size; i+=1)
+    {
+        unsigned int input[1];
+        half output[1];
+        input[0] = dis(gen);
+        output[0] = u(input[0]);
+        val[i] = output[0];
+        mean += __half2float(output[0]);
+    }
+    mean = mean / size;
+
+    // Calculate stddev
+    float std = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        std += std::pow(__half2float(val[i]) - mean, 2);
+    }
+    std = std::sqrt(std / size);
+
+    float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
+    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+
+    EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
+    EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
 }

@@ -24,8 +24,7 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 class rocrand_basic_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
 
@@ -82,14 +81,6 @@ TEST_P(rocrand_basic_tests, rocrand_initialize_generator_test)
     ROCRAND_CHECK(rocrand_initialize_generator(g));
     ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
-
-const rocrand_rng_type rng_types[] = {
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
-    ROCRAND_RNG_PSEUDO_MRG32K3A,
-    ROCRAND_RNG_PSEUDO_XORWOW,
-    ROCRAND_RNG_PSEUDO_MTGP32,
-    ROCRAND_RNG_QUASI_SOBOL32
-};
 
 INSTANTIATE_TEST_CASE_P(rocrand_basic_tests,
                         rocrand_basic_tests,
