@@ -20,9 +20,9 @@
 
 #include <hip/hip_runtime.h>
 
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
-#include <hiprand/hiprand.h>
+#include <hiprand.h>
 
 #if defined(__cplusplus)
 extern "C" {

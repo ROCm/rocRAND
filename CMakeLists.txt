@@ -35,13 +35,13 @@ list(APPEND CMAKE_MODULE_PATH
 #
 # rocRAND project
 #
-project(rocrand CXX)
+project(rocRAND CXX)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Setting build type to 'Release' as none was specified.")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOLEAN "Add paths to linker search and installed rpath")
@@ -61,26 +61,14 @@ option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" ON)
 option(BUILD_CRUSH_TEST "Build Crush tests (requires TestU01)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
-option(BUILD_TOOLS "Build tools" OFF)
 
 # Include cmake scripts
 include(cmake/Dependencies.cmake)
 
-# Setup VERSION
-set(VERSION_STRING "2.5.0.")
-
-# Check if BUILD_NUMBER is defined in a Jenkins environment
-if($ENV{BUILD_NUMBER} )
-  string(CONCAT BUILD_VERSION ${VERSION_STRING} $ENV{BUILD_NUMBER})
-else()
-  string(CONCAT BUILD_VERSION ${VERSION_STRING} "0")
-endif()
-
-rocm_setup_version(VERSION ${BUILD_VERSION} NO_GIT_TAG_VERSION)
-set(hiprand_VERSION "${rocrand_VERSION}")
-math(EXPR temp "${rocrand_VERSION_MAJOR} * 100000 + ${rocrand_VERSION_MINOR} * 100 + ${rocrand_VERSION_PATCH}")
-set(rocrand_VERSION_NUMBER ${temp})
-set(hiprand_VERSION_NUMBER ${temp})
+# Set version variables
+include(cmake/Common.cmake)
+create_version_vars(hiprand 1 8 2)
+create_version_vars(rocrand 1 8 2)
 
 # AMD targets
 set(AMDGPU_TARGETS gfx803;gfx900;gfx906 CACHE STRING "List of specific machine types for library to target")
@@ -90,9 +78,7 @@ include(cmake/Summary.cmake)
 print_configuration_summary()
 
 # Tools
-if (BUILD_TOOLS)
-    add_subdirectory(tools)
-endif()
+add_subdirectory(tools)
 
 # rocRAND and hipRAND libraries
 # This adds library targets: rocrand, hiprand,
