@@ -27,6 +27,7 @@
 #define ROCRAND_H_
 
 #include <hip/hip_runtime.h>
+#include <hip/hip_fp16.h>
 
 #include "rocrand_discrete_types.h"
 
@@ -41,6 +42,11 @@
 /// \cond ROCRAND_DOCS_TYPEDEFS
 /// rocRAND random number generator (opaque)
 typedef struct rocrand_generator_base_type * rocrand_generator;
+/// \endcond
+
+/// \cond ROCRAND_DOCS_TYPEDEFS
+/// rocRAND half type (derived from HIP)
+typedef __half half;
 /// \endcond
 
 #if defined(__cplusplus)
@@ -147,6 +153,54 @@ rocrand_generate(rocrand_generator generator,
                  unsigned int * output_data, size_t n);
 
 /**
+* \brief Generates uniformly distributed 8-bit unsigned integers.
+*
+* Generates \p n uniformly distributed 8-bit unsigned integers and
+* saves them to \p output_data.
+*
+* Generated numbers are between \p 0 and \p 2^8, including \p 0 and
+* excluding \p 2^8.
+*
+* \param generator - Generator to use
+* \param output_data - Pointer to memory to store generated numbers
+* \param n - Number of 8-bit unsigned integers to generate
+*
+* \return
+* - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+* - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+* - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+* of used quasi-random generator \n
+* - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+*/
+rocrand_status ROCRANDAPI
+rocrand_generate_char(rocrand_generator generator,
+                      unsigned char * output_data, size_t n);
+
+/**
+* \brief Generates uniformly distributed 16-bit unsigned integers.
+*
+* Generates \p n uniformly distributed 16-bit unsigned integers and
+* saves them to \p output_data.
+*
+* Generated numbers are between \p 0 and \p 2^16, including \p 0 and
+* excluding \p 2^16.
+*
+* \param generator - Generator to use
+* \param output_data - Pointer to memory to store generated numbers
+* \param n - Number of 16-bit unsigned integers to generate
+*
+* \return
+* - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+* - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+* - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+* of used quasi-random generator \n
+* - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+*/
+rocrand_status ROCRANDAPI
+rocrand_generate_short(rocrand_generator generator,
+                       unsigned short * output_data, size_t n);
+
+/**
  * \brief Generates uniformly distributed \p float values.
  *
  * Generates \p n uniformly distributed 32-bit floating-point values
@@ -181,7 +235,7 @@ rocrand_generate_uniform(rocrand_generator generator,
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>float</tt>s to generate
+ * \param n - Number of <tt>double</tt>s to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -193,6 +247,30 @@ rocrand_generate_uniform(rocrand_generator generator,
 rocrand_status ROCRANDAPI
 rocrand_generate_uniform_double(rocrand_generator generator,
                                 double * output_data, size_t n);
+
+/**
+ * \brief Generates uniformly distributed half-precision floating-point values.
+ *
+ * Generates \p n uniformly distributed 16-bit half-precision floating-point
+ * values and saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0.0 and \p 1.0, excluding \p 0.0 and
+ * including \p 1.0.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of <tt>half</tt>s to generate
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+rocrand_status ROCRANDAPI
+rocrand_generate_uniform_half(rocrand_generator generator,
+                              half * output_data, size_t n);
 
 /**
  * \brief Generates normally distributed \p float values.
@@ -209,8 +287,7 @@ rocrand_generate_uniform_double(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
- * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
  * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
@@ -234,8 +311,7 @@ rocrand_generate_normal(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
- * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
  * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
@@ -243,6 +319,30 @@ rocrand_status ROCRANDAPI
 rocrand_generate_normal_double(rocrand_generator generator,
                                double * output_data, size_t n,
                                double mean, double stddev);
+
+/**
+* \brief Generates normally distributed \p half values.
+*
+* Generates \p n normally distributed 16-bit half-precision floating-point
+* numbers and saves them to \p output_data.
+*
+* \param generator - Generator to use
+* \param output_data - Pointer to memory to store generated numbers
+* \param n - Number of <tt>half</tt>s to generate
+* \param mean - Mean value of normal distribution
+* \param stddev - Standard deviation value of normal distribution
+*
+* \return
+* - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+* - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+* - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+* of used quasi-random generator \n
+* - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+*/
+rocrand_status ROCRANDAPI
+rocrand_generate_normal_half(rocrand_generator generator,
+                             half * output_data, size_t n,
+                             half mean, half stddev);
 
 /**
  * \brief Generates log-normally distributed \p float values.
@@ -259,8 +359,7 @@ rocrand_generate_normal_double(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
- * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
  * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
@@ -284,8 +383,7 @@ rocrand_generate_log_normal(rocrand_generator generator,
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
- * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
  * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
@@ -293,6 +391,30 @@ rocrand_status ROCRANDAPI
 rocrand_generate_log_normal_double(rocrand_generator generator,
                                    double * output_data, size_t n,
                                    double mean, double stddev);
+
+/**
+* \brief Generates log-normally distributed \p half values.
+*
+* Generates \p n log-normally distributed 16-bit half-precision floating-point
+* values and saves them to \p output_data.
+*
+* \param generator - Generator to use
+* \param output_data - Pointer to memory to store generated numbers
+* \param n - Number of <tt>half</tt>s to generate
+* \param mean - Mean value of log normal distribution
+* \param stddev - Standard deviation value of log normal distribution
+*
+* \return
+* - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+* - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+* - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+* of used quasi-random generator \n
+* - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+*/
+rocrand_status ROCRANDAPI
+rocrand_generate_log_normal_half(rocrand_generator generator,
+                                 half * output_data, size_t n,
+                                 half mean, half stddev);
 
 /**
  * \brief Generates Poisson-distributed 32-bit unsigned integers.

@@ -150,13 +150,15 @@ private:
 ///
 /// \brief Produces random integer values uniformly distributed on the interval [0, 2^32 - 1].
 ///
-/// \tparam IntType - type of generated values. Only \p unsigned \p int type is supported.
+/// \tparam IntType - type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int type is supported.
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
     static_assert(
-        std::is_same<unsigned int, IntType>::value,
-            "Only unsigned int type is supported in uniform_int_distribution"
+        std::is_same<unsigned char, IntType>::value
+        || std::is_same<unsigned short, IntType>::value
+        || std::is_same<unsigned int, IntType>::value,
+        "Only unsigned int type is supported in uniform_int_distribution"
     );
 
 public:
@@ -200,11 +202,12 @@ public:
     /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
-    /// See also: hiprandGenerate()
+    /// See also: hiprandGenerate(), hiprandGenerateChar(), hiprandGenerateShort()
     template<class Generator>
     void operator()(Generator& g, IntType * output, size_t size)
     {
-        hiprandStatus_t status = hiprandGenerate(g.m_generator, output, size);
+        hiprandStatus_t status;
+        status = this->generate(g, output, size);
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
     }
 
@@ -220,20 +223,40 @@ public:
     {
         return !(*this == other);
     }
+
+private:
+    template<class Generator>
+    hiprandStatus_t generate(Generator& g, unsigned char * output, size_t size)
+    {
+        return hiprandGenerateChar(g.m_generator, output, size);
+    }
+
+    template<class Generator>
+    hiprandStatus_t generate(Generator& g, unsigned short * output, size_t size)
+    {
+        return hiprandGenerateShort(g.m_generator, output, size);
+    }
+
+    template<class Generator>
+    hiprandStatus_t generate(Generator& g, unsigned int * output, size_t size)
+    {
+        return hiprandGenerate(g.m_generator, output, size);
+    }
 };
 
 /// \class uniform_real_distribution
 ///
 /// \brief Produces random floating-point values uniformly distributed on the interval (0, 1].
 ///
-/// \tparam RealType - type of generated values. Only \p float and \p double types are supported.
+/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
 template<class RealType = float>
 class uniform_real_distribution
 {
     static_assert(
-            std::is_same<float, RealType>::value
-            || std::is_same<double, RealType>::value,
-            "Only float and double types are supported in uniform_real_distribution"
+        std::is_same<float, RealType>::value
+        || std::is_same<double, RealType>::value
+        || std::is_same<half, RealType>::value,
+        "Only float, double, and half types are supported in uniform_real_distribution"
     );
 
 public:
@@ -281,7 +304,7 @@ public:
     /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
-    /// See also: hiprandGenerateUniform(), hiprandGenerateUniformDouble()
+    /// See also: hiprandGenerateUniform(), hiprandGenerateUniformDouble(), hiprandGenerateUniformHalf()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
@@ -315,22 +338,29 @@ private:
     {
         return hiprandGenerateUniformDouble(g.m_generator, output, size);
     }
+
+    template<class Generator>
+    hiprandStatus_t generate(Generator& g, half * output, size_t size)
+    {
+        return hiprandGenerateUniformHalf(g.m_generator, output, size);
+    }
 };
 
 /// \class normal_distribution
 ///
 /// \brief Produces random numbers according to a normal distribution.
 ///
-/// \tparam RealType - type of generated values. Only \p float and \p double types are supported.
+/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
 ///
 /// See also: <a href="https://en.wikipedia.org/wiki/Normal_distribution">Wikipedia:Normal distribution</a>.
 template<class RealType = float>
 class normal_distribution
 {
     static_assert(
-            std::is_same<float, RealType>::value
-            || std::is_same<double, RealType>::value,
-            "Only float and double types are supported in normal_distribution"
+        std::is_same<float, RealType>::value
+        || std::is_same<double, RealType>::value
+        || std::is_same<half, RealType>::value,
+        "Only float, double and half types are supported in normal_distribution"
     );
 
 public:
@@ -461,7 +491,7 @@ public:
     /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
-    /// See also: hiprandGenerateNormal(), hiprandGenerateNormalDouble()
+    /// See also: hiprandGenerateNormal(), hiprandGenerateNormalDouble(), hiprandGenerateNormalHalf()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
@@ -503,6 +533,14 @@ private:
         );
     }
 
+    template<class Generator>
+    hiprandStatus_t generate(Generator& g, half * output, size_t size)
+    {
+        return hiprandGenerateNormalHalf(
+            g.m_generator, output, size, this->mean(), this->stddev()
+        );
+    }
+
     param_type m_params;
 };
 
@@ -510,16 +548,17 @@ private:
 ///
 /// \brief Produces positive random numbers according to a log-normal distribution.
 ///
-/// \tparam RealType - type of generated values. Only \p float and \p double types are supported.
+/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
 ///
 /// See also: <a href="https://en.wikipedia.org/wiki/Log-normal_distribution">Wikipedia:Log-normal distribution</a>.
 template<class RealType = float>
 class lognormal_distribution
 {
     static_assert(
-            std::is_same<float, RealType>::value
-            || std::is_same<double, RealType>::value,
-            "Only float and double types are supported in lognormal_distribution"
+        std::is_same<float, RealType>::value
+        || std::is_same<double, RealType>::value
+        || std::is_same<half, RealType>::value,
+        "Only float, double and half types are supported in lognormal_distribution"
     );
 
 public:
@@ -651,7 +690,7 @@ public:
     /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
-    /// See also: hiprandGenerateLogNormal(), hiprandGenerateLogNormalDouble()
+    /// See also: hiprandGenerateLogNormal(), hiprandGenerateLogNormalDouble(), hiprandGenerateLogNormalHalf()
     template<class Generator>
     void operator()(Generator& g, RealType * output, size_t size)
     {
@@ -689,6 +728,14 @@ private:
     hiprandStatus_t generate(Generator& g, double * output, size_t size)
     {
         return hiprandGenerateLogNormalDouble(
+            g.m_generator, output, size, this->m(), this->s()
+        );
+    }
+
+    template<class Generator>
+    hiprandStatus_t generate(Generator& g, half * output, size_t size)
+    {
+        return hiprandGenerateLogNormalHalf(
             g.m_generator, output, size, this->m(), this->s()
         );
     }

@@ -24,8 +24,10 @@
 #include <math.h>
 #include <hip/hip_runtime.h>
 
-#include "common.hpp"
 #include "device_distributions.hpp"
+
+
+// Universal
 
 template<class T>
 struct uniform_distribution;
@@ -33,93 +35,88 @@ struct uniform_distribution;
 template<>
 struct uniform_distribution<unsigned int>
 {
-    __forceinline__ __host__ __device__
-    unsigned int operator()(const unsigned int v) const
-    {
-        return v;
-    }
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
 
-    __forceinline__ __host__ __device__
-    uint4 operator()(const uint4 v) const
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
-        return v;
+        unsigned int v = input[0];
+        output[0] = v;
     }
 };
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
-// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+template<>
+struct uniform_distribution<unsigned char>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 4;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
+    {
+        unsigned int v = input[0];
+        *reinterpret_cast<unsigned int *>(output) = v;
+    }
+};
+
+template<>
+struct uniform_distribution<unsigned short>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
+    {
+        unsigned int v = input[0];
+        *reinterpret_cast<unsigned int *>(output) = v;
+    }
+};
+
 template<>
 struct uniform_distribution<float>
 {
-    __forceinline__ __host__ __device__
-    float operator()(const unsigned int v) const
-    {
-        return rocrand_device::detail::uniform_distribution(v);
-    }
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
 
-    __forceinline__ __host__ __device__
-    float4 operator()(const uint4 v) const
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], float (&output)[1]) const
     {
-        return {
-            (*this)(v.x),
-            (*this)(v.y),
-            (*this)(v.z),
-            (*this)(v.w)
-        };
+        output[0] = rocrand_device::detail::uniform_distribution(input[0]);
     }
 };
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
-// 0.0 and 1.0, excluding 0.0 and including 1.0.
 template<>
 struct uniform_distribution<double>
 {
-    __forceinline__ __host__ __device__
-    double operator()(const unsigned int v) const
-    {
-        return rocrand_device::detail::uniform_distribution_double(v);
-    }
+    static constexpr unsigned int input_width = 2;
+    static constexpr unsigned int output_width = 1;
 
-    __forceinline__ __host__ __device__
-    double operator()(const unsigned int v1, const unsigned int v2) const
+    __host__ __device__
+    void operator()(const unsigned int (&input)[2], double (&output)[1]) const
     {
-        return rocrand_device::detail::uniform_distribution_double(v1, v2);
-    }
-
-    __forceinline__ __host__ __device__
-    double operator()(const unsigned long long v) const
-    {
-        return rocrand_device::detail::uniform_distribution_double(v);
-    }
-
-    __forceinline__ __host__ __device__
-    double2 operator()(const uint4 v) const
-    {
-        return double2 {
-            (*this)(v.x, v.y),
-            (*this)(v.z, v.w)
-        };
-    }
-
-    __forceinline__ __host__ __device__
-    double4 operator()(const uint4 v1, const uint4 v2) const
-    {
-        return double4 {
-            (*this)(v1.x, v1.y),
-            (*this)(v1.z, v1.w),
-            (*this)(v2.x, v2.y),
-            (*this)(v2.z, v2.w)
-        };
+        output[0] = rocrand_device::detail::uniform_distribution_double(input[0], input[1]);
     }
 };
 
-// MRG32K3A constants
-#ifndef ROCRAND_MRG32K3A_NORM_DOUBLE
-#define ROCRAND_MRG32K3A_NORM_DOUBLE (2.3283065498378288e-10) // 1/ROCRAND_MRG32K3A_M1
-#endif
-#ifndef ROCRAND_MRG32K3A_UINT_NORM
-#define ROCRAND_MRG32K3A_UINT_NORM (1.000000048661606966) // ROCRAND_MRG32K3A_POW32/ROCRAND_MRG32K3A_M1
-#endif
+template<>
+struct uniform_distribution<__half>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+    {
+        unsigned int v = input[0];
+        output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
+        output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
+    }
+};
+
+
+// Mrg32k3a
 
 template<class T>
 struct mrg_uniform_distribution;
@@ -127,34 +124,149 @@ struct mrg_uniform_distribution;
 template<>
 struct mrg_uniform_distribution<unsigned int>
 {
-    __forceinline__ __host__ __device__
-    unsigned int operator()(const unsigned int v) const
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
-        return static_cast<unsigned int>(v * ROCRAND_MRG32K3A_UINT_NORM);
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        output[0] = v;
     }
 };
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
-// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+template<>
+struct mrg_uniform_distribution<unsigned char>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 4;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
+    {
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        *reinterpret_cast<unsigned int *>(output) = v;
+    }
+};
+
+template<>
+struct mrg_uniform_distribution<unsigned short>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
+    {
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        *reinterpret_cast<unsigned int *>(output) = v;
+    }
+};
+
 template<>
 struct mrg_uniform_distribution<float>
 {
-    __forceinline__ __host__ __device__
-    float operator()(const unsigned int v) const
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], float (&output)[1]) const
     {
-        return rocrand_device::detail::mrg_uniform_distribution(v);
+        output[0] = rocrand_device::detail::mrg_uniform_distribution(input[0]);
     }
 };
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
-// 0.0 and 1.0, excluding 0.0 and including 1.0.
 template<>
 struct mrg_uniform_distribution<double>
 {
-    __forceinline__ __host__ __device__
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], double (&output)[1]) const
+    {
+        output[0] = rocrand_device::detail::mrg_uniform_distribution_double(input[0]);
+    }
+};
+
+template<>
+struct mrg_uniform_distribution<__half>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    __host__ __device__
+    void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
+    {
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
+        output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
+    }
+};
+
+
+// Sobol
+
+template<class T>
+struct sobol_uniform_distribution;
+
+template<>
+struct sobol_uniform_distribution<unsigned int>
+{
+    __host__ __device__
+    unsigned int operator()(const unsigned int v) const
+    {
+        return v;
+    }
+};
+
+template<>
+struct sobol_uniform_distribution<unsigned char>
+{
+    __host__ __device__
+    unsigned char operator()(const unsigned int v) const
+    {
+        return static_cast<unsigned char>(v >> 24);
+    }
+};
+
+template<>
+struct sobol_uniform_distribution<unsigned short>
+{
+    __host__ __device__
+    unsigned short operator()(const unsigned int v) const
+    {
+        return static_cast<unsigned short>(v >> 16);
+    }
+};
+
+template<>
+struct sobol_uniform_distribution<float>
+{
+    __host__ __device__
+    float operator()(const unsigned int v) const
+    {
+        return rocrand_device::detail::uniform_distribution(v);
+    }
+};
+
+template<>
+struct sobol_uniform_distribution<double>
+{
+    __host__ __device__
     double operator()(const unsigned int v) const
     {
-        return rocrand_device::detail::mrg_uniform_distribution_double(v);
+        return rocrand_device::detail::uniform_distribution_double(v);
+    }
+};
+
+template<>
+struct sobol_uniform_distribution<__half>
+{
+    __host__ __device__
+    __half operator()(const unsigned int v) const
+    {
+        return rocrand_device::detail::uniform_distribution_half(static_cast<unsigned short>(v >> 16));
     }
 };
 

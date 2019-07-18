@@ -58,72 +58,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rocrand.h>
 
+#include "common.hpp"
 #include "generator_type.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 
 namespace rocrand_host {
 namespace detail {
-
-    struct double2_unaligned
-    {
-        double x;
-        double y;
-    };
-
-    struct uint4_unaligned
-    {
-        unsigned int x;
-        unsigned int y;
-        unsigned int z;
-        unsigned int w;
-    };
-
-    struct float4_unaligned
-    {
-        float x;
-        float y;
-        float z;
-        float w;
-    };
-
-    struct double4_unaligned
-    {
-        double x;
-        double y;
-        double z;
-        double w;
-    };
-
-    template<class T>
-    struct unaligned_type
-    {
-        typedef void type;
-    };
-
-    template<>
-    struct unaligned_type<double2>
-    {
-        typedef double2_unaligned type;
-    };
-
-    template<>
-    struct unaligned_type<uint4>
-    {
-        typedef uint4_unaligned type;
-    };
-
-    template<>
-    struct unaligned_type<float4>
-    {
-        typedef float4_unaligned type;
-    };
-
-    template<>
-    struct unaligned_type<double4>
-    {
-        typedef double4_unaligned type;
-    };
 
     inline __device__ unsigned int warp_reduce_min(unsigned int val, int size) {
       for (int offset = size/2; offset > 0; offset /= 2) {
@@ -178,273 +119,123 @@ namespace detail {
         engines[engine_id] = philox4x32_10_device_engine(seed, engine_id, offset);
     }
 
-    template<unsigned int ThreadsPerEngine, class Distribution>
+    template<unsigned int ThreadsPerEngine, class T, class Distribution>
     __global__
     void generate_kernel(philox4x32_10_device_engine * engines,
-                         double * data, const size_t n,
+                         T * data, const size_t n,
                          Distribution distribution)
     {
-        typedef philox4x32_10_device_engine DeviceEngineType;
-        typedef decltype(distribution(uint4())) Type2;
-        typedef typename unaligned_type<Type2>::type Type2_unaligned;
+        constexpr unsigned int input_width = Distribution::input_width;
+        constexpr unsigned int output_width = Distribution::output_width;
 
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int engine_id = index/ThreadsPerEngine;
+        static_assert(4 % input_width == 0 && input_width <= 4, "Incorrect input_width");
+        constexpr unsigned int output_per_thread = 4 / input_width;
+        constexpr unsigned int full_output_width = output_per_thread * output_width;
+
+        using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
+
+        const unsigned int thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int engine_id = thread_id/ThreadsPerEngine;
         const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        size_t index = thread_id;
 
         // Load device engine
-        DeviceEngineType engine = engines[engine_id];
+        philox4x32_10_device_engine engine = engines[engine_id];
         if(hipThreadIdx_x%ThreadsPerEngine > 0)
         {
             // Skips hipThreadIdx_x%ThreadsPerEngine states
             engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
         }
 
-        if(((uintptr_t)data)%(sizeof(Type2)) == 0)
+        unsigned int input[input_width];
+        T output[output_per_thread][output_width];
+
+        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
+        const size_t misalignment =
+            (
+                full_output_width - uintptr / sizeof(T) % full_output_width
+            ) % full_output_width;
+        const unsigned int head_size = min(n, misalignment);
+        const unsigned int tail_size = (n - head_size) % full_output_width;
+        const size_t vec_n = (n - head_size) / full_output_width;
+
+        // Save multiple values as one vec_type
+        vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
+        while(index < vec_n)
         {
-            Type2 * data2 = (Type2 *)data;
-            while(index < (n/2))
+            const uint4 v = engine.next4_leap(ThreadsPerEngine);
+            const unsigned int vs[4] = { v.x, v.y, v.z, v.w };
+            for(unsigned int s = 0; s < output_per_thread; s++)
             {
-                data2[index] = distribution(engine.next4_leap(ThreadsPerEngine));
-                // Next position
-                index += stride;
+                for(unsigned int i = 0; i < input_width; i++)
+                {
+                    input[i] = vs[s * input_width + i];
+                }
+                distribution(input, output[s]);
             }
-        }
-        else
-        {
-            Type2_unaligned * data2 = (Type2_unaligned *)data;
-            while(index < (n/2))
-            {
-                Type2 result = distribution(engine.next4_leap(ThreadsPerEngine));
-                data2[index] = *(Type2_unaligned*)(&result);  // reinterpret as Type4_unaligned
-                // Next position
-                index += stride;
-            }
-        }
-
-        // Find thread with the smallest state of the engine which id is engine_id
-        unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
-        const bool smallest_state = (index == index_min);
-
-        // Check if we need to save tail (last 1 random number).
-        // Those numbers should be generated by the thread that would
-        // save next uint4 if n was equal n+1 (index < (n/2) would be
-        // true in such situation).
-        // If this condition is met, then we know that (index == index_min)
-        // is also true for that thread, so we don't need to check that.
-        auto tail_size = n & 1;
-        if((index == n/2) && tail_size > 0)
-        {
-            Type2 result = distribution(engine.next4());
-            // Save the tail
-            data[n - tail_size] = result.x;
-        }
-
-        // Save engine
-        if(smallest_state)
-            engines[engine_id] = engine;
-    }
-
-    template<unsigned int ThreadsPerEngine, class Type, class Distribution>
-    __global__
-    void generate_kernel(philox4x32_10_device_engine * engines,
-                         Type * data, const size_t n,
-                         Distribution distribution)
-    {
-        typedef philox4x32_10_device_engine DeviceEngineType;
-        typedef decltype(distribution(uint4())) Type4;
-        typedef typename unaligned_type<Type4>::type Type4_unaligned;
-
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int engine_id = index/ThreadsPerEngine;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        DeviceEngineType engine = engines[engine_id];
-        if(hipThreadIdx_x%ThreadsPerEngine > 0)
-        {
-            // Skips hipThreadIdx_x%ThreadsPerEngine states
-            engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
-        }
-
-        if(((uintptr_t)data)%(sizeof(Type4)) == 0)
-        {
-            Type4 * data4 = (Type4 *)data;
-            while(index < (n/4))
-            {
-                data4[index] = distribution(engine.next4_leap(ThreadsPerEngine));
-                // Next position
-                index += stride;
-            }
-        }
-        else
-        {
-            Type4_unaligned * data4 = (Type4_unaligned *)data;
-            while(index < (n/4))
-            {
-                Type4 result = distribution(engine.next4_leap(ThreadsPerEngine));
-                data4[index] = *(Type4_unaligned*)(&result);  // reinterpret as Type4_unaligned
-                // Next position
-                index += stride;
-            }
-        }
-
-        // Find thread with the smallest state of the engine which id is engine_id
-        unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
-        const bool smallest_state = (index == index_min);
-
-        // Check if we need to save tail (last 1,2,3 random number).
-        // Those numbers should be generated by the thread that would
-        // save next uint4 if n was equal n+3 (index < (n/4) would be
-        // true in such situation).
-        // If this condition is met, then we know that (index == index_min)
-        // is also true for that thread, so we don't need to check that.
-        auto tail_size = n & 3;
-        if((index == n/4) && tail_size > 0)
-        {
-            Type4 result = distribution(engine.next4());
-            // Save the tail
-            data[n - tail_size] = result.x;
-            if(tail_size > 1) data[n - tail_size + 1] = result.y;
-            if(tail_size > 2) data[n - tail_size + 2] = result.z;
-        }
-
-        // Save engine
-        if(smallest_state)
-            engines[engine_id] = engine;
-    }
-
-    template<unsigned int ThreadsPerEngine, class RealType, class Distribution>
-    __global__
-    void generate_normal_kernel(philox4x32_10_device_engine * engines,
-                                RealType * data, const size_t n,
-                                Distribution distribution)
-    {
-        typedef philox4x32_10_device_engine DeviceEngineType;
-        // RealTypeX can be float4, double2
-        typedef decltype(distribution(uint4())) RealTypeX;
-        // x can be 2 or 4
-        const unsigned x = sizeof(RealTypeX) / sizeof(RealType);
-
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int engine_id = index/ThreadsPerEngine;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        DeviceEngineType engine = engines[engine_id];
-        if(hipThreadIdx_x%ThreadsPerEngine > 0)
-        {
-            // Skips hipThreadIdx_x%ThreadsPerEngine states
-            engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
-        }
-
-        RealTypeX * dataX = (RealTypeX *)data;
-        while(index < (n/x))
-        {
-            dataX[index] = distribution(engine.next4_leap(ThreadsPerEngine));
+            vec_data[index] = *reinterpret_cast<vec_type *>(output);
             // Next position
             index += stride;
         }
 
         // Find thread with the smallest state of the engine which id is engine_id
         unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
-        const bool smallest_state = index == index_min;
+        const bool smallest_state = (index == index_min);
 
-        // Check if we need to save tail (last 1,..,(x-1) random number).
+        // Check if we need to save head and tail.
         // Those numbers should be generated by the thread that would
-        // save next uint4 if n was equal n+(x-1) (index < (n/x) would be
-        // true in such situation).
+        // save next vec_type.
         // If this condition is met, then we know that (index == index_min)
         // is also true for that thread, so we don't need to check that.
-        auto tail_size = n & (x - 1);
-        if((index == n/4) && tail_size > 0)
+        if(index == vec_n)
         {
-            RealTypeX result = distribution(engine.next4());
-            // Save the tail
-            data[n - tail_size] = (&result.x)[0]; // .x
-            if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
-            if(tail_size > 2) data[n - tail_size + 2] = (&result.x)[2]; // .z
+            // If data is not aligned by sizeof(vec_type)
+            if(head_size > 0)
+            {
+                const uint4 v = engine.next4_leap(ThreadsPerEngine);
+                const unsigned int vs[4] = { v.x, v.y, v.z, v.w };
+                for(unsigned int s = 0; s < output_per_thread; s++)
+                {
+                    for(unsigned int i = 0; i < input_width; i++)
+                    {
+                        input[i] = vs[s * input_width + i];
+                    }
+                    distribution(input, output[s]);
+
+                    for(unsigned int o = 0; o < output_width; o++)
+                    {
+                        if(s * output_width + o < head_size)
+                        {
+                            data[s * output_width + o] = output[s][o];
+                        }
+                    }
+                }
+            }
+
+            if(tail_size > 0)
+            {
+                const uint4 v = engine.next4_leap(ThreadsPerEngine);
+                const unsigned int vs[4] = { v.x, v.y, v.z, v.w };
+                for(unsigned int s = 0; s < output_per_thread; s++)
+                {
+                    for(unsigned int i = 0; i < input_width; i++)
+                    {
+                        input[i] = vs[s * input_width + i];
+                    }
+                    distribution(input, output[s]);
+
+                    for(unsigned int o = 0; o < output_width; o++)
+                    {
+                        if(s * output_width + o < tail_size)
+                        {
+                            data[n - tail_size + s * output_width + o] = output[s][o];
+                        }
+                    }
+                }
+            }
         }
 
         // Save engine
-        if(smallest_state)
-            engines[engine_id] = engine;
-    }
-
-    template <unsigned int ThreadsPerEngine, class Distribution>
-    __global__
-    void generate_poisson_kernel(philox4x32_10_device_engine * engines,
-                                 unsigned int * data, const size_t n,
-                                 const Distribution distribution)
-    {
-        typedef philox4x32_10_device_engine DeviceEngineType;
-
-        unsigned int index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int engine_id = index/ThreadsPerEngine;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        // Load device engine
-        DeviceEngineType engine = engines[engine_id];
-        if(hipThreadIdx_x%ThreadsPerEngine > 0)
-        {
-            // Skips hipThreadIdx_x%ThreadsPerEngine states
-            engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
-        }
-
-        if(((uintptr_t)data)%(sizeof(uint4)) == 0)
-        {
-            uint4 * data4 = (uint4 *)data;
-            while(index < (n / 4))
-            {
-                const uint4 u4 = engine.next4();
-                const uint4 result = uint4 {
-                    distribution(u4.x),
-                    distribution(u4.y),
-                    distribution(u4.z),
-                    distribution(u4.w)
-                };
-                data4[index] = result;
-                index += stride;
-            }
-        }
-        else
-        {
-            uint4_unaligned * data4 = (uint4_unaligned *)data;
-            while(index < (n / 4))
-            {
-                const uint4 u4 = engine.next4();
-                const uint4 result = uint4 {
-                    distribution(u4.x),
-                    distribution(u4.y),
-                    distribution(u4.z),
-                    distribution(u4.w)
-                };
-                data4[index] = *(uint4_unaligned*)(&result); // reinterpret as uint4_unaligned
-                index += stride;
-            }
-        }
-
-        // Find thread with the smallest state of the engine which id is engine_id
-        unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
-        const bool smallest_state = index == index_min;
-
-        // First work-item saves the tail when n is not a multiple of 4
-        auto tail_size = n & 3;
-        if((index == n/4) == 0 && tail_size > 0)
-        {
-            const uint4 u4 = engine.next4();
-            const uint4 result = uint4 {
-                distribution(u4.x),
-                distribution(u4.y),
-                distribution(u4.z),
-                distribution(u4.w)
-            };
-            data[n - tail_size] = (&result.x)[0]; // .x
-            if(tail_size > 1) data[n - tail_size + 1] = (&result.x)[1]; // .y
-            if(tail_size > 2) data[n - tail_size + 2] = (&result.x)[2]; // .z
-        }
-
-        // Save engine with its state
         if(smallest_state)
             engines[engine_id] = engine;
     }
@@ -518,7 +309,7 @@ public:
 
     template<class T, class Distribution = uniform_distribution<T> >
     rocrand_status generate(T * data, size_t data_size,
-                            const Distribution& distribution = Distribution())
+                            Distribution distribution = Distribution())
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
@@ -539,72 +330,26 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        uniform_distribution<T> udistribution;
-        return generate(data, data_size, udistribution);
+        uniform_distribution<T> distribution;
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        // data_size must be even
-        // data must be aligned to 2 * sizeof(T) bytes
-        if(data_size%2 != 0 || ((uintptr_t)(data)%(2*sizeof(T))) != 0)
-        {
-            return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
-        }
-
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
         normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel<s_threads_per_engine>),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        // data_size must be even
-        // data must be aligned to 2 * sizeof(T) bytes
-        if(data_size%2 != 0 || ((uintptr_t)(data)%(2*sizeof(T))) != 0)
-        {
-            return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
-        }
-
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
         log_normal_distribution<T> distribution(mean, stddev);
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_normal_kernel<s_threads_per_engine>),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, distribution);
     }
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
-            return status;
-
         try
         {
             m_poisson.set_lambda(lambda);
@@ -613,17 +358,7 @@ public:
         {
             return status;
         }
-
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_poisson_kernel<s_threads_per_engine>),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, m_poisson.dis
-        );
-        // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-
-        return ROCRAND_STATUS_SUCCESS;
+        return generate(data, data_size, m_poisson.dis);
     }
 
 private:
