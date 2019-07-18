@@ -197,7 +197,7 @@ int main(int argc, char const *argv[]) {
     if (argc != 2 || std::string(argv[1]) == "--help")
     {
         std::cout << "Usage:" << std::endl;
-        std::cout << "  ./xorwow_precomputed_generator ../../library/include/rocrand/rocrand_xorwow_precomputed.h" << std::endl;
+        std::cout << "  ./xorwow_precomputed_generator ../../library/include/rocrand_xorwow_precomputed.h" << std::endl;
         return -1;
     }
 
