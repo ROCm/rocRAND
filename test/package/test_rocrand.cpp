@@ -21,7 +21,7 @@
 #include <iostream>
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
 #define HIP_CHECK(condition)         \
   {                                  \

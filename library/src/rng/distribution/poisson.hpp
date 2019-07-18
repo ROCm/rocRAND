@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <vector>
 
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
 #include "discrete.hpp"
 

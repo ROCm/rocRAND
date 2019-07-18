@@ -22,7 +22,7 @@
 
 #include "rng/generators.hpp"
 
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 #include <new>
 
 #if defined(__cplusplus)

@@ -41,7 +41,7 @@ variables:
   image: rocm/rocm-terminal:latest
   before_script:
     - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y -qq ca-certificates git wget tar xz-utils bzip2 build-essential pkg-config g++ gfortran findutils
+    - $SUDO_CMD apt-get install -y -qq ca-certificates git wget tar xz-utils bzip2 build-essential pkg-config g++ gfortran
     - hipconfig
     # cmake
     - mkdir -p $DEPS_DIR/cmake
@@ -57,7 +57,7 @@ build:rocm:
   script:
     - mkdir build
     - cd build
-    - CXX=hcc cmake -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - CXX=hcc cmake -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
@@ -158,7 +158,6 @@ test:rocm_package:
   script:
     - cd build
     - $SUDO_CMD dpkg -i rocrand-*.deb
-    - find -L /opt/rocm/ | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
     - cmake ../test/package/.
     - make VERBOSE=1
@@ -166,22 +165,20 @@ test:rocm_package:
     - ldd ./test_hiprand
     - $SUDO_CMD dpkg -r rocrand
 
-test:rocm_install:
-  extends: .rocm
-  stage: test
-  dependencies: []
-  script:
-    - mkdir build_only_install
-    - cd build_only_install
-    - CXX=hcc cmake -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=ON ../.
-    - make -j16
-    - $SUDO_CMD make install
-    - find -L /opt/rocm/ | grep rand | sort
-    - mkdir ../install_test && cd ../install_test
-    - cmake ../test/package/.
-    - make VERBOSE=1
-    - $SUDO_CMD ctest --output-on-failure
-    - ldd ./test_hiprand
+# test:rocm_install:
+#   extends: .rocm
+#   stage: test
+#   script:
+#     - mkdir build_only_install
+#     - cd build_only_install
+#     - CXX=hcc cmake -DBUILD_TEST=OFF ../.
+#     - make -j16
+#     - $SUDO_CMD make install
+#     - mkdir ../install_test && cd ../install_test
+#     - cmake ../test/package/.
+#     - make VERBOSE=1
+#     - $SUDO_CMD ctest --output-on-failure
+#     - ldd ./test_hiprand
 
 
 # NVCC
@@ -194,7 +191,7 @@ test:rocm_install:
     - nvidia-smi
     # HIP-nvcc
     - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y -qq ca-certificates git wget tar xz-utils bzip2 build-essential pkg-config g++ gfortran findutils
+    - $SUDO_CMD apt-get install -y -qq ca-certificates git wget tar xz-utils bzip2 build-essential pkg-config g++ gfortran
     - wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | $SUDO_CMD apt-key add -
     - echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | $SUDO_CMD tee /etc/apt/sources.list.d/rocm.list
     - $SUDO_CMD apt-get update -qq
@@ -219,7 +216,7 @@ build:nvcc:
   script:
     - mkdir build
     - cd build
-    - cmake -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - cmake -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
@@ -308,7 +305,6 @@ test:nvcc_package:
   script:
     - cd build
     - $SUDO_CMD dpkg -i rocrand-*.deb
-    - find -L /opt/rocm/ | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
     - cmake ../test/package/.
     - make VERBOSE=1
@@ -316,19 +312,17 @@ test:nvcc_package:
     - ldd ./test_hiprand
     - $SUDO_CMD dpkg -r rocrand
 
-test:nvcc_install:
-  extends: .nvcc
-  stage: test
-  dependencies: []
-  script:
-    - mkdir build_only_install
-    - cd build_only_install
-    - cmake -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=ON ../.
-    - make -j16
-    - $SUDO_CMD make install
-    - find -L /opt/rocm/ | grep rand | sort
-    - mkdir ../install_test && cd ../install_test
-    - cmake ../test/package/.
-    - make VERBOSE=1
-    - $SUDO_CMD ctest --output-on-failure
-    - ldd ./test_hiprand
+# test:nvcc_install:
+#   extends: .nvcc
+#   stage: test
+#   script:
+#     - mkdir build_only_install
+#     - cd build_only_install
+#     - cmake -DBUILD_TEST=OFF ../.
+#     - make -j16
+#     - $SUDO_CMD make install
+#     - mkdir ../install_test && cd ../install_test
+#     - cmake ../test/package/.
+#     - make VERBOSE=1
+#     - $SUDO_CMD ctest --output-on-failure
+#     - ldd ./test_hiprand
