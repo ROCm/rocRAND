@@ -34,7 +34,7 @@
 /// \cond
 #define FQUALIFIERS QUALIFIERS
 /// \endcond
-#include <rocrand/rocrand_kernel.h>
+#include <rocrand_kernel.h>
 
 /// \cond
 #define DEFINE_HIPRAND_STATE(hiprand_name, rocrand_name) \
