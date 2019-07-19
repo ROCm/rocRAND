@@ -29,6 +29,7 @@
 #include <numeric>
 #include <utility>
 #include <algorithm>
+#include <functional>
 
 extern "C" {
 #include "gofs.h"
@@ -124,13 +125,13 @@ void save_points_plots(const size_t size,
 }
 
 template<typename T>
-void analyze(const size_t size,
+__host__ void analyze(const size_t size,
              const size_t level1_tests,
              const T * data,
              const bool save_plots,
              const std::string plot_name,
              const double mean, const double stddev,
-             const distribution_func_type& distribution_func)__attribute__((cpu))
+             const distribution_func_type& distribution_func)
 {
     if (save_plots)
     {
