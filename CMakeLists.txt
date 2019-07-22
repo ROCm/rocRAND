@@ -63,12 +63,18 @@ option(BUILD_CRUSH_TEST "Build Crush tests (requires TestU01)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 
 # Include cmake scripts
+include(cmake/Common.cmake)
 include(cmake/Dependencies.cmake)
 
 # Set version variables
-include(cmake/Common.cmake)
-create_version_vars(hiprand 2 6 0)
-create_version_vars(rocrand 2 6 0)
+set ( VERSION_STRING "2.7.0" )
+rocm_setup_version( VERSION ${VERSION_STRING} )
+set ( rocrand_VERSION ${rocRAND_VERSION} )
+set ( hiprand_VERSION ${rocRAND_VERSION} )
+# Old-style version number used within the library's API. rocrand_get_version should be modified.
+math(EXPR temp "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
+set(hiprand_VERSION_NUMBER ${temp})
+set(rocrand_VERSION_NUMBER ${temp})
 
 # AMD targets
 set(AMDGPU_TARGETS gfx803;gfx900;gfx906 CACHE STRING "List of specific machine types for library to target")
