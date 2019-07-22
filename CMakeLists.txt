@@ -68,14 +68,11 @@ include(cmake/Dependencies.cmake)
 
 # Set version variables
 set ( VERSION_STRING "2.7.0" )
-set ( hiprand_VERSION ${VERSION_STRING} )
-set ( rocrand_VERSION ${VERSION_STRING} )
 rocm_setup_version( VERSION ${VERSION_STRING} )
+set ( rocrand_VERSION ${rocRAND_VERSION} )
+set ( hiprand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
-set ( VERSION_MAJOR 2 )
-set ( VERSION_MINOR 7 )
-set ( VERSION_PATCH 0 )
-math(EXPR temp "${VERSION_MAJOR} * 100000 + ${VERSION_MINOR} * 100 + ${VERSION_PATCH}")
+math(EXPR temp "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
 set(hiprand_VERSION_NUMBER ${temp})
 set(rocrand_VERSION_NUMBER ${temp})
 
