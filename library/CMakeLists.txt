@@ -1,5 +1,9 @@
 # rocRAND library
 
+set( lib_SOVERSION 1.1 )
+set( hiprand_SOVERSION ${lib_SOVERSION} )
+set( rocrand_SOVERSION ${lib_SOVERSION} )
+
 # Get sources
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 set(rocRAND_SRCS ${tmp})
@@ -79,7 +83,7 @@ set_target_properties(rocrand
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
         VERSION ${rocrand_VERSION}
-        SOVERSION 1
+        SOVERSION ${rocrand_SOVERSION}
 )
 # Set AMD targets
 if(HIP_PLATFORM STREQUAL "hcc")
@@ -182,7 +186,7 @@ set_target_properties(hiprand
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
         VERSION ${hiprand_VERSION}
-        SOVERSION 1
+        SOVERSION ${hiprand_SOVERSION}
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/rocrand/lib"
 )
 
