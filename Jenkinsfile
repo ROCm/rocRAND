@@ -11,8 +11,7 @@ rocRANDCI:
 
     def rocrand = new rocProject('rocRAND')
 
-    def nodes = new dockerNodes(['gfx900 && ubuntu', 'gfx906 && ubuntu', 'gfx900 && centos7', 'gfx906 && centos7',
-                    'gfx900 && ubuntu && hip-clang', 'gfx906 && ubuntu && hip-clang'], rocrand)
+    def nodes = new dockerNodes(['gfx900 && ubuntu && hip-clang', 'gfx906 && ubuntu && hip-clang'], rocrand)
 
     boolean formatCheck = false
      
@@ -29,7 +28,7 @@ rocRANDCI:
             command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
+                    LD_LIBRARY_PATH=/opt/rocm/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
                     """
         }
         else
