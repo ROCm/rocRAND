@@ -78,12 +78,12 @@ target_include_directories(rocrand
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
         $<INSTALL_INTERFACE:rocrand/include>
 )
+
+rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
-        VERSION ${rocrand_VERSION}
-        SOVERSION ${rocrand_SOVERSION}
 )
 # Set AMD targets
 if(HIP_PLATFORM STREQUAL "hcc")
@@ -181,12 +181,12 @@ else()
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
 endif()
+  
+rocm_set_soversion(hiprand ${hiprand_SOVERSION})
 set_target_properties(hiprand
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
-        VERSION ${hiprand_VERSION}
-        SOVERSION ${hiprand_SOVERSION}
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/rocrand/lib"
 )
 
