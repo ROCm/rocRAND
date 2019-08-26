@@ -11,7 +11,7 @@ rocRANDCI:
 
     def rocrand = new rocProject('rocRAND')
 
-    def nodes = new dockerNodes(['gfx900 && ubuntu && hip-clang', 'gfx906 && ubuntu && hip-clang'], rocrand)
+    def nodes = new dockerNodes(['gfx900 && centos && hip-clang', 'gfx906 && ubuntu && hip-clang'], rocrand)
 
     boolean formatCheck = false
      
@@ -47,20 +47,7 @@ rocRANDCI:
     {
         platform, project->
 
-        def command
-
-        if(platform.jenkinsLabel.contains('centos'))
-        {
-            command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make -j4
-                    sudo ctest --output-on-failure
-                """
-        }
-        else
-        {
-            command = """#!/usr/bin/env bash
+        def command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
                     make -j4
@@ -71,46 +58,8 @@ rocRANDCI:
         platform.runCommand(this, command)
     }
 
-    def packageCommand =
-    {
-        platform, project->
-
-        def command
-        
-        if(platform.jenkinsLabel.contains('centos'))
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.rpm package/
-                    rpm -qlp package/*.rpm
-                  """
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.rpm""")
-        }
-        else if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            packageCommand = null
-        }
-        else
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.deb package/
-                    dpkg -c package/*.deb
-                  """        
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.deb""")
-        }
-    }
-
+    def packageCommand = null
+    
     buildProject(rocrand, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
 }
 
