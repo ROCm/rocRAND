@@ -53,7 +53,6 @@ rocRANDCI:
                     make -j4
                     ctest --output-on-failure
                 """
-        }
 
         platform.runCommand(this, command)
     }
@@ -62,4 +61,3 @@ rocRANDCI:
     
     buildProject(rocrand, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
 }
-
