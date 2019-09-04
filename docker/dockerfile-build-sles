@@ -1,4 +1,4 @@
-# Parameters related to building rocFFT
+# Parameters related to building rocRAND
 ARG base_image
 
 FROM ${base_image}
