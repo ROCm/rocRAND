@@ -1,0 +1,6 @@
+# Parameters related to building rocrand
+ARG base_image
+
+FROM ${base_image}
+LABEL maintainer="rocrand-maintaineramd.com"
+
