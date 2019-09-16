@@ -11,7 +11,7 @@ rocRANDCI:
 
     def rocrand = new rocProject('rocRAND')
 
-    def nodes = new dockerNodes(['ubuntu', 'gfx900 && centos7', 'gfx906 && centos7', 'sles'], rocrand)
+    def nodes = new dockerNodes(['ubuntu && gfx803', 'gfx900 && centos7', 'gfx906 && centos7', 'sles && gfx906'], rocrand)
 
     boolean formatCheck = false
      
