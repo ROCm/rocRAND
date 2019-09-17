@@ -53,8 +53,11 @@ rocRANDCI:
     def packageCommand =
     {
         platform, project->
-
-        packageCommand = platform.jenkinsLabel.contains('hip-clang') ? null : platform.makePackage(this,platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release")
+        
+        def packageHelper = platform.makePackage(this,platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release") 
+        
+        platform.runCommand(this, packageHelper[0])
+        platform.archiveArtifacts(this, packageHelper[1])
     }
 
     buildProject(rocrand, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
