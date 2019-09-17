@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-@Library('rocJenkins@makePackage') _
+@Library('rocJenkins') _
 import com.amd.project.*
 import com.amd.docker.*
 
