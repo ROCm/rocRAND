@@ -21,52 +21,31 @@ rocRANDCI:
 
         project.paths.construct_build_prefix()
         
-        def command 
+        rocrand.paths.build_command = platform.jenkinsLabel.contains('hip-clang') ? './install -c --hip-clang' : './install -c'
+        rocrand.compiler.compiler_path = platform.jenkinsLabel.contains('hip-clang') ? '/opt/rocm/bin/hipcc' : '/opt/rocm/bin/hcc'        
 
-        if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            command = """#!/usr/bin/env bash
+        def command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
+                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=${project.compiler.compiler_path} ${project.paths.build_command}
                     """
-        }
-        else
-        {
-            command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
-                    """
-        }
-
+        
         platform.runCommand(this, command)
     }
 
+    
     def testCommand =
     {
         platform, project->
+        
+        String sudo = auxiliary.sudo(platform.jenkinsLabel)
 
-        def command
-
-        if(platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('sles'))
-        {
-            command = """#!/usr/bin/env bash
+        def command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
                     make -j4
-                    sudo ctest --output-on-failure
+                    ${sudo} ctest --output-on-failure
                 """
-        }
-        else
-        {
-            command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make -j4
-                    ctest --output-on-failure
-                """
-        }
 
         platform.runCommand(this, command)
     }
@@ -74,41 +53,11 @@ rocRANDCI:
     def packageCommand =
     {
         platform, project->
-
-        def command
         
-        if(platform.jenkinsLabel.contains('centos'))
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.rpm package/
-                    rpm -qlp package/*.rpm
-                  """
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.rpm""")
-        }
-        else if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            packageCommand = null
-        }
-        else
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.deb package/
-                    dpkg -c package/*.deb
-                  """        
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.deb""")
-        }
+        def packageHelper = platform.makePackage(platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release") 
+        
+        platform.runCommand(this, packageHelper[0])
+        platform.archiveArtifacts(this, packageHelper[1])
     }
 
     buildProject(rocrand, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
