@@ -44,7 +44,7 @@ rocRANDCI:
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
                     make -j4
-                    ${sudo} ctest --output-on-failure
+                    ${sudo} LD_LIBRARY_PATH=/opt/rocm/hcc/lib ctest --output-on-failure
                 """
 
         platform.runCommand(this, command)
