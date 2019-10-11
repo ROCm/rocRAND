@@ -95,7 +95,7 @@ else
     mkdir -p debug; cd debug
 fi
 
-# Configure hipCUB, setup options for your system.
+# Configure rocRAND, setup options for your system.
 # Build options:
 #   BUILD_TEST - on by default,
 #   BUILD_BENCHMARK - off by default.
@@ -105,10 +105,7 @@ fi
 # before 'cmake' or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HCC compiler.
 #
 
-compiler="hcc"
-if ($build_hip_clang); then
-    compiler="hipcc"
-fi
+compiler="hipcc"
 
 if [ -e /etc/redhat-release ] ; then
     distro='centos'
@@ -130,15 +127,15 @@ make -j$(nproc)
 
 if ($run_tests); then
 # Optionally, run tests if they're enabled.
-ctest --output-on-failure
+    ctest --output-on-failure
 fi
 
 if ($install_package); then
 # Install
-make install
+    make install
 fi
 
 if ($build_package); then
 # Install
-make package -j$(nproc)
+    make package -j$(nproc)
 fi
