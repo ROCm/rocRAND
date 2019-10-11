@@ -22,7 +22,7 @@ rocRANDCI:
         project.paths.construct_build_prefix()
         
         rocrand.paths.build_command = platform.jenkinsLabel.contains('hip-clang') ? './install -c --hip-clang' : './install -c'
-        rocrand.compiler.compiler_path = platform.jenkinsLabel.contains('hip-clang') ? '/opt/rocm/bin/hipcc' : '/opt/rocm/bin/hcc'        
+        rocrand.compiler.compiler_path = platform.jenkinsLabel.contains('hip-clang') ? '/opt/rocm/bin/hipcc' : '/opt/rocm/bin/hipcc'        
 
         def command = """#!/usr/bin/env bash
                     set -x
