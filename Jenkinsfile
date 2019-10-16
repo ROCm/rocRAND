@@ -21,13 +21,13 @@ rocRANDCI:
 
         project.paths.construct_build_prefix()
         
-        rocrand.paths.build_command = platform.jenkinsLabel.contains('hip-clang') ? './install -c --hip-clang' : './install -c'
-        rocrand.compiler.compiler_path = platform.jenkinsLabel.contains('hip-clang') ? '/opt/rocm/bin/hipcc' : '/opt/rocm/bin/hipcc'        
+        rocrand.paths.build_command = './install -c'
+        rocrand.compiler.compiler_path =  '/opt/rocm/bin/hipcc'
 
         def command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    sudo LD_LIBRARY_PATH=/opt/rocm/hcc/lib/ CXX=${project.compiler.compiler_path} ${project.paths.build_command}
+                    sudo LD_LIBRARY_PATH=/opt/rocm/lib CXX=${project.compiler.compiler_path} ${project.paths.build_command}
                     """
         
         platform.runCommand(this, command)
@@ -44,7 +44,7 @@ rocRANDCI:
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
                     make -j4
-                    ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ctest --output-on-failure
+                    sudo LD_LIBRARY_PATH=/opt/rocm/lib ctest --output-on-failure
                 """
 
         platform.runCommand(this, command)
