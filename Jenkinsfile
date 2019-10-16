@@ -27,7 +27,7 @@ rocRANDCI:
         def command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    sudo LD_LIBRARY_PATH=/opt/rocm/lib CXX=${project.compiler.compiler_path} ${project.paths.build_command}
+                    /usr/bin/sudo --preserve-env LD_LIBRARY_PATH=/opt/rocm/lib CXX=${project.compiler.compiler_path} ${project.paths.build_command}
                     """
         
         platform.runCommand(this, command)
@@ -44,7 +44,7 @@ rocRANDCI:
                     set -x
                     cd ${project.paths.project_build_prefix}/build/release
                     make -j4
-                    sudo LD_LIBRARY_PATH=/opt/rocm/lib ctest --output-on-failure
+                    /usr/bin/sudo --preserve-env LD_LIBRARY_PATH=/opt/rocm/lib ctest --output-on-failure
                 """
 
         platform.runCommand(this, command)
