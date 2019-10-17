@@ -54,8 +54,10 @@ rocRANDCI:
     def packageCommand =
     {
         platform, project->
-        
-        def packageHelper = platform.makePackage(platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release") 
+
+        boolean needSudo = label.contains('hip-clang') || label.contains('sles') || label.contains('centos')
+
+        def packageHelper = platform.makePackage(platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release", false, needSudo) 
         
         platform.runCommand(this, packageHelper[0])
         platform.archiveArtifacts(this, packageHelper[1])
