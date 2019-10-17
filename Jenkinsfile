@@ -15,14 +15,14 @@ rocRANDCI:
 
     boolean formatCheck = false
 
-    String sudo = auxiliary.sudo(platform.jenkinsLabel)
-
     def compileCommand =
     {
         platform, project->
 
         project.paths.construct_build_prefix()
-        
+        String sudo = auxiliary.sudo(platform.jenkinsLabel)
+
+
         rocrand.paths.build_command = './install -c'
         rocrand.compiler.compiler_path =  '/opt/rocm/bin/hipcc'
 
@@ -39,6 +39,7 @@ rocRANDCI:
     def testCommand =
     {
         platform, project->
+        String sudo = auxiliary.sudo(platform.jenkinsLabel)
         
         def command = """#!/usr/bin/env bash
                     set -x
