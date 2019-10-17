@@ -55,7 +55,7 @@ rocRANDCI:
     {
         platform, project->
 
-        boolean needSudo = label.contains('hip-clang') || label.contains('sles') || label.contains('centos')
+        boolean needSudo = platform.jenkinsLabel.contains('hip-clang') || label.contains('sles') || label.contains('centos')
 
         def packageHelper = platform.makePackage(platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release", false, needSudo) 
         
