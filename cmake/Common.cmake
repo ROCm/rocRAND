@@ -1,4 +1,6 @@
 #
+set(ROCM_DISABLE_LDCONFIG OFF CACHE BOOL "")
+
 function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS)
     list(LENGTH LIB_NAMES len1)
     list(LENGTH LIB_DIRS  len2)
@@ -18,7 +20,9 @@ function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS)
 
         set(POSTINST_SOURCE "${POSTINST_SOURCE}\nmkdir -p ${inc_dir}/../../include/")
         set(POSTINST_SOURCE "${POSTINST_SOURCE}\nmkdir -p ${lib_dir}/../../lib/cmake/${lib_name}")
-        set(POSTINST_SOURCE "${POSTINST_SOURCE}\necho \"${lib_dir}\" > /etc/ld.so.conf.d/${lib_name}.conf")
+        if(NOT ${ROCM_DISABLE_LDCONFIG})
+            set(POSTINST_SOURCE "${POSTINST_SOURCE}\necho \"${lib_dir}\" > /etc/ld.so.conf.d/${lib_name}.conf")
+        endif()
         set(POSTINST_SOURCE "${POSTINST_SOURCE}\nln -sr ${inc_dir} ${inc_dir}/../../include/${lib_name}")
         set(POSTINST_SOURCE "${POSTINST_SOURCE}\nln -sr ${lib_dir}/lib${lib_name}.so ${lib_dir}/../../lib/lib${lib_name}.so")
         set(POSTINST_SOURCE "${POSTINST_SOURCE}\nln -sr ${lib_dir}/cmake/${lib_name} ${lib_dir}/../../lib/cmake/${lib_name}\n")
