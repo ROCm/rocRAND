@@ -255,11 +255,11 @@ set(CPACK_PACKAGE_NAME "rocrand")
 set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saad Rahim <saad.rahim@amd.com>")
 if(HIP_PLATFORM STREQUAL "hcc")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip_hcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip_hcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 2.5.27)") # 1.5.19055 is part of ROCm 2.2
+  set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 2.5.27") # 1.5.19055 is part of ROCm 2.2
 else()
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip_nvcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip_nvcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-nvcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
+  set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
 endif()
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers.")
 set(CPACK_SET_DESTDIR ON)
