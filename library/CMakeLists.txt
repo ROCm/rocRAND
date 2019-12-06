@@ -255,8 +255,8 @@ set(CPACK_PACKAGE_NAME "rocrand")
 set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saad Rahim <saad.rahim@amd.com>")
 if(HIP_PLATFORM STREQUAL "hcc")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
-  set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 2.5.27)") # 1.5.19055 is part of ROCm 2.2
+  set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 2.5.27") # 1.5.19055 is part of ROCm 2.2
 else()
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-nvcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
