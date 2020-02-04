@@ -6,7 +6,8 @@ import java.nio.file.Path;
 
 def runCI =
 {
-
+    nodeDetails, jobName->
+    
     def prj = new rocProject('rocRAND', 'PreCheckin')
 
     def nodes = new dockerNodes(nodeDetails, jobName, prj)
