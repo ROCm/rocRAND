@@ -33,12 +33,6 @@ def runTestCommand (platform, project)
 
 def runPackageCommand(platform, project)
 {
-    //// temporary change due to new containers having HOME hardcoded to /root
-    environment {
-        HOME = '/home/jenkins'
-    }
-    ////
-
     def packageHelper = platform.makePackage(platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release") 
         
     platform.runCommand(this, packageHelper[0])
