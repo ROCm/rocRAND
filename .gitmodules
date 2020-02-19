@@ -1,0 +1,3 @@
+[submodule "rocFFT-internal"]
+	path = rocFFT-internal
+	url = https://github.com/ROCmSoftwarePlatform/rocFFT-internal.git
