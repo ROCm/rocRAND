@@ -36,6 +36,7 @@ variables:
 .rocm:
   variables:
     SUDO_CMD: "sudo -E"
+    SUDO_CMD_HOME: "sudo -E -H"
   tags:
     - rocm
   image: rocm/rocm-terminal:latest
@@ -128,10 +129,10 @@ test:rocm_python:
     - $SUDO_CMD apt-get install -y -qq python python-pip python-numpy
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
     - $SUDO_CMD apt-get install -y -qq wget
-    - sudo apt-get -y remove python-pip python3-pip
+    - $SUDO_CMD apt-get -y remove python-pip python3-pip
     - wget https://bootstrap.pypa.io/get-pip.py
-    - sudo -H python get-pip.py
-    - sudo -H python3 get-pip.py
+    - $SUDO_CMD_HOME python get-pip.py
+    - $SUDO_CMD_HOME python3 get-pip.py
 
   script:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
@@ -289,10 +290,10 @@ test:nvcc_python:
     - $SUDO_CMD apt-get install -y -qq python python-pip python-numpy
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
     - $SUDO_CMD apt-get install -y -qq wget
-    - sudo apt-get -y remove python-pip python3-pip
+    - $SUDO_CMD apt-get -y remove python-pip python3-pip
     - wget https://bootstrap.pypa.io/get-pip.py
-    - sudo -H python get-pip.py
-    - sudo -H python3 get-pip.py
+    - $SUDO_CMD_HOME python get-pip.py
+    - $SUDO_CMD_HOME python3 get-pip.py
 
   script:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
@@ -354,4 +355,3 @@ test:nvcc_install:
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
     - ldd ./test_hiprand
-
