@@ -272,6 +272,7 @@ package_set_postinst_prerm(
     "hiprand;rocrand"
     "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
     "${CMAKE_INSTALL_PREFIX}/hiprand/include;${CMAKE_INSTALL_PREFIX}/rocrand/include"
+    "${hiprand_SOVERSION};${rocrand_SOVERSION}"
 )
 
 # Include CPack to introduce the appropriate targets
