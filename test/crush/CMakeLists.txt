@@ -56,7 +56,7 @@ foreach(crush_test_src ${rocRAND_CRUSH_TEST_SRCS})
         else()
             target_link_libraries(${crush_test_name}
                 rocrand
-                hip::hip_hcc hip::hip_device
+                hip::device 
                 ${TestU01_LIBRARIES}
             )
         endif()
