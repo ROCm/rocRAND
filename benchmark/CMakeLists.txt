@@ -49,7 +49,7 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
         else()
             target_link_libraries(${benchmark_name}
                 rocrand
-                hip::hip_hcc hip::hip_device
+                hip::device 
             )
         endif()
         foreach(amdgpu_target ${AMDGPU_TARGETS})
