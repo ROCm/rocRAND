@@ -58,11 +58,13 @@ git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 cd rocRAND; mkdir build; cd build
 
 # Configure rocRAND, setup options for your system
-# Build options: BUILD_TEST, BUILD_BENCHMARK (off by default), BUILD_CRUSH_TEST (off by default)
+# Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_CRUSH_TEST (off by default), BUILD_SHARED_LIBS
 #
 # ! IMPORTANT !
 # On ROCm platform set C++ compiler to HCC. You can do it by adding 'CXX=<path-to-hcc>' or just
 # `CXX=hcc` before 'cmake', or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HCC compiler.
+#
+# The python interface do not work with static library.
 #
 [CXX=hcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
