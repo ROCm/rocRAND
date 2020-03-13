@@ -51,9 +51,9 @@ if(HIP_PLATFORM STREQUAL "nvcc")
             CUDA_SOURCE_PROPERTY_FORMAT OBJ
     )
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(rocrand ${rocRAND_SRCS})
+    CUDA_ADD_LIBRARY(rocrand ${LIB_TYPE} ${rocRAND_SRCS})
 else()
-    add_library(rocrand ${rocRAND_SRCS})
+    add_library(rocrand ${LIB_TYPE} ${rocRAND_SRCS})
 
     # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
     if(CXX_VERSION_STRING MATCHES "clang")
@@ -92,10 +92,11 @@ if(HIP_PLATFORM STREQUAL "hcc")
 endif()
 
 # Install
-# .so lib
+# .so or .a lib
 install(
     TARGETS rocrand
     EXPORT rocrand-targets
+    ARCHIVE DESTINATION rocrand/lib
     LIBRARY DESTINATION rocrand/lib
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
@@ -155,9 +156,9 @@ if(HIP_PLATFORM STREQUAL "nvcc")
             CUDA_SOURCE_PROPERTY_FORMAT OBJ
     )
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(hiprand ${hipRAND_SRCS})
+    CUDA_ADD_LIBRARY(hiprand ${LIB_TYPE} ${hipRAND_SRCS})
 else()
-    add_library(hiprand ${hipRAND_SRCS})
+    add_library(hiprand ${LIB_TYPE} ${hipRAND_SRCS})
 endif()
 target_include_directories(hiprand
     PUBLIC
@@ -180,7 +181,7 @@ else()
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
 endif()
-  
+
 rocm_set_soversion(hiprand ${hiprand_SOVERSION})
 set_target_properties(hiprand
     PROPERTIES
@@ -190,10 +191,11 @@ set_target_properties(hiprand
 )
 
 # Install
-# .so library
+# .so and .a library
 install(
     TARGETS hiprand
     EXPORT hiprand-targets
+    ARCHIVE DESTINATION hiprand/lib
     LIBRARY DESTINATION hiprand/lib
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
