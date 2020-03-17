@@ -115,7 +115,6 @@ test:rocm_vega20:
     - $SUDO_CMD ctest --output-on-failure
     - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
-    - $SUDO_CMD ./test/crush_test_rocrand --help # Just check if works
 
 test:rocm_s9300:
   extends: .rocm
@@ -129,7 +128,6 @@ test:rocm_s9300:
     - $SUDO_CMD ctest --output-on-failure
     - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
-    - $SUDO_CMD ./test/crush_test_rocrand --help # Just check if works
 
 test:rocm_mi25:
   extends: .rocm
@@ -143,7 +141,6 @@ test:rocm_mi25:
     - $SUDO_CMD ctest --output-on-failure
     - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
-    - $SUDO_CMD ./test/crush_test_rocrand --help # Just check if works
 
 test:rocm_python:
   extends: .rocm
@@ -290,7 +287,6 @@ test:nvcc_titanv:
     - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_curand_generate --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_curand_kernel --dis all --engine all --trials 5
-    - $SUDO_CMD ./test/crush_test_rocrand --help # Just check if works
 
 test:nvcc_980:
   extends: .nvcc
@@ -305,7 +301,6 @@ test:nvcc_980:
     - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_curand_generate --dis all --engine all --trials 5
     - $SUDO_CMD ./benchmark/benchmark_curand_kernel --dis all --engine all --trials 5
-    - $SUDO_CMD ./test/crush_test_rocrand --help # Just check if works
 
 test:nvcc_python:
   extends: .nvcc
