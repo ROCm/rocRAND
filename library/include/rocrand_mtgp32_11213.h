@@ -29760,8 +29760,5 @@ static rocrand_device::mtgp32_fast_params mtgp32dc_params_fast_11213[]
     }
 };
 extern const int mtgpdc_params_11213_num;
-const int mtgpdc_params_11213_num = 512;
-
+// Definition in mtgp32.hpp file mtgpdc_params_11213_num = 512;
 #endif // ROCRAND_MTGP32_11213_H_
-
-
