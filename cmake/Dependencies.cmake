@@ -64,34 +64,6 @@ if(BUILD_TEST)
     find_package(GTest REQUIRED)
 endif()
 
-# Crush Tests
-if(BUILD_CRUSH_TEST)
-    if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-        find_package(TestU01 QUIET)
-    endif()
-
-    if(NOT TestU01_FOUND)
-        message(STATUS "TestU01 not found. Downloading and building TestU01.")
-        # Download and install TestU01 library
-        set(TESTU01_ROOT_DIR ${CMAKE_CURRENT_BINARY_DIR}/testu01)
-        download_project(PROJ                TestU01
-                         URL                 http://simul.iro.umontreal.ca/testu01/TestU01.zip
-                         URL_MD5             0cbbe837f330d813ee258ef6bea2ac0e
-                         INSTALL_DIR         ${TESTU01_ROOT_DIR}
-                         CONFIGURE_COMMAND   ./configure --prefix=<INSTALL_DIR>
-                         BUILD_COMMAND       make
-                         INSTALL_COMMAND     make install
-                         UPDATE_COMMAND      ""
-                         PATCH_COMMAND       ""
-                         LOG_DOWNLOAD        TRUE
-                         LOG_CONFIGURE       TRUE
-                         LOG_BUILD           TRUE
-                         LOG_INSTALL         TRUE
-        )
-    endif()
-    find_package(TestU01 REQUIRED)
-endif()
-
 # Find or download/install rocm-cmake project
 find_package(ROCM QUIET CONFIG PATHS /opt/rocm)
 if(NOT ROCM_FOUND)

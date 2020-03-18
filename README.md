@@ -38,9 +38,6 @@ Optional:
 * [GTest](https://github.com/google/googletest) (required only for tests; building tests is enabled by default)
   * Use `GTEST_ROOT` to specify GTest location (also see [FindGTest](https://cmake.org/cmake/help/latest/module/FindGTest.html))
   * Note: If GTest is not already installed, it will be automatically downloaded and built
-* [TestU01](http://simul.iro.umontreal.ca/testu01/tu01.html) (required only for crush tests)
-  * Use `TESTU01_ROOT_DIR` to specify TestU01 location
-  * Note: If TestU01 is not already installed, it will be automatically downloaded and built
 * Fortran compiler (required only for Fortran wrapper)
   * `gfortran` is recommended.
 * Python 2.7+ or 3.5+ (required only for Python wrapper)
@@ -58,11 +55,13 @@ git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 cd rocRAND; mkdir build; cd build
 
 # Configure rocRAND, setup options for your system
-# Build options: BUILD_TEST, BUILD_BENCHMARK (off by default), BUILD_CRUSH_TEST (off by default)
+# Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_SHARED_LIBS
 #
 # ! IMPORTANT !
 # On ROCm platform set C++ compiler to HCC. You can do it by adding 'CXX=<path-to-hcc>' or just
 # `CXX=hcc` before 'cmake', or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HCC compiler.
+#
+# The python interface do not work with static library.
 #
 [CXX=hcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
@@ -129,11 +128,6 @@ cd rocRAND; cd build
 ```
 # Go to rocRAND build directory
 cd rocRAND; cd build
-
-# To run "crush" test, which verifies that generated pseudorandom
-# numbers are of high quality:
-# engine -> all, xorwow, mrg32k3a, mtgp32, philox
-./test/crush_test_rocrand --engine <engine>
 
 # To run Pearson Chi-squared and Anderson-Darling tests, which verify
 # that distribution of random number agrees with the requested distribution:
