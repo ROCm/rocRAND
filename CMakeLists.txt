@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
 # Install prefix
-set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
+set(CMAKE_INSTALL_PREFIX "/opt/rocm-3.1.0" CACHE PATH "Install path prefix, prepended onto install directories")
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -58,8 +58,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 # Build options
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
-option(BUILD_TEST "Build tests (requires googletest)" ON)
-option(BUILD_CRUSH_TEST "Build Crush tests (requires TestU01)" OFF)
+option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 
 # Include cmake scripts
@@ -81,6 +80,12 @@ set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908 CACHE STRING "List of specific ma
 # Print configuration summary
 include(cmake/Summary.cmake)
 print_configuration_summary()
+
+if(BUILD_SHARED_LIBS)
+   set(LIB_TYPE SHARED)
+else()
+   set(LIB_TYPE STATIC)
+endif()
 
 # Tools
 add_subdirectory(tools)
