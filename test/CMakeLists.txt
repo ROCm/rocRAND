@@ -69,11 +69,6 @@ if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(fortran)
 endif()
 
-# Crush Tests
-if(BUILD_CRUSH_TEST)
-    add_subdirectory(crush)
-endif()
-
 # Get hipRAND tests source files
 file(GLOB hipRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_hiprand*.cpp)
 
