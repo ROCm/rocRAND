@@ -254,7 +254,7 @@ if(EXISTS ${DPKG_EXE})
 endif()
 set(CPACK_PACKAGE_NAME "rocrand")
 set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Saad Rahim <saad.rahim@amd.com>")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "rocRAND Maintainer <rocrand-maintaner@amd.com>")
 if(HIP_PLATFORM STREQUAL "hcc")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 2.5.27)") # 1.5.19055 is part of ROCm 2.2
   set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 2.5.27") # 1.5.19055 is part of ROCm 2.2

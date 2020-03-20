@@ -2,7 +2,7 @@
 ARG base_image
 
 FROM ${base_image}
-LABEL maintainer="nico.trost@amd.com"
+LABEL maintainer="rocrand-maintainer@amd.com"
 
 # Copy the rpm package of rocblas into the container from host
 COPY *.rpm /tmp/
