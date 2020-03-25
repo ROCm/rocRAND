@@ -63,7 +63,7 @@ else()
 endif()
 
 # Build options
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(BUILD_STATIC_LIBS "Build static libraries next to shared" OFF)
 option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
@@ -87,12 +87,6 @@ set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908 CACHE STRING "List of specific ma
 # Print configuration summary
 include(cmake/Summary.cmake)
 print_configuration_summary()
-
-if(BUILD_SHARED_LIBS)
-   set(LIB_TYPE SHARED)
-else()
-   set(LIB_TYPE STATIC)
-endif()
 
 # Tools
 add_subdirectory(tools)
