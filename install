@@ -149,8 +149,10 @@ if [[ "${build_relocatable}" == true ]]; then
     -DROCM_DISABLE_LDCONFIG=ON \
     -DCMAKE_MODULE_PATH="${rocm_path}/hip/cmake" \
     ../../. # or cmake-gui ../.
+    check_exit_code
 else
     CXX=${rocm_path}/bin/$compiler ${cmake_executable} ${clients} ../../. # or cmake-gui ../.
+    check_exit_code
 fi
 check_exit_code
 
