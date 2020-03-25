@@ -54,8 +54,8 @@ eval set -- "${GETOPT_PARSE}"
 
 check_exit_code( )
 {
-    if (( $? != 0 )); then
-	exit $?
+    if (( $1 != 0 )); then
+	exit $1
     fi
 }
 
@@ -149,16 +149,14 @@ if [[ "${build_relocatable}" == true ]]; then
     -DROCM_DISABLE_LDCONFIG=ON \
     -DCMAKE_MODULE_PATH="${rocm_path}/hip/cmake" \
     ../../. # or cmake-gui ../.
-    check_exit_code
 else
     CXX=${rocm_path}/bin/$compiler ${cmake_executable} ${clients} ../../. # or cmake-gui ../.
-    check_exit_code
 fi
-check_exit_code
+check_exit_code($?)
 
 # Build
 make -j$(nproc)
-check_exit_code
+check_exit_code($?)
 
 if ($run_tests); then
 # Optionally, run tests if they're enabled.
@@ -168,11 +166,11 @@ fi
 if ($install_package); then
     # Install
     make install
-    check_exit_code    
+    check_exit_code($?)    
 fi
 
 if ($build_package); then
     # Package
     make package -j$(nproc)
-    check_exit_code
+    check_exit_code($?)
 fi
