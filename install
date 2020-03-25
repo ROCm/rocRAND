@@ -152,11 +152,11 @@ if [[ "${build_relocatable}" == true ]]; then
 else
     CXX=${rocm_path}/bin/$compiler ${cmake_executable} ${clients} ../../. # or cmake-gui ../.
 fi
-check_exit_code($?)
+check_exit_code "$?"
 
 # Build
 make -j$(nproc)
-check_exit_code($?)
+check_exit_code "$?"
 
 if ($run_tests); then
 # Optionally, run tests if they're enabled.
@@ -166,11 +166,11 @@ fi
 if ($install_package); then
     # Install
     make install
-    check_exit_code($?)    
+    check_exit_code "$?"    
 fi
 
 if ($build_package); then
     # Package
     make package -j$(nproc)
-    check_exit_code($?)
+    check_exit_code "$?"
 fi
