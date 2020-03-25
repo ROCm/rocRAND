@@ -152,6 +152,7 @@ if [[ "${build_relocatable}" == true ]]; then
 else
     CXX=${rocm_path}/bin/$compiler ${cmake_executable} ${clients} ../../. # or cmake-gui ../.
 fi
+check_exit_code
 
 # Build
 make -j$(nproc)
