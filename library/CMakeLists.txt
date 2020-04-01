@@ -140,7 +140,13 @@ install(
 # hipRAND library
 
 # Get hipRAND sources
-set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_${HIP_PLATFORM}.cpp)
+if(HIP_PLATFORM STREQUAL "nvcc")
+    set(HIP_PLATFORM_SOURCE "nvcc")
+else()
+    set(HIP_PLATFORM_SOURCE "hcc")
+endif()
+set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_${HIP_PLATFORM_SOURCE}.cpp)
+
 
 # Configure a header file to pass the hipRAND version
 configure_file(
