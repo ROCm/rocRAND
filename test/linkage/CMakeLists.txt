@@ -40,7 +40,7 @@ function(add_rocrand_link_test TEST_SOURCES)
         rocrand
         ${GTEST_BOTH_LIBRARIES}
     )
-    if(HIP_PLATFORM STREQUAL "hcc")
+    if(HIP_PLATFORM STREQUAL "hcc" OR HIP_PLATFORM STREQUAL "clang")
         # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
         if(TARGET hip::device)
             target_link_libraries(${TEST_TARGET} hip::device)

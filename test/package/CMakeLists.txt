@@ -85,6 +85,13 @@ foreach(test_src ${hiprand_pkg_TEST_SRCS})
                 roc::rocrand
                 "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
         )
+    elseif(HIP_PLATFORM STREQUAL "clang")
+        target_link_libraries(${test_name}
+            PRIVATE
+                hip::hiprand
+                roc::rocrand
+                "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib" //TODO: pass in appropriate linker flag for hip-clang
+        )
     else()
         target_link_libraries(${test_name}
             PRIVATE

@@ -51,13 +51,13 @@
 #    // Remember to first find and include HIP
 #    // See https://github.com/ROCm-Developer-Tools/HIP
 #    find_package(hiprand REQUIRED CONFIG PATHS "/opt/rocm/hiprand")
-#    if(HIP_PLATFORM STREQUAL "hcc")
+#    if(HIP_PLATFORM STREQUAL "hcc" OR HIP_PLATFORM STREQUAL "clang")
 #      find_package(rocrand REQUIRED CONFIG PATHS "/opt/rocm/rocrand")
 #    endif()
 #
 #    add_executable(foo foo.cpp)
 #    // Set HIP flags, includes (see hipconfig)
-#    if(HIP_PLATFORM STREQUAL "hcc")
+#    if(HIP_PLATFORM STREQUAL "hcc" OR HIP_PLATFORM STREQUAL "clang")
 #      // Link foo against HIP library
 #      target_link_libraries(foo roc::rocrand hip::hiprand)
 #    else()
@@ -73,7 +73,7 @@
 #    )
 #
 #    add_executable(bar ${bar_SRCS})
-#    if(HIP_PLATFORM STREQUAL "hcc")
+#    if(HIP_PLATFORM STREQUAL "hcc" OR HIP_PLATFORM STREQUAL "clang")
 #      // Link bar against HIP library
 #      target_link_libraries(bar roc::rocrand hip::hiprand)
 #    else()

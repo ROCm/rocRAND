@@ -45,7 +45,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         rocrand
         ${GTEST_BOTH_LIBRARIES}
     )
-    if(HIP_PLATFORM STREQUAL "hcc")
+    if(HIP_PLATFORM STREQUAL "hcc" OR HIP_PLATFORM STREQUAL "clang")
         # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
         if(TARGET hip::device)
             target_link_libraries(${test_name} hip::device)
