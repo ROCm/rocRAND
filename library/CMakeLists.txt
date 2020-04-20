@@ -65,7 +65,7 @@ else()
               # to link to roc::rocrand when using different compiler than hcc,
               # hip::device adds hcc-specific compilation flags.
               hip::device
-              hcc::hccshared
+             # hcc::hccshared
       )
     endif()
     set(rocrand_DEPENDENCIES "hip")
@@ -175,7 +175,7 @@ else()
     if(CXX_VERSION_STRING MATCHES "clang")
       target_link_libraries(hiprand PRIVATE rocrand hip::device)
     else()
-      target_link_libraries(hiprand PRIVATE rocrand hip::device hcc::hccshared)
+      target_link_libraries(hiprand PRIVATE rocrand hip::device)
     endif()
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
