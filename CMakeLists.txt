@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
 # Install prefix
-set(CMAKE_INSTALL_PREFIX "/opt/rocm-3.1.0" CACHE PATH "Install path prefix, prepended onto install directories")
+set(CMAKE_INSTALL_PREFIX "/opt/rocm-3.3.0" CACHE PATH "Install path prefix, prepended onto install directories")
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -49,11 +49,18 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOLEAN "Add paths to linker se
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
 
+# Build option to disable -Werror
+option(DISABLE_WERROR "Disable building with Werror" ON)
+
 # Build CXX flags
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+if(DISABLE_WERROR)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+endif()
 
 # Build options
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
