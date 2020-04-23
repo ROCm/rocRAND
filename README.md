@@ -65,6 +65,12 @@ cd rocRAND; mkdir build; cd build
 #
 [CXX=hcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
+# To configure rocRAND for Nvidia platforms, 'CXX=<path-to-nvcc>', `CXX=nvcc` or omitting the flag
+# entirely before 'cmake' is sufficient
+[CXX=nvcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+# or
+cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+
 # Build
 # For ROCM-1.6, if a HCC runtime error is caught, consider setting
 # HCC_AMDGPU_TARGET=<arch> in front of make as a workaround
