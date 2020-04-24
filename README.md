@@ -55,7 +55,7 @@ git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 cd rocRAND; mkdir build; cd build
 
 # Configure rocRAND, setup options for your system
-# Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_SHARED_LIBS
+# Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_STATIC_LIBS (off by default)
 #
 # ! IMPORTANT !
 # On ROCm platform set C++ compiler to HCC. You can do it by adding 'CXX=<path-to-hcc>' or just
