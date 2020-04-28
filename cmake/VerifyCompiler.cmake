@@ -22,6 +22,9 @@
 
 # Find HIP package
 find_package(HIP REQUIRED)
+find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
+message(STATUS "HIP_COMPILER=${HIP_COMPILER}")
+message(STATUS "HIP_RUNTIME=${HIP_RUNTIME}")
 
 if(HIP_PLATFORM STREQUAL "nvcc")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
