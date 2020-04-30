@@ -62,14 +62,13 @@ else()
     if(CXX_VERSION_STRING MATCHES "clang")
         target_link_libraries(rocrand PRIVATE hip::device)
     else()
-        target_link_libraries(rocrand
-            PRIVATE
-                # We keep hip::device private, because otherwise it's not possible
-                # to link to roc::rocrand when using different compiler than hcc,
-                # hip::device adds hcc-specific compilation flags.
-                hip::device
-                hcc::hccshared
-        )
+      target_link_libraries(rocrand
+          PRIVATE
+              # We keep hip::device private, because otherwise it's not possible
+              # to link to roc::rocrand when using different compiler than hcc,
+              # hip::device adds hcc-specific compilation flags.
+              hip::device
+      )
     endif()
     set(rocrand_DEPENDENCIES "hip")
     if(BUILD_STATIC_LIBS)
@@ -245,10 +244,11 @@ else()
             target_link_libraries(hiprand_static PRIVATE rocrand hip::device)
         endif()
     else()
-        target_link_libraries(hiprand PRIVATE rocrand hip::device hcc::hccshared)
         if(BUILD_STATIC_LIBS)
-            target_link_libraries(hiprand_static PRIVATE rocrand hip::device hcc::hccshared)
+            target_link_libraries(hiprand_static PRIVATE rocrand hip::device)
         endif()
+
+      target_link_libraries(hiprand PRIVATE rocrand hip::device)
     endif()
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
