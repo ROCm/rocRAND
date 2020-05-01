@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
 find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
 message(STATUS "HIP_COMPILER=${HIP_COMPILER}")
 message(STATUS "HIP_RUNTIME=${HIP_RUNTIME}")
@@ -33,10 +34,8 @@ if(HIP_COMPILER STREQUAL "nvcc")
 elseif(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
     if(NOT (CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR CMAKE_CXX_COMPILER MATCHES ".*/hipcc$"))
         message(FATAL_ERROR "On ROCm platform 'hcc' or 'clang' must be used as C++ compiler.")
-    elseif(CXX_VERSION_STRING MATCHES "clang")
-        list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
-    else()
-        list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hcc /opt/rocm/hip)
+    elseif(NOT CXX_VERSION_STRING MATCHES "clang")
+        list(APPEND CMAKE_PREFIX_PATH /opt/rocm/hcc)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
     endif()
 else()

@@ -9,7 +9,7 @@ endforeach()
 
 # Use CUDA_INCLUDE_DIRECTORIES to include required dirs
 # for nvcc if cmake version is less than 3.9.3
-if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
+if((HIP_COMPILER STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
     CUDA_INCLUDE_DIRECTORIES(
         "${PROJECT_BINARY_DIR}/library/include/"
         "${PROJECT_SOURCE_DIR}/library/include/"
@@ -22,7 +22,7 @@ endif()
 foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     # nvcc/CUDA
-    if(HIP_PLATFORM STREQUAL "nvcc")
+    if(HIP_COMPILER STREQUAL "nvcc")
         set_source_files_properties(${test_src}
             PROPERTIES
                 CUDA_SOURCE_PROPERTY_FORMAT OBJ
@@ -45,13 +45,8 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         rocrand
         ${GTEST_BOTH_LIBRARIES}
     )
-    if(HIP_PLATFORM STREQUAL "hcc")
-        # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
-        if(TARGET hip::device)
-            target_link_libraries(${test_name} hip::device)
-        else()
-            target_link_libraries(${test_name} hip::device )
-        endif()
+    if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
+        target_link_libraries(${test_name} hip::device)
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
         endforeach()
@@ -76,7 +71,7 @@ file(GLOB hipRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_hiprand*.cpp)
 foreach(test_src ${hipRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     # nvcc/CUDA
-    if(HIP_PLATFORM STREQUAL "nvcc")
+    if(HIP_COMPILER STREQUAL "nvcc")
         set_source_files_properties(${test_src}
             PROPERTIES
                 CUDA_SOURCE_PROPERTY_FORMAT OBJ
@@ -95,7 +90,7 @@ foreach(test_src ${hipRAND_TEST_SRCS})
         PUBLIC
             ${PROJECT_SOURCE_DIR}/library/src
     )
-    if(HIP_PLATFORM STREQUAL "nvcc")
+    if(HIP_COMPILER STREQUAL "nvcc")
         target_link_libraries(${test_name}
             hiprand
             ${CUDA_curand_LIBRARY}
@@ -107,12 +102,7 @@ foreach(test_src ${hipRAND_TEST_SRCS})
             rocrand
             ${GTEST_BOTH_LIBRARIES}
         )
-        # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
-        if(TARGET hip::device)
-            target_link_libraries(${test_name} hip::device)
-        else()
-            target_link_libraries(${test_name} hip::device )
-        endif()
+        target_link_libraries(${test_name} hip::device )
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
         endforeach()
