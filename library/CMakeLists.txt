@@ -35,7 +35,7 @@ configure_file(
 
 # Use CUDA_INCLUDE_DIRECTORIES to include required dirs
 # for nvcc if cmake version is less than 3.9.3
-if((HIP_PLATFORM STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
+if((HIP_COMPILER STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
     CUDA_INCLUDE_DIRECTORIES(
         "${PROJECT_BINARY_DIR}/library/include/"
         "${PROJECT_SOURCE_DIR}/library/include/"
@@ -45,7 +45,7 @@ endif()
 include(CMakePackageConfigHelpers)
 
 # Build library
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
         PROPERTIES
             CUDA_SOURCE_PROPERTY_FORMAT OBJ
@@ -54,20 +54,7 @@ if(HIP_PLATFORM STREQUAL "nvcc")
     CUDA_ADD_LIBRARY(rocrand ${LIB_TYPE} ${rocRAND_SRCS})
 else()
     add_library(rocrand ${LIB_TYPE} ${rocRAND_SRCS})
-
-    # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
-    if(CXX_VERSION_STRING MATCHES "clang")
-      target_link_libraries(rocrand PRIVATE hip::device)
-    else()
-      target_link_libraries(rocrand
-          PRIVATE
-              # We keep hip::device private, because otherwise it's not possible
-              # to link to roc::rocrand when using different compiler than hcc,
-              # hip::device adds hcc-specific compilation flags.
-              hip::device
-             # hcc::hccshared
-      )
-    endif()
+    target_link_libraries(rocrand PRIVATE hip::device)
     set(rocrand_DEPENDENCIES "hip")
 endif()
 
@@ -84,10 +71,10 @@ set_target_properties(rocrand
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
 )
-# Set AMD targets
-if(HIP_PLATFORM STREQUAL "hcc")
+# Set AMD target
+if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
     foreach(amdgpu_target ${AMDGPU_TARGETS})
-        target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
+    	target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
 endif()
 
@@ -140,7 +127,11 @@ install(
 # hipRAND library
 
 # Get hipRAND sources
-set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_${HIP_PLATFORM}.cpp)
+if(HIP_COMPILER STREQUAL "nvcc")
+    set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_${HIP_COMPILER}.cpp)
+else()
+    set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand.cpp)
+endif()
 
 # Configure a header file to pass the hipRAND version
 configure_file(
@@ -150,7 +141,7 @@ configure_file(
 )
 
 # Build
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${hipRAND_SRCS}
         PROPERTIES
             CUDA_SOURCE_PROPERTY_FORMAT OBJ
@@ -166,7 +157,7 @@ target_include_directories(hiprand
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
         $<INSTALL_INTERFACE:hiprand/include>
 )
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     target_link_libraries(hiprand
         ${CUDA_curand_LIBRARY}
     )
@@ -255,10 +246,10 @@ endif()
 set(CPACK_PACKAGE_NAME "rocrand")
 set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "rocRAND Maintainer <rocrand-maintaner@amd.com>")
-if(HIP_PLATFORM STREQUAL "hcc")
+if(HIP_COMPILER STREQUAL "hcc")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 2.5.27)") # 1.5.19055 is part of ROCm 2.2
   set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 2.5.27") # 1.5.19055 is part of ROCm 2.2
-else()
+elseif(HIP_COMPILER STREQUAL "nvcc")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-nvcc (>= 1.5.19055)") # 1.5.19055 is part of ROCm 2.2
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 1.5.19055") # 1.5.19055 is part of ROCm 2.2
 endif()

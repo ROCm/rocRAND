@@ -20,29 +20,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Find HIP package
-find_package(HIP REQUIRED)
 find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
 message(STATUS "HIP_COMPILER=${HIP_COMPILER}")
 message(STATUS "HIP_RUNTIME=${HIP_RUNTIME}")
 
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         include(SetupNVCC)
     else()
         message(WARNING "On CUDA platform 'g++' is recommended C++ compiler.")
     endif()
-elseif(HIP_PLATFORM STREQUAL "hcc")
+elseif(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
     if(NOT (CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR CMAKE_CXX_COMPILER MATCHES ".*/hipcc$"))
         message(FATAL_ERROR "On ROCm platform 'hcc' or 'clang' must be used as C++ compiler.")
+    elseif(CXX_VERSION_STRING MATCHES "clang")
+        list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
     else()
-        # Workaround until hcc & hip cmake modules fixes symlink logic in their config files.
-        # (Thanks to rocBLAS devs for finding workaround for this problem.)
-        list(APPEND CMAKE_PREFIX_PATH /opt/rocm/hcc /opt/rocm/hip)
-        # Ignore hcc warning: argument unused during compilation: '-isystem /opt/rocm/hip/include'
+        list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hcc /opt/rocm/hip)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
-        find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
     endif()
 else()
-    message(FATAL_ERROR "HIP_PLATFORM must be 'hcc' or 'clang' (AMD ROCm platform) or `nvcc` (NVIDIA CUDA platform).")
+    message(FATAL_ERROR "HIP_COMPILER must be 'hcc' or 'clang' (AMD ROCm platform) or `nvcc` (NVIDIA CUDA platform).")
 endif()
