@@ -24,7 +24,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CPP_CONFIG}")
 
 # CUDA
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
     find_package(CUDA REQUIRED)
 endif()
@@ -59,7 +59,7 @@ enable_testing()
 foreach(test_src ${rocrand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    if(HIP_PLATFORM STREQUAL "nvcc")
+    if(HIP_COMPILER STREQUAL "nvcc")
         target_link_libraries(${test_name}
             PRIVATE
                 roc::rocrand
@@ -78,7 +78,7 @@ endforeach()
 foreach(test_src ${hiprand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    if(HIP_PLATFORM STREQUAL "hcc")
+    if(HIP_COMPILER STREQUAL "hcc" OR HCC_COMPILER STREQUAL "clang")
         target_link_libraries(${test_name}
             PRIVATE
                 hip::hiprand

@@ -1,6 +1,6 @@
 # Fortran Wrapper
 
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_nvcc_m.f90"
         "${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90"
@@ -23,7 +23,7 @@ set(FORTRAN_ROCRAND_SRCS
 )
 add_library(rocrand_fortran STATIC "${FORTRAN_ROCRAND_SRCS}")
 set_target_properties(rocrand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     target_link_libraries(rocrand_fortran
         PRIVATE
             rocrand
@@ -51,7 +51,7 @@ set(FORTRAN_HIPRAND_SRCS
 )
 add_library(hiprand_fortran STATIC "${FORTRAN_HIPRAND_SRCS}")
 set_target_properties(hiprand_fortran PROPERTIES LINKER_LANGUAGE Fortran)
-if(HIP_PLATFORM STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     target_link_libraries(hiprand_fortran
         PRIVATE
             hiprand
