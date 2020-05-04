@@ -51,13 +51,16 @@ if(HIP_PLATFORM STREQUAL "nvcc")
             CUDA_SOURCE_PROPERTY_FORMAT OBJ
     )
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(rocrand ${LIB_TYPE} ${rocRAND_SRCS})
+    CUDA_ADD_LIBRARY(rocrand SHARED ${rocRAND_SRCS})
+    if(BUILD_STATIC_LIBS)
+        CUDA_ADD_LIBRARY(rocrand_static STATIC ${rocRAND_SRCS})
+    endif()
 else()
-    add_library(rocrand ${LIB_TYPE} ${rocRAND_SRCS})
+    add_library(rocrand SHARED ${rocRAND_SRCS})
 
     # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
     if(CXX_VERSION_STRING MATCHES "clang")
-      target_link_libraries(rocrand PRIVATE hip::device)
+        target_link_libraries(rocrand PRIVATE hip::device)
     else()
       target_link_libraries(rocrand
           PRIVATE
@@ -65,10 +68,27 @@ else()
               # to link to roc::rocrand when using different compiler than hcc,
               # hip::device adds hcc-specific compilation flags.
               hip::device
-             # hcc::hccshared
       )
     endif()
     set(rocrand_DEPENDENCIES "hip")
+    if(BUILD_STATIC_LIBS)
+        add_library(rocrand_static STATIC ${rocRAND_SRCS})
+
+        # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
+        if(CXX_VERSION_STRING MATCHES "clang")
+          target_link_libraries(rocrand_static PRIVATE hip::device)
+        else()
+          target_link_libraries(rocrand_static
+              PRIVATE
+                  # We keep hip::device private, because otherwise it's not possible
+                  # to link to roc::rocrand when using different compiler than hcc,
+                  # hip::device adds hcc-specific compilation flags.
+                  hip::device
+                  hcc::hccshared
+          )
+        endif()
+        set(rocrand_static_DEPENDENCIES "hip")
+    endif()
 endif()
 
 target_include_directories(rocrand
@@ -77,24 +97,51 @@ target_include_directories(rocrand
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
         $<INSTALL_INTERFACE:rocrand/include>
 )
+if(BUILD_STATIC_LIBS)
+    target_include_directories(rocrand_static
+        PUBLIC
+            $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
+            $<INSTALL_INTERFACE:rocrand/include>
+    )
+endif()
 
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
+if(BUILD_STATIC_LIBS)
+    rocm_set_soversion(rocrand_static ${rocrand_SOVERSION})
+endif()
 set_target_properties(rocrand
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
 )
+if(BUILD_STATIC_LIBS)
+    set_target_properties(rocrand_static
+        PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+            DEBUG_POSTFIX "-d"
+            OUTPUT_NAME "rocrand"
+    )
+endif()
 # Set AMD targets
 if(HIP_PLATFORM STREQUAL "hcc")
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
+        if(BUILD_STATIC_LIBS)
+          target_link_libraries(rocrand_static PRIVATE --amdgpu-target=${amdgpu_target})
+        endif()
     endforeach()
+endif()
+
+set(rocrandtargets rocrand)
+if(BUILD_STATIC_LIBS)
+    set(rocrandtargets rocrand rocrand_static)
 endif()
 
 # Install
 # .so or .a lib
 install(
-    TARGETS rocrand
+    TARGETS ${rocrandtargets}
     EXPORT rocrand-targets
     ARCHIVE DESTINATION rocrand/lib
     LIBRARY DESTINATION rocrand/lib
@@ -156,9 +203,15 @@ if(HIP_PLATFORM STREQUAL "nvcc")
             CUDA_SOURCE_PROPERTY_FORMAT OBJ
     )
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(hiprand ${LIB_TYPE} ${hipRAND_SRCS})
+    CUDA_ADD_LIBRARY(hiprand SHARED ${hipRAND_SRCS})
+    if(BUILD_STATIC_LIBS)
+        CUDA_ADD_LIBRARY(hiprand_static STATIC ${hipRAND_SRCS})
+    endif()
 else()
-    add_library(hiprand ${LIB_TYPE} ${hipRAND_SRCS})
+    add_library(hiprand SHARED ${hipRAND_SRCS})
+    if(BUILD_STATIC_LIBS)
+        add_library(hiprand_static STATIC ${hipRAND_SRCS})
+    endif()
 endif()
 target_include_directories(hiprand
     PUBLIC
@@ -166,19 +219,42 @@ target_include_directories(hiprand
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
         $<INSTALL_INTERFACE:hiprand/include>
 )
+if(BUILD_STATIC_LIBS)
+    target_include_directories(hiprand_static
+        PUBLIC
+            $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
+            $<INSTALL_INTERFACE:hiprand/include>
+    )
+endif()
 if(HIP_PLATFORM STREQUAL "nvcc")
     target_link_libraries(hiprand
         ${CUDA_curand_LIBRARY}
     )
+    if(BUILD_STATIC_LIBS)
+        target_link_libraries(hiprand_static
+            ${CUDA_curand_LIBRARY}
+        )
+    endif()
 else()
     # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
     if(CXX_VERSION_STRING MATCHES "clang")
-      target_link_libraries(hiprand PRIVATE rocrand hip::device)
+        target_link_libraries(hiprand PRIVATE rocrand hip::device)
+        if(BUILD_STATIC_LIBS)
+            target_link_libraries(hiprand_static PRIVATE rocrand hip::device)
+        endif()
     else()
+        if(BUILD_STATIC_LIBS)
+            target_link_libraries(hiprand_static PRIVATE rocrand hip::device)
+        endif()
+
       target_link_libraries(hiprand PRIVATE rocrand hip::device)
     endif()
     foreach(amdgpu_target ${AMDGPU_TARGETS})
         target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
+        if(BUILD_STATIC_LIBS)
+            target_link_libraries(hiprand_static PRIVATE --amdgpu-target=${amdgpu_target})
+        endif()
     endforeach()
 endif()
 
@@ -189,11 +265,26 @@ set_target_properties(hiprand
         DEBUG_POSTFIX "-d"
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/rocrand/lib"
 )
+if(BUILD_STATIC_LIBS)
+    rocm_set_soversion(hiprand_static ${hiprand_SOVERSION})
+    set_target_properties(hiprand_static
+        PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+            DEBUG_POSTFIX "-d"
+            INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/rocrand/lib"
+            OUTPUT_NAME "hiprand"
+    )
+endif()
+
+set(hiprandtargets hiprand)
+if(BUILD_STATIC_LIBS)
+    set(hiprandtargets hiprand hiprand_static)
+endif()
 
 # Install
 # .so and .a library
 install(
-    TARGETS hiprand
+    TARGETS ${hiprandtargets}
     EXPORT hiprand-targets
     ARCHIVE DESTINATION hiprand/lib
     LIBRARY DESTINATION hiprand/lib
