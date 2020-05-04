@@ -55,7 +55,7 @@ git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 cd rocRAND; mkdir build; cd build
 
 # Configure rocRAND, setup options for your system
-# Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_SHARED_LIBS
+# Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_STATIC_LIBS (off by default)
 #
 # ! IMPORTANT !
 # On ROCm platform set C++ compiler to HCC. You can do it by adding 'CXX=<path-to-hcc>' or just
@@ -64,6 +64,12 @@ cd rocRAND; mkdir build; cd build
 # The python interface do not work with static library.
 #
 [CXX=hcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+
+# To configure rocRAND for Nvidia platforms, 'CXX=<path-to-nvcc>', `CXX=nvcc` or omitting the flag
+# entirely before 'cmake' is sufficient
+[CXX=nvcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+# or
+cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
 # For ROCM-1.6, if a HCC runtime error is caught, consider setting
