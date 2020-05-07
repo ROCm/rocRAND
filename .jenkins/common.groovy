@@ -27,7 +27,7 @@ def runTestCommand (platform, project)
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
                 make -j4
-                ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ${testCommand} --output-on-failure
+                ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ${testCommand}
             """
 
     platform.runCommand(this, command)
