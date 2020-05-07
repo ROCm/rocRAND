@@ -78,7 +78,7 @@ include(cmake/Common.cmake)
 include(cmake/Dependencies.cmake)
 
 # Set version variables
-rocm_setup_version( VERSION "2.10.0" )
+rocm_setup_version( VERSION "2.10.1" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
 set ( hiprand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
