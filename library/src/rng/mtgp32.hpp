@@ -66,9 +66,6 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 
-// Define external variable
-const int mtgpdc_params_11213_num = 512;
-
 namespace rocrand_host {
 namespace detail {
 

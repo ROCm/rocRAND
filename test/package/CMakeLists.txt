@@ -4,12 +4,18 @@ cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 project(hiprand_package_test CXX)
 
 # CMake modules
+list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
 list(APPEND CMAKE_MODULE_PATH
     ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
 )
 
 # Find HIP
-find_package(HIP REQUIRED)
+if(HIP_COMPILER STREQUAL "nvcc")
+  find_package(HIP REQUIRED)
+else()
+  find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
+endif()
+
 # Get HIP options
 execute_process(
     COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
@@ -34,19 +40,20 @@ find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "/opt/rocm/rocra
 # Find hipRAND
 find_package(hiprand REQUIRED CONFIG HINTS ${hiprand_DIR} PATHS "/opt/rocm/hiprand")
 
+# TODO: Fix fortran wrapper
 # Check if Fortran wrapper is installed
-if(NOT EXISTS "${hiprand_FORTRAN_SRC_DIRS}/hiprand_m.f90")
-    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/hiprand_m.f90 does not exist")
-endif()
-if(NOT EXISTS "${hiprand_FORTRAN_SRC_DIRS}/hip_m.f90")
-    message(FATAL_ERROR "${hiprand_FORTRAN_SRC_DIRS}/hip_m.f90 does not exist")
-endif()
-if(NOT EXISTS "${rocrand_FORTRAN_SRC_DIRS}/rocrand_m.f90")
-    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/rocrand_m.f90 does not exist")
-endif()
-if(NOT EXISTS "${rocrand_FORTRAN_SRC_DIRS}/hip_m.f90")
-    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/hip_m.f90 does not exist")
-endif()
+#if(NOT EXISTS "${hiprand_FORTRAN_SRC_DIRS}/hiprand_m.f90")
+#    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/hiprand_m.f90 does not exist")
+#endif()
+#if(NOT EXISTS "${hiprand_FORTRAN_SRC_DIRS}/hip_m.f90")
+#    message(FATAL_ERROR "${hiprand_FORTRAN_SRC_DIRS}/hip_m.f90 does not exist")
+#endif()
+#if(NOT EXISTS "${rocrand_FORTRAN_SRC_DIRS}/rocrand_m.f90")
+#    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/rocrand_m.f90 does not exist")
+#endif()
+#if(NOT EXISTS "${rocrand_FORTRAN_SRC_DIRS}/hip_m.f90")
+#    message(FATAL_ERROR "${rocrand_FORTRAN_SRC_DIRS}/hip_m.f90 does not exist")
+#endif()
 
 # Get sources
 file(GLOB rocrand_pkg_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_rocrand*.cpp)
@@ -78,7 +85,7 @@ endforeach()
 foreach(test_src ${hiprand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    if(HIP_COMPILER STREQUAL "hcc" OR HCC_COMPILER STREQUAL "clang")
+    if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
         target_link_libraries(${test_name}
             PRIVATE
                 hip::hiprand
