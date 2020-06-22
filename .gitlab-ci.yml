@@ -30,7 +30,7 @@ variables:
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_PATH: "/opt/rocm-3.3.0/"
+  ROCM_LATEST_PATH: "/opt/rocm-3.5.1/"
 
 # ROCm
 
@@ -43,7 +43,7 @@ variables:
   image: rocm/rocm-terminal:latest
   before_script:
     - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y -qq ca-certificates git wget tar xz-utils bzip2 build-essential pkg-config g++ gfortran findutils
+    - $SUDO_CMD apt-get install -y -qq git wget tar xz-utils bzip2 build-essential pkg-config ca-certificates kmod gfortran findutils
     - hipconfig
     # cmake
     - mkdir -p $DEPS_DIR/cmake
@@ -59,7 +59,7 @@ build:rocm:
   script:
     - mkdir build
     - cd build
-    - CXX=hcc cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - CXX=hipcc cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
@@ -78,69 +78,32 @@ build:rocm:
       - build/*.zip
     expire_in: 2 weeks
 
-build:rocm-static:
-  extends: .rocm
-  stage: build
-  script:
-    - mkdir build
-    - cd build
-    - CXX=hcc cmake -DBUILD_STATIC_LIBS=ON -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_TEST_STATIC=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
-    - make -j16
-    - make package
-  artifacts:
-    paths:
-      - build/library/
-      - build/test/crush_test_*
-      - build/test/test_*
-      - build/test/stat_test_*
-      - build/test/CTestTestfile.cmake
-      - build/benchmark/benchmark_*
-      - build/gtest/
-      - build/testu01/
-      - build/CMakeCache.txt
-      - build/CTestTestfile.cmake
-      - build/*.deb
-      - build/*.zip
-    expire_in: 2 weeks
+#build:rocm-static:
+#  extends: .rocm
+#  stage: build
+#  script:
+#    - mkdir build
+#    - cd build
+#    - CXX=hipcc cmake -DBUILD_STATIC_LIBS=ON -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_TEST_STATIC=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+#    - make -j16
+#    - make package
+#  artifacts:
+#    paths:
+#      - build/library/
+#      - build/test/crush_test_*
+#      - build/test/test_*
+#      - build/test/stat_test_*
+#      - build/test/CTestTestfile.cmake
+#      - build/benchmark/benchmark_*
+#      - build/gtest/
+#      - build/testu01/
+#      - build/CMakeCache.txt
+#      - build/CTestTestfile.cmake
+#      - build/*.deb
+#      - build/*.zip
+#    expire_in: 2 weeks
 
-test:rocm_vega20:
-  extends: .rocm
-  dependencies:
-    - build:rocm-static
-  tags:
-    - vega20
-    - rocm
-  script:
-    - cd build
-    - $SUDO_CMD ctest --output-on-failure
-    - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
-    - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
-
-test:rocm_s9300:
-  extends: .rocm
-  dependencies:
-    - build:rocm
-  tags:
-    - s9300
-    - rocm
-  script:
-    - cd build
-    - $SUDO_CMD ctest --output-on-failure
-    - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
-    - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
-
-test:rocm_mi25:
-  extends: .rocm
-  dependencies:
-    - build:rocm
-  tags:
-    - mi25
-    - rocm
-  script:
-    - cd build
-    - $SUDO_CMD ctest --output-on-failure
-    - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
-    - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
+include: '.gitlab-ci-gputest.yml'
 
 test:rocm_python:
   extends: .rocm
@@ -195,7 +158,7 @@ test:rocm_package:
     - $SUDO_CMD dpkg -i rocrand-*.deb
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
-    - cmake ../test/package/.
+    - CXX=hipcc cmake -DHIP_COMPILER=clang ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
     - ldd ./test_hiprand
@@ -208,12 +171,12 @@ test:rocm_install:
   script:
     - mkdir build_only_install
     - cd build_only_install
-    - CXX=hcc cmake -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=ON ../.
+    - CXX=hipcc cmake -DHIP_COMPILER=clang -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=OFF ../.
     - make -j16
     - $SUDO_CMD make install
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../install_test && cd ../install_test
-    - cmake ../test/package/.
+    - CXX=hipcc cmake ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
     - ldd ./test_hiprand
@@ -238,7 +201,7 @@ test:rocm_install:
     # (with heavy libraries, tools etc. that also require GUI and other packages)
     - apt-get download hip-nvcc
     - $SUDO_CMD dpkg -i --ignore-depends=cuda hip*.deb
-    - $SUDO_CMD ln -s $ROCM_PATH /opt/rocm
+    - $SUDO_CMD ln -s $ROCM_LATEST_PATH /opt/rocm
     - export PATH=$PATH:/opt/rocm/bin
     - hipconfig
     # cmake
@@ -255,7 +218,7 @@ build:nvcc:
   script:
     - mkdir build
     - cd build
-    - cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - cmake -DHIP_COMPILER=nvcc -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
@@ -355,7 +318,7 @@ test:nvcc_package:
     - $SUDO_CMD dpkg -i rocrand-*.deb
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
-    - cmake ../test/package/.
+    - cmake -DHIP_COMPILER=nvcc ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
     - ldd ./test_hiprand
@@ -368,12 +331,12 @@ test:nvcc_install:
   script:
     - mkdir build_only_install
     - cd build_only_install
-    - cmake -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=ON ../.
+    - cmake -DHIP_COMPILER=nvcc -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=ON ../.
     - make -j16
     - $SUDO_CMD make install
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../install_test && cd ../install_test
-    - cmake ../test/package/.
+    - cmake -DHIP_COMPILER=nvcc ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
     - ldd ./test_hiprand
