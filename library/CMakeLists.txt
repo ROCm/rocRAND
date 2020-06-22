@@ -84,7 +84,6 @@ else()
                   # to link to roc::rocrand when using different compiler than hcc,
                   # hip::device adds hcc-specific compilation flags.
                   hip::device
-                  hcc::hccshared
           )
         endif()
         set(rocrand_static_DEPENDENCIES "hip")
