@@ -21,7 +21,11 @@
 # SOFTWARE.
 
 list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
-find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
+if(HIP_COMPILER STREQUAL "nvcc")
+  find_package(HIP REQUIRED)
+else()
+  find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
+endif()
 
 if(HIP_COMPILER STREQUAL "nvcc")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
