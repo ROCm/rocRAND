@@ -111,6 +111,7 @@ namespace detail {
     };
 
     __global__
+    __launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
     void init_engines_kernel(philox4x32_10_device_engine * engines,
                              const unsigned long long seed,
                              const unsigned long long offset)
@@ -121,6 +122,7 @@ namespace detail {
 
     template<unsigned int ThreadsPerEngine, class T, class Distribution>
     __global__
+    __launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
     void generate_kernel(philox4x32_10_device_engine * engines,
                          T * data, const size_t n,
                          Distribution distribution)

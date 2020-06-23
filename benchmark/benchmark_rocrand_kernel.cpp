@@ -69,6 +69,7 @@ size_t next_power2(size_t x)
 
 template<typename GeneratorState>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void init_kernel(GeneratorState * states,
                  const unsigned long long seed,
                  const unsigned long long offset)
@@ -81,6 +82,7 @@ void init_kernel(GeneratorState * states,
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void generate_kernel(GeneratorState * states,
                      T * data,
                      const size_t size,
@@ -147,6 +149,7 @@ struct runner
 
 template<typename T, typename GenerateFunc, typename Extra>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void generate_kernel(rocrand_state_mtgp32 * states,
                      T * data,
                      const size_t size,
@@ -219,6 +222,7 @@ struct runner<rocrand_state_mtgp32>
 
 template<typename Directions>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void init_kernel(rocrand_state_sobol32 * states,
                  const Directions directions,
                  const unsigned long long offset)
@@ -232,6 +236,7 @@ void init_kernel(rocrand_state_sobol32 * states,
 
 template<typename T, typename GenerateFunc, typename Extra>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void generate_kernel(rocrand_state_sobol32 * states,
                      T * data,
                      const size_t size,
