@@ -73,6 +73,9 @@ typedef hiprandDiscreteDistribution_st * hiprandDiscreteDistribution_t;
 typedef __half half;
 /// \endcond
 
+#define HIPRAND_DEFAULT_MAXIMUM_BLOCK_SIZE 256
+#define HIPRAND_DEFAULT_MIN_WARPS_PER_EU 1
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
