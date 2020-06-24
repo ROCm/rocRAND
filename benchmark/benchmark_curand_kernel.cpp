@@ -36,7 +36,7 @@
 #include <curand_mtgp32_host.h>
 #include <curand_mtgp32dc_p_11213.h>
 
-#define CUPRAND_DEFAULT_MAXIMUM_BLOCK_SIZE 256
+#define CUPRAND_DEFAULT_MAX_BLOCK_SIZE 256
 #define CUPRAND_DEFAULT_MIN_WARPS_PER_EU 1
 
 #define CUDA_CALL(x) do { \
@@ -64,7 +64,7 @@ size_t next_power2(size_t x)
 
 template<typename GeneratorState>
 __global__
-__launch_bounds__(CUPRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void init_kernel(GeneratorState * states,
                  const unsigned long long seed,
                  const unsigned long long offset)
@@ -77,7 +77,7 @@ void init_kernel(GeneratorState * states,
 
 template<typename GeneratorState, typename T, typename GenerateFunc, typename Extra>
 __global__
-__launch_bounds__(CUPRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void generate_kernel(GeneratorState * states,
                      T * data,
                      const size_t size,
@@ -136,7 +136,7 @@ struct runner
 
 template<typename T, typename GenerateFunc, typename Extra>
 __global__
-__launch_bounds__(CUPRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void generate_kernel(curandStateMtgp32_t * states,
                      T * data,
                      const size_t size,
@@ -209,7 +209,7 @@ struct runner<curandStateMtgp32_t>
 
 template<typename Directions>
 __global__
-__launch_bounds__(CUPRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void init_kernel(curandStateSobol32_t * states,
                  const Directions directions,
                  const unsigned long long offset)
@@ -223,7 +223,7 @@ void init_kernel(curandStateSobol32_t * states,
 
 template<typename T, typename GenerateFunc, typename Extra>
 __global__
-__launch_bounds__(CUPRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void generate_kernel(curandStateSobol32_t * states,
                      T * data,
                      const size_t size,
