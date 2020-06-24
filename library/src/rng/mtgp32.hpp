@@ -66,9 +66,6 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 
-// Define external variable
-const int mtgpdc_params_11213_num = 512;
-
 namespace rocrand_host {
 namespace detail {
 
@@ -76,6 +73,7 @@ namespace detail {
 
     template<unsigned int BlockSize, class T, class Distribution>
     __global__
+    __launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
     void generate_kernel(mtgp32_device_engine * engines,
                          T * data,
                          const size_t n,

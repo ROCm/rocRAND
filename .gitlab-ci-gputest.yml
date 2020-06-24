@@ -1,0 +1,39 @@
+test:rocm_vega20:
+  extends: .rocm
+  dependencies:
+    - build:rocm
+  tags:
+    - vega20
+    - rocm
+  script:
+    - cd build
+    - $SUDO_CMD ctest --output-on-failure
+    - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
+    - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
+
+#test:rocm_s9300:
+#  extends: .rocm
+#  dependencies:
+#    - build:rocm
+#  tags:
+#    - s9300
+#    - rocm
+#  script:
+#    - cd build
+#    - $SUDO_CMD ctest --output-on-failure
+#    - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
+#    - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
+#  allow_failure: true
+
+test:rocm_mi25:
+  extends: .rocm
+  dependencies:
+    - build:rocm
+  tags:
+    - mi25
+    - rocm
+  script:
+    - cd build
+    - $SUDO_CMD ctest --output-on-failure
+    - $SUDO_CMD ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
+    - $SUDO_CMD ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
