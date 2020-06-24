@@ -27,7 +27,7 @@ environment cuRAND is used instead.
 * C++ compiler with C++11 support
 * For AMD platforms:
   * [ROCm](https://rocm.github.io/install.html) (1.7 or later)
-  * [HCC](https://github.com/RadeonOpenCompute/hcc) compiler, which must be
+  * [HIP-clang](https://github.com/ROCm-Developer-Tools/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
     set as C++ compiler on ROCm platform.
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
@@ -58,12 +58,12 @@ cd rocRAND; mkdir build; cd build
 # Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_STATIC_LIBS (off by default)
 #
 # ! IMPORTANT !
-# On ROCm platform set C++ compiler to HCC. You can do it by adding 'CXX=<path-to-hcc>' or just
-# `CXX=hcc` before 'cmake', or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HCC compiler.
+# Set C++ compiler to HCC or HIP-clang. You can do it by adding 'CXX=<path-to-compiler>'
+# before 'cmake' or setting cmake option 'CMAKE_CXX_COMPILER' to path to the compiler.
 #
 # The python interface do not work with static library.
 #
-[CXX=hcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+[CXX=hipcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # To configure rocRAND for Nvidia platforms, 'CXX=<path-to-nvcc>', `CXX=nvcc` or omitting the flag
 # entirely before 'cmake' is sufficient

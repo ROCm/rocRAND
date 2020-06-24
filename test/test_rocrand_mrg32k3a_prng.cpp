@@ -33,6 +33,7 @@
 using rocrand_device::detail::mad_u64_u32;
 
 __global__
+__launch_bounds__(1, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void mad_u64_u32_kernel(const unsigned int * x,
                         const unsigned int * y,
                         const unsigned long long * z,

@@ -49,6 +49,9 @@ typedef struct rocrand_generator_base_type * rocrand_generator;
 typedef __half half;
 /// \endcond
 
+#define ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE 256
+#define ROCRAND_DEFAULT_MIN_WARPS_PER_EU 1
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */

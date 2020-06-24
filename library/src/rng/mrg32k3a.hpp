@@ -38,6 +38,7 @@ namespace detail {
     typedef ::rocrand_device::mrg32k3a_engine mrg32k3a_device_engine;
 
     __global__
+    __launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
     void init_engines_kernel(mrg32k3a_device_engine * engines,
                              unsigned long long seed,
                              unsigned long long offset)
@@ -48,6 +49,7 @@ namespace detail {
 
     template<class T, class Distribution>
     __global__
+    __launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
     void generate_kernel(mrg32k3a_device_engine * engines,
                          T * data, const size_t n,
                          Distribution distribution)

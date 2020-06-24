@@ -35,6 +35,7 @@
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_init_kernel(GeneratorState * states,
                          const size_t states_size,
                          unsigned long long seed,
@@ -52,6 +53,7 @@ void hiprand_init_kernel(GeneratorState * states,
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_skip_kernel(GeneratorState * states,
                          const size_t states_size,
                          unsigned long long seed,
@@ -71,6 +73,7 @@ void hiprand_skip_kernel(GeneratorState * states,
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_kernel(unsigned int * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -94,6 +97,7 @@ void hiprand_kernel(unsigned int * output, const size_t size)
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_uniform_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -117,6 +121,7 @@ void hiprand_uniform_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_normal_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -145,6 +150,7 @@ void hiprand_normal_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_log_normal_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -173,6 +179,7 @@ void hiprand_log_normal_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_poisson_kernel(unsigned int * output, const size_t size, double lambda)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -196,6 +203,7 @@ void hiprand_poisson_kernel(unsigned int * output, const size_t size, double lam
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(64, HIPRAND_DEFAULT_MIN_WARPS_PER_EU)
 void hiprand_discrete_kernel(unsigned int * output, const size_t size, hiprandDiscreteDistribution_t discrete_distribution)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;

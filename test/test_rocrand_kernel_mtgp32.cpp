@@ -35,6 +35,7 @@
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
@@ -61,6 +62,7 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
@@ -91,6 +93,7 @@ void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
@@ -121,6 +124,7 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void rocrand_log_normal_kernel(GeneratorState * states, float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x;
@@ -151,6 +155,7 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
 
 template <class GeneratorState>
 __global__
+__launch_bounds__(ROCRAND_DEFAULT_MAXIMUM_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
 void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, const size_t size, double lambda)
 {
     const unsigned int state_id = hipBlockIdx_x;

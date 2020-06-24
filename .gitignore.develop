@@ -87,3 +87,6 @@ local.properties
 # TeXlipse plugin
 .texlipse
 CMakeLists.txt.user
+
+### Gtilab CI ###
+.gitlab-ci-gputest.yml
