@@ -366,6 +366,27 @@ set(CPACK_PACKAGE_VERSION ${rocRAND_VERSION})
 set(CPACK_PACKAGE_VERSION_MAJOR ${rocRAND_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${rocRAND_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${rocRAND_VERSION_PATCH})
+
+# This section copied from rocm-cmake project per terms of the MIT license
+# rocRAND packaging will switch to use rocm-cmake macros in the future
+if (EXISTS "/etc/os-release")
+  rocm_set_os_id(_os_id)
+  rocm_read_os_release(_version_id "VERSION_ID")
+
+  #only set CPACK_SYSTEM_NAME for AMD supported OSes
+  if (_os_id_centos OR _os_is_rhel)
+    STRING(CONCAT _SYSTEM_NAME "el" ${_version_id} ".x86_64")
+    #Debs use underscrore between OS and architecture
+  elseif(_os_id_ubuntu)
+    STRING(CONCAT _SYSTEM_NAME ${_os_id} "-" ${_version_id} "_amd64")
+  else()
+    #For SLES and unsupported OSes
+    STRING(CONCAT _SYSTEM_NAME ${_os_id} "-" ${_version_id} ".amd64")
+  endif()
+
+  set(CPACK_SYSTEM_NAME ${_SYSTEM_NAME} CACHE STRING "CPACK_SYSTEM_NAME for packaging")
+endif()
+
 package_set_postinst_prerm(
     "hiprand;rocrand"
     "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
