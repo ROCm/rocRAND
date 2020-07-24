@@ -59,7 +59,7 @@ build:rocm:
   script:
     - mkdir build
     - cd build
-    - CXX=hipcc cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - CXX=hipcc cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON -DAMDGPU_TARGETS="gfx803;gfx900;gfx906" ../.
     - make -j16
     - make package
   artifacts:
