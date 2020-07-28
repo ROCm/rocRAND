@@ -1,7 +1,7 @@
 // This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
 
-def runCompileCommand(platform, project, jobName, boolean debug=false, boolean static=false)
+def runCompileCommand(platform, project, jobName, boolean debug=false, boolean staticLibrary=false)
 {
     project.paths.construct_build_prefix()
         
@@ -9,7 +9,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     project.compiler.compiler_path = platform.jenkinsLabel.contains('hip-clang') ? '/opt/rocm/bin/hipcc' : '/opt/rocm/bin/hcc'        
     String buildTypeArg = debug ? '-DCMAKE_BUILD_TYPE=Debug' : '-DCMAKE_BUILD_TYPE=Release'
     String buildTypeDir = debug ? 'debug' : 'release'
-    String buildStatic = static = '-DBUILD_SHARED=OFF' : '-DBUILD_SHARED=ON'
+    String buildStatic = staticLibrary = '-DBUILD_SHARED=OFF' : '-DBUILD_SHARED=ON'
     
     def command = """#!/usr/bin/env bash
                 set -x
