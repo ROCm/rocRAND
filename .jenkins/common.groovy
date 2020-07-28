@@ -9,7 +9,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     project.compiler.compiler_path = platform.jenkinsLabel.contains('hip-clang') ? '/opt/rocm/bin/hipcc' : '/opt/rocm/bin/hcc'        
     String buildTypeArg = debug ? '-DCMAKE_BUILD_TYPE=Debug' : '-DCMAKE_BUILD_TYPE=Release'
     String buildTypeDir = debug ? 'debug' : 'release'
-    String buildStatic = staticLibrary ? '-DBUILD_SHARED=OFF' : '-DBUILD_STATIC_LIBS=ON'
+    String buildStatic = staticLibrary ? '-DBUILD_STATIC_LIBS=ON' : '-DBUILD_SHARED=OFF'
     String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
 
     def command = """#!/usr/bin/env bash
