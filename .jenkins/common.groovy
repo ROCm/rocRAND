@@ -10,7 +10,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String buildTypeArg = debug ? '-DCMAKE_BUILD_TYPE=Debug' : '-DCMAKE_BUILD_TYPE=Release'
     String buildTypeDir = debug ? 'debug' : 'release'
     String buildStatic = staticLibrary ? '-DBUILD_SHARED=OFF' : '-DBUILD_SHARED=ON'
-    
+    String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
+
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}
