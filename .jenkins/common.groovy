@@ -17,8 +17,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib/ CXX=${project.compiler.compiler_path} ${project.paths.build_command}
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
-                ${sudo} ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/${compiler} ${buildTypeArg} ${buildStatic} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
-                ${sudo} make -j\$(nproc)
+                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/${compiler} ${buildTypeArg} ${buildStatic} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
+                make -j\$(nproc)
                 """
     
     platform.runCommand(this, command)
