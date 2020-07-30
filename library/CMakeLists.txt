@@ -76,7 +76,6 @@ else()
       )
     endif()
     set(rocrand_DEPENDENCIES "hip")
-    endif()
 endif()
 
 target_include_directories(rocrand
