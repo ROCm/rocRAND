@@ -50,6 +50,9 @@ endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker search and installed rpath")
 
+# Set the default value of BUILD_SHARED_LIBS
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
+
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
 
