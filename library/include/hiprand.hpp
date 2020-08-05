@@ -377,10 +377,7 @@ public:
         {
         }
 
-        param_type(const param_type& params)
-        : m_mean(params.mean()), m_stddev(params.stddev())
-        {
-        }
+        param_type(const param_type& params) = default;
 
         /// \brief Returns the deviation distribution parameter.
         ///
@@ -575,10 +572,7 @@ public:
         {
         }
 
-        param_type(const param_type& params)
-        : m_mean(params.m()), m_stddev(params.s())
-        {
-        }
+        param_type(const param_type& params) = default;
 
         /// \brief Returns the deviation distribution parameter.
         ///
@@ -772,10 +766,7 @@ public:
         {
         }
 
-        param_type(const param_type& params)
-        : m_mean(params.mean())
-        {
-        }
+        param_type(const param_type& params) = default;
 
         /// \brief Returns the mean distribution parameter.
         ///
