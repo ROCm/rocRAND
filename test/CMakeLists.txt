@@ -42,17 +42,10 @@ foreach(test_src ${rocRAND_TEST_SRCS})
             ${PROJECT_SOURCE_DIR}/library/src
     )
 
-    if(BUILD_TEST_STATIC)
-        target_link_libraries(${test_name}
-            rocrand_static
-            ${GTEST_BOTH_LIBRARIES}
-        )
-    else()
-        target_link_libraries(${test_name}
-            rocrand
-            ${GTEST_BOTH_LIBRARIES}
-        )
-    endif()
+    target_link_libraries(${test_name}
+        rocrand
+        ${GTEST_BOTH_LIBRARIES}
+    )
     if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
         # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
         if(TARGET hip::device)
@@ -105,33 +98,12 @@ foreach(test_src ${hipRAND_TEST_SRCS})
     )
 
     if(HIP_COMPILER  STREQUAL "nvcc")
-        if(BUILD_TEST_STATIC)
-            target_link_libraries(${test_name}
-                hiprand_static
-                ${CUDA_curand_LIBRARY}
-                ${GTEST_BOTH_LIBRARIES}
-            )
-        else()
-            target_link_libraries(${test_name}
-                hiprand
-                ${CUDA_curand_LIBRARY}
-                ${GTEST_BOTH_LIBRARIES}
-            )
-        endif()
+        target_link_libraries(${test_name}
+            hiprand
+            ${CUDA_curand_LIBRARY}
+            ${GTEST_BOTH_LIBRARIES}
+        )
     else()
-        if(BUILD_TEST_STATIC)
-            target_link_libraries(${test_name}
-                hiprand_static
-                rocrand_static
-                ${GTEST_BOTH_LIBRARIES}
-            )
-        else()
-            target_link_libraries(${test_name}
-                hiprand
-                rocrand
-                ${GTEST_BOTH_LIBRARIES}
-            )
-        endif()
         target_link_libraries(${test_name}
             hiprand
             rocrand

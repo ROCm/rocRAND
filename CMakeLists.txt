@@ -48,7 +48,10 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOLEAN "Add paths to linker search and installed rpath")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker search and installed rpath")
+
+# Set the default value of BUILD_SHARED_LIBS
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
@@ -67,15 +70,9 @@ else()
 endif()
 
 # Build options
-option(BUILD_STATIC_LIBS "Build static libraries next to shared" OFF)
 option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
-option(BUILD_TEST_STATIC "Build tests with static library (if available)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
-
-if (BUILD_TEST_STATIC AND (NOT BUILD_STATIC_LIBS OR NOT BUILD_TEST))
-    message(FATAL_ERROR "Ensure that BUILD_STATIC_LIBS AND BUILD_TEST are ON before enabling BUILD_TEST_STATIC")
-endif()
 
 # Include cmake scripts
 include(cmake/Common.cmake)
