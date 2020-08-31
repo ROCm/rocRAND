@@ -1,6 +1,7 @@
 test:rocm_vega20:
   extends: .rocm
-  dependencies:
+  stage: test
+  needs:
     - build:rocm
   tags:
     - vega20
@@ -13,7 +14,8 @@ test:rocm_vega20:
 
 test:rocm_s9300:
   extends: .rocm
-  dependencies:
+  stage: test
+  needs:
     - build:rocm
   tags:
     - s9300
@@ -27,7 +29,8 @@ test:rocm_s9300:
 
 test:rocm_mi25:
   extends: .rocm
-  dependencies:
+  stage: test
+  needs:
     - build:rocm-static
   tags:
     - mi25
