@@ -83,7 +83,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
         target_link_libraries(${test_name}
             PRIVATE
                 roc::rocrand
-                "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
+                "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
         )
     endif()
     add_test(NAME "${test_name}" COMMAND ${test_name})
@@ -97,7 +97,7 @@ foreach(test_src ${hiprand_pkg_TEST_SRCS})
             PRIVATE
                 hip::hiprand
                 roc::rocrand
-                "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
+                "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
         )
     else()
         target_link_libraries(${test_name}
