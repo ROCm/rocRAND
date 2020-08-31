@@ -30,7 +30,7 @@ variables:
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_LATEST_PATH: "/opt/rocm-3.5.0/"
+  ROCM_LATEST_PATH: "/opt/rocm-3.7.0/"
 
 # ROCm
 
@@ -108,10 +108,10 @@ include: '.gitlab-ci-gputest.yml'
 test:rocm_python:
   extends: .rocm
   stage: test
+  needs:
+    - build:rocm
   tags:
     - rocm-stable
-  dependencies:
-    - build:rocm
   before_script:
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y -qq python python-pip python-numpy
@@ -153,10 +153,10 @@ test:rocm_python:
 test:rocm_package:
   extends: .rocm
   stage: test
+  needs:
+    - build:rocm
   tags:
     - rocm-stable
-  dependencies:
-    - build:rocm
   script:
     - cd build
     - $SUDO_CMD dpkg -i rocrand-*.deb
@@ -207,6 +207,7 @@ test:rocm_install:
     # (with heavy libraries, tools etc. that also require GUI and other packages)
     - apt-get download hip-nvcc
     - $SUDO_CMD dpkg -i --ignore-depends=cuda hip*.deb
+    - $SUDO_CMD ls -d /opt/*
     - $SUDO_CMD ln -s $ROCM_LATEST_PATH /opt/rocm
     - export PATH=$PATH:/opt/rocm/bin
     - hipconfig
@@ -246,7 +247,7 @@ build:nvcc:
 test:nvcc_titanv:
   extends: .nvcc
   stage: test
-  dependencies:
+  needs:
     - build:nvcc
   script:
     - export CUDA_VISIBLE_DEVICES=0
@@ -260,7 +261,7 @@ test:nvcc_titanv:
 test:nvcc_980:
   extends: .nvcc
   stage: test
-  dependencies:
+  needs:
     - build:nvcc
   script:
     - export CUDA_VISIBLE_DEVICES=1
@@ -274,7 +275,7 @@ test:nvcc_980:
 test:nvcc_python:
   extends: .nvcc
   stage: test
-  dependencies:
+  needs:
     - build:nvcc
   before_script:
     - $SUDO_CMD apt-get update -qq
@@ -317,7 +318,7 @@ test:nvcc_python:
 test:nvcc_package:
   extends: .nvcc
   stage: test
-  dependencies:
+  needs:
     - build:nvcc
   script:
     - cd build
