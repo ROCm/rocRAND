@@ -53,6 +53,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
+# AMD targets
+set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908;gfx1010;gfx1011 CACHE STRING "List of specific machine types for library to target")
+
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
 
@@ -86,9 +89,6 @@ set ( hiprand_VERSION ${rocRAND_VERSION} )
 math(EXPR temp "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
 set(hiprand_VERSION_NUMBER ${temp})
 set(rocrand_VERSION_NUMBER ${temp})
-
-# AMD targets
-set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908 CACHE STRING "List of specific machine types for library to target")
 
 # Print configuration summary
 include(cmake/Summary.cmake)
