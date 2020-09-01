@@ -10,8 +10,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false)
     
     def command = """#!/usr/bin/env bash
             set -ex
-            cd ${project.paths.project_build_prefix}
-            doxygen docs/Doxyfile
+            cd ${project.paths.project_build_prefix}/docs
+            doxygen
             """
     try
     {
