@@ -21,8 +21,8 @@
 #ifndef HIPRAND_H_
 #define HIPRAND_H_
 
-#include <hip/hip_runtime.h>
 #include <hip/hip_fp16.h>
+#include <hip/hip_runtime.h>
 
 /** \addtogroup hiprandhost
  *
@@ -60,12 +60,12 @@
 
 /// \cond HIPRAND_DOCS_TYPEDEFS
 /// \brief hipRAND random number generator (opaque)
-typedef hiprandGenerator_st * hiprandGenerator_t;
+typedef hiprandGenerator_st *hiprandGenerator_t;
 /// \endcond
 
 /// \cond HIPRAND_DOCS_TYPEDEFS
 /// \brief hipRAND discrete distribution
-typedef hiprandDiscreteDistribution_st * hiprandDiscreteDistribution_t;
+typedef hiprandDiscreteDistribution_st *hiprandDiscreteDistribution_t;
 /// \endcond
 
 /// \cond HIPRAND_DOCS_TYPEDEFS
@@ -84,44 +84,53 @@ extern "C" {
  * \brief hipRAND function call status type
  */
 typedef enum hiprandStatus {
-    HIPRAND_STATUS_SUCCESS = 0, ///< Success
-    HIPRAND_STATUS_VERSION_MISMATCH = 100, ///< Header file and linked library version do not match
-    HIPRAND_STATUS_NOT_INITIALIZED = 101, ///< Generator not created
-    HIPRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
-    HIPRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
-    HIPRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
-    HIPRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multiple of quasirandom generator's dimension,
-                                              ///< or requested size is not even (see hiprandGenerateNormal()),
-                                              ///< or pointer is misaligned (see hiprandGenerateNormal())
-    HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
-    HIPRAND_STATUS_LAUNCH_FAILURE = 201, ///< Kernel launch failure
-    HIPRAND_STATUS_PREEXISTING_FAILURE = 202, ///< Preexisting failure on library entry
-    HIPRAND_STATUS_INITIALIZATION_FAILED = 203, ///< Initialization of HIP failed
-    HIPRAND_STATUS_ARCH_MISMATCH = 204, ///< Architecture mismatch, GPU does not support requested feature
-    HIPRAND_STATUS_INTERNAL_ERROR = 999, ///< Internal library error
-    HIPRAND_STATUS_NOT_IMPLEMENTED = 1000 ///< Feature not implemented yet
+  HIPRAND_STATUS_SUCCESS = 0, ///< Success
+  HIPRAND_STATUS_VERSION_MISMATCH =
+      100, ///< Header file and linked library version do not match
+  HIPRAND_STATUS_NOT_INITIALIZED = 101,   ///< Generator not created
+  HIPRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
+  HIPRAND_STATUS_TYPE_ERROR = 103,        ///< Generator type is wrong
+  HIPRAND_STATUS_OUT_OF_RANGE = 104,      ///< Argument out of range
+  HIPRAND_STATUS_LENGTH_NOT_MULTIPLE =
+      105, ///< Requested size is not a multiple of quasirandom generator's
+           ///< dimension, or requested size is not even (see
+           ///< hiprandGenerateNormal()), or pointer is misaligned (see
+           ///< hiprandGenerateNormal())
+  HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED =
+      106,                             ///< GPU does not have double precision
+  HIPRAND_STATUS_LAUNCH_FAILURE = 201, ///< Kernel launch failure
+  HIPRAND_STATUS_PREEXISTING_FAILURE =
+      202, ///< Preexisting failure on library entry
+  HIPRAND_STATUS_INITIALIZATION_FAILED = 203, ///< Initialization of HIP failed
+  HIPRAND_STATUS_ARCH_MISMATCH =
+      204, ///< Architecture mismatch, GPU does not support requested feature
+  HIPRAND_STATUS_INTERNAL_ERROR = 999,  ///< Internal library error
+  HIPRAND_STATUS_NOT_IMPLEMENTED = 1000 ///< Feature not implemented yet
 } hiprandStatus_t;
 
 /**
  * \brief hipRAND generator type
  */
 typedef enum hiprandRngType {
-    /// \cond
-    HIPRAND_RNG_TEST = 0,
-    /// \endcond
-    HIPRAND_RNG_PSEUDO_DEFAULT = 400, ///< Default pseudorandom generator
-    HIPRAND_RNG_PSEUDO_XORWOW = 401, ///< XORWOW pseudorandom generator
-    HIPRAND_RNG_PSEUDO_MRG32K3A = 402, ///< MRG32k3a pseudorandom generator
-    HIPRAND_RNG_PSEUDO_MTGP32 = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
-    HIPRAND_RNG_PSEUDO_MT19937 = 404, ///< Mersenne Twister 19937
-    HIPRAND_RNG_PSEUDO_PHILOX4_32_10 = 405, ///< PHILOX_4x32 (10 rounds) pseudorandom generator
-    HIPRAND_RNG_QUASI_DEFAULT = 500, ///< Default quasirandom generator
-    HIPRAND_RNG_QUASI_SOBOL32 = 501, ///< Sobol32 quasirandom generator
-    HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502,  ///< Scrambled Sobol32 quasirandom generator
-    HIPRAND_RNG_QUASI_SOBOL64 = 503, ///< Sobol64 quasirandom generator
-    HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504  ///< Scrambled Sobol64 quasirandom generator
+  /// \cond
+  HIPRAND_RNG_TEST = 0,
+  /// \endcond
+  HIPRAND_RNG_PSEUDO_DEFAULT = 400,  ///< Default pseudorandom generator
+  HIPRAND_RNG_PSEUDO_XORWOW = 401,   ///< XORWOW pseudorandom generator
+  HIPRAND_RNG_PSEUDO_MRG32K3A = 402, ///< MRG32k3a pseudorandom generator
+  HIPRAND_RNG_PSEUDO_MTGP32 =
+      403, ///< Mersenne Twister MTGP32 pseudorandom generator
+  HIPRAND_RNG_PSEUDO_MT19937 = 404, ///< Mersenne Twister 19937
+  HIPRAND_RNG_PSEUDO_PHILOX4_32_10 =
+      405, ///< PHILOX_4x32 (10 rounds) pseudorandom generator
+  HIPRAND_RNG_QUASI_DEFAULT = 500, ///< Default quasirandom generator
+  HIPRAND_RNG_QUASI_SOBOL32 = 501, ///< Sobol32 quasirandom generator
+  HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL32 =
+      502,                         ///< Scrambled Sobol32 quasirandom generator
+  HIPRAND_RNG_QUASI_SOBOL64 = 503, ///< Sobol64 quasirandom generator
+  HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 =
+      504 ///< Scrambled Sobol64 quasirandom generator
 } hiprandRngType_t;
-
 
 // Host API functions
 
@@ -150,16 +159,18 @@ typedef enum hiprandRngType {
  *
  * \return
  * - HIPRAND_STATUS_ALLOCATION_FAILED, if memory allocation failed \n
- * - HIPRAND_STATUS_INITIALIZATION_FAILED if there was a problem setting up the GPU \n
- * - HIPRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
- *   dynamically linked library version \n
+ * - HIPRAND_STATUS_INITIALIZATION_FAILED if there was a problem setting up the
+ * GPU \n
+ * - HIPRAND_STATUS_VERSION_MISMATCH if the header file version does not match
+ * the dynamically linked library version \n
  * - HIPRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
- * - HIPRAND_STATUS_NOT_IMPLEMENTED if generator of type \p rng_type is not implemented yet \n
+ * - HIPRAND_STATUS_NOT_IMPLEMENTED if generator of type \p rng_type is not
+ * implemented yet \n
  * - HIPRAND_STATUS_SUCCESS if generator was created successfully \n
  *
  */
-hiprandStatus_t HIPRANDAPI
-hiprandCreateGenerator(hiprandGenerator_t * generator, hiprandRngType_t rng_type);
+hiprandStatus_t HIPRANDAPI hiprandCreateGenerator(hiprandGenerator_t *generator,
+                                                  hiprandRngType_t rng_type);
 
 /**
  * \brief Creates a new random number generator on host.
@@ -186,14 +197,15 @@ hiprandCreateGenerator(hiprandGenerator_t * generator, hiprandRngType_t rng_type
  *
  * \return
  * - HIPRAND_STATUS_ALLOCATION_FAILED, if memory allocation failed \n
- * - HIPRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
- *   dynamically linked library version \n
+ * - HIPRAND_STATUS_VERSION_MISMATCH if the header file version does not match
+ * the dynamically linked library version \n
  * - HIPRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
- * - HIPRAND_STATUS_NOT_IMPLEMENTED if host generator of type \p rng_type is not implemented yet \n
+ * - HIPRAND_STATUS_NOT_IMPLEMENTED if host generator of type \p rng_type is not
+ * implemented yet \n
  * - HIPRAND_STATUS_SUCCESS if generator was created successfully \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandCreateGeneratorHost(hiprandGenerator_t * generator, hiprandRngType_t rng_type);
+hiprandStatus_t HIPRANDAPI hiprandCreateGeneratorHost(
+    hiprandGenerator_t *generator, hiprandRngType_t rng_type);
 
 /**
  * \brief Destroys random number generator.
@@ -227,9 +239,8 @@ hiprandDestroyGenerator(hiprandGenerator_t generator);
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerate(hiprandGenerator_t generator,
-                unsigned int * output_data, size_t n);
+hiprandStatus_t HIPRANDAPI hiprandGenerate(hiprandGenerator_t generator,
+                                           unsigned int *output_data, size_t n);
 
 /**
  * \brief Generates uniformly distributed 8-bit unsigned integers.
@@ -249,9 +260,9 @@ hiprandGenerate(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateChar(hiprandGenerator_t generator,
-                    unsigned char * output_data, size_t n);
+hiprandStatus_t HIPRANDAPI hiprandGenerateChar(hiprandGenerator_t generator,
+                                               unsigned char *output_data,
+                                               size_t n);
 
 /**
  * \brief Generates uniformly distributed 16-bit unsigned integers.
@@ -271,9 +282,9 @@ hiprandGenerateChar(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateShort(hiprandGenerator_t generator,
-                     unsigned short * output_data, size_t n);
+hiprandStatus_t HIPRANDAPI hiprandGenerateShort(hiprandGenerator_t generator,
+                                                unsigned short *output_data,
+                                                size_t n);
 
 /**
  * \brief Generates uniformly distributed floats.
@@ -291,16 +302,16 @@ hiprandGenerateShort(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateUniform(hiprandGenerator_t generator,
-                       float * output_data, size_t n);
+hiprandStatus_t HIPRANDAPI hiprandGenerateUniform(hiprandGenerator_t generator,
+                                                  float *output_data, size_t n);
 
 /**
- * \brief Generates uniformly distributed double-precision floating-point values.
+ * \brief Generates uniformly distributed double-precision floating-point
+ * values.
  *
  * Generates \p n uniformly distributed 64-bit double-precision floating-point
  * values and saves them to \p output_data.
@@ -320,37 +331,35 @@ hiprandGenerateUniform(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateUniformDouble(hiprandGenerator_t generator,
-                             double * output_data, size_t n);
+hiprandStatus_t HIPRANDAPI hiprandGenerateUniformDouble(
+    hiprandGenerator_t generator, double *output_data, size_t n);
 
 /**
-* \brief Generates uniformly distributed half-precision floating-point values.
-*
-* Generates \p n uniformly distributed 16-bit half-precision floating-point
-* values and saves them to \p output_data.
-*
-* Generated numbers are between \p 0.0 and \p 1.0, excluding \p 0.0 and
-* including \p 1.0.
-*
-* \param generator - Generator to use
-* \param output_data - Pointer to memory to store generated numbers
-* \param n - Number of halfs to generate
-*
-* \return
-* - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
-* - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
-* - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
-* of used quasi-random generator \n
-* - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
-*/
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateUniformHalf(hiprandGenerator_t generator,
-                           half * output_data, size_t n);
+ * \brief Generates uniformly distributed half-precision floating-point values.
+ *
+ * Generates \p n uniformly distributed 16-bit half-precision floating-point
+ * values and saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0.0 and \p 1.0, excluding \p 0.0 and
+ * including \p 1.0.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of halfs to generate
+ *
+ * \return
+ * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
+ * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+hiprandStatus_t HIPRANDAPI hiprandGenerateUniformHalf(
+    hiprandGenerator_t generator, half *output_data, size_t n);
 
 /**
  * \brief Generates normally distributed floats.
@@ -367,15 +376,14 @@ hiprandGenerateUniformHalf(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is
+ * not aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateNormal(hiprandGenerator_t generator,
-                      float * output_data, size_t n,
-                      float mean, float stddev);
+hiprandStatus_t HIPRANDAPI hiprandGenerateNormal(hiprandGenerator_t generator,
+                                                 float *output_data, size_t n,
+                                                 float mean, float stddev);
 
 /**
  * \brief Generates normally distributed doubles.
@@ -392,15 +400,14 @@ hiprandGenerateNormal(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is
+ * not aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
-hiprandGenerateNormalDouble(hiprandGenerator_t generator,
-                            double * output_data, size_t n,
-                            double mean, double stddev);
+hiprandGenerateNormalDouble(hiprandGenerator_t generator, double *output_data,
+                            size_t n, double mean, double stddev);
 
 /**
  * \brief Generates normally distributed halfs.
@@ -417,15 +424,14 @@ hiprandGenerateNormalDouble(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(half2) bytes, or \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is
+ * not aligned to \p sizeof(half2) bytes, or \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
-hiprandGenerateNormalHalf(hiprandGenerator_t generator,
-                          half * output_data, size_t n,
-                          half mean, half stddev);
+hiprandGenerateNormalHalf(hiprandGenerator_t generator, half *output_data,
+                          size_t n, half mean, half stddev);
 
 /**
  * \brief Generates log-normally distributed floats.
@@ -442,21 +448,20 @@ hiprandGenerateNormalHalf(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is
+ * not aligned to \p sizeof(float2) bytes, or \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
-hiprandGenerateLogNormal(hiprandGenerator_t generator,
-                         float * output_data, size_t n,
-                         float mean, float stddev);
+hiprandGenerateLogNormal(hiprandGenerator_t generator, float *output_data,
+                         size_t n, float mean, float stddev);
 
 /**
  * \brief Generates log-normally distributed doubles.
  *
- * Generates \p n log-normally distributed 64-bit double-precision floating-point
- * values and saves them to \p output_data.
+ * Generates \p n log-normally distributed 64-bit double-precision
+ * floating-point values and saves them to \p output_data.
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
@@ -467,40 +472,38 @@ hiprandGenerateLogNormal(hiprandGenerator_t generator,
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
- * aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is
+ * not aligned to \p sizeof(double2) bytes, or \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
+ * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+hiprandStatus_t HIPRANDAPI hiprandGenerateLogNormalDouble(
+    hiprandGenerator_t generator, double *output_data, size_t n, double mean,
+    double stddev);
+
+/**
+ * \brief Generates log-normally distributed halfs.
+ *
+ * Generates \p n log-normally distributed 16-bit half-precision floating-point
+ * values and saves them to \p output_data.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of halfs to generate
+ * \param mean - Mean value of log normal distribution
+ * \param stddev - Standard deviation value of log normal distribution
+ *
+ * \return
+ * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
+ * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is
+ * not aligned to \p sizeof(half2) bytes, or \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI
-hiprandGenerateLogNormalDouble(hiprandGenerator_t generator,
-                               double * output_data, size_t n,
-                               double mean, double stddev);
-
-/**
-* \brief Generates log-normally distributed halfs.
-*
-* Generates \p n log-normally distributed 16-bit half-precision floating-point
-* values and saves them to \p output_data.
-*
-* \param generator - Generator to use
-* \param output_data - Pointer to memory to store generated numbers
-* \param n - Number of halfs to generate
-* \param mean - Mean value of log normal distribution
-* \param stddev - Standard deviation value of log normal distribution
-*
-* \return
-* - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
-* - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
-* - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not even, \p output_data is not
-* aligned to \p sizeof(half2) bytes, or \p n is not a multiple of the dimension
-* of used quasi-random generator \n
-* - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
-*/
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateLogNormalHalf(hiprandGenerator_t generator,
-                             half * output_data, size_t n,
-                             half mean, half stddev);
+hiprandGenerateLogNormalHalf(hiprandGenerator_t generator, half *output_data,
+                             size_t n, half mean, half stddev);
 
 /**
  * \brief Generates Poisson-distributed 32-bit unsigned integers.
@@ -517,14 +520,13 @@ hiprandGenerateLogNormalHalf(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_LAUNCH_FAILURE if generator failed to launch kernel \n
  * - HIPRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
- * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
- * of used quasi-random generator \n
+ * - HIPRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the
+ * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGeneratePoisson(hiprandGenerator_t generator,
-                       unsigned int * output_data, size_t n,
-                       double lambda);
+hiprandStatus_t HIPRANDAPI hiprandGeneratePoisson(hiprandGenerator_t generator,
+                                                  unsigned int *output_data,
+                                                  size_t n, double lambda);
 
 /**
  * \brief Initializes the generator's state on GPU or host.
@@ -544,8 +546,7 @@ hiprandGeneratePoisson(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_LAUNCH_FAILURE if the kernel launch failed for any reason \n
  * - HIPRAND_STATUS_SUCCESS if the seeds were generated successfully \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateSeeds(hiprandGenerator_t generator);
+hiprandStatus_t HIPRANDAPI hiprandGenerateSeeds(hiprandGenerator_t generator);
 
 /**
  * \brief Sets the current stream for kernel launches.
@@ -560,8 +561,8 @@ hiprandGenerateSeeds(hiprandGenerator_t generator);
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_SUCCESS if stream was set successfully \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandSetStream(hiprandGenerator_t generator, hipStream_t stream);
+hiprandStatus_t HIPRANDAPI hiprandSetStream(hiprandGenerator_t generator,
+                                            hipStream_t stream);
 
 /**
  * \brief Sets the seed of a pseudo-random number generator.
@@ -576,11 +577,12 @@ hiprandSetStream(hiprandGenerator_t generator, hipStream_t stream);
  *
  * \return
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
- * - HIPRAND_STATUS_TYPE_ERROR if the generator is a quasi random number generator \n
+ * - HIPRAND_STATUS_TYPE_ERROR if the generator is a quasi random number
+ * generator \n
  * - HIPRAND_STATUS_SUCCESS if seed was set successfully \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandSetPseudoRandomGeneratorSeed(hiprandGenerator_t generator, unsigned long long seed);
+hiprandStatus_t HIPRANDAPI hiprandSetPseudoRandomGeneratorSeed(
+    hiprandGenerator_t generator, unsigned long long seed);
 
 /**
  * \brief Sets the offset of a random number generator.
@@ -602,8 +604,8 @@ hiprandSetPseudoRandomGeneratorSeed(hiprandGenerator_t generator, unsigned long 
  * - HIPRAND_STATUS_TYPE_ERROR if generator's type is HIPRAND_RNG_PSEUDO_MTGP32
  * or HIPRAND_RNG_PSEUDO_MT19937 \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offset);
+hiprandStatus_t HIPRANDAPI hiprandSetGeneratorOffset(
+    hiprandGenerator_t generator, unsigned long long offset);
 
 /**
  * \brief Set the number of dimensions of a quasi-random number generator.
@@ -619,12 +621,13 @@ hiprandSetGeneratorOffset(hiprandGenerator_t generator, unsigned long long offse
  *
  * \return
  * - HIPRAND_STATUS_NOT_CREATED if the generator wasn't created \n
- * - HIPRAND_STATUS_TYPE_ERROR if the generator is not a quasi-random number generator \n
+ * - HIPRAND_STATUS_TYPE_ERROR if the generator is not a quasi-random number
+ * generator \n
  * - HIPRAND_STATUS_OUT_OF_RANGE if \p dimensions is out of range \n
  * - HIPRAND_STATUS_SUCCESS if the number of dimensions was set successfully \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandSetQuasiRandomGeneratorDimensions(hiprandGenerator_t generator, unsigned int dimensions);
+hiprandStatus_t HIPRANDAPI hiprandSetQuasiRandomGeneratorDimensions(
+    hiprandGenerator_t generator, unsigned int dimensions);
 
 /**
  * \brief Returns the version number of the cuRAND or rocRAND library.
@@ -638,8 +641,7 @@ hiprandSetQuasiRandomGeneratorDimensions(hiprandGenerator_t generator, unsigned 
  * - HIPRAND_STATUS_OUT_OF_RANGE if \p version is NULL \n
  * - HIPRAND_STATUS_SUCCESS if the version number was successfully returned \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGetVersion(int * version);
+hiprandStatus_t HIPRANDAPI hiprandGetVersion(int *version);
 
 /**
  * \brief Construct the histogram for a Poisson distribution.
@@ -655,8 +657,8 @@ hiprandGetVersion(int * version);
  * - HIPRAND_STATUS_OUT_OF_RANGE if lambda is non-positive \n
  * - HIPRAND_STATUS_SUCCESS if the histogram was constructed successfully \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandCreatePoissonDistribution(double lambda, hiprandDiscreteDistribution_t * discrete_distribution);
+hiprandStatus_t HIPRANDAPI hiprandCreatePoissonDistribution(
+    double lambda, hiprandDiscreteDistribution_t *discrete_distribution);
 
 /**
  * \brief Destroy the histogram array for a discrete distribution.

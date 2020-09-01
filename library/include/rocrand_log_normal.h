@@ -32,11 +32,11 @@
 
 #include <math.h>
 
-#include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
-#include "rocrand_xorwow.h"
-#include "rocrand_sobol32.h"
 #include "rocrand_mtgp32.h"
+#include "rocrand_philox4x32_10.h"
+#include "rocrand_sobol32.h"
+#include "rocrand_xorwow.h"
 
 #include "rocrand_normal.h"
 
@@ -45,9 +45,9 @@
  *
  * Generates and returns a log-normally distributed \p float value using Philox
  * generator in \p state, and increments position of the generator by one.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, returns first of them, and saves
- * the second to be returned on the next call.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, transforms them to log-normally distributed values,
+ * returns first of them, and saves the second to be returned on the next call.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -57,27 +57,30 @@
  */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
-float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
-{
-    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_philox4x32_10> bm_helper;
+float rocrand_log_normal(rocrand_state_philox4x32_10 *state, float mean,
+                         float stddev) {
+  typedef rocrand_device::detail::engine_boxmuller_helper<
+      rocrand_state_philox4x32_10>
+      bm_helper;
 
-    if(bm_helper::has_float(state))
-    {
-        return expf(mean + (stddev * bm_helper::get_float(state)));
-    }
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
-    bm_helper::save_float(state, r.y);
-    return expf(mean + (stddev * r.x));
+  if (bm_helper::has_float(state)) {
+    return expf(mean + (stddev * bm_helper::get_float(state)));
+  }
+  float2 r = rocrand_device::detail::normal_distribution2(rocrand(state),
+                                                          rocrand(state));
+  bm_helper::save_float(state, r.y);
+  return expf(mean + (stddev * r.x));
 }
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
  *
- * Generates and returns two log-normally distributed \p float values using Philox
- * generator in \p state, and increments position of the generator by two.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, and returns both.
+ * Generates and returns two log-normally distributed \p float values using
+ * Philox generator in \p state, and increments position of the generator by
+ * two. The function uses the Box-Muller transform method to generate two
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns both.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -86,22 +89,21 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
  * \return Two log-normally distributed \p float value as \p float2
  */
 FQUALIFIERS
-float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, float stddev)
-{
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
-    return float2 {
-        expf(mean + (stddev * r.x)),
-        expf(mean + (stddev * r.y))
-    };
+float2 rocrand_log_normal2(rocrand_state_philox4x32_10 *state, float mean,
+                           float stddev) {
+  float2 r = rocrand_device::detail::normal_distribution2(rocrand(state),
+                                                          rocrand(state));
+  return float2{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y))};
 }
 
 /**
  * \brief Returns four log-normally distributed \p float values.
  *
- * Generates and returns four log-normally distributed \p float values using Philox
- * generator in \p state, and increments position of the generator by four.
- * The function uses the Box-Muller transform method to generate four normally distributed
- * values, transforms them to log-normally distributed values, and returns them.
+ * Generates and returns four log-normally distributed \p float values using
+ * Philox generator in \p state, and increments position of the generator by
+ * four. The function uses the Box-Muller transform method to generate four
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns them.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -110,15 +112,11 @@ float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, floa
  * \return Four log-normally distributed \p float value as \p float4
  */
 FQUALIFIERS
-float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, float stddev)
-{
-    float4 r = rocrand_device::detail::normal_distribution4(rocrand4(state));
-    return float4 {
-        expf(mean + (stddev * r.x)),
-        expf(mean + (stddev * r.y)),
-        expf(mean + (stddev * r.z)),
-        expf(mean + (stddev * r.w))
-    };
+float4 rocrand_log_normal4(rocrand_state_philox4x32_10 *state, float mean,
+                           float stddev) {
+  float4 r = rocrand_device::detail::normal_distribution4(rocrand4(state));
+  return float4{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y)),
+                expf(mean + (stddev * r.z)), expf(mean + (stddev * r.w))};
 }
 
 /**
@@ -126,9 +124,10 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
  *
  * Generates and returns a log-normally distributed \p double value using Philox
  * generator in \p state, and increments position of the generator by two.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * \p double values, transforms them to log-normally distributed \p double values, returns
- * first of them, and saves the second to be returned on the next call.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed \p double values, transforms them to log-normally distributed \p
+ * double values, returns first of them, and saves the second to be returned on
+ * the next call.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -138,27 +137,30 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
  */
 #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mean, double stddev)
-{
-    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_philox4x32_10> bm_helper;
+double rocrand_log_normal_double(rocrand_state_philox4x32_10 *state,
+                                 double mean, double stddev) {
+  typedef rocrand_device::detail::engine_boxmuller_helper<
+      rocrand_state_philox4x32_10>
+      bm_helper;
 
-    if(bm_helper::has_double(state))
-    {
-        return exp(mean + (stddev * bm_helper::get_double(state)));
-    }
-    double2 r = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
-    bm_helper::save_double(state, r.y);
-    return exp(mean + r.x * stddev);
+  if (bm_helper::has_double(state)) {
+    return exp(mean + (stddev * bm_helper::get_double(state)));
+  }
+  double2 r =
+      rocrand_device::detail::normal_distribution_double2(rocrand4(state));
+  bm_helper::save_double(state, r.y);
+  return exp(mean + r.x * stddev);
 }
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.
  *
- * Generates and returns two log-normally distributed \p double values using Philox
- * generator in \p state, and increments position of the generator by four.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, and returns both.
+ * Generates and returns two log-normally distributed \p double values using
+ * Philox generator in \p state, and increments position of the generator by
+ * four. The function uses the Box-Muller transform method to generate two
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns both.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -167,22 +169,21 @@ double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mea
  * \return Two log-normally distributed \p double values as \p double2
  */
 FQUALIFIERS
-double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double mean, double stddev)
-{
-    double2 r = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
-    return double2 {
-        exp(mean + (stddev * r.x)),
-        exp(mean + (stddev * r.y))
-    };
+double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 *state,
+                                   double mean, double stddev) {
+  double2 r =
+      rocrand_device::detail::normal_distribution_double2(rocrand4(state));
+  return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
 /**
  * \brief Returns four log-normally distributed \p double values.
  *
- * Generates and returns four log-normally distributed \p double values using Philox
- * generator in \p state, and increments position of the generator by eight.
- * The function uses the Box-Muller transform method to generate four normally distributed
- * values, transforms them to log-normally distributed values, and returns them.
+ * Generates and returns four log-normally distributed \p double values using
+ * Philox generator in \p state, and increments position of the generator by
+ * eight. The function uses the Box-Muller transform method to generate four
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns them.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -191,24 +192,23 @@ double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double m
  * \return Four log-normally distributed \p double values as \p double4
  */
 FQUALIFIERS
-double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double mean, double stddev)
-{
-    double2 r1, r2;
-    r1 = rocrand_log_normal_double2(state, mean, stddev);
-    r2 = rocrand_log_normal_double2(state, mean, stddev);
-    return double4 {
-        r1.x, r1.y, r2.x, r2.y
-    };
+double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 *state,
+                                   double mean, double stddev) {
+  double2 r1, r2;
+  r1 = rocrand_log_normal_double2(state, mean, stddev);
+  r2 = rocrand_log_normal_double2(state, mean, stddev);
+  return double4{r1.x, r1.y, r2.x, r2.y};
 }
 
 /**
  * \brief Returns a log-normally distributed \p float value.
  *
- * Generates and returns a log-normally distributed \p float value using MRG32k3a
- * generator in \p state, and increments position of the generator by one.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, returns first of them,
- * and saves the second to be returned on the next call.
+ * Generates and returns a log-normally distributed \p float value using
+ * MRG32k3a generator in \p state, and increments position of the generator by
+ * one. The function uses the Box-Muller transform method to generate two
+ * normally distributed values, transforms them to log-normally distributed
+ * values, returns first of them, and saves the second to be returned on the
+ * next call.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -218,27 +218,30 @@ double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double m
  */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
-float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stddev)
-{
-    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg32k3a> bm_helper;
+float rocrand_log_normal(rocrand_state_mrg32k3a *state, float mean,
+                         float stddev) {
+  typedef rocrand_device::detail::engine_boxmuller_helper<
+      rocrand_state_mrg32k3a>
+      bm_helper;
 
-    if(bm_helper::has_float(state))
-    {
-        return expf(mean + (stddev * bm_helper::get_float(state)));
-    }
-    float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
-    bm_helper::save_float(state, r.y);
-    return expf(mean + (stddev * r.x));
+  if (bm_helper::has_float(state)) {
+    return expf(mean + (stddev * bm_helper::get_float(state)));
+  }
+  float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state),
+                                                              rocrand(state));
+  bm_helper::save_float(state, r.y);
+  return expf(mean + (stddev * r.x));
 }
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
  *
- * Generates and returns two log-normally distributed \p float values using MRG32k3a
- * generator in \p state, and increments position of the generator by two.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, and returns both.
+ * Generates and returns two log-normally distributed \p float values using
+ * MRG32k3a generator in \p state, and increments position of the generator by
+ * two. The function uses the Box-Muller transform method to generate two
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns both.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -247,23 +250,22 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
  * \return Two log-normally distributed \p float value as \p float2
  */
 FQUALIFIERS
-float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float stddev)
-{
-    float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
-    return float2 {
-        expf(mean + (stddev * r.x)),
-        expf(mean + (stddev * r.y))
-    };
+float2 rocrand_log_normal2(rocrand_state_mrg32k3a *state, float mean,
+                           float stddev) {
+  float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state),
+                                                              rocrand(state));
+  return float2{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y))};
 }
 
 /**
  * \brief Returns a log-normally distributed \p double value.
  *
- * Generates and returns a log-normally distributed \p double value using MRG32k3a
- * generator in \p state, and increments position of the generator by one.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * \p double values, transforms them to log-normally distributed \p double values, returns
- * first of them, and saves the second to be returned on the next call.
+ * Generates and returns a log-normally distributed \p double value using
+ * MRG32k3a generator in \p state, and increments position of the generator by
+ * one. The function uses the Box-Muller transform method to generate two
+ * normally distributed \p double values, transforms them to log-normally
+ * distributed \p double values, returns first of them, and saves the second to
+ * be returned on the next call.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -273,27 +275,30 @@ float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float std
  */
 #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, double stddev)
-{
-    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg32k3a> bm_helper;
+double rocrand_log_normal_double(rocrand_state_mrg32k3a *state, double mean,
+                                 double stddev) {
+  typedef rocrand_device::detail::engine_boxmuller_helper<
+      rocrand_state_mrg32k3a>
+      bm_helper;
 
-    if(bm_helper::has_double(state))
-    {
-        return exp(mean + (stddev * bm_helper::get_double(state)));
-    }
-    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
-    bm_helper::save_double(state, r.y);
-    return exp(mean + r.x * stddev);
+  if (bm_helper::has_double(state)) {
+    return exp(mean + (stddev * bm_helper::get_double(state)));
+  }
+  double2 r = rocrand_device::detail::mrg_normal_distribution_double2(
+      rocrand(state), rocrand(state));
+  bm_helper::save_double(state, r.y);
+  return exp(mean + r.x * stddev);
 }
 #endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.
  *
- * Generates and returns two log-normally distributed \p double values using MRG32k3a
- * generator in \p state, and increments position of the generator by two.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, and returns both.
+ * Generates and returns two log-normally distributed \p double values using
+ * MRG32k3a generator in \p state, and increments position of the generator by
+ * two. The function uses the Box-Muller transform method to generate two
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns both.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -302,13 +307,11 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
  * \return Two log-normally distributed \p double values as \p double2
  */
 FQUALIFIERS
-double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, double stddev)
-{
-    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
-    return double2 {
-        exp(mean + (stddev * r.x)),
-        exp(mean + (stddev * r.y))
-    };
+double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a *state, double mean,
+                                   double stddev) {
+  double2 r = rocrand_device::detail::mrg_normal_distribution_double2(
+      rocrand(state), rocrand(state));
+  return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
 /**
@@ -316,9 +319,9 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
  *
  * Generates and returns a log-normally distributed \p float value using XORWOW
  * generator in \p state, and increments position of the generator by one.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, returns first of them,
- * and saves the second to be returned on the next call.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, transforms them to log-normally distributed values,
+ * returns first of them, and saves the second to be returned on the next call.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -328,27 +331,29 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
  */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
-float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
-{
-    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow> bm_helper;
+float rocrand_log_normal(rocrand_state_xorwow *state, float mean,
+                         float stddev) {
+  typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow>
+      bm_helper;
 
-    if(bm_helper::has_float(state))
-    {
-        return expf(mean + (stddev * bm_helper::get_float(state)));
-    }
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
-    bm_helper::save_float(state, r.y);
-    return expf(mean + (stddev * r.x));
+  if (bm_helper::has_float(state)) {
+    return expf(mean + (stddev * bm_helper::get_float(state)));
+  }
+  float2 r = rocrand_device::detail::normal_distribution2(rocrand(state),
+                                                          rocrand(state));
+  bm_helper::save_float(state, r.y);
+  return expf(mean + (stddev * r.x));
 }
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
  *
- * Generates and returns two log-normally distributed \p float values using XORWOW
- * generator in \p state, and increments position of the generator by two.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, and returns both.
+ * Generates and returns two log-normally distributed \p float values using
+ * XORWOW generator in \p state, and increments position of the generator by
+ * two. The function uses the Box-Muller transform method to generate two
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns both.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -357,13 +362,11 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
  * \return Two log-normally distributed \p float value as \p float2
  */
 FQUALIFIERS
-float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stddev)
-{
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
-    return float2 {
-        expf(mean + (stddev * r.x)),
-        expf(mean + (stddev * r.y))
-    };
+float2 rocrand_log_normal2(rocrand_state_xorwow *state, float mean,
+                           float stddev) {
+  float2 r = rocrand_device::detail::normal_distribution2(rocrand(state),
+                                                          rocrand(state));
+  return float2{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y))};
 }
 
 /**
@@ -371,9 +374,10 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
  *
  * Generates and returns a log-normally distributed \p double value using XORWOW
  * generator in \p state, and increments position of the generator by two.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * \p double values, transforms them to log-normally distributed \p double values, returns
- * first of them, and saves the second to be returned on the next call.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed \p double values, transforms them to log-normally distributed \p
+ * double values, returns first of them, and saves the second to be returned on
+ * the next call.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -383,29 +387,29 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
  */
 #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, double stddev)
-{
-    typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow> bm_helper;
+double rocrand_log_normal_double(rocrand_state_xorwow *state, double mean,
+                                 double stddev) {
+  typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow>
+      bm_helper;
 
-    if(bm_helper::has_double(state))
-    {
-        return exp(mean + (stddev * bm_helper::get_double(state)));
-    }
-    double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
-    );
-    bm_helper::save_double(state, r.y);
-    return exp(mean + (stddev * r.x));
+  if (bm_helper::has_double(state)) {
+    return exp(mean + (stddev * bm_helper::get_double(state)));
+  }
+  double2 r = rocrand_device::detail::normal_distribution_double2(
+      uint4{rocrand(state), rocrand(state), rocrand(state), rocrand(state)});
+  bm_helper::save_double(state, r.y);
+  return exp(mean + (stddev * r.x));
 }
 #endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.
  *
- * Generates and returns two log-normally distributed \p double values using XORWOW
- * generator in \p state, and increments position of the generator by four.
- * The function uses the Box-Muller transform method to generate two normally distributed
- * values, transforms them to log-normally distributed values, and returns both.
+ * Generates and returns two log-normally distributed \p double values using
+ * XORWOW generator in \p state, and increments position of the generator by
+ * four. The function uses the Box-Muller transform method to generate two
+ * normally distributed values, transforms them to log-normally distributed
+ * values, and returns both.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -414,15 +418,11 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
  * \return Two log-normally distributed \p double values as \p double2
  */
 FQUALIFIERS
-double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, double stddev)
-{
-    double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
-    );
-    return double2 {
-        exp(mean + (stddev * r.x)),
-        exp(mean + (stddev * r.y))
-    };
+double2 rocrand_log_normal_double2(rocrand_state_xorwow *state, double mean,
+                                   double stddev) {
+  double2 r = rocrand_device::detail::normal_distribution_double2(
+      uint4{rocrand(state), rocrand(state), rocrand(state), rocrand(state)});
+  return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
 /**
@@ -438,10 +438,10 @@ double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, do
  * \return Log-normally distributed \p float value
  */
 FQUALIFIERS
-float rocrand_log_normal(rocrand_state_mtgp32 * state, float mean, float stddev)
-{
-    float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return expf(mean + (stddev * r));
+float rocrand_log_normal(rocrand_state_mtgp32 *state, float mean,
+                         float stddev) {
+  float r = rocrand_device::detail::normal_distribution(rocrand(state));
+  return expf(mean + (stddev * r));
 }
 
 /**
@@ -457,10 +457,10 @@ float rocrand_log_normal(rocrand_state_mtgp32 * state, float mean, float stddev)
  * \return Log-normally distributed \p double value
  */
 FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_mtgp32 * state, double mean, double stddev)
-{
-    double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
-    return exp(mean + (stddev * r));
+double rocrand_log_normal_double(rocrand_state_mtgp32 *state, double mean,
+                                 double stddev) {
+  double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+  return exp(mean + (stddev * r));
 }
 
 /**
@@ -476,17 +476,18 @@ double rocrand_log_normal_double(rocrand_state_mtgp32 * state, double mean, doub
  * \return Log-normally distributed \p float value
  */
 FQUALIFIERS
-float rocrand_log_normal(rocrand_state_sobol32 * state, float mean, float stddev)
-{
-    float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return expf(mean + (stddev * r));
+float rocrand_log_normal(rocrand_state_sobol32 *state, float mean,
+                         float stddev) {
+  float r = rocrand_device::detail::normal_distribution(rocrand(state));
+  return expf(mean + (stddev * r));
 }
 
 /**
  * \brief Returns a log-normally distributed \p double value.
  *
- * Generates and returns a log-normally distributed \p double value using SOBOL32
- * generator in \p state, and increments position of the generator by one.
+ * Generates and returns a log-normally distributed \p double value using
+ * SOBOL32 generator in \p state, and increments position of the generator by
+ * one.
  *
  * \param state  - Pointer to a state to use
  * \param mean   - Mean of the related log-normal distribution
@@ -495,12 +496,11 @@ float rocrand_log_normal(rocrand_state_sobol32 * state, float mean, float stddev
  * \return Log-normally distributed \p double value
  */
 FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_sobol32 * state, double mean, double stddev)
-{
-    double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
-    return exp(mean + (stddev * r));
+double rocrand_log_normal_double(rocrand_state_sobol32 *state, double mean,
+                                 double stddev) {
+  double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+  return exp(mean + (stddev * r));
 }
-
 
 #endif // ROCRAND_LOG_NORMAL_H_
 

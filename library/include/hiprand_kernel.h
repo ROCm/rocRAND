@@ -33,17 +33,17 @@
  *  @{
  */
 
- /**
+/**
  * \def HIPRAND_PHILOX4x32_DEFAULT_SEED
  * \brief Default seed for PHILOX4x32 PRNG.
  */
 #define HIPRAND_PHILOX4x32_DEFAULT_SEED 0ULL
- /**
+/**
  * \def HIPRAND_XORWOW_DEFAULT_SEED
  * \brief Default seed for XORWOW PRNG.
  */
 #define HIPRAND_XORWOW_DEFAULT_SEED 0ULL
- /**
+/**
  * \def HIPRAND_MRG32K3A_DEFAULT_SEED
  * \brief Default seed for MRG32K3A PRNG.
  */

@@ -27,180 +27,144 @@
 
 #include "rocrand_common.h"
 
-// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom
-// sequence generator, 2003
-// http://doi.acm.org/10.1145/641876.641879
+// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's
+// quasirandom sequence generator, 2003 http://doi.acm.org/10.1145/641876.641879
 
 namespace rocrand_device {
 
-template<bool UseSharedVectors>
-struct sobol32_state
-{
-    unsigned int d;
-    unsigned int i;
-    unsigned int vectors[32];
+template <bool UseSharedVectors> struct sobol32_state {
+  unsigned int d;
+  unsigned int i;
+  unsigned int vectors[32];
 
-    FQUALIFIERS
-    sobol32_state() { }
+  FQUALIFIERS
+  sobol32_state() {}
 
-    FQUALIFIERS
-    sobol32_state(const unsigned int d,
-                  const unsigned int i,
-                  const unsigned int * vectors)
-        : d(d), i(i)
-    {
-        for(int k = 0; k < 32; k++)
-        {
-            this->vectors[k] = vectors[k];
-        }
+  FQUALIFIERS
+  sobol32_state(const unsigned int d, const unsigned int i,
+                const unsigned int *vectors)
+      : d(d), i(i) {
+    for (int k = 0; k < 32; k++) {
+      this->vectors[k] = vectors[k];
     }
+  }
 };
 
-template<>
-struct sobol32_state<true>
-{
-    unsigned int d;
-    unsigned int i;
-    const unsigned int * vectors;
+template <> struct sobol32_state<true> {
+  unsigned int d;
+  unsigned int i;
+  const unsigned int *vectors;
 
-    FQUALIFIERS
-    sobol32_state() { }
+  FQUALIFIERS
+  sobol32_state() {}
 
-    FQUALIFIERS
-    sobol32_state(const unsigned int d,
-                  const unsigned int i,
-                  const unsigned int * vectors)
-        : d(d), i(i), vectors(vectors) { }
+  FQUALIFIERS
+  sobol32_state(const unsigned int d, const unsigned int i,
+                const unsigned int *vectors)
+      : d(d), i(i), vectors(vectors) {}
 };
 
-template<bool UseSharedVectors>
-class sobol32_engine
-{
+template <bool UseSharedVectors> class sobol32_engine {
 public:
+  typedef struct sobol32_state<UseSharedVectors> sobol32_state;
 
-    typedef struct sobol32_state<UseSharedVectors> sobol32_state;
+  FQUALIFIERS
+  sobol32_engine() {}
 
-    FQUALIFIERS
-    sobol32_engine() { }
+  FQUALIFIERS
+  sobol32_engine(const unsigned int *vectors, const unsigned int offset)
+      : m_state(0, 0, vectors) {
+    discard_state(offset);
+  }
 
-    FQUALIFIERS
-    sobol32_engine(const unsigned int * vectors,
-                   const unsigned int offset)
-        : m_state(0, 0, vectors)
-    {
-        discard_state(offset);
-    }
+  FQUALIFIERS
+  ~sobol32_engine() {}
 
-    FQUALIFIERS
-    ~sobol32_engine() { }
+  /// Advances the internal state to skip \p offset numbers.
+  FQUALIFIERS
+  void discard(unsigned int offset) { discard_state(offset); }
 
-    /// Advances the internal state to skip \p offset numbers.
-    FQUALIFIERS
-    void discard(unsigned int offset)
-    {
-        discard_state(offset);
-    }
+  FQUALIFIERS
+  void discard() { discard_state(); }
 
-    FQUALIFIERS
-    void discard()
-    {
-        discard_state();
-    }
+  /// Advances the internal state by stride times, where stride is power of 2
+  FQUALIFIERS
+  void discard_stride(unsigned int stride) { discard_state_power2(stride); }
 
-    /// Advances the internal state by stride times, where stride is power of 2
-    FQUALIFIERS
-    void discard_stride(unsigned int stride)
-    {
-        discard_state_power2(stride);
-    }
+  FQUALIFIERS
+  unsigned int operator()() { return this->next(); }
 
-    FQUALIFIERS
-    unsigned int operator()()
-    {
-        return this->next();
-    }
+  FQUALIFIERS
+  unsigned int next() {
+    unsigned int p = m_state.d;
+    discard_state();
+    return p;
+  }
 
-    FQUALIFIERS
-    unsigned int next()
-    {
-        unsigned int p = m_state.d;
-        discard_state();
-        return p;
-    }
-
-    FQUALIFIERS
-    unsigned int current()
-    {
-        return m_state.d;
-    }
+  FQUALIFIERS
+  unsigned int current() { return m_state.d; }
 
 protected:
-    // Advances the internal state by offset times.
-    FQUALIFIERS
-    void discard_state(unsigned int offset)
-    {
-        m_state.i += offset;
-        const unsigned int g = m_state.i ^ (m_state.i >> 1);
-        m_state.d = 0;
-        for(int i = 0; i < 32; i++)
-        {
-            m_state.d ^= (g & (1 << i) ? m_state.vectors[i] : 0);
-        }
+  // Advances the internal state by offset times.
+  FQUALIFIERS
+  void discard_state(unsigned int offset) {
+    m_state.i += offset;
+    const unsigned int g = m_state.i ^ (m_state.i >> 1);
+    m_state.d = 0;
+    for (int i = 0; i < 32; i++) {
+      m_state.d ^= (g & (1 << i) ? m_state.vectors[i] : 0);
     }
+  }
 
-    // Advances the internal state to the next state
-    FQUALIFIERS
-    void discard_state()
-    {
-        m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i)];
-        m_state.i++;
+  // Advances the internal state to the next state
+  FQUALIFIERS
+  void discard_state() {
+    m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i)];
+    m_state.i++;
+  }
+
+  FQUALIFIERS
+  void discard_state_power2(unsigned int stride) {
+    // Leap frog
+    //
+    // T Bradley, J Toit, M Giles, R Tong, P Woodhams
+    // Parallelisation Techniques for Random Number Generators
+    // GPU Computing Gems, 2011
+    //
+    // For power of 2 jumps only 2 bits in Gray code change values
+    // All bits lower than log2(stride) flip 2, 4... times, i.e.
+    // do not change their values.
+
+    // log2(stride) bit
+    m_state.d ^= m_state.vectors[rightmost_zero_bit(~stride) - 1];
+    // the rightmost zero bit of i, not including the lower log2(stride) bits
+    m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i | (stride - 1))];
+    m_state.i += stride;
+  }
+
+  // Returns the index of the rightmost zero bit in the binary expansion of
+  // x (Gray code of the current element's index)
+  FQUALIFIERS
+  unsigned int rightmost_zero_bit(unsigned int x) {
+#if defined(__HIP_DEVICE_COMPILE__)
+    unsigned int z = __ffs(~x);
+    return z ? z - 1 : 0;
+#else
+    if (x == 0)
+      return 0;
+    unsigned int y = x;
+    unsigned int z = 1;
+    while (y & 1) {
+      y >>= 1;
+      z++;
     }
-
-    FQUALIFIERS
-    void discard_state_power2(unsigned int stride)
-    {
-        // Leap frog
-        //
-        // T Bradley, J Toit, M Giles, R Tong, P Woodhams
-        // Parallelisation Techniques for Random Number Generators
-        // GPU Computing Gems, 2011
-        //
-        // For power of 2 jumps only 2 bits in Gray code change values
-        // All bits lower than log2(stride) flip 2, 4... times, i.e.
-        // do not change their values.
-
-        // log2(stride) bit
-        m_state.d ^= m_state.vectors[rightmost_zero_bit(~stride) - 1];
-        // the rightmost zero bit of i, not including the lower log2(stride) bits
-        m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i | (stride - 1))];
-        m_state.i += stride;
-    }
-
-    // Returns the index of the rightmost zero bit in the binary expansion of
-    // x (Gray code of the current element's index)
-    FQUALIFIERS
-    unsigned int rightmost_zero_bit(unsigned int x)
-    {
-        #if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int z = __ffs(~x);
-        return z ? z - 1 : 0;
-        #else
-        if(x == 0)
-            return 0;
-        unsigned int y = x;
-        unsigned int z = 1;
-        while(y & 1)
-        {
-            y >>= 1;
-            z++;
-        }
-        return z - 1;
-        #endif
-    }
+    return z - 1;
+#endif
+  }
 
 protected:
-    // State
-    sobol32_state m_state;
+  // State
+  sobol32_state m_state;
 
 }; // sobol32_engine class
 
@@ -226,11 +190,9 @@ typedef rocrand_device::sobol32_engine<false> rocrand_state_sobol32;
  * \param state - Pointer to state to initialize
  */
 FQUALIFIERS
-void rocrand_init(const unsigned int * vectors,
-                  const unsigned int offset,
-                  rocrand_state_sobol32 * state)
-{
-    *state = rocrand_state_sobol32(vectors, offset);
+void rocrand_init(const unsigned int *vectors, const unsigned int offset,
+                  rocrand_state_sobol32 *state) {
+  *state = rocrand_state_sobol32(vectors, offset);
 }
 
 /**
@@ -246,10 +208,7 @@ void rocrand_init(const unsigned int * vectors,
  * \return Quasirandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
-unsigned int rocrand(rocrand_state_sobol32 * state)
-{
-    return state->next();
-}
+unsigned int rocrand(rocrand_state_sobol32 *state) { return state->next(); }
 
 /**
  * \brief Updates SOBOL32 state to skip ahead by \p offset elements.
@@ -260,9 +219,8 @@ unsigned int rocrand(rocrand_state_sobol32 * state)
  * \param state - Pointer to state to update
  */
 FQUALIFIERS
-void skipahead(unsigned long long offset, rocrand_state_sobol32 * state)
-{
-    return state->discard(offset);
+void skipahead(unsigned long long offset, rocrand_state_sobol32 *state) {
+  return state->discard(offset);
 }
 
 /** @} */ // end of group rocranddevice

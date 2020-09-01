@@ -18,22 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
 #include <hip/hip_runtime.h>
 
 #include <hiprand.h>
-#include <hiprand_kernel.h>
 #include <hiprand.hpp>
+#include <hiprand_kernel.h>
 
 #include "get_hiprand_version.hpp"
 
-TEST(hiprand_linkage_tests, get_version_test)
-{
-    #ifdef __HIP_PLATFORM_HCC__
-    EXPECT_EQ(get_hiprand_version(), HIPRAND_VERSION);
-    #else
-    EXPECT_EQ(get_hiprand_version(), CUDART_VERSION);
-    #endif
+TEST(hiprand_linkage_tests, get_version_test) {
+#ifdef __HIP_PLATFORM_HCC__
+  EXPECT_EQ(get_hiprand_version(), HIPRAND_VERSION);
+#else
+  EXPECT_EQ(get_hiprand_version(), CUDART_VERSION);
+#endif
 }

@@ -26,16 +26,16 @@
 #endif // FQUALIFIERS
 
 #include "rocrand_common.h"
-#include "rocrand_philox4x32_10.h"
 #include "rocrand_mrg32k3a.h"
-#include "rocrand_xorwow.h"
-#include "rocrand_sobol32.h"
 #include "rocrand_mtgp32.h"
+#include "rocrand_philox4x32_10.h"
+#include "rocrand_sobol32.h"
+#include "rocrand_xorwow.h"
 
-#include "rocrand_uniform.h"
-#include "rocrand_normal.h"
-#include "rocrand_log_normal.h"
-#include "rocrand_poisson.h"
 #include "rocrand_discrete.h"
+#include "rocrand_log_normal.h"
+#include "rocrand_normal.h"
+#include "rocrand_poisson.h"
+#include "rocrand_uniform.h"
 
 #endif // ROCRAND_KERNEL_H_

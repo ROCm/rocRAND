@@ -27,9 +27,9 @@
 
 #include "../device_engines.hpp"
 
-#include <rocrand_uniform.h>
-#include <rocrand_normal.h>
-#include <rocrand_log_normal.h>
 #include <rocrand_discrete.h>
+#include <rocrand_log_normal.h>
+#include <rocrand_normal.h>
+#include <rocrand_uniform.h>
 
 #endif // ROCRAND_RNG_DISTRIBUTION_DEVICE_DISTRIBUTIONS_H_

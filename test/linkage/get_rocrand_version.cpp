@@ -20,12 +20,10 @@
 
 #include "get_rocrand_version.hpp"
 
-int get_rocrand_version()
-{
-    int version;
-    if(rocrand_get_version(&version) == ROCRAND_STATUS_SUCCESS)
-    {
-        return version;
-    }
-    return -1;
+int get_rocrand_version() {
+  int version;
+  if (rocrand_get_version(&version) == ROCRAND_STATUS_SUCCESS) {
+    return version;
+  }
+  return -1;
 }

@@ -18,19 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
 #include <hip/hip_runtime.h>
 
 #include <rocrand.h>
-#include <rocrand_kernel.h>
 #include <rocrand.hpp>
+#include <rocrand_kernel.h>
 
 #include "get_rocrand_version.hpp"
 
-TEST(rocrand_linkage_tests, get_version_test)
-{
-    EXPECT_EQ(rocrand_get_version(NULL), ROCRAND_STATUS_OUT_OF_RANGE);
-    EXPECT_EQ(get_rocrand_version(), ROCRAND_VERSION);
+TEST(rocrand_linkage_tests, get_version_test) {
+  EXPECT_EQ(rocrand_get_version(NULL), ROCRAND_STATUS_OUT_OF_RANGE);
+  EXPECT_EQ(get_rocrand_version(), ROCRAND_VERSION);
 }

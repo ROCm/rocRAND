@@ -21,10 +21,10 @@
 #ifndef ROCRAND_RNG_GENERATORS_H_
 #define ROCRAND_RNG_GENERATORS_H_
 
-#include "philox4x32_10.hpp"
 #include "mrg32k3a.hpp"
-#include "xorwow.hpp"
-#include "sobol32.hpp"
 #include "mtgp32.hpp"
+#include "philox4x32_10.hpp"
+#include "sobol32.hpp"
+#include "xorwow.hpp"
 
 #endif // ROCRAND_RNG_GENERATORS_H_

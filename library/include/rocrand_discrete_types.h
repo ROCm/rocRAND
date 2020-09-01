@@ -21,19 +21,18 @@
 #ifndef ROCRAND_DISCRETE_TYPES_H_
 #define ROCRAND_DISCRETE_TYPES_H_
 
-struct rocrand_discrete_distribution_st
-{
-    unsigned int size;
-    unsigned int offset;
+struct rocrand_discrete_distribution_st {
+  unsigned int size;
+  unsigned int offset;
 
-    // Alias table
-    unsigned int * alias;
-    double * probability;
+  // Alias table
+  unsigned int *alias;
+  double *probability;
 
-    // Cumulative distribution function
-    double * cdf;
+  // Cumulative distribution function
+  double *cdf;
 };
 
-typedef struct rocrand_discrete_distribution_st * rocrand_discrete_distribution;
+typedef struct rocrand_discrete_distribution_st *rocrand_discrete_distribution;
 
 #endif // ROCRAND_DISCRETE_TYPES_H_
