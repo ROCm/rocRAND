@@ -58,7 +58,7 @@ def runCI =
 ci: { 
     String urlJobName = auxiliary.getTopJobName(env.BUILD_URL)
 
-    properties(auxiliary.addCommonProperties([pipelineTriggers([cron('0 6 * * 8')])]))
+    properties(auxiliary.addCommonProperties([pipelineTriggers([cron('0 8 * * 6')])]))
     
     stage(urlJobName) {
         runCI([ubuntu18:['cpu']], urlJobName)
