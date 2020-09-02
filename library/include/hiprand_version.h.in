@@ -33,6 +33,6 @@
 /// For example, if HIPRAND_VERSION is 100500, then
 /// the major version is 1, the minor version is 5, and
 /// the patch level is 0.
-#define HIPRAND_VERSION @hiprand_VERSION_NUMBER @
+#define HIPRAND_VERSION @hiprand_VERSION_NUMBER@
 
 #endif // HIPRAND_VERSION_H_
