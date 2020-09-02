@@ -65,8 +65,6 @@ unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const
     #endif
 }
 
-#undef OLDER_THAN_NAVI21
-
 // This helps access fields of engine's internal state which
 // saves floats and doubles generated using the Box–Muller transform
 template<typename Engine>
