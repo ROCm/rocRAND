@@ -82,6 +82,6 @@ TEST_P(rocrand_basic_tests, rocrand_initialize_generator_test)
     ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
 
-INSTANTIATE_TEST_CASE_P(rocrand_basic_tests,
+INSTANTIATE_TEST_SUITE_P(rocrand_basic_tests,
                         rocrand_basic_tests,
                         ::testing::ValuesIn(rng_types));

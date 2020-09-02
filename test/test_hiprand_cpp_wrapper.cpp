@@ -630,7 +630,7 @@ TEST_P(poisson_dist, hiprand_poisson_dist)
 
 const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
 
-INSTANTIATE_TEST_CASE_P(hiprand_cpp_wrapper,
+INSTANTIATE_TEST_SUITE_P(hiprand_cpp_wrapper,
                         poisson_dist,
                         ::testing::ValuesIn(lambdas));
 
