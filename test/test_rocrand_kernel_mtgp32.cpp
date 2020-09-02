@@ -435,6 +435,6 @@ TEST_P(rocrand_kernel_mtgp32_poisson, rocrand_poisson)
 
 const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
 
-INSTANTIATE_TEST_CASE_P(rocrand_kernel_mtgp32_poisson,
+INSTANTIATE_TEST_SUITE_P(rocrand_kernel_mtgp32_poisson,
                         rocrand_kernel_mtgp32_poisson,
                         ::testing::ValuesIn(lambdas));
