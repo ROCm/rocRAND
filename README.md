@@ -144,7 +144,9 @@ cd rocRAND; cd build
 ```
 
 ## Documentation
+The latest rocRAND documentation and API description can be found [here](https://rocrand.readthedocs.io/en/latest/).
 
+It can also be build using the following commands
 ```
 # go to rocRAND doc directory
 cd rocRAND; cd doc
