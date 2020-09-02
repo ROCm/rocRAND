@@ -154,6 +154,6 @@ TEST(rocrand_generate_uniform_tests, neg_test)
     );
 }
 
-INSTANTIATE_TEST_CASE_P(rocrand_generate_uniform_tests,
+INSTANTIATE_TEST_SUITE_P(rocrand_generate_uniform_tests,
                         rocrand_generate_uniform_tests,
                         ::testing::ValuesIn(rng_types));

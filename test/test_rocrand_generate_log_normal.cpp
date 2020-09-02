@@ -162,6 +162,6 @@ TEST(rocrand_generate_log_normal_tests, neg_test)
     );
 }
 
-INSTANTIATE_TEST_CASE_P(rocrand_generate_log_normal_tests,
+INSTANTIATE_TEST_SUITE_P(rocrand_generate_log_normal_tests,
                         rocrand_generate_log_normal_tests,
                         ::testing::ValuesIn(rng_types));
