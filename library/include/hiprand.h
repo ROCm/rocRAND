@@ -60,12 +60,12 @@
 
 /// \cond HIPRAND_DOCS_TYPEDEFS
 /// \brief hipRAND random number generator (opaque)
-typedef hiprandGenerator_st *hiprandGenerator_t;
+typedef hiprandGenerator_st* hiprandGenerator_t;
 /// \endcond
 
 /// \cond HIPRAND_DOCS_TYPEDEFS
 /// \brief hipRAND discrete distribution
-typedef hiprandDiscreteDistribution_st *hiprandDiscreteDistribution_t;
+typedef hiprandDiscreteDistribution_st* hiprandDiscreteDistribution_t;
 /// \endcond
 
 /// \cond HIPRAND_DOCS_TYPEDEFS
@@ -83,53 +83,48 @@ extern "C" {
 /**
  * \brief hipRAND function call status type
  */
-typedef enum hiprandStatus {
-  HIPRAND_STATUS_SUCCESS = 0, ///< Success
-  HIPRAND_STATUS_VERSION_MISMATCH =
-      100, ///< Header file and linked library version do not match
-  HIPRAND_STATUS_NOT_INITIALIZED = 101,   ///< Generator not created
-  HIPRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
-  HIPRAND_STATUS_TYPE_ERROR = 103,        ///< Generator type is wrong
-  HIPRAND_STATUS_OUT_OF_RANGE = 104,      ///< Argument out of range
-  HIPRAND_STATUS_LENGTH_NOT_MULTIPLE =
-      105, ///< Requested size is not a multiple of quasirandom generator's
-           ///< dimension, or requested size is not even (see
-           ///< hiprandGenerateNormal()), or pointer is misaligned (see
-           ///< hiprandGenerateNormal())
-  HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED =
-      106,                             ///< GPU does not have double precision
-  HIPRAND_STATUS_LAUNCH_FAILURE = 201, ///< Kernel launch failure
-  HIPRAND_STATUS_PREEXISTING_FAILURE =
-      202, ///< Preexisting failure on library entry
-  HIPRAND_STATUS_INITIALIZATION_FAILED = 203, ///< Initialization of HIP failed
-  HIPRAND_STATUS_ARCH_MISMATCH =
-      204, ///< Architecture mismatch, GPU does not support requested feature
-  HIPRAND_STATUS_INTERNAL_ERROR = 999,  ///< Internal library error
-  HIPRAND_STATUS_NOT_IMPLEMENTED = 1000 ///< Feature not implemented yet
+typedef enum hiprandStatus
+{
+    HIPRAND_STATUS_SUCCESS           = 0, ///< Success
+    HIPRAND_STATUS_VERSION_MISMATCH  = 100, ///< Header file and linked library version do not match
+    HIPRAND_STATUS_NOT_INITIALIZED   = 101, ///< Generator not created
+    HIPRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed
+    HIPRAND_STATUS_TYPE_ERROR        = 103, ///< Generator type is wrong
+    HIPRAND_STATUS_OUT_OF_RANGE      = 104, ///< Argument out of range
+    HIPRAND_STATUS_LENGTH_NOT_MULTIPLE
+    = 105, ///< Requested size is not a multiple of quasirandom generator's
+    ///< dimension, or requested size is not even (see
+    ///< hiprandGenerateNormal()), or pointer is misaligned (see
+    ///< hiprandGenerateNormal())
+    HIPRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
+    HIPRAND_STATUS_LAUNCH_FAILURE            = 201, ///< Kernel launch failure
+    HIPRAND_STATUS_PREEXISTING_FAILURE       = 202, ///< Preexisting failure on library entry
+    HIPRAND_STATUS_INITIALIZATION_FAILED     = 203, ///< Initialization of HIP failed
+    HIPRAND_STATUS_ARCH_MISMATCH
+    = 204, ///< Architecture mismatch, GPU does not support requested feature
+    HIPRAND_STATUS_INTERNAL_ERROR  = 999, ///< Internal library error
+    HIPRAND_STATUS_NOT_IMPLEMENTED = 1000 ///< Feature not implemented yet
 } hiprandStatus_t;
 
 /**
  * \brief hipRAND generator type
  */
-typedef enum hiprandRngType {
-  /// \cond
-  HIPRAND_RNG_TEST = 0,
-  /// \endcond
-  HIPRAND_RNG_PSEUDO_DEFAULT = 400,  ///< Default pseudorandom generator
-  HIPRAND_RNG_PSEUDO_XORWOW = 401,   ///< XORWOW pseudorandom generator
-  HIPRAND_RNG_PSEUDO_MRG32K3A = 402, ///< MRG32k3a pseudorandom generator
-  HIPRAND_RNG_PSEUDO_MTGP32 =
-      403, ///< Mersenne Twister MTGP32 pseudorandom generator
-  HIPRAND_RNG_PSEUDO_MT19937 = 404, ///< Mersenne Twister 19937
-  HIPRAND_RNG_PSEUDO_PHILOX4_32_10 =
-      405, ///< PHILOX_4x32 (10 rounds) pseudorandom generator
-  HIPRAND_RNG_QUASI_DEFAULT = 500, ///< Default quasirandom generator
-  HIPRAND_RNG_QUASI_SOBOL32 = 501, ///< Sobol32 quasirandom generator
-  HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL32 =
-      502,                         ///< Scrambled Sobol32 quasirandom generator
-  HIPRAND_RNG_QUASI_SOBOL64 = 503, ///< Sobol64 quasirandom generator
-  HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 =
-      504 ///< Scrambled Sobol64 quasirandom generator
+typedef enum hiprandRngType
+{
+    /// \cond
+    HIPRAND_RNG_TEST = 0,
+    /// \endcond
+    HIPRAND_RNG_PSEUDO_DEFAULT          = 400, ///< Default pseudorandom generator
+    HIPRAND_RNG_PSEUDO_XORWOW           = 401, ///< XORWOW pseudorandom generator
+    HIPRAND_RNG_PSEUDO_MRG32K3A         = 402, ///< MRG32k3a pseudorandom generator
+    HIPRAND_RNG_PSEUDO_MTGP32           = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+    HIPRAND_RNG_PSEUDO_MT19937          = 404, ///< Mersenne Twister 19937
+    HIPRAND_RNG_PSEUDO_PHILOX4_32_10    = 405, ///< PHILOX_4x32 (10 rounds) pseudorandom generator
+    HIPRAND_RNG_QUASI_DEFAULT           = 500, ///< Default quasirandom generator
+    HIPRAND_RNG_QUASI_SOBOL32           = 501, ///< Sobol32 quasirandom generator
+    HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502, ///< Scrambled Sobol32 quasirandom generator
+    HIPRAND_RNG_QUASI_SOBOL64           = 503, ///< Sobol64 quasirandom generator
+    HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504 ///< Scrambled Sobol64 quasirandom generator
 } hiprandRngType_t;
 
 // Host API functions
@@ -169,8 +164,8 @@ typedef enum hiprandRngType {
  * - HIPRAND_STATUS_SUCCESS if generator was created successfully \n
  *
  */
-hiprandStatus_t HIPRANDAPI hiprandCreateGenerator(hiprandGenerator_t *generator,
-                                                  hiprandRngType_t rng_type);
+hiprandStatus_t HIPRANDAPI hiprandCreateGenerator(hiprandGenerator_t* generator,
+                                                  hiprandRngType_t    rng_type);
 
 /**
  * \brief Creates a new random number generator on host.
@@ -204,8 +199,8 @@ hiprandStatus_t HIPRANDAPI hiprandCreateGenerator(hiprandGenerator_t *generator,
  * implemented yet \n
  * - HIPRAND_STATUS_SUCCESS if generator was created successfully \n
  */
-hiprandStatus_t HIPRANDAPI hiprandCreateGeneratorHost(
-    hiprandGenerator_t *generator, hiprandRngType_t rng_type);
+hiprandStatus_t HIPRANDAPI hiprandCreateGeneratorHost(hiprandGenerator_t* generator,
+                                                      hiprandRngType_t    rng_type);
 
 /**
  * \brief Destroys random number generator.
@@ -218,8 +213,7 @@ hiprandStatus_t HIPRANDAPI hiprandCreateGeneratorHost(
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_SUCCESS if generator was destroyed successfully \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandDestroyGenerator(hiprandGenerator_t generator);
+hiprandStatus_t HIPRANDAPI hiprandDestroyGenerator(hiprandGenerator_t generator);
 
 /**
  * \brief Generates uniformly distributed 32-bit unsigned integers.
@@ -240,7 +234,8 @@ hiprandDestroyGenerator(hiprandGenerator_t generator);
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI hiprandGenerate(hiprandGenerator_t generator,
-                                           unsigned int *output_data, size_t n);
+                                           unsigned int*      output_data,
+                                           size_t             n);
 
 /**
  * \brief Generates uniformly distributed 8-bit unsigned integers.
@@ -261,8 +256,8 @@ hiprandStatus_t HIPRANDAPI hiprandGenerate(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI hiprandGenerateChar(hiprandGenerator_t generator,
-                                               unsigned char *output_data,
-                                               size_t n);
+                                               unsigned char*     output_data,
+                                               size_t             n);
 
 /**
  * \brief Generates uniformly distributed 16-bit unsigned integers.
@@ -283,8 +278,8 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateChar(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI hiprandGenerateShort(hiprandGenerator_t generator,
-                                                unsigned short *output_data,
-                                                size_t n);
+                                                unsigned short*    output_data,
+                                                size_t             n);
 
 /**
  * \brief Generates uniformly distributed floats.
@@ -307,7 +302,8 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateShort(hiprandGenerator_t generator,
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI hiprandGenerateUniform(hiprandGenerator_t generator,
-                                                  float *output_data, size_t n);
+                                                  float*             output_data,
+                                                  size_t             n);
 
 /**
  * \brief Generates uniformly distributed double-precision floating-point
@@ -335,8 +331,9 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateUniform(hiprandGenerator_t generator,
  * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI hiprandGenerateUniformDouble(
-    hiprandGenerator_t generator, double *output_data, size_t n);
+hiprandStatus_t HIPRANDAPI hiprandGenerateUniformDouble(hiprandGenerator_t generator,
+                                                        double*            output_data,
+                                                        size_t             n);
 
 /**
  * \brief Generates uniformly distributed half-precision floating-point values.
@@ -358,8 +355,9 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateUniformDouble(
  * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI hiprandGenerateUniformHalf(
-    hiprandGenerator_t generator, half *output_data, size_t n);
+hiprandStatus_t HIPRANDAPI hiprandGenerateUniformHalf(hiprandGenerator_t generator,
+                                                      half*              output_data,
+                                                      size_t             n);
 
 /**
  * \brief Generates normally distributed floats.
@@ -381,9 +379,8 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateUniformHalf(
  * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI hiprandGenerateNormal(hiprandGenerator_t generator,
-                                                 float *output_data, size_t n,
-                                                 float mean, float stddev);
+hiprandStatus_t HIPRANDAPI hiprandGenerateNormal(
+    hiprandGenerator_t generator, float* output_data, size_t n, float mean, float stddev);
 
 /**
  * \brief Generates normally distributed doubles.
@@ -405,9 +402,8 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateNormal(hiprandGenerator_t generator,
  * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateNormalDouble(hiprandGenerator_t generator, double *output_data,
-                            size_t n, double mean, double stddev);
+hiprandStatus_t HIPRANDAPI hiprandGenerateNormalDouble(
+    hiprandGenerator_t generator, double* output_data, size_t n, double mean, double stddev);
 
 /**
  * \brief Generates normally distributed halfs.
@@ -429,9 +425,8 @@ hiprandGenerateNormalDouble(hiprandGenerator_t generator, double *output_data,
  * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateNormalHalf(hiprandGenerator_t generator, half *output_data,
-                          size_t n, half mean, half stddev);
+hiprandStatus_t HIPRANDAPI hiprandGenerateNormalHalf(
+    hiprandGenerator_t generator, half* output_data, size_t n, half mean, half stddev);
 
 /**
  * \brief Generates log-normally distributed floats.
@@ -453,9 +448,8 @@ hiprandGenerateNormalHalf(hiprandGenerator_t generator, half *output_data,
  * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateLogNormal(hiprandGenerator_t generator, float *output_data,
-                         size_t n, float mean, float stddev);
+hiprandStatus_t HIPRANDAPI hiprandGenerateLogNormal(
+    hiprandGenerator_t generator, float* output_data, size_t n, float mean, float stddev);
 
 /**
  * \brief Generates log-normally distributed doubles.
@@ -478,8 +472,7 @@ hiprandGenerateLogNormal(hiprandGenerator_t generator, float *output_data,
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI hiprandGenerateLogNormalDouble(
-    hiprandGenerator_t generator, double *output_data, size_t n, double mean,
-    double stddev);
+    hiprandGenerator_t generator, double* output_data, size_t n, double mean, double stddev);
 
 /**
  * \brief Generates log-normally distributed halfs.
@@ -501,9 +494,8 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateLogNormalDouble(
  * dimension of used quasi-random generator \n
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-hiprandStatus_t HIPRANDAPI
-hiprandGenerateLogNormalHalf(hiprandGenerator_t generator, half *output_data,
-                             size_t n, half mean, half stddev);
+hiprandStatus_t HIPRANDAPI hiprandGenerateLogNormalHalf(
+    hiprandGenerator_t generator, half* output_data, size_t n, half mean, half stddev);
 
 /**
  * \brief Generates Poisson-distributed 32-bit unsigned integers.
@@ -525,8 +517,9 @@ hiprandGenerateLogNormalHalf(hiprandGenerator_t generator, half *output_data,
  * - HIPRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 hiprandStatus_t HIPRANDAPI hiprandGeneratePoisson(hiprandGenerator_t generator,
-                                                  unsigned int *output_data,
-                                                  size_t n, double lambda);
+                                                  unsigned int*      output_data,
+                                                  size_t             n,
+                                                  double             lambda);
 
 /**
  * \brief Initializes the generator's state on GPU or host.
@@ -561,8 +554,7 @@ hiprandStatus_t HIPRANDAPI hiprandGenerateSeeds(hiprandGenerator_t generator);
  * - HIPRAND_STATUS_NOT_INITIALIZED if the generator was not initialized \n
  * - HIPRAND_STATUS_SUCCESS if stream was set successfully \n
  */
-hiprandStatus_t HIPRANDAPI hiprandSetStream(hiprandGenerator_t generator,
-                                            hipStream_t stream);
+hiprandStatus_t HIPRANDAPI hiprandSetStream(hiprandGenerator_t generator, hipStream_t stream);
 
 /**
  * \brief Sets the seed of a pseudo-random number generator.
@@ -581,8 +573,8 @@ hiprandStatus_t HIPRANDAPI hiprandSetStream(hiprandGenerator_t generator,
  * generator \n
  * - HIPRAND_STATUS_SUCCESS if seed was set successfully \n
  */
-hiprandStatus_t HIPRANDAPI hiprandSetPseudoRandomGeneratorSeed(
-    hiprandGenerator_t generator, unsigned long long seed);
+hiprandStatus_t HIPRANDAPI hiprandSetPseudoRandomGeneratorSeed(hiprandGenerator_t generator,
+                                                               unsigned long long seed);
 
 /**
  * \brief Sets the offset of a random number generator.
@@ -604,8 +596,8 @@ hiprandStatus_t HIPRANDAPI hiprandSetPseudoRandomGeneratorSeed(
  * - HIPRAND_STATUS_TYPE_ERROR if generator's type is HIPRAND_RNG_PSEUDO_MTGP32
  * or HIPRAND_RNG_PSEUDO_MT19937 \n
  */
-hiprandStatus_t HIPRANDAPI hiprandSetGeneratorOffset(
-    hiprandGenerator_t generator, unsigned long long offset);
+hiprandStatus_t HIPRANDAPI hiprandSetGeneratorOffset(hiprandGenerator_t generator,
+                                                     unsigned long long offset);
 
 /**
  * \brief Set the number of dimensions of a quasi-random number generator.
@@ -626,8 +618,8 @@ hiprandStatus_t HIPRANDAPI hiprandSetGeneratorOffset(
  * - HIPRAND_STATUS_OUT_OF_RANGE if \p dimensions is out of range \n
  * - HIPRAND_STATUS_SUCCESS if the number of dimensions was set successfully \n
  */
-hiprandStatus_t HIPRANDAPI hiprandSetQuasiRandomGeneratorDimensions(
-    hiprandGenerator_t generator, unsigned int dimensions);
+hiprandStatus_t HIPRANDAPI hiprandSetQuasiRandomGeneratorDimensions(hiprandGenerator_t generator,
+                                                                    unsigned int       dimensions);
 
 /**
  * \brief Returns the version number of the cuRAND or rocRAND library.
@@ -641,7 +633,7 @@ hiprandStatus_t HIPRANDAPI hiprandSetQuasiRandomGeneratorDimensions(
  * - HIPRAND_STATUS_OUT_OF_RANGE if \p version is NULL \n
  * - HIPRAND_STATUS_SUCCESS if the version number was successfully returned \n
  */
-hiprandStatus_t HIPRANDAPI hiprandGetVersion(int *version);
+hiprandStatus_t HIPRANDAPI hiprandGetVersion(int* version);
 
 /**
  * \brief Construct the histogram for a Poisson distribution.
@@ -658,7 +650,7 @@ hiprandStatus_t HIPRANDAPI hiprandGetVersion(int *version);
  * - HIPRAND_STATUS_SUCCESS if the histogram was constructed successfully \n
  */
 hiprandStatus_t HIPRANDAPI hiprandCreatePoissonDistribution(
-    double lambda, hiprandDiscreteDistribution_t *discrete_distribution);
+    double lambda, hiprandDiscreteDistribution_t* discrete_distribution);
 
 /**
  * \brief Destroy the histogram array for a discrete distribution.
@@ -673,7 +665,7 @@ hiprandStatus_t HIPRANDAPI hiprandCreatePoissonDistribution(
  * - HIPRAND_STATUS_SUCCESS if the histogram was destroyed successfully \n
  */
 hiprandStatus_t HIPRANDAPI
-hiprandDestroyDistribution(hiprandDiscreteDistribution_t discrete_distribution);
+    hiprandDestroyDistribution(hiprandDiscreteDistribution_t discrete_distribution);
 
 #if defined(__cplusplus)
 }

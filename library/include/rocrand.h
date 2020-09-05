@@ -41,7 +41,7 @@
 
 /// \cond ROCRAND_DOCS_TYPEDEFS
 /// rocRAND random number generator (opaque)
-typedef struct rocrand_generator_base_type *rocrand_generator;
+typedef struct rocrand_generator_base_type* rocrand_generator;
 /// \endcond
 
 /// \cond ROCRAND_DOCS_TYPEDEFS
@@ -59,40 +59,36 @@ extern "C" {
 /**
  * \brief rocRAND function call status type
  */
-typedef enum rocrand_status {
-  ROCRAND_STATUS_SUCCESS = 0, ///< No errors
-  ROCRAND_STATUS_VERSION_MISMATCH =
-      100, ///< Header file and linked library version do not match
-  ROCRAND_STATUS_NOT_CREATED =
-      101, ///< Generator was not created using rocrand_create_generator
-  ROCRAND_STATUS_ALLOCATION_FAILED =
-      102, ///< Memory allocation failed during execution
-  ROCRAND_STATUS_TYPE_ERROR = 103,   ///< Generator type is wrong
-  ROCRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
-  ROCRAND_STATUS_LENGTH_NOT_MULTIPLE =
-      105, ///< Requested size is not a multiple of quasirandom generator's
-           ///< dimension, or requested size is not even (see
-           ///< rocrand_generate_normal()), or pointer is misaligned (see
-           ///< rocrand_generate_normal())
-  ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED =
-      106,                             ///< GPU does not have double precision
-  ROCRAND_STATUS_LAUNCH_FAILURE = 107, ///< Kernel launch failure
-  ROCRAND_STATUS_INTERNAL_ERROR = 108  ///< Internal library error
+typedef enum rocrand_status
+{
+    ROCRAND_STATUS_SUCCESS          = 0, ///< No errors
+    ROCRAND_STATUS_VERSION_MISMATCH = 100, ///< Header file and linked library version do not match
+    ROCRAND_STATUS_NOT_CREATED = 101, ///< Generator was not created using rocrand_create_generator
+    ROCRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed during execution
+    ROCRAND_STATUS_TYPE_ERROR        = 103, ///< Generator type is wrong
+    ROCRAND_STATUS_OUT_OF_RANGE      = 104, ///< Argument out of range
+    ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    = 105, ///< Requested size is not a multiple of quasirandom generator's
+    ///< dimension, or requested size is not even (see
+    ///< rocrand_generate_normal()), or pointer is misaligned (see
+    ///< rocrand_generate_normal())
+    ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
+    ROCRAND_STATUS_LAUNCH_FAILURE            = 107, ///< Kernel launch failure
+    ROCRAND_STATUS_INTERNAL_ERROR            = 108 ///< Internal library error
 } rocrand_status;
 
 /**
  * \brief rocRAND generator type
  */
-typedef enum rocrand_rng_type {
-  ROCRAND_RNG_PSEUDO_DEFAULT = 400,  ///< Default pseudorandom generator
-  ROCRAND_RNG_PSEUDO_XORWOW = 401,   ///< XORWOW pseudorandom generator
-  ROCRAND_RNG_PSEUDO_MRG32K3A = 402, ///< MRG32k3a pseudorandom generator
-  ROCRAND_RNG_PSEUDO_MTGP32 =
-      403, ///< Mersenne Twister MTGP32 pseudorandom generator
-  ROCRAND_RNG_PSEUDO_PHILOX4_32_10 =
-      404,                         ///< PHILOX-4x32-10 pseudorandom generator
-  ROCRAND_RNG_QUASI_DEFAULT = 500, ///< Default quasirandom generator
-  ROCRAND_RNG_QUASI_SOBOL32 = 501  ///< Sobol32 quasirandom generator
+typedef enum rocrand_rng_type
+{
+    ROCRAND_RNG_PSEUDO_DEFAULT       = 400, ///< Default pseudorandom generator
+    ROCRAND_RNG_PSEUDO_XORWOW        = 401, ///< XORWOW pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG32K3A      = 402, ///< MRG32k3a pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
+    ROCRAND_RNG_QUASI_DEFAULT        = 500, ///< Default quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL32        = 501 ///< Sobol32 quasirandom generator
 } rocrand_rng_type;
 
 // Host API function
@@ -121,8 +117,8 @@ typedef enum rocrand_rng_type {
  * - ROCRAND_STATUS_SUCCESS if generator was created successfully \n
  *
  */
-rocrand_status ROCRANDAPI rocrand_create_generator(rocrand_generator *generator,
-                                                   rocrand_rng_type rng_type);
+rocrand_status ROCRANDAPI rocrand_create_generator(rocrand_generator* generator,
+                                                   rocrand_rng_type   rng_type);
 
 /**
  * \brief Destroys random number generator.
@@ -135,8 +131,7 @@ rocrand_status ROCRANDAPI rocrand_create_generator(rocrand_generator *generator,
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_SUCCESS if generator was destroyed successfully \n
  */
-rocrand_status ROCRANDAPI
-rocrand_destroy_generator(rocrand_generator generator);
+rocrand_status ROCRANDAPI rocrand_destroy_generator(rocrand_generator generator);
 
 /**
  * \brief Generates uniformly distributed 32-bit unsigned integers.
@@ -159,7 +154,8 @@ rocrand_destroy_generator(rocrand_generator generator);
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI rocrand_generate(rocrand_generator generator,
-                                           unsigned int *output_data, size_t n);
+                                           unsigned int*     output_data,
+                                           size_t            n);
 
 /**
  * \brief Generates uniformly distributed 8-bit unsigned integers.
@@ -182,8 +178,8 @@ rocrand_status ROCRANDAPI rocrand_generate(rocrand_generator generator,
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI rocrand_generate_char(rocrand_generator generator,
-                                                unsigned char *output_data,
-                                                size_t n);
+                                                unsigned char*    output_data,
+                                                size_t            n);
 
 /**
  * \brief Generates uniformly distributed 16-bit unsigned integers.
@@ -206,8 +202,8 @@ rocrand_status ROCRANDAPI rocrand_generate_char(rocrand_generator generator,
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI rocrand_generate_short(rocrand_generator generator,
-                                                 unsigned short *output_data,
-                                                 size_t n);
+                                                 unsigned short*   output_data,
+                                                 size_t            n);
 
 /**
  * \brief Generates uniformly distributed \p float values.
@@ -230,8 +226,8 @@ rocrand_status ROCRANDAPI rocrand_generate_short(rocrand_generator generator,
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI rocrand_generate_uniform(rocrand_generator generator,
-                                                   float *output_data,
-                                                   size_t n);
+                                                   float*            output_data,
+                                                   size_t            n);
 
 /**
  * \brief Generates uniformly distributed double-precision floating-point
@@ -254,8 +250,9 @@ rocrand_status ROCRANDAPI rocrand_generate_uniform(rocrand_generator generator,
  * dimension of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI rocrand_generate_uniform_double(
-    rocrand_generator generator, double *output_data, size_t n);
+rocrand_status ROCRANDAPI rocrand_generate_uniform_double(rocrand_generator generator,
+                                                          double*           output_data,
+                                                          size_t            n);
 
 /**
  * \brief Generates uniformly distributed half-precision floating-point values.
@@ -277,8 +274,9 @@ rocrand_status ROCRANDAPI rocrand_generate_uniform_double(
  * dimension of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI rocrand_generate_uniform_half(
-    rocrand_generator generator, half *output_data, size_t n);
+rocrand_status ROCRANDAPI rocrand_generate_uniform_half(rocrand_generator generator,
+                                                        half*             output_data,
+                                                        size_t            n);
 
 /**
  * \brief Generates normally distributed \p float values.
@@ -299,9 +297,8 @@ rocrand_status ROCRANDAPI rocrand_generate_uniform_half(
  * dimension of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI rocrand_generate_normal(rocrand_generator generator,
-                                                  float *output_data, size_t n,
-                                                  float mean, float stddev);
+rocrand_status ROCRANDAPI rocrand_generate_normal(
+    rocrand_generator generator, float* output_data, size_t n, float mean, float stddev);
 
 /**
  * \brief Generates normally distributed \p double values.
@@ -322,9 +319,8 @@ rocrand_status ROCRANDAPI rocrand_generate_normal(rocrand_generator generator,
  * dimension of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI
-rocrand_generate_normal_double(rocrand_generator generator, double *output_data,
-                               size_t n, double mean, double stddev);
+rocrand_status ROCRANDAPI rocrand_generate_normal_double(
+    rocrand_generator generator, double* output_data, size_t n, double mean, double stddev);
 
 /**
  * \brief Generates normally distributed \p half values.
@@ -345,9 +341,8 @@ rocrand_generate_normal_double(rocrand_generator generator, double *output_data,
  * dimension of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI
-rocrand_generate_normal_half(rocrand_generator generator, half *output_data,
-                             size_t n, half mean, half stddev);
+rocrand_status ROCRANDAPI rocrand_generate_normal_half(
+    rocrand_generator generator, half* output_data, size_t n, half mean, half stddev);
 
 /**
  * \brief Generates log-normally distributed \p float values.
@@ -368,9 +363,8 @@ rocrand_generate_normal_half(rocrand_generator generator, half *output_data,
  * dimension of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI
-rocrand_generate_log_normal(rocrand_generator generator, float *output_data,
-                            size_t n, float mean, float stddev);
+rocrand_status ROCRANDAPI rocrand_generate_log_normal(
+    rocrand_generator generator, float* output_data, size_t n, float mean, float stddev);
 
 /**
  * \brief Generates log-normally distributed \p double values.
@@ -392,8 +386,7 @@ rocrand_generate_log_normal(rocrand_generator generator, float *output_data,
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI rocrand_generate_log_normal_double(
-    rocrand_generator generator, double *output_data, size_t n, double mean,
-    double stddev);
+    rocrand_generator generator, double* output_data, size_t n, double mean, double stddev);
 
 /**
  * \brief Generates log-normally distributed \p half values.
@@ -414,9 +407,8 @@ rocrand_status ROCRANDAPI rocrand_generate_log_normal_double(
  * dimension of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI
-rocrand_generate_log_normal_half(rocrand_generator generator, half *output_data,
-                                 size_t n, half mean, half stddev);
+rocrand_status ROCRANDAPI rocrand_generate_log_normal_half(
+    rocrand_generator generator, half* output_data, size_t n, half mean, half stddev);
 
 /**
  * \brief Generates Poisson-distributed 32-bit unsigned integers.
@@ -438,8 +430,9 @@ rocrand_generate_log_normal_half(rocrand_generator generator, half *output_data,
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
 rocrand_status ROCRANDAPI rocrand_generate_poisson(rocrand_generator generator,
-                                                   unsigned int *output_data,
-                                                   size_t n, double lambda);
+                                                   unsigned int*     output_data,
+                                                   size_t            n,
+                                                   double            lambda);
 
 /**
  * \brief Initializes the generator's state on GPU or host.
@@ -458,8 +451,7 @@ rocrand_status ROCRANDAPI rocrand_generate_poisson(rocrand_generator generator,
  * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
  * - ROCRAND_STATUS_SUCCESS if the seeds were generated successfully \n
  */
-rocrand_status ROCRANDAPI
-rocrand_initialize_generator(rocrand_generator generator);
+rocrand_status ROCRANDAPI rocrand_initialize_generator(rocrand_generator generator);
 
 /**
  * \brief Sets the current stream for kernel launches.
@@ -474,8 +466,7 @@ rocrand_initialize_generator(rocrand_generator generator);
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_SUCCESS if stream was set successfully \n
  */
-rocrand_status ROCRANDAPI rocrand_set_stream(rocrand_generator generator,
-                                             hipStream_t stream);
+rocrand_status ROCRANDAPI rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
 
 /**
  * \brief Sets the seed of a pseudo-random number generator.
@@ -498,8 +489,7 @@ rocrand_status ROCRANDAPI rocrand_set_stream(rocrand_generator generator,
  * generator \n
  * - ROCRAND_STATUS_SUCCESS if seed was set successfully \n
  */
-rocrand_status ROCRANDAPI rocrand_set_seed(rocrand_generator generator,
-                                           unsigned long long seed);
+rocrand_status ROCRANDAPI rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
 
 /**
  * \brief Sets the offset of a random number generator.
@@ -520,7 +510,7 @@ rocrand_status ROCRANDAPI rocrand_set_seed(rocrand_generator generator,
  * - ROCRAND_STATUS_SUCCESS if offset was successfully set \n
  * - ROCRAND_STATUS_TYPE_ERROR if generator's type is ROCRAND_RNG_PSEUDO_MTGP32
  */
-rocrand_status ROCRANDAPI rocrand_set_offset(rocrand_generator generator,
+rocrand_status ROCRANDAPI rocrand_set_offset(rocrand_generator  generator,
                                              unsigned long long offset);
 
 /**
@@ -542,8 +532,8 @@ rocrand_status ROCRANDAPI rocrand_set_offset(rocrand_generator generator,
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p dimensions is out of range \n
  * - ROCRAND_STATUS_SUCCESS if the number of dimensions was set successfully \n
  */
-rocrand_status ROCRANDAPI rocrand_set_quasi_random_generator_dimensions(
-    rocrand_generator generator, unsigned int dimensions);
+rocrand_status ROCRANDAPI rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
+                                                                        unsigned int dimensions);
 
 /**
  * \brief Returns the version number of the library.
@@ -557,7 +547,7 @@ rocrand_status ROCRANDAPI rocrand_set_quasi_random_generator_dimensions(
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p version is NULL \n
  * - ROCRAND_STATUS_SUCCESS if the version number was successfully returned \n
  */
-rocrand_status ROCRANDAPI rocrand_get_version(int *version);
+rocrand_status ROCRANDAPI rocrand_get_version(int* version);
 
 /**
  * \brief Construct the histogram for a Poisson distribution.
@@ -574,7 +564,7 @@ rocrand_status ROCRANDAPI rocrand_get_version(int *version);
  * - ROCRAND_STATUS_SUCCESS if the histogram was constructed successfully \n
  */
 rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
-    double lambda, rocrand_discrete_distribution *discrete_distribution);
+    double lambda, rocrand_discrete_distribution* discrete_distribution);
 
 /**
  * \brief Construct the histogram for a custom discrete distribution.
@@ -594,9 +584,11 @@ rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p size was zero \n
  * - ROCRAND_STATUS_SUCCESS if the histogram was constructed successfully \n
  */
-rocrand_status ROCRANDAPI rocrand_create_discrete_distribution(
-    const double *probabilities, unsigned int size, unsigned int offset,
-    rocrand_discrete_distribution *discrete_distribution);
+rocrand_status ROCRANDAPI
+    rocrand_create_discrete_distribution(const double*                  probabilities,
+                                         unsigned int                   size,
+                                         unsigned int                   offset,
+                                         rocrand_discrete_distribution* discrete_distribution);
 
 /**
  * \brief Destroy the histogram array for a discrete distribution.
@@ -610,8 +602,8 @@ rocrand_status ROCRANDAPI rocrand_create_discrete_distribution(
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution was null \n
  * - ROCRAND_STATUS_SUCCESS if the histogram was destroyed successfully \n
  */
-rocrand_status ROCRANDAPI rocrand_destroy_discrete_distribution(
-    rocrand_discrete_distribution discrete_distribution);
+rocrand_status ROCRANDAPI
+    rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution);
 
 #if defined(__cplusplus)
 }

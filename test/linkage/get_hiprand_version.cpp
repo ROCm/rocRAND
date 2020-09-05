@@ -20,10 +20,12 @@
 
 #include "get_hiprand_version.hpp"
 
-int get_hiprand_version() {
-  int version;
-  if (hiprandGetVersion(&version) == HIPRAND_STATUS_SUCCESS) {
-    return version;
-  }
-  return -1;
+int get_hiprand_version()
+{
+    int version;
+    if(hiprandGetVersion(&version) == HIPRAND_STATUS_SUCCESS)
+    {
+        return version;
+    }
+    return -1;
 }

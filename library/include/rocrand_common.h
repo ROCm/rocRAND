@@ -39,81 +39,90 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-#if __HIP_DEVICE_COMPILE__ &&                                                  \
-    (defined(__HIP_PLATFORM_HCC__) ||                                          \
-     (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
+#if __HIP_DEVICE_COMPILE__            \
+    && (defined(__HIP_PLATFORM_HCC__) \
+        || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
 #define ROCRAND_HALF_MATH_SUPPORTED
 #endif
 
-namespace rocrand_device {
-namespace detail {
+namespace rocrand_device
+{
+    namespace detail
+    {
 
-FQUALIFIERS
-unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y,
-                               const unsigned long long z) {
-#if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__) &&        \
-    defined(ROCRAND_ENABLE_INLINE_ASM)
+        FQUALIFIERS
+        unsigned long long
+            mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
+        {
+#if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__) \
+    && defined(ROCRAND_ENABLE_INLINE_ASM)
 
-  unsigned long long r;
-  unsigned long long c; // carry bits, SGPR, unused
-  // x has "r" constraint. This allows to use both VGPR and SGPR
-  // (to save VGPR) as input.
-  // y and z have "v" constraints, because only one SGPR or literal
-  // can be read by the instruction.
-  asm volatile("v_mad_u64_u32 %0, %1, %2, %3, %4"
-               : "=v"(r), "=s"(c)
-               : "r"(x), "v"(y), "v"(z));
-  return r;
+            unsigned long long r;
+            unsigned long long c; // carry bits, SGPR, unused
+            // x has "r" constraint. This allows to use both VGPR and SGPR
+            // (to save VGPR) as input.
+            // y and z have "v" constraints, because only one SGPR or literal
+            // can be read by the instruction.
+            asm volatile("v_mad_u64_u32 %0, %1, %2, %3, %4"
+                         : "=v"(r), "=s"(c)
+                         : "r"(x), "v"(y), "v"(z));
+            return r;
 
-#elif defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__) &&     \
-    defined(ROCRAND_ENABLE_INLINE_ASM)
+#elif defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__) \
+    && defined(ROCRAND_ENABLE_INLINE_ASM)
 
-  unsigned long long r;
-  asm("mad.wide.u32 %0, %1, %2, %3;" : "=l"(r) : "r"(x), "r"(y), "l"(z));
-  return r;
+            unsigned long long r;
+            asm("mad.wide.u32 %0, %1, %2, %3;" : "=l"(r) : "r"(x), "r"(y), "l"(z));
+            return r;
 
 #else // host code
 
-  return static_cast<unsigned long long>(x) *
-             static_cast<unsigned long long>(y) +
-         z;
+            return static_cast<unsigned long long>(x) * static_cast<unsigned long long>(y) + z;
 
 #endif
-}
+        }
 
-// This helps access fields of engine's internal state which
-// saves floats and doubles generated using the Box–Muller transform
-template <typename Engine> struct engine_boxmuller_helper {
-  static FQUALIFIERS bool has_float(const Engine *engine) {
-    return engine->m_state.boxmuller_float_state != 0;
-  }
+        // This helps access fields of engine's internal state which
+        // saves floats and doubles generated using the Box–Muller transform
+        template <typename Engine>
+        struct engine_boxmuller_helper
+        {
+            static FQUALIFIERS bool has_float(const Engine* engine)
+            {
+                return engine->m_state.boxmuller_float_state != 0;
+            }
 
-  static FQUALIFIERS float get_float(Engine *engine) {
-    engine->m_state.boxmuller_float_state = 0;
-    return engine->m_state.boxmuller_float;
-  }
+            static FQUALIFIERS float get_float(Engine* engine)
+            {
+                engine->m_state.boxmuller_float_state = 0;
+                return engine->m_state.boxmuller_float;
+            }
 
-  static FQUALIFIERS void save_float(Engine *engine, float f) {
-    engine->m_state.boxmuller_float_state = 1;
-    engine->m_state.boxmuller_float = f;
-  }
+            static FQUALIFIERS void save_float(Engine* engine, float f)
+            {
+                engine->m_state.boxmuller_float_state = 1;
+                engine->m_state.boxmuller_float       = f;
+            }
 
-  static FQUALIFIERS bool has_double(const Engine *engine) {
-    return engine->m_state.boxmuller_double_state != 0;
-  }
+            static FQUALIFIERS bool has_double(const Engine* engine)
+            {
+                return engine->m_state.boxmuller_double_state != 0;
+            }
 
-  static FQUALIFIERS float get_double(Engine *engine) {
-    engine->m_state.boxmuller_double_state = 0;
-    return engine->m_state.boxmuller_double;
-  }
+            static FQUALIFIERS float get_double(Engine* engine)
+            {
+                engine->m_state.boxmuller_double_state = 0;
+                return engine->m_state.boxmuller_double;
+            }
 
-  static FQUALIFIERS void save_double(Engine *engine, double d) {
-    engine->m_state.boxmuller_double_state = 1;
-    engine->m_state.boxmuller_double = d;
-  }
-};
+            static FQUALIFIERS void save_double(Engine* engine, double d)
+            {
+                engine->m_state.boxmuller_double_state = 1;
+                engine->m_state.boxmuller_double       = d;
+            }
+        };
 
-} // end namespace detail
+    } // end namespace detail
 } // end namespace rocrand_device
 
 #endif // ROCRAND_COMMON_H_

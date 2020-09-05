@@ -47,57 +47,64 @@
 // A Linear Algorithm For Generating Random Numbers With a Given Distribution,
 // 1991
 
-namespace rocrand_device {
-namespace detail {
+namespace rocrand_device
+{
+    namespace detail
+    {
 
-FQUALIFIERS
-unsigned int discrete_alias(const double x,
-                            const rocrand_discrete_distribution_st &dis) {
-  // Calculate value using Alias table
+        FQUALIFIERS
+        unsigned int discrete_alias(const double x, const rocrand_discrete_distribution_st& dis)
+        {
+            // Calculate value using Alias table
 
-  // x is [0, 1)
-  const double nx = dis.size * x;
-  const double fnx = floor(nx);
-  const double y = nx - fnx;
-  const unsigned int i = static_cast<unsigned int>(fnx);
-  return dis.offset + (y < dis.probability[i] ? i : dis.alias[i]);
-}
+            // x is [0, 1)
+            const double       nx  = dis.size * x;
+            const double       fnx = floor(nx);
+            const double       y   = nx - fnx;
+            const unsigned int i   = static_cast<unsigned int>(fnx);
+            return dis.offset + (y < dis.probability[i] ? i : dis.alias[i]);
+        }
 
-FQUALIFIERS
-unsigned int discrete_alias(const unsigned int r,
-                            const rocrand_discrete_distribution_st &dis) {
-  const double x = r * ROCRAND_2POW32_INV_DOUBLE;
-  return discrete_alias(x, dis);
-}
+        FQUALIFIERS
+        unsigned int discrete_alias(const unsigned int                      r,
+                                    const rocrand_discrete_distribution_st& dis)
+        {
+            const double x = r * ROCRAND_2POW32_INV_DOUBLE;
+            return discrete_alias(x, dis);
+        }
 
-FQUALIFIERS
-unsigned int discrete_cdf(const double x,
-                          const rocrand_discrete_distribution_st &dis) {
-  // Calculate value using binary search in CDF
+        FQUALIFIERS
+        unsigned int discrete_cdf(const double x, const rocrand_discrete_distribution_st& dis)
+        {
+            // Calculate value using binary search in CDF
 
-  unsigned int min = 0;
-  unsigned int max = dis.size - 1;
-  do {
-    const unsigned int center = (min + max) / 2;
-    const double p = dis.cdf[center];
-    if (x > p) {
-      min = center + 1;
-    } else {
-      max = center;
-    }
-  } while (min != max);
+            unsigned int min = 0;
+            unsigned int max = dis.size - 1;
+            do
+            {
+                const unsigned int center = (min + max) / 2;
+                const double       p      = dis.cdf[center];
+                if(x > p)
+                {
+                    min = center + 1;
+                }
+                else
+                {
+                    max = center;
+                }
+            } while(min != max);
 
-  return dis.offset + min;
-}
+            return dis.offset + min;
+        }
 
-FQUALIFIERS
-unsigned int discrete_cdf(const unsigned int r,
-                          const rocrand_discrete_distribution_st &dis) {
-  const double x = r * ROCRAND_2POW32_INV_DOUBLE;
-  return discrete_cdf(x, dis);
-}
+        FQUALIFIERS
+        unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribution_st& dis)
+        {
+            const double x = r * ROCRAND_2POW32_INV_DOUBLE;
+            return discrete_cdf(x, dis);
+        }
 
-} // end namespace detail
+    } // end namespace detail
 } // end namespace rocrand_device
 
 /** \rocrand_internal \addtogroup rocranddevice
@@ -119,11 +126,10 @@ unsigned int discrete_cdf(const unsigned int r,
  * discrete_distribution
  */
 FQUALIFIERS
-unsigned int
-rocrand_discrete(rocrand_state_philox4x32_10 *state,
-                 const rocrand_discrete_distribution discrete_distribution) {
-  return rocrand_device::detail::discrete_alias(rocrand(state),
-                                                *discrete_distribution);
+unsigned int rocrand_discrete(rocrand_state_philox4x32_10*        state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -140,15 +146,14 @@ rocrand_discrete(rocrand_state_philox4x32_10 *state,
  * discrete_distribution as \p uint4
  */
 FQUALIFIERS
-uint4 rocrand_discrete4(
-    rocrand_state_philox4x32_10 *state,
-    const rocrand_discrete_distribution discrete_distribution) {
-  const uint4 u4 = rocrand4(state);
-  return uint4{
-      rocrand_device::detail::discrete_alias(u4.x, *discrete_distribution),
-      rocrand_device::detail::discrete_alias(u4.y, *discrete_distribution),
-      rocrand_device::detail::discrete_alias(u4.z, *discrete_distribution),
-      rocrand_device::detail::discrete_alias(u4.w, *discrete_distribution)};
+uint4 rocrand_discrete4(rocrand_state_philox4x32_10*        state,
+                        const rocrand_discrete_distribution discrete_distribution)
+{
+    const uint4 u4 = rocrand4(state);
+    return uint4{rocrand_device::detail::discrete_alias(u4.x, *discrete_distribution),
+                 rocrand_device::detail::discrete_alias(u4.y, *discrete_distribution),
+                 rocrand_device::detail::discrete_alias(u4.z, *discrete_distribution),
+                 rocrand_device::detail::discrete_alias(u4.w, *discrete_distribution)};
 }
 
 /**
@@ -165,11 +170,10 @@ uint4 rocrand_discrete4(
  * discrete_distribution
  */
 FQUALIFIERS
-unsigned int
-rocrand_discrete(rocrand_state_mrg32k3a *state,
-                 const rocrand_discrete_distribution discrete_distribution) {
-  return rocrand_device::detail::discrete_alias(rocrand(state),
-                                                *discrete_distribution);
+unsigned int rocrand_discrete(rocrand_state_mrg32k3a*             state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -186,11 +190,10 @@ rocrand_discrete(rocrand_state_mrg32k3a *state,
  * discrete_distribution
  */
 FQUALIFIERS
-unsigned int
-rocrand_discrete(rocrand_state_xorwow *state,
-                 const rocrand_discrete_distribution discrete_distribution) {
-  return rocrand_device::detail::discrete_alias(rocrand(state),
-                                                *discrete_distribution);
+unsigned int rocrand_discrete(rocrand_state_xorwow*               state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -207,11 +210,10 @@ rocrand_discrete(rocrand_state_xorwow *state,
  * discrete_distribution
  */
 FQUALIFIERS
-unsigned int
-rocrand_discrete(rocrand_state_mtgp32 *state,
-                 const rocrand_discrete_distribution discrete_distribution) {
-  return rocrand_device::detail::discrete_cdf(rocrand(state),
-                                              *discrete_distribution);
+unsigned int rocrand_discrete(rocrand_state_mtgp32*               state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -228,11 +230,10 @@ rocrand_discrete(rocrand_state_mtgp32 *state,
  * discrete_distribution
  */
 FQUALIFIERS
-unsigned int
-rocrand_discrete(rocrand_state_sobol32 *state,
-                 const rocrand_discrete_distribution discrete_distribution) {
-  return rocrand_device::detail::discrete_cdf(rocrand(state),
-                                              *discrete_distribution);
+unsigned int rocrand_discrete(rocrand_state_sobol32*              state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
 
 #endif // ROCRAND_DISCRETE_H_

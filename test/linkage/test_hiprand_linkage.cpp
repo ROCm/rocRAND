@@ -29,10 +29,11 @@
 
 #include "get_hiprand_version.hpp"
 
-TEST(hiprand_linkage_tests, get_version_test) {
+TEST(hiprand_linkage_tests, get_version_test)
+{
 #ifdef __HIP_PLATFORM_HCC__
-  EXPECT_EQ(get_hiprand_version(), HIPRAND_VERSION);
+    EXPECT_EQ(get_hiprand_version(), HIPRAND_VERSION);
 #else
-  EXPECT_EQ(get_hiprand_version(), CUDART_VERSION);
+    EXPECT_EQ(get_hiprand_version(), CUDART_VERSION);
 #endif
 }

@@ -26,57 +26,62 @@
 
 #include "test_common.hpp"
 
-class rocrand_basic_tests : public ::testing::TestWithParam<rocrand_rng_type> {
+class rocrand_basic_tests : public ::testing::TestWithParam<rocrand_rng_type>
+{
 };
 
-TEST(rocrand_basic_tests, rocrand_get_version_test) {
-  EXPECT_EQ(rocrand_get_version(NULL), ROCRAND_STATUS_OUT_OF_RANGE);
-  int version;
-  ROCRAND_CHECK(rocrand_get_version(&version));
-  EXPECT_EQ(version, ROCRAND_VERSION);
+TEST(rocrand_basic_tests, rocrand_get_version_test)
+{
+    EXPECT_EQ(rocrand_get_version(NULL), ROCRAND_STATUS_OUT_OF_RANGE);
+    int version;
+    ROCRAND_CHECK(rocrand_get_version(&version));
+    EXPECT_EQ(version, ROCRAND_VERSION);
 }
 
-TEST(rocrand_basic_tests, rocrand_generator_test) {
-  rocrand_generator gen = 0;
-  EXPECT_EQ(gen, static_cast<rocrand_generator>(0));
+TEST(rocrand_basic_tests, rocrand_generator_test)
+{
+    rocrand_generator gen = 0;
+    EXPECT_EQ(gen, static_cast<rocrand_generator>(0));
 }
 
-TEST_P(rocrand_basic_tests, rocrand_create_destroy_generator_test) {
-  const rocrand_rng_type rng_type = GetParam();
+TEST_P(rocrand_basic_tests, rocrand_create_destroy_generator_test)
+{
+    const rocrand_rng_type rng_type = GetParam();
 
-  rocrand_generator g = NULL;
-  ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
-  ROCRAND_CHECK(rocrand_destroy_generator(g));
+    rocrand_generator g = NULL;
+    ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
+    ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
 
-TEST_P(rocrand_basic_tests, rocrand_set_stream_test) {
-  const rocrand_rng_type rng_type = GetParam();
+TEST_P(rocrand_basic_tests, rocrand_set_stream_test)
+{
+    const rocrand_rng_type rng_type = GetParam();
 
-  rocrand_generator g = NULL;
-  EXPECT_EQ(rocrand_set_stream(g, NULL), ROCRAND_STATUS_NOT_CREATED);
-  ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
-  hipStream_t stream;
-  HIP_CHECK(hipStreamCreate(&stream));
-  ROCRAND_CHECK(rocrand_set_stream(g, stream));
-  ROCRAND_CHECK(rocrand_set_stream(g, NULL));
-  HIP_CHECK(hipStreamDestroy(stream));
-  ROCRAND_CHECK(rocrand_destroy_generator(g));
+    rocrand_generator g = NULL;
+    EXPECT_EQ(rocrand_set_stream(g, NULL), ROCRAND_STATUS_NOT_CREATED);
+    ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
+    hipStream_t stream;
+    HIP_CHECK(hipStreamCreate(&stream));
+    ROCRAND_CHECK(rocrand_set_stream(g, stream));
+    ROCRAND_CHECK(rocrand_set_stream(g, NULL));
+    HIP_CHECK(hipStreamDestroy(stream));
+    ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
 
-TEST_P(rocrand_basic_tests, rocrand_initialize_generator_test) {
-  const rocrand_rng_type rng_type = GetParam();
+TEST_P(rocrand_basic_tests, rocrand_initialize_generator_test)
+{
+    const rocrand_rng_type rng_type = GetParam();
 
-  rocrand_generator g = NULL;
-  ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
-  ROCRAND_CHECK(rocrand_initialize_generator(g));
-  ROCRAND_CHECK(rocrand_destroy_generator(g));
+    rocrand_generator g = NULL;
+    ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
+    ROCRAND_CHECK(rocrand_initialize_generator(g));
+    ROCRAND_CHECK(rocrand_destroy_generator(g));
 
-  ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
-  ROCRAND_CHECK(rocrand_initialize_generator(g));
-  ROCRAND_CHECK(rocrand_initialize_generator(g));
-  ROCRAND_CHECK(rocrand_initialize_generator(g));
-  ROCRAND_CHECK(rocrand_destroy_generator(g));
+    ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
+    ROCRAND_CHECK(rocrand_initialize_generator(g));
+    ROCRAND_CHECK(rocrand_initialize_generator(g));
+    ROCRAND_CHECK(rocrand_initialize_generator(g));
+    ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
 
-INSTANTIATE_TEST_CASE_P(rocrand_basic_tests, rocrand_basic_tests,
-                        ::testing::ValuesIn(rng_types));
+INSTANTIATE_TEST_CASE_P(rocrand_basic_tests, rocrand_basic_tests, ::testing::ValuesIn(rng_types));

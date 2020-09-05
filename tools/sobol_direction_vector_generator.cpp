@@ -8,96 +8,109 @@
 
 using namespace std;
 
-struct sobol_set {
-  unsigned int d;
-  unsigned int s;
-  unsigned int a;
-  unsigned int m[18];
+struct sobol_set
+{
+    unsigned int d;
+    unsigned int s;
+    unsigned int a;
+    unsigned int m[18];
 };
 
-bool read_sobol_set(struct sobol_set *inputs, int N, const std::string name) {
-  ifstream infile(name, ios::in);
-  if (!infile) {
-    cout << "Input file containing direction numbers cannot be found!\n";
-    return false;
-  }
-  char buffer[1000];
-  infile.getline(buffer, 1000, '\n');
-
-  for (int i = 0; i < N; i++) {
-    infile >> inputs[i].d >> inputs[i].s >> inputs[i].a;
-    for (unsigned int j = 0; j < inputs[i].s; j++)
-      infile >> inputs[i].m[j];
-  }
-
-  return true;
-}
-
-void init_direction_vectors(struct sobol_set *inputs, unsigned int *directions,
-                            int n_directions, int n) {
-  for (int i = 0; i < n; i++) {
-    if (i == 0)
-      for (int j = 0; j < n_directions; j++)
-        directions[j] = 1 << (31 - j);
-    else {
-      int ix = i - 1;
-      int s = inputs[ix].s;
-      for (int j = 0; j < s; j++)
-        directions[j] = inputs[ix].m[j] << (31 - j);
-      for (int j = s; j < n_directions; j++) {
-        directions[j] = directions[j - s] ^ (directions[j - s] >> s);
-        for (int k = 1; k < s; k++)
-          directions[j] ^=
-              (((inputs[ix].a >> (s - 1 - k)) & 1) * directions[j - k]);
-      }
+bool read_sobol_set(struct sobol_set* inputs, int N, const std::string name)
+{
+    ifstream infile(name, ios::in);
+    if(!infile)
+    {
+        cout << "Input file containing direction numbers cannot be found!\n";
+        return false;
     }
-    directions += n_directions;
-  }
+    char buffer[1000];
+    infile.getline(buffer, 1000, '\n');
+
+    for(int i = 0; i < N; i++)
+    {
+        infile >> inputs[i].d >> inputs[i].s >> inputs[i].a;
+        for(unsigned int j = 0; j < inputs[i].s; j++)
+            infile >> inputs[i].m[j];
+    }
+
+    return true;
 }
 
-void write_matrices(std::ofstream &fout, const std::string name,
-                    unsigned int *a, int n, int bits, bool is_device) {
-  fout << "static const ";
-  fout << (is_device ? "__device__ " : "") << "unsigned int " << name
-       << "[SOBOL_N] = " << std::endl;
-  fout << "    {" << std::endl;
-  fout << "        ";
-  for (int k = 0; k < n; k++) {
-    fout << "0x";
-    fout << hex << setw(8) << setfill('0') << a[k] << ", ";
-    if ((k + 1) % bits == 0 && k != 1)
-      fout << std::endl << "        ";
-  }
-  fout << std::endl;
-  fout << "    };" << std::endl;
-  fout << std::endl;
+void init_direction_vectors(struct sobol_set* inputs,
+                            unsigned int*     directions,
+                            int               n_directions,
+                            int               n)
+{
+    for(int i = 0; i < n; i++)
+    {
+        if(i == 0)
+            for(int j = 0; j < n_directions; j++)
+                directions[j] = 1 << (31 - j);
+        else
+        {
+            int ix = i - 1;
+            int s  = inputs[ix].s;
+            for(int j = 0; j < s; j++)
+                directions[j] = inputs[ix].m[j] << (31 - j);
+            for(int j = s; j < n_directions; j++)
+            {
+                directions[j] = directions[j - s] ^ (directions[j - s] >> s);
+                for(int k = 1; k < s; k++)
+                    directions[j] ^= (((inputs[ix].a >> (s - 1 - k)) & 1) * directions[j - k]);
+            }
+        }
+        directions += n_directions;
+    }
 }
 
-int main(int argc, char const *argv[]) {
-  if (argc != 3 || std::string(argv[1]) == "--help") {
-    std::cout << "Usage:" << std::endl;
-    std::cout << "  ./sobol_direction_vector_generator new-joe-kuo-6.21201 "
-                 "../../library/include/rocrand_sobol_precomputed.h"
-              << std::endl;
-    std::cout << "  (the source file can be downloaded here: "
-                 "http://web.maths.unsw.edu.au/~fkuo/sobol/)"
-              << std::endl;
-    return -1;
-  }
+void write_matrices(
+    std::ofstream& fout, const std::string name, unsigned int* a, int n, int bits, bool is_device)
+{
+    fout << "static const ";
+    fout << (is_device ? "__device__ " : "") << "unsigned int " << name
+         << "[SOBOL_N] = " << std::endl;
+    fout << "    {" << std::endl;
+    fout << "        ";
+    for(int k = 0; k < n; k++)
+    {
+        fout << "0x";
+        fout << hex << setw(8) << setfill('0') << a[k] << ", ";
+        if((k + 1) % bits == 0 && k != 1)
+            fout << std::endl << "        ";
+    }
+    fout << std::endl;
+    fout << "    };" << std::endl;
+    fout << std::endl;
+}
 
-  const std::string vector_file(argv[1]);
-  unsigned int SOBOL_DIM = 20000;
-  unsigned int SOBOL_N = SOBOL_DIM * 32;
-  struct sobol_set *inputs = new struct sobol_set[SOBOL_DIM];
-  unsigned int *directions = new unsigned int[SOBOL_N];
-  bool read = read_sobol_set(inputs, SOBOL_DIM, vector_file);
+int main(int argc, char const* argv[])
+{
+    if(argc != 3 || std::string(argv[1]) == "--help")
+    {
+        std::cout << "Usage:" << std::endl;
+        std::cout << "  ./sobol_direction_vector_generator new-joe-kuo-6.21201 "
+                     "../../library/include/rocrand_sobol_precomputed.h"
+                  << std::endl;
+        std::cout << "  (the source file can be downloaded here: "
+                     "http://web.maths.unsw.edu.au/~fkuo/sobol/)"
+                  << std::endl;
+        return -1;
+    }
 
-  if (read) {
-    init_direction_vectors(inputs, directions, 32, SOBOL_DIM);
-    const std::string file_path(argv[2]);
-    std::ofstream fout(file_path, std::ios_base::out | std::ios_base::trunc);
-    fout
-        << R"(// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+    const std::string vector_file(argv[1]);
+    unsigned int      SOBOL_DIM  = 20000;
+    unsigned int      SOBOL_N    = SOBOL_DIM * 32;
+    struct sobol_set* inputs     = new struct sobol_set[SOBOL_DIM];
+    unsigned int*     directions = new unsigned int[SOBOL_N];
+    bool              read       = read_sobol_set(inputs, SOBOL_DIM, vector_file);
+
+    if(read)
+    {
+        init_direction_vectors(inputs, directions, 32, SOBOL_DIM);
+        const std::string file_path(argv[2]);
+        std::ofstream     fout(file_path, std::ios_base::out | std::ios_base::trunc);
+        fout << R"(// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -125,20 +138,19 @@ int main(int argc, char const *argv[]) {
 
 )";
 
-    fout << "#define SOBOL_DIM " << SOBOL_DIM << std::endl;
-    fout << "#define SOBOL_N " << SOBOL_N << std::endl;
-    fout << std::endl;
+        fout << "#define SOBOL_DIM " << SOBOL_DIM << std::endl;
+        fout << "#define SOBOL_N " << SOBOL_N << std::endl;
+        fout << std::endl;
 
-    write_matrices(fout, "h_sobol32_direction_vectors", directions, SOBOL_N, 32,
-                   false);
+        write_matrices(fout, "h_sobol32_direction_vectors", directions, SOBOL_N, 32, false);
 
-    fout << R"(
+        fout << R"(
 #endif // ROCRAND_SOBOL_PRECOMPUTED_H_
 )";
-  }
+    }
 
-  delete[] inputs;
-  delete[] directions;
+    delete[] inputs;
+    delete[] directions;
 
-  return 0;
+    return 0;
 }

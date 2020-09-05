@@ -24,9 +24,10 @@
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
-const rocrand_rng_type rng_types[] = {
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10, ROCRAND_RNG_PSEUDO_MRG32K3A,
-    ROCRAND_RNG_PSEUDO_XORWOW, ROCRAND_RNG_PSEUDO_MTGP32,
-    ROCRAND_RNG_QUASI_SOBOL32};
+const rocrand_rng_type rng_types[] = {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+                                      ROCRAND_RNG_PSEUDO_MRG32K3A,
+                                      ROCRAND_RNG_PSEUDO_XORWOW,
+                                      ROCRAND_RNG_PSEUDO_MTGP32,
+                                      ROCRAND_RNG_QUASI_SOBOL32};
 
 #endif // TEST_COMMON_HPP_

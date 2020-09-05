@@ -28,8 +28,9 @@
 #include <rocrand_common.h>
 
 template <class T, unsigned int N>
-struct alignas(sizeof(T) * N) aligned_vec_type {
-  T data[N];
+struct alignas(sizeof(T) * N) aligned_vec_type
+{
+    T data[N];
 };
 
 #endif // ROCRAND_RNG_COMMON_H_

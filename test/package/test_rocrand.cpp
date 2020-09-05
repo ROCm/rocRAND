@@ -23,40 +23,42 @@
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
 
-#define HIP_CHECK(condition)                                                   \
-  {                                                                            \
-    hipError_t error = condition;                                              \
-    if (error != hipSuccess) {                                                 \
-      std::cout << error << std::endl;                                         \
-      exit(error);                                                             \
-    }                                                                          \
-  }
+#define HIP_CHECK(condition)                 \
+    {                                        \
+        hipError_t error = condition;        \
+        if(error != hipSuccess)              \
+        {                                    \
+            std::cout << error << std::endl; \
+            exit(error);                     \
+        }                                    \
+    }
 
-#define ROCRAND_CHECK(condition)                                               \
-  {                                                                            \
-    rocrand_status status = condition;                                         \
-    if (status != ROCRAND_STATUS_SUCCESS) {                                    \
-      std::cout << status << std::endl;                                        \
-      exit(status);                                                            \
-    }                                                                          \
-  }
+#define ROCRAND_CHECK(condition)              \
+    {                                         \
+        rocrand_status status = condition;    \
+        if(status != ROCRAND_STATUS_SUCCESS)  \
+        {                                     \
+            std::cout << status << std::endl; \
+            exit(status);                     \
+        }                                     \
+    }
 
-int main(int argc, char *argv[]) {
-  rocrand_generator generator;
-  ROCRAND_CHECK(
-      rocrand_create_generator(&generator, ROCRAND_RNG_PSEUDO_DEFAULT));
+int main(int argc, char* argv[])
+{
+    rocrand_generator generator;
+    ROCRAND_CHECK(rocrand_create_generator(&generator, ROCRAND_RNG_PSEUDO_DEFAULT));
 
-  const size_t size = 128;
-  unsigned int *data = NULL;
-  HIP_CHECK(hipMalloc(&data, size * sizeof(unsigned int)));
-  ROCRAND_CHECK(rocrand_generate(generator, (unsigned int *)data, size));
-  HIP_CHECK(hipDeviceSynchronize());
+    const size_t  size = 128;
+    unsigned int* data = NULL;
+    HIP_CHECK(hipMalloc(&data, size * sizeof(unsigned int)));
+    ROCRAND_CHECK(rocrand_generate(generator, (unsigned int*)data, size));
+    HIP_CHECK(hipDeviceSynchronize());
 
-  ROCRAND_CHECK(rocrand_destroy_generator(generator));
-  HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    HIP_CHECK(hipFree(data));
 
-  if (ROCRAND_VERSION < 0)
-    exit(1);
+    if(ROCRAND_VERSION < 0)
+        exit(1);
 
-  return 0;
+    return 0;
 }

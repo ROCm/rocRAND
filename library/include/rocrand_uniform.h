@@ -36,99 +36,113 @@
 #include "rocrand_sobol32.h"
 #include "rocrand_xorwow.h"
 
-namespace rocrand_device {
-namespace detail {
+namespace rocrand_device
+{
+    namespace detail
+    {
 
-struct two_uints {
-  unsigned int x;
-  unsigned int y;
-};
+        struct two_uints
+        {
+            unsigned int x;
+            unsigned int y;
+        };
 
-union two_uints_to_ulong {
-  two_uints uint2_value;
-  unsigned long long ulong_value;
-};
+        union two_uints_to_ulong
+        {
+            two_uints          uint2_value;
+            unsigned long long ulong_value;
+        };
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
-// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
-FQUALIFIERS
-float uniform_distribution(unsigned int v) {
-  return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
-}
+        // For unsigned integer between 0 and UINT_MAX, returns value between
+        // 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+        FQUALIFIERS
+        float uniform_distribution(unsigned int v)
+        {
+            return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
+        }
 
-FQUALIFIERS
-float4 uniform_distribution4(uint4 v) {
-  return float4{ROCRAND_2POW32_INV + (v.x * ROCRAND_2POW32_INV),
-                ROCRAND_2POW32_INV + (v.y * ROCRAND_2POW32_INV),
-                ROCRAND_2POW32_INV + (v.z * ROCRAND_2POW32_INV),
-                ROCRAND_2POW32_INV + (v.w * ROCRAND_2POW32_INV)};
-}
+        FQUALIFIERS
+        float4 uniform_distribution4(uint4 v)
+        {
+            return float4{ROCRAND_2POW32_INV + (v.x * ROCRAND_2POW32_INV),
+                          ROCRAND_2POW32_INV + (v.y * ROCRAND_2POW32_INV),
+                          ROCRAND_2POW32_INV + (v.z * ROCRAND_2POW32_INV),
+                          ROCRAND_2POW32_INV + (v.w * ROCRAND_2POW32_INV)};
+        }
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
-// 0.0 and 1.0, excluding 0.0 and including 1.0.
-FQUALIFIERS
-double uniform_distribution_double(unsigned int v) {
-  return ROCRAND_2POW32_INV_DOUBLE + (v * ROCRAND_2POW32_INV_DOUBLE);
-}
+        // For unsigned integer between 0 and UINT_MAX, returns value between
+        // 0.0 and 1.0, excluding 0.0 and including 1.0.
+        FQUALIFIERS
+        double uniform_distribution_double(unsigned int v)
+        {
+            return ROCRAND_2POW32_INV_DOUBLE + (v * ROCRAND_2POW32_INV_DOUBLE);
+        }
 
-FQUALIFIERS
-double uniform_distribution_double(unsigned int v1, unsigned int v2) {
-  two_uints_to_ulong v;
-  v.uint2_value.x = v1;
-  v.uint2_value.y = (v2 >> 11);
-  return ROCRAND_2POW53_INV_DOUBLE +
-         (v.ulong_value * ROCRAND_2POW53_INV_DOUBLE);
-}
+        FQUALIFIERS
+        double uniform_distribution_double(unsigned int v1, unsigned int v2)
+        {
+            two_uints_to_ulong v;
+            v.uint2_value.x = v1;
+            v.uint2_value.y = (v2 >> 11);
+            return ROCRAND_2POW53_INV_DOUBLE + (v.ulong_value * ROCRAND_2POW53_INV_DOUBLE);
+        }
 
-FQUALIFIERS
-double uniform_distribution_double(unsigned long long v) {
-  return ROCRAND_2POW53_INV_DOUBLE +
-         (
-             // 2^53 is the biggest int that can be stored in double, such
-             // that it and all smaller integers can be stored in double
-             (v >> 11) * ROCRAND_2POW53_INV_DOUBLE);
-}
+        FQUALIFIERS
+        double uniform_distribution_double(unsigned long long v)
+        {
+            return ROCRAND_2POW53_INV_DOUBLE
+                   + (
+                       // 2^53 is the biggest int that can be stored in double, such
+                       // that it and all smaller integers can be stored in double
+                       (v >> 11) * ROCRAND_2POW53_INV_DOUBLE);
+        }
 
-FQUALIFIERS
-double2 uniform_distribution_double2(uint4 v) {
-  return double2{uniform_distribution_double(v.x, v.y),
-                 uniform_distribution_double(v.z, v.w)};
-}
+        FQUALIFIERS
+        double2 uniform_distribution_double2(uint4 v)
+        {
+            return double2{uniform_distribution_double(v.x, v.y),
+                           uniform_distribution_double(v.z, v.w)};
+        }
 
-FQUALIFIERS
-double4 uniform_distribution_double4(uint4 v1, uint4 v2) {
-  return double4{uniform_distribution_double(v1.x, v1.y),
-                 uniform_distribution_double(v1.z, v1.w),
-                 uniform_distribution_double(v2.x, v2.y),
-                 uniform_distribution_double(v2.z, v2.w)};
-}
+        FQUALIFIERS
+        double4 uniform_distribution_double4(uint4 v1, uint4 v2)
+        {
+            return double4{uniform_distribution_double(v1.x, v1.y),
+                           uniform_distribution_double(v1.z, v1.w),
+                           uniform_distribution_double(v2.x, v2.y),
+                           uniform_distribution_double(v2.z, v2.w)};
+        }
 
-FQUALIFIERS
-__half uniform_distribution_half(unsigned short v) {
-  return __float2half(ROCRAND_2POW16_INV + (v * ROCRAND_2POW16_INV));
-}
+        FQUALIFIERS
+        __half uniform_distribution_half(unsigned short v)
+        {
+            return __float2half(ROCRAND_2POW16_INV + (v * ROCRAND_2POW16_INV));
+        }
 
-FQUALIFIERS
-unsigned int mrg_uniform_distribution_uint(unsigned int v) {
-  // v in [1, ROCRAND_MRG32K3A_M1]
-  return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
-}
+        FQUALIFIERS
+        unsigned int mrg_uniform_distribution_uint(unsigned int v)
+        {
+            // v in [1, ROCRAND_MRG32K3A_M1]
+            return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
+        }
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
-// 0.0f and 1.0f, excluding 0.0f and including 1.0f (MRG32K3A).
-FQUALIFIERS
-float mrg_uniform_distribution(unsigned int v) {
-  double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
-  return static_cast<float>(ret);
-}
+        // For unsigned integer between 0 and UINT_MAX, returns value between
+        // 0.0f and 1.0f, excluding 0.0f and including 1.0f (MRG32K3A).
+        FQUALIFIERS
+        float mrg_uniform_distribution(unsigned int v)
+        {
+            double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
+            return static_cast<float>(ret);
+        }
 
-FQUALIFIERS
-double mrg_uniform_distribution_double(unsigned int v) {
-  double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
-  return ret;
-}
+        FQUALIFIERS
+        double mrg_uniform_distribution_double(unsigned int v)
+        {
+            double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
+            return ret;
+        }
 
-} // end namespace detail
+    } // end namespace detail
 } // end namespace rocrand_device
 
 /**
@@ -144,8 +158,9 @@ double mrg_uniform_distribution_double(unsigned int v) {
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_philox4x32_10 *state) {
-  return rocrand_device::detail::uniform_distribution(rocrand(state));
+float rocrand_uniform(rocrand_state_philox4x32_10* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 /**
@@ -162,9 +177,10 @@ float rocrand_uniform(rocrand_state_philox4x32_10 *state) {
  * float2.
  */
 FQUALIFIERS
-float2 rocrand_uniform2(rocrand_state_philox4x32_10 *state) {
-  return float2{rocrand_device::detail::uniform_distribution(rocrand(state)),
-                rocrand_device::detail::uniform_distribution(rocrand(state))};
+float2 rocrand_uniform2(rocrand_state_philox4x32_10* state)
+{
+    return float2{rocrand_device::detail::uniform_distribution(rocrand(state)),
+                  rocrand_device::detail::uniform_distribution(rocrand(state))};
 }
 
 /**
@@ -181,8 +197,9 @@ float2 rocrand_uniform2(rocrand_state_philox4x32_10 *state) {
  * float4.
  */
 FQUALIFIERS
-float4 rocrand_uniform4(rocrand_state_philox4x32_10 *state) {
-  return rocrand_device::detail::uniform_distribution4(rocrand4(state));
+float4 rocrand_uniform4(rocrand_state_philox4x32_10* state)
+{
+    return rocrand_device::detail::uniform_distribution4(rocrand4(state));
 }
 
 /**
@@ -198,9 +215,9 @@ float4 rocrand_uniform4(rocrand_state_philox4x32_10 *state) {
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_philox4x32_10 *state) {
-  return rocrand_device::detail::uniform_distribution_double(rocrand(state),
-                                                             rocrand(state));
+double rocrand_uniform_double(rocrand_state_philox4x32_10* state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state), rocrand(state));
 }
 
 /**
@@ -217,8 +234,9 @@ double rocrand_uniform_double(rocrand_state_philox4x32_10 *state) {
  * double2.
  */
 FQUALIFIERS
-double2 rocrand_uniform_double2(rocrand_state_philox4x32_10 *state) {
-  return rocrand_device::detail::uniform_distribution_double2(rocrand4(state));
+double2 rocrand_uniform_double2(rocrand_state_philox4x32_10* state)
+{
+    return rocrand_device::detail::uniform_distribution_double2(rocrand4(state));
 }
 
 /**
@@ -235,9 +253,9 @@ double2 rocrand_uniform_double2(rocrand_state_philox4x32_10 *state) {
  * double4.
  */
 FQUALIFIERS
-double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 *state) {
-  return rocrand_device::detail::uniform_distribution_double4(rocrand4(state),
-                                                              rocrand4(state));
+double4 rocrand_uniform_double4(rocrand_state_philox4x32_10* state)
+{
+    return rocrand_device::detail::uniform_distribution_double4(rocrand4(state), rocrand4(state));
 }
 
 /**
@@ -253,8 +271,9 @@ double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 *state) {
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_mrg32k3a *state) {
-  return rocrand_device::detail::mrg_uniform_distribution(rocrand(state));
+float rocrand_uniform(rocrand_state_mrg32k3a* state)
+{
+    return rocrand_device::detail::mrg_uniform_distribution(rocrand(state));
 }
 
 /**
@@ -273,9 +292,9 @@ float rocrand_uniform(rocrand_state_mrg32k3a *state) {
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_mrg32k3a *state) {
-  return rocrand_device::detail::mrg_uniform_distribution_double(
-      rocrand(state));
+double rocrand_uniform_double(rocrand_state_mrg32k3a* state)
+{
+    return rocrand_device::detail::mrg_uniform_distribution_double(rocrand(state));
 }
 
 /**
@@ -291,8 +310,9 @@ double rocrand_uniform_double(rocrand_state_mrg32k3a *state) {
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_xorwow *state) {
-  return rocrand_device::detail::uniform_distribution(rocrand(state));
+float rocrand_uniform(rocrand_state_xorwow* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 /**
@@ -308,9 +328,9 @@ float rocrand_uniform(rocrand_state_xorwow *state) {
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_xorwow *state) {
-  return rocrand_device::detail::uniform_distribution_double(rocrand(state),
-                                                             rocrand(state));
+double rocrand_uniform_double(rocrand_state_xorwow* state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state), rocrand(state));
 }
 
 /**
@@ -326,8 +346,9 @@ double rocrand_uniform_double(rocrand_state_xorwow *state) {
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_mtgp32 *state) {
-  return rocrand_device::detail::uniform_distribution(rocrand(state));
+float rocrand_uniform(rocrand_state_mtgp32* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 /**
@@ -346,8 +367,9 @@ float rocrand_uniform(rocrand_state_mtgp32 *state) {
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_mtgp32 *state) {
-  return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+double rocrand_uniform_double(rocrand_state_mtgp32* state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
 /**
@@ -363,8 +385,9 @@ double rocrand_uniform_double(rocrand_state_mtgp32 *state) {
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_sobol32 *state) {
-  return rocrand_device::detail::uniform_distribution(rocrand(state));
+float rocrand_uniform(rocrand_state_sobol32* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 /**
@@ -383,8 +406,9 @@ float rocrand_uniform(rocrand_state_sobol32 *state) {
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_sobol32 *state) {
-  return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+double rocrand_uniform_double(rocrand_state_sobol32* state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
 #endif // ROCRAND_UNIFORM_H_
