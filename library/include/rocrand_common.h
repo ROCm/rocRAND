@@ -54,21 +54,7 @@ namespace rocrand_device
         unsigned long long
             mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
         {
-#if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__) \
-    && defined(ROCRAND_ENABLE_INLINE_ASM)
-
-            unsigned long long r;
-            unsigned long long c; // carry bits, SGPR, unused
-            // x has "r" constraint. This allows to use both VGPR and SGPR
-            // (to save VGPR) as input.
-            // y and z have "v" constraints, because only one SGPR or literal
-            // can be read by the instruction.
-            asm volatile("v_mad_u64_u32 %0, %1, %2, %3, %4"
-                         : "=v"(r), "=s"(c)
-                         : "r"(x), "v"(y), "v"(z));
-            return r;
-
-#elif defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__) \
+#if defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__) \
     && defined(ROCRAND_ENABLE_INLINE_ASM)
 
             unsigned long long r;

@@ -120,6 +120,6 @@ TEST(rocrand_generate_tests, neg_test)
     EXPECT_EQ(rocrand_generate(generator, (unsigned int*)data, size), ROCRAND_STATUS_NOT_CREATED);
 }
 
-INSTANTIATE_TEST_CASE_P(rocrand_generate_tests,
-                        rocrand_generate_tests,
-                        ::testing::ValuesIn(rng_types));
+INSTANTIATE_TEST_SUITE_P(rocrand_generate_tests,
+                         rocrand_generate_tests,
+                         ::testing::ValuesIn(rng_types));

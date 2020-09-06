@@ -129,6 +129,6 @@ TEST_P(poisson_distribution_tests, histogram_compare)
 
 const double lambdas[] = {1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0};
 
-INSTANTIATE_TEST_CASE_P(poisson_distribution_tests,
-                        poisson_distribution_tests,
-                        ::testing::ValuesIn(lambdas));
+INSTANTIATE_TEST_SUITE_P(poisson_distribution_tests,
+                         poisson_distribution_tests,
+                         ::testing::ValuesIn(lambdas));

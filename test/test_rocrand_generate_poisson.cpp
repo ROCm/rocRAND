@@ -80,6 +80,6 @@ TEST_P(rocrand_generate_poisson_tests, out_of_range_test)
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
-INSTANTIATE_TEST_CASE_P(rocrand_generate_poisson_tests,
-                        rocrand_generate_poisson_tests,
-                        ::testing::ValuesIn(rng_types));
+INSTANTIATE_TEST_SUITE_P(rocrand_generate_poisson_tests,
+                         rocrand_generate_poisson_tests,
+                         ::testing::ValuesIn(rng_types));

@@ -717,9 +717,9 @@ TEST_P(hiprand_kernel_h_philox4x32_10_poisson, hiprand_discrete)
     hiprand_kernel_h_hiprand_discrete_test<state_type>(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_philox4x32_10_poisson,
-                        hiprand_kernel_h_philox4x32_10_poisson,
-                        ::testing::ValuesIn(lambdas));
+INSTANTIATE_TEST_SUITE_P(hiprand_kernel_h_philox4x32_10_poisson,
+                         hiprand_kernel_h_philox4x32_10_poisson,
+                         ::testing::ValuesIn(lambdas));
 
 class hiprand_kernel_h_mrg32k3a_poisson : public ::testing::TestWithParam<double>
 {
@@ -737,9 +737,9 @@ TEST_P(hiprand_kernel_h_mrg32k3a_poisson, hiprand_discrete)
     hiprand_kernel_h_hiprand_discrete_test<state_type>(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_mrg32k3a_poisson,
-                        hiprand_kernel_h_mrg32k3a_poisson,
-                        ::testing::ValuesIn(lambdas));
+INSTANTIATE_TEST_SUITE_P(hiprand_kernel_h_mrg32k3a_poisson,
+                         hiprand_kernel_h_mrg32k3a_poisson,
+                         ::testing::ValuesIn(lambdas));
 
 class hiprand_kernel_h_xorwow_poisson : public ::testing::TestWithParam<double>
 {
@@ -757,9 +757,9 @@ TEST_P(hiprand_kernel_h_xorwow_poisson, hiprand_discrete)
     hiprand_kernel_h_hiprand_discrete_test<state_type>(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_xorwow_poisson,
-                        hiprand_kernel_h_xorwow_poisson,
-                        ::testing::ValuesIn(lambdas));
+INSTANTIATE_TEST_SUITE_P(hiprand_kernel_h_xorwow_poisson,
+                         hiprand_kernel_h_xorwow_poisson,
+                         ::testing::ValuesIn(lambdas));
 
 class hiprand_kernel_h_default_poisson : public ::testing::TestWithParam<double>
 {
@@ -777,6 +777,6 @@ TEST_P(hiprand_kernel_h_default_poisson, hiprand_discrete)
     hiprand_kernel_h_hiprand_discrete_test<state_type>(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(hiprand_kernel_h_default_poisson,
-                        hiprand_kernel_h_default_poisson,
-                        ::testing::ValuesIn(lambdas));
+INSTANTIATE_TEST_SUITE_P(hiprand_kernel_h_default_poisson,
+                         hiprand_kernel_h_default_poisson,
+                         ::testing::ValuesIn(lambdas));

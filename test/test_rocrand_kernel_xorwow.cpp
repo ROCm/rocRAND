@@ -486,6 +486,6 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_discrete)
 
 const double lambdas[] = {1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0};
 
-INSTANTIATE_TEST_CASE_P(rocrand_kernel_xorwow_poisson,
-                        rocrand_kernel_xorwow_poisson,
-                        ::testing::ValuesIn(lambdas));
+INSTANTIATE_TEST_SUITE_P(rocrand_kernel_xorwow_poisson,
+                         rocrand_kernel_xorwow_poisson,
+                         ::testing::ValuesIn(lambdas));
