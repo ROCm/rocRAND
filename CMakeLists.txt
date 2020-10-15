@@ -54,7 +54,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # AMD targets
-set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908;gfx1010;gfx1011 CACHE STRING "List of specific machine types for library to target")
+set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-:xnack-;gfx908:xnack- CACHE STRING "List of specific machine types for library to target")
 
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
@@ -67,9 +67,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(DISABLE_WERROR)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra --amdgpu-target=gfx908:xnack-")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror --amdgpu-target=gfx908:xnack-")
 endif()
 
 # Build options
