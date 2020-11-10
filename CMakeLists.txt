@@ -54,7 +54,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # AMD targets
-set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908;gfx1010;gfx1011 CACHE STRING "List of specific machine types for library to target")
+set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-;gfx908:xnack- CACHE STRING "List of specific machine types for library to target")
 
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
@@ -66,11 +66,10 @@ option(DISABLE_WERROR "Disable building with Werror" ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(XNACK_FLAGS "-mno-xnack -Xarch_gfx906 -mno-sram-ecc -Xarch_gfx908 -mno-sram-ecc")
 if(DISABLE_WERROR)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra ${XNACK_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror ${XNACK_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 endif()
 
 # Build options
@@ -83,7 +82,7 @@ include(cmake/Common.cmake)
 include(cmake/Dependencies.cmake)
 
 # Set version variables
-rocm_setup_version( VERSION "2.10.6" )
+rocm_setup_version( VERSION "2.10.7" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
 set ( hiprand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
