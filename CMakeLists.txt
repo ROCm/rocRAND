@@ -35,7 +35,7 @@ list(APPEND CMAKE_MODULE_PATH
     ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
     /opt/rocm/llvm
 )
-message("HELLO")
+message("HELLO 2")
 #
 # rocRAND project
 #
