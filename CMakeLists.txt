@@ -36,6 +36,7 @@ list(APPEND CMAKE_MODULE_PATH
     /opt/rocm/llvm
 )
 message("HELLO 2")
+INTENTIONALBREAK!!
 #
 # rocRAND project
 #
