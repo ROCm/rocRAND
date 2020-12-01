@@ -289,12 +289,16 @@ set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
 
 # Below block of code is to support older version of rocm-cmake
 # it checks for occurance of '-' in TWEAK and returns the substring after the last '-'
-string(FIND ${rocRAND_VERSION_TWEAK} "-" DASH_POS REVERSE)
-set(MINUS_ONE -1)
-if (NOT DASH_POS EQUAL MINUS_ONE)
-  math(EXPR DASH_POS "${DASH_POS}+1")
-  string(SUBSTRING ${PROJECT_VERSION_TWEAK} ${DASH_POS} 7 PARSED_GIT_TAG)
-  set(rocRAND_VERSION_TWEAK ${PARSED_GIT_TAG})
+if (rocRAND_VERSION_TWEAK STREQUAL "" OR NOT DEFINED rocRAND_VERSION_TWEAK)
+  set(rocRAND_VERSION_TWEAK "local")
+else ()
+  string(FIND ${rocRAND_VERSION_TWEAK} "-" DASH_POS REVERSE)
+  set(MINUS_ONE -1)
+  if (NOT DASH_POS EQUAL MINUS_ONE)
+    math(EXPR DASH_POS "${DASH_POS}+1")
+    string(SUBSTRING ${PROJECT_VERSION_TWEAK} ${DASH_POS} 7 PARSED_GIT_TAG)
+    set(rocRAND_VERSION_TWEAK ${PARSED_GIT_TAG})
+  endif()
 endif()
 
 set(DEBIAN_VERSION ${rocRAND_VERSION_TWEAK})
