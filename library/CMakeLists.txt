@@ -87,7 +87,7 @@ set_target_properties(rocrand
 # Set AMD targets
 if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
     foreach(amdgpu_target ${AMDGPU_TARGETS})
-        target_link_libraries(rocrand PRIVATE --cuda-gpu-arch=${amdgpu_target})
+        target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
 endif()
 
@@ -185,7 +185,7 @@ else()
       target_link_libraries(hiprand PRIVATE rocrand hip::device)
     endif()
     foreach(amdgpu_target ${AMDGPU_TARGETS})
-        target_link_libraries(hiprand PRIVATE --cuda-gpu-arch=${amdgpu_target})
+        target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
     endforeach()
 endif()
 

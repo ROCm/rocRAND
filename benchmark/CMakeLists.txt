@@ -45,7 +45,7 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
             hip::device 
         )
         foreach(amdgpu_target ${AMDGPU_TARGETS})
-            target_link_libraries(${benchmark_name} --cuda-gpu-arch=${amdgpu_target})
+            target_link_libraries(${benchmark_name} --amdgpu-target=${amdgpu_target})
         endforeach()
     endif()
     set_target_properties(${benchmark_name}
