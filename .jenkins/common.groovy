@@ -5,8 +5,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 {
     project.paths.construct_build_prefix()
         
-    project.paths.build_command = jobName.contains('hipclang') ? './install -c --hip-clang' : './install -c'
-    project.compiler.compiler_path = platform.jenkinsLabel.contains('hip-clang') ? '/opt/rocm/bin/hipcc' : '/opt/rocm/bin/hcc'        
+    project.paths.build_command = './install -c'
     String buildTypeArg = debug ? '-DCMAKE_BUILD_TYPE=Debug' : '-DCMAKE_BUILD_TYPE=Release'
     String buildTypeDir = debug ? 'debug' : 'release'
     String buildStatic = staticLibrary ? '-DBUILD_STATIC_LIBS=ON' : '-DBUILD_SHARED=OFF'
