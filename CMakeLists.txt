@@ -53,8 +53,17 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
-# AMD targets
-set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-;gfx908:xnack- CACHE STRING "List of specific machine types for library to target")
+# Detect compiler support for target ID
+set(TARGET_ID_COMMAND bash "-c" "/opt/rocm/bin/hipcc --help | grep mcode-object-version" )
+execute_process (COMMAND ${TARGET_ID_COMMAND} OUTPUT_VARIABLE TARGET_ID_SUPPORT )
+
+# Use target ID syntax if supported
+if(TARGET_ID_SUPPORT)
+  set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-;gfx908:xnack- CACHE STRING "List of specific machine types for library to target")
+else()
+  set(AMDGPU_TARGETS gfx900;gfx906;gfx908 CACHE STRING "List of specific machine types for library to target")
+endif()
+
 
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
