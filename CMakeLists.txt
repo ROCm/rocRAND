@@ -57,7 +57,7 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 set(TARGET_ID_COMMAND bash "-c" "/opt/rocm/bin/hipcc --help | grep mcode-object-version" )
 execute_process (COMMAND ${TARGET_ID_COMMAND} OUTPUT_VARIABLE TARGET_ID_SUPPORT )
 
-# Use target ID syntax if supported
+# Use target ID syntax if supported for AMDGPU_TARGETS
 if(TARGET_ID_SUPPORT)
   set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-;gfx908:xnack- CACHE STRING "List of specific machine types for library to target")
 else()
