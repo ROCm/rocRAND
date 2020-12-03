@@ -69,7 +69,6 @@ else()
   set(AMDGPU_TARGETS gfx900;gfx906;gfx908 CACHE STRING "List of specific machine types for library to target")
 endif()
 
-
 # Verify that hcc compiler is used on ROCM platform
 include(cmake/VerifyCompiler.cmake)
 
