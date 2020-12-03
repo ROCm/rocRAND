@@ -54,7 +54,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # Detect compiler support for target ID
-set(TARGET_ID_COMMAND bash "-c" "/opt/rocm/bin/hipcc --help | grep mcode-object-version" )
+set(TARGET_ID_COMMAND bash "-c" "${CMAKE_CXX_COMPILER} --help | grep mcode-object-version" )
 execute_process (COMMAND ${TARGET_ID_COMMAND} OUTPUT_VARIABLE TARGET_ID_SUPPORT )
 
 # Use target ID syntax if supported for AMDGPU_TARGETS
