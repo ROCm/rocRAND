@@ -54,8 +54,14 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # Detect compiler support for target ID
-set(TARGET_ID_COMMAND bash "-c" "${CMAKE_CXX_COMPILER} --help | grep mcode-object-version" )
-execute_process (COMMAND ${TARGET_ID_COMMAND} OUTPUT_VARIABLE TARGET_ID_SUPPORT )
+if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
+  execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
+    OUTPUT_VARIABLE CXX_OUTPUT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE)
+  message( ${CXX_OUTPUT} "output")
+  string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
+endif()
 
 # Use target ID syntax if supported for AMDGPU_TARGETS
 if(TARGET_ID_SUPPORT)
