@@ -43,7 +43,7 @@ TEST_P(rocrand_generate_poisson_tests, uint_test)
     const size_t size = 12563;
     double lambda = 100.0;
     unsigned int * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&data, size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
@@ -82,7 +82,7 @@ TEST_P(rocrand_generate_poisson_tests, out_of_range_test)
     const size_t size = 256;
     double lambda = 0.0;
     unsigned int * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&data, size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     EXPECT_EQ(

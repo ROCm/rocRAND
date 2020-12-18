@@ -26,12 +26,12 @@
 
 #include <hip/hip_runtime.h>
 
+
 #define QUALIFIERS __forceinline__ __host__ __device__
 #include <hiprand_kernel.h>
 #include <hiprand.h>
 
-#define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
-#define HIPRAND_CHECK(state) ASSERT_EQ(state, HIPRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 template <class GeneratorState>
 __global__
@@ -235,7 +235,7 @@ void hiprand_kernel_h_hiprand_init_test()
 
     const size_t states_size = 256;
     state_type * states;
-    HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(state_type)));
+    HIP_CHECK(hipMallocHelper((void **)&states, states_size * sizeof(state_type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -283,7 +283,7 @@ TEST(hiprand_kernel_h_philox4x32_10, hiprand_init_nvcc)
 
     const size_t states_size = 256;
     state_type * states;
-    HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(state_type)));
+    HIP_CHECK(hipMallocHelper((void **)&states, states_size * sizeof(state_type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -338,7 +338,7 @@ TEST(hiprand_kernel_h_philox4x32_10, hiprand_skip_nvcc)
 
     const size_t states_size = 256;
     state_type * states;
-    HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(state_type)));
+    HIP_CHECK(hipMallocHelper((void **)&states, states_size * sizeof(state_type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -380,7 +380,7 @@ void hiprand_kernel_h_hiprand_test()
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -441,7 +441,7 @@ void hiprand_kernel_h_hiprand_uniform_test()
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -502,7 +502,7 @@ void hiprand_kernel_h_hiprand_normal_test()
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -571,7 +571,7 @@ void hiprand_kernel_h_hiprand_log_normal_test()
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -644,7 +644,7 @@ void hiprand_kernel_h_hiprand_poisson_test(double lambda)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -690,7 +690,7 @@ void hiprand_kernel_h_hiprand_discrete_test(double lambda)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hiprandDiscreteDistribution_t discrete_distribution;

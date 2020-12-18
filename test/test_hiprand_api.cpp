@@ -24,8 +24,10 @@
 #include <hip/hip_runtime.h>
 #include <hiprand.h>
 
-#define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
+#include "test_common.hpp"
 #define HIPRAND_CHECK(state) ASSERT_EQ(state, HIPRAND_STATUS_SUCCESS)
+
+
 
 template<hiprandRngType_t rng_type>
 void hiprand_generate_test_func()
@@ -36,7 +38,7 @@ void hiprand_generate_test_func()
     const size_t output_size = 8192;
     unsigned int * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(unsigned int))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -101,7 +103,7 @@ void hiprand_generate_uniform_test_func()
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(float))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -166,7 +168,7 @@ void hiprand_generate_uniform_double_test_func()
     const size_t output_size = 8192;
     double * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(double))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -231,7 +233,7 @@ void hiprand_generate_normal_test_func()
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(float))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -304,7 +306,7 @@ void hiprand_generate_normal_double_test_func()
     const size_t output_size = 8192;
     double * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(double))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -377,7 +379,7 @@ void hiprand_generate_lognormal_test_func()
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(float))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -454,7 +456,7 @@ void hiprand_generate_lognormal_double_test_func()
     const size_t output_size = 8192;
     double * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(double))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -532,7 +534,7 @@ void hiprand_generate_poisson_test_func()
     const size_t output_size = 8192;
     unsigned int * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(unsigned int))
     );
     HIP_CHECK(hipDeviceSynchronize());
