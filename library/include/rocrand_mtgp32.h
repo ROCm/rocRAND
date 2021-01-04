@@ -128,9 +128,9 @@ typedef mtgp32_params_fast_t mtgp32_fast_params;
 
 struct mtgp32_state
 {
-    unsigned int status[MTGP_STATE];
     int offset;
     int id;
+    unsigned int status[MTGP_STATE];
 
     FQUALIFIERS
     ~mtgp32_state() { }
@@ -338,9 +338,9 @@ public:
     unsigned int pos_tbl;
     unsigned int param_tbl[MTGP_TS];
     unsigned int temper_tbl[MTGP_TS];
-    unsigned int single_temper_tbl[MTGP_TS];
     unsigned int sh1_tbl;
     unsigned int sh2_tbl;
+    unsigned int single_temper_tbl[MTGP_TS];
     unsigned int mask;
 
 }; // mtgp32_engine class

@@ -46,7 +46,7 @@ if(BUILD_TEST)
     endif()
 
     if(NOT GTEST_FOUND)
-        message(STATUS "GTest not found. Downloading and building GTest.")
+        message(STATUS "GTest not found or force download GTest on. Downloading and building GTest.")
         # Download, build and install googletest library
         set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gtest CACHE PATH "")
         download_project(PROJ                googletest
