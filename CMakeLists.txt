@@ -53,6 +53,20 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
+# Set the default value of BUILD_SHARED_LIBS
+set(ADDRESS_SANITIZER ON CACHE BOOL "Build with address sanitizer")
+
+if ( ${ADDRESS_SANITIZER} )
+    set ( HSAKMT_C_FLAGS "${HSAKMT_C_FLAGS}" -fsanitize=address )
+    set ( HSAKMT_LINK_FLAGS "${HSAKMT_LINK_FLAGS}" -fsanitize=address )
+    if ( BUILD_SHARED_LIBS} )
+        set ( HSAKMT_LINK_FLAGS "${HSAKMT_LINK_FLAGS}" -shared-libasan )
+    else ()
+        set ( HSAKMT_LINK_FLAGS "${HSAKMT_LINK_FLAGS}" -static-libasan )
+    endif ()
+endif ()
+
+
 # Detect compiler support for target ID
 if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
