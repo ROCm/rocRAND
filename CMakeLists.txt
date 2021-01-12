@@ -54,7 +54,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # Set the default value of BUILD_SHARED_LIBS
-set(ADDRESS_SANITIZER ON CACHE BOOL "Build with address sanitizer")
+set(ADDRESS_SANITIZER OFF CACHE BOOL "Build with address sanitizer")
 
 if ( ${ADDRESS_SANITIZER} )
     set ( HSAKMT_C_FLAGS "${HSAKMT_C_FLAGS}" -fsanitize=address )
