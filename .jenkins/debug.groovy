@@ -36,7 +36,7 @@ def runCI =
     {
         platform, project->
 
-        commonGroovy.runPackageCommand(platform, project)
+        commonGroovy.runPackageCommand(platform, project, true)
     }
 
     buildProject(prj, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)

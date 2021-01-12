@@ -39,9 +39,10 @@ def runTestCommand (platform, project, boolean debug=false)
     platform.runCommand(this, command)
 }
 
-def runPackageCommand(platform, project)
+def runPackageCommand(platform, project, boolean debug=false)
 {
-    def packageHelper = platform.makePackage(platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/release") 
+    String buildTypeDir = debug ? 'debug' : 'release'
+    def packageHelper = platform.makePackage(platform.jenkinsLabel,"${project.paths.project_build_prefix}/build/${buildTypeDir}") 
         
     platform.runCommand(this, packageHelper[0])
     platform.archiveArtifacts(this, packageHelper[1])
