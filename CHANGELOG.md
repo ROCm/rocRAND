@@ -2,7 +2,16 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## [Unreleased rocRAND-2.10.7 for ROCm 4.0.0]
+## [rocRAND-2.10.8 for ROCm 4.1.0]
+### Added
+- Ability to force install dependencies with new -d flag in install script
+### Changed
+- rocRAND package name has been updated to support newer versions of ROCm.
+### Fixed
+- rocRAND benchmark performance drop has been fixed.
+- Debug builds via the install script have been fixed.
+
+## [rocRAND-2.10.7 for ROCm 4.0.0]
 ### Added
 - No new features
 
