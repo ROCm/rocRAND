@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2019 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -95,7 +95,7 @@ include(cmake/Common.cmake)
 include(cmake/Dependencies.cmake)
 
 # Set version variables
-rocm_setup_version( VERSION "2.10.7" )
+rocm_setup_version( VERSION "2.10.8" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
 set ( hiprand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
