@@ -16,6 +16,7 @@ function display_help()
     echo "    [-c|--clients] build library clients too (combines with -i & -d)"
     echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
     echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
+    echo "    [--sanitizer] build with address sanitizer using hip-clang"
 }
 
 
@@ -31,6 +32,10 @@ build_hip_clang=false
 rocm_path=/opt/rocm
 build_relocatable=false
 install_dependencies=false
+build_sanitizer=false
+cflags=
+cxxflags=
+ldflags=
 
 # #################################################
 # Parameter parsing
@@ -39,7 +44,7 @@ install_dependencies=false
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies --options hicgtprd -- "$@")
+    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,sanitizer --options hicgtprd -- "$@")
 else
     echo "Need a new version of getopt"
     exit 1
@@ -88,6 +93,9 @@ while true; do
 	    shift ;;
     --hip-clang)
         build_hip_clang=true
+        shift ;;
+    --sanitizer)
+        build_sanitizer=true
         shift ;;
 	--) shift ; break ;;
 	*)  echo "Unexpected command line parameter received; aborting";
@@ -149,12 +157,20 @@ if($build_clients); then
     clients=" -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON "
 fi
 
+if($build_sanitizer); then
+    cflags="-fsanitize=address -shared-libasan ${cflags}"
+    cxxflags="-fsanitize=address -shared-libasan ${cxxflags}"
+    ldflags="-fuse-ld=lld ${ldflags}"
+fi
+
 if($install_dependencies); then
 cmake_common_options="${cmake_common_options} -DDEPENDENCIES_FORCE_DOWNLOAD=ON"
 fi
 
 if [[ "${build_relocatable}" == true ]]; then
-    CXX=${rocm_path}/bin/$compiler ${cmake_executable}  -DCMAKE_INSTALL_PREFIX="${rocm_path}" \
+    CC=${rocm_path}/bin/$compiler CXX=${rocm_path}/bin/$compiler 
+    CFLAGS="${cflags}" CXXFLAGS="${cxxflags}" LDFLAGS="${ldflags}" \
+    ${cmake_executable}  -DCMAKE_INSTALL_PREFIX="${rocm_path}" \
     -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_CRUSH_TEST=ON ${cmake_common_options} \
     -DCMAKE_PREFIX_PATH="${rocm_path} ${rocm_path}/hcc ${rocm_path}/hip" \
     -DCMAKE_SHARED_LINKER_FLAGS="${rocm_rpath}" \
@@ -163,9 +179,12 @@ if [[ "${build_relocatable}" == true ]]; then
     ../../. # or cmake-gui ../.
 else
     set -x
-    CFLAGS="fsanitize=address -shared-libasan" CXXFLAGS="-fsanitize=address -shared-libasan" LDFLAGS="-fuse-ld=lld" CXX=${rocm_path}/bin/$compiler ${cmake_executable} ${clients} ${cmake_common_options} ../../. # or cmake-gui ../.
+    CC=${rocm_path}/bin/$compiler CXX=${rocm_path}/bin/$compiler \
+    CFLAGS="${cflags}" CXXFLAGS="${cxxflags}" LDFLAGS="${ldflags}" \
+    ${cmake_executable} ${clients} ${cmake_common_options} ../../. # or cmake-gui ../.
 fi
 check_exit_code "$?"
+
 
 # Build
 make -j$(nproc)
