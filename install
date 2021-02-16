@@ -178,7 +178,6 @@ if [[ "${build_relocatable}" == true ]]; then
     -DCMAKE_MODULE_PATH="${rocm_path}/hip/cmake" \
     ../../. # or cmake-gui ../.
 else
-    set -x
     CC=${rocm_path}/bin/$compiler CXX=${rocm_path}/bin/$compiler \
     CFLAGS="${cflags}" CXXFLAGS="${cxxflags}" LDFLAGS="${ldflags}" \
     ${cmake_executable} ${clients} ${cmake_common_options} ../../. # or cmake-gui ../.
