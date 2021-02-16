@@ -162,7 +162,8 @@ if [[ "${build_relocatable}" == true ]]; then
     -DCMAKE_MODULE_PATH="${rocm_path}/hip/cmake" \
     ../../. # or cmake-gui ../.
 else
-    CXX=${rocm_path}/bin/$compiler ${cmake_executable} ${clients} ${cmake_common_options} ../../. # or cmake-gui ../.
+    set -x
+    CFLAGS="fsanitize=address -shared-libasan" CXXFLAGS="-fsanitize=address -shared-libasan" LDFLAGS="-fuse-ld=lld" CXX=${rocm_path}/bin/$compiler ${cmake_executable} ${clients} ${cmake_common_options} ../../. # or cmake-gui ../.
 fi
 check_exit_code "$?"
 
