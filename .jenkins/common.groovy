@@ -27,7 +27,7 @@ def runTestCommand (platform, project, boolean debug=false)
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
     String centos = platform.jenkinsLabel.contains('centos') ? '3' : ''
     String buildTypeDir = debug ? 'debug' : 'release'
-    String sanitizerLibPath = debug ? 'export LD_LIBRARY_PATH=/opt/rocm/llvm/lib/clang/12.0.0/lib/linux:\$LD_LIBRARY_PATH' : ''
+    String sanitizerLibPath = debug ? "export LD_LIBRARY_PATH=/opt/rocm/llvm/lib/clang/12.0.0/lib/linux:\$LD_LIBRARY_PATH" : ''
     def testCommand = "ctest${centos} --output-on-failure"
 
     def command = """#!/usr/bin/env bash
