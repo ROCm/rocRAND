@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-@Library('rocJenkins@pong') _
+@Library('rocJenkins@sanitizerpath') _
 import com.amd.project.*
 import com.amd.docker.*
 import java.nio.file.Path;

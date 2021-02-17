@@ -15,7 +15,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 set -x
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
-                ${addressSanitizerFlags} ${cmake} -DCMAKE_C_COMPILER= /opt/ropcm/bin/hipcc -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
+                ${addressSanitizerFlags} ${cmake} -DCMAKE_C_COMPILER=/opt/ropcm/bin/hipcc -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
                 make -j\$(nproc)
                 """
     
@@ -27,7 +27,7 @@ def runTestCommand (platform, project, boolean debug=false)
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
     String centos = platform.jenkinsLabel.contains('centos') ? '3' : ''
     String buildTypeDir = debug ? 'debug' : 'release'
-    String sanitizerLibPath = debug ? "/opt/rocm/llvm/lib/clang/12.0.0/lib/linux" : ''
+    String sanitizerLibPath = debug ? project.paths.sanitizerLibPath : ''
     def testCommand = "ctest${centos} --output-on-failure"
 
     def command = """#!/usr/bin/env bash
