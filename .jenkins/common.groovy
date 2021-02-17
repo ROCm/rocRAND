@@ -33,7 +33,6 @@ def runTestCommand (platform, project, boolean debug=false)
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}/build/${buildTypeDir}
-                ${sanitizerLibPath}
                 ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/:${sanitizerLibPath} ${testCommand}
             """
 
