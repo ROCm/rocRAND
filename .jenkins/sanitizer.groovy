@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-@Library('rocJenkins@sanitizerpath') _
+@Library('rocJenkins@pong') _
 import com.amd.project.*
 import com.amd.docker.*
 import java.nio.file.Path;
@@ -29,7 +29,7 @@ def runCI =
     {
         platform, project->
 
-        commonGroovy.runTestCommand(platform, project, true)
+        commonGroovy.runTestCommand(platform, project, true, true)
     }
 
     def packageCommand =

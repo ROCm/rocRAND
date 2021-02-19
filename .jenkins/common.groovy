@@ -22,12 +22,12 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     platform.runCommand(this, command)
 }
 
-def runTestCommand (platform, project, boolean debug=false)
+def runTestCommand (platform, project, boolean debug=false, boolean addressSanitizer=false)
 {
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
     String centos = platform.jenkinsLabel.contains('centos') ? '3' : ''
     String buildTypeDir = debug ? 'debug' : 'release'
-    String sanitizerLibPath = debug ? project.paths.sanitizerLibPath : ''
+    String sanitizerLibPath = addressSanitizer ? project.paths.sanitizerLibPath : ''
     def testCommand = "ctest${centos} --output-on-failure"
 
     def command = """#!/usr/bin/env bash
