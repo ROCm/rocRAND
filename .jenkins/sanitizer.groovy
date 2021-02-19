@@ -8,7 +8,7 @@ def runCI =
 {
     nodeDetails, jobName->
 
-    def prj = new rocProject('rocRAND', 'Debug')
+    def prj = new rocProject('rocRAND', 'Sanitizer')
 
     def nodes = new dockerNodes(nodeDetails, jobName, prj)
 
