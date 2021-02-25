@@ -7,26 +7,19 @@ foreach(to_exclude ${tmp})
     list(REMOVE_ITEM rocRAND_TEST_SRCS "${to_exclude}")
 endforeach()
 
-# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
-# for nvcc if cmake version is less than 3.9.3
-if((HIP_COMPILER STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
-    CUDA_INCLUDE_DIRECTORIES(
-        "${PROJECT_BINARY_DIR}/library/include/"
-        "${PROJECT_SOURCE_DIR}/library/include/"
-        "${PROJECT_SOURCE_DIR}/library/src"
-        ${GTEST_INCLUDE_DIRS}
-    )
-endif()
 
 # Build rocRAND tests
 foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
+    add_executable(${test_name} ${test_src})
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
-      set_property(TARGET ${TEST_TARGET} PROPERTY CUDA_STANDARD 14)
-      set_source_files_properties(${TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
+      set_source_files_properties(${test_name}
+        PROPERTIES
+          LANGUAGE CUDA
+          CUDA_STANDARD 14
+      )
     endif()
-    add_executable(${test_name} ${test_src})
     # GTEST include dirs
     target_include_directories(${test_name} SYSTEM
         PUBLIC
@@ -48,9 +41,6 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         else()
             target_link_libraries(${test_name} hip::device )
         endif()
-        foreach(amdgpu_target ${AMDGPU_TARGETS})
-            target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
-        endforeach()
     endif()
     set_target_properties(
         ${test_name}
@@ -71,12 +61,15 @@ file(GLOB hipRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_hiprand*.cpp)
 # Build hipRAND tests
 foreach(test_src ${hipRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
+    add_executable(${test_name} ${test_src})
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
-      set_property(TARGET ${TEST_TARGET} PROPERTY CUDA_STANDARD 14)
-      set_source_files_properties(${TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
+      set_source_files_properties(${TEST_SOURCES}
+        PROPERTIES
+          LANGUAGE CUDA
+          CUDA_STANDARD 14
+      )
     endif()
-    add_executable(${test_name} ${test_src})
     # GTEST include dirs
     target_include_directories(${test_name} SYSTEM
         PUBLIC
@@ -100,9 +93,6 @@ foreach(test_src ${hipRAND_TEST_SRCS})
             ${GTEST_BOTH_LIBRARIES}
         )
         target_link_libraries(${test_name} hip::device )
-        foreach(amdgpu_target ${AMDGPU_TARGETS})
-            target_link_libraries(${test_name} --amdgpu-target=${amdgpu_target})
-        endforeach()
     endif()
     set_target_properties(${test_name}
         PROPERTIES
