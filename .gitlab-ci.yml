@@ -23,14 +23,14 @@
 variables:
   SUDO_CMD: "" # Must be "sudo" on images which dont use root user
   DEPS_DIR: "$CI_PROJECT_DIR/__dependencies"
-  CMAKE_URL: "https://cmake.org/files/v3.5/cmake-3.5.1-Linux-x86_64.tar.gz"
+  CMAKE_URL: "https://cmake.org/files/v3.10/cmake-3.10.2-Linux-x86_64.tar.gz"
   # General build flags
   CXXFLAGS: ""
   CMAKE_OPTIONS: ""
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_LATEST_PATH: "/opt/rocm-3.8.0/"
+  ROCM_LATEST_PATH: "/opt/rocm-4.0.0/"
 
 # ROCm
 
