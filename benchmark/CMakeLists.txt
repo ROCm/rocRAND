@@ -8,43 +8,31 @@ if(HIP_COMPILER STREQUAL "nvcc")
     set(rocRAND_BENCHMARK_SRCS ${rocRAND_BENCHMARK_SRCS} ${tmp})
 endif()
 
-# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
-# for nvcc if cmake version is less than 3.9.3# Use CUDA_INCLUDE_DIRS if cmake version is less than 3.9.3
-if((HIP_COMPILER STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
-    CUDA_INCLUDE_DIRECTORIES(
-        "${PROJECT_BINARY_DIR}/library/include/"
-        "${PROJECT_SOURCE_DIR}/library/include/"
-    )
-endif()
-
 # Build benchmarks
 foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
-    get_filename_component(benchmark_name ${benchmark_src} NAME_WE)
+    get_filename_component(BENCHMARK_TARGET ${benchmark_src} NAME_WE)
+    add_executable(${BENCHMARK_TARGET} ${benchmark_src})
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
       set_property(TARGET ${BENCHMARK_TARGET} PROPERTY CUDA_STANDARD 14)
-      set_source_files_properties(${BENCHMARK_SOURCE} PROPERTIES LANGUAGE CUDA)
+      set_source_files_properties(${benchmark_src} PROPERTIES LANGUAGE CUDA)
       target_compile_options(${BENCHMARK_TARGET}
         PRIVATE
           $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>
       )
     endif()
-    add_executable(${benchmark_name} ${benchmark_src})
     if(HIP_COMPILER STREQUAL "nvcc")
-        target_link_libraries(${benchmark_name}
+        target_link_libraries(${BENCHMARK_TARGET}
             rocrand
             ${CUDA_curand_LIBRARY}
         )
     else()
-        target_link_libraries(${benchmark_name}
+        target_link_libraries(${BENCHMARK_TARGET}
             rocrand
             hip::device
         )
-        foreach(amdgpu_target ${AMDGPU_TARGETS})
-            target_link_libraries(${benchmark_name} --amdgpu-target=${amdgpu_target})
-        endforeach()
     endif()
-    set_target_properties(${benchmark_name}
+    set_target_properties(${BENCHMARK_TARGET}
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmark"
     )
