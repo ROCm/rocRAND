@@ -23,15 +23,10 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
-        set_source_files_properties(${test_src}
-            PROPERTIES
-                CUDA_SOURCE_PROPERTY_FORMAT OBJ
-        )
-        CUDA_ADD_EXECUTABLE(${test_name} ${test_src})
-    # hcc/ROCm
-    else()
-        add_executable(${test_name} ${test_src})
+      set_property(TARGET ${TEST_TARGET} PROPERTY CUDA_STANDARD 14)
+      set_source_files_properties(${TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
     endif()
+    add_executable(${test_name} ${test_src})
     # GTEST include dirs
     target_include_directories(${test_name} SYSTEM
         PUBLIC
@@ -78,15 +73,10 @@ foreach(test_src ${hipRAND_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
-        set_source_files_properties(${test_src}
-            PROPERTIES
-                CUDA_SOURCE_PROPERTY_FORMAT OBJ
-        )
-        CUDA_ADD_EXECUTABLE(${test_name} ${test_src})
-    # hcc/ROCm
-    else()
-        add_executable(${test_name} ${test_src})
+      set_property(TARGET ${TEST_TARGET} PROPERTY CUDA_STANDARD 14)
+      set_source_files_properties(${TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
     endif()
+    add_executable(${test_name} ${test_src})
     # GTEST include dirs
     target_include_directories(${test_name} SYSTEM
         PUBLIC

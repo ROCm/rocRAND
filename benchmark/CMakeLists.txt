@@ -22,18 +22,14 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     get_filename_component(benchmark_name ${benchmark_src} NAME_WE)
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
-        set_source_files_properties(${benchmark_src}
-            PROPERTIES
-                CUDA_SOURCE_PROPERTY_FORMAT OBJ
-        )
-        CUDA_ADD_EXECUTABLE(${benchmark_name}
-            ${benchmark_src}
-            OPTIONS --expt-extended-lambda
-        )
-    # hcc/ROCm
-    else()
-        add_executable(${benchmark_name} ${benchmark_src})
+      set_property(TARGET ${BENCHMARK_TARGET} PROPERTY CUDA_STANDARD 14)
+      set_source_files_properties(${BENCHMARK_SOURCE} PROPERTIES LANGUAGE CUDA)
+      target_compile_options(${BENCHMARK_TARGET}
+        PRIVATE
+          $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>
+      )
     endif()
+    add_executable(${benchmark_name} ${benchmark_src})
     if(HIP_COMPILER STREQUAL "nvcc")
         target_link_libraries(${benchmark_name}
             rocrand
@@ -42,7 +38,7 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     else()
         target_link_libraries(${benchmark_name}
             rocrand
-            hip::device 
+            hip::device
         )
         foreach(amdgpu_target ${AMDGPU_TARGETS})
             target_link_libraries(${benchmark_name} --amdgpu-target=${amdgpu_target})
