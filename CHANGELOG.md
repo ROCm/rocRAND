@@ -2,7 +2,11 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## [Unreleased rocRAND-2.10.8 for ROCm 4.1.0]
+## [Unreleased rocRAND-2.10.9 for ROCm 4.2.0]
+### Fixed
+- rocRAND benchmark performance drop for xorwow has been fixed for older ROCm builds.
+
+## [rocRAND-2.10.8 for ROCm 4.1.0]
 ### Added
 - Ability to force install dependencies with new -d flag in install script
 ### Changed
