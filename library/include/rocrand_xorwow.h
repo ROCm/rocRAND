@@ -78,9 +78,6 @@ class xorwow_engine
 public:
     struct xorwow_state
     {
-        // Xorshift values (160 bits)
-        unsigned int x[5];
-
         // Weyl sequence value
         unsigned int d;
 
@@ -95,6 +92,9 @@ public:
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
         #endif
+
+        // Xorshift values (160 bits)
+        unsigned int x[5];
 
         FQUALIFIERS
         ~xorwow_state() { }
