@@ -64,7 +64,7 @@ endif()
 
 # Use target ID syntax if supported for AMDGPU_TARGETS
 if(TARGET_ID_SUPPORT)
-  set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx1030:xnack- CACHE STRING "List of specific machine types for library to target")
+  set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx1030 CACHE STRING "List of specific machine types for library to target")
 else()
   set(AMDGPU_TARGETS gfx900;gfx906;gfx908;gfx1030 CACHE STRING "List of specific machine types for library to target")
 endif()
