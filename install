@@ -101,6 +101,11 @@ while true; do
     esac
     done
 
+if (${install_dependencies} == true && ${spack_dependencies} == true); then
+    echo "-d or --dependencies and --spack cannot be used together"
+    exit 1
+fi
+
 if [[ "${build_relocatable}" == true ]]; then
     if ! [ -z ${ROCM_PATH+x} ]; then
         rocm_path=${ROCM_PATH}
