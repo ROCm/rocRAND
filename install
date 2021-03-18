@@ -156,7 +156,6 @@ fi
 
 if($spack_dependencies); then
     spack load googletest@1.10.0
-    echo "Loading googletest"
 fi
 
 if [[ "${build_relocatable}" == true ]]; then
@@ -191,4 +190,8 @@ if ($build_package); then
     # Package
     make package -j$(nproc)
     check_exit_code "$?"
+fi
+
+if($spack_dependencies); then
+    spack unload googletest@1.10.0
 fi
