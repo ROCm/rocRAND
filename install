@@ -12,7 +12,8 @@ function display_help()
     echo "    [-i|--install] install after build"
     echo "    [-p|--package] build package"
     echo "    [-r]--relocatable] create a package to support relocatable ROCm"
-    echo "    [-d|--dependencies] install build dependencies"
+    echo "    [-d|--dependencies] install build dependencies via web downloads"
+    echo "    [--spack] get build dependencies via spack modules"
     echo "    [-c|--clients] build library clients too (combines with -i & -d)"
     echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
     echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
@@ -31,6 +32,7 @@ build_hip_clang=false
 rocm_path=/opt/rocm
 build_relocatable=false
 install_dependencies=false
+spack_dependencies=false
 
 # #################################################
 # Parameter parsing
@@ -39,7 +41,7 @@ install_dependencies=false
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies --options hicgtprd -- "$@")
+    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,spack --options hicgtprd -- "$@")
 else
     echo "Need a new version of getopt"
     exit 1
@@ -77,6 +79,9 @@ while true; do
     -d|--dependencies)
         install_dependencies=true
         shift ;;
+    --spack)
+	spack_dependencies=true
+	shift ;;
 	-c|--clients)
 	    build_clients=true
 	    shift ;;
@@ -147,6 +152,11 @@ fi
 
 if($install_dependencies); then
 cmake_common_options="${cmake_common_options} -DDEPENDENCIES_FORCE_DOWNLOAD=ON"
+fi
+
+if($spack_dependencies); then
+    spack load googletest@1.10.0
+    echo "Loading googletest"
 fi
 
 if [[ "${build_relocatable}" == true ]]; then
