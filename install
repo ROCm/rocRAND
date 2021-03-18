@@ -161,6 +161,7 @@ fi
 
 if($spack_dependencies); then
     spack load googletest@1.10.0
+    check_exit_code "$?"
 fi
 
 if [[ "${build_relocatable}" == true ]]; then
@@ -199,4 +200,5 @@ fi
 
 if($spack_dependencies); then
     spack unload googletest@1.10.0
+    check_exit_code "$?"
 fi
