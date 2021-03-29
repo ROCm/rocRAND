@@ -925,11 +925,19 @@ public:
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
         }
-        this->seed(seed_value);
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
     }
 
     /// \brief Constructs the pseudo-random number engine.
@@ -1089,11 +1097,19 @@ public:
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
         }
-        this->seed(seed_value);
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
@@ -1213,11 +1229,19 @@ public:
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
         }
-        this->seed(seed_value);
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
@@ -1347,7 +1371,15 @@ public:
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-        this->seed(seed_value);
+        try
+        {
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
@@ -1469,11 +1501,19 @@ public:
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->dimensions(num_of_dimensions);
         }
-        this->dimensions(num_of_dimensions);
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)

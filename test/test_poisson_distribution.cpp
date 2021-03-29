@@ -72,6 +72,8 @@ TEST_P(poisson_distribution_tests, mean_var)
         values[si] = v;
     }
 
+    dis.deallocate();
+
     const double mean = get_mean(values);
     const double variance = get_variance(values, mean);
 
@@ -115,6 +117,8 @@ TEST_P(poisson_distribution_tests, histogram_compare)
             historgram1[bin]++;
         }
     }
+
+    dis.deallocate();
 
     // Very loose comparison
     for (size_t bi = 0; bi < bins_count; bi++)
