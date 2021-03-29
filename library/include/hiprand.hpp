@@ -933,11 +933,19 @@ public:
         hiprandStatus_t status;
         status = hiprandCreateGenerator(&m_generator, this->type());
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
         }
-        this->seed(seed_value);
+        catch(...)
+        {
+            (void)hiprandDestroyGenerator(m_generator);
+            throw;
+        }
     }
 
     /// \brief Constructs the pseudo-random number engine.
@@ -1097,11 +1105,19 @@ public:
         hiprandStatus_t status;
         status = hiprandCreateGenerator(&m_generator, this->type());
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
         }
-        this->seed(seed_value);
+        catch(...)
+        {
+            (void)hiprandDestroyGenerator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
@@ -1221,11 +1237,19 @@ public:
         hiprandStatus_t status;
         status = hiprandCreateGenerator(&m_generator, this->type());
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
         }
-        this->seed(seed_value);
+        catch(...)
+        {
+            (void)hiprandDestroyGenerator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
@@ -1355,7 +1379,15 @@ public:
         hiprandStatus_t status;
         status = hiprandCreateGenerator(&m_generator, this->type());
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
-        this->seed(seed_value);
+        try
+        {
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)hiprandDestroyGenerator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
@@ -1477,11 +1509,19 @@ public:
         hiprandStatus_t status;
         status = hiprandCreateGenerator(&m_generator, this->type());
         if(status != HIPRAND_STATUS_SUCCESS) throw hiprand_cpp::error(status);
-        if(offset_value > 0)
+        try
         {
-            this->offset(offset_value);
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->dimensions(num_of_dimensions);
         }
-        this->dimensions(num_of_dimensions);
+        catch(...)
+        {
+            (void)hiprandDestroyGenerator(m_generator);
+            throw;
+        }
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(hiprandGenerator_t&)
