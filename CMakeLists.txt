@@ -41,6 +41,16 @@ list(APPEND CMAKE_MODULE_PATH
 #
 project(rocRAND CXX)
 
+# This finds the rocm-cmake project, and installs it if not found
+# rocm-cmake contains common cmake code for rocm projects to help
+# setup and install
+find_package(ROCM CONFIG)
+include(ROCMSetupVersion)
+include(ROCMCreatePackage)
+include(ROCMInstallTargets)
+include(ROCMPackageConfigHelpers)
+include(ROCMInstallSymlinks)
+
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to 'Release' as none was specified.")
