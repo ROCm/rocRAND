@@ -14,18 +14,23 @@ function(add_rocrand_link_test TEST_SOURCES)
             CUDA_STANDARD 14
         )
     endif()
-    # GTEST include dirs
-    target_include_directories(${TEST_TARGET} SYSTEM
-        PUBLIC
-            ${GTEST_INCLUDE_DIRS}
-    )
     target_include_directories(${TEST_TARGET}
         PUBLIC
             ${PROJECT_SOURCE_DIR}/library/src
     )
+    if(TARGET GTest::GTest)
+        target_link_libraries(${TEST_TARGET}
+            GTest::GTest
+            GTest::Main
+        )
+    else()
+        target_link_libraries(${TEST_TARGET}
+            GTest::gtest
+            GTest::gtest_main
+        )
+    endif()
     target_link_libraries(${TEST_TARGET}
         rocrand
-        ${GTEST_BOTH_LIBRARIES}
     )
     if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
         target_link_libraries(${TEST_TARGET} hip::device)
@@ -53,26 +58,30 @@ function(add_hiprand_link_test TEST_SOURCES)
           CUDA_STANDARD 14
       )
     endif()
-    # GTEST include dirs
-    target_include_directories(${TEST_TARGET} SYSTEM
-        PUBLIC
-            ${GTEST_INCLUDE_DIRS}
-    )
     target_include_directories(${TEST_TARGET}
         PUBLIC
             ${PROJECT_SOURCE_DIR}/library/src
     )
+    if(TARGET GTest::GTest)
+        target_link_libraries(${TEST_TARGET}
+            GTest::GTest
+            GTest::Main
+        )
+    else()
+        target_link_libraries(${TEST_TARGET}
+            GTest::gtest
+            GTest::gtest_main
+        )
+    endif()
     if(HIP_COMPILER STREQUAL "nvcc")
         target_link_libraries(${TEST_TARGET}
             hiprand
             ${CUDA_curand_LIBRARY}
-            ${GTEST_BOTH_LIBRARIES}
         )
     else()
         target_link_libraries(${TEST_TARGET}
             hiprand
             rocrand
-            ${GTEST_BOTH_LIBRARIES}
         )
         target_link_libraries(${TEST_TARGET} hip::device)
     endif()

@@ -19,27 +19,32 @@ foreach(test_src ${rocRAND_TEST_SRCS})
           LANGUAGE CUDA
           CUDA_STANDARD 14
       )
+      set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     endif()
-    # GTEST include dirs
-    target_include_directories(${test_name} SYSTEM
-        PUBLIC
-            ${GTEST_INCLUDE_DIRS}
-    )
     target_include_directories(${test_name}
         PUBLIC
             ${PROJECT_SOURCE_DIR}/library/src
     )
-
+    if(TARGET GTest::GTest)
+        target_link_libraries(${test_name}
+            GTest::GTest
+            GTest::Main
+        )
+    else()
+        target_link_libraries(${test_name}
+            GTest::gtest
+            GTest::gtest_main
+        )
+    endif()
     target_link_libraries(${test_name}
         rocrand
-        ${GTEST_BOTH_LIBRARIES}
     )
     if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
         # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
         if(TARGET hip::device)
             target_link_libraries(${test_name} hip::device)
         else()
-            target_link_libraries(${test_name} hip::device )
+            target_link_libraries(${test_name} hip::device)
         endif()
     endif()
     set_target_properties(
@@ -64,35 +69,39 @@ foreach(test_src ${hipRAND_TEST_SRCS})
     add_executable(${test_name} ${test_src})
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
-      set_source_files_properties(${TEST_SOURCES}
+      set_source_files_properties(${test_name}
         PROPERTIES
           LANGUAGE CUDA
           CUDA_STANDARD 14
       )
+      set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     endif()
-    # GTEST include dirs
-    target_include_directories(${test_name} SYSTEM
-        PUBLIC
-            ${GTEST_INCLUDE_DIRS}
-    )
     target_include_directories(${test_name}
         PUBLIC
             ${PROJECT_SOURCE_DIR}/library/src
     )
-
+    if(TARGET GTest::GTest)
+        target_link_libraries(${test_name}
+            GTest::GTest
+            GTest::Main
+        )
+    else()
+        target_link_libraries(${test_name}
+            GTest::gtest
+            GTest::gtest_main
+        )
+    endif()
     if(HIP_COMPILER  STREQUAL "nvcc")
         target_link_libraries(${test_name}
             hiprand
             ${CUDA_curand_LIBRARY}
-            ${GTEST_BOTH_LIBRARIES}
         )
     else()
         target_link_libraries(${test_name}
             hiprand
             rocrand
-            ${GTEST_BOTH_LIBRARIES}
+            hip::device
         )
-        target_link_libraries(${test_name} hip::device )
     endif()
     set_target_properties(${test_name}
         PROPERTIES
