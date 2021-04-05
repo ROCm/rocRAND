@@ -10,12 +10,15 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String buildTypeDir = debug ? 'debug' : 'release'
     String buildStatic = staticLibrary ? '-DBUILD_STATIC_LIBS=ON' : '-DBUILD_SHARED=OFF'
     String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
+    String amdgpuTargets = env.BRANCH_NAME.startsWith("PR-") ? '-DAMDGPU_TARGETS=\$GFXARCH'
+    if env.BRANCH_NAME.startsWith("PR-")
 
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
-                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
+                GFXARCH=\$(/opt/rocm/bin/rocm_agent_enumerator | tail -1)
+                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} ${amdgpuTargets} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
                 make -j\$(nproc)
                 """
     
