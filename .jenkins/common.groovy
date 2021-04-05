@@ -11,7 +11,6 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String buildStatic = staticLibrary ? '-DBUILD_STATIC_LIBS=ON' : '-DBUILD_SHARED=OFF'
     String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
     String amdgpuTargets = env.BRANCH_NAME.startsWith("PR-") ? '-DAMDGPU_TARGETS=\$GFXARCH'
-    if env.BRANCH_NAME.startsWith("PR-")
 
     def command = """#!/usr/bin/env bash
                 set -x
