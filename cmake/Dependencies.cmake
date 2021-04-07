@@ -48,7 +48,7 @@ if(BUILD_TEST)
   # GTestConfig.cmake defines: GTest::gtest, GTest::gtest_main, GTest::gmock, GTest::gmock_main
   #
   # NOTE2: Finding GTest in MODULE mode, one cannot invoke find_package in CONFIG mode, because targets
-  #        will be duplicately defined. 
+  #        will be duplicately defined.
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
     # Google Test (https://github.com/google/googletest)
     find_package(GTest QUIET)
@@ -101,11 +101,6 @@ if(NOT ROCM_FOUND)
         message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag}.zip failed")
     endif()
     find_package(ROCM REQUIRED CONFIG PATHS ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag})
-endif()
-
-if(NOT (CMAKE_VERSION VERSION_LESS 3.17) AND HIP_COMPILER STREQUAL nvcc)
-  find_package(CUDAToolkit)
-  set(CUDA_curand_LIBRARY CUDA::curand)
 endif()
 
 include(ROCMSetupVersion)
