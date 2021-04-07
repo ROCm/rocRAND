@@ -30,7 +30,7 @@ variables:
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_LATEST_PATH: "/opt/rocm-4.0.0/"
+  ROCM_LATEST_PATH: "/opt/rocm-4.1.0/"
 
 # ROCm
 
@@ -159,7 +159,7 @@ test:rocm_package:
     - rocm-stable
   script:
     - cd build
-    - $SUDO_CMD dpkg -i rocrand-*.deb
+    - $SUDO_CMD dpkg -i rocrand*.deb
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
     - CXX=hipcc cmake ../test/package/.
@@ -193,7 +193,7 @@ test:rocm_install:
 .nvcc:
   tags:
     - nvcc
-  image: nvidia/cuda:10.1-devel-ubuntu16.04
+  image: nvidia/cuda:10.2-devel-ubuntu18.04
   before_script:
     - nvidia-smi
     # HIP-nvcc
@@ -322,7 +322,7 @@ test:nvcc_package:
     - build:nvcc
   script:
     - cd build
-    - $SUDO_CMD dpkg -i rocrand-*.deb
+    - $SUDO_CMD dpkg -i rocrand*.deb
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
     - cmake ../test/package/.
