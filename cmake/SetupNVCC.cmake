@@ -80,6 +80,14 @@ endif()
 # Get CUDA
 enable_language("CUDA")
 
+if( CMAKE_VERSION VERSION_LESS 3.17 )
+    find_package(CUDA REQUIRED)
+else()
+    find_package(CUDAToolkit)
+    set(CUDA_curand_LIBRARY CUDA::curand)
+endif()
+
+
 # Suppressing warnings
 set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets -Xcompiler -Wno-return-type -Wno-deprecated-declarations ")
 
