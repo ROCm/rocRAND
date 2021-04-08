@@ -118,9 +118,12 @@ test:rocm_python:
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
     - $SUDO_CMD apt-get install -y -qq wget
     - $SUDO_CMD apt-get -y remove python-pip python3-pip
-    - wget https://bootstrap.pypa.io/get-pip.py
-    - $SUDO_CMD_HOME python get-pip.py
-    - $SUDO_CMD_HOME python3 get-pip.py
+    # Latest supported Python version of pypa is 3.6, but there's no permalink
+    # for the latest scripts, hence the '+' in the filename and the generic URL
+    - wget https://bootstrap.pypa.io/get-pip.py -O get-pip-3.6+.py
+    - wget https://bootstrap.pypa.io/pip/2.7/get-pip.py -O get-pip-2.7.py
+    - $SUDO_CMD_HOME python get-pip-2.7.py
+    - $SUDO_CMD_HOME python3 get-pip-3.6+.py
 
   script:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
@@ -283,9 +286,12 @@ test:nvcc_python:
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
     - $SUDO_CMD apt-get install -y -qq wget
     - $SUDO_CMD apt-get -y remove python-pip python3-pip
-    - wget https://bootstrap.pypa.io/get-pip.py
-    - $SUDO_CMD_HOME python get-pip.py
-    - $SUDO_CMD_HOME python3 get-pip.py
+    # Latest supported Python version of pypa is 3.6, but there's no permalink
+    # for the latest scripts, hence the '+' in the filename and the generic URL
+    - wget https://bootstrap.pypa.io/get-pip.py -O get-pip-3.6+.py
+    - wget https://bootstrap.pypa.io/pip/2.7/get-pip.py -O get-pip-2.7.py
+    - $SUDO_CMD_HOME python get-pip-2.7.py
+    - $SUDO_CMD_HOME python3 get-pip-3.6+.py
 
   script:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
