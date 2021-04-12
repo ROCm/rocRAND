@@ -53,15 +53,6 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
-# Detect compiler support for target ID
-if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
-  execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-    OUTPUT_VARIABLE CXX_OUTPUT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE)
-  string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
-endif()
-
 #Set the AMDGPU_TARGETS with backward compatiblity
 if(COMMAND rocm_check_target_ids)
    set(AMDGPU_TARGETS gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030 
