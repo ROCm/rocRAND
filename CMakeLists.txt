@@ -62,11 +62,12 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
   string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
 endif()
 
-# Use target ID syntax if supported for AMDGPU_TARGETS
-if(TARGET_ID_SUPPORT)
-  set(AMDGPU_TARGETS gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030 CACHE STRING "List of specific machine types for library to target")
-else()
-  set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908 CACHE STRING "List of specific machine types for library to target")
+#Set the AMDGPU_TARGETS with backward compatiblity
+if(COMMAND rocm_check_target_ids)
+    set(AMDGPU_TARGETS gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030 CACHE STRING "List of specific machine types for library to target")
+    rocm_check_target_ids(AMDGPU_TARGETS TARGETS AMDGPU_TARGETS)
+else
+   set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908 CACHE STRING "List of specific machine types for library to target")
 endif()
 
 # Verify that hcc compiler is used on ROCM platform
