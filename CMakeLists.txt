@@ -41,7 +41,6 @@ list(APPEND CMAKE_MODULE_PATH
 #
 project(rocRAND CXX)
 
-# This finds the rocm-cmake project, and installs it if not found
 # rocm-cmake contains common cmake code for rocm projects to help
 # setup and install
 find_package(ROCM CONFIG)
