@@ -6,69 +6,78 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
-
-using namespace std;
+#include <stdint.h>
 
 struct sobol_set
 {
-    unsigned int d;
-    unsigned int s;
-    unsigned int a;
-    unsigned int m[18];
+    uint32_t d;
+    uint32_t s;
+    uint32_t a;
+    uint32_t m[18];
 };
 
 bool read_sobol_set(struct sobol_set * inputs, int N, const std::string name)
 {
-    ifstream infile(name ,ios::in);
+    std::ifstream infile(name ,std::ios::in);
     if (!infile) {
-        cout << "Input file containing direction numbers cannot be found!\n";
+        std::cout << "Input file containing direction numbers cannot be found!\n";
         return false;
     }
     char buffer[1000];
     infile.getline(buffer,1000,'\n');
 
-    for (int i = 0; i < N; i++) {
+    for (int32_t i = 0; i < N; i++) {
         infile >> inputs[i].d >> inputs[i].s >> inputs[i].a;
-        for (unsigned int j = 0; j < inputs[i].s; j++)
+        for (uint32_t j = 0; j < inputs[i].s; j++)
             infile >> inputs[i].m[j];
     }
 
     return true;
 }
 
-void init_direction_vectors(struct sobol_set * inputs, unsigned int * directions, int n_directions, int n)
+template<typename DirectionVectorType>
+void init_direction_vectors(struct sobol_set * inputs, DirectionVectorType* directions, int n_directions, int n)
 {
-    for (int i = 0 ; i < n ; i++) {
-        if (i == 0)
-            for (int j = 0 ; j < n_directions ; j++)
-                directions[j] = 1 << (31 - j);
-        else
+    constexpr uint32_t shift_adjust = (sizeof(DirectionVectorType) * 8) - 1;
+    for (int j = 0 ; j < n_directions ; j++)
+    {
+        directions[j] = 1lu << (shift_adjust - j);
+    }
+    directions += n_directions;
+    for (int i = 1; i < n ; i++) {
+        int ix = i - 1;
+        int s = inputs[ix].s;
+        for (int j = 0; j < s ; j++)
         {
-            int ix = i - 1;
-            int s = inputs[ix].s;
-            for (int j = 0 ; j < s ; j++)
-                directions[j] = inputs[ix].m[j] << (31 - j);
-            for (int j = s ; j < n_directions ; j++)
+            directions[j] = (DirectionVectorType)inputs[ix].m[j] << (shift_adjust - j);
+        }
+        for (int j = s; j < n_directions ; j++)
+        {
+            directions[j] = directions[j - s] ^ (directions[j - s] >> s);
+            for (int k = 1; k < s ; k++)
             {
-                directions[j] = directions[j - s] ^ (directions[j - s] >> s);
-                for (int k = 1 ; k < s ; k++)
-                    directions[j] ^= (((inputs[ix].a >> (s - 1 - k)) & 1) * directions[j - k]);
+                directions[j] ^= ((((DirectionVectorType)inputs[ix].a >> (s - 1 - k)) & 1) * directions[j - k]);
             }
         }
         directions += n_directions;
     }
 }
 
-void write_matrices(std::ofstream& fout, const std::string name, unsigned int * a, int n, int bits, bool is_device)
+template<typename DirectionVectorType>
+void write_matrices(std::ofstream& fout, const std::string name, DirectionVectorType* directions, int32_t n, int32_t bits, bool is_device)
 {
     fout << "static const ";
-    fout << (is_device ? "__device__ " : "") << "unsigned int " << name << "[SOBOL_N] = " << std::endl;
-    fout << "    {" << std::endl;
-    fout << "        ";
+    fout << (is_device ? "__device__ " : "");
+    fout << ((sizeof(DirectionVectorType) == 4) ? "unsigned int " : "unsigned long long int");
+    fout << name << ((sizeof(DirectionVectorType) == 4) ? "[SOBOL_N] = " : "[SOBOL64_N] = ");
+    fout << std::endl;
+    fout << "    {";
+    fout << std::endl;
+    fout << "        ";;
     for (int k = 0; k < n; k++)
     {
         fout << "0x";
-        fout << hex << setw(8) << setfill('0') << a[k] << ", ";
+        fout << std::hex << std::setw(sizeof(DirectionVectorType) * 2) << std::setfill('0') << directions[k] << ", ";
         if ((k + 1) % bits == 0 && k != 1)
             fout  << std::endl << "        ";
     }
@@ -77,7 +86,7 @@ void write_matrices(std::ofstream& fout, const std::string name, unsigned int * 
     fout << std::endl;
 }
 
-int main(int argc, char const *argv[])
+int32_t main(int32_t argc, char const *argv[])
 {
     if (argc != 3 || std::string(argv[1]) == "--help")
     {
@@ -88,15 +97,19 @@ int main(int argc, char const *argv[])
     }
 
     const std::string vector_file(argv[1]);
-    unsigned int SOBOL_DIM = 20000;
-    unsigned int SOBOL_N = SOBOL_DIM * 32;
+    uint32_t SOBOL_DIM = 20000;
+    uint32_t SOBOL32_N = SOBOL_DIM * 32;
+    uint32_t SOBOL64_N = SOBOL_DIM * 64;
     struct sobol_set * inputs = new struct sobol_set[SOBOL_DIM];
-    unsigned int * directions = new unsigned int[SOBOL_N];
+    uint32_t * directions_32 = new uint32_t[SOBOL32_N];
+    uint64_t * directions_64 = new uint64_t[SOBOL64_N];
     bool read = read_sobol_set(inputs, SOBOL_DIM, vector_file);
 
     if (read)
     {
-        init_direction_vectors(inputs, directions, 32, SOBOL_DIM);
+        init_direction_vectors<uint32_t>(inputs, directions_32, 32, SOBOL_DIM);
+        init_direction_vectors<uint64_t>(inputs, directions_64, 64, SOBOL_DIM);
+
         const std::string file_path(argv[2]);
         std::ofstream fout(file_path, std::ios_base::out | std::ios_base::trunc);
         fout << R"(// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
@@ -128,11 +141,12 @@ int main(int argc, char const *argv[])
 )";
 
         fout << "#define SOBOL_DIM " << SOBOL_DIM << std::endl;
-        fout << "#define SOBOL_N " << SOBOL_N << std::endl;
+        fout << "#define SOBOL_N " << SOBOL32_N << std::endl;
+        fout << "#define SOBOL64_N " << SOBOL64_N << std::endl;
         fout << std::endl;
 
-        write_matrices(fout, "h_sobol32_direction_vectors", directions, SOBOL_N,
-        32, false);
+        write_matrices<uint32_t>(fout, "h_sobol32_direction_vectors", directions_32, SOBOL32_N, 32, false);
+        write_matrices<uint64_t>(fout, "h_sobol64_direction_vectors", directions_64, SOBOL64_N, 64, false);
 
         fout << R"(
 #endif // ROCRAND_SOBOL_PRECOMPUTED_H_
@@ -140,7 +154,8 @@ int main(int argc, char const *argv[])
     }
 
     delete[] inputs;
-    delete[] directions;
+    delete[] directions_32;
+    delete[] directions_64;
 
     return 0;
 }

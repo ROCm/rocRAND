@@ -113,8 +113,10 @@ public:
         cdf = NULL;
     }
 
+    // Template for switching between 32-bit and 64-bit unsigned int types
+    template<class T>
     __forceinline__ __host__ __device__
-    unsigned int operator()(const unsigned int x) const
+    T operator()(T x) const
     {
         if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
         {
@@ -126,8 +128,10 @@ public:
         }
     }
 
+    // Template for switching between 32-bit and 64-bit unsigned int types
+    template<class T>
     __host__ __device__
-    void operator()(const unsigned int (&input)[1], unsigned int output[1]) const
+    void operator()(const T (&input)[1], T output[1]) const
     {
         output[0] = (*this)(input[0]);
     }

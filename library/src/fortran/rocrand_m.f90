@@ -28,6 +28,7 @@ module rocrand_m
     integer, public :: ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
     integer, public :: ROCRAND_RNG_QUASI_DEFAULT = 500
     integer, public :: ROCRAND_RNG_QUASI_SOBOL32 = 501
+    integer, public :: HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504
 
     integer, public :: ROCRAND_STATUS_SUCCESS = 0
     integer, public :: ROCRAND_STATUS_VERSION_MISMATCH  = 100
