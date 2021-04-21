@@ -2,7 +2,7 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## [Unreleased rocRAND-2.10.9 for ROCm 4.2.0]
+## [rocRAND-2.10.9 for ROCm 4.2.0]
 ### Fixed
 - rocRAND benchmark performance drop for xorwow has been fixed for older ROCm builds.
 
