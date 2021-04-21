@@ -211,40 +211,57 @@ template<class T>
 struct sobol_uniform_distribution;
 
 template<>
-struct sobol_uniform_distribution<unsigned int>
+struct sobol_uniform_distribution<unsigned long long int>
 {
     __host__ __device__
-    unsigned int operator()(const unsigned int v) const
+    unsigned long long int operator()(const unsigned long long int v) const
     {
-        return v;
+        return v; 
+    }
+};
+
+template<>
+struct sobol_uniform_distribution<unsigned int>
+{
+    template<class DirectionVectorType>
+    __host__ __device__
+    unsigned int operator()(const DirectionVectorType v) const
+    {
+        constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned int)) * 8);
+        return v >> bit_shift;
     }
 };
 
 template<>
 struct sobol_uniform_distribution<unsigned char>
 {
+    template<class DirectionVectorType>
     __host__ __device__
-    unsigned char operator()(const unsigned int v) const
+    unsigned char operator()(const DirectionVectorType v) const
     {
-        return static_cast<unsigned char>(v >> 24);
+        constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned char)) * 8);
+        return static_cast<unsigned char>(v >> bit_shift);
     }
 };
 
 template<>
 struct sobol_uniform_distribution<unsigned short>
 {
+    template<class DirectionVectorType>
     __host__ __device__
-    unsigned short operator()(const unsigned int v) const
+    unsigned short operator()(const DirectionVectorType v) const
     {
-        return static_cast<unsigned short>(v >> 16);
+        constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned short)) * 8);
+        return static_cast<unsigned short>(v >> bit_shift);
     }
 };
 
 template<>
 struct sobol_uniform_distribution<float>
 {
+    template<class DirectionVectorType>
     __host__ __device__
-    float operator()(const unsigned int v) const
+    float operator()(const DirectionVectorType v) const
     {
         return rocrand_device::detail::uniform_distribution(v);
     }
@@ -253,8 +270,9 @@ struct sobol_uniform_distribution<float>
 template<>
 struct sobol_uniform_distribution<double>
 {
+    template<class DirectionVectorType>
     __host__ __device__
-    double operator()(const unsigned int v) const
+    double operator()(const DirectionVectorType v) const
     {
         return rocrand_device::detail::uniform_distribution_double(v);
     }
@@ -263,10 +281,12 @@ struct sobol_uniform_distribution<double>
 template<>
 struct sobol_uniform_distribution<__half>
 {
+    template<class DirectionVectorType>
     __host__ __device__
-    __half operator()(const unsigned int v) const
+    __half operator()(const DirectionVectorType v) const
     {
-        return rocrand_device::detail::uniform_distribution_half(static_cast<unsigned short>(v >> 16));
+        constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned short)) * 8);
+        return rocrand_device::detail::uniform_distribution_half(static_cast<unsigned short>(v >> bit_shift));
     }
 };
 

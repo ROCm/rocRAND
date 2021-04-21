@@ -25,6 +25,7 @@
 #include "mrg32k3a.hpp"
 #include "xorwow.hpp"
 #include "sobol32.hpp"
+#include "sobol64.hpp"
 #include "mtgp32.hpp"
 
 #endif // ROCRAND_RNG_GENERATORS_H_

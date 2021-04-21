@@ -1627,6 +1627,166 @@ private:
     /// \endcond
 };
 
+/// \brief Sobol's quasi-random sequence generator
+///
+/// sobol64 is quasi-random number engine which produced
+/// <a href="https://en.wikipedia.org/wiki/Sobol_sequence">Sobol sequences</a>.
+/// This implementation supports generating sequences in up to 20,000 dimensions.
+/// The engine produces random unsigned integers on the interval [0, 2^64 - 1].
+template<unsigned int DefaultNumDimensions = 1>
+class sobol64_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \typedef dimensions_num_type
+    /// Quasi-random number engine type for number of dimensions.
+    ///
+    /// See also dimensions()
+    typedef unsigned int dimensions_num_type;
+    /// \brief The default number of dimenstions, equal to \p DefaultNumDimensions.
+    static constexpr dimensions_num_type default_num_dimensions = DefaultNumDimensions;
+
+    /// \brief Constructs the pseudo-random number engine.
+    ///
+    /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
+    /// \param offset_value - number of internal states that should be skipped, see also offset()
+    ///
+    /// See also: rocrand_create_generator()
+    sobol64_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
+                   offset_type offset_value = 0)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->dimensions(num_of_dimensions);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    sobol64_engine(rocrand_generator& generator)
+        : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~sobol64_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \brief Set the number of dimensions of a quasi-random number generator.
+    ///
+    /// Supported values of \p dimensions are 1 to 20000.
+    ///
+    /// - This operation resets the generator's internal state.
+    /// - This operation does not change the generator's offset.
+    ///
+    /// \param value - Number of dimensions
+    ///
+    /// See also: rocrand_set_quasi_random_generator_dimensions()
+    void dimensions(dimensions_num_type value)
+    {
+        rocrand_status status =
+            rocrand_set_quasi_random_generator_dimensions(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \brief Fills \p output with uniformly distributed random integer values.
+    ///
+    /// Generates \p size random integer values uniformly distributed
+    /// on the interval [0, 2^64 - 1], and stores them into the device memory
+    /// referenced by \p output pointer.
+    ///
+    /// \param output - Pointer to device memory to store results
+    /// \param size - Number of values to generate
+    ///
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
+    /// and be large enough to store at least \p size values of \p IntType type.
+    /// * \p size must be a multiple of the engine's number of dimensions.
+    ////
+    /// See also: rocrand_generate()
+    template<class Generator>
+    void operator()(result_type * output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_QUASI_SOBOL64;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
 /// \cond
 template<unsigned int DefaultNumDimensions>
 constexpr typename sobol32_engine<DefaultNumDimensions>::dimensions_num_type
@@ -1648,6 +1808,9 @@ typedef mtgp32_engine<> mtgp32;
 /// \typedef sobol32
 /// \brief Typedef of rocrand_cpp::sobol32_engine PRNG engine with default number of dimensions (1).
 typedef sobol32_engine<> sobol32;
+/// \typedef sobol64
+/// \brief Typedef of rocrand_cpp::sobol64_engine PRNG engine with default number of dimensions (1).
+typedef sobol64_engine<> sobol64;
 
 /// \typedef default_random_engine
 /// \brief Default random engine.

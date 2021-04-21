@@ -36,6 +36,7 @@
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
 #include "rocrand_sobol32.h"
+#include "rocrand_sobol64.h"
 #include "rocrand_mtgp32.h"
 
 #include "rocrand_normal.h"
@@ -496,6 +497,25 @@ float rocrand_log_normal(rocrand_state_sobol32 * state, float mean, float stddev
  */
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_sobol32 * state, double mean, double stddev)
+{
+    double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+    return exp(mean + (stddev * r));
+}
+
+/**
+ * \brief Returns a log-normally distributed \p double value.
+ *
+ * Generates and returns a log-normally distributed \p double value using SOBOL64
+ * generator in \p state, and increments position of the generator by one.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Log-normally distributed \p double value
+ */
+FQUALIFIERS
+double rocrand_log_normal_double(rocrand_state_sobol64 * state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
