@@ -2,6 +2,15 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
+## [Unreleased rocRAND-2.10.10 for ROCm 4.3.0]
+### Added
+- gfx90a support added.
+- gfx1030 support added
+- gfx803 supported re-enabled
+### Fixed
+- Memory leaks in Poisson tests has been fixed.
+- Memory leaks when generator has been created but setting seed/offset/dimensions throws an exception has been fixed.
+
 ## [rocRAND-2.10.9 for ROCm 4.2.0]
 ### Fixed
 - rocRAND benchmark performance drop for xorwow has been fixed for older ROCm builds.
