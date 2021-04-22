@@ -471,7 +471,7 @@ const std::vector<std::string> all_engines = {
     "philox",
     "sobol32",
     // "scrambled_sobol32",
-    // "sobol64",
+    "sobol64",
     // "scrambled_sobol64",
 };
 
