@@ -330,7 +330,7 @@ void init_kernel(rocrand_state_sobol64 * states,
     const unsigned int dimension = hipBlockIdx_y;
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     rocrand_state_sobol64 state;
-    rocrand_init(&directions[dimension * 32], offset + state_id, &state);
+    rocrand_init(&directions[dimension * 64], offset + state_id, &state);
     states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
 }
 
@@ -379,7 +379,7 @@ struct runner<rocrand_state_sobol64>
         HIP_CHECK(hipMalloc((void **)&states, states_size * sizeof(rocrand_state_sobol64)));
 
         unsigned long long int * directions;
-        const size_t size = dimensions * 32 * sizeof(unsigned long long int);
+        const size_t size = dimensions * 64 * sizeof(unsigned long long int);
         HIP_CHECK(hipMalloc((void **)&directions, size));
         HIP_CHECK(hipMemcpy(directions, h_sobol64_direction_vectors, size, hipMemcpyHostToDevice));
 
