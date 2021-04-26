@@ -157,8 +157,8 @@ TEST(rocrand_kernel_sobol64, rocrand)
     HIP_CHECK(hipDeviceSynchronize());
 
     Type * m_vector;
-    HIP_CHECK(hipMalloc(&m_vector, sizeof(Type) * 8 * 32));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(Type) * 8 * 32, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMalloc(&m_vector, sizeof(Type) * 8 * 64));
+    HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(Type) * 8 * 64, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(

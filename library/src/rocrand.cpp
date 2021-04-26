@@ -52,6 +52,10 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
         {
             *generator = new rocrand_sobol32();
         }
+        else if(rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+        {
+            *generator = new rocrand_sobol64();
+        }
         else if(rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
         {
             *generator = new rocrand_mtgp32();
@@ -119,6 +123,12 @@ rocrand_generate(rocrand_generator generator,
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
@@ -160,6 +170,12 @@ rocrand_generate_char(rocrand_generator generator,
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate(output_data, n);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
@@ -204,6 +220,12 @@ rocrand_generate_short(rocrand_generator generator,
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
@@ -247,6 +269,12 @@ rocrand_generate_uniform(rocrand_generator generator,
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_uniform(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
@@ -289,6 +317,12 @@ rocrand_generate_uniform_double(rocrand_generator generator,
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_uniform(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
@@ -330,6 +364,12 @@ rocrand_generate_uniform_half(rocrand_generator generator,
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_uniform(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_uniform(output_data, n);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
@@ -377,6 +417,13 @@ rocrand_generate_normal(rocrand_generator generator,
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_normal(output_data, n,
+                                                          mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_normal(output_data, n,
                                                           mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
@@ -427,6 +474,13 @@ rocrand_generate_normal_double(rocrand_generator generator,
         return rocrand_sobol32_generator->generate_normal(output_data, n,
                                                           mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_normal(output_data, n,
+                                                          mean, stddev);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
@@ -473,6 +527,13 @@ rocrand_generate_normal_half(rocrand_generator generator,
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_normal(output_data, n,
+                                                          mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_normal(output_data, n,
                                                           mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
@@ -524,6 +585,13 @@ rocrand_generate_log_normal(rocrand_generator generator,
         return rocrand_sobol32_generator->generate_log_normal(output_data, n,
                                                               mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_log_normal(output_data, n,
+                                                              mean, stddev);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
@@ -572,6 +640,13 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
         return rocrand_sobol32_generator->generate_log_normal(output_data, n,
                                                               mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_log_normal(output_data, n,
+                                                              mean, stddev);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         rocrand_mtgp32 * rocrand_mtgp32_generator =
@@ -618,6 +693,13 @@ rocrand_generate_log_normal_half(rocrand_generator generator,
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_log_normal(output_data, n,
+                                                              mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_log_normal(output_data, n,
                                                               mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
@@ -671,6 +753,13 @@ rocrand_generate_poisson(rocrand_generator generator,
         rocrand_sobol32 * rocrand_sobol32_generator =
             static_cast<rocrand_sobol32 *>(generator);
         return rocrand_sobol32_generator->generate_poisson(output_data, n,
+                                                           lambda);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        rocrand_sobol64 * rocrand_sobol64_generator =
+            static_cast<rocrand_sobol64 *>(generator);
+        return rocrand_sobol64_generator->generate_poisson(output_data, n,
                                                            lambda);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
@@ -740,6 +829,11 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
     else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         static_cast<rocrand_sobol32 *>(generator)->set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        static_cast<rocrand_sobol64 *>(generator)->set_stream(stream);
         return ROCRAND_STATUS_SUCCESS;
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
@@ -813,6 +907,11 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
         static_cast<rocrand_sobol32 *>(generator)->set_offset(offset);
         return ROCRAND_STATUS_SUCCESS;
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        static_cast<rocrand_sobol64 *>(generator)->set_offset(offset);
+        return ROCRAND_STATUS_SUCCESS;
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         // Can't set offset for MTGP32
@@ -834,6 +933,12 @@ rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
     {
         return static_cast<rocrand_sobol32 *>(generator)->set_dimensions(dimensions);
     }
+
+    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        return static_cast<rocrand_sobol64 *>(generator)->set_dimensions(dimensions);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
