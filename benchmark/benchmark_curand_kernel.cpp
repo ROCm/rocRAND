@@ -221,20 +221,6 @@ void init_kernel(curandStateSobol32_t * states,
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
-template<typename Directions>
-__global__
-__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
-void init_kernel(curandStateSobol64_t * states,
-                 const Directions directions,
-                 const unsigned long long offset)
-{
-    const unsigned int dimension = blockIdx.y;
-    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    curandStateSobol64_t state;
-    curand_init(directions[dimension], offset + state_id, &state);
-    states[gridDim.x * blockDim.x * dimension + state_id] = state;
-}
-
 template<typename T, typename GenerateFunc, typename Extra>
 __global__
 __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
@@ -312,6 +298,47 @@ struct runner<curandStateSobol32_t>
         generate_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, data, size / dimensions, generate_func, extra);
     }
 };
+
+template<typename Directions>
+__global__
+__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
+void init_kernel(curandStateSobol64_t * states,
+                 const Directions directions,
+                 const unsigned long long offset)
+{
+    const unsigned int dimension = blockIdx.y;
+    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
+    curandStateSobol64_t state;
+    curand_init(directions[dimension], offset + state_id, &state);
+    states[gridDim.x * blockDim.x * dimension + state_id] = state;
+}
+
+template<typename T, typename GenerateFunc, typename Extra>
+__global__
+__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE, CUPRAND_DEFAULT_MIN_WARPS_PER_EU)
+void generate_kernel(curandStateSobol64_t * states,
+                     T * data,
+                     const size_t size,
+                     GenerateFunc generate_func,
+                     const Extra extra)
+{
+    const unsigned int dimension = blockIdx.y;
+    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride = gridDim.x * blockDim.x;
+
+    curandStateSobol64_t state = states[gridDim.x * blockDim.x * dimension + state_id];
+    const unsigned int offset = dimension * size;
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        data[offset + index] = generate_func(&state, extra);
+        skipahead(stride - 1, &state);
+        index += stride;
+    }
+    state = states[gridDim.x * blockDim.x * dimension + state_id];
+    skipahead(static_cast<unsigned int>(size), &state);
+    states[gridDim.x * blockDim.x * dimension + state_id] = state;
+}
 
 template<>
 struct runner<curandStateSobol64_t>
