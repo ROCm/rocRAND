@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <chrono>
 #include <numeric>
 #include <utility>
 #include <algorithm>
@@ -62,6 +61,7 @@ using generate_func_type = std::function<rocrand_status(rocrand_generator, T *, 
 template<typename T>
 void run_benchmark(const cli::Parser& parser,
                    const rng_type_t rng_type,
+                   hipStream_t stream,
                    generate_func_type<T> generate_func)
 {
     const size_t size0 = parser.get<size_t>("size");
@@ -81,6 +81,8 @@ void run_benchmark(const cli::Parser& parser,
         ROCRAND_CHECK(status);
     }
 
+    ROCRAND_CHECK(rocrand_set_stream(generator, stream));
+
     // Warm-up
     for (size_t i = 0; i < 5; i++)
     {
@@ -89,27 +91,33 @@ void run_benchmark(const cli::Parser& parser,
     HIP_CHECK(hipDeviceSynchronize());
 
     // Measurement
-    auto start = std::chrono::high_resolution_clock::now();
+    hipEvent_t start, stop;
+    HIP_CHECK(hipEventCreate(&start));
+    HIP_CHECK(hipEventCreate(&stop));
+    HIP_CHECK(hipEventRecord(start, stream));
     for (size_t i = 0; i < trials; i++)
     {
         ROCRAND_CHECK(generate_func(generator, data, size));
     }
-    HIP_CHECK(hipDeviceSynchronize());
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
+    HIP_CHECK(hipEventRecord(stop, stream));
+    HIP_CHECK(hipEventSynchronize(stop));
+    float elapsed;
+    HIP_CHECK(hipEventElapsedTime(&elapsed, start, stop));
+    HIP_CHECK(hipEventDestroy(start));
+    HIP_CHECK(hipEventDestroy(stop));
 
     std::cout << std::fixed << std::setprecision(3)
               << "      "
               << "Throughput = "
               << std::setw(8) << (trials * size * sizeof(T)) /
-                    (elapsed.count() / 1e3 * (1 << 30))
+                    (elapsed / 1e3 * (1 << 30))
               << " GB/s, Samples = "
               << std::setw(8) << (trials * size) /
-                    (elapsed.count() / 1e3 * (1 << 30))
+                    (elapsed / 1e3 * (1 << 30))
               << " GSample/s, AvgTime (1 trial) = "
-              << std::setw(8) << elapsed.count() / trials
+              << std::setw(8) << elapsed / trials
               << " ms, Time (all) = "
-              << std::setw(8) << elapsed.count()
+              << std::setw(8) << elapsed
               << " ms, Size = " << size
               << std::endl;
 
@@ -119,11 +127,12 @@ void run_benchmark(const cli::Parser& parser,
 
 void run_benchmarks(const cli::Parser& parser,
                     const rng_type_t rng_type,
-                    const std::string& distribution)
+                    const std::string& distribution,
+                    hipStream_t stream)
 {
     if (distribution == "uniform-uint")
     {
-        run_benchmark<unsigned int>(parser, rng_type,
+        run_benchmark<unsigned int>(parser, rng_type, stream,
             [](rocrand_generator gen, unsigned int * data, size_t size) {
                 return rocrand_generate(gen, data, size);
             }
@@ -131,7 +140,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "uniform-uchar")
     {
-        run_benchmark<unsigned char>(parser, rng_type,
+        run_benchmark<unsigned char>(parser, rng_type, stream,
             [](rocrand_generator gen, unsigned char * data, size_t size) {
                 return rocrand_generate_char(gen, data, size);
             }
@@ -139,7 +148,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "uniform-ushort")
     {
-        run_benchmark<unsigned short>(parser, rng_type,
+        run_benchmark<unsigned short>(parser, rng_type, stream,
             [](rocrand_generator gen, unsigned short * data, size_t size) {
                 return rocrand_generate_short(gen, data, size);
             }
@@ -147,7 +156,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "uniform-half")
     {
-        run_benchmark<__half>(parser, rng_type,
+        run_benchmark<__half>(parser, rng_type, stream,
             [](rocrand_generator gen, __half * data, size_t size) {
                 return rocrand_generate_uniform_half(gen, data, size);
             }
@@ -155,7 +164,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "uniform-float")
     {
-        run_benchmark<float>(parser, rng_type,
+        run_benchmark<float>(parser, rng_type, stream,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_uniform(gen, data, size);
             }
@@ -163,7 +172,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "uniform-double")
     {
-        run_benchmark<double>(parser, rng_type,
+        run_benchmark<double>(parser, rng_type, stream,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_uniform_double(gen, data, size);
             }
@@ -171,7 +180,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "normal-half")
     {
-        run_benchmark<__half>(parser, rng_type,
+        run_benchmark<__half>(parser, rng_type, stream,
             [](rocrand_generator gen, __half * data, size_t size) {
                 return rocrand_generate_normal_half(gen, data, size, 0.0f, 1.0f);
             }
@@ -179,7 +188,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "normal-float")
     {
-        run_benchmark<float>(parser, rng_type,
+        run_benchmark<float>(parser, rng_type, stream,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
             }
@@ -187,7 +196,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "normal-double")
     {
-        run_benchmark<double>(parser, rng_type,
+        run_benchmark<double>(parser, rng_type, stream,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
             }
@@ -195,7 +204,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "log-normal-half")
     {
-        run_benchmark<__half>(parser, rng_type,
+        run_benchmark<__half>(parser, rng_type, stream,
             [](rocrand_generator gen, __half * data, size_t size) {
                 return rocrand_generate_log_normal_half(gen, data, size, 0.0f, 1.0f);
             }
@@ -203,7 +212,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "log-normal-float")
     {
-        run_benchmark<float>(parser, rng_type,
+        run_benchmark<float>(parser, rng_type, stream,
             [](rocrand_generator gen, float * data, size_t size) {
                 return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
             }
@@ -211,7 +220,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "log-normal-double")
     {
-        run_benchmark<double>(parser, rng_type,
+        run_benchmark<double>(parser, rng_type, stream,
             [](rocrand_generator gen, double * data, size_t size) {
                 return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
             }
@@ -224,7 +233,7 @@ void run_benchmarks(const cli::Parser& parser,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_benchmark<unsigned int>(parser, rng_type,
+            run_benchmark<unsigned int>(parser, rng_type, stream,
                 [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
                     return rocrand_generate_poisson(gen, data, size, lambda);
                 }
@@ -335,6 +344,9 @@ int main(int argc, char *argv[])
     std::cout << "Device: " << props.name;
     std::cout << std::endl << std::endl;
 
+    hipStream_t stream;
+    HIP_CHECK(hipStreamCreate(&stream));
+
     for (auto engine : engines)
     {
         rng_type_t rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
@@ -359,10 +371,12 @@ int main(int argc, char *argv[])
         for (auto distribution : distributions)
         {
             std::cout << "  " << distribution << ":" << std::endl;
-            run_benchmarks(parser, rng_type, distribution);
+            run_benchmarks(parser, rng_type, distribution, stream);
         }
         std::cout << std::endl;
     }
+
+    HIP_CHECK(hipStreamDestroy(stream));
 
     return 0;
 }
