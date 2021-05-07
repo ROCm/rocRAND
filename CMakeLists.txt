@@ -116,7 +116,7 @@ option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 if(BUILD_ADDRESS_SANITIZER AND BUILD_SHARED_LIBS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
-  add_link_options(-fsanitize=address -fuse-ld=lld)
+  add_link_options(-fuse-ld=lld)
 endif()
 
 # Set version variables
