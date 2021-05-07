@@ -33,28 +33,17 @@ configure_file(
     @ONLY
 )
 
-# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
-# for nvcc if cmake version is less than 3.9.3
-if((HIP_COMPILER STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
-    CUDA_INCLUDE_DIRECTORIES(
-        "${PROJECT_BINARY_DIR}/library/include/"
-        "${PROJECT_SOURCE_DIR}/library/include/"
-    )
-endif()
-
 include(CMakePackageConfigHelpers)
+
+add_library(rocrand ${rocRAND_SRCS})
 
 # Build library
 if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
-        PROPERTIES
-            CUDA_SOURCE_PROPERTY_FORMAT OBJ
+        PROPERTIES LANGUAGE CUDA
     )
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(rocrand ${rocRAND_SRCS})
 else()
-    add_library(rocrand ${rocRAND_SRCS})
-
     # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
     if(CXX_VERSION_STRING MATCHES "clang")
         target_link_libraries(rocrand PRIVATE hip::device)
@@ -157,15 +146,10 @@ configure_file(
 
 # Build
 if(HIP_COMPILER STREQUAL "nvcc")
-    set_source_files_properties(${hipRAND_SRCS}
-        PROPERTIES
-            CUDA_SOURCE_PROPERTY_FORMAT OBJ
-    )
+    set_source_files_properties(${hipRAND_SRCS} PROPERTIES LANGUAGE CUDA)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(hiprand ${hipRAND_SRCS})
-else()
-    add_library(hiprand ${hipRAND_SRCS})
 endif()
+add_library(hiprand ${hipRAND_SRCS})
 target_include_directories(hiprand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
@@ -252,18 +236,7 @@ endif()
 
 # Package (make package)
 # Generates .deb, .zip., and .tar.gz packages
-find_program(RPMBUILD_EXE rpmbuild)
-find_program(DPKG_EXE dpkg)
-set(CPACK_GENERATOR "TGZ;ZIP")
-if(EXISTS ${RPMBUILD_EXE})
-    list(APPEND CPACK_GENERATOR "RPM")
-endif()
-if(EXISTS ${DPKG_EXE})
-    list(APPEND CPACK_GENERATOR "DEB")
-endif()
-set(CPACK_PACKAGE_NAME "rocrand")
-set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "rocRAND Maintainer <rocrand-maintaner@amd.com>")
+
 if(HIP_RUNTIME STREQUAL "ROCclr")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)")
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-rocclr >= 3.5.0")
@@ -271,63 +244,11 @@ elseif(HIP_RUNTIME STREQUAL "cuda")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-nvcc (>= 3.5.0)")
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 3.5.0")
 endif()
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers.")
-set(CPACK_SET_DESTDIR ON)
-set(CPACK_RPM_PACKAGE_RELOCATABLE OFF)
-set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF CACHE BOOL "")
-set(CPACK_PACKAGE_VERSION ${rocRAND_VERSION_MAJOR}.${rocRAND_VERSION_MINOR}.${rocRAND_VERSION_PATCH})
-set(CPACK_PACKAGE_VERSION_MAJOR ${rocRAND_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${rocRAND_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${rocRAND_VERSION_PATCH})
 
-if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
-  set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
-endif()
-
-set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
-set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
-
-# Below block of code is to support older version of rocm-cmake
-# it checks for occurance of '-' in TWEAK and returns the substring after the last '-'
-if (rocRAND_VERSION_TWEAK STREQUAL "" OR NOT DEFINED rocRAND_VERSION_TWEAK)
-  set(rocRAND_VERSION_TWEAK "local")
-else ()
-  string(FIND ${rocRAND_VERSION_TWEAK} "-" DASH_POS REVERSE)
-  set(MINUS_ONE -1)
-  if (NOT DASH_POS EQUAL MINUS_ONE)
-    math(EXPR DASH_POS "${DASH_POS}+1")
-    string(SUBSTRING ${PROJECT_VERSION_TWEAK} ${DASH_POS} 7 PARSED_GIT_TAG)
-    set(rocRAND_VERSION_TWEAK ${PARSED_GIT_TAG})
-  endif()
-endif()
-
-set(DEBIAN_VERSION ${rocRAND_VERSION_TWEAK})
-if(DEFINED ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
-  set(DEBIAN_VERSION $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
-endif()
-
-set(RPM_RELEASE ${rocRAND_VERSION_TWEAK})
-if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
-  set(RPM_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
-endif()
-
-# '%{?dist}' breaks manual builds on debian systems due to empty Provides
-execute_process(COMMAND rpm --eval %{?dist}
-                RESULT_VARIABLE PROC_RESULT
-                OUTPUT_VARIABLE EVAL_RESULT
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-if (PROC_RESULT EQUAL "0" AND NOT EVAL_RESULT STREQUAL "")
-  string (APPEND RPM_RELEASE "%{?dist}")
-endif()
-set(CPACK_DEBIAN_PACKAGE_RELEASE ${DEBIAN_VERSION})
-set(CPACK_RPM_PACKAGE_RELEASE ${RPM_RELEASE})
-
-package_set_postinst_prerm(
-    "hiprand;rocrand"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/include;${CMAKE_INSTALL_PREFIX}/rocrand/include"
-    "${hiprand_SOVERSION};${rocrand_SOVERSION}"
+rocm_create_package(
+    NAME "rocrand;hiprand"
+    DESCRIPTION "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers."
+    MAINTAINER "rocRAND Maintainer <rocrand-maintaner@amd.com>"
+    LDCONFIG
 )
 
-# Include CPack to introduce the appropriate targets
-include(CPack)
