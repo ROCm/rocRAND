@@ -39,7 +39,7 @@ namespace detail {
 
     template<unsigned int OutputPerThread, class T, class Distribution>
     __global__
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(T * data, const size_t n,
                          const unsigned int * direction_vectors,
                          const unsigned int offset,

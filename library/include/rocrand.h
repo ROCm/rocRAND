@@ -50,7 +50,6 @@ typedef __half half;
 /// \endcond
 
 #define ROCRAND_DEFAULT_MAX_BLOCK_SIZE 256
-#define ROCRAND_DEFAULT_MIN_WARPS_PER_EU 1
 
 #if defined(__cplusplus)
 extern "C" {

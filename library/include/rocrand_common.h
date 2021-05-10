@@ -47,7 +47,8 @@
 namespace rocrand_device {
 namespace detail {
 
-  #if ( defined(__gfx801__) || \
+  #if ( defined(__HIP_PLATFORM_NVCC__) || \
+        defined(__gfx801__) || \
         defined(__gfx802__) || \
         defined(__gfx803__) || \
         defined(__gfx810__) || \
