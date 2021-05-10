@@ -32,7 +32,8 @@
 #include <rocrand.h>
 #include <rocrand_kernel.h>
 #include <rocrand_mtgp32_11213.h>
-#include <rocrand_sobol_precomputed.h>
+#include <rocrand_sobol32_precomputed.h>
+#include <rocrand_sobol64_precomputed.h>
 
 #define HIP_CHECK(condition)         \
   {                                  \
