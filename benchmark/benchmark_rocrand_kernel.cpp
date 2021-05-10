@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <vector>
 #include <string>
+#include <chrono>
 #include <numeric>
 #include <utility>
 #include <algorithm>
@@ -133,7 +134,6 @@ struct runner
     template<typename T, typename GenerateFunc, typename Extra>
     void generate(const size_t blocks,
                   const size_t threads,
-                  hipStream_t stream,
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
@@ -141,7 +141,7 @@ struct runner
     {
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(generate_kernel),
-            dim3(blocks), dim3(threads), 0, stream,
+            dim3(blocks), dim3(threads), 0, 0,
             states, data, size, generate_func, extra
         );
     }
@@ -207,7 +207,6 @@ struct runner<rocrand_state_mtgp32>
     template<typename T, typename GenerateFunc, typename Extra>
     void generate(const size_t blocks,
                   const size_t /* threads */,
-                  hipStream_t stream,
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
@@ -215,7 +214,7 @@ struct runner<rocrand_state_mtgp32>
     {
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(generate_kernel),
-            dim3(std::min((size_t)200, blocks)), dim3(256), 0, stream,
+            dim3(std::min((size_t)200, blocks)), dim3(256), 0, 0,
             states, data, size, generate_func, extra
         );
     }
@@ -305,7 +304,6 @@ struct runner<rocrand_state_sobol32>
     template<typename T, typename GenerateFunc, typename Extra>
     void generate(const size_t blocks,
                   const size_t threads,
-                  hipStream_t stream,
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
@@ -314,7 +312,7 @@ struct runner<rocrand_state_sobol32>
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(generate_kernel),
-            dim3(blocks_x, dimensions), dim3(threads), 0, stream,
+            dim3(blocks_x, dimensions), dim3(threads), 0, 0,
             states, data, size / dimensions, generate_func, extra
         );
     }
@@ -322,7 +320,6 @@ struct runner<rocrand_state_sobol32>
 
 template<typename T, typename GeneratorState, typename GenerateFunc, typename Extra>
 void run_benchmark(const cli::Parser& parser,
-                   hipStream_t stream,
                    const GenerateFunc& generate_func,
                    const Extra extra)
 {
@@ -341,40 +338,35 @@ void run_benchmark(const cli::Parser& parser,
     // Warm-up
     for (size_t i = 0; i < 5; i++)
     {
-        r.generate(blocks, threads, stream, data, size, generate_func, extra);
+        r.generate(blocks, threads, data, size, generate_func, extra);
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
     }
     HIP_CHECK(hipDeviceSynchronize());
 
     // Measurement
-    hipEvent_t start, stop;
-    HIP_CHECK(hipEventCreate(&start));
-    HIP_CHECK(hipEventCreate(&stop));
-    HIP_CHECK(hipEventRecord(start, stream));
+    auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < trials; i++)
     {
-        r.generate(blocks, threads, stream, data, size, generate_func, extra);
+        r.generate(blocks, threads, data, size, generate_func, extra);
     }
-    HIP_CHECK(hipEventRecord(stop, stream));
-    HIP_CHECK(hipEventSynchronize(stop));
-    float elapsed;
-    HIP_CHECK(hipEventElapsedTime(&elapsed, start, stop));
-    HIP_CHECK(hipEventDestroy(start));
-    HIP_CHECK(hipEventDestroy(stop));
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
 
     std::cout << std::fixed << std::setprecision(3)
               << "      "
               << "Throughput = "
               << std::setw(8) << (trials * size * sizeof(T)) /
-                    (elapsed / 1e3 * (1 << 30))
+                    (elapsed.count() / 1e3 * (1 << 30))
               << " GB/s, Samples = "
               << std::setw(8) << (trials * size) /
-                    (elapsed / 1e3 * (1 << 30))
+                    (elapsed.count() / 1e3 * (1 << 30))
               << " GSample/s, AvgTime (1 trial) = "
-              << std::setw(8) << elapsed / trials
+              << std::setw(8) << elapsed.count() / trials
               << " ms, Time (all) = "
-              << std::setw(8) << elapsed
+              << std::setw(8) << elapsed.count()
               << " ms, Size = " << size
               << std::endl;
 
@@ -383,12 +375,11 @@ void run_benchmark(const cli::Parser& parser,
 
 template<typename GeneratorState>
 void run_benchmarks(const cli::Parser& parser,
-                    const std::string& distribution,
-                    hipStream_t stream)
+                    const std::string& distribution)
 {
     if (distribution == "uniform-uint")
     {
-        run_benchmark<unsigned int, GeneratorState>(parser, stream,
+        run_benchmark<unsigned int, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand(state);
             }, 0
@@ -396,7 +387,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "uniform-float")
     {
-        run_benchmark<float, GeneratorState>(parser, stream,
+        run_benchmark<float, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_uniform(state);
             }, 0
@@ -404,7 +395,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "uniform-double")
     {
-        run_benchmark<double, GeneratorState>(parser, stream,
+        run_benchmark<double, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_uniform_double(state);
             }, 0
@@ -412,7 +403,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "normal-float")
     {
-        run_benchmark<float, GeneratorState>(parser, stream,
+        run_benchmark<float, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_normal(state);
             }, 0
@@ -420,7 +411,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "normal-double")
     {
-        run_benchmark<double, GeneratorState>(parser, stream,
+        run_benchmark<double, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_normal_double(state);
             }, 0
@@ -428,7 +419,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "log-normal-float")
     {
-        run_benchmark<float, GeneratorState>(parser, stream,
+        run_benchmark<float, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_log_normal(state, 0.0f, 1.0f);
             }, 0
@@ -436,7 +427,7 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "log-normal-double")
     {
-        run_benchmark<double, GeneratorState>(parser, stream,
+        run_benchmark<double, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, int) {
                 return rocrand_log_normal_double(state, 0.0, 1.0);
             }, 0
@@ -449,7 +440,7 @@ void run_benchmarks(const cli::Parser& parser,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_benchmark<unsigned int, GeneratorState>(parser, stream,
+            run_benchmark<unsigned int, GeneratorState>(parser,
                 [] __device__ (GeneratorState * state, double lambda) {
                     return rocrand_poisson(state, lambda);
                 }, lambda
@@ -465,7 +456,7 @@ void run_benchmarks(const cli::Parser& parser,
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
             rocrand_discrete_distribution discrete_distribution;
             ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
-            run_benchmark<unsigned int, GeneratorState>(parser, stream,
+            run_benchmark<unsigned int, GeneratorState>(parser,
                 [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
                     return rocrand_discrete(state, discrete_distribution);
                 }, discrete_distribution
@@ -490,7 +481,7 @@ void run_benchmarks(const cli::Parser& parser,
 
         rocrand_discrete_distribution discrete_distribution;
         ROCRAND_CHECK(rocrand_create_discrete_distribution(probabilities.data(), probabilities.size(), offset, &discrete_distribution));
-        run_benchmark<unsigned int, GeneratorState>(parser, stream,
+        run_benchmark<unsigned int, GeneratorState>(parser,
             [] __device__ (GeneratorState * state, rocrand_discrete_distribution discrete_distribution) {
                 return rocrand_discrete(state, discrete_distribution);
             }, discrete_distribution
@@ -604,9 +595,6 @@ int main(int argc, char *argv[])
     std::cout << "Device: " << props.name;
     std::cout << std::endl << std::endl;
 
-    hipStream_t stream;
-    HIP_CHECK(hipStreamCreate(&stream));
-
     for (auto engine : engines)
     {
         std::cout << engine << ":" << std::endl;
@@ -616,29 +604,27 @@ int main(int argc, char *argv[])
             const std::string plot_name = engine + "-" + distribution;
             if (engine == "xorwow")
             {
-                run_benchmarks<rocrand_state_xorwow>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_xorwow>(parser, distribution);
             }
             else if (engine == "mrg32k3a")
             {
-                run_benchmarks<rocrand_state_mrg32k3a>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_mrg32k3a>(parser, distribution);
             }
             else if (engine == "philox")
             {
-                run_benchmarks<rocrand_state_philox4x32_10>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_philox4x32_10>(parser, distribution);
             }
             else if (engine == "sobol32")
             {
-                run_benchmarks<rocrand_state_sobol32>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_sobol32>(parser, distribution);
             }
             else if (engine == "mtgp32")
             {
-                run_benchmarks<rocrand_state_mtgp32>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_mtgp32>(parser, distribution);
             }
         }
         std::cout << std::endl;
     }
-
-    HIP_CHECK(hipStreamDestroy(stream));
 
     return 0;
 }
