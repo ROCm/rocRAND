@@ -28,7 +28,7 @@
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand_kernel.h>
-#include <rocrand_sobol_precomputed.h>
+#include <rocrand_sobol64_precomputed.h>
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
@@ -204,7 +204,7 @@ TEST(rocrand_kernel_sobol64, rocrand_uniform)
     HIP_CHECK(hipMalloc(&m_vector, sizeof(DirectionVectorType) * 8 * 64));
     HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(DirectionVectorType) * 8 * 64, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
-    
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
         dim3(8), dim3(32), 0, 0,
