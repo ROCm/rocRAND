@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +25,10 @@ if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL 
     find_package(hip QUIET CONFIG PATHS /opt/rocm)
     if(NOT hip_FOUND)
         find_package(HIP REQUIRED)
-    endif()
-    if((HIP_COMPILER STREQUAL "hcc") OR (HIP_COMPILER STREQUAL "clang"))
-       # TODO: The HIP package on NVIDIA platform is incorrect at few versions
-       set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
+        if((HIP_COMPILER STREQUAL "hcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
+           # TODO: The HIP package on NVIDIA platform is incorrect at few versions
+           set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
+        endif()
     endif()
 else()
   find_package(hip REQUIRED CONFIG PATHS /opt/rocm)

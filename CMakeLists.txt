@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
 # Install prefix
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
@@ -40,15 +40,6 @@ list(APPEND CMAKE_MODULE_PATH
 # rocRAND project
 #
 project(rocRAND CXX)
-
-# rocm-cmake contains common cmake code for rocm projects to help
-# setup and install
-find_package(ROCM CONFIG)
-include(ROCMSetupVersion)
-include(ROCMCreatePackage)
-include(ROCMInstallTargets)
-include(ROCMPackageConfigHelpers)
-include(ROCMInstallSymlinks)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
