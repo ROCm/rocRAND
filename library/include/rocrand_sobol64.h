@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -269,4 +269,3 @@ void skipahead(unsigned int offset, rocrand_state_sobol64 * state)
 /** @} */ // end of group rocranddevice
 
 #endif // ROCRAND_sobol64_H_
-
