@@ -2,7 +2,7 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## [Unreleased rocRAND-2.10.10 for ROCm 4.3.0]
+## [rocRAND-2.10.10 for ROCm 4.3.0]
 ### Added
 - gfx90a support added.
 - gfx1030 support added
