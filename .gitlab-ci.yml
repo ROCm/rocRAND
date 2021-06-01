@@ -30,7 +30,7 @@ variables:
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_LATEST_PATH: "/opt/rocm-4.1.0/"
+  ROCM_LATEST_PATH: "/opt/rocm-4.2.0/"
 
 # ROCm
 
