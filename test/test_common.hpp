@@ -55,7 +55,16 @@ bool supports_hmm()
 
 bool use_hmm()
 {
-    return std::getenv("ROCRAND_USE_HMM");
+    if (getenv("ROCRAND_USE_HMM") == nullptr)
+    {
+        return false;
+    }
+
+    if (strcmp(getenv("ROCRAND_USE_HMM"), "1") == 0)
+    {
+        return true;
+    }
+    return false;
 }
 
 // Helper for HMM allocations: if device supports managedMemory, and HMM is requested through
