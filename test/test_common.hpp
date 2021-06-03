@@ -67,8 +67,8 @@ bool use_hmm()
     return false;
 }
 
-// Helper for HMM allocations: if device supports managedMemory, and HMM is requested through
-// ROCRAND_MALLOC_MANAGED environment variable
+// Helper for HMM allocations: if HMM is requested through
+// setting environment variable ROCRAND_USE_HMM=1
 template <class T>
 hipError_t hipMallocHelper(T** devPtr, size_t size)
 {
