@@ -27,8 +27,7 @@
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 using rocrand_device::detail::mad_u64_u32;
 
@@ -57,10 +56,10 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
     unsigned int * y;
     unsigned long long * z;
     unsigned long long * r;
-    HIP_CHECK(hipMalloc((void **)&x, size * sizeof(unsigned int)));
-    HIP_CHECK(hipMalloc((void **)&y, size * sizeof(unsigned int)));
-    HIP_CHECK(hipMalloc((void **)&z, size * sizeof(unsigned long long)));
-    HIP_CHECK(hipMalloc((void **)&r, size * sizeof(unsigned long long)));
+    HIP_CHECK(hipMallocHelper((void **)&x, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&y, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&z, size * sizeof(unsigned long long)));
+    HIP_CHECK(hipMallocHelper((void **)&r, size * sizeof(unsigned long long)));
 
     unsigned int h_x[size];
     unsigned int h_y[size];
@@ -106,7 +105,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_mrg32k3a g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -131,7 +130,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float * data;
-    hipMalloc(&data, sizeof(float) * size);
+    hipMallocHelper(&data, sizeof(float) * size);
 
     rocrand_mrg32k3a g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -158,7 +157,7 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
 {
     const size_t size = 1314;
     float * data;
-    hipMalloc(&data, sizeof(float) * size);
+    hipMallocHelper(&data, sizeof(float) * size);
 
     rocrand_mrg32k3a g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
@@ -192,7 +191,7 @@ TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_mrg32k3a g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -230,7 +229,7 @@ TEST(rocrand_mrg32k3a_prng_tests, state_progress_test)
     // Device data
     const size_t size = 1025;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
     rocrand_mrg32k3a g0;
@@ -272,7 +271,7 @@ TEST(rocrand_mrg32k3a_prng_tests, same_seed_test)
     // Device side data
     const size_t size = 1024;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
     rocrand_mrg32k3a g0, g1;
@@ -316,7 +315,7 @@ TEST(rocrand_mrg32k3a_prng_tests, different_seed_test)
     // Device side data
     const size_t size = 1024;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper((void**)&data, sizeof(unsigned int) * size));
 
     // Generators
     rocrand_mrg32k3a g0, g1;

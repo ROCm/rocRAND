@@ -30,8 +30,7 @@
 #include <rocrand_kernel.h>
 #include <rocrand_sobol_precomputed.h>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 template <class GeneratorState>
 __global__
@@ -152,11 +151,11 @@ TEST(rocrand_kernel_sobol32, rocrand)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int * m_vector;
-    HIP_CHECK(hipMalloc(&m_vector, sizeof(unsigned int) * 8 * 32));
+    HIP_CHECK(hipMallocHelper(&m_vector, sizeof(unsigned int) * 8 * 32));
     HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -194,11 +193,11 @@ TEST(rocrand_kernel_sobol32, rocrand_uniform)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int * m_vector;
-    HIP_CHECK(hipMalloc(&m_vector, sizeof(unsigned int) * 8 * 32));
+    HIP_CHECK(hipMallocHelper(&m_vector, sizeof(unsigned int) * 8 * 32));
     HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -236,11 +235,11 @@ TEST(rocrand_kernel_sobol32, rocrand_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int * m_vector;
-    HIP_CHECK(hipMalloc(&m_vector, sizeof(unsigned int) * 8 * 32));
+    HIP_CHECK(hipMallocHelper(&m_vector, sizeof(unsigned int) * 8 * 32));
     HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -286,11 +285,11 @@ TEST(rocrand_kernel_sobol32, rocrand_log_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int * m_vector;
-    HIP_CHECK(hipMalloc(&m_vector, sizeof(unsigned int) * 8 * 32));
+    HIP_CHECK(hipMallocHelper(&m_vector, sizeof(unsigned int) * 8 * 32));
     HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -343,13 +342,13 @@ TEST_P(rocrand_kernel_sobol32_poisson, rocrand_poisson)
     const double lambda = GetParam();
 
     unsigned int * m_vector;
-    HIP_CHECK(hipMalloc(&m_vector, sizeof(unsigned int) * 8 * 32));
+    HIP_CHECK(hipMallocHelper(&m_vector, sizeof(unsigned int) * 8 * 32));
     HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
