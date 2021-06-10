@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 
 #include <hip/hip_runtime.h>
 #include <rocrand.h>
-#include <rocrand_sobol_precomputed.h>
+#include <rocrand_sobol32_precomputed.h>
 
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>

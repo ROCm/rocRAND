@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -196,8 +196,9 @@ struct sobol_normal_distribution<float>
     sobol_normal_distribution(float mean, float stddev)
         : mean(mean), stddev(stddev) {}
 
+    template<class DirectionVectorType>
     __host__ __device__
-    float operator()(const unsigned int x) const
+    float operator()(const DirectionVectorType x) const
     {
         float v = rocrand_device::detail::normal_distribution(x);
         return mean + v * stddev;
@@ -214,8 +215,9 @@ struct sobol_normal_distribution<double>
     sobol_normal_distribution(double mean, double stddev)
         : mean(mean), stddev(stddev) {}
 
+    template<class DirectionVectorType>
     __host__ __device__
-    double operator()(const unsigned int x) const
+    double operator()(const DirectionVectorType x) const
     {
         double v = rocrand_device::detail::normal_distribution_double(x);
         return mean + v * stddev;
@@ -232,8 +234,9 @@ struct sobol_normal_distribution<__half>
     sobol_normal_distribution(__half mean, __half stddev)
         : mean(mean), stddev(stddev) {}
 
+    template<class DirectionVectorType>
     __host__ __device__
-    __half operator()(const unsigned int x) const
+    __half operator()(const DirectionVectorType x) const
     {
         float v = rocrand_device::detail::normal_distribution(x);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)

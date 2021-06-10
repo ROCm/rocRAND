@@ -1,4 +1,4 @@
-!! Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+!! Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 !!
 !! Permission is hereby granted, free of charge, to any person obtaining a copy
 !! of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ module rocrand_m
     integer, public :: ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
     integer, public :: ROCRAND_RNG_QUASI_DEFAULT = 500
     integer, public :: ROCRAND_RNG_QUASI_SOBOL32 = 501
+    integer, public :: HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504
 
     integer, public :: ROCRAND_STATUS_SUCCESS = 0
     integer, public :: ROCRAND_STATUS_VERSION_MISMATCH  = 100

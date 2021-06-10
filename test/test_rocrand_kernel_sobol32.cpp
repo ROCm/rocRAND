@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,14 +28,14 @@
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand_kernel.h>
-#include <rocrand_sobol_precomputed.h>
+#include <rocrand_sobol32_precomputed.h>
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(32, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(32)
 void rocrand_init_kernel(GeneratorState * states,
                          const size_t states_size,
                          unsigned int * vectors,
@@ -52,7 +52,7 @@ void rocrand_init_kernel(GeneratorState * states,
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(32, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(32)
 void rocrand_kernel(unsigned int * output, unsigned int * vectors, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -70,7 +70,7 @@ void rocrand_kernel(unsigned int * output, unsigned int * vectors, const size_t 
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(32, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(32)
 void rocrand_uniform_kernel(float * output, unsigned int * vectors, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -88,7 +88,7 @@ void rocrand_uniform_kernel(float * output, unsigned int * vectors, const size_t
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(32, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(32)
 void rocrand_normal_kernel(float * output, unsigned int * vectors, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -106,7 +106,7 @@ void rocrand_normal_kernel(float * output, unsigned int * vectors, const size_t 
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(32, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(32)
 void rocrand_log_normal_kernel(float * output, unsigned int * vectors, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -124,7 +124,7 @@ void rocrand_log_normal_kernel(float * output, unsigned int * vectors, const siz
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(32, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(32)
 void rocrand_poisson_kernel(unsigned int * output, unsigned int * vectors, const size_t size, double lambda)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;

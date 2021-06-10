@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,7 @@
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
 #include "rocrand_sobol32.h"
+#include "rocrand_sobol64.h"
 #include "rocrand_mtgp32.h"
 
 #include "rocrand_uniform.h"
@@ -325,6 +326,23 @@ unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
  */
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
+}
+
+/**
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using SOBOL64 generator.
+ *
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using SOBOL64 generator in \p state. State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ * \param lambda - Lambda parameter of the Poisson distribution
+ *
+ * \return Poisson-distributed <tt>unsigned int</tt>
+ */
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_sobol64 * state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }

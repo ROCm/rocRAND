@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
 #include "rocrand_sobol32.h"
+#include "rocrand_sobol64.h"
 #include "rocrand_mtgp32.h"
 
 namespace rocrand_device {
@@ -48,7 +49,7 @@ struct two_uints
 union two_uints_to_ulong
 {
     two_uints uint2_value;
-    unsigned long long ulong_value;
+    unsigned long long int ulong_value;
 };
 
 // For unsigned integer between 0 and UINT_MAX, returns value between
@@ -88,7 +89,7 @@ double uniform_distribution_double(unsigned int v1, unsigned int v2)
 }
 
 FQUALIFIERS
-double uniform_distribution_double(unsigned long long v)
+double uniform_distribution_double(unsigned long long int v)
 {
     return ROCRAND_2POW53_INV_DOUBLE + (
         // 2^53 is the biggest int that can be stored in double, such
@@ -409,6 +410,48 @@ float rocrand_uniform(rocrand_state_sobol32 * state)
  */
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_sobol32 * state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * Note: In this implementation returned \p double value is generated
+ * from only 32 random bits (one <tt>unsigned int</tt> value).
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_sobol64 * state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * Note: In this implementation returned \p double value is generated
+ * from only 32 random bits (one <tt>unsigned int</tt> value).
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS
+double rocrand_uniform_double(rocrand_state_sobol64 * state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }

@@ -2,6 +2,13 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
+## [Unreleased rocRAND-2.10.11 for ROCm 4.4.0]
+### Added
+- sobol64 support added.
+- Benchmark time measurement improvement
+### Fixed
+- nvcc backend fix
+
 ## [Unreleased rocRAND-2.10.10 for ROCm 4.3.0]
 ### Added
 - gfx90a support added.
