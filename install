@@ -16,7 +16,7 @@ function display_help()
     echo "    [-c|--clients] build library clients too (combines with -i & -d)"
     echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
     echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
-    echo "    [--sanitizer] build with address sanitizer enabled"
+    echo "    [--address-sanitizer] build with address sanitizer enabled"
 }
 
 
@@ -32,7 +32,7 @@ build_hip_clang=false
 rocm_path=/opt/rocm
 build_relocatable=false
 install_dependencies=false
-build_sanitizer=false
+build_address_sanitizer=false
 
 # #################################################
 # Parameter parsing
@@ -41,7 +41,7 @@ build_sanitizer=false
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,sanitizer --options hicgtprd -- "$@")
+    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,address-sanitizer --options hicgtprd -- "$@")
 else
     echo "Need a new version of getopt"
     exit 1
@@ -91,8 +91,8 @@ while true; do
     --hip-clang)
         build_hip_clang=true
         shift ;;
-    --sanitizer)
-        build_sanitizer=true
+    --address-sanitizer)
+        build_address_sanitizer=true
         shift ;;
 	--) shift ; break ;;
 	*)  echo "Unexpected command line parameter received; aborting";
@@ -150,7 +150,7 @@ if($build_clients); then
     clients=" -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON "
 fi
 
-if ($build_sanitizer); then
+if ($build_address_sanitizer); then
     cmake_common_options="$cmake_common_options -DBUILD_ADDRESS_SANITIZER=ON"
 fi
 
