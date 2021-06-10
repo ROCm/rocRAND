@@ -66,7 +66,7 @@ def load_hip():
     loading_errors = []
     if hip is None:
         try:
-            hip = CDLL(find_library(HIP_PATHS, "libhip_hcc.so"), mode=RTLD_GLOBAL)
+            hip = CDLL(find_library(HIP_PATHS, "libamdhip64.so"), mode=RTLD_GLOBAL)
         except OSError as e:
             loading_errors.append(str(e))
 
@@ -83,7 +83,7 @@ def load_hip():
             hip.hipMemcpy = cuda.cudaMemcpy
 
     if hip is None:
-        raise ImportError("both libcudart.so and libhip_hcc.so cannot be loaded: " +
+        raise ImportError("both libcudart.so and libamdhip64.so cannot be loaded: " +
                 ", ".join(loading_errors))
 
 class MemoryPointer(object):

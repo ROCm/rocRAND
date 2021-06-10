@@ -23,14 +23,14 @@
 variables:
   SUDO_CMD: "" # Must be "sudo" on images which dont use root user
   DEPS_DIR: "$CI_PROJECT_DIR/__dependencies"
-  CMAKE_URL: "https://cmake.org/files/v3.5/cmake-3.5.1-Linux-x86_64.tar.gz"
+  CMAKE_URL: "https://cmake.org/files/v3.10/cmake-3.10.2-Linux-x86_64.tar.gz"
   # General build flags
   CXXFLAGS: ""
   CMAKE_OPTIONS: ""
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_LATEST_PATH: "/opt/rocm-3.8.0/"
+  ROCM_LATEST_PATH: "/opt/rocm-4.2.0/"
 
 # ROCm
 
@@ -118,9 +118,12 @@ test:rocm_python:
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
     - $SUDO_CMD apt-get install -y -qq wget
     - $SUDO_CMD apt-get -y remove python-pip python3-pip
-    - wget https://bootstrap.pypa.io/get-pip.py
-    - $SUDO_CMD_HOME python get-pip.py
-    - $SUDO_CMD_HOME python3 get-pip.py
+    # Latest supported Python version of pypa is 3.6, but there's no permalink
+    # for the latest scripts, hence the '+' in the filename and the generic URL
+    - wget https://bootstrap.pypa.io/get-pip.py -O get-pip-3.6+.py
+    - wget https://bootstrap.pypa.io/pip/2.7/get-pip.py -O get-pip-2.7.py
+    - $SUDO_CMD_HOME python get-pip-2.7.py
+    - $SUDO_CMD_HOME python3 get-pip-3.6+.py
 
   script:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
@@ -159,7 +162,7 @@ test:rocm_package:
     - rocm-stable
   script:
     - cd build
-    - $SUDO_CMD dpkg -i rocrand-*.deb
+    - $SUDO_CMD dpkg -i rocrand*.deb
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
     - CXX=hipcc cmake ../test/package/.
@@ -193,7 +196,7 @@ test:rocm_install:
 .nvcc:
   tags:
     - nvcc
-  image: nvidia/cuda:10.1-devel-ubuntu16.04
+  image: nvidia/cuda:10.2-devel-ubuntu18.04
   before_script:
     - nvidia-smi
     # HIP-nvcc
@@ -202,7 +205,7 @@ test:rocm_install:
     - wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | $SUDO_CMD apt-key add -
     - echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | $SUDO_CMD tee /etc/apt/sources.list.d/rocm.list
     - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y hip-base
+    - $SUDO_CMD apt-get install -y hip-base rocm-cmake
     # Install hip-nvcc ignoring dependencies because it depends on cuda metapackage
     # (with heavy libraries, tools etc. that also require GUI and other packages)
     - apt-get download hip-nvcc
@@ -225,7 +228,7 @@ build:nvcc:
   script:
     - mkdir build
     - cd build
-    - cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=ON -DBUILD_CRUSH_TEST=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_CRUSH_TEST=ON -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
@@ -283,9 +286,12 @@ test:nvcc_python:
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
     - $SUDO_CMD apt-get install -y -qq wget
     - $SUDO_CMD apt-get -y remove python-pip python3-pip
-    - wget https://bootstrap.pypa.io/get-pip.py
-    - $SUDO_CMD_HOME python get-pip.py
-    - $SUDO_CMD_HOME python3 get-pip.py
+    # Latest supported Python version of pypa is 3.6, but there's no permalink
+    # for the latest scripts, hence the '+' in the filename and the generic URL
+    - wget https://bootstrap.pypa.io/get-pip.py -O get-pip-3.6+.py
+    - wget https://bootstrap.pypa.io/pip/2.7/get-pip.py -O get-pip-2.7.py
+    - $SUDO_CMD_HOME python get-pip-2.7.py
+    - $SUDO_CMD_HOME python3 get-pip-3.6+.py
 
   script:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
@@ -322,7 +328,7 @@ test:nvcc_package:
     - build:nvcc
   script:
     - cd build
-    - $SUDO_CMD dpkg -i rocrand-*.deb
+    - $SUDO_CMD dpkg -i rocrand*.deb
     - find -L $ROCM_PATH | grep rand | sort
     - mkdir ../build_package_test && cd ../build_package_test
     - cmake ../test/package/.
@@ -338,7 +344,7 @@ test:nvcc_install:
   script:
     - mkdir build_only_install
     - cd build_only_install
-    - cmake -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=ON ../.
+    - cmake -DBUILD_TEST=OFF -DBUILD_FORTRAN_WRAPPER=OFF ../.
     - make -j16
     - $SUDO_CMD make install
     - find -L $ROCM_PATH | grep rand | sort
