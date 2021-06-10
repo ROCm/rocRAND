@@ -33,28 +33,17 @@ configure_file(
     @ONLY
 )
 
-# Use CUDA_INCLUDE_DIRECTORIES to include required dirs
-# for nvcc if cmake version is less than 3.9.3
-if((HIP_COMPILER STREQUAL "nvcc") AND (CMAKE_VERSION VERSION_LESS "3.9.3"))
-    CUDA_INCLUDE_DIRECTORIES(
-        "${PROJECT_BINARY_DIR}/library/include/"
-        "${PROJECT_SOURCE_DIR}/library/include/"
-    )
-endif()
-
 include(CMakePackageConfigHelpers)
+
+add_library(rocrand ${rocRAND_SRCS})
 
 # Build library
 if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
-        PROPERTIES
-            CUDA_SOURCE_PROPERTY_FORMAT OBJ
+        PROPERTIES LANGUAGE CUDA
     )
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(rocrand ${rocRAND_SRCS})
 else()
-    add_library(rocrand ${rocRAND_SRCS})
-
     # Remove this check when we no longer build with older rocm stack(ie < 1.8.2)
     if(CXX_VERSION_STRING MATCHES "clang")
         target_link_libraries(rocrand PRIVATE hip::device)
@@ -157,15 +146,10 @@ configure_file(
 
 # Build
 if(HIP_COMPILER STREQUAL "nvcc")
-    set_source_files_properties(${hipRAND_SRCS}
-        PROPERTIES
-            CUDA_SOURCE_PROPERTY_FORMAT OBJ
-    )
+    set_source_files_properties(${hipRAND_SRCS} PROPERTIES LANGUAGE CUDA)
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    CUDA_ADD_LIBRARY(hiprand ${hipRAND_SRCS})
-else()
-    add_library(hiprand ${hipRAND_SRCS})
 endif()
+add_library(hiprand ${hipRAND_SRCS})
 target_include_directories(hiprand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
