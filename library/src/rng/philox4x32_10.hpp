@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -111,7 +111,7 @@ namespace detail {
     };
 
     __global__
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void init_engines_kernel(philox4x32_10_device_engine * engines,
                              const unsigned long long seed,
                              const unsigned long long offset)
@@ -122,7 +122,7 @@ namespace detail {
 
     template<unsigned int ThreadsPerEngine, class T, class Distribution>
     __global__
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(philox4x32_10_device_engine * engines,
                          T * data, const size_t n,
                          Distribution distribution)

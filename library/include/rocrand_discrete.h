@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
 #include "rocrand_sobol32.h"
+#include "rocrand_sobol64.h"
 #include "rocrand_mtgp32.h"
 
 #include "rocrand_uniform.h"
@@ -48,8 +49,9 @@
 namespace rocrand_device {
 namespace detail {
 
+template<class OutputType>
 FQUALIFIERS
-unsigned int discrete_alias(const double x, const rocrand_discrete_distribution_st& dis)
+OutputType discrete_alias(const double x, const rocrand_discrete_distribution_st& dis)
 {
     // Calculate value using Alias table
 
@@ -57,27 +59,46 @@ unsigned int discrete_alias(const double x, const rocrand_discrete_distribution_
     const double nx = dis.size * x;
     const double fnx = floor(nx);
     const double y = nx - fnx;
-    const unsigned int i = static_cast<unsigned int>(fnx);
+    const OutputType i = static_cast<OutputType>(fnx);
     return dis.offset + (y < dis.probability[i] ? i : dis.alias[i]);
 }
 
 FQUALIFIERS
 unsigned int discrete_alias(const unsigned int r, const rocrand_discrete_distribution_st& dis)
 {
-    const double x = r * ROCRAND_2POW32_INV_DOUBLE;
-    return discrete_alias(x, dis);
+    constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
+    const double x = r * inv_double_32;
+    return discrete_alias<unsigned int>(x, dis);
+}
+
+// To prevent ambiguity compile error when compiler is facing the type "unsigned long"!!!
+FQUALIFIERS
+unsigned long int discrete_alias(const unsigned long r, const rocrand_discrete_distribution_st& dis)
+{
+    constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
+    const double x = r * inv_double_32;
+    return discrete_alias<unsigned long>(x, dis);
 }
 
 FQUALIFIERS
-unsigned int discrete_cdf(const double x, const rocrand_discrete_distribution_st& dis)
+unsigned long long int discrete_alias(const unsigned long long int r, const rocrand_discrete_distribution_st& dis)
+{
+    constexpr double inv_double_64 = ROCRAND_2POW64_INV_DOUBLE;
+    const double x = r * inv_double_64;
+    return discrete_alias<unsigned long long int>(x, dis);
+}
+
+template<class OutputType>
+FQUALIFIERS
+OutputType discrete_cdf(const double x, const rocrand_discrete_distribution_st& dis)
 {
     // Calculate value using binary search in CDF
 
-    unsigned int min = 0;
-    unsigned int max = dis.size - 1;
+    OutputType min = 0;
+    OutputType max = dis.size - 1;
     do
     {
-        const unsigned int center = (min + max) / 2;
+        const OutputType center = (min + max) / 2;
         const double p = dis.cdf[center];
         if (x > p)
         {
@@ -96,8 +117,26 @@ unsigned int discrete_cdf(const double x, const rocrand_discrete_distribution_st
 FQUALIFIERS
 unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribution_st& dis)
 {
-    const double x = r * ROCRAND_2POW32_INV_DOUBLE;
-    return discrete_cdf(x, dis);
+    constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
+    const double x = r * inv_double_32;
+    return discrete_cdf<unsigned int>(x, dis);
+}
+
+// To prevent ambiguity compile error when compiler is facing the type "unsigned long"!!!
+FQUALIFIERS
+unsigned long int discrete_cdf(const unsigned long r, const rocrand_discrete_distribution_st& dis)
+{
+    constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
+    const double x = r * inv_double_32;
+    return discrete_cdf<unsigned long>(x, dis);
+}
+
+FQUALIFIERS
+unsigned long long int discrete_cdf(const unsigned long long int r, const rocrand_discrete_distribution_st& dis)
+{
+    constexpr double inv_double_64 = ROCRAND_2POW64_INV_DOUBLE;
+    const double x = r * inv_double_64;
+    return discrete_cdf<unsigned long long int>(x, dis);
 }
 
 } // end namespace detail
@@ -218,6 +257,24 @@ unsigned int rocrand_discrete(rocrand_state_mtgp32 * state, const rocrand_discre
  */
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
+ *
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using SOBOL64 generator in \p state, and increments
+ * the position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ * \param discrete_distribution - Related discrete distribution
+ *
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned int rocrand_discrete(rocrand_state_sobol64 * state, const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }

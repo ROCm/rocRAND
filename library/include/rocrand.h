@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,6 @@ typedef __half half;
 /// \endcond
 
 #define ROCRAND_DEFAULT_MAX_BLOCK_SIZE 256
-#define ROCRAND_DEFAULT_MIN_WARPS_PER_EU 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -84,7 +83,8 @@ typedef enum rocrand_rng_type {
     ROCRAND_RNG_PSEUDO_MTGP32 = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
     ROCRAND_RNG_QUASI_DEFAULT = 500,  ///< Default quasirandom generator
-    ROCRAND_RNG_QUASI_SOBOL32 = 501 ///< Sobol32 quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL32 = 501, ///< Sobol32 quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL64 = 504 ///< Sobol64 quasirandom generator
 } rocrand_rng_type;
 
 

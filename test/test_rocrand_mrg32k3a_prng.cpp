@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@
 using rocrand_device::detail::mad_u64_u32;
 
 __global__
-__launch_bounds__(1, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+__launch_bounds__(1)
 void mad_u64_u32_kernel(const unsigned int * x,
                         const unsigned int * y,
                         const unsigned long long * z,

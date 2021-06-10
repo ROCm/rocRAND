@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 #include <hip/hip_runtime.h>
 
 #include <rocrand.h>
-#include <rocrand_sobol_precomputed.h>
+#include <rocrand_sobol32_precomputed.h>
 
 #include "common.hpp"
 #include "generator_type.hpp"
@@ -39,7 +39,7 @@ namespace detail {
 
     template<unsigned int OutputPerThread, class T, class Distribution>
     __global__
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE, ROCRAND_DEFAULT_MIN_WARPS_PER_EU)
+    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(T * data, const size_t n,
                          const unsigned int * direction_vectors,
                          const unsigned int offset,
@@ -157,12 +157,12 @@ public:
     {
         // Allocate direction vectors
         hipError_t error;
-        error = hipMalloc(&m_direction_vectors, sizeof(unsigned int) * SOBOL_N);
+        error = hipMalloc(&m_direction_vectors, sizeof(unsigned int) * SOBOL32_N);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
-        error = hipMemcpy(m_direction_vectors, h_sobol32_direction_vectors, sizeof(unsigned int) * SOBOL_N, hipMemcpyHostToDevice);
+        error = hipMemcpy(m_direction_vectors, h_sobol32_direction_vectors, sizeof(unsigned int) * SOBOL32_N, hipMemcpyHostToDevice);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_INTERNAL_ERROR;

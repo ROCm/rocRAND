@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,7 @@
 #include "rocrand_mrg32k3a.h"
 #include "rocrand_xorwow.h"
 #include "rocrand_sobol32.h"
+#include "rocrand_sobol64.h"
 #include "rocrand_mtgp32.h"
 
 #include "rocrand_uniform.h"
@@ -65,11 +66,11 @@ FQUALIFIERS
 double2 box_muller_double(uint4 v)
 {
     double2 result;
-    unsigned long long v1 = (unsigned long long)v.x ^
-        ((unsigned long long)v.y << (53 - 32));
+    unsigned long long int v1 = (unsigned long long int)v.x ^
+        ((unsigned long long int)v.y << (53 - 32));
     double u = ROCRAND_2POW53_INV_DOUBLE + (v1 * ROCRAND_2POW53_INV_DOUBLE);
-    unsigned long long v2 = (unsigned long long)v.z ^
-        ((unsigned long long)v.w << (53 - 32));
+    unsigned long long int v2 = (unsigned long long int)v.z ^
+        ((unsigned long long int)v.w << (53 - 32));
     double w = (ROCRAND_2POW53_INV_DOUBLE * 2.0) +
         (v2 * (ROCRAND_2POW53_INV_DOUBLE * 2.0));
     double s = sqrt(-2.0 * log(u));
@@ -236,6 +237,14 @@ float4 normal_distribution4(uint4 v)
 
 FQUALIFIERS
 double normal_distribution_double(unsigned int x)
+{
+    double p = ::rocrand_device::detail::uniform_distribution_double(x);
+    double v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_d_erfinv(2.0 * p - 1.0);
+    return v;
+}
+
+FQUALIFIERS
+double normal_distribution_double(unsigned long long int x)
 {
     double p = ::rocrand_device::detail::uniform_distribution_double(x);
     double v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_d_erfinv(2.0 * p - 1.0);
@@ -699,6 +708,42 @@ float rocrand_normal(rocrand_state_sobol32 * state)
  */
 FQUALIFIERS
 double rocrand_normal_double(rocrand_state_sobol32 * state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p double value using SOBOL64
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p double value
+ */
+FQUALIFIERS
+float rocrand_normal(rocrand_state_sobol64 * state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p double value using SOBOL64
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p double value
+ */
+FQUALIFIERS
+double rocrand_normal_double(rocrand_state_sobol64 * state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }

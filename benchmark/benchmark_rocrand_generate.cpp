@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -248,6 +248,7 @@ const std::vector<std::string> all_engines = {
     "mtgp32",
     "philox",
     "sobol32",
+    "sobol64",
 };
 
 const std::vector<std::string> all_distributions = {
@@ -358,6 +359,8 @@ int main(int argc, char *argv[])
             rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
         else if (engine == "sobol32")
             rng_type = ROCRAND_RNG_QUASI_SOBOL32;
+        else if (engine == "sobol64")
+            rng_type = ROCRAND_RNG_QUASI_SOBOL64;
         else if (engine == "mtgp32")
             rng_type = ROCRAND_RNG_PSEUDO_MTGP32;
         else

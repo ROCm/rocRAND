@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 #define ROCRAND_2POW16_INV_2PI (1.5258789e-05f * 6.2831855f)
 #define ROCRAND_2POW32_INV (2.3283064e-10f)
 #define ROCRAND_2POW32_INV_DOUBLE (2.3283064365386963e-10)
+#define ROCRAND_2POW64_INV_DOUBLE (5.4210108624275221700372640043497e-20)
 #define ROCRAND_2POW32_INV_2PI (2.3283064e-10f * 6.2831855f)
 #define ROCRAND_2POW53_INV_DOUBLE (1.1102230246251565e-16)
 #define ROCRAND_PI  (3.1415926f)
@@ -46,7 +47,8 @@
 namespace rocrand_device {
 namespace detail {
 
-  #if ( defined(__gfx801__) || \
+  #if ( defined(__HIP_PLATFORM_NVCC__) || \
+        defined(__gfx801__) || \
         defined(__gfx802__) || \
         defined(__gfx803__) || \
         defined(__gfx810__) || \
