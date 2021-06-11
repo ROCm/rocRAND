@@ -30,8 +30,7 @@
 #include <rocrand_kernel.h>
 #include <rocrand_mtgp32_11213.h>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 template <class GeneratorState>
 __global__
@@ -195,13 +194,13 @@ TEST(rocrand_kernel_mtgp32, rocrand)
     typedef rocrand_state_mtgp32 state_type;
 
     state_type * states;
-    hipMalloc(&states, sizeof(state_type) * 8);
+    hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -237,13 +236,13 @@ TEST(rocrand_kernel_mtgp32, rocrand_uniform)
     typedef rocrand_state_mtgp32 state_type;
 
     state_type * states;
-    hipMalloc(&states, sizeof(state_type) * 8);
+    hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -279,13 +278,13 @@ TEST(rocrand_kernel_mtgp32, rocrand_normal)
     typedef rocrand_state_mtgp32 state_type;
 
     state_type * states;
-    hipMalloc(&states, sizeof(state_type) * 8);
+    hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -329,13 +328,13 @@ TEST(rocrand_kernel_mtgp32, rocrand_log_normal)
     typedef rocrand_state_mtgp32 state_type;
 
     state_type * states;
-    hipMalloc(&states, sizeof(state_type) * 8);
+    hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -387,13 +386,13 @@ TEST_P(rocrand_kernel_mtgp32_poisson, rocrand_poisson)
     const double lambda = GetParam();
 
     state_type * states;
-    hipMalloc(&states, sizeof(state_type) * 8);
+    hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(

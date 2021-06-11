@@ -28,14 +28,13 @@
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 TEST(rocrand_sobol32_qrng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_sobol32 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -60,7 +59,7 @@ TEST(rocrand_sobol32_qrng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_sobol32 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -87,7 +86,7 @@ TEST(rocrand_sobol32_qrng_tests, normal_float_test)
 {
     const size_t size = 1313;
     float * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_sobol32 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
@@ -121,7 +120,7 @@ TEST(rocrand_sobol32_qrng_tests, poisson_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_sobol32 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -156,7 +155,7 @@ TEST(rocrand_sobol32_qrng_tests, dimesions_test)
 {
     const size_t size = 12345;
     float * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_sobol32 g;
 
@@ -179,7 +178,7 @@ TEST(rocrand_sobol32_qrng_tests, state_progress_test)
     // Device data
     const size_t size = 1025;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
     rocrand_sobol32 g0;

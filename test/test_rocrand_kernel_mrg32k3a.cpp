@@ -30,8 +30,7 @@
 #include <rocrand_kernel.h>
 #include <rocrand.h>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 template <class GeneratorState>
 __global__
@@ -189,7 +188,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -225,7 +224,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_uniform)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -261,7 +260,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -305,7 +304,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_log_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -357,7 +356,7 @@ TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_poisson)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -404,7 +403,7 @@ TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_discrete)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMalloc((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     rocrand_discrete_distribution discrete_distribution;
