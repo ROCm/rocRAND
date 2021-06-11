@@ -6,6 +6,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ### Added
 - sobol64 support added.
 - Benchmark time measurement improvement
+- Address Sanitizer build option added.
 ### Fixed
 - nvcc backend fix
 
