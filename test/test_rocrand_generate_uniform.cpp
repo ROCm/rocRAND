@@ -42,7 +42,7 @@ TEST_P(rocrand_generate_uniform_tests, float_test)
 
     const size_t size = 12563;
     float * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -80,7 +80,7 @@ TEST_P(rocrand_generate_uniform_tests, double_test)
 
     const size_t size = 12563;
     double * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(double)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -118,7 +118,7 @@ TEST_P(rocrand_generate_uniform_tests, half_test)
 
     const size_t size = 12563;
     half * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(half)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(half)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes

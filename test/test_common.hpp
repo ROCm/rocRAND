@@ -21,9 +21,19 @@
 #ifndef TEST_COMMON_HPP_
 #define TEST_COMMON_HPP_
 
+#include <cstdlib>
+
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
+#define HIP_CHECK_NON_VOID(condition)         \
+{                                    \
+    hipError_t error = condition;    \
+    if(error != hipSuccess){         \
+        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
+        exit(error); \
+    } \
+}
 const rocrand_rng_type rng_types[] = {
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
     ROCRAND_RNG_PSEUDO_MRG32K3A,
@@ -31,5 +41,47 @@ const rocrand_rng_type rng_types[] = {
     ROCRAND_RNG_PSEUDO_MTGP32,
     ROCRAND_RNG_QUASI_SOBOL32
 };
+
+bool supports_hmm()
+{
+    hipDeviceProp_t device_prop;
+    int device_id;
+    HIP_CHECK_NON_VOID(hipGetDevice(&device_id));
+    HIP_CHECK_NON_VOID(hipGetDeviceProperties(&device_prop, device_id));
+    if (device_prop.managedMemory == 1) return true;
+
+    return false;
+}
+
+bool use_hmm()
+{
+    if (getenv("ROCRAND_USE_HMM") == nullptr)
+    {
+        return false;
+    }
+
+    if (strcmp(getenv("ROCRAND_USE_HMM"), "1") == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+// Helper for HMM allocations: if HMM is requested through
+// setting environment variable ROCRAND_USE_HMM=1
+template <class T>
+hipError_t hipMallocHelper(T** devPtr, size_t size)
+{
+    if (use_hmm())
+    {
+        return hipMallocManaged((void**)devPtr, size);
+    }
+    else
+    {
+        return hipMalloc((void**)devPtr, size);
+    }
+    return hipSuccess;
+}
+
 
 #endif // TEST_COMMON_HPP_

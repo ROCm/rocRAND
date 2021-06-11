@@ -27,14 +27,13 @@
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
 
-#define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+#include "test_common.hpp"
 
 TEST(rocrand_philox_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * (size + 1)));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * (size + 1)));
 
     rocrand_philox4x32_10 g;
     ROCRAND_CHECK(g.generate(data+1, size));
@@ -59,7 +58,7 @@ TEST(rocrand_philox_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_philox4x32_10 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -89,7 +88,7 @@ TEST(rocrand_philox_prng_tests, state_progress_test)
     // Device data
     const size_t size = 1025;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
     rocrand_philox4x32_10 g0;
@@ -130,7 +129,7 @@ TEST(rocrand_philox_prng_tests, same_seed_test)
     // Device side data
     const size_t size = 1024;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
     rocrand_philox4x32_10 g0, g1;
@@ -173,7 +172,7 @@ TEST(rocrand_philox_prng_tests, different_seed_test)
     // Device side data
     const size_t size = 1024;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
     rocrand_philox4x32_10 g0, g1;

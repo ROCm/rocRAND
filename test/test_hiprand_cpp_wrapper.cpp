@@ -24,7 +24,7 @@
 #include <hip/hip_runtime.h>
 #include <hiprand.hpp>
 
-#define HIP_CHECK(x) ASSERT_EQ(x, hipSuccess)
+#include "test_common.hpp"
 
 TEST(hiprand_cpp_wrapper, hiprand_error)
 {
@@ -230,7 +230,7 @@ void hiprand_uniform_int_dist_template()
     const size_t output_size = 8192;
     IntType * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(IntType))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -287,7 +287,7 @@ void hiprand_uniform_real_dist_template()
     const size_t output_size = 8192;
     RealType * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(RealType))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -363,7 +363,7 @@ void hiprand_normal_dist_template()
     const size_t output_size = 8192;
     RealType * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(RealType))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -461,7 +461,7 @@ void hiprand_lognormal_dist_template()
     const size_t output_size = 8192;
     RealType * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(RealType))
     );
     HIP_CHECK(hipDeviceSynchronize());
@@ -568,7 +568,7 @@ void hiprand_poisson_dist_template(const double lambda)
     const size_t output_size = 8192;
     IntType * output;
     HIP_CHECK(
-        hipMalloc((void **)&output,
+        hipMallocHelper((void **)&output,
         output_size * sizeof(IntType))
     );
     HIP_CHECK(hipDeviceSynchronize());
