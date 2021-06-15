@@ -70,6 +70,7 @@ if(BUILD_TEST)
       BUILD_PROJECT       TRUE
       UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
     )
+    list( APPEND CMAKE_PREFIX_PATH ${GTEST_ROOT} )
     find_package(GTest CONFIG REQUIRED PATHS ${GTEST_ROOT})
   endif()
 endif()
