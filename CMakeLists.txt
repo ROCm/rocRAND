@@ -140,3 +140,5 @@ endif()
 if (BUILD_BENCHMARK)
     add_subdirectory(benchmark)
 endif()
+
+message("HELLO")
