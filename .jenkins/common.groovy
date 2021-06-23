@@ -31,7 +31,15 @@ def runTestCommand (platform, project)
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
     String centos = platform.jenkinsLabel.contains('centos') ? '3' : ''
     def testCommand = "ctest${centos} --output-on-failure"
-    def hmmTestCommand = platform.jenkinsLabel.contains('gfx90a') ? "HSA_XNACK=1 ROCRAND_USE_HMM=1 ctest${centos} --output-on-failure" : ''
+    def hmmTestCommand = ''
+    if (platform.jenkinsLabel.contains('gfx90a'))
+    {
+        hmmTestCommand = """
+                            export HSA_XNACK=1
+                            export ROCRAND_USE_HMM=1
+                            ${testCommand}
+                         """
+    }
 
     def command = """#!/usr/bin/env bash
                 set -x
