@@ -25,6 +25,7 @@
 #include <rocrand.hpp>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 TEST(rocrand_cpp_wrapper, rocrand_error)
 {

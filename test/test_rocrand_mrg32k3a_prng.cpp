@@ -28,6 +28,7 @@
 #include <rng/generators.hpp>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 using rocrand_device::detail::mad_u64_u32;
 
