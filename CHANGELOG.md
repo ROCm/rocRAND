@@ -4,11 +4,12 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 
 ## [Unreleased rocRAND-2.10.11 for ROCm 4.4.0]
 ### Added
-- sobol64 support added.
+- Sobol64 support added.
 - Benchmark time measurement improvement
 - Address Sanitizer build option added.
 ### Fixed
 - nvcc backend fix
+- Fix ranges of MRG32k3a device functions.
 
 ## [Unreleased rocRAND-2.10.10 for ROCm 4.3.0]
 ### Added
