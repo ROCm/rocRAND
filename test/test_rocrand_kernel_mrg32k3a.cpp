@@ -93,6 +93,26 @@ void rocrand_uniform_kernel(float * output, const size_t size)
 template <class GeneratorState>
 __global__
 __launch_bounds__(32)
+void rocrand_uniform_double_kernel(double * output, const size_t size)
+{
+    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+
+    GeneratorState state;
+    const unsigned int subsequence = state_id;
+    rocrand_init(12345, subsequence, 0, &state);
+
+    unsigned int index = state_id;
+    while(index < size)
+    {
+        output[index] = rocrand_uniform_double(&state);
+        index += global_size;
+    }
+}
+
+template <class GeneratorState>
+__global__
+__launch_bounds__(32)
 void rocrand_normal_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -252,6 +272,110 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_uniform)
     }
     mean = mean / output_size;
     EXPECT_NEAR(mean, 0.5, 0.1);
+}
+
+TEST(rocrand_kernel_mrg32k3a, rocrand_uniform_double)
+{
+    typedef rocrand_state_mrg32k3a state_type;
+
+    const size_t output_size = 8192;
+    double * output;
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(double)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(rocrand_uniform_double_kernel<state_type>),
+        dim3(8), dim3(32), 0, 0,
+        output, output_size
+    );
+    HIP_CHECK(hipPeekAtLastError());
+
+    std::vector<double> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(double),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    double mean = 0;
+    for(auto v : output_host)
+    {
+        mean += v;
+    }
+    mean = mean / output_size;
+    EXPECT_NEAR(mean, 0.5, 0.1);
+}
+
+TEST(rocrand_kernel_mrg32k3a, rocrand_uniform_range)
+{
+    typedef rocrand_state_mrg32k3a state_type;
+
+    const size_t output_size = 1 << 26;
+    float * output;
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
+        dim3(8), dim3(32), 0, 0,
+        output, output_size
+    );
+    HIP_CHECK(hipPeekAtLastError());
+
+    std::vector<float> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(float),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    for(auto v : output_host)
+    {
+        ASSERT_GT(v, 0.0f);
+        ASSERT_LE(v, 1.0f);
+    }
+}
+
+TEST(rocrand_kernel_mrg32k3a, rocrand_uniform_double_range)
+{
+    typedef rocrand_state_mrg32k3a state_type;
+
+    const size_t output_size = 1 << 26;
+    double * output;
+    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(double)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(rocrand_uniform_double_kernel<state_type>),
+        dim3(8), dim3(32), 0, 0,
+        output, output_size
+    );
+    HIP_CHECK(hipPeekAtLastError());
+
+    std::vector<double> output_host(output_size);
+    HIP_CHECK(
+        hipMemcpy(
+            output_host.data(), output,
+            output_size * sizeof(double),
+            hipMemcpyDeviceToHost
+        )
+    );
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+
+    for(auto v : output_host)
+    {
+        ASSERT_GT(v, 0.0);
+        ASSERT_LE(v, 1.0);
+    }
 }
 
 TEST(rocrand_kernel_mrg32k3a, rocrand_normal)
