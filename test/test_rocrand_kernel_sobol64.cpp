@@ -183,7 +183,7 @@ TEST(rocrand_kernel_sobol64, rocrand)
     double mean = 0;
     for(auto v : output_host)
     {
-        mean += static_cast<double>(v) / UINT64_MAX;
+        mean += static_cast<double>(v) / static_cast<double>(UINT64_MAX);
     }
     mean = mean / output_size;
     EXPECT_NEAR(mean, 0.5, 0.1);

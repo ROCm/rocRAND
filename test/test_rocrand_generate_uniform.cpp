@@ -25,6 +25,7 @@
 #include <rocrand.h>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 class rocrand_generate_uniform_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
 

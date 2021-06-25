@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 #include <cstdlib>
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
-#define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
 #define HIP_CHECK_NON_VOID(condition)         \
 {                                    \
@@ -34,13 +33,6 @@
         exit(error); \
     } \
 }
-const rocrand_rng_type rng_types[] = {
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
-    ROCRAND_RNG_PSEUDO_MRG32K3A,
-    ROCRAND_RNG_PSEUDO_XORWOW,
-    ROCRAND_RNG_PSEUDO_MTGP32,
-    ROCRAND_RNG_QUASI_SOBOL32
-};
 
 bool supports_hmm()
 {
@@ -82,6 +74,5 @@ hipError_t hipMallocHelper(T** devPtr, size_t size)
     }
     return hipSuccess;
 }
-
 
 #endif // TEST_COMMON_HPP_
