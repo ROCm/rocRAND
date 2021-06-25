@@ -29,6 +29,7 @@
 #include <rng/generators.hpp>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 TEST(rocrand_sobol32_qrng_tests, uniform_uint_test)
 {

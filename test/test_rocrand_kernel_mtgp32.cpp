@@ -31,6 +31,7 @@
 #include <rocrand_mtgp32_11213.h>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 template <class GeneratorState>
 __global__

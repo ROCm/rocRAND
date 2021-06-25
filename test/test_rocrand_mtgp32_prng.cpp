@@ -28,6 +28,7 @@
 #include <rng/generators.hpp>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 TEST(rocrand_mtgp32_prng_tests, uniform_uint_test)
 {

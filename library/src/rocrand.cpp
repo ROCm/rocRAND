@@ -796,6 +796,10 @@ rocrand_initialize_generator(rocrand_generator generator)
     {
         return static_cast<rocrand_sobol32 *>(generator)->init();
     }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        return static_cast<rocrand_sobol64 *>(generator)->init();
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         return static_cast<rocrand_mtgp32 *>(generator)->init();

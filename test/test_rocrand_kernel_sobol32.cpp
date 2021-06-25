@@ -31,6 +31,7 @@
 #include <rocrand_sobol32_precomputed.h>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 template <class GeneratorState>
 __global__
