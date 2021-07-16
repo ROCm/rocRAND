@@ -56,7 +56,7 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 include(cmake/Common.cmake)
 include(cmake/Dependencies.cmake)
 
-# Detect compiler support for target ID 
+# Detect compiler support for target ID
 # This section is deprecated. Please use rocm_check_target_ids for future use.
 if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
@@ -66,6 +66,7 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
     string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
 endif()
 
+set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
 # Set the AMDGPU_TARGETS with backward compatiblity
 if(COMMAND rocm_check_target_ids)
    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
@@ -79,10 +80,23 @@ else()
         set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908")
     endif()
 endif()
-set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
+if (AMDGPU_TARGETS)
+    if( AMDGPU_TARGETS STREQUAL "all" )
+      set( gpus "${DEFAULT_AMDGPU_TARGETS}")
+    else()
+      set( gpus "${AMDGPU_TARGETS}")
+    endif()
+    # must FORCE set this AMDGPU_TARGETS before any find_package( hip ...), in this file
+    # to override CACHE var and set --offload-arch flags via hip-config.cmake hip::device dependency
+    set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
+endif()
+
+#set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
 
 # Verify that hcc compiler is used on ROCM platform
-include(cmake/VerifyCompiler.cmake)
+#include(cmake/VerifyCompiler.cmake)
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm /opt/rocm/llvm /opt/rocm/hip)
+find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
 # Build option to disable -Werror
 option(DISABLE_WERROR "Disable building with Werror" ON)
