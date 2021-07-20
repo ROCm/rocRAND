@@ -84,7 +84,7 @@ set(rocrandtargets rocrand)
 
 # Install
 # .so or .a lib
-install(
+rocm_install(
     TARGETS ${rocrandtargets}
     EXPORT rocrand-targets
     ARCHIVE DESTINATION rocrand/lib
@@ -92,7 +92,7 @@ install(
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
 # headers
-install(
+rocm_install(
     DIRECTORY
         "include/"
         "${PROJECT_BINARY_DIR}/library/include/"
@@ -103,7 +103,7 @@ install(
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
-install(
+rocm_install(
     EXPORT rocrand-targets
     NAMESPACE roc::
     DESTINATION rocrand/lib/cmake/rocrand
@@ -121,7 +121,7 @@ write_basic_package_version_file(
     VERSION ${rocrand_VERSION}
     COMPATIBILITY SameMajorVersion
 )
-install(
+rocm_install(
     FILES
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
@@ -185,7 +185,7 @@ set(hiprandtargets hiprand)
 
 # Install
 # .so and .a library
-install(
+rocm_install(
     TARGETS ${hiprandtargets}
     EXPORT hiprand-targets
     ARCHIVE DESTINATION hiprand/lib
@@ -193,7 +193,7 @@ install(
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
 # headers
-install(
+rocm_install(
     DIRECTORY
         "include/"
         "${PROJECT_BINARY_DIR}/library/include/"
@@ -204,7 +204,7 @@ install(
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
-install(
+rocm_install(
     EXPORT hiprand-targets
     NAMESPACE hip::
     DESTINATION hiprand/lib/cmake/hiprand
@@ -222,7 +222,7 @@ write_basic_package_version_file(
     VERSION ${hiprand_VERSION}
     COMPATIBILITY SameMajorVersion
 )
-install(
+rocm_install(
     FILES
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
@@ -234,84 +234,49 @@ if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
 
-# Package (make package)
-# Generates .deb, .zip., and .tar.gz packages
-find_program(RPMBUILD_EXE rpmbuild)
-find_program(DPKG_EXE dpkg)
-set(CPACK_GENERATOR "TGZ;ZIP")
-if(EXISTS ${RPMBUILD_EXE})
-    list(APPEND CPACK_GENERATOR "RPM")
-endif()
-if(EXISTS ${DPKG_EXE})
-    list(APPEND CPACK_GENERATOR "DEB")
-endif()
-set(CPACK_PACKAGE_NAME "rocrand")
-set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "rocRAND Maintainer <rocrand-maintaner@amd.com>")
-if(HIP_RUNTIME STREQUAL "ROCclr")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip-rocclr >= 3.5.0")
-elseif(HIP_RUNTIME STREQUAL "cuda")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-nvcc (>= 3.5.0)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 3.5.0")
-endif()
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers.")
-set(CPACK_SET_DESTDIR ON)
-set(CPACK_RPM_PACKAGE_RELOCATABLE OFF)
-set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF CACHE BOOL "")
-set(CPACK_PACKAGE_VERSION ${rocRAND_VERSION_MAJOR}.${rocRAND_VERSION_MINOR}.${rocRAND_VERSION_PATCH})
-set(CPACK_PACKAGE_VERSION_MAJOR ${rocRAND_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${rocRAND_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${rocRAND_VERSION_PATCH})
-
-if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
-  set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
+# Package specific CPACK vars
+# As of ROCm 3.8, HIP_RUNTIME has been changed from "ROCclr" to "rocclr"
+# As of ROCm 3.8, HIP_RUNTIME has been changed from "cuda" to "cudart"
+string( TOLOWER "${HIP_RUNTIME}" HIP_RUNTIME_LOWER )
+if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
+  set( RPM_REQUIREMENTS "hip-rocclr >= 3.5.0" )
+  set( CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)" )
+elseif( HIP_RUNTIME MATCHES ".*cuda.*")
+  set( RPM_REQUIREMENTS "hip-nvcc >= 3.5.0" )
+  set( CPACK_DEBIAN_PACKAGE_DEPENDS "hip-nvcc (>= 3.5.0)" )
+else()
+  set( RPM_REQUIREMENTS "rocm-dev >= 2.5.27" )
+  set( CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 2.5.27)" )
 endif()
 
-set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
-set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
+set( CPACK_RPM_PACKAGE_REQUIRES ${RPM_REQUIREMENTS} )
 
-# Below block of code is to support older version of rocm-cmake
-# it checks for occurance of '-' in TWEAK and returns the substring after the last '-'
-if (rocRAND_VERSION_TWEAK STREQUAL "" OR NOT DEFINED rocRAND_VERSION_TWEAK)
-  set(rocRAND_VERSION_TWEAK "local")
-else ()
-  string(FIND ${rocRAND_VERSION_TWEAK} "-" DASH_POS REVERSE)
-  set(MINUS_ONE -1)
-  if (NOT DASH_POS EQUAL MINUS_ONE)
-    math(EXPR DASH_POS "${DASH_POS}+1")
-    string(SUBSTRING ${PROJECT_VERSION_TWEAK} ${DASH_POS} 7 PARSED_GIT_TAG)
-    set(rocRAND_VERSION_TWEAK ${PARSED_GIT_TAG})
-  endif()
-endif()
+set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt" )
 
-set(DEBIAN_VERSION ${rocRAND_VERSION_TWEAK})
-if(DEFINED ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
-  set(DEBIAN_VERSION $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
-endif()
+if (WIN32)
+  SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
+  SET( INSTALL_PREFIX "C:/hipSDK" )
+  SET( CPACK_SET_DESTDIR FALSE )
+  SET( CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK" )
+  SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
+  set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
+endif( )
 
-set(RPM_RELEASE ${rocRAND_VERSION_TWEAK})
-if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
-  set(RPM_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
-endif()
+set( CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include" "\${CPACK_PACKAGING_INSTALL_PREFIX}/lib" )
 
-# '%{?dist}' breaks manual builds on debian systems due to empty Provides
-execute_process(COMMAND rpm --eval %{?dist}
-                RESULT_VARIABLE PROC_RESULT
-                OUTPUT_VARIABLE EVAL_RESULT
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-if (PROC_RESULT EQUAL "0" AND NOT EVAL_RESULT STREQUAL "")
-  string (APPEND RPM_RELEASE "%{?dist}")
-endif()
-set(CPACK_DEBIAN_PACKAGE_RELEASE ${DEBIAN_VERSION})
-set(CPACK_RPM_PACKAGE_RELEASE ${RPM_RELEASE})
+# Give rocblas compiled for CUDA backend a different name
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    set( package_name rocrand )
+else( )
+    set( package_name rocrand-alt )
+endif( )
 
-package_set_postinst_prerm(
-    "hiprand;rocrand"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/include;${CMAKE_INSTALL_PREFIX}/rocrand/include"
-    "${hiprand_SOVERSION};${rocrand_SOVERSION}"
+set( ROCRAND_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file.")
+
+rocm_create_package(
+    NAME ${package_name}
+    DESCRIPTION "the rocRAND project provides functions that generate pseudo-random and quasi-random numbers."
+    MAINTAINER "rocRAND Maintainer <rocrand-maintainer@amd.com>"
+    LDCONFIG
+    LDCONFIG_DIR ${ROCRAND_CONFIG_DIR}
 )
-
-# Include CPack to introduce the appropriate targets
-include(CPack)
