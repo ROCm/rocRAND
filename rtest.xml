@@ -1,0 +1,6 @@
+<testset>
+<var name="CTEST_FILTER" value="ctest --output-on-failure"></var>
+<test sets="psdb">
+  <run name="default_tests">{CTEST_FILTER}</run>
+</test>
+</testset>

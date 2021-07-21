@@ -36,7 +36,7 @@ namespace detail {
 
     typedef ::rocrand_device::xorwow_engine xorwow_device_engine;
 
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void init_engines_kernel(xorwow_device_engine * engines,
                              unsigned long long seed,
@@ -47,7 +47,7 @@ namespace detail {
     }
 
     template<class T, class Distribution>
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(xorwow_device_engine * engines,
                          T * data, const size_t n,

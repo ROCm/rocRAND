@@ -72,7 +72,7 @@ namespace detail {
     typedef ::rocrand_device::mtgp32_engine mtgp32_device_engine;
 
     template<unsigned int BlockSize, class T, class Distribution>
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(mtgp32_device_engine * engines,
                          T * data,

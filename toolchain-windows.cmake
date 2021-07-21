@@ -3,11 +3,11 @@
 # Ninja doesn't support platform
 #set(CMAKE_GENERATOR_PLATFORM x64)
 
-if (DEFINED ENV{HIP_PATH})
-  file(TO_CMAKE_PATH "$ENV{HIP_PATH}" HIP_PATH)
-  set(rocm_bin "${HIP_PATH}/bin")
+if (DEFINED ENV{HIP_DIR})
+  file(TO_CMAKE_PATH "$ENV{HIP_DIR}" HIP_DIR)
+  set(rocm_bin "${HIP_DIR}/bin")
 else()
-  set(HIP_PATH "C:/hip")
+  set(HIP_DIR "C:/hip")
   set(rocm_bin "C:/hip/bin")
 endif()
 
@@ -24,7 +24,7 @@ set(CMAKE_CXX_COMPILER_WORKS 1)
 #
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -IC:/hip/include -IC:/hip/lib/clang/12.0.0 -DWIN32 -D_CRT_SECURE_NO_WARNINGS")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${HIP_PATH}/include -DWIN32 -D_CRT_SECURE_NO_WARNINGS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${HIP_DIR}/include -DWIN32 -D_CRT_SECURE_NO_WARNINGS")
 
 # flags for clang direct use
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fms-extensions -fms-compatibility")
