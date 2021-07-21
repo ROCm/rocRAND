@@ -3,4 +3,7 @@
 <test sets="psdb">
   <run name="default_tests">{CTEST_FILTER}</run>
 </test>
+<test sets="osdb">
+  <run name="default_tests">{CTEST_FILTER}</run>
+</test>
 </testset>
