@@ -82,21 +82,40 @@ endif()
 
 set(rocrandtargets rocrand)
 
-# Install
-# .so or .a lib
-install(
-    TARGETS ${rocrandtargets}
-    EXPORT rocrand-targets
-    ARCHIVE DESTINATION rocrand/lib
-    LIBRARY DESTINATION rocrand/lib
-    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-)
-# headers
+# Install...
+if(BUILD_SHARED_LIBS)
+    # ... .so lib and namelinks
+    install(
+        TARGETS ${rocrandtargets}
+        EXPORT rocrand-targets
+        ARCHIVE DESTINATION rocrand/lib ${DEVEL_COMPONENT}
+        LIBRARY DESTINATION rocrand/lib ${RUNTIME_COMPONENT} NAMELINK_SKIP
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    )
+    install(
+        TARGETS ${rocrandtargets}
+        EXPORT rocrand-targets
+        LIBRARY DESTINATION rocrand/lib ${DEVEL_COMPONENT} NAMELINK_ONLY
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+
+    )
+else()
+    # ... .a lib
+    install(
+        TARGETS ${rocrandtargets}
+        EXPORT rocrand-targets
+        ARCHIVE DESTINATION rocrand/lib ${DEVEL_COMPONENT}
+        LIBRARY DESTINATION rocrand/lib ${DEVEL_COMPONENT}
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    )
+endif()
+# ... headers
 install(
     DIRECTORY
         "include/"
         "${PROJECT_BINARY_DIR}/library/include/"
     DESTINATION rocrand/include
+    ${DEVEL_COMPONENT}
     FILES_MATCHING
     PATTERN "rocrand*h"
     PATTERN "rocrand*hpp"
@@ -107,6 +126,7 @@ install(
     EXPORT rocrand-targets
     NAMESPACE roc::
     DESTINATION rocrand/lib/cmake/rocrand
+    ${DEVEL_COMPONENT}
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
@@ -126,6 +146,7 @@ install(
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
     DESTINATION rocrand/lib/cmake/rocrand
+    ${DEVEL_COMPONENT}
 )
 
 # hipRAND library
@@ -183,21 +204,41 @@ set_target_properties(hiprand
 
 set(hiprandtargets hiprand)
 
-# Install
-# .so and .a library
-install(
-    TARGETS ${hiprandtargets}
-    EXPORT hiprand-targets
-    ARCHIVE DESTINATION hiprand/lib
-    LIBRARY DESTINATION hiprand/lib
-    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-)
-# headers
+# Install...
+if(BUILD_SHARED_LIBS)
+    # ... .so lib and namelinks
+    install(
+        TARGETS ${hiprandtargets}
+        EXPORT hiprand-targets
+        ARCHIVE DESTINATION hiprand/lib ${DEVEL_COMPONENT}
+        LIBRARY DESTINATION hiprand/lib ${RUNTIME_COMPONENT} NAMELINK_SKIP
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    )
+    install(
+        TARGETS ${hiprandtargets}
+        EXPORT hiprand-targets
+        LIBRARY DESTINATION hiprand/lib ${DEVEL_COMPONENT} NAMELINK_ONLY
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+
+    )
+else()
+    # ... .a lib
+    install(
+        TARGETS ${hiprandtargets}
+        EXPORT hiprand-targets
+        ARCHIVE DESTINATION hiprand/lib ${DEVEL_COMPONENT}
+        LIBRARY DESTINATION hiprand/lib ${DEVEL_COMPONENT}
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    )
+endif()
+
+# ... headers
 install(
     DIRECTORY
         "include/"
         "${PROJECT_BINARY_DIR}/library/include/"
     DESTINATION hiprand/include
+    ${DEVEL_COMPONENT}
     FILES_MATCHING
     PATTERN "hiprand*h"
     PATTERN "hiprand*hpp"
@@ -208,6 +249,7 @@ install(
     EXPORT hiprand-targets
     NAMESPACE hip::
     DESTINATION hiprand/lib/cmake/hiprand
+    ${DEVEL_COMPONENT}
 )
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
@@ -227,6 +269,7 @@ install(
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
     DESTINATION hiprand/lib/cmake/hiprand
+    ${DEVEL_COMPONENT}
 )
 
 # Fortran wrappers for hipRAND and rocRAND
@@ -241,17 +284,32 @@ find_program(DPKG_EXE dpkg)
 set(CPACK_GENERATOR "TGZ;ZIP")
 if(EXISTS ${RPMBUILD_EXE})
     list(APPEND CPACK_GENERATOR "RPM")
+    if(ROCM_USE_DEV_COMPONENT)
+        set(CPACK_RPM_COMPONENT_INSTALL ON)
+    endif()
 endif()
 if(EXISTS ${DPKG_EXE})
     list(APPEND CPACK_GENERATOR "DEB")
+    if(ROCM_USE_DEV_COMPONENT)
+        set(CPACK_DEB_COMPONENT_INSTALL ON)
+        execute_process(
+            COMMAND dpkg --print-architecture
+            RESULT_VARIABLE PROC_RESULT
+            OUTPUT_VARIABLE COMMAND_OUTPUT
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(PROC_RESULT EQUAL "0" AND NOT COMMAND_OUTPUT STREQUAL "")
+            set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${COMMAND_OUTPUT}")
+        endif()
+    endif()
 endif()
 set(CPACK_PACKAGE_NAME "rocrand")
 set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "rocRAND Maintainer <rocrand-maintaner@amd.com>")
-if(HIP_RUNTIME STREQUAL "ROCclr")
+string(TOLOWER HIP_RUNTIME HIP_RUNTIME_lower)
+if(HIP_RUNTIME_lower STREQUAL "rocclr")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)")
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-rocclr >= 3.5.0")
-elseif(HIP_RUNTIME STREQUAL "cuda")
+elseif(HIP_RUNTIME_lower STREQUAL "cuda")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-nvcc (>= 3.5.0)")
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 3.5.0")
 endif()
@@ -305,6 +363,21 @@ if (PROC_RESULT EQUAL "0" AND NOT EVAL_RESULT STREQUAL "")
 endif()
 set(CPACK_DEBIAN_PACKAGE_RELEASE ${DEBIAN_VERSION})
 set(CPACK_RPM_PACKAGE_RELEASE ${RPM_RELEASE})
+
+if(ROCM_USE_DEV_COMPONENT)
+    set(CPACK_COMPONENTS_ALL "Unspecified;devel")
+    set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "${CPACK_PACKAGE_NAME} (>= ${DEBIAN_VERSION})")
+    set(CPACK_DEBIAN_UNSPECIFIED_PACKAGE_RECOMMENDS "${CPACK_PACKAGE_NAME}-devel (>= ${DEBIAN_VERSION})")
+    set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "${CPACK_PACKAGE_NAME} >= ${RPM_RELEASE}")
+    set(CPACK_RPM_UNSPECIFIED_PACKAGE_SUGGESTS "${CPACK_PACKAGE_NAME}-devel >= ${RPM_RELEASE}")
+
+    set(CPACK_RPM_MAIN_COMPONENT "Unspecified")
+    set(CPACK_RPM_UNSPECIFIED_DISPLAY_NAME "${CPACK_PACKAGE_NAME}")
+    set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+    set(CPACK_DEBIAN_UNSPECIFIED_FILE_NAME
+       "${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}-${DEBIAN_VERSION}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
+    set(CPACK_DEBIAN_UNSPECIFIED_PACKAGE_NAME "${CPACK_PACKAGE_NAME}")
+endif()
 
 package_set_postinst_prerm(
     "hiprand;rocrand"
