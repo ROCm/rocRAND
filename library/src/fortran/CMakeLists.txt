@@ -38,7 +38,7 @@ else()
 endif()
 
 # Install Fortran sources
-rocm_install(
+install(
     FILES ${FORTRAN_ROCRAND_SRCS}
     DESTINATION rocrand/src/fortran
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
@@ -68,7 +68,7 @@ else()
 endif()
 
 # Install Fortran sources
-rocm_install(
+install(
     FILES ${FORTRAN_HIPRAND_SRCS}
     DESTINATION hiprand/src/fortran
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
