@@ -186,9 +186,12 @@ float rocrand_uniform(rocrand_state_philox4x32_10 * state)
 FQUALIFIERS
 float2 rocrand_uniform2(rocrand_state_philox4x32_10 * state)
 {
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
     return float2 {
-        rocrand_device::detail::uniform_distribution(rocrand(state)),
-        rocrand_device::detail::uniform_distribution(rocrand(state))
+        rocrand_device::detail::uniform_distribution(state1),
+        rocrand_device::detail::uniform_distribution(state2)
     };
 }
 
@@ -225,7 +228,10 @@ float4 rocrand_uniform4(rocrand_state_philox4x32_10 * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_philox4x32_10 * state)
 {
-    return rocrand_device::detail::uniform_distribution_double(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::uniform_distribution_double(state1, state2);
 }
 
 /**
@@ -336,7 +342,10 @@ float rocrand_uniform(rocrand_state_xorwow * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_xorwow * state)
 {
-    return rocrand_device::detail::uniform_distribution_double(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::uniform_distribution_double(state1, state2);
 }
 
  /**
