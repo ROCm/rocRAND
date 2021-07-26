@@ -211,6 +211,13 @@ install(
     NAMESPACE hip::
     DESTINATION hiprand/lib/cmake/hiprand
 )
+
+# install library to C:\hipSDK\bin
+if (WIN32)
+  install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+  install (TARGETS hiprand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+endif()
+
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
@@ -240,7 +247,16 @@ endif()
 # Generates .deb, .zip., and .tar.gz packages
 find_program(RPMBUILD_EXE rpmbuild)
 find_program(DPKG_EXE dpkg)
-set(CPACK_GENERATOR "TGZ;ZIP")
+# The following code is setting variables to control the behavior of CPack to generate our
+if( WIN32 )
+    set( CPACK_SOURCE_GENERATOR "ZIP" )
+    set( CPACK_GENERATOR "ZIP" )
+else( )
+    set( CPACK_SOURCE_GENERATOR "TGZ;ZIP" )
+#    set( CPACK_GENERATOR "DEB;RPM" CACHE STRING "cpack list: 7Z, DEB, IFW, NSIS, NSIS64, RPM, STGZ, TBZ2, TGZ, TXZ, TZ, ZIP" )
+#    set( CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON )
+endif( )
+
 if(EXISTS ${RPMBUILD_EXE})
     list(APPEND CPACK_GENERATOR "RPM")
 endif()
@@ -258,11 +274,7 @@ elseif(HIP_RUNTIME STREQUAL "cuda")
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 3.5.0")
 endif()
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers.")
-if (WIN32)
-  set(CPACK_SET_DESTDIR OFF)
-else()
-  set(CPACK_SET_DESTDIR ON)
-endif()
+
 set(CPACK_RPM_PACKAGE_RELOCATABLE OFF)
 set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF CACHE BOOL "")
 set(CPACK_PACKAGE_VERSION ${rocRAND_VERSION_MAJOR}.${rocRAND_VERSION_MINOR}.${rocRAND_VERSION_PATCH})

@@ -90,8 +90,8 @@ def config_cmd():
         cmake_executable = "cmake.exe"
         toolchain = os.path.join( src_path, "toolchain-windows.cmake" )
         #set CPACK_PACKAGING_INSTALL_PREFIX= defined as blank as it is appended to end of path for archive creation
-        cmake_platform_opts.append( f"-DWIN32=ON -DCPACK_PACKAGING_INSTALL_PREFIX=") #" -DCPACK_PACKAGING_INSTALL_PREFIX={rocm_path}"
-        cmake_platform_opts.append( f"-DCMAKE_INSTALL_PREFIX=\"C:/hipSDK\"" )     
+        cmake_platform_opts.append( f"-DCPACK_PACKAGING_INSTALL_PREFIX=" )
+        cmake_platform_opts.append( f"-DCMAKE_INSTALL_PREFIX=\"C:/hipSDK\"" )
         generator = f"-G Ninja"
         # "-G \"Visual Studio 16 2019\" -A x64"  #  -G NMake ")  #
         cmake_options.append( generator )

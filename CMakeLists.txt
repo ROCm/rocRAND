@@ -23,11 +23,19 @@
 cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
 
 # Install prefix
-set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
+if (WIN32)
+  SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
+  SET( INSTALL_PREFIX "C:/hipSDK" )
+  SET( CPACK_SET_DESTDIR FALSE )
+  SET( CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK" )
+  SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
+  set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
+else()
+  set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
-#Adding CMAKE_PREFIX_PATH
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
-
+  #Adding CMAKE_PREFIX_PATH
+  list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+endif()
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
@@ -94,7 +102,11 @@ endif()
 #set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
 
 # Verify that hcc compiler is used on ROCM platform
-#include(cmake/VerifyCompiler.cmake)
+# TODO: Fix VerifyCompiler for Windows
+if (NOT WIN32)
+  include(cmake/VerifyCompiler.cmake)
+endif()
+
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm /opt/rocm/llvm /opt/rocm/hip)
 find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
