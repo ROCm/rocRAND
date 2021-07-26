@@ -122,6 +122,19 @@ set(rocrand_VERSION_NUMBER ${temp})
 include(cmake/Summary.cmake)
 print_configuration_summary()
 
+if(WIN32)
+    set(ROCM_USE_DEV_COMPONENT OFF CACHE BOOL "Whether to generate the devel package.")
+else()
+    set(ROCM_USE_DEV_COMPONENT ON CACHE BOOL "Whether to generate the devel package.")
+endif()
+set(RUNTIME_COMPONENT "COMPONENT;Unspecified")
+if(ROCM_USE_DEV_COMPONENT)
+    set(DEVEL_COMPONENT "COMPONENT;devel")
+else()
+    set(DEVEL_COMPONENT "COMPONENT;Unspecified")
+endif()
+
+
 # Tools
 add_subdirectory(tools)
 
