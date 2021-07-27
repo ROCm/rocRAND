@@ -2,6 +2,11 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
+## (Unreleased) rocRAND-2.10.12
+### Changed
+
+- Packaging split into a runtime package called rocrand and a development package called rocrand-devel. The development package depends on runtime. The runtime package suggests the development package for all supported OSes except CentOS 7 to aid in the transition. The suggests feature in packaging is introduced as a deprecated feature and will be removed in a future rocm release.
+
 ## [Unreleased rocRAND-2.10.11 for ROCm 4.4.0]
 ### Added
 - Sobol64 support added.
