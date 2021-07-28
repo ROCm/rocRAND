@@ -32,7 +32,7 @@ environment cuRAND is used instead.
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
   * Latest CUDA SDK
-* Python 3.6 or higher (HIP on Windows only)
+* Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
 * Strawberry Perl (HIP on Windows only)
 
