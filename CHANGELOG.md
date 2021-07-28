@@ -2,10 +2,16 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## (Unreleased) rocRAND-2.10.12
+## (Unreleased) rocRAND-2.10.12 for ROCm 4.5.0
+### Addded
+- Initial HIP on Windows support. See README for instructions on how to build and install.
 ### Changed
-
 - Packaging split into a runtime package called rocrand and a development package called rocrand-devel. The development package depends on runtime. The runtime package suggests the development package for all supported OSes except CentOS 7 to aid in the transition. The suggests feature in packaging is introduced as a deprecated feature and will be removed in a future rocm release.
+### Fixed
+- Fix for mrg_uniform_distribution_double generating incorrect range of values
+- Fix for order of state calls for log_normal, normal, and uniform
+### Known issues
+- kernel_xorwow test is failing for MI200.
 
 ## [Unreleased rocRAND-2.10.11 for ROCm 4.4.0]
 ### Added

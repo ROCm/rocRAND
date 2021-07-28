@@ -33,7 +33,17 @@
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
-#define ROCRANDAPI
+#ifdef WIN32
+  #ifdef rocrand_EXPORTS
+  /* We are building this library */
+    #define ROCRANDAPI __declspec(dllexport)
+  #else
+    /* We are using this library */
+    #define ROCRANDAPI __declspec(dllimport)
+  #endif
+#else
+  #define ROCRANDAPI
+#endif
 #endif
 /// \endcond
 
