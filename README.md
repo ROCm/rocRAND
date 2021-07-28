@@ -32,6 +32,9 @@ environment cuRAND is used instead.
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
   * Latest CUDA SDK
+* Python 3.6 or higher (HIP on Windows only)
+* Visual Studio 2019 with clang support (HIP on Windows only)
+* Strawberry Perl (HIP on Windows only)
 
 Optional:
 
@@ -81,6 +84,20 @@ ctest --output-on-failure
 
 # Install
 [sudo] make install
+```
+
+### HIP on Windows
+
+Initial support for HIP on Windows has been added.  To install, use the provided rmake.py python script:
+```shell
+git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
+cd rocPRIM
+
+# the -i option will install rocPRIM to C:\hipSDK by default
+python rmake.py -i
+
+# the -c option will build all clients including unit tests
+python rmake.py -c
 ```
 
 Note: Existing gtest library in the system (especially static gtest libraries built with other compilers)
