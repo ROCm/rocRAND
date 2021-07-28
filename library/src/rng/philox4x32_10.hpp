@@ -110,7 +110,7 @@ namespace detail {
         // m_state from base class
     };
 
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void init_engines_kernel(philox4x32_10_device_engine * engines,
                              const unsigned long long seed,
@@ -121,7 +121,7 @@ namespace detail {
     }
 
     template<unsigned int ThreadsPerEngine, class T, class Distribution>
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(philox4x32_10_device_engine * engines,
                          T * data, const size_t n,

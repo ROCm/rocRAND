@@ -31,7 +31,17 @@
 
 /// \cond HIPRAND_DOCS_MACRO
 #ifndef HIPRANDAPI
-#define HIPRANDAPI
+#ifdef WIN32
+  #ifdef hiprand_EXPORTS
+  /* We are building this library */
+    #define HIPRANDAPI __declspec(dllexport)
+  #else
+    /* We are using this library */
+    #define HIPRANDAPI __declspec(dllimport)
+  #endif
+#else
+  #define HIPRANDAPI
+#endif
 #endif
 /// \endcond
 

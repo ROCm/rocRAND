@@ -38,7 +38,7 @@ namespace detail {
     typedef ::rocrand_device::sobol32_engine<true> sobol32_device_engine;
 
     template<unsigned int OutputPerThread, class T, class Distribution>
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(T * data, const size_t n,
                          const unsigned int * direction_vectors,

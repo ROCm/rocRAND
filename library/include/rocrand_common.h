@@ -36,6 +36,12 @@
 
 #include <math.h>
 
+#ifdef WIN32
+#define ROCRAND_KERNEL __global__ static
+#else
+#define ROCRAND_KERNEL __global__
+#endif
+
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
