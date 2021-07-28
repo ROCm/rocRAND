@@ -35,6 +35,7 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     set_target_properties(${BENCHMARK_TARGET}
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmark"
+    )
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
@@ -48,6 +49,5 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
       foreach( file_i ${third_party_dlls})
         add_custom_command( TARGET ${BENCHMARK_TARGET} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/benchmark )
       endforeach( file_i )
-    endif()              
-    )
+    endif()
 endforeach()
