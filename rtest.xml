@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testset>
+<testset failure-regex="[1-9]\d* tests failed">
     <var name="TEST_COMMAND">ctest --output-on-failure </var>
     <test sets="psdb">
         <run name="all-psdb">{TEST_COMMAND}</run>
