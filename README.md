@@ -91,7 +91,7 @@ ctest --output-on-failure
 Initial support for HIP on Windows has been added.  To install, use the provided rmake.py python script:
 ```shell
 git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
-cd rocPRIM
+cd rocRAND
 
 # the -i option will install rocPRIM to C:\hipSDK by default
 python rmake.py -i
