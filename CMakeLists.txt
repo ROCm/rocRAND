@@ -35,6 +35,9 @@ else()
 
   #Adding CMAKE_PREFIX_PATH
   list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+  if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
+      set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+  endif()
 endif()
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
