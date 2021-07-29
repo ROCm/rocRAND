@@ -65,7 +65,6 @@ target_include_directories(rocrand
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
         $<INSTALL_INTERFACE:rocrand/include>
 )
-
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
     PROPERTIES
@@ -74,10 +73,12 @@ set_target_properties(rocrand
 )
 
 # Set AMD targets
-if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-    foreach(amdgpu_target ${AMDGPU_TARGETS})
-        target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
-    endforeach()
+if (NOT WIN32)
+  if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
+      foreach(amdgpu_target ${AMDGPU_TARGETS})
+          target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
+      endforeach()
+  endif()
 endif()
 
 set(rocrandtargets rocrand)
@@ -150,7 +151,6 @@ install(
 )
 
 # hipRAND library
-
 # Get hipRAND sources
 if(HIP_COMPILER STREQUAL "nvcc")
     set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_${HIP_COMPILER}.cpp)
@@ -189,9 +189,11 @@ else()
     else()
       target_link_libraries(hiprand PRIVATE rocrand hip::device)
     endif()
-    foreach(amdgpu_target ${AMDGPU_TARGETS})
-        target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
-    endforeach()
+	if (NOT WIN32)
+      foreach(amdgpu_target ${AMDGPU_TARGETS})
+          target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
+      endforeach()
+	endif()
 endif()
 
 rocm_set_soversion(hiprand ${hiprand_SOVERSION})
@@ -251,6 +253,13 @@ install(
     DESTINATION hiprand/lib/cmake/hiprand
     ${DEVEL_COMPONENT}
 )
+
+# install library to C:\hipSDK\bin
+if (WIN32)
+  install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+  install (TARGETS hiprand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+endif()
+
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
@@ -281,7 +290,16 @@ endif()
 # Generates .deb, .zip., and .tar.gz packages
 find_program(RPMBUILD_EXE rpmbuild)
 find_program(DPKG_EXE dpkg)
-set(CPACK_GENERATOR "TGZ;ZIP")
+# The following code is setting variables to control the behavior of CPack to generate our
+if( WIN32 )
+    set( CPACK_SOURCE_GENERATOR "ZIP" )
+    set( CPACK_GENERATOR "ZIP" )
+else( )
+    set( CPACK_SOURCE_GENERATOR "TGZ;ZIP" )
+#    set( CPACK_GENERATOR "DEB;RPM" CACHE STRING "cpack list: 7Z, DEB, IFW, NSIS, NSIS64, RPM, STGZ, TBZ2, TGZ, TXZ, TZ, ZIP" )
+#    set( CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON )
+endif( )
+
 if(EXISTS ${RPMBUILD_EXE})
     list(APPEND CPACK_GENERATOR "RPM")
     if(ROCM_USE_DEV_COMPONENT)
@@ -314,7 +332,7 @@ elseif( HIP_RUNTIME STREQUAL "cuda" )
   set(CPACK_RPM_PACKAGE_REQUIRES "hip-nvcc >= 3.5.0")
 endif( )
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The rocRAND library provides functions that generate pseudo-random and quasi-random numbers.")
-set(CPACK_SET_DESTDIR ON)
+
 set(CPACK_RPM_PACKAGE_RELOCATABLE OFF)
 set(CPACK_RPM_PACKAGE_AUTOREQPROV OFF CACHE BOOL "")
 set(CPACK_PACKAGE_VERSION ${rocRAND_VERSION_MAJOR}.${rocRAND_VERSION_MINOR}.${rocRAND_VERSION_PATCH})
@@ -397,6 +415,25 @@ package_set_postinst_prerm(
     "${CMAKE_INSTALL_PREFIX}/hiprand/include;${CMAKE_INSTALL_PREFIX}/rocrand/include"
     "${hiprand_SOVERSION};${rocrand_SOVERSION}"
 )
+
+# In windows, we require the DLLs to be in the same directory as test executables
+if (BUILD_TEST AND WIN32)
+  add_custom_command(
+      TARGET rocrand 
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+          $<TARGET_FILE:rocrand>
+          ${PROJECT_BINARY_DIR}/test/$<TARGET_FILE_NAME:rocrand>
+  )
+
+  add_custom_command(
+      TARGET hiprand 
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy
+          $<TARGET_FILE:hiprand>
+          ${PROJECT_BINARY_DIR}/test/$<TARGET_FILE_NAME:hiprand>
+  )
+endif()
 
 # Include CPack to introduce the appropriate targets
 include(CPack)
