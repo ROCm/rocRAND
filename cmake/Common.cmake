@@ -83,6 +83,7 @@ function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS SOVERSIONS)
         set(${RI_D_S} "${${RI_D_S}}\n\trm -f ${lib_dir}/lib${lib_name}.so")
         set(${RI_R_S} "${${RI_R_S}}\n\trm -f ${lib_dir}/lib${lib_name}.so.*")
         set(${RI_D_S} "${${RI_D_S}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
+        set(${RI_R_S} "${${RI_R_S}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
         set(${RI_D_S} "${${RI_D_S}}\nfi")
         set(${RI_R_S} "${${RI_R_S}}\nfi")
 
@@ -93,6 +94,7 @@ function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS SOVERSIONS)
         set(${PR_R_S} "${${PR_R_S}}\nunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_STRING}")
         set(${PR_D_S} "${${PR_D_S}}\nunlink ${lib_dir}/../../lib/cmake/${lib_name}/${lib_name}")
         set(${PR_D_S} "${${PR_D_S}}\nrm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
+        set(${RI_R_S} "${${RI_R_S}}\nrm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
 
 	#For pre uninstall script, first argument is 0 for uninstall and 1 for upgrade
 	#Skip removal of symlinks if upgrade command is called (only for RPM)
@@ -105,6 +107,7 @@ function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS SOVERSIONS)
         set(${PR_R_SR} "${${PR_R_SR}}\n\tunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_STRING}")
         set(${PR_D_SR} "${${PR_D_SR}}\n\tunlink ${lib_dir}/../../lib/cmake/${lib_name}/${lib_name}")
         set(${PR_D_SR} "${${PR_D_SR}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
+        set(${RI_R_SR} "${${RI_R_SR}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
         set(${PR_D_SR} "${${PR_D_SR}}\nfi")
     endforeach()
     #For Deb package, POSTINST_SOURCE and PRERM_SOURCE are used
