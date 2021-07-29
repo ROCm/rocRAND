@@ -11,7 +11,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - Fix for mrg_uniform_distribution_double generating incorrect range of values
 - Fix for order of state calls for log_normal, normal, and uniform
 ### Known issues
-- kernel_xorwow test is failing for MI200.
+- kernel_xorwow test is failing for certain GPU architectures.
 
 ## [Unreleased rocRAND-2.10.11 for ROCm 4.4.0]
 ### Added
