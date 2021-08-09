@@ -1,6 +1,89 @@
 #
 set(ROCM_DISABLE_LDCONFIG OFF CACHE BOOL "")
 
+if(ROCM_USE_DEV_COMPONENT)
+    function(_clear_all)
+        foreach(PREFIX IN LISTS ARGV)
+            set(${PREFIX}_RUNTIME_SOURCE "" PARENT_SCOPE)
+            set(${PREFIX}_DEVEL_SOURCE "" PARENT_SCOPE)
+        endforeach()
+    endfunction()
+
+    function(_add_to_both PREFIX CMD)
+        set(${PREFIX}_RUNTIME_SOURCE "${${PREFIX}_RUNTIME_SOURCE}\n${CMD}" PARENT_SCOPE)
+        set(${PREFIX}_DEVEL_SOURCE "${${PREFIX}_DEVEL_SOURCE}\n${CMD}" PARENT_SCOPE)
+    endfunction()
+
+    function(_add_to_devel PREFIX CMD)
+        set(${PREFIX}_DEVEL_SOURCE "${${PREFIX}_DEVEL_SOURCE}\n${CMD}" PARENT_SCOPE)
+    endfunction()
+
+    function(_add_to_runtime PREFIX CMD)
+        set(${PREFIX}_RUNTIME_SOURCE "${${PREFIX}_RUNTIME_SOURCE}\n${CMD}" PARENT_SCOPE)
+    endfunction()
+
+    function(_write_files PREFIXES FILES)
+        list(LENGTH PREFIXES len1)
+        list(LENGTH FILES len2)
+        if(NOT (len1 EQUAL len2))
+            message(FATAL_ERROR "PREFIXES and FILES must have same size")
+        endif()
+        math(EXPR len3 "${len1} - 1")
+
+        foreach(val RANGE ${len3})
+            list(GET PREFIXES ${val} PREFIX)
+            list(GET FILES ${val} FILE)
+            file(WRITE ${PROJECT_BINARY_DIR}/deb/runtime/${FILE} ""
+                "#!/bin/bash\n"
+                "${${PREFIX}_RUNTIME_SOURCE}\n"
+                "ldconfig\n"
+            )
+            file(WRITE ${PROJECT_BINARY_DIR}/deb/devel/${FILE} ""
+                "#!/bin/bash\n"
+                "${${PREFIX}_DEVEL_SOURCE}\n"
+                "ldconfig\n"
+            )
+        endforeach()
+    endfunction()
+else()
+    function(_clear_all)
+        foreach(PREFIX IN LISTS ARGV)
+            set(${PREFIX}_SOURCE "" PARENT_SCOPE)
+        endforeach()
+    endfunction()
+
+    function(_add_to_both PREFIX CMD)
+        set(${PREFIX}_SOURCE "${${PREFIX}_SOURCE}\n${CMD}" PARENT_SCOPE)
+    endfunction()
+
+    function(_add_to_devel PREFIX CMD)
+        set(${PREFIX}_SOURCE "${${PREFIX}_SOURCE}\n${CMD}" PARENT_SCOPE)
+    endfunction()
+
+    function(_add_to_runtime PREFIX CMD)
+        set(${PREFIX}_SOURCE "${${PREFIX}_SOURCE}\n${CMD}" PARENT_SCOPE)
+    endfunction()
+
+    function(_write_files PREFIXES FILES)
+        list(LENGTH PREFIXES len1)
+        list(LENGTH FILES len2)
+        if(NOT (len1 EQUAL len2))
+            message(FATAL_ERROR "PREFIXES and FILES must have same size")
+        endif()
+        math(EXPR len3 "${len1} - 1")
+
+        foreach(val RANGE ${len3})
+            list(GET PREFIXES ${val} PREFIX)
+            list(GET FILES ${val} FILE)
+            file(WRITE ${PROJECT_BINARY_DIR}/deb/${FILE} ""
+                "#!/bin/bash\n"
+                "${${PREFIX}_SOURCE}\n"
+                "ldconfig\n"
+            )
+        endforeach()
+    endfunction()
+endif()
+
 function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS SOVERSIONS)
     list(LENGTH LIB_NAMES len1)
     list(LENGTH LIB_DIRS  len2)
@@ -9,42 +92,7 @@ function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS SOVERSIONS)
     endif()
     math(EXPR len3 "${len1} - 1")
 
-    set(POSTINST_DEVEL_SOURCE "")
-    set(PREINST_DEVEL_SOURCE "")
-    set(PRERM_DEVEL_SOURCE "")
-    set(PRERM_DEVEL_RPM_SOURCE "")
-
-    set(POSTINST_RUNTIME_SOURCE "")
-    set(PREINST_RUNTIME_SOURCE "")
-    set(PRERM_RUNTIME_SOURCE "")
-    set(PRERM_RUNTIME_RPM_SOURCE "")
-
-    set(POSTINST_SOURCE "")
-    set(PREINST_SOURCE "")
-    set(PRERM_SOURCE "")
-    set(PRERM_RPM_SOURCE "")
-
-    if(ROCM_USE_DEV_COMPONENT)
-        set(PI_D_S POSTINST_DEVEL_SOURCE)
-        set(RI_D_S PREINST_DEVEL_SOURCE)
-        set(PR_D_S PRERM_DEVEL_SOURCE)
-        set(PR_D_SR PRERM_DEVEL_RPM_SOURCE)
-
-        set(PI_R_S POSTINST_RUNTIME_SOURCE)
-        set(RI_R_S PREINST_RUNTIME_SOURCE)
-        set(PR_R_S PRERM_RUNTIME_SOURCE)
-        set(PR_R_SR PRERM_RUNTIME_RPM_SOURCE)
-    else()
-        set(PI_D_S POSTINST_SOURCE)
-        set(RI_D_S PREINST_SOURCE)
-        set(PR_D_S PRERM_SOURCE)
-        set(PR_D_SR PRERM_RPM_SOURCE)
-
-        set(PI_R_S POSTINST_SOURCE)
-        set(RI_R_S PREINST_SOURCE)
-        set(PR_R_S PRERM_SOURCE)
-        set(PR_R_SR PRERM_RPM_SOURCE)
-    endif()
+    _clear_all(POSTINST PREINST PRERM PRERM_RPM)
 
     foreach(val RANGE ${len3})
         list(GET LIB_NAMES ${val} lib_name)
@@ -53,139 +101,80 @@ function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS SOVERSIONS)
         list(GET SOVERSIONS ${val} so_ver)
 
         rocm_version_regex_parse("^([0-9]+).*" LIB_VERSION_MAJOR "${so_ver}")
-        set (LIB_VERSION_STRING "${so_ver}.0")
+        set(LIB_VERSION_STRING "${so_ver}")
         if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
             set (LIB_VERSION_STRING "${so_ver}.$ENV{ROCM_LIBPATCH_VERSION}")
         endif()
 
-        set(${PI_D_S} "${${PI_D_S}}\nmkdir -p ${inc_dir}/../../include/")
-        set(${PI_R_S} "${${PI_R_S}}\nmkdir -p ${inc_dir}/../../include/")
-        set(${PI_D_S} "${${PI_D_S}}\nmkdir -p ${lib_dir}/../../lib/cmake/${lib_name}")
-        set(${PI_R_S} "${${PI_R_S}}\nmkdir -p ${lib_dir}/../../lib/cmake/${lib_name}")
+        set(lib_link_dir "${lib_dir}/../../lib")
+
+        _add_to_both(POSTINST       "# Begin autogenerated postinst script for ${lib_name}")
+        _add_to_both(POSTINST       "mkdir -p ${lib_dir}/../../include")
+        _add_to_both(POSTINST       "mkdir -p ${lib_dir}/../../lib/cmake/${lib_name}")
         if(NOT ${ROCM_DISABLE_LDCONFIG})
-            set(${PI_R_S} "${${PI_R_S}}\necho \"${lib_dir}\" > /etc/ld.so.conf.d/${lib_name}.conf")
+            _add_to_runtime(POSTINST "echo \"${lib_dir}\" > /etc/ld.so.conf.d/${lib_name}.conf")
         endif()
-        set(${PI_D_S} "${${PI_D_S}}\nln -sr ${inc_dir} ${inc_dir}/../../include/${lib_name}")
-        set(${PI_D_S} "${${PI_D_S}}\nln -sr ${lib_dir}/lib${lib_name}.so ${lib_dir}/../../lib/lib${lib_name}.so")
-        set(${PI_R_S} "${${PI_R_S}}\nln -sr ${lib_dir}/lib${lib_name}.so.${LIB_VERSION_MAJOR} ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
-        set(${PI_R_S} "${${PI_R_S}}\nln -sr ${lib_dir}/lib${lib_name}.so.${LIB_VERSION_STRING} ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_STRING}")
-        set(${PI_D_S} "${${PI_D_S}}\nln -sr ${lib_dir}/cmake/${lib_name} ${lib_dir}/../../lib/cmake/${lib_name}\n")
+        _add_to_devel(POSTINST      "ln -sr ${inc_dir} ${inc_dir}/../../include/${lib_name}")
+        _add_to_devel(POSTINST      "ln -sr ${lib_dir}/lib${lib_name}.so ${lib_link_dir}/lib${lib_name}.so")
+        _add_to_runtime(POSTINST    "ln -sr ${lib_dir}/lib${lib_name}.so.${LIB_VERSION_MAJOR} ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
+        _add_to_runtime(POSTINST    "ln -sr ${lib_dir}/lib${lib_name}.so.${LIB_VERSION_STRING} ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_STRING}")
+        _add_to_devel(POSTINST      "ln -sr ${lib_dir}/cmake/${lib_name} ${lib_link_dir}/cmake/${lib_name}")
+        _add_to_both(POSTINST       "# End autogenerated postinst script for ${lib_name}\n")
+
 	#For preinstall script, first argument is 1 for install and 2 for upgrade
 	#Skip removal of symlinks if install command is called
-        set(${RI_D_S} "${${RI_D_S}}\nif [ $1 == 2 ]; then")
-        set(${RI_R_S} "${${RI_R_S}}\nif [ $1 == 2 ]; then")
-        set(${RI_R_S} "${${RI_R_S}}\n\trm -f /etc/ld.so.conf.d/${lib_name}.conf")
-        set(${RI_D_S} "${${RI_D_S}}\n\tunlink ${inc_dir}/../../include/${lib_name}")
-        set(${RI_D_S} "${${RI_D_S}}\n\tunlink ${lib_dir}/../../lib/lib${lib_name}.so")
-        set(${RI_R_S} "${${RI_R_S}}\n\tunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
-        set(${RI_R_S} "${${RI_R_S}}\n\tunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_STRING}")
-        set(${RI_D_S} "${${RI_D_S}}\n\tunlink ${lib_dir}/../../lib/cmake/${lib_name}/${lib_name}")
-        set(${RI_D_S} "${${RI_D_S}}\n\trm -f ${lib_dir}/lib${lib_name}.so")
-        set(${RI_R_S} "${${RI_R_S}}\n\trm -f ${lib_dir}/lib${lib_name}.so.*")
-        set(${RI_D_S} "${${RI_D_S}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
-        set(${RI_R_S} "${${RI_R_S}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
-        set(${RI_D_S} "${${RI_D_S}}\nfi")
-        set(${RI_R_S} "${${RI_R_S}}\nfi")
+        _add_to_both(PREINST "# Begin autogenerated preinst script for ${lib_name}")
+        _add_to_both(PREINST "if [ $1 == 2 ]; then")
+        _add_to_runtime(PREINST "\trm -f /etc/ld.so.conf.d/${lib_name}.conf")
+        _add_to_devel(PREINST   "\tunlink ${inc_dir}/../../include/${lib_name}")
+        _add_to_devel(PREINST   "\tunlink ${lib_link_dir}/lib${lib_name}.so")
+        _add_to_runtime(PREINST "\tunlink ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
+        _add_to_runtime(PREINST "\tunlink ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_STRING}")
+        _add_to_devel(PREINST   "\tunlink ${lib_link_dir}/cmake/${lib_name}/${lib_name}")
+        _add_to_devel(PREINST   "\trm -f ${lib_dir}/${lib_name}.so")
+        _add_to_runtime(PREINST "\trm -f ${lib_dir}/${lib_name}.so.*")
+        _add_to_both(PREINST    "\trm -d ${lib_link_dir}/cmake/${lib_name}")
+        _add_to_both(PREINST "fi")
+        _add_to_both(PREINST "# End autogenerated preinst script for ${lib_name}\n")
 
-        set(${PR_R_S} "${${PR_R_S}}\nrm -f /etc/ld.so.conf.d/${lib_name}.conf")
-        set(${PR_D_S} "${${PR_D_S}}\nunlink ${inc_dir}/../../include/${lib_name}")
-        set(${PR_D_S} "${${PR_D_S}}\nunlink ${lib_dir}/../../lib/lib${lib_name}.so")
-        set(${PR_R_S} "${${PR_R_S}}\nunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
-        set(${PR_R_S} "${${PR_R_S}}\nunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_STRING}")
-        set(${PR_D_S} "${${PR_D_S}}\nunlink ${lib_dir}/../../lib/cmake/${lib_name}/${lib_name}")
-        set(${PR_D_S} "${${PR_D_S}}\nrm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
-        set(${PR_R_S} "${${PR_R_S}}\nrm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
+        _add_to_both(PRERM      "# Begin autogenerated prerm script for ${lib_name}")
+        _add_to_runtime(PRERM   "rm -f /etc/ld.so.conf.d/${lib_name}.conf")
+        _add_to_devel(PRERM     "unlink ${inc_dir}/../../include/${lib_name}")
+        _add_to_devel(PRERM     "unlink ${lib_link_dir}/lib${lib_name}.so")
+        _add_to_runtime(PRERM   "unlink ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
+        _add_to_runtime(PRERM   "unlink ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_STRING}")
+        _add_to_devel(PRERM     "unlink ${lib_link_dir}/cmake/${lib_name}/${lib_name}")
+        _add_to_both(PRERM      "rm -d ${lib_link_dir}/cmake/${lib_name}")
+        _add_to_both(PRERM      "# End autogenerated prerm script for ${lib_name}\n")
 
 	#For pre uninstall script, first argument is 0 for uninstall and 1 for upgrade
 	#Skip removal of symlinks if upgrade command is called (only for RPM)
-        set(${PR_D_SR} "${${PR_D_SR}}\nif [ $1 == 0 ]; then")
-        set(${PR_R_SR} "${${PR_R_SR}}\nif [ $1 == 0 ]; then")
-        set(${PR_R_SR} "${${PR_R_SR}}\n\trm -f /etc/ld.so.conf.d/${lib_name}.conf")
-        set(${PR_D_SR} "${${PR_D_SR}}\n\tunlink ${inc_dir}/../../include/${lib_name}")
-        set(${PR_D_SR} "${${PR_D_SR}}\n\tunlink ${lib_dir}/../../lib/lib${lib_name}.so")
-        set(${PR_R_SR} "${${PR_R_SR}}\n\tunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
-        set(${PR_R_SR} "${${PR_R_SR}}\n\tunlink ${lib_dir}/../../lib/lib${lib_name}.so.${LIB_VERSION_STRING}")
-        set(${PR_D_SR} "${${PR_D_SR}}\n\tunlink ${lib_dir}/../../lib/cmake/${lib_name}/${lib_name}")
-        set(${PR_D_SR} "${${PR_D_SR}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
-        set(${PR_R_SR} "${${PR_R_SR}}\n\trm -d ${lib_dir}/../../lib/cmake/${lib_name}\n")
-        set(${PR_D_SR} "${${PR_D_SR}}\nfi")
+        _add_to_both(PRERM_RPM "# Begin autogenerated RPM only prerm script for ${lib_name}")
+        _add_to_both(PRERM_RPM "if [ $1 == 0 ]; then")
+        _add_to_runtime(PRERM_RPM   "\trm -f /etc/ld.so.conf.d/${lib_name}.conf")
+        _add_to_devel(PRERM_RPM     "\tunlink ${inc_dir}/../../include/${lib_name}")
+        _add_to_devel(PRERM_RPM     "\tunlink ${lib_link_dir}/lib${lib_name}.so")
+        _add_to_runtime(PRERM_RPM   "\tunlink ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_MAJOR}")
+        _add_to_runtime(PRERM_RPM   "\tunlink ${lib_link_dir}/lib${lib_name}.so.${LIB_VERSION_STRING}")
+        _add_to_devel(PRERM_RPM     "\tunlink ${lib_link_dir}/cmake/${lib_name}/${lib_name}")
+        _add_to_both(PRERM_RPM      "\trm -d ${lib_link_dir}/cmake/${lib_name}")
+        _add_to_both(PRERM_RPM "fi")
+        _add_to_both(PRERM_RPM "# End autogenerated RPM only prerm script for ${lib_name}\n")
     endforeach()
     #For Deb package, POSTINST_SOURCE and PRERM_SOURCE are used
     #For RPM package, POSTINST_SOURCE, PREINST_SOURCE, PRERM_RPM_SOURCE are used
+    _write_files("POSTINST;PREINST;PRERM;PRERM_RPM" "postinst;preinst;prerm;prermrpm")
     if(ROCM_USE_DEV_COMPONENT)
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/runtime/postinst ""
-            "#!/bin/bash\n"
-            "${POSTINST_RUNTIME_SOURCE}\n"
-            "ldconfig\n"
-        )
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/devel/postinst ""
-            "#!/bin/bash\n"
-            "${POSTINST_DEVEL_SOURCE}\n"
-            "ldconfig\n"
-        )
-
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/runtime/preinst ""
-            "#!/bin/bash\n"
-            "${PREINST_RUNTIME_SOURCE}\n"
-            "ldconfig\n"
-        )
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/devel/preinst ""
-            "#!/bin/bash\n"
-            "${PREINST_DEVEL_SOURCE}\n"
-            "ldconfig\n"
-        )
-
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/runtime/prerm ""
-            "#!/bin/bash\n"
-            "${PRERM_RUNTIME_SOURCE}\n"
-            "ldconfig\n"
-        )
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/devel/prerm ""
-            "#!/bin/bash\n"
-            "${PRERM_DEVEL_SOURCE}\n"
-            "ldconfig\n"
-        )
-
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/runtime/prermrpm ""
-            "#!/bin/bash\n"
-            "${PRERM_RUNTIME_RPM_SOURCE}\n"
-            "ldconfig\n"
-        )
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/devel/prermrpm ""
-            "#!/bin/bash\n"
-            "${PRERM_DEVEL_RPM_SOURCE}\n"
-            "ldconfig\n"
-        )
         set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${PROJECT_BINARY_DIR}/deb/runtime/postinst;${PROJECT_BINARY_DIR}/deb/runtime/prerm" PARENT_SCOPE)
-        set(CPACK_DEBIAN_DEVEL_PACKAGE_CONTROL_EXTRA "${PROJECT_BINARY_DIR}/deb/devel/postinst;${PROJECT_BINARY_DIR}/deb/devel/prerm" PARENT_SCOPE)
         set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/runtime/postinst" PARENT_SCOPE)
-        set(CPACK_RPM_DEVEL_POST_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/devel/postinst" PARENT_SCOPE)
         set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/runtime/preinst" PARENT_SCOPE)
-        set(CPACK_RPM_DEVEL_PRE_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/devel/preinst" PARENT_SCOPE)
         set(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/runtime/prermrpm" PARENT_SCOPE)
+
+        set(CPACK_DEBIAN_DEVEL_PACKAGE_CONTROL_EXTRA "${PROJECT_BINARY_DIR}/deb/devel/postinst;${PROJECT_BINARY_DIR}/deb/devel/prerm" PARENT_SCOPE)
+        set(CPACK_RPM_DEVEL_POST_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/devel/postinst" PARENT_SCOPE)
+        set(CPACK_RPM_DEVEL_PRE_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/devel/preinst" PARENT_SCOPE)
         set(CPACK_RPM_DEVEL_PRE_UNINSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/devel/prermrpm" PARENT_SCOPE)
     else()
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/postinst ""
-            "#!/bin/bash\n"
-            "${POSTINST_SOURCE}\n"
-            "ldconfig\n"
-        )
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/preinst ""
-            "#!/bin/bash\n"
-            "${PREINST_SOURCE}\n"
-            "ldconfig\n"
-        )
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/prerm ""
-            "#!/bin/bash\n"
-            "${PRERM_SOURCE}\n"
-            "ldconfig\n"
-        )
-        file(WRITE ${PROJECT_BINARY_DIR}/deb/prermrpm ""
-            "#!/bin/bash\n"
-            "${PRERM_RPM_SOURCE}\n"
-            "ldconfig\n"
-        )
-
         set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${PROJECT_BINARY_DIR}/deb/postinst;${PROJECT_BINARY_DIR}/deb/prerm" PARENT_SCOPE)
         set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/postinst" PARENT_SCOPE)
         set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE "${PROJECT_BINARY_DIR}/deb/preinst" PARENT_SCOPE)
