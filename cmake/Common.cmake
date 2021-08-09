@@ -101,7 +101,7 @@ function(package_set_postinst_prerm LIB_NAMES LIB_DIRS INCLUDE_DIRS SOVERSIONS)
         list(GET SOVERSIONS ${val} so_ver)
 
         rocm_version_regex_parse("^([0-9]+).*" LIB_VERSION_MAJOR "${so_ver}")
-        set (LIB_VERSION_STRING "${so_ver}.0")
+        set(LIB_VERSION_STRING "${so_ver}")
         if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
             set (LIB_VERSION_STRING "${so_ver}.$ENV{ROCM_LIBPATCH_VERSION}")
         endif()
