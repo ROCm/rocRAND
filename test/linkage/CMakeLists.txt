@@ -40,7 +40,7 @@ function(add_rocrand_link_test TEST_SOURCES)
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    add_test(NAME ${TEST_TARGET} COMMAND "./${TEST_TARGET}")
+    add_test(NAME ${TEST_TARGET} COMMAND "../${TEST_TARGET}")
 endfunction()
 
 add_rocrand_link_test("test_rocrand_linkage.cpp;get_rocrand_version.cpp")
@@ -89,7 +89,7 @@ function(add_hiprand_link_test TEST_SOURCES)
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    add_test(NAME ${TEST_TARGET} COMMAND "./${TEST_TARGET}")
+    add_test(NAME ${TEST_TARGET} COMMAND "../${TEST_TARGET}")
 endfunction()
 
 add_hiprand_link_test("test_hiprand_linkage.cpp;get_hiprand_version.cpp")
