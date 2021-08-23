@@ -51,7 +51,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
+    add_test(NAME ${test_name} COMMAND "./${test_name}")
 endforeach()
 
 # Fortran Wrapper Tests
@@ -106,7 +106,7 @@ foreach(test_src ${hipRAND_TEST_SRCS})
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    add_test(NAME ${test_name} COMMAND $<TARGET_FILE:${test_name}>)
+    add_test(NAME ${test_name} COMMAND "./${test_name}")
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
