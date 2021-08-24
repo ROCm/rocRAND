@@ -1,7 +1,7 @@
 # Tests
 
 function(add_relative_test test_name)
-    file(RELATIVE_PATH rel_path "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_BINARY_DIR}/test/${test_name}"
+    file(RELATIVE_PATH rel_path "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_BINARY_DIR}/test/${test_name}")
     add_test(NAME "${test_name}" COMMAND "./${rel_path}")
 endfunction()
 
