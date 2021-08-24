@@ -1,5 +1,10 @@
 # Tests
 
+function(add_relative_test test_name)
+    file(RELATIVE_PATH rel_path "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_BINARY_DIR}/test/${test_name}"
+    add_test(NAME "${test_name}" COMMAND "./${rel_path}")
+endfunction()
+
 # Get rocRAND tests source files
 file(GLOB rocRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/test_hiprand*.cpp)
@@ -51,7 +56,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    add_test(NAME ${test_name} COMMAND "./${test_name}")
+    add_relative_test(${test_name})
 endforeach()
 
 # Fortran Wrapper Tests
@@ -106,7 +111,7 @@ foreach(test_src ${hipRAND_TEST_SRCS})
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    add_test(NAME ${test_name} COMMAND "./${test_name}")
+    add_relative_test(${test_name})
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)

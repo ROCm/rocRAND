@@ -36,5 +36,5 @@ set_target_properties(${test_hiprand}
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
 )
 
-add_test(NAME ${test_rocrand} COMMAND "./${test_rocrand}")
-add_test(NAME ${test_hiprand} COMMAND "./${test_hiprand}")
+add_relative_test(${test_rocrand})
+add_relative_test(${test_hiprand})
