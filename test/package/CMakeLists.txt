@@ -86,7 +86,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
                 "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
         )
     endif()
-    add_test(NAME "${test_name}" COMMAND ${test_name})
+    add_test(NAME "${test_name}" COMMAND "./${test_name}")
 endforeach()
 
 foreach(test_src ${hiprand_pkg_TEST_SRCS})
@@ -107,7 +107,7 @@ foreach(test_src ${hiprand_pkg_TEST_SRCS})
                 ${CUDA_LIBRARIES}
         )
     endif()
-    add_test(NAME "${test_name}" COMMAND ${test_name})
+    add_relative_test(${test_name})
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
