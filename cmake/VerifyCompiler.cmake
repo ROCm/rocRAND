@@ -31,6 +31,7 @@ if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL 
        set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
     endif()
 else()
+  message("Looking in $ENV{ROCM_PATH}...")
   find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
 endif()
 
