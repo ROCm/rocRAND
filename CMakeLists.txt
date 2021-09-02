@@ -22,12 +22,6 @@
 
 cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
 
-if(WIN32)
-    set(ROCM_USE_DEV_COMPONENT OFF CACHE BOOL "Whether to generate the devel package.")
-else()
-    set(ROCM_USE_DEV_COMPONENT ON CACHE BOOL "Whether to generate the devel package.")
-endif()
-
 # Install prefix
 if (WIN32)
   SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
@@ -37,10 +31,10 @@ if (WIN32)
   SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
   set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
 else()
-  set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
+  set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
 
   #Adding CMAKE_PREFIX_PATH
-  list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+  list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH} )
   if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
       set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
   endif()
@@ -49,8 +43,8 @@ endif()
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
-    ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
-    /opt/rocm/llvm
+    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+    $ENV{ROCM_PATH}/llvm
 )
 
 #
@@ -70,7 +64,6 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # Include cmake scripts
-include(cmake/Common.cmake)
 include(cmake/Dependencies.cmake)
 
 # Detect compiler support for target ID
@@ -84,19 +77,10 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
 endif()
 
 set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
-# Set the AMDGPU_TARGETS with backward compatiblity
-if(COMMAND rocm_check_target_ids)
-   rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-       TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030"
-   )
-else()
-    # Use target ID syntax if supported for AMDGPU_TARGETS
-    if(TARGET_ID_SUPPORT)
-        set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx1030")
-    else()
-        set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908")
-    endif()
-endif()
+# Set the AMDGPU_TARGETS
+rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030"
+)
 if (AMDGPU_TARGETS)
     if( AMDGPU_TARGETS STREQUAL "all" )
       set( gpus "${DEFAULT_AMDGPU_TARGETS}")
@@ -115,8 +99,8 @@ endif()
 if (NOT WIN32)
   include(cmake/VerifyCompiler.cmake)
 else()
-  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm /opt/rocm/llvm /opt/rocm/hip)
-  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+  list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
+  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
 endif()
 
 # Build option to disable -Werror
@@ -152,23 +136,13 @@ endif()
 # Set version variables
 rocm_setup_version( VERSION "2.10.9" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
-set ( hiprand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
-math(EXPR temp "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
-set(hiprand_VERSION_NUMBER ${temp})
-set(rocrand_VERSION_NUMBER ${temp})
+math(EXPR rocrand_VERSION_NUMBER "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
+set(rocrand_SOVERSION 1.1)
 
 # Print configuration summary
 include(cmake/Summary.cmake)
 print_configuration_summary()
-
-set(RUNTIME_COMPONENT "COMPONENT;Unspecified")
-if(ROCM_USE_DEV_COMPONENT)
-    set(DEVEL_COMPONENT "COMPONENT;devel")
-else()
-    set(DEVEL_COMPONENT "COMPONENT;Unspecified")
-endif()
-
 
 # Tools
 add_subdirectory(tools)
