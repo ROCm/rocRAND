@@ -1,7 +1,19 @@
 # Tests
 
-function(add_relative_test test_name)
-    file(RELATIVE_PATH rel_path "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_BINARY_DIR}/test/${test_name}")
+function(add_relative_test test_name test_target)
+    get_target_property(EXE_PATH ${test_target} RUNTIME_OUTPUT_DIRECTORY)
+    if(EXE_PATH STREQUAL "EXE_PATH-NOTFOUND")
+        set(EXE_PATH ".")
+    endif()
+    get_filename_component(EXE_PATH "${EXE_PATH}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    get_target_property(EXE_NAME ${test_target} RUNTIME_OUTPUT_NAME)
+    if(EXE_NAME STREQUAL "EXE_NAME-NOTFOUND")
+        get_target_property(EXE_NAME ${test_target} OUTPUT_NAME)
+        if(EXE_NAME STREQUAL "EXE_NAME-NOTFOUND")
+            set(EXE_NAME "${test_target}")
+        endif()
+    endif()
+    file(RELATIVE_PATH rel_path "${CMAKE_CURRENT_BINARY_DIR}" "${EXE_PATH}/${EXE_NAME}")
     add_test(NAME "${test_name}" COMMAND "./${rel_path}")
 endfunction()
 
@@ -47,7 +59,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    add_relative_test(${test_name})
+    add_relative_test(${test_name} ${test_name})
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)

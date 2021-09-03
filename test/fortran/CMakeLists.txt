@@ -21,4 +21,4 @@ set_target_properties(${test_rocrand}
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
 )
 
-add_relative_test(${test_rocrand})
+add_relative_test(${test_rocrand} ${test_rocrand})
