@@ -49,16 +49,14 @@ set_target_properties(rocrand
         DEBUG_POSTFIX "-d"
 )
 
-set(OLD_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
-set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}/hiprand")
 rocm_install(
     TARGETS rocrand
     INCLUDE
         "${CMAKE_SOURCE_DIR}/library/include"
         "${CMAKE_BINARY_DIR}/library/include"
+    INCLUDE_SUBDIR rocrand
     PREFIX rocrand
 )
-set(CMAKE_INSTALL_INCLUDEDIR "${OLD_INCLUDEDIR}")
 
 if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(

@@ -80,7 +80,7 @@ find_package(ROCM 0.7 QUIET CONFIG PATHS $ENV{ROCM_PATH})
 if(NOT ROCM_FOUND)
   set(PROJECT_EXTERN_DIR "${CMAKE_CURRENT_BINARY_DIR}/deps")
   file( TO_NATIVE_PATH "${PROJECT_EXTERN_DIR}" PROJECT_EXTERN_DIR_NATIVE)
-  set(rocm_cmake_tag "client-packaging" CACHE STRING "rocm-cmake tag to download")
+  set(rocm_cmake_tag "include-subdir" CACHE STRING "rocm-cmake tag to download")
   file(
       DOWNLOAD https://github.com/lawruble13/rocm-cmake/archive/${rocm_cmake_tag}.tar.gz
       ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag}.tar.gz
