@@ -42,12 +42,6 @@ else()
     endif()
 endif()
 
-target_include_directories(rocrand
-    PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
-        $<INSTALL_INTERFACE:rocrand/include>
-)
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
     PROPERTIES
@@ -55,15 +49,16 @@ set_target_properties(rocrand
         DEBUG_POSTFIX "-d"
 )
 
-set(rocrandtargets rocrand)
-
+set(OLD_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}/hiprand")
 rocm_install(
-    TARGETS ${rocrandtargets}
+    TARGETS rocrand
     INCLUDE
         "${CMAKE_SOURCE_DIR}/library/include"
         "${CMAKE_BINARY_DIR}/library/include"
     PREFIX rocrand
 )
+set(CMAKE_INSTALL_INCLUDEDIR "${OLD_INCLUDEDIR}")
 
 if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(
