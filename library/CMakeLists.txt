@@ -123,5 +123,5 @@ rocm_create_package(
     DESCRIPTION "Radeon Open Compute RAND library"
     MAINTAINER "rocRAND Maintainer <hiprand-maintainer@amd.com>"
     LDCONFIG
-    LDCONFIG_DIR ${ROCRAND_CONFIG_DIR}
+    # LDCONFIG_DIR ${ROCRAND_CONFIG_DIR}
 )
