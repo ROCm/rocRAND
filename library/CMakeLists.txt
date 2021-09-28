@@ -83,7 +83,7 @@ if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
 
-rocm_install_symlink_subdir(rocrand)
+# rocm_install_symlink_subdir(rocrand)
 
 # Package (make package)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt")
