@@ -31,6 +31,8 @@ def parse_args():
                         help='Generate static library build (default: False)')
     parser.add_argument('-c', '--clients', required=False, default=False, dest='build_clients', action='store_true',
                         help='Generate all client builds (default: False)')
+    parser.add_argument('-p', '--package', required=False, default=False, dest='package', action='store_true',
+                        help='Generate packages (default: False)')
     parser.add_argument('-i', '--install', required=False, default=False, dest='install', action='store_true',
                         help='Install after build (default: False)')
     parser.add_argument(      '--cmake-darg', required=False, dest='cmake_dargs', action='append', default=[],
@@ -180,8 +182,10 @@ def make_cmd():
         if args.verbose:
           make_options.append( "--verbose" )
         make_options.append( "--target all" )
+        if args.install or args.package:
+          make_options.append( "--target package" )
         if args.install:
-          make_options.append( "--target package --target install" )
+            make_options.append( "--target install" )
     else:
         nproc = OS_info["NUM_PROC"]
         make_executable = f"make -j{nproc}"
