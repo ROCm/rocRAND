@@ -246,7 +246,7 @@ public:
             distribution
         );
         // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         m_current_offset += size;

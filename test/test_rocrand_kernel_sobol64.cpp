@@ -166,7 +166,7 @@ TEST(rocrand_kernel_sobol64, rocrand)
         dim3(8), dim3(32), 0, 0,
         output, m_vector, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<Type> output_host(output_size);
     HIP_CHECK(
@@ -210,7 +210,7 @@ TEST(rocrand_kernel_sobol64, rocrand_uniform)
         dim3(8), dim3(32), 0, 0,
         output, m_vector, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<Type> output_host(output_size);
     HIP_CHECK(
@@ -254,7 +254,7 @@ TEST(rocrand_kernel_sobol64, rocrand_normal)
         dim3(8), dim3(32), 0, 0,
         output, m_vector, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<Type> output_host(output_size);
     HIP_CHECK(
@@ -306,7 +306,7 @@ TEST(rocrand_kernel_sobol64, rocrand_log_normal)
         dim3(8), dim3(32), 0, 0,
         output, m_vector, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<Type> output_host(output_size);
     HIP_CHECK(
@@ -366,7 +366,7 @@ TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
         dim3(8), dim3(32), 0, 0,
         output, m_vector, output_size, lambda
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
