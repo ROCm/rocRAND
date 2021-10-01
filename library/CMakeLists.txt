@@ -440,5 +440,10 @@ if (BUILD_TEST AND WIN32)
   )
 endif()
 
+if(WIN32)
+    rocm_install_symlink_subdir(rocrand)
+    rocm_install_symlink_subdir(hiprand)
+endif()
+
 # Include CPack to introduce the appropriate targets
 include(CPack)
