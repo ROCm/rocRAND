@@ -272,7 +272,7 @@ if (WIN32)
         NAME hiprand
         PREFIX hiprand
         DEPENDS PACKAGE hip
-        NAMESPACE roc::
+        NAMESPACE hip::
     )
     install(
         EXPORT hiprand-targets
