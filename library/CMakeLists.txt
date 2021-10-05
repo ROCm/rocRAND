@@ -125,31 +125,11 @@ install(
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 # .cmake files
-install(
-    EXPORT rocrand-targets
+rocm_export_targets(
+    TARGETS ${rocrandtargets}
+    PREFIX rocrand
+    DEPENDS PACKAGE hip
     NAMESPACE roc::
-    DESTINATION rocrand/lib/cmake/rocrand
-    ${DEVEL_COMPONENT}
-)
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
-set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
-configure_package_config_file(
-    src/rocrand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
-    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/rocrand
-    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR FORTRAN_SRCS_INSTALL_DIR
-)
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
-    VERSION ${rocrand_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-install(
-    FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
-    DESTINATION rocrand/lib/cmake/rocrand
-    ${DEVEL_COMPONENT}
 )
 
 # hipRAND library
@@ -250,37 +230,23 @@ install(
     PATTERN "hiprand*hpp"
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
-# .cmake files
-install(
-    EXPORT hiprand-targets
-    NAMESPACE hip::
-    DESTINATION hiprand/lib/cmake/hiprand
-    ${DEVEL_COMPONENT}
-)
-
 # install library to C:\hipSDK\bin
 if (WIN32)
   install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
   install (TARGETS hiprand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
 endif()
 
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
-set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
-configure_package_config_file(
-    src/hiprand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
-    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/hiprand
-    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR FORTRAN_SRCS_INSTALL_DIR
-)
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
-    VERSION ${hiprand_VERSION}
-    COMPATIBILITY SameMajorVersion
+# .cmake files
+rocm_export_targets(
+    TARGETS ${hiprandtargets}
+    NAME hiprand
+    PREFIX hiprand
+    DEPENDS PACKAGE hip
+    NAMESPACE roc::
 )
 install(
-    FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
+    EXPORT hiprand-targets
+    NAMESPACE hip::
     DESTINATION hiprand/lib/cmake/hiprand
     ${DEVEL_COMPONENT}
 )
