@@ -217,7 +217,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -253,7 +253,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_uniform)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -289,7 +289,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_uniform_double)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<double> output_host(output_size);
     HIP_CHECK(
@@ -325,7 +325,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_uniform_range)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -359,7 +359,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_uniform_double_range)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<double> output_host(output_size);
     HIP_CHECK(
@@ -393,7 +393,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_normal)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -437,7 +437,7 @@ TEST(rocrand_kernel_mrg32k3a, rocrand_log_normal)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -489,7 +489,7 @@ TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_poisson)
         dim3(4), dim3(64), 0, 0,
         output, output_size, lambda
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -539,7 +539,7 @@ TEST_P(rocrand_kernel_mrg32k3a_poisson, rocrand_discrete)
         dim3(4), dim3(64), 0, 0,
         output, output_size, lambda
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(

@@ -82,7 +82,7 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
         dim3(1), dim3(1), 0, 0,
         x, y, z, r
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     unsigned long long h_r[size];
     HIP_CHECK(hipMemcpy(h_r, r, size * sizeof(unsigned long long), hipMemcpyDefault));
