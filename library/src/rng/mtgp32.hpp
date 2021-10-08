@@ -258,7 +258,7 @@ public:
             m_engines, data, data_size, distribution
         );
         // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         return ROCRAND_STATUS_SUCCESS;

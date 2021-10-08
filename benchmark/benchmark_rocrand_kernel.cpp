@@ -122,7 +122,7 @@ struct runner
             states, seed, offset
         );
 
-        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
     }
 
@@ -292,7 +292,7 @@ struct runner<rocrand_state_sobol32>
             states, directions, offset
         );
 
-        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         HIP_CHECK(hipFree(directions));
@@ -391,7 +391,7 @@ struct runner<rocrand_state_sobol64>
             states, directions, offset
         );
 
-        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         HIP_CHECK(hipFree(directions));
@@ -442,7 +442,7 @@ void run_benchmark(const cli::Parser& parser,
     for (size_t i = 0; i < 5; i++)
     {
         r.generate(blocks, threads, stream, data, size, generate_func, extra);
-        HIP_CHECK(hipPeekAtLastError());
+        HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
     }
     HIP_CHECK(hipDeviceSynchronize());

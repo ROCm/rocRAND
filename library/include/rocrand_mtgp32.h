@@ -405,7 +405,7 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
     hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
     free(h_state);
 
-    if (hipPeekAtLastError() != hipSuccess)
+    if (hipGetLastError() != hipSuccess)
         return ROCRAND_STATUS_ALLOCATION_FAILED;
 
     return ROCRAND_STATUS_SUCCESS;
