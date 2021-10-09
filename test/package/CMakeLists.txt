@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 project(hiprand_package_test CXX)
 
 # CMake modules
-list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
+list(APPEND CMAKE_PREFIX_PATH /opt/rocm)
 list(APPEND CMAKE_MODULE_PATH
-    ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
+    ${HIP_PATH}/lib/cmake/hip /opt/rocm/lib/cmake/hip # FindHIP.cmake
 )
 
 # Find HIP
