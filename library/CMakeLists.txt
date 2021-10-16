@@ -63,7 +63,7 @@ target_include_directories(rocrand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
-        $<INSTALL_INTERFACE:rocrand/include>
+        $<INSTALL_INTERFACE:include/rocrand>
 )
 
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
@@ -87,8 +87,8 @@ set(rocrandtargets rocrand)
 install(
     TARGETS ${rocrandtargets}
     EXPORT rocrand-targets
-    ARCHIVE DESTINATION rocrand/lib
-    LIBRARY DESTINATION rocrand/lib
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
 # headers
@@ -96,7 +96,7 @@ install(
     DIRECTORY
         "include/"
         "${PROJECT_BINARY_DIR}/library/include/"
-    DESTINATION rocrand/include
+    DESTINATION include/rocrand
     FILES_MATCHING
     PATTERN "rocrand*h"
     PATTERN "rocrand*hpp"
@@ -106,10 +106,10 @@ install(
 install(
     EXPORT rocrand-targets
     NAMESPACE roc::
-    DESTINATION rocrand/lib/cmake/rocrand
+    DESTINATION lib/cmake/rocrand
 )
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/include")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/lib")
+set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include")
+set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
 configure_package_config_file(
     src/rocrand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
@@ -125,7 +125,7 @@ install(
     FILES
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/rocrand-config-version.cmake
-    DESTINATION rocrand/lib/cmake/rocrand
+    DESTINATION lib/cmake/rocrand
 )
 
 # hipRAND library
@@ -154,7 +154,7 @@ target_include_directories(hiprand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
-        $<INSTALL_INTERFACE:hiprand/include>
+        $<INSTALL_INTERFACE:include/hiprand>
 )
 
 if(HIP_COMPILER STREQUAL "nvcc")
@@ -178,7 +178,7 @@ set_target_properties(hiprand
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
-        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/rocrand/lib"
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
 )
 
 set(hiprandtargets hiprand)
@@ -188,8 +188,8 @@ set(hiprandtargets hiprand)
 install(
     TARGETS ${hiprandtargets}
     EXPORT hiprand-targets
-    ARCHIVE DESTINATION hiprand/lib
-    LIBRARY DESTINATION hiprand/lib
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
 # headers
@@ -197,7 +197,7 @@ install(
     DIRECTORY
         "include/"
         "${PROJECT_BINARY_DIR}/library/include/"
-    DESTINATION hiprand/include
+    DESTINATION include/hiprand
     FILES_MATCHING
     PATTERN "hiprand*h"
     PATTERN "hiprand*hpp"
@@ -207,10 +207,10 @@ install(
 install(
     EXPORT hiprand-targets
     NAMESPACE hip::
-    DESTINATION hiprand/lib/cmake/hiprand
+    DESTINATION lib/cmake/hiprand
 )
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/include")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/lib")
+set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include")
+set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/hiprand/src/fortran")
 configure_package_config_file(
     src/hiprand-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
@@ -226,7 +226,7 @@ install(
     FILES
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/hiprand-config-version.cmake
-    DESTINATION hiprand/lib/cmake/hiprand
+    DESTINATION lib/cmake/hiprand
 )
 
 # Fortran wrappers for hipRAND and rocRAND
@@ -308,8 +308,8 @@ set(CPACK_RPM_PACKAGE_RELEASE ${RPM_RELEASE})
 
 package_set_postinst_prerm(
     "hiprand;rocrand"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/lib;${CMAKE_INSTALL_PREFIX}/rocrand/lib"
-    "${CMAKE_INSTALL_PREFIX}/hiprand/include;${CMAKE_INSTALL_PREFIX}/rocrand/include"
+    "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib"
+    "${CMAKE_INSTALL_PREFIX}/include;${CMAKE_INSTALL_PREFIX}/include"
     "${hiprand_SOVERSION};${rocrand_SOVERSION}"
 )
 
