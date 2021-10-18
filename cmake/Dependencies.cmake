@@ -82,16 +82,15 @@ if(NOT ROCM_FOUND)
   file( TO_NATIVE_PATH "${PROJECT_EXTERN_DIR}" PROJECT_EXTERN_DIR_NATIVE)
   set(rocm_cmake_tag "master" CACHE STRING "rocm-cmake tag to download")
   file(
-      DOWNLOAD https://github.com/ROCmSoftwarePlatform/rocm-cmake/archive/${rocm_cmake_tag}.tar.gz
+      DOWNLOAD https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.tar.gz
       ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag}.tar.gz
       STATUS rocm_cmake_download_status LOG rocm_cmake_download_log
   )
   list(GET rocm_cmake_download_status 0 rocm_cmake_download_error_code)
-  list(GET rocm_cmake_download_status 1 rocm_cmake_download_error_string)
   if(rocm_cmake_download_error_code)
       message(FATAL_ERROR "Error: downloading "
           "https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.zip failed "
-          "error_code: ${rocm_cmake_download_error_code} - ${rocm_cmake_download_error_string}"
+          "error_code: ${rocm_cmake_download_error_code} "
           "log: ${rocm_cmake_download_log} "
       )
   endif()
