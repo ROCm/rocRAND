@@ -22,12 +22,29 @@
 
 cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
 
+if(WIN32)
+    set(ROCM_USE_DEV_COMPONENT OFF CACHE BOOL "Whether to generate the devel package.")
+else()
+    set(ROCM_USE_DEV_COMPONENT ON CACHE BOOL "Whether to generate the devel package.")
+endif()
+
 # Install prefix
-set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
+if (WIN32)
+  SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
+  SET( INSTALL_PREFIX "C:/hipSDK" )
+  SET( CPACK_SET_DESTDIR FALSE )
+  SET( CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK" )
+  SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
+  set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
+else()
+  set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
-#Adding CMAKE_PREFIX_PATH
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
-
+  #Adding CMAKE_PREFIX_PATH
+  list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+  if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
+      set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+  endif()
+endif()
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
@@ -56,7 +73,7 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 include(cmake/Common.cmake)
 include(cmake/Dependencies.cmake)
 
-# Detect compiler support for target ID 
+# Detect compiler support for target ID
 # This section is deprecated. Please use rocm_check_target_ids for future use.
 if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
@@ -66,6 +83,7 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
     string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
 endif()
 
+set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
 # Set the AMDGPU_TARGETS with backward compatiblity
 if(COMMAND rocm_check_target_ids)
    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
@@ -79,10 +97,27 @@ else()
         set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908")
     endif()
 endif()
-set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
+if (AMDGPU_TARGETS)
+    if( AMDGPU_TARGETS STREQUAL "all" )
+      set( gpus "${DEFAULT_AMDGPU_TARGETS}")
+    else()
+      set( gpus "${AMDGPU_TARGETS}")
+    endif()
+    # must FORCE set this AMDGPU_TARGETS before any find_package( hip ...), in this file
+    # to override CACHE var and set --offload-arch flags via hip-config.cmake hip::device dependency
+    set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
+endif()
+
+#set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
 
 # Verify that hcc compiler is used on ROCM platform
-include(cmake/VerifyCompiler.cmake)
+# TODO: Fix VerifyCompiler for Windows
+if (NOT WIN32)
+  include(cmake/VerifyCompiler.cmake)
+else()
+  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm /opt/rocm/llvm /opt/rocm/hip)
+  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+endif()
 
 # Build option to disable -Werror
 option(DISABLE_WERROR "Disable building with Werror" ON)
@@ -92,9 +127,14 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(DISABLE_WERROR)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mf16c")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -mf16c")
+endif()
+
+# HIP on Windows: xhip is required with clang++ to get __half defined
+if (WIN32)
+  add_compile_options(-xhip)
 endif()
 
 # Build options
@@ -121,6 +161,14 @@ set(rocrand_VERSION_NUMBER ${temp})
 # Print configuration summary
 include(cmake/Summary.cmake)
 print_configuration_summary()
+
+set(RUNTIME_COMPONENT "COMPONENT;Unspecified")
+if(ROCM_USE_DEV_COMPONENT)
+    set(DEVEL_COMPONENT "COMPONENT;devel")
+else()
+    set(DEVEL_COMPONENT "COMPONENT;Unspecified")
+endif()
+
 
 # Tools
 add_subdirectory(tools)

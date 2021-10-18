@@ -124,14 +124,15 @@ __half uniform_distribution_half(unsigned short v)
     return __float2half(ROCRAND_2POW16_INV + (v * ROCRAND_2POW16_INV));
 }
 
+// For unsigned integer in [1, ROCRAND_MRG32K3A_M1], returns value
+// in range [0, UINT_MAX] (MRG32K3A).
 FQUALIFIERS
 unsigned int mrg_uniform_distribution_uint(unsigned int v)
 {
-    // v in [1, ROCRAND_MRG32K3A_M1]
     return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
-// For unsigned integer between 0 and UINT_MAX, returns value between
+// For unsigned integer in [1, ROCRAND_MRG32K3A_M1], returns value between
 // 0.0f and 1.0f, excluding 0.0f and including 1.0f (MRG32K3A).
 FQUALIFIERS
 float mrg_uniform_distribution(unsigned int v)
@@ -140,6 +141,8 @@ float mrg_uniform_distribution(unsigned int v)
     return static_cast<float>(ret);
 }
 
+// For unsigned integer in [1, ROCRAND_MRG32K3A_M1], returns value between
+// 0.0 and 1.0, excluding 0.0 and including 1.0 (MRG32K3A).
 FQUALIFIERS
 double mrg_uniform_distribution_double(unsigned int v)
 {
@@ -183,9 +186,12 @@ float rocrand_uniform(rocrand_state_philox4x32_10 * state)
 FQUALIFIERS
 float2 rocrand_uniform2(rocrand_state_philox4x32_10 * state)
 {
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
     return float2 {
-        rocrand_device::detail::uniform_distribution(rocrand(state)),
-        rocrand_device::detail::uniform_distribution(rocrand(state))
+        rocrand_device::detail::uniform_distribution(state1),
+        rocrand_device::detail::uniform_distribution(state2)
     };
 }
 
@@ -222,7 +228,10 @@ float4 rocrand_uniform4(rocrand_state_philox4x32_10 * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_philox4x32_10 * state)
 {
-    return rocrand_device::detail::uniform_distribution_double(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::uniform_distribution_double(state1, state2);
 }
 
 /**
@@ -276,7 +285,7 @@ double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 * state)
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution(rocrand(state));
+    return rocrand_device::detail::mrg_uniform_distribution(state->next());
 }
 
  /**
@@ -297,7 +306,7 @@ float rocrand_uniform(rocrand_state_mrg32k3a * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution_double(rocrand(state));
+    return rocrand_device::detail::mrg_uniform_distribution_double(state->next());
 }
 
  /**
@@ -333,7 +342,10 @@ float rocrand_uniform(rocrand_state_xorwow * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_xorwow * state)
 {
-    return rocrand_device::detail::uniform_distribution_double(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::uniform_distribution_double(state1, state2);
 }
 
  /**

@@ -28,6 +28,7 @@
 #include <rng/generators.hpp>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 using rocrand_device::detail::mad_u64_u32;
 
@@ -81,7 +82,7 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
         dim3(1), dim3(1), 0, 0,
         x, y, z, r
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     unsigned long long h_r[size];
     HIP_CHECK(hipMemcpy(h_r, r, size * sizeof(unsigned long long), hipMemcpyDefault));
@@ -143,14 +144,85 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
     double sum = 0;
     for(size_t i = 0; i < size; i++)
     {
-        ASSERT_GT(host_data[i], 0.0f);
-        ASSERT_LE(host_data[i], 1.0f);
         sum += host_data[i];
     }
     const float mean = sum / size;
     ASSERT_NEAR(mean, 0.5f, 0.05f);
 
     HIP_CHECK(hipFree(data));
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, uniform_double_test)
+{
+    const size_t size = 1313;
+    double * data;
+    hipMallocHelper(&data, sizeof(double) * size);
+
+    rocrand_mrg32k3a g;
+    ROCRAND_CHECK(g.generate(data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(double) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double sum = 0;
+    for(size_t i = 0; i < size; i++)
+    {
+        sum += host_data[i];
+    }
+    const double mean = sum / size;
+    ASSERT_NEAR(mean, 0.5, 0.05);
+
+    HIP_CHECK(hipFree(data));
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, uniform_float_range_test)
+{
+    const size_t size = 1 << 26;
+    float * data;
+    hipMallocHelper(&data, sizeof(float) * size);
+
+    rocrand_mrg32k3a g;
+    ROCRAND_CHECK(g.generate(data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    float * host_data = new float[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    for(size_t i = 0; i < size; i++)
+    {
+        ASSERT_GT(host_data[i], 0.0f);
+        ASSERT_LE(host_data[i], 1.0f);
+    }
+
+    HIP_CHECK(hipFree(data));
+    delete[] host_data;
+}
+
+TEST(rocrand_mrg32k3a_prng_tests, uniform_double_range_test)
+{
+    const size_t size = 1 << 26;
+    double * data;
+    hipMallocHelper(&data, sizeof(double) * size);
+
+    rocrand_mrg32k3a g;
+    ROCRAND_CHECK(g.generate(data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double * host_data = new double[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(double) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    for(size_t i = 0; i < size; i++)
+    {
+        ASSERT_GT(host_data[i], 0.0);
+        ASSERT_LE(host_data[i], 1.0);
+    }
+
+    HIP_CHECK(hipFree(data));
+    delete[] host_data;
 }
 
 TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)

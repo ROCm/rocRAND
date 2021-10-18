@@ -66,7 +66,11 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
     {
         return expf(mean + (stddev * bm_helper::get_float(state)));
     }
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
@@ -89,7 +93,10 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, float stddev)
 {
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
     return float2 {
         expf(mean + (stddev * r.x)),
         expf(mean + (stddev * r.y))
@@ -227,7 +234,11 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
     {
         return expf(mean + (stddev * bm_helper::get_float(state)));
     }
-    float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
+
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    float2 r = rocrand_device::detail::mrg_normal_distribution2(state1, state2);
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
@@ -250,7 +261,10 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float stddev)
 {
-    float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    float2 r = rocrand_device::detail::mrg_normal_distribution2(state1, state2);
     return float2 {
         expf(mean + (stddev * r.x)),
         expf(mean + (stddev * r.y))
@@ -282,7 +296,11 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
     {
         return exp(mean + (stddev * bm_helper::get_double(state)));
     }
-    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
+
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(state1, state2);
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
@@ -305,7 +323,10 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, double stddev)
 {
-    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(state1, state2);
     return double2 {
         exp(mean + (stddev * r.x)),
         exp(mean + (stddev * r.y))
@@ -337,7 +358,11 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
     {
         return expf(mean + (stddev * bm_helper::get_float(state)));
     }
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
@@ -360,7 +385,10 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
 FQUALIFIERS
 float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stddev)
 {
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
     return float2 {
         expf(mean + (stddev * r.x)),
         expf(mean + (stddev * r.y))
@@ -392,8 +420,14 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
     {
         return exp(mean + (stddev * bm_helper::get_double(state)));
     }
+
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    auto state3 = rocrand(state);
+    auto state4 = rocrand(state);
+
     double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+        uint4 { state1, state2, state3, state4 }
     );
     bm_helper::save_double(state, r.y);
     return exp(mean + (stddev * r.x));
@@ -417,8 +451,13 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
 FQUALIFIERS
 double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, double stddev)
 {
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    auto state3 = rocrand(state);
+    auto state4 = rocrand(state);
+
     double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+        uint4 { state1, state2, state3, state4 }
     );
     return double2 {
         exp(mean + (stddev * r.x)),

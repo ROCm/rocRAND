@@ -36,7 +36,7 @@ namespace detail {
 
     typedef ::rocrand_device::xorwow_engine xorwow_device_engine;
 
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void init_engines_kernel(xorwow_device_engine * engines,
                              unsigned long long seed,
@@ -47,7 +47,7 @@ namespace detail {
     }
 
     template<class T, class Distribution>
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(xorwow_device_engine * engines,
                          T * data, const size_t n,
@@ -188,7 +188,7 @@ public:
             m_engines, m_seed, m_offset
         );
         // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         m_engines_initialized = true;
@@ -210,7 +210,7 @@ public:
             m_engines, data, data_size, distribution
         );
         // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         return ROCRAND_STATUS_SUCCESS;

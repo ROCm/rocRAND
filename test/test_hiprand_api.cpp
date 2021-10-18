@@ -25,9 +25,8 @@
 #include <hiprand.h>
 
 #include "test_common.hpp"
+
 #define HIPRAND_CHECK(state) ASSERT_EQ(state, HIPRAND_STATUS_SUCCESS)
-
-
 
 template<hiprandRngType_t rng_type>
 void hiprand_generate_test_func()

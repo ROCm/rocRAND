@@ -31,6 +31,7 @@
 #include <rocrand.h>
 
 #include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 template <class GeneratorState>
 __global__
@@ -225,7 +226,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
         states, states_size,
         seed, offset
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<state_type_test> states_host(states_size);
     HIP_CHECK(
@@ -277,7 +278,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -313,7 +314,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_uniform)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -349,7 +350,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_normal)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -393,7 +394,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_log_normal)
         dim3(8), dim3(32), 0, 0,
         output, output_size
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -445,7 +446,7 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_poisson)
         dim3(4), dim3(64), 0, 0,
         output, output_size, lambda
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -495,7 +496,7 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_discrete)
         dim3(4), dim3(64), 0, 0,
         output, output_size, discrete_distribution
     );
-    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(

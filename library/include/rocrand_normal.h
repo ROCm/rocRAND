@@ -315,7 +315,11 @@ float rocrand_normal(rocrand_state_philox4x32_10 * state)
     {
         return bm_helper::get_float(state);
     }
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
     bm_helper::save_float(state, r.y);
     return r.x;
 }
@@ -338,7 +342,10 @@ float rocrand_normal(rocrand_state_philox4x32_10 * state)
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_philox4x32_10 * state)
 {
-    return rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::normal_distribution2(state1, state2);
 }
 
 /**
@@ -460,7 +467,11 @@ float rocrand_normal(rocrand_state_mrg32k3a * state)
     {
         return bm_helper::get_float(state);
     }
-    float2 r = rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
+
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    float2 r = rocrand_device::detail::mrg_normal_distribution2(state1, state2);
     bm_helper::save_float(state, r.y);
     return r.x;
 }
@@ -483,7 +494,10 @@ float rocrand_normal(rocrand_state_mrg32k3a * state)
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_normal_distribution2(rocrand(state), rocrand(state));
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    return rocrand_device::detail::mrg_normal_distribution2(state1, state2);
 }
 
 /**
@@ -510,7 +524,11 @@ double rocrand_normal_double(rocrand_state_mrg32k3a * state)
     {
         return bm_helper::get_double(state);
     }
-    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
+
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    double2 r = rocrand_device::detail::mrg_normal_distribution_double2(state1, state2);
     bm_helper::save_double(state, r.y);
     return r.x;
 }
@@ -533,7 +551,10 @@ double rocrand_normal_double(rocrand_state_mrg32k3a * state)
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_normal_distribution_double2(rocrand(state), rocrand(state));
+    auto state1 = state->next();
+    auto state2 = state->next();
+
+    return rocrand_device::detail::mrg_normal_distribution_double2(state1, state2);
 }
 
 /**
@@ -560,7 +581,9 @@ float rocrand_normal(rocrand_state_xorwow * state)
     {
         return bm_helper::get_float(state);
     }
-    float2 r = rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
     bm_helper::save_float(state, r.y);
     return r.x;
 }
@@ -583,7 +606,9 @@ float rocrand_normal(rocrand_state_xorwow * state)
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_xorwow * state)
 {
-    return rocrand_device::detail::normal_distribution2(rocrand(state), rocrand(state));
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    return rocrand_device::detail::normal_distribution2(state1, state2);
 }
 
 /**
@@ -610,8 +635,14 @@ double rocrand_normal_double(rocrand_state_xorwow * state)
     {
         return bm_helper::get_double(state);
     }
+
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    auto state3 = rocrand(state);
+    auto state4 = rocrand(state);
+
     double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+        uint4 { state1, state2, state3, state4 }
     );
     bm_helper::save_double(state, r.y);
     return r.x;
@@ -635,8 +666,13 @@ double rocrand_normal_double(rocrand_state_xorwow * state)
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_xorwow * state)
 {
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    auto state3 = rocrand(state);
+    auto state4 = rocrand(state);
+
     return rocrand_device::detail::normal_distribution_double2(
-        uint4 { rocrand(state), rocrand(state), rocrand(state), rocrand(state) }
+        uint4 { state1, state2, state3, state4 }
     );
 }
 

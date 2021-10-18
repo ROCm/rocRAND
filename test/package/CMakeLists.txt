@@ -86,7 +86,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
                 "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
         )
     endif()
-    add_test(NAME "${test_name}" COMMAND ${test_name})
+    add_test(NAME "${test_name}" COMMAND "./${test_name}")
 endforeach()
 
 foreach(test_src ${hiprand_pkg_TEST_SRCS})
@@ -107,5 +107,19 @@ foreach(test_src ${hiprand_pkg_TEST_SRCS})
                 ${CUDA_LIBRARIES}
         )
     endif()
-    add_test(NAME "${test_name}" COMMAND ${test_name})
+    add_relative_test(${test_name})
+    if (WIN32 AND NOT DEFINED DLLS_COPIED)
+      set(DLLS_COPIED "YES")
+      set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
+      # for now adding in all .dll as dependency chain is not cmake based on win32
+      file( GLOB third_party_dlls
+      LIST_DIRECTORIES ON
+      CONFIGURE_DEPENDS
+      ${HIP_DIR}/bin/*.dll
+      ${CMAKE_SOURCE_DIR}/rtest.*
+      )
+      foreach( file_i ${third_party_dlls})
+        add_custom_command( TARGET ${test_name} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/test/package )
+      endforeach( file_i )
+    endif()         
 endforeach()

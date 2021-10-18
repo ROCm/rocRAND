@@ -39,7 +39,7 @@ namespace detail {
     typedef ::rocrand_device::sobol64_engine<true> sobol64_device_engine;
 
     template<unsigned int OutputPerThread, class T, class Distribution>
-    __global__
+    ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel_64(T * data, const size_t n,
                          const unsigned long long int * direction_vectors,
@@ -246,7 +246,7 @@ public:
             distribution
         );
         // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         m_current_offset += size;
