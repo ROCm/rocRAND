@@ -111,6 +111,7 @@ else()
             "hiprand >= ${rocRAND_VERSION}")
         rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_SUGGESTS
             "hiprand-devel >= ${rocRAND_VERSION}")
+    endif()
 endif()
 
 
