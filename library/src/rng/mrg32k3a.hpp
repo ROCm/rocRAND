@@ -205,7 +205,7 @@ public:
             m_engines, m_seed, m_offset
         );
         // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         m_engines_initialized = true;
@@ -227,7 +227,7 @@ public:
             m_engines, data, data_size, distribution
         );
         // Check kernel status
-        if(hipPeekAtLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         return ROCRAND_STATUS_SUCCESS;
