@@ -75,7 +75,10 @@ endif()
 
 # install library to C:\hipSDK\bin
 if (WIN32)
-  install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+    install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+    if (BUILD_TEST)
+        install (TARGETS rocrand DESTINATION "${PROJECT_BINARY_DIR}/test")
+    endif()
 endif()
 
 # Fortran wrappers for hipRAND and rocRAND
