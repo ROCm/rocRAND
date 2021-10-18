@@ -31,8 +31,7 @@ def runTestCommand (platform, project)
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
     String centos = platform.jenkinsLabel.contains('centos') ? '3' : ''
     
-    // Disable xorwow test for now as it is a known failure with gfx90a.
-    def testCommand = "ctest${centos} --output-on-failure --exclude-regex test_rocrand_kernel_xorwow"
+    def testCommand = "ctest${centos} --output-on-failure"
     def hmmTestCommand = ''
     if (platform.jenkinsLabel.contains('gfx90a'))
     {
