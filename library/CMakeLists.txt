@@ -100,7 +100,19 @@ else()
     if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
         set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
+
+    rocm_join_if_set(", " CPACK_DEBIAN_RUNTIME_PACKAGE_RECOMMENDS 
+        "hiprand (>=${rocRAND_VERSION})")
+    rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_RECOMMENDS 
+        "hiprand-dev (>=${rocRAND_VERSION})")
+    rocm_find_program_version(rpmbuild GREATER_THAN 4.12.0)
+    if (rpmbuild_VERSION_OK)
+        rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_SUGGESTS 
+            "hiprand >= ${rocRAND_VERSION}")
+        rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_SUGGESTS
+            "hiprand-devel >= ${rocRAND_VERSION}")
 endif()
+
 
 if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
     rocm_package_add_dependencies("hip-rocclr >= 3.5.0")
