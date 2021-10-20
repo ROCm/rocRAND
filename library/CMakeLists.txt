@@ -58,11 +58,19 @@ rocm_install(
     PREFIX rocrand
 )
 
+set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
+configure_file(
+    src/rocrand-fortran-config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake
+)
+
+
 if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(
         TARGETS roc::rocrand
         PREFIX rocrand
         NAMESPACE roc::
+        INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
     )
 else()
     rocm_export_targets(
@@ -70,6 +78,7 @@ else()
         PREFIX rocrand
         NAMESPACE roc::
         DEPENDS PACKAGE hip
+        INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
     )
 endif()
 
