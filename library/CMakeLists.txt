@@ -108,8 +108,12 @@ else()
         "hiprand (>=${rocRAND_VERSION})")
     rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_RECOMMENDS 
         "hiprand-dev (>=${rocRAND_VERSION})")
-    rocm_find_program_version(rpmbuild GREATER_THAN 4.12.0)
-    if (rpmbuild_VERSION_OK)
+    execute_process(
+        COMMAND ${RPM_EXECUTABLE} --suggests
+        ERROR_QUIET
+        RESULT_VARIABLE RPMBUILD_SUGGESTS_RESULT)
+    
+    if (RPMBUILD_SUGGESTS_RESULT EQUAL 0)
         rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_SUGGESTS 
             "hiprand >= ${rocRAND_VERSION}")
         rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_SUGGESTS
