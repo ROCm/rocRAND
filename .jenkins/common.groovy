@@ -19,7 +19,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
-                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} ${amdgpuTargets} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DROCM_DEP_ROCMCORE=OFF ../..
+                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} ${amdgpuTargets} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
                 make -j\$(nproc)
                 """
 
