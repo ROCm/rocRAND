@@ -16,7 +16,6 @@ def runCompileCommand(platform, project, jobName, boolean debug=false)
     def command = """#!/usr/bin/env bash
             set -ex
             make -C ${project.paths.project_build_prefix}/python/rocrand/docs html
-            make -C ${project.paths.project_build_prefix}/python/hiprand/docs html
             """
 
     try

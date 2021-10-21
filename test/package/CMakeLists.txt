@@ -4,14 +4,14 @@ cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 project(hiprand_package_test CXX)
 
 # CMake modules
-list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
 list(APPEND CMAKE_MODULE_PATH
-    ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
+    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
 )
 
 # Find HIP
 if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    find_package(hip QUIET CONFIG PATHS /opt/rocm)
+    find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
     if(NOT hip_FOUND)
         find_package(HIP REQUIRED)
         if((HIP_COMPILER STREQUAL "hcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
@@ -20,7 +20,7 @@ if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL 
         endif()
     endif()
 else()
-  find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
+  find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
 endif()
 
 # Get HIP options
@@ -43,9 +43,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
 endif()
 
 # Find rocRAND
-find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "/opt/rocm/rocrand")
-# Find hipRAND
-find_package(hiprand REQUIRED CONFIG HINTS ${hiprand_DIR} PATHS "/opt/rocm/hiprand")
+find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")
 
 # TODO: Fix fortran wrapper
 # Check if Fortran wrapper is installed
@@ -64,7 +62,6 @@ find_package(hiprand REQUIRED CONFIG HINTS ${hiprand_DIR} PATHS "/opt/rocm/hipra
 
 # Get sources
 file(GLOB rocrand_pkg_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_rocrand*.cpp)
-file(GLOB hiprand_pkg_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/test_hiprand*.cpp)
 
 # Enable testing (ctest)
 enable_testing()
@@ -86,28 +83,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
                 "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
         )
     endif()
-    add_test(NAME "${test_name}" COMMAND "./${test_name}")
-endforeach()
-
-foreach(test_src ${hiprand_pkg_TEST_SRCS})
-    get_filename_component(test_name ${test_src} NAME_WE)
-    add_executable(${test_name} "${test_src}")
-    if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-        target_link_libraries(${test_name}
-            PRIVATE
-                hip::hiprand
-                roc::rocrand
-                "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
-        )
-    else()
-        target_link_libraries(${test_name}
-            PRIVATE
-                hip::hiprand
-                ${CUDA_curand_LIBRARY}
-                ${CUDA_LIBRARIES}
-        )
-    endif()
-    add_relative_test(${test_name})
+    add_relative_test(NAME "${test_name}" COMMAND "./${test_name}")
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
@@ -121,5 +97,5 @@ foreach(test_src ${hiprand_pkg_TEST_SRCS})
       foreach( file_i ${third_party_dlls})
         add_custom_command( TARGET ${test_name} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/test/package )
       endforeach( file_i )
-    endif()         
+    endif() 
 endforeach()

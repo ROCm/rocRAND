@@ -87,3 +87,6 @@ local.properties
 # TeXlipse plugin
 .texlipse
 CMakeLists.txt.user
+
+# Visual Studio / VSCode config folders
+.vs*/**/*
