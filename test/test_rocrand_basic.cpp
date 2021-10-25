@@ -22,14 +22,12 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
-class rocrand_basic_tests : public ::testing::TestWithParam<rocrand_rng_type>
-{
-};
+class rocrand_basic_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
 
 TEST(rocrand_basic_tests, rocrand_get_version_test)
 {
@@ -86,5 +84,5 @@ TEST_P(rocrand_basic_tests, rocrand_initialize_generator_test)
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_basic_tests,
-                         rocrand_basic_tests,
-                         ::testing::ValuesIn(rng_types));
+                        rocrand_basic_tests,
+                        ::testing::ValuesIn(rng_types));

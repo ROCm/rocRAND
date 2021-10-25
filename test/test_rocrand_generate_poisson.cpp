@@ -22,14 +22,12 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
-class rocrand_generate_poisson_tests : public ::testing::TestWithParam<rocrand_rng_type>
-{
-};
+class rocrand_generate_poisson_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
 
 TEST_P(rocrand_generate_poisson_tests, uint_test)
 {
@@ -39,16 +37,19 @@ TEST_P(rocrand_generate_poisson_tests, uint_test)
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            rng_type));
+            rng_type
+        )
+    );
 
     const size_t size = 12563;
     double lambda = 100.0;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper((void **)&data, size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda));
+        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda)
+    );
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
@@ -58,12 +59,13 @@ TEST(rocrand_generate_poisson_tests, neg_test)
 {
     const size_t size = 256;
     double lambda = 100.0;
-    unsigned int *data = NULL;
+    unsigned int * data = NULL;
 
     rocrand_generator generator = NULL;
     EXPECT_EQ(
         rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
-        ROCRAND_STATUS_NOT_CREATED);
+        ROCRAND_STATUS_NOT_CREATED
+    );
 }
 
 TEST_P(rocrand_generate_poisson_tests, out_of_range_test)
@@ -74,22 +76,25 @@ TEST_P(rocrand_generate_poisson_tests, out_of_range_test)
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            rng_type));
+            rng_type
+        )
+    );
 
     const size_t size = 256;
     double lambda = 0.0;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper((void **)&data, size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     EXPECT_EQ(
         rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
-        ROCRAND_STATUS_OUT_OF_RANGE);
+        ROCRAND_STATUS_OUT_OF_RANGE
+    );
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_poisson_tests,
-                         rocrand_generate_poisson_tests,
-                         ::testing::ValuesIn(rng_types));
+                        rocrand_generate_poisson_tests,
+                        ::testing::ValuesIn(rng_types));

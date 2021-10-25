@@ -29,27 +29,25 @@
 #include "cmdparser.hpp"
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
-#define HIP_CHECK(condition)                                                           \
-    {                                                                                  \
-        hipError_t error = condition;                                                  \
-        if (error != hipSuccess)                                                       \
-        {                                                                              \
-            std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
-            exit(error);                                                               \
-        }                                                                              \
-    }
+#define HIP_CHECK(condition)         \
+  {                                  \
+    hipError_t error = condition;    \
+    if(error != hipSuccess){         \
+        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
+        exit(error); \
+    } \
+  }
 
-#define ROCRAND_CHECK(condition)                                                             \
-    {                                                                                        \
-        rocrand_status _status = condition;                                                  \
-        if (_status != ROCRAND_STATUS_SUCCESS)                                               \
-        {                                                                                    \
-            std::cout << "ROCRAND error: " << _status << " line: " << __LINE__ << std::endl; \
-            exit(_status);                                                                   \
-        }                                                                                    \
-    }
+#define ROCRAND_CHECK(condition)                 \
+  {                                              \
+    rocrand_status _status = condition;           \
+    if(_status != ROCRAND_STATUS_SUCCESS) {       \
+        std::cout << "ROCRAND error: " << _status << " line: " << __LINE__ << std::endl; \
+        exit(_status); \
+    } \
+  }
 
 #ifndef DEFAULT_RAND_N
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
@@ -57,11 +55,11 @@ const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 
 typedef rocrand_rng_type rng_type_t;
 
-template <typename T>
+template<typename T>
 using generate_func_type = std::function<rocrand_status(rocrand_generator, T *, size_t)>;
 
-template <typename T>
-void run_benchmark(const cli::Parser &parser,
+template<typename T>
+void run_benchmark(const cli::Parser& parser,
                    const rng_type_t rng_type,
                    hipStream_t stream,
                    generate_func_type<T> generate_func)
@@ -71,7 +69,7 @@ void run_benchmark(const cli::Parser &parser,
     const size_t dimensions = parser.get<size_t>("dimensions");
     const size_t size = (size0 / dimensions) * dimensions;
 
-    T *data;
+    T * data;
     HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
 
     rocrand_generator generator;
@@ -111,9 +109,11 @@ void run_benchmark(const cli::Parser &parser,
     std::cout << std::fixed << std::setprecision(3)
               << "      "
               << "Throughput = "
-              << std::setw(8) << (trials * size * sizeof(T)) / (elapsed / 1e3 * (1 << 30))
+              << std::setw(8) << (trials * size * sizeof(T)) /
+                    (elapsed / 1e3 * (1 << 30))
               << " GB/s, Samples = "
-              << std::setw(8) << (trials * size) / (elapsed / 1e3 * (1 << 30))
+              << std::setw(8) << (trials * size) /
+                    (elapsed / 1e3 * (1 << 30))
               << " GSample/s, AvgTime (1 trial) = "
               << std::setw(8) << elapsed / trials
               << " ms, Time (all) = "
@@ -125,120 +125,119 @@ void run_benchmark(const cli::Parser &parser,
     HIP_CHECK(hipFree(data));
 }
 
-void run_benchmarks(const cli::Parser &parser,
+void run_benchmarks(const cli::Parser& parser,
                     const rng_type_t rng_type,
-                    const std::string &distribution,
+                    const std::string& distribution,
                     hipStream_t stream)
 {
     if (distribution == "uniform-uint")
     {
         run_benchmark<unsigned int>(parser, rng_type, stream,
-                                    [](rocrand_generator gen, unsigned int *data, size_t size)
-                                    {
-                                        return rocrand_generate(gen, data, size);
-                                    });
+            [](rocrand_generator gen, unsigned int * data, size_t size) {
+                return rocrand_generate(gen, data, size);
+            }
+        );
     }
     if (distribution == "uniform-uchar")
     {
         run_benchmark<unsigned char>(parser, rng_type, stream,
-                                     [](rocrand_generator gen, unsigned char *data, size_t size)
-                                     {
-                                         return rocrand_generate_char(gen, data, size);
-                                     });
+            [](rocrand_generator gen, unsigned char * data, size_t size) {
+                return rocrand_generate_char(gen, data, size);
+            }
+        );
     }
     if (distribution == "uniform-ushort")
     {
         run_benchmark<unsigned short>(parser, rng_type, stream,
-                                      [](rocrand_generator gen, unsigned short *data, size_t size)
-                                      {
-                                          return rocrand_generate_short(gen, data, size);
-                                      });
+            [](rocrand_generator gen, unsigned short * data, size_t size) {
+                return rocrand_generate_short(gen, data, size);
+            }
+        );
     }
     if (distribution == "uniform-half")
     {
         run_benchmark<__half>(parser, rng_type, stream,
-                              [](rocrand_generator gen, __half *data, size_t size)
-                              {
-                                  return rocrand_generate_uniform_half(gen, data, size);
-                              });
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_uniform_half(gen, data, size);
+            }
+        );
     }
     if (distribution == "uniform-float")
     {
         run_benchmark<float>(parser, rng_type, stream,
-                             [](rocrand_generator gen, float *data, size_t size)
-                             {
-                                 return rocrand_generate_uniform(gen, data, size);
-                             });
+            [](rocrand_generator gen, float * data, size_t size) {
+                return rocrand_generate_uniform(gen, data, size);
+            }
+        );
     }
     if (distribution == "uniform-double")
     {
         run_benchmark<double>(parser, rng_type, stream,
-                              [](rocrand_generator gen, double *data, size_t size)
-                              {
-                                  return rocrand_generate_uniform_double(gen, data, size);
-                              });
+            [](rocrand_generator gen, double * data, size_t size) {
+                return rocrand_generate_uniform_double(gen, data, size);
+            }
+        );
     }
     if (distribution == "normal-half")
     {
         run_benchmark<__half>(parser, rng_type, stream,
-                              [](rocrand_generator gen, __half *data, size_t size)
-                              {
-                                  return rocrand_generate_normal_half(gen, data, size, 0.0f, 1.0f);
-                              });
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_normal_half(gen, data, size, 0.0f, 1.0f);
+            }
+        );
     }
     if (distribution == "normal-float")
     {
         run_benchmark<float>(parser, rng_type, stream,
-                             [](rocrand_generator gen, float *data, size_t size)
-                             {
-                                 return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
-                             });
+            [](rocrand_generator gen, float * data, size_t size) {
+                return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
+            }
+        );
     }
     if (distribution == "normal-double")
     {
         run_benchmark<double>(parser, rng_type, stream,
-                              [](rocrand_generator gen, double *data, size_t size)
-                              {
-                                  return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
-                              });
+            [](rocrand_generator gen, double * data, size_t size) {
+                return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
+            }
+        );
     }
     if (distribution == "log-normal-half")
     {
         run_benchmark<__half>(parser, rng_type, stream,
-                              [](rocrand_generator gen, __half *data, size_t size)
-                              {
-                                  return rocrand_generate_log_normal_half(gen, data, size, 0.0f, 1.0f);
-                              });
+            [](rocrand_generator gen, __half * data, size_t size) {
+                return rocrand_generate_log_normal_half(gen, data, size, 0.0f, 1.0f);
+            }
+        );
     }
     if (distribution == "log-normal-float")
     {
         run_benchmark<float>(parser, rng_type, stream,
-                             [](rocrand_generator gen, float *data, size_t size)
-                             {
-                                 return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
-                             });
+            [](rocrand_generator gen, float * data, size_t size) {
+                return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
+            }
+        );
     }
     if (distribution == "log-normal-double")
     {
         run_benchmark<double>(parser, rng_type, stream,
-                              [](rocrand_generator gen, double *data, size_t size)
-                              {
-                                  return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
-                              });
+            [](rocrand_generator gen, double * data, size_t size) {
+                return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
+            }
+        );
     }
     if (distribution == "poisson")
     {
         const auto lambdas = parser.get<std::vector<double>>("lambda");
         for (double lambda : lambdas)
         {
-            std::cout << "    "
-                      << "lambda "
-                      << std::fixed << std::setprecision(1) << lambda << std::endl;
+            std::cout << "    " << "lambda "
+                 << std::fixed << std::setprecision(1) << lambda << std::endl;
             run_benchmark<unsigned int>(parser, rng_type, stream,
-                                        [lambda](rocrand_generator gen, unsigned int *data, size_t size)
-                                        {
-                                            return rocrand_generate_poisson(gen, data, size, lambda);
-                                        });
+                [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
+                    return rocrand_generate_poisson(gen, data, size, lambda);
+                }
+            );
         }
     }
 }
@@ -266,7 +265,8 @@ const std::vector<std::string> all_distributions = {
     "log-normal-half",
     "log-normal-float",
     "log-normal-double",
-    "poisson"};
+    "poisson"
+};
 
 int main(int argc, char *argv[])
 {
@@ -275,18 +275,18 @@ int main(int argc, char *argv[])
     const std::string distribution_desc =
         "space-separated list of distributions:" +
         std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
-                        [](std::string a, std::string b)
-                        {
-                            return a + "\n      " + b;
-                        }) +
+            [](std::string a, std::string b) {
+                return a + "\n      " + b;
+            }
+        ) +
         "\n      or all";
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-                        [](std::string a, std::string b)
-                        {
-                            return a + "\n      " + b;
-                        }) +
+            [](std::string a, std::string b) {
+                return a + "\n      " + b;
+            }
+        ) +
         "\n      or all";
 
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
@@ -343,8 +343,7 @@ int main(int argc, char *argv[])
     std::cout << "rocRAND: " << version << " ";
     std::cout << "Runtime: " << runtime_version << " ";
     std::cout << "Device: " << props.name;
-    std::cout << std::endl
-              << std::endl;
+    std::cout << std::endl << std::endl;
 
     hipStream_t stream;
     HIP_CHECK(hipStreamCreate(&stream));

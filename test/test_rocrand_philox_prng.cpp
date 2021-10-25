@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
@@ -33,19 +33,19 @@
 TEST(rocrand_philox_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * (size + 1)));
 
     rocrand_philox4x32_10 g;
-    ROCRAND_CHECK(g.generate(data + 1, size));
+    ROCRAND_CHECK(g.generate(data+1, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data + 1, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipMemcpy(host_data, data+1, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long sum = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         sum += host_data[i];
     }
@@ -58,7 +58,7 @@ TEST(rocrand_philox_prng_tests, uniform_uint_test)
 TEST(rocrand_philox_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
-    float *data;
+    float * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_philox4x32_10 g;
@@ -70,7 +70,7 @@ TEST(rocrand_philox_prng_tests, uniform_float_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     double sum = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         ASSERT_GT(host_data[i], 0.0f);
         ASSERT_LE(host_data[i], 1.0f);
@@ -88,7 +88,7 @@ TEST(rocrand_philox_prng_tests, state_progress_test)
 {
     // Device data
     const size_t size = 1025;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
@@ -111,10 +111,9 @@ TEST(rocrand_philox_prng_tests, state_progress_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     size_t same = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
-        if (host_data1[i] == host_data2[i])
-            same++;
+        if(host_data1[i] == host_data2[i]) same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -130,7 +129,7 @@ TEST(rocrand_philox_prng_tests, same_seed_test)
 
     // Device side data
     const size_t size = 1024;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
@@ -157,7 +156,7 @@ TEST(rocrand_philox_prng_tests, same_seed_test)
 
     // Numbers generated using same generator with same
     // seed should be the same
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         ASSERT_EQ(g0_host_data[i], g1_host_data[i]);
     }
@@ -173,7 +172,7 @@ TEST(rocrand_philox_prng_tests, different_seed_test)
 
     // Device side data
     const size_t size = 1024;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
@@ -200,10 +199,9 @@ TEST(rocrand_philox_prng_tests, different_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     size_t same = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
-        if (g1_host_data[i] == g0_host_data[i])
-            same++;
+        if(g1_host_data[i] == g0_host_data[i]) same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -219,10 +217,11 @@ TEST(rocrand_philox_prng_tests, different_seed_test)
 class rocrand_philox4x32_10_engine_type_test : public rocrand_philox4x32_10::engine_type
 {
 public:
+
     __host__ rocrand_philox4x32_10_engine_type_test()
         : rocrand_philox4x32_10::engine_type(0, 0, 0) {}
 
-    __host__ state_type &internal_state_ref()
+    __host__ state_type& internal_state_ref()
     {
         return m_state;
     }
@@ -231,7 +230,7 @@ public:
 TEST(rocrand_philox_prng_state_tests, seed_test)
 {
     rocrand_philox4x32_10_engine_type_test engine;
-    rocrand_philox4x32_10_engine_type_test::state_type &state = engine.internal_state_ref();
+    rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
@@ -256,7 +255,7 @@ TEST(rocrand_philox_prng_state_tests, seed_test)
 TEST(rocrand_philox_prng_state_tests, discard_test)
 {
     rocrand_philox4x32_10_engine_type_test engine;
-    rocrand_philox4x32_10_engine_type_test::state_type &state = engine.internal_state_ref();
+    rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
@@ -333,7 +332,7 @@ TEST(rocrand_philox_prng_state_tests, discard_test)
 TEST(rocrand_philox_prng_state_tests, discard_sequence_test)
 {
     rocrand_philox4x32_10_engine_type_test engine;
-    rocrand_philox4x32_10_engine_type_test::state_type &state = engine.internal_state_ref();
+    rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
     engine.discard_subsequence(UINT_MAX);
     EXPECT_EQ(state.counter.x, 0U);

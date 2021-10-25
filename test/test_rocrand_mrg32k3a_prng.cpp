@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
+#include <rocrand.h>
 
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
@@ -33,10 +33,11 @@
 using rocrand_device::detail::mad_u64_u32;
 
 __global__
-    __launch_bounds__(1) void mad_u64_u32_kernel(const unsigned int *x,
-                                                 const unsigned int *y,
-                                                 const unsigned long long *z,
-                                                 unsigned long long *r)
+__launch_bounds__(1)
+void mad_u64_u32_kernel(const unsigned int * x,
+                        const unsigned int * y,
+                        const unsigned long long * z,
+                        unsigned long long * r)
 {
     r[0] = mad_u64_u32(x[0], y[0], z[0]);
     r[1] = mad_u64_u32(x[1], y[1], z[1]);
@@ -52,10 +53,10 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
 {
     const size_t size = 8;
 
-    unsigned int *x;
-    unsigned int *y;
-    unsigned long long *z;
-    unsigned long long *r;
+    unsigned int * x;
+    unsigned int * y;
+    unsigned long long * z;
+    unsigned long long * r;
     HIP_CHECK(hipMallocHelper((void **)&x, size * sizeof(unsigned int)));
     HIP_CHECK(hipMallocHelper((void **)&y, size * sizeof(unsigned int)));
     HIP_CHECK(hipMallocHelper((void **)&z, size * sizeof(unsigned long long)));
@@ -65,18 +66,10 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
     unsigned int h_y[size];
     unsigned long long h_z[size];
 
-    h_x[0] = 3492343451;
-    h_y[0] = 1234;
-    h_z[0] = 1231314234234265ULL;
-    h_x[1] = 2;
-    h_y[1] = UINT_MAX;
-    h_z[1] = 10ULL;
-    h_x[2] = 0;
-    h_y[2] = 2342345;
-    h_z[2] = 53483747345345ULL;
-    h_x[3] = 1324423423;
-    h_y[3] = 1;
-    h_z[3] = 0ULL;
+    h_x[0] = 3492343451; h_y[0] = 1234; h_z[0] = 1231314234234265ULL;
+    h_x[1] = 2; h_y[1] = UINT_MAX; h_z[1] = 10ULL;
+    h_x[2] = 0; h_y[2] = 2342345; h_z[2] = 53483747345345ULL;
+    h_x[3] = 1324423423; h_y[3] = 1; h_z[3] = 0ULL;
     h_y[4] = 575675676;
     h_x[5] = 12;
 
@@ -87,7 +80,8 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(mad_u64_u32_kernel),
         dim3(1), dim3(1), 0, 0,
-        x, y, z, r);
+        x, y, z, r
+    );
     HIP_CHECK(hipGetLastError());
 
     unsigned long long h_r[size];
@@ -111,7 +105,7 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
 TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_mrg32k3a g;
@@ -123,7 +117,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long sum = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         sum += host_data[i];
     }
@@ -136,7 +130,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
 TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
-    float *data;
+    float * data;
     hipMallocHelper(&data, sizeof(float) * size);
 
     rocrand_mrg32k3a g;
@@ -148,7 +142,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     double sum = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         sum += host_data[i];
     }
@@ -161,7 +155,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
 TEST(rocrand_mrg32k3a_prng_tests, uniform_double_test)
 {
     const size_t size = 1313;
-    double *data;
+    double * data;
     hipMallocHelper(&data, sizeof(double) * size);
 
     rocrand_mrg32k3a g;
@@ -173,7 +167,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_double_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     double sum = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         sum += host_data[i];
     }
@@ -186,18 +180,18 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_double_test)
 TEST(rocrand_mrg32k3a_prng_tests, uniform_float_range_test)
 {
     const size_t size = 1 << 26;
-    float *data;
+    float * data;
     hipMallocHelper(&data, sizeof(float) * size);
 
     rocrand_mrg32k3a g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
-    float *host_data = new float[size];
+    float * host_data = new float[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         ASSERT_GT(host_data[i], 0.0f);
         ASSERT_LE(host_data[i], 1.0f);
@@ -210,18 +204,18 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_range_test)
 TEST(rocrand_mrg32k3a_prng_tests, uniform_double_range_test)
 {
     const size_t size = 1 << 26;
-    double *data;
+    double * data;
     hipMallocHelper(&data, sizeof(double) * size);
 
     rocrand_mrg32k3a g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
-    double *host_data = new double[size];
+    double * host_data = new double[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(double) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         ASSERT_GT(host_data[i], 0.0);
         ASSERT_LE(host_data[i], 1.0);
@@ -234,7 +228,7 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_double_range_test)
 TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
 {
     const size_t size = 1314;
-    float *data;
+    float * data;
     hipMallocHelper(&data, sizeof(float) * size);
 
     rocrand_mrg32k3a g;
@@ -246,21 +240,21 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     float mean = 0.0f;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
 
     float std = 0.0f;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         std += std::pow(host_data[i] - mean, 2);
     }
     std = sqrt(std / size);
 
     EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
-    EXPECT_NEAR(5.0f, std, 1.0f);  // 20%
+    EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 
     HIP_CHECK(hipFree(data));
 }
@@ -268,7 +262,7 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
 TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
 {
     const size_t size = 1313;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_mrg32k3a g;
@@ -280,14 +274,14 @@ TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     double mean = 0.0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
 
     double var = 0.0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         double x = host_data[i] - mean;
         var += x * x;
@@ -306,7 +300,7 @@ TEST(rocrand_mrg32k3a_prng_tests, state_progress_test)
 {
     // Device data
     const size_t size = 1025;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
@@ -329,10 +323,9 @@ TEST(rocrand_mrg32k3a_prng_tests, state_progress_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     size_t same = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
-        if (host_data1[i] == host_data2[i])
-            same++;
+        if(host_data1[i] == host_data2[i]) same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -349,7 +342,7 @@ TEST(rocrand_mrg32k3a_prng_tests, same_seed_test)
 
     // Device side data
     const size_t size = 1024;
-    unsigned int *data;
+    unsigned int * data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
@@ -376,7 +369,7 @@ TEST(rocrand_mrg32k3a_prng_tests, same_seed_test)
 
     // Numbers generated using same generator with same
     // seed should be the same
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
         ASSERT_EQ(g0_host_data[i], g1_host_data[i]);
     }
@@ -393,8 +386,8 @@ TEST(rocrand_mrg32k3a_prng_tests, different_seed_test)
 
     // Device side data
     const size_t size = 1024;
-    unsigned int *data;
-    HIP_CHECK(hipMallocHelper((void **)&data, sizeof(unsigned int) * size));
+    unsigned int * data;
+    HIP_CHECK(hipMallocHelper((void**)&data, sizeof(unsigned int) * size));
 
     // Generators
     rocrand_mrg32k3a g0, g1;
@@ -420,10 +413,9 @@ TEST(rocrand_mrg32k3a_prng_tests, different_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     size_t same = 0;
-    for (size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i++)
     {
-        if (g1_host_data[i] == g0_host_data[i])
-            same++;
+        if(g1_host_data[i] == g0_host_data[i]) same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -444,7 +436,8 @@ TEST(rocrand_mrg32k3a_prng_tests, discard_test)
 
     const unsigned long long ds[] = {
         1ULL, 4ULL, 37ULL, 583ULL, 7452ULL,
-        21032ULL, 35678ULL, 66778ULL, 10313475ULL, 82120230ULL};
+        21032ULL, 35678ULL, 66778ULL, 10313475ULL, 82120230ULL
+    };
 
     for (auto d : ds)
     {
@@ -466,7 +459,7 @@ TEST(rocrand_mrg32k3a_prng_tests, discard_sequence_test)
 
     EXPECT_EQ(engine1(), engine2());
 
-    engine1.discard(5356446450ULL);
+    engine1.discard( 5356446450ULL);
     engine1.discard_sequence(123ULL);
     engine1.discard(30000000006ULL);
 
@@ -494,7 +487,7 @@ TEST(rocrand_mrg32k3a_prng_tests, discard_subsequence_test)
 
     EXPECT_EQ(engine1(), engine2());
 
-    engine1.discard(5356446450ULL);
+    engine1.discard( 5356446450ULL);
     engine1.discard_subsequence(123ULL);
     engine1.discard(30000000006ULL);
 
