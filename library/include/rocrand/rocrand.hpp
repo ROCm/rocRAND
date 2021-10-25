@@ -31,8 +31,8 @@
 #include <type_traits>
 #include <limits>
 
-#include "rocrand.h"
-#include "rocrand_kernel.h"
+#include "rocrand/rocrand.h"
+#include "rocrand/rocrand_kernel.h"
 
 namespace rocrand_cpp {
 

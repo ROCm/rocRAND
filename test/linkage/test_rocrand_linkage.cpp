@@ -23,8 +23,8 @@
 
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
-#include <rocrand_kernel.h>
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_kernel.h>
 #include <rocrand.hpp>
 
 #include "get_rocrand_version.hpp"
