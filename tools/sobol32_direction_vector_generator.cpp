@@ -17,17 +17,19 @@ struct sobol_set
     uint32_t m[18];
 };
 
-bool read_sobol_set(struct sobol_set * inputs, int N, const std::string name)
+bool read_sobol_set(struct sobol_set *inputs, int N, const std::string name)
 {
-    std::ifstream infile(name ,std::ios::in);
-    if (!infile) {
+    std::ifstream infile(name, std::ios::in);
+    if (!infile)
+    {
         std::cout << "Input file containing direction numbers cannot be found!\n";
         return false;
     }
     char buffer[1000];
-    infile.getline(buffer,1000,'\n');
+    infile.getline(buffer, 1000, '\n');
 
-    for (int32_t i = 0; i < N; i++) {
+    for (int32_t i = 0; i < N; i++)
+    {
         infile >> inputs[i].d >> inputs[i].s >> inputs[i].a;
         for (uint32_t j = 0; j < inputs[i].s; j++)
             infile >> inputs[i].m[j];
@@ -36,26 +38,27 @@ bool read_sobol_set(struct sobol_set * inputs, int N, const std::string name)
     return true;
 }
 
-template<typename DirectionVectorType>
-void init_direction_vectors(struct sobol_set * inputs, DirectionVectorType* directions, int n_directions, int n)
+template <typename DirectionVectorType>
+void init_direction_vectors(struct sobol_set *inputs, DirectionVectorType *directions, int n_directions, int n)
 {
     constexpr uint32_t shift_adjust = (sizeof(DirectionVectorType) * 8) - 1;
-    for (int j = 0 ; j < n_directions ; j++)
+    for (int j = 0; j < n_directions; j++)
     {
         directions[j] = 1lu << (shift_adjust - j);
     }
     directions += n_directions;
-    for (int i = 1; i < n ; i++) {
+    for (int i = 1; i < n; i++)
+    {
         int ix = i - 1;
         int s = inputs[ix].s;
-        for (int j = 0; j < s ; j++)
+        for (int j = 0; j < s; j++)
         {
             directions[j] = (DirectionVectorType)inputs[ix].m[j] << (shift_adjust - j);
         }
-        for (int j = s; j < n_directions ; j++)
+        for (int j = s; j < n_directions; j++)
         {
             directions[j] = directions[j - s] ^ (directions[j - s] >> s);
-            for (int k = 1; k < s ; k++)
+            for (int k = 1; k < s; k++)
             {
                 directions[j] ^= ((((DirectionVectorType)inputs[ix].a >> (s - 1 - k)) & 1) * directions[j - k]);
             }
@@ -64,8 +67,8 @@ void init_direction_vectors(struct sobol_set * inputs, DirectionVectorType* dire
     }
 }
 
-template<typename DirectionVectorType>
-void write_matrices(std::ofstream& fout, const std::string name, DirectionVectorType* directions, int32_t n, int32_t bits, bool is_device)
+template <typename DirectionVectorType>
+void write_matrices(std::ofstream &fout, const std::string name, DirectionVectorType *directions, int32_t n, int32_t bits, bool is_device)
 {
     fout << "static const ";
     fout << (is_device ? "__device__ " : "");
@@ -74,13 +77,15 @@ void write_matrices(std::ofstream& fout, const std::string name, DirectionVector
     fout << std::endl;
     fout << "    {";
     fout << std::endl;
-    fout << "        ";;
+    fout << "        ";
+    ;
     for (int k = 0; k < n; k++)
     {
         fout << "0x";
         fout << std::hex << std::setw(sizeof(DirectionVectorType) * 2) << std::setfill('0') << directions[k] << ", ";
         if ((k + 1) % bits == 0 && k != 1)
-            fout  << std::endl << "        ";
+            fout << std::endl
+                 << "        ";
     }
     fout << std::endl;
     fout << "    };" << std::endl;
@@ -92,7 +97,7 @@ int main(int argc, char const *argv[])
     if (argc != 3 || std::string(argv[1]) == "--help")
     {
         std::cout << "Usage:" << std::endl;
-        std::cout << "  ./sobol32_direction_vector_generator new-joe-kuo-6.21201 ../../library/include/rocrand_sobol32_precomputed.h" << std::endl;
+        std::cout << "  ./sobol32_direction_vector_generator new-joe-kuo-6.21201 ../../library/include/rocrand/rocrand_sobol32_precomputed.h" << std::endl;
         std::cout << "  (the source file can be downloaded here: http://web.maths.unsw.edu.au/~fkuo/sobol/)" << std::endl;
         return -1;
     }
@@ -100,8 +105,8 @@ int main(int argc, char const *argv[])
     const std::string vector_file(argv[1]);
     uint32_t SOBOL_DIM = 20000;
     uint32_t SOBOL32_N = SOBOL_DIM * 32;
-    struct sobol_set * inputs = new struct sobol_set[SOBOL_DIM];
-    uint32_t * directions_32 = new uint32_t[SOBOL32_N];
+    struct sobol_set *inputs = new struct sobol_set[SOBOL_DIM];
+    uint32_t *directions_32 = new uint32_t[SOBOL32_N];
     bool read = read_sobol_set(inputs, SOBOL_DIM, vector_file);
 
     if (read)

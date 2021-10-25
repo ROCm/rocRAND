@@ -22,8 +22,8 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
-#include <rocrand_sobol64_precomputed.h>
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_sobol64_precomputed.h>
 
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
@@ -87,7 +87,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint64_test)
 TEST(rocrand_sobol64_qrng_tests, uniform_double_test)
 {
     constexpr size_t size = 1313;
-    double * data;
+    double *data;
     HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
 
     rocrand_sobol64 g;
@@ -99,7 +99,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_double_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     double sum = 0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         ASSERT_GT(host_data[i], 0.0f);
         ASSERT_LE(host_data[i], 1.0f);
@@ -114,7 +114,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_double_test)
 TEST(rocrand_sobol64_qrng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
-    unsigned int * data;
+    unsigned int *data;
     HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
 
     rocrand_sobol64 g;
@@ -125,7 +125,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long int sum = 0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         sum += host_data[i];
     }
@@ -139,7 +139,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint_test)
 TEST(rocrand_sobol64_qrng_tests, normal_double_test)
 {
     const size_t size = 1313;
-    double * data;
+    double *data;
     HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
 
     rocrand_sobol64 g;
@@ -151,21 +151,21 @@ TEST(rocrand_sobol64_qrng_tests, normal_double_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     double mean = 0.0f;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
 
     double std = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         std += std::pow(host_data[i] - mean, 2);
     }
     std = sqrt(std / size);
 
     EXPECT_NEAR(2.0, mean, 0.4); // 20%
-    EXPECT_NEAR(5.0, std, 1.0); // 20%
+    EXPECT_NEAR(5.0, std, 1.0);  // 20%
 
     HIP_CHECK(hipFree(data));
 }
@@ -174,7 +174,7 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test_32bit)
 {
     using T = unsigned int;
     constexpr size_t size = 1313;
-    T * data;
+    T *data;
     HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
 
     rocrand_sobol64 g;
@@ -186,14 +186,14 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test_32bit)
     HIP_CHECK(hipDeviceSynchronize());
 
     double mean = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
 
     double var = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         double x = host_data[i] - mean;
         var += x * x;
@@ -210,7 +210,7 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test_64bit)
 {
     using T = unsigned long long int;
     constexpr size_t size = 1313;
-    T * data;
+    T *data;
     HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
 
     rocrand_sobol64 g;
@@ -222,14 +222,14 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test_64bit)
     HIP_CHECK(hipDeviceSynchronize());
 
     double mean = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
     mean = mean / size;
 
     double var = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         double x = host_data[i] - mean;
         var += x * x;
@@ -245,7 +245,7 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test_64bit)
 TEST(rocrand_sobol64_qrng_tests, dimesions_test)
 {
     const size_t size = 12345;
-    double * data;
+    double *data;
     HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
 
     rocrand_sobol64 g;
@@ -268,7 +268,7 @@ TEST(rocrand_sobol64_qrng_tests, state_progress_test)
 {
     // Device data
     const size_t size = 1025;
-    unsigned int * data;
+    unsigned int *data;
     HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
 
     // Generator
@@ -291,9 +291,10 @@ TEST(rocrand_sobol64_qrng_tests, state_progress_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     size_t same = 0;
-    for(size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
-        if(host_data1[i] == host_data2[i]) same++;
+        if (host_data1[i] == host_data2[i])
+            same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -320,8 +321,7 @@ TEST(rocrand_sobol64_qrng_tests, discard_test)
 
     const unsigned int ds[] = {
         0, 1, 4, 37, 583, 7452,
-        21032, 35678, 66778, 10313475, 82120230
-    };
+        21032, 35678, 66778, 10313475, 82120230};
 
     for (auto d : ds)
     {
@@ -343,8 +343,7 @@ TEST(rocrand_sobol64_qrng_tests, discard_stride_test)
     EXPECT_EQ(engine1(), engine2());
 
     const unsigned int ds[] = {
-        1, 10, 12, 20, 4, 5, 30
-    };
+        1, 10, 12, 20, 4, 5, 30};
 
     for (auto d : ds)
     {

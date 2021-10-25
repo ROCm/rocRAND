@@ -25,19 +25,18 @@
 #include <algorithm>
 #include <vector>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "discrete.hpp"
 
-template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
+template <rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class rocrand_poisson_distribution : public rocrand_discrete_distribution_base<Method, IsHostSide>
 {
 public:
-
     typedef rocrand_discrete_distribution_base<Method, IsHostSide> base;
 
     rocrand_poisson_distribution()
-        : base() { }
+        : base() {}
 
     rocrand_poisson_distribution(double lambda)
         : rocrand_poisson_distribution()
@@ -45,8 +44,7 @@ public:
         set_lambda(lambda);
     }
 
-    __host__ __device__
-    ~rocrand_poisson_distribution() { }
+    __host__ __device__ ~rocrand_poisson_distribution() {}
 
     void set_lambda(double lambda)
     {
@@ -60,8 +58,7 @@ public:
     }
 
 protected:
-
-    void calculate_probabilities(std::vector<double>& p, const size_t capacity,
+    void calculate_probabilities(std::vector<double> &p, const size_t capacity,
                                  const double lambda)
     {
         const double p_epsilon = 1e-12;
@@ -112,16 +109,16 @@ protected:
 // Handles caching of precomputed tables for the distribution and recomputes
 // them only when lambda is changed (as these computations, device memory
 // allocations and copying take time).
-template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
+template <rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class poisson_distribution_manager
 {
 public:
-
     rocrand_poisson_distribution<Method, IsHostSide> dis;
 
     poisson_distribution_manager()
         : lambda(0.0)
-    { }
+    {
+    }
 
     ~poisson_distribution_manager()
     {
@@ -139,7 +136,6 @@ public:
     }
 
 private:
-
     double lambda;
 };
 
@@ -152,10 +148,10 @@ struct mrg_poisson_distribution
 
     mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
         : dis(dis)
-    { }
+    {
+    }
 
-    __host__ __device__
-    void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
+    __host__ __device__ void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
         // Alias method requires x in [0, 1), uint must be in [0, UINT_MAX],
         // but Mrg32k3a's "raw" output is in [1, ROCRAND_MRG32K3A_M1],

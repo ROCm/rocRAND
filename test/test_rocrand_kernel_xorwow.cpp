@@ -27,23 +27,22 @@
 #include <hip/hip_runtime.h>
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
-#include <rocrand_kernel.h>
-#include <rocrand.h>
+#include <rocrand/rocrand_kernel.h>
+#include <rocrand/rocrand.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
-void rocrand_init_kernel(GeneratorState * states,
-                         const size_t states_size,
-                         unsigned long long seed,
-                         unsigned long long offset)
+    __launch_bounds__(64) void rocrand_init_kernel(GeneratorState *states,
+                                                   const size_t states_size,
+                                                   unsigned long long seed,
+                                                   unsigned long long offset)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int subsequence = state_id;
-    if(state_id < states_size)
+    if (state_id < states_size)
     {
         GeneratorState state;
         rocrand_init(seed, subsequence, offset, &state);
@@ -53,8 +52,7 @@ void rocrand_init_kernel(GeneratorState * states,
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
-void rocrand_kernel(unsigned int * output, const size_t size)
+    __launch_bounds__(64) void rocrand_kernel(unsigned int *output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
@@ -64,7 +62,7 @@ void rocrand_kernel(unsigned int * output, const size_t size)
     rocrand_init(0, subsequence, 123ULL, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    while (index < size)
     {
         output[index] = rocrand(&state);
         index += global_size;
@@ -73,8 +71,7 @@ void rocrand_kernel(unsigned int * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
-void rocrand_uniform_kernel(float * output, const size_t size)
+    __launch_bounds__(64) void rocrand_uniform_kernel(float *output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
@@ -84,7 +81,7 @@ void rocrand_uniform_kernel(float * output, const size_t size)
     rocrand_init(0, subsequence, 234ULL, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    while (index < size)
     {
         output[index] = rocrand_uniform(&state);
         index += global_size;
@@ -93,8 +90,7 @@ void rocrand_uniform_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
-void rocrand_normal_kernel(float * output, const size_t size)
+    __launch_bounds__(64) void rocrand_normal_kernel(float *output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
@@ -104,11 +100,11 @@ void rocrand_normal_kernel(float * output, const size_t size)
     rocrand_init(0, subsequence, 345ULL, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    while (index < size)
     {
-        if(index % 3 == 0)
+        if (index % 3 == 0)
             output[index] = rocrand_normal2(&state).x;
-        else if(index % 3 == 1)
+        else if (index % 3 == 1)
             output[index] = rocrand_normal2(&state).y;
         else
             output[index] = rocrand_normal(&state);
@@ -118,8 +114,7 @@ void rocrand_normal_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
-void rocrand_log_normal_kernel(float * output, const size_t size)
+    __launch_bounds__(64) void rocrand_log_normal_kernel(float *output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
@@ -129,11 +124,11 @@ void rocrand_log_normal_kernel(float * output, const size_t size)
     rocrand_init(0, subsequence, 456ULL, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    while (index < size)
     {
-        if(index % 3 == 0)
+        if (index % 3 == 0)
             output[index] = rocrand_log_normal2(&state, 1.6f, 0.25f).x;
-        else if(index % 3 == 1)
+        else if (index % 3 == 1)
             output[index] = rocrand_log_normal2(&state, 1.6f, 0.25f).y;
         else
             output[index] = rocrand_log_normal(&state, 1.6f, 0.25f);
@@ -143,8 +138,7 @@ void rocrand_log_normal_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
-void rocrand_poisson_kernel(unsigned int * output, const size_t size, double lambda)
+    __launch_bounds__(64) void rocrand_poisson_kernel(unsigned int *output, const size_t size, double lambda)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
@@ -154,7 +148,7 @@ void rocrand_poisson_kernel(unsigned int * output, const size_t size, double lam
     rocrand_init(0, subsequence, 234ULL, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    while (index < size)
     {
         output[index] = rocrand_poisson(&state, lambda);
         index += global_size;
@@ -163,8 +157,7 @@ void rocrand_poisson_kernel(unsigned int * output, const size_t size, double lam
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
-void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_discrete_distribution discrete_distribution)
+    __launch_bounds__(64) void rocrand_discrete_kernel(unsigned int *output, const size_t size, rocrand_discrete_distribution discrete_distribution)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
@@ -174,7 +167,7 @@ void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_d
     rocrand_init(0, subsequence, 234ULL, &state);
 
     unsigned int index = state_id;
-    while(index < size)
+    while (index < size)
     {
         output[index] = rocrand_discrete(&state, discrete_distribution);
         index += global_size;
@@ -195,7 +188,6 @@ TEST(rocrand_kernel_xorwow, rocrand_init)
         typedef rocrand_state_xorwow::xorwow_state internal_state_type;
 
     public:
-
         __host__ rocrand_state_xorwow_test() {}
 
         __host__ internal_state_type internal_state() const
@@ -211,7 +203,7 @@ TEST(rocrand_kernel_xorwow, rocrand_init)
     unsigned long long offset = 345678ULL;
 
     const size_t states_size = 256;
-    state_type * states;
+    state_type *states;
     HIP_CHECK(hipMallocHelper((void **)&states, states_size * sizeof(state_type)));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -219,8 +211,7 @@ TEST(rocrand_kernel_xorwow, rocrand_init)
         HIP_KERNEL_NAME(rocrand_init_kernel),
         dim3(4), dim3(64), 0, 0,
         states, states_size,
-        seed, offset
-    );
+        seed, offset);
     HIP_CHECK(hipGetLastError());
 
     std::vector<state_type_test> states_host(states_size);
@@ -228,13 +219,11 @@ TEST(rocrand_kernel_xorwow, rocrand_init)
         hipMemcpy(
             states_host.data(), states,
             states_size * sizeof(state_type),
-            hipMemcpyDeviceToHost
-        )
-    );
+            hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(states));
 
-    for(size_t si = 1; si < states_size; si++)
+    for (size_t si = 1; si < states_size; si++)
     {
         auto s0 = states_host[si - 1].internal_state();
         auto s1 = states_host[si].internal_state();
@@ -254,15 +243,14 @@ TEST(rocrand_kernel_xorwow, rocrand)
     typedef rocrand_state_xorwow state_type;
 
     const size_t output_size = 8192;
-    unsigned int * output;
+    unsigned int *output;
     HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_kernel<state_type>),
         dim3(4), dim3(64), 0, 0,
-        output, output_size
-    );
+        output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
@@ -270,14 +258,12 @@ TEST(rocrand_kernel_xorwow, rocrand)
         hipMemcpy(
             output_host.data(), output,
             output_size * sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
+            hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
 
     double mean = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         mean += static_cast<double>(v) / UINT_MAX;
     }
@@ -290,15 +276,14 @@ TEST(rocrand_kernel_xorwow, rocrand_uniform)
     typedef rocrand_state_xorwow state_type;
 
     const size_t output_size = 8192;
-    float * output;
+    float *output;
     HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
         dim3(4), dim3(64), 0, 0,
-        output, output_size
-    );
+        output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
@@ -306,14 +291,12 @@ TEST(rocrand_kernel_xorwow, rocrand_uniform)
         hipMemcpy(
             output_host.data(), output,
             output_size * sizeof(float),
-            hipMemcpyDeviceToHost
-        )
-    );
+            hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
 
     double mean = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         mean += static_cast<double>(v);
     }
@@ -326,15 +309,14 @@ TEST(rocrand_kernel_xorwow, rocrand_normal)
     typedef rocrand_state_xorwow state_type;
 
     const size_t output_size = 8192;
-    float * output;
+    float *output;
     HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_normal_kernel<state_type>),
         dim3(4), dim3(64), 0, 0,
-        output, output_size
-    );
+        output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
@@ -342,14 +324,12 @@ TEST(rocrand_kernel_xorwow, rocrand_normal)
         hipMemcpy(
             output_host.data(), output,
             output_size * sizeof(float),
-            hipMemcpyDeviceToHost
-        )
-    );
+            hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
 
     double mean = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         mean += static_cast<double>(v);
     }
@@ -357,7 +337,7 @@ TEST(rocrand_kernel_xorwow, rocrand_normal)
     EXPECT_NEAR(mean, 0.0, 0.2);
 
     double stddev = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         stddev += std::pow(static_cast<double>(v) - mean, 2);
     }
@@ -370,15 +350,14 @@ TEST(rocrand_kernel_xorwow, rocrand_log_normal)
     typedef rocrand_state_xorwow state_type;
 
     const size_t output_size = 8192;
-    float * output;
+    float *output;
     HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_log_normal_kernel<state_type>),
         dim3(4), dim3(64), 0, 0,
-        output, output_size
-    );
+        output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
@@ -386,34 +365,34 @@ TEST(rocrand_kernel_xorwow, rocrand_log_normal)
         hipMemcpy(
             output_host.data(), output,
             output_size * sizeof(float),
-            hipMemcpyDeviceToHost
-        )
-    );
+            hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
 
     double mean = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         mean += static_cast<double>(v);
     }
     mean = mean / output_size;
 
     double stddev = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         stddev += std::pow(v - mean, 2);
     }
     stddev = std::sqrt(stddev / output_size);
 
     double logmean = std::log(mean * mean / std::sqrt(stddev + mean * mean));
-    double logstd = std::sqrt(std::log(1.0f + stddev/(mean * mean)));
+    double logstd = std::sqrt(std::log(1.0f + stddev / (mean * mean)));
 
     EXPECT_NEAR(1.6, logmean, 1.6 * 0.2);
     EXPECT_NEAR(0.25, logstd, 0.25 * 0.2);
 }
 
-class rocrand_kernel_xorwow_poisson : public ::testing::TestWithParam<double> { };
+class rocrand_kernel_xorwow_poisson : public ::testing::TestWithParam<double>
+{
+};
 
 TEST_P(rocrand_kernel_xorwow_poisson, rocrand_poisson)
 {
@@ -422,15 +401,14 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_poisson)
     const double lambda = GetParam();
 
     const size_t output_size = 8192;
-    unsigned int * output;
+    unsigned int *output;
     HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
         dim3(4), dim3(64), 0, 0,
-        output, output_size, lambda
-    );
+        output, output_size, lambda);
     HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
@@ -438,21 +416,19 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_poisson)
         hipMemcpy(
             output_host.data(), output,
             output_size * sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
+            hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
 
     double mean = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         mean += static_cast<double>(v);
     }
     mean = mean / output_size;
 
     double variance = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         variance += std::pow(v - mean, 2);
     }
@@ -469,7 +445,7 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_discrete)
     const double lambda = GetParam();
 
     const size_t output_size = 8192;
-    unsigned int * output;
+    unsigned int *output;
     HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -479,8 +455,7 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_discrete)
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_discrete_kernel<state_type>),
         dim3(4), dim3(64), 0, 0,
-        output, output_size, discrete_distribution
-    );
+        output, output_size, discrete_distribution);
     HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
@@ -488,22 +463,20 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_discrete)
         hipMemcpy(
             output_host.data(), output,
             output_size * sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
+            hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
 
     double mean = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         mean += static_cast<double>(v);
     }
     mean = mean / output_size;
 
     double variance = 0;
-    for(auto v : output_host)
+    for (auto v : output_host)
     {
         variance += std::pow(v - mean, 2);
     }
@@ -513,8 +486,8 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_discrete)
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
 }
 
-const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
+const double lambdas[] = {1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0};
 
 INSTANTIATE_TEST_SUITE_P(rocrand_kernel_xorwow_poisson,
-                        rocrand_kernel_xorwow_poisson,
-                        ::testing::ValuesIn(lambdas));
+                         rocrand_kernel_xorwow_poisson,
+                         ::testing::ValuesIn(lambdas));

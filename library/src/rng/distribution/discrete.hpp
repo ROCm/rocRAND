@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <vector>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "device_distributions.hpp"
 
@@ -44,11 +44,10 @@ enum rocrand_discrete_method
     ROCRAND_DISCRETE_METHOD_UNIVERSAL = ROCRAND_DISCRETE_METHOD_ALIAS | ROCRAND_DISCRETE_METHOD_CDF
 };
 
-template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
+template <rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class rocrand_discrete_distribution_base : public rocrand_discrete_distribution_st
 {
 public:
-
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
@@ -60,7 +59,7 @@ public:
         cdf = NULL;
     }
 
-    rocrand_discrete_distribution_base(const double * probabilities,
+    rocrand_discrete_distribution_base(const double *probabilities,
                                        unsigned int size,
                                        unsigned int offset)
         : rocrand_discrete_distribution_base()
@@ -70,8 +69,7 @@ public:
         init(p, size, offset);
     }
 
-    __host__ __device__
-    ~rocrand_discrete_distribution_base() { }
+    __host__ __device__ ~rocrand_discrete_distribution_base() {}
 
     void deallocate()
     {
@@ -114,9 +112,10 @@ public:
     }
 
     // Template for switching between 32-bit and 64-bit unsigned int types
-    template<class T>
+    template <class T>
     __forceinline__ __host__ __device__
-    T operator()(T x) const
+        T
+        operator()(T x) const
     {
         if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
         {
@@ -129,15 +128,13 @@ public:
     }
 
     // Template for switching between 32-bit and 64-bit unsigned int types
-    template<class T>
-    __host__ __device__
-    void operator()(const T (&input)[1], T output[1]) const
+    template <class T>
+    __host__ __device__ void operator()(const T (&input)[1], T output[1]) const
     {
         output[0] = (*this)(input[0]);
     }
 
 protected:
-
     void init(std::vector<double> p,
               const unsigned int size,
               const unsigned int offset)
@@ -199,7 +196,7 @@ protected:
         }
     }
 
-    void normalize(std::vector<double>& p)
+    void normalize(std::vector<double> &p)
     {
         double sum = 0.0;
         for (unsigned int i = 0; i < size; i++)

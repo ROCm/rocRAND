@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include <rng/generator_type.hpp>
 
@@ -34,13 +34,13 @@ TEST(rocrand_generator_type_tests, rocrand_generator)
     EXPECT_EQ(g, static_cast<rocrand_generator>(0));
 
     g = new rocrand_generator_type<>;
-    rocrand_generator_type<> * gg = static_cast<rocrand_generator_type<>* >(g);
+    rocrand_generator_type<> *gg = static_cast<rocrand_generator_type<> *>(g);
     EXPECT_NE(gg, static_cast<rocrand_generator>(0));
     EXPECT_EQ(gg->type(), ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
     EXPECT_EQ(gg->get_offset(), 0ULL);
     EXPECT_EQ(gg->get_seed(), 0ULL);
     EXPECT_EQ(gg->get_stream(), (hipStream_t)(0));
-    delete(g);
+    delete (g);
 }
 
 TEST(rocrand_generator_type_tests, default_ctor_test)

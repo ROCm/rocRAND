@@ -22,12 +22,14 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
-class rocrand_generate_uniform_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
+class rocrand_generate_uniform_tests : public ::testing::TestWithParam<rocrand_rng_type>
+{
+};
 
 TEST_P(rocrand_generate_uniform_tests, float_test)
 {
@@ -37,30 +39,25 @@ TEST_P(rocrand_generate_uniform_tests, float_test)
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            rng_type
-        )
-    );
+            rng_type));
 
     const size_t size = 12563;
-    float * data;
+    float *data;
     HIP_CHECK(hipMallocHelper(&data, size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
     ROCRAND_CHECK(
-        rocrand_generate_uniform(generator, data, 1)
-    );
+        rocrand_generate_uniform(generator, data, 1));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
     ROCRAND_CHECK(
-        rocrand_generate_uniform(generator, data+1, 2)
-    );
+        rocrand_generate_uniform(generator, data + 1, 2));
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_uniform(generator, data, size)
-    );
+        rocrand_generate_uniform(generator, data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
@@ -75,30 +72,25 @@ TEST_P(rocrand_generate_uniform_tests, double_test)
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            rng_type
-        )
-    );
+            rng_type));
 
     const size_t size = 12563;
-    double * data;
+    double *data;
     HIP_CHECK(hipMallocHelper(&data, size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
     ROCRAND_CHECK(
-        rocrand_generate_uniform_double(generator, data, 1)
-    );
+        rocrand_generate_uniform_double(generator, data, 1));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
     ROCRAND_CHECK(
-        rocrand_generate_uniform_double(generator, data+1, 2)
-    );
+        rocrand_generate_uniform_double(generator, data + 1, 2));
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_uniform_double(generator, data, size)
-    );
+        rocrand_generate_uniform_double(generator, data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
@@ -113,30 +105,25 @@ TEST_P(rocrand_generate_uniform_tests, half_test)
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
-            rng_type
-        )
-    );
+            rng_type));
 
     const size_t size = 12563;
-    half * data;
+    half *data;
     HIP_CHECK(hipMallocHelper(&data, size * sizeof(half)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
     ROCRAND_CHECK(
-        rocrand_generate_uniform_half(generator, data, 1)
-    );
+        rocrand_generate_uniform_half(generator, data, 1));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
     ROCRAND_CHECK(
-        rocrand_generate_uniform_half(generator, data+1, 2)
-    );
+        rocrand_generate_uniform_half(generator, data + 1, 2));
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(
-        rocrand_generate_uniform_half(generator, data, size)
-    );
+        rocrand_generate_uniform_half(generator, data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
@@ -146,15 +133,14 @@ TEST_P(rocrand_generate_uniform_tests, half_test)
 TEST(rocrand_generate_uniform_tests, neg_test)
 {
     const size_t size = 256;
-    float * data = NULL;
+    float *data = NULL;
 
     rocrand_generator generator = NULL;
     EXPECT_EQ(
-        rocrand_generate_uniform(generator, (float *) data, size),
-        ROCRAND_STATUS_NOT_CREATED
-    );
+        rocrand_generate_uniform(generator, (float *)data, size),
+        ROCRAND_STATUS_NOT_CREATED);
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_uniform_tests,
-                        rocrand_generate_uniform_tests,
-                        ::testing::ValuesIn(rng_types));
+                         rocrand_generate_uniform_tests,
+                         ::testing::ValuesIn(rng_types));

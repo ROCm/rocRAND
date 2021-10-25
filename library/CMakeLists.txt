@@ -19,8 +19,8 @@ endif()
 
 # Configure a header file to pass the rocRAND version
 configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_version.h"
     @ONLY
 )
 

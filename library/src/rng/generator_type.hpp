@@ -22,7 +22,7 @@
 #define ROCRAND_RNG_GENERATOR_TYPE_H_
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 struct rocrand_generator_base_type
 {
@@ -33,7 +33,7 @@ struct rocrand_generator_base_type
 };
 
 // rocRAND random number generator base class
-template<rocrand_rng_type GeneratorType = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
+template <rocrand_rng_type GeneratorType = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 struct rocrand_generator_type : public rocrand_generator_base_type
 {
     using base_type = rocrand_generator_base_type;
@@ -44,7 +44,6 @@ struct rocrand_generator_type : public rocrand_generator_base_type
         : base_type(GeneratorType),
           m_seed(seed), m_offset(offset), m_stream(stream)
     {
-
     }
 
     /// Return generator's type
