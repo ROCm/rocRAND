@@ -28,9 +28,6 @@
 #include "rocrand_common.h"
 #include "rocrand_mrg32k3a_precomputed.h"
 
-// Thomas Bradley, Parallelisation Techniques for Random Number Generators
-// https://www.nag.co.uk/IndustryArticles/gpu_gems_article.pdf
-
 #define ROCRAND_MRG32K3A_POW32 4294967296
 #define ROCRAND_MRG32K3A_M1 4294967087
 #define ROCRAND_MRG32K3A_M1C 209

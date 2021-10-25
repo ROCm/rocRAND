@@ -343,8 +343,6 @@ private:
 /// \brief Produces random numbers according to a normal distribution.
 ///
 /// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
-///
-/// See also: <a href="https://en.wikipedia.org/wiki/Normal_distribution">Wikipedia:Normal distribution</a>.
 template<class RealType = float>
 class normal_distribution
 {
@@ -538,8 +536,6 @@ private:
 /// \brief Produces positive random numbers according to a log-normal distribution.
 ///
 /// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
-///
-/// See also: <a href="https://en.wikipedia.org/wiki/Log-normal_distribution">Wikipedia:Log-normal distribution</a>.
 template<class RealType = float>
 class lognormal_distribution
 {
@@ -734,8 +730,6 @@ private:
 /// \brief Produces random non-negative integer values distributed according to Poisson distribution.
 ///
 /// \tparam IntType - type of generated values. Only \p unsinged \p int type is supported.
-///
-/// See also: <a href="https://en.wikipedia.org/wiki/Poisson_distribution">Wikipedia:Poisson distribution</a>.
 template<class IntType = unsigned int>
 class poisson_distribution
 {
@@ -885,10 +879,6 @@ private:
 
 /// \brief Pseudorandom number engine based Philox algorithm.
 ///
-/// philox4x32_10_engine implements
-/// a <a href="https://en.wikipedia.org/wiki/Counter-based_random_number_generator_(CBRNG)">
-/// Counter-based random number generator</a> called Philox, which was developed by
-/// a group at D. E. Shaw Research.
 /// It generates random numbers of type \p unsigned \p int on the interval [0; 2^32 - 1].
 /// Random numbers are generated in sets of four.
 template<unsigned long long DefaultSeed = ROCRAND_PHILOX4x32_DEFAULT_SEED>
@@ -1073,9 +1063,8 @@ constexpr typename philox4x32_10_engine<DefaultSeed>::seed_type philox4x32_10_en
 
 /// \brief Pseudorandom number engine based XORWOW algorithm.
 ///
-/// xorwow_engine is a <a href="https://en.wikipedia.org/wiki/Xorshift">xorshift</a> pseudorandom
-/// number engine based on XORWOW algorithm, which was presented by George Marsaglia in
-/// "Xorshift RNGs" paper published in Journal of Statistical Software. It produces random numbers
+/// xorwow_engine is a xorshift pseudorandom
+/// number engine based on XORWOW algorithm. It produces random numbers
 /// of type \p unsigned \p int on the interval [0; 2^32 - 1].
 template<unsigned long long DefaultSeed = ROCRAND_XORWOW_DEFAULT_SEED>
 class xorwow_engine
@@ -1336,15 +1325,11 @@ template<unsigned long long DefaultSeed>
 constexpr typename mrg32k3a_engine<DefaultSeed>::seed_type mrg32k3a_engine<DefaultSeed>::default_seed;
 /// \endcond
 
-/// \brief Random number engine based on
-/// <a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MTGP/">Mersenne Twister
-/// for Graphic Processors</a> algorithm.
+/// \brief Random number engine based on the Mersenne Twister for Graphic Processors algorithm.
 ///
-/// mtgp32_engine is a random number engine based on
-/// <a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MTGP/">Mersenne Twister
-/// for Graphic Processors</a> algorithm, which is a version of well-known
-/// <a href="https://en.wikipedia.org/wiki/Mersenne_Twister">Mersenne Twister</a>
-/// algorithm. It produces high quality random numbers of type \p unsigned \p int
+/// mtgp32_engine is a random number engine based on the Mersenne Twister
+/// for Graphic Processors algorithm, which is a version of well-known
+/// Mersenne Twister algorithm. It produces high quality random numbers of type \p unsigned \p int
 /// on the interval [0; 2^32 - 1].
 template<unsigned long long DefaultSeed = 0>
 class mtgp32_engine
@@ -1469,8 +1454,7 @@ constexpr typename mtgp32_engine<DefaultSeed>::seed_type mtgp32_engine<DefaultSe
 
 /// \brief Sobol's quasi-random sequence generator
 ///
-/// sobol32_engine is quasi-random number engine which produced
-/// <a href="https://en.wikipedia.org/wiki/Sobol_sequence">Sobol sequences</a>.
+/// sobol32_engine is quasi-random number engine which produced Sobol sequences.
 /// This implementation supports generating sequences in up to 20,000 dimensions.
 /// The engine produces random unsigned integers on the interval [0, 2^32 - 1].
 template<unsigned int DefaultNumDimensions = 1>
@@ -1629,8 +1613,7 @@ private:
 
 /// \brief Sobol's quasi-random sequence generator
 ///
-/// sobol64 is quasi-random number engine which produced
-/// <a href="https://en.wikipedia.org/wiki/Sobol_sequence">Sobol sequences</a>.
+/// sobol64 is quasi-random number engine which produced Sobol sequences.
 /// This implementation supports generating sequences in up to 20,000 dimensions.
 /// The engine produces random unsigned integers on the interval [0, 2^64 - 1].
 template<unsigned int DefaultNumDimensions = 1>
@@ -1818,13 +1801,11 @@ typedef xorwow default_random_engine;
 
 /// \typedef random_device
 ///
-/// \brief A non-deterministic uniform random number generator,
-/// see <a href="http://en.cppreference.com/w/cpp/numeric/random/random_device">std::random_device</a>.
+/// \brief A non-deterministic uniform random number generator.
 ///
 /// rocrand_cpp::random_device is non-deterministic uniform random number generator,
 /// or a pseudo-random number engine if there is no support for non-deterministic
-/// random number generation. It's implemented as a typedef of
-/// <a href="http://en.cppreference.com/w/cpp/numeric/random/random_device">std::random_device</a>.
+/// random number generation. It's implemented as a typedef of std::random_device.
 ///
 /// For practical use rocrand_cpp::random_device is generally only used to seed a PRNG
 /// such as \ref rocrand_cpp::mtgp32_engine.
