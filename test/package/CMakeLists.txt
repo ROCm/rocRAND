@@ -4,14 +4,14 @@ cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 project(hiprand_package_test CXX)
 
 # CMake modules
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 list(APPEND CMAKE_MODULE_PATH
-    ${HIP_DIR}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+    ${HIP_DIR}/cmake ${ROCM_PATH}/hip/cmake # FindHIP.cmake
 )
 
 # Find HIP
 if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
+    find_package(hip QUIET CONFIG PATHS ${ROCM_PATH})
     if(NOT hip_FOUND)
         find_package(HIP REQUIRED)
         if((HIP_COMPILER STREQUAL "hcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
@@ -20,7 +20,7 @@ if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL 
         endif()
     endif()
 else()
-  find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
+  find_package(hip REQUIRED CONFIG PATHS ${ROCM_PATH})
 endif()
 
 # Get HIP options
@@ -43,7 +43,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
 endif()
 
 # Find rocRAND
-find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")
+find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "${ROCM_PATH}/rocrand")
 
 # TODO: Fix fortran wrapper
 # Check if Fortran wrapper is installed
