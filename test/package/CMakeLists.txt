@@ -6,7 +6,7 @@ project(hiprand_package_test CXX)
 # CMake modules
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
 list(APPEND CMAKE_MODULE_PATH
-    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+    ${HIP_DIR}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
 )
 
 # Find HIP

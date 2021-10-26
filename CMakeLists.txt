@@ -43,7 +43,7 @@ endif()
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
-    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+    ${HIP_DIR}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
     $ENV{ROCM_PATH}/llvm
 )
 
