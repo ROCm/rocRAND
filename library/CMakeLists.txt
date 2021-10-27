@@ -63,7 +63,7 @@ target_include_directories(rocrand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
-        $<INSTALL_INTERFACE:include/rocrand>
+        $<INSTALL_INTERFACE:include>
 )
 
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
@@ -154,7 +154,7 @@ target_include_directories(hiprand
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/include>
-        $<INSTALL_INTERFACE:include/hiprand>
+        $<INSTALL_INTERFACE:include>
 )
 
 if(HIP_COMPILER STREQUAL "nvcc")
