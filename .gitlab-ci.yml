@@ -52,6 +52,7 @@ variables:
     # Combine global build options with local options
     - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
     - export CMAKE_OPTIONS=$CXXFLAGS" "$LOCAL_CMAKE_OPTIONS
+    - export ROCM_PATH=$ROCM_LATEST_PATH
 
 build:rocm:
   extends: .rocm
@@ -221,6 +222,7 @@ test:rocm_install:
     # Combine global build options with local options
     - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
     - export CMAKE_OPTIONS=$CXXFLAGS" "$LOCAL_CMAKE_OPTIONS
+    - export ROCM_PATH=$ROCM_LATEST_PATH
 
 build:nvcc:
   extends: .nvcc
