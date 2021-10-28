@@ -59,7 +59,7 @@ build:rocm:
   script:
     - mkdir build
     - cd build
-    - CXX=hipcc cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - CXX=hipcc cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
@@ -84,7 +84,7 @@ build:rocm-static:
   script:
     - mkdir build
     - cd build
-    - CXX=hipcc cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
+    - CXX=hipcc cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DDEPENDENCIES_FORCE_DOWNLOAD=ON ../.
     - make -j16
     - make package
   artifacts:
@@ -228,7 +228,7 @@ build:nvcc:
   script:
     - mkdir build
     - cd build
-    - cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DBUILD_TOOLS=ON -DDEPENDENCIES_FORCE_DOWNLOAD=ON -DNVGPU_TARGETS="52;70" ../.
+    - cmake -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_FORTRAN_WRAPPER=OFF -DDEPENDENCIES_FORCE_DOWNLOAD=ON -DNVGPU_TARGETS="52;70" ../.
     - make -j16
     - make package
   artifacts:
