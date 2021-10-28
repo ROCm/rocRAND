@@ -134,12 +134,6 @@ test:rocm_python:
     - pip2 install . --user
     - $SUDO_CMD python2 tests/rocrand_test.py
     - pip2 uninstall --yes rocrand
-    # hipRAND Wrapper with Python 2
-    - cd $CI_PROJECT_DIR/python/hiprand
-    - $SUDO_CMD python2 setup.py test
-    - pip2 install . --user
-    - $SUDO_CMD python2 tests/hiprand_test.py
-    - pip2 uninstall --yes hiprand
     # rocRAND Wrapper with Python 3
     - pip3 --version
     - cd $CI_PROJECT_DIR/python/rocrand
@@ -147,12 +141,6 @@ test:rocm_python:
     - pip3 install . --user
     - $SUDO_CMD python3 tests/rocrand_test.py
     - pip3 uninstall --yes rocrand
-    # hipRAND Wrapper with Python 3
-    - cd $CI_PROJECT_DIR/python/hiprand
-    - $SUDO_CMD python3 setup.py test
-    - pip3 install . --user
-    - $SUDO_CMD python3 tests/hiprand_test.py
-    - pip3 uninstall --yes hiprand
 
 test:rocm_package:
   extends: .rocm
@@ -169,7 +157,6 @@ test:rocm_package:
     - CXX=hipcc cmake ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
-    - ldd ./test_hiprand
     - $SUDO_CMD dpkg -r rocrand
 
 test:rocm_install:
@@ -189,7 +176,6 @@ test:rocm_install:
     - CXX=hipcc cmake ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
-    - ldd ./test_hiprand
 
 
 # NVCC
@@ -303,12 +289,6 @@ test:nvcc_python:
     - pip2 install . --user
     - $SUDO_CMD python2 tests/rocrand_test.py
     - pip2 uninstall --yes rocrand
-    # hipRAND Wrapper with Python 2
-    - cd $CI_PROJECT_DIR/python/hiprand
-    - $SUDO_CMD python2 setup.py test
-    - pip2 install . --user
-    - $SUDO_CMD python2 tests/hiprand_test.py
-    - pip2 uninstall --yes hiprand
     # rocRAND Wrapper with Python 3
     - pip3 --version
     - cd $CI_PROJECT_DIR/python/rocrand
@@ -316,12 +296,6 @@ test:nvcc_python:
     - pip3 install . --user
     - $SUDO_CMD python3 tests/rocrand_test.py
     - pip3 uninstall --yes rocrand
-    # hipRAND Wrapper with Python 3
-    - cd $CI_PROJECT_DIR/python/hiprand
-    - $SUDO_CMD python3 setup.py test
-    - pip3 install . --user
-    - $SUDO_CMD python3 tests/hiprand_test.py
-    - pip3 uninstall --yes hiprand
 
 test:nvcc_package:
   extends: .nvcc
@@ -336,7 +310,6 @@ test:nvcc_package:
     - cmake ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
-    - ldd ./test_hiprand
     - $SUDO_CMD dpkg -r rocrand
 
 test:nvcc_install:
@@ -354,7 +327,6 @@ test:nvcc_install:
     - cmake ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
-    - ldd ./test_hiprand
 
 test:doc:
   variables:
@@ -373,4 +345,3 @@ test:doc:
     - cd doc
     - $SUDO_CMD doxygen Doxyfile
     - $SUDO_CMD make -C ../python/rocrand/docs html
-    - $SUDO_CMD make -C ../python/hiprand/docs html
