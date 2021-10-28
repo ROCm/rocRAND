@@ -40,8 +40,6 @@ except ImportError:
   from backports.weakref import finalize
 
 
-rocrand = None
-
 ROCRAND_PATHS = [
         os.getenv("ROCRAND_PATH")
     ] + expand_paths(HIP_PATHS, ["", "rocrand"])
@@ -56,7 +54,15 @@ def load_rocrand():
 
     load_hip()
 
-load_rocrand()
+# Delay the loading of rocrand to the first use
+# so no code is executed when loading this module 
+class _load_rocrand_on_access(object):
+    def __getattribute__(self, name):
+        global rocrand
+        load_rocrand()
+        return getattr(rocrand, name)
+
+rocrand = _load_rocrand_on_access()
 
 ROCRAND_RNG_PSEUDO_DEFAULT = 400
 ROCRAND_RNG_PSEUDO_XORWOW = 401
