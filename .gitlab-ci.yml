@@ -30,7 +30,7 @@ variables:
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_LATEST_PATH: "/opt/rocm-4.3.1/"
+  ROCM_LATEST_PATH: "/opt/rocm-4.5.0"
 
 # ROCm
 
@@ -52,7 +52,7 @@ variables:
     # Combine global build options with local options
     - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
     - export CMAKE_OPTIONS=$CXXFLAGS" "$LOCAL_CMAKE_OPTIONS
-    - export ROCM_PATH=$ROCM_LATEST_PATH
+    - export ROCM_PATH=/opt/rocm
 
 build:rocm:
   extends: .rocm
@@ -190,7 +190,7 @@ test:rocm_install:
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y -qq ca-certificates git wget tar xz-utils bzip2 build-essential pkg-config g++ gfortran findutils
     - wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | $SUDO_CMD apt-key add -
-    - echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/4.3.1/ ubuntu main' | $SUDO_CMD tee /etc/apt/sources.list.d/rocm.list
+    - echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ ubuntu main' | $SUDO_CMD tee /etc/apt/sources.list.d/rocm.list
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y hip-base rocm-cmake
     # Install hip-nvcc ignoring dependencies because it depends on cuda metapackage
@@ -208,7 +208,7 @@ test:rocm_install:
     # Combine global build options with local options
     - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
     - export CMAKE_OPTIONS=$CXXFLAGS" "$LOCAL_CMAKE_OPTIONS
-    - export ROCM_PATH=$ROCM_LATEST_PATH
+    - export ROCM_PATH=/opt/rocm
 
 build:nvcc:
   extends: .nvcc
