@@ -164,7 +164,7 @@ test:rocm_install:
   stage: test
   tags:
     - rocm-stable
-  dependencies: []
+  needs: []
   script:
     - mkdir build_only_install
     - cd build_only_install
@@ -315,7 +315,7 @@ test:nvcc_package:
 test:nvcc_install:
   extends: .nvcc
   stage: test
-  dependencies: []
+  needs: []
   script:
     - mkdir build_only_install
     - cd build_only_install
