@@ -183,7 +183,7 @@ test:rocm_install:
 .nvcc:
   tags:
     - nvcc
-  image: nvidia/cuda:10.2-devel-ubuntu18.04
+  image: nvidia/cuda:11.4.1-devel-ubuntu18.04
   before_script:
     - nvidia-smi
     # HIP-nvcc
