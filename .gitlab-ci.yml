@@ -130,16 +130,16 @@ test:rocm_python:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
     # rocRAND Wrapper with Python 2
     - cd $CI_PROJECT_DIR/python/rocrand
-    - $SUDO_CMD python2 setup.py test
+    - python2 setup.py test
     - pip2 install . --user
-    - $SUDO_CMD python2 tests/rocrand_test.py
+    - python2 tests/rocrand_test.py
     - pip2 uninstall --yes rocrand
     # rocRAND Wrapper with Python 3
     - pip3 --version
     - cd $CI_PROJECT_DIR/python/rocrand
-    - $SUDO_CMD python3 setup.py test
+    - python3 setup.py test
     - pip3 install . --user
-    - $SUDO_CMD python3 tests/rocrand_test.py
+    - python3 tests/rocrand_test.py
     - pip3 uninstall --yes rocrand
 
 test:rocm_package:
@@ -157,7 +157,7 @@ test:rocm_package:
     - CXX=hipcc cmake ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
-    - $SUDO_CMD dpkg -r rocrand
+    - $SUDO_CMD dpkg -r rocrand-dev rocrand
 
 test:rocm_install:
   extends: .rocm
@@ -285,16 +285,16 @@ test:nvcc_python:
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
     # rocRAND Wrapper with Python 2
     - cd $CI_PROJECT_DIR/python/rocrand
-    - $SUDO_CMD python2 setup.py test
+    - python2 setup.py test
     - pip2 install . --user
-    - $SUDO_CMD python2 tests/rocrand_test.py
+    - python2 tests/rocrand_test.py
     - pip2 uninstall --yes rocrand
     # rocRAND Wrapper with Python 3
     - pip3 --version
     - cd $CI_PROJECT_DIR/python/rocrand
-    - $SUDO_CMD python3 setup.py test
+    - python3 setup.py test
     - pip3 install . --user
-    - $SUDO_CMD python3 tests/rocrand_test.py
+    - python3 tests/rocrand_test.py
     - pip3 uninstall --yes rocrand
 
 test:nvcc_package:
@@ -310,7 +310,7 @@ test:nvcc_package:
     - cmake ../test/package/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure
-    - $SUDO_CMD dpkg -r rocrand
+    - $SUDO_CMD dpkg -r rocrand-dev rocrand
 
 test:nvcc_install:
   extends: .nvcc
