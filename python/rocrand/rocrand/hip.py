@@ -29,7 +29,12 @@ import numbers
 import numpy as np
 
 from .utils import find_library
-from .finalize import track_for_finalization
+
+# Finalize is only supported by python >= 3.4
+try:
+  from weakref import finalize
+except ImportError:
+  from backports.weakref import finalize
 
 
 class HipError(Exception):
@@ -90,7 +95,7 @@ class MemoryPointer(object):
     def __init__(self, nbytes):
         self.ptr = c_void_p()
         check_hip(hip.hipMalloc(byref(self.ptr), c_size_t(nbytes)))
-        track_for_finalization(self, self.ptr, MemoryPointer._finalize)
+        finalize(self, MemoryPointer._finalize, self.ptr)
 
     @classmethod
     def _finalize(cls, ptr):
