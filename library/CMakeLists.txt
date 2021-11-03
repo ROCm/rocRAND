@@ -198,8 +198,8 @@ endfunction()
 install_symlinks(rocrand/include/rocrand rocrand/include)
 install_symlinks(hiprand/include/hiprand hiprand/include)
 
-rocm_install_symlink_subdir(rocrand)
-rocm_install_symlink_subdir(hiprand)
+rocm_install_symlink_subdir(rocrand .)
+rocm_install_symlink_subdir(hiprand .)
 
 
 # Package (make package)
