@@ -181,8 +181,8 @@ function(install_symlinks SRC_DIR DEST_DIR)
 
     set(INSTALL_CMD "
         set(SRC_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SRC_DIR})
-        set(DEST_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SRC_DIR})
-        file(GLOB_RECURSE FILES RELATIVE \${SRC_DIR} \${SRC_DIR}/*)
+        set(DEST_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${DEST_DIR})
+        file(GLOB_RECURSE FILES FOLLOW_SYMLINKS RELATIVE \${SRC_DIR} \${SRC_DIR}/*)
         foreach(FILE \${FILES})
             set(SRC \${SRC_DIR}/\${FILE})
             set(DEST \${DEST_DIR}/\${FILE})
