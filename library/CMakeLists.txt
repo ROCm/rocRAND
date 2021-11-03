@@ -1,7 +1,16 @@
 # rocRAND library
+
+set( lib_SOVERSION 1.1 )
+set( hiprand_SOVERSION ${lib_SOVERSION} )
+set( rocrand_SOVERSION ${lib_SOVERSION} )
+
 # Get sources
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 set(rocRAND_SRCS ${tmp})
+file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/*.cpp)
+foreach(to_exclude ${tmp})
+    list(REMOVE_ITEM rocRAND_SRCS "${to_exclude}")
+endforeach()
 
 # When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
 # turns on inline asm in rocRAND (for both compiled library and device functions).
@@ -19,8 +28,8 @@ endif()
 
 # Configure a header file to pass the rocRAND version
 configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_version.h"
     @ONLY
 )
 
@@ -54,7 +63,6 @@ rocm_install(
     INCLUDE
         "${CMAKE_SOURCE_DIR}/library/include"
         "${CMAKE_BINARY_DIR}/library/include"
-    INCLUDE_SUBDIR rocrand
     PREFIX rocrand
 )
 
@@ -64,6 +72,54 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake
 )
 
+# hipRAND library
+# Get hipRAND sources
+if(HIP_COMPILER STREQUAL "nvcc")
+    set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand_nvcc.cpp)
+    set_source_files_properties(${hipRAND_SRCS} PROPERTIES LANGUAGE CUDA)
+    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+else()
+    set(hipRAND_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/hiprand/hiprand.cpp)
+endif()
+
+# Configure a header file to pass the hipRAND version
+configure_file(
+    "${PROJECT_SOURCE_DIR}/library/include/hiprand/hiprand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/hiprand/hiprand_version.h"
+    @ONLY
+)
+
+# Build
+add_library(hiprand ${hipRAND_SRCS})
+
+if(HIP_COMPILER STREQUAL "nvcc")
+    target_link_libraries(hiprand
+        ${CUDA_curand_LIBRARY}
+    )
+else()
+    target_link_libraries(hiprand PRIVATE roc::rocrand hip::device)
+	if (NOT WIN32)
+      foreach(amdgpu_target ${AMDGPU_TARGETS})
+          target_link_libraries(hiprand PRIVATE --amdgpu-target=${amdgpu_target})
+      endforeach()
+	endif()
+endif()
+
+rocm_set_soversion(hiprand ${hiprand_SOVERSION})
+set_target_properties(hiprand
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+        DEBUG_POSTFIX "-d"
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/rocrand/lib"
+)
+
+rocm_install(
+    TARGETS hiprand
+    INCLUDE
+        "${CMAKE_SOURCE_DIR}/library/include"
+        "${CMAKE_BINARY_DIR}/library/include"
+    PREFIX hiprand
+)
 
 if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(
@@ -71,6 +127,13 @@ if(HIP_COMPILER STREQUAL "nvcc")
         PREFIX rocrand
         NAMESPACE roc::
         INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
+    )
+    rocm_export_targets(
+        TARGETS hip::hiprand
+        NAME hiprand
+        PREFIX hiprand
+        NAMESPACE hip::
+        INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/hiprand-fortran-config.cmake"
     )
 else()
     rocm_export_targets(
@@ -80,13 +143,21 @@ else()
         DEPENDS PACKAGE hip
         INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
     )
+    rocm_export_targets(
+        TARGETS hip::hiprand
+        NAME hiprand
+        PREFIX hiprand
+        NAMESPACE hip::
+        DEPENDS PACKAGE hip
+        INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/hiprand-fortran-config.cmake"
+    )
 endif()
 
 # install library to C:\hipSDK\bin
 if (WIN32)
-    install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+    install (TARGETS rocrand hiprand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
     if (BUILD_TEST)
-        install (TARGETS rocrand DESTINATION "${PROJECT_BINARY_DIR}/test")
+        install (TARGETS rocrand hiprand DESTINATION "${PROJECT_BINARY_DIR}/test")
     endif()
 endif()
 
@@ -95,7 +166,33 @@ if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
 
+# Install symlinks
+if(WIN32)
+    set(SYMLINK_CMD "file(COPY \${SRC} DESTINATION \${DEST_DIR})")
+else()
+    set(SYMLINK_CMD "execute_process(COMMAND ln -sf \${SRC_REL} \${DEST})")
+endif()
+
+set(INSTALL_CMD "
+    set(SUBDIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX})
+    file(GLOB_RECURSE FILES RELATIVE LIST_DIRECTORIES false \${SUBDIR} \${SUBDIR}/*rand/include/*)
+    foreach(FILE \${FILES})
+        set(SRC \${SUBDIR}/\${FILE})
+        get_filename_component(SRC_NAME \${SRC} NAME)
+        set(DEST_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/include)
+        set(DEST \${DEST_DIR}/\${SRC_NAME})
+        file(MAKE_DIRECTORY \${DEST_DIR})
+        file(RELATIVE_PATH SRC_REL \${DEST_DIR} \${SRC})
+        message(STATUS \"symlink: \${SRC_REL} -> \${DEST}\")
+        ${SYMLINK_CMD}
+    endforeach()
+")
+
+rocm_install(CODE "${INSTALL_CMD}")
+
 rocm_install_symlink_subdir(rocrand)
+rocm_install_symlink_subdir(hiprand)
+
 
 # Package (make package)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt")
@@ -113,23 +210,11 @@ else()
         set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
 
-    rocm_join_if_set(", " CPACK_DEBIAN_RUNTIME_PACKAGE_RECOMMENDS 
-        "hiprand (>=${rocRAND_VERSION})")
-    rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_RECOMMENDS 
-        "hiprand-dev (>=${rocRAND_VERSION})")
-    execute_process(
-        COMMAND ${RPM_EXECUTABLE} --suggests
-        ERROR_QUIET
-        RESULT_VARIABLE RPMBUILD_SUGGESTS_RESULT)
-    
-    if (RPMBUILD_SUGGESTS_RESULT EQUAL 0)
-        rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_SUGGESTS 
-            "hiprand >= ${rocRAND_VERSION}")
-        rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_SUGGESTS
-            "hiprand-devel >= ${rocRAND_VERSION}")
-    endif()
+    rocm_join_if_set(", " CPACK_DEBIAN_RUNTIME_PACKAGE_PROVIDES "hiprand")
+    rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_PROVIDES "hiprand")
+    rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_PROVIDES "hiprand-dev")
+    rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_PROVIDES "hiprand-devel")
 endif()
-
 
 if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
     rocm_package_add_dependencies("hip-rocclr >= 3.5.0")

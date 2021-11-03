@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,25 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_KERNEL_H_
-#define ROCRAND_KERNEL_H_
+#ifndef HIPRAND_HCC_H_
+#define HIPRAND_HCC_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
+#include <rocrand/rocrand.h>
 
-#include "rocrand_common.h"
-#include "rocrand_philox4x32_10.h"
-#include "rocrand_mrg32k3a.h"
-#include "rocrand_xorwow.h"
-#include "rocrand_sobol32.h"
-#include "rocrand_sobol64.h"
-#include "rocrand_mtgp32.h"
+typedef rocrand_generator_base_type hiprandGenerator_st;
 
-#include "rocrand_uniform.h"
-#include "rocrand_normal.h"
-#include "rocrand_log_normal.h"
-#include "rocrand_poisson.h"
-#include "rocrand_discrete.h"
+typedef struct rocrand_discrete_distribution_st hiprandDiscreteDistribution_st;
 
-#endif // ROCRAND_KERNEL_H_
+#endif // HIPRAND_HCC_H_

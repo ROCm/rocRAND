@@ -3,12 +3,8 @@
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
 ## (Unreleased) rocRAND for ROCm 5.0.0
-### Changed
-- [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) split into a separate package
-- Header file installation location changed to match other libraries.
-  - Using the `rocrand.h` header file should now use `#include <rocrand.h>`, rather than `#include <rocrand/rocrand.h>`
-
-
+### Added
+- Symbolic links for rocRAND and hipRAND header files
 ## (Unreleased) rocRAND-2.10.12 for ROCm 4.5.0
 ### Addded
 - Initial HIP on Windows support. See README for instructions on how to build and install.
