@@ -22,6 +22,12 @@
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH "$ENV{ROCM_PATH}" CACHE PATH "Path to ROCm installation.")
+else()
+    set(ROCM_PATH "/opt/rocm" CACHE PATH "Path to ROCm installation.")
+endif()
+
 # Install prefix
 if (WIN32)
   SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
@@ -31,10 +37,10 @@ if (WIN32)
   SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
   set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
 else()
-  set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
+  set(CMAKE_INSTALL_PREFIX "${ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
 
   #Adding CMAKE_PREFIX_PATH
-  list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH} )
+  list( APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/llvm ${ROCM_PATH} )
   if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
       set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
   endif()
@@ -43,8 +49,8 @@ endif()
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
-    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
-    $ENV{ROCM_PATH}/llvm
+    ${HIP_PATH}/cmake ${ROCM_PATH}/hip/cmake # FindHIP.cmake
+    ${ROCM_PATH}/llvm
 )
 
 #
@@ -99,8 +105,8 @@ endif()
 if (NOT WIN32)
   include(cmake/VerifyCompiler.cmake)
 else()
-  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
-  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
+  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm)
+  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH})
 endif()
 
 # Build option to disable -Werror
@@ -136,9 +142,11 @@ endif()
 # Set version variables
 rocm_setup_version( VERSION "2.10.9" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
+set ( hiprand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
-math(EXPR rocrand_VERSION_NUMBER "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
-set(rocrand_SOVERSION 1.1)
+math(EXPR temp "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
+set(hiprand_VERSION_NUMBER ${temp})
+set(rocrand_VERSION_NUMBER ${temp})
 
 # Print configuration summary
 include(cmake/Summary.cmake)
