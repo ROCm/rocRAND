@@ -23,7 +23,7 @@
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand.h>
-#include <rocrand_sobol64_precomputed.h>
+#include <rocrand/rocrand_sobol64_precomputed.h>
 
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>

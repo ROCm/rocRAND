@@ -58,7 +58,7 @@
 #define ROCRAND_MTGP32_11213_H_
 
 #include <stdint.h>
-#include "rocrand_mtgp32.h"
+#include "rocrand/rocrand_mtgp32.h"
 
 static rocrand_device::mtgp32_fast_params mtgp32dc_params_fast_11213[]
  = {

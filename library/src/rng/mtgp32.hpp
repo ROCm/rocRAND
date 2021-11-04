@@ -59,7 +59,7 @@
 #include <hip/hip_runtime.h>
 
 #include <rocrand/rocrand.h>
-#include <rocrand_mtgp32_11213.h>
+#include <rocrand/rocrand_mtgp32_11213.h>
 
 #include "common.hpp"
 #include "generator_type.hpp"

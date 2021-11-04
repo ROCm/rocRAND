@@ -28,7 +28,7 @@
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand/rocrand_kernel.h>
-#include <rocrand_sobol64_precomputed.h>
+#include <rocrand/rocrand_sobol64_precomputed.h>
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
