@@ -58,7 +58,7 @@
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 #include <rocrand_mtgp32_11213.h>
 
 #include "common.hpp"

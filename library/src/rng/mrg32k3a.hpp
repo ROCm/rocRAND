@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 #include <rocrand_mrg32k3a_precomputed.h>
 
 #include "common.hpp"

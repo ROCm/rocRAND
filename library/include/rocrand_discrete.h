@@ -36,7 +36,7 @@
 
 #include "rocrand_uniform.h"
 #include "rocrand_normal.h"
-#include "rocrand_discrete_types.h"
+#include "rocrand/rocrand_discrete_types.h"
 
 // Alias method
 //

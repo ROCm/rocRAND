@@ -25,7 +25,7 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand_common.h"
+#include "rocrand/rocrand_common.h"
 
 // S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom
 // sequence generator, 2003

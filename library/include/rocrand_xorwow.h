@@ -25,7 +25,7 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand_common.h"
+#include "rocrand/rocrand_common.h"
 #include "rocrand_xorwow_precomputed.h"
 
 // G. Marsaglia, Xorshift RNGs, 2003
