@@ -29,8 +29,8 @@
 #include "cmdparser.hpp"
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
-#include <rocrand_kernel.h>
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_kernel.h>
 #include <rocrand_mtgp32_11213.h>
 #include <rocrand_sobol32_precomputed.h>
 #include <rocrand_sobol64_precomputed.h>
