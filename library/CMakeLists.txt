@@ -67,14 +67,12 @@ configure_file(
 if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(
         TARGETS roc::rocrand
-        PREFIX rocrand
         NAMESPACE roc::
         INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
     )
 else()
     rocm_export_targets(
         TARGETS roc::rocrand
-        PREFIX rocrand
         NAMESPACE roc::
         DEPENDS PACKAGE hip
         INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
