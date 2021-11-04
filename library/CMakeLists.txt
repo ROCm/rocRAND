@@ -19,8 +19,8 @@ endif()
 
 # Configure a header file to pass the rocRAND version
 configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_version.h"
     @ONLY
 )
 
@@ -95,7 +95,41 @@ if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
 
-rocm_install_symlink_subdir(rocrand)
+function(install_symlinks SRC_DIR)
+    # TODO: Check if SUBDIR is relative path Copy instead of symlink on windows
+    if(CMAKE_HOST_WIN32)
+        set(SYMLINK_CMD "file(COPY \${SRC} DESTINATION \${DEST_DIR})")
+    else()
+        set(SYMLINK_CMD "execute_process(COMMAND ln -sf \${SRC_REL} \${DEST})")
+    endif()
+
+    set(DEST_DIR "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}")
+    if("${ARGN}" GREATER 1)
+        set(DEST_DIR "${DEST_DIR}/${ARGV1}")
+    endif()
+    set(INSTALL_CMD "
+        set(SRC_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SRC_DIR})
+        set(DEST_DIR \"${DEST_DIR}\")
+        file(GLOB_RECURSE FILES FOLLOW_SYMLINKS RELATIVE \${SRC_DIR} \${SRC_DIR}/*)
+        foreach(FILE \${FILES})
+            set(SRC \${SRC_DIR}/\${FILE})
+            set(DEST \${DEST_DIR}/\${FILE})
+            get_filename_component(DEST_PARENT \${DEST} DIRECTORY)
+            file(MAKE_DIRECTORY \${DEST_PARENT})
+            file(RELATIVE_PATH SRC_REL \${DEST_PARENT} \${SRC})
+            file(TO_NATIVE_PATH \"\${DEST_DIR}\" DEST_DIR)
+            message(STATUS \"symlink: \${SRC_REL} -> \${DEST}\")
+            message(STATUS \"${${SYMLINK_COMMAND}}\")
+            ${SYMLINK_CMD}
+        endforeach()
+    ")
+    rocm_install(CODE "${INSTALL_CMD}")
+    install(CODE "${INSTALL_CMD}")
+endfunction()
+
+install_symlinks(rocrand/include/rocrand rocrand/include)
+
+install_symlinks(rocrand "")
 
 # Package (make package)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt")
@@ -113,23 +147,11 @@ else()
         set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
 
-    rocm_join_if_set(", " CPACK_DEBIAN_RUNTIME_PACKAGE_RECOMMENDS 
-        "hiprand (>=${rocRAND_VERSION})")
-    rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_RECOMMENDS 
-        "hiprand-dev (>=${rocRAND_VERSION})")
-    execute_process(
-        COMMAND ${RPM_EXECUTABLE} --suggests
-        ERROR_QUIET
-        RESULT_VARIABLE RPMBUILD_SUGGESTS_RESULT)
-    
-    if (RPMBUILD_SUGGESTS_RESULT EQUAL 0)
-        rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_SUGGESTS 
-            "hiprand >= ${rocRAND_VERSION}")
-        rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_SUGGESTS
-            "hiprand-devel >= ${rocRAND_VERSION}")
-    endif()
+    rocm_join_if_set(", " CPACK_DEBIAN_RUNTIME_PACKAGE_PROVIDES "hiprand")
+    rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_PROVIDES "hiprand")
+    rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_PROVIDES "hiprand-dev")
+    rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_PROVIDES "hiprand-devel")
 endif()
-
 
 if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
     rocm_package_add_dependencies("hip-rocclr >= 3.5.0")
@@ -146,6 +168,16 @@ else()
 endif()
 
 set(ROCRAND_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
+
+if(WIN32)
+    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" ON) # TODO
+else()
+    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" ON)
+endif()
+if(BUILD_HIPRAND)
+    set(HIPRAND_SUBMODULE ON CACHE BOOL "Build hipRAND as a submodule of rocRAND." FORCE)
+    add_subdirectory(../hipRAND ../hipRAND)
+endif()
 
 rocm_create_package(
     NAME ${package_name}
