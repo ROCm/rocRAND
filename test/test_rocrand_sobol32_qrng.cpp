@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 #include <rocrand_sobol32_precomputed.h>
 
 #include <rng/generator_type.hpp>
