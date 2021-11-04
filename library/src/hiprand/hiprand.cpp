@@ -20,7 +20,7 @@
 
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include <hiprand.h>
 

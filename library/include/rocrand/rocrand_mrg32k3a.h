@@ -25,8 +25,8 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand_common.h"
-#include "rocrand_mrg32k3a_precomputed.h"
+#include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_mrg32k3a_precomputed.h"
 
 // Thomas Bradley, Parallelisation Techniques for Random Number Generators
 // https://www.nag.co.uk/IndustryArticles/gpu_gems_article.pdf
