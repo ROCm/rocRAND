@@ -55,7 +55,6 @@ rocm_install(
         "${CMAKE_SOURCE_DIR}/library/include"
         "${CMAKE_BINARY_DIR}/library/include"
     INCLUDE_SUBDIR rocrand
-    PREFIX rocrand
 )
 
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
