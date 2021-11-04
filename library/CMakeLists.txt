@@ -95,42 +95,6 @@ if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
 
-function(install_symlinks SRC_DIR)
-    # TODO: Check if SUBDIR is relative path Copy instead of symlink on windows
-    if(CMAKE_HOST_WIN32)
-        set(SYMLINK_CMD "file(COPY \${SRC} DESTINATION \${DEST_DIR})")
-    else()
-        set(SYMLINK_CMD "execute_process(COMMAND ln -sf \${SRC_REL} \${DEST})")
-    endif()
-
-    set(DEST_DIR "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}")
-    if("${ARGN}" GREATER 1)
-        set(DEST_DIR "${DEST_DIR}/${ARGV1}")
-    endif()
-    set(INSTALL_CMD "
-        set(SRC_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SRC_DIR})
-        set(DEST_DIR \"${DEST_DIR}\")
-        file(GLOB_RECURSE FILES FOLLOW_SYMLINKS RELATIVE \${SRC_DIR} \${SRC_DIR}/*)
-        foreach(FILE \${FILES})
-            set(SRC \${SRC_DIR}/\${FILE})
-            set(DEST \${DEST_DIR}/\${FILE})
-            get_filename_component(DEST_PARENT \${DEST} DIRECTORY)
-            file(MAKE_DIRECTORY \${DEST_PARENT})
-            file(RELATIVE_PATH SRC_REL \${DEST_PARENT} \${SRC})
-            file(TO_NATIVE_PATH \"\${DEST_DIR}\" DEST_DIR)
-            message(STATUS \"symlink: \${SRC_REL} -> \${DEST}\")
-            message(STATUS \"${${SYMLINK_COMMAND}}\")
-            ${SYMLINK_CMD}
-        endforeach()
-    ")
-    rocm_install(CODE "${INSTALL_CMD}")
-    install(CODE "${INSTALL_CMD}")
-endfunction()
-
-install_symlinks(rocrand/include/rocrand rocrand/include)
-
-install_symlinks(rocrand "")
-
 # Package (make package)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt")
 if(WIN32)
