@@ -131,7 +131,7 @@ endif()
 set(ROCRAND_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
 
 if(WIN32)
-    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" ON) # TODO
+    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" OFF)
 else()
     option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" ON)
 endif()
