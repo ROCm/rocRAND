@@ -1,0 +1,3 @@
+[submodule "hipRAND"]
+	path = hipRAND
+	url = https://github.com/ROCmSoftwarePlatform/hipRAND.git
