@@ -27,8 +27,8 @@
 #include <hip/hip_runtime.h>
 
 #define QUALIFIERS __forceinline__ __host__ __device__
-#include <hiprand_kernel.h>
-#include <hiprand.h>
+#include <hiprand/hiprand_kernel.h>
+#include <hiprand/hiprand.h>
 
 #include "test_common.hpp"
 

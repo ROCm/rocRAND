@@ -22,7 +22,7 @@
 
 #include <curand.h>
 
-#include <hiprand.h>
+#include <hiprand/hiprand.h>
 
 #if defined(__cplusplus)
 extern "C" {

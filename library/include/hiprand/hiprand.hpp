@@ -31,8 +31,8 @@
 #include <type_traits>
 #include <limits>
 
-#include "hiprand.h"
-#include "hiprand_kernel.h"
+#include "hiprand/hiprand.h"
+#include "hiprand/hiprand_kernel.h"
 
 namespace hiprand_cpp {
 
@@ -1676,7 +1676,7 @@ typedef xorwow default_random_engine;
 ///
 /// Example:
 /// \code
-/// #include <hiprand.hpp>
+/// #include <hiprand/hiprand.hpp>
 ///
 /// int main()
 /// {

@@ -25,7 +25,7 @@
 /// @{
 
 #if defined(__HIP_PLATFORM_HCC__) || HIPRAND_DOXYGEN
-#include "hiprand_kernel.h"
+#include "hiprand/hiprand_kernel.h"
 
 /// \cond
 typedef mtgp32_params mtgp32_kernel_params_t;

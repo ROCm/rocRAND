@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <hiprand.h>
+#include <hiprand/hiprand.h>
 
 #include "test_common.hpp"
 
