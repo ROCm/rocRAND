@@ -28,8 +28,8 @@ endif()
 
 # Configure a header file to pass the rocRAND version
 configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_version.h"
     @ONLY
 )
 
@@ -94,8 +94,8 @@ install(
 # headers
 install(
     DIRECTORY
-        "include/"
-        "${PROJECT_BINARY_DIR}/library/include/"
+        "include/rocrand/"
+        "${PROJECT_BINARY_DIR}/library/include/rocrand/"
     DESTINATION include/rocrand
     FILES_MATCHING
     PATTERN "rocrand*h"

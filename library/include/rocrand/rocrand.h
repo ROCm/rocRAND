@@ -29,7 +29,7 @@
 #include <hip/hip_runtime.h>
 #include <hip/hip_fp16.h>
 
-#include "rocrand_discrete_types.h"
+#include "rocrand/rocrand_discrete_types.h"
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
@@ -37,7 +37,7 @@
 #endif
 /// \endcond
 
-#include "rocrand_version.h"
+#include "rocrand/rocrand_version.h"
 
 /// \cond ROCRAND_DOCS_TYPEDEFS
 /// rocRAND random number generator (opaque)

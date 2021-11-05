@@ -61,8 +61,8 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand.h"
-#include "rocrand_common.h"
+#include "rocrand/rocrand.h"
+#include "rocrand/rocrand_common.h"
 
 #define MTGP_MEXP 11213
 #define MTGP_N 351
