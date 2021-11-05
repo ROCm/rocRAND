@@ -94,6 +94,7 @@ install(
 # headers
 install(
     DIRECTORY
+        "include/rocrand/"
         "${PROJECT_BINARY_DIR}/library/include/rocrand/"
     DESTINATION include/rocrand
     FILES_MATCHING
