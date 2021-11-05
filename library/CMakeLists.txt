@@ -107,11 +107,6 @@ else()
     if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
         set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
-
-    rocm_join_if_set(", " CPACK_DEBIAN_RUNTIME_PACKAGE_PROVIDES "hiprand")
-    rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_PROVIDES "hiprand")
-    rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_PROVIDES "hiprand-dev")
-    rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_PROVIDES "hiprand-devel")
 endif()
 
 if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
