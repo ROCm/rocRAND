@@ -58,8 +58,7 @@ hip = None
 HIP_PATHS = [
     os.getenv("ROCM_PATH"),
     os.getenv("HIP_PATH"),
-    "/opt/rocm",
-    "/opt/rocm/hip"]
+    "/opt/rocm"]
 
 CUDA_PATHS = [
     os.getenv("CUDA_PATH"),

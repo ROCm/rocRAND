@@ -43,7 +43,7 @@ endif()
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
-    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+    ${HIP_PATH}/lib/cmake/hip $ENV{ROCM_PATH}/lib/cmake/hip # FindHIP.cmake
     $ENV{ROCM_PATH}/llvm
 )
 
@@ -92,14 +92,12 @@ if (AMDGPU_TARGETS)
     set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
 endif()
 
-#set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
-
 # Verify that hcc compiler is used on ROCM platform
 # TODO: Fix VerifyCompiler for Windows
 if (NOT WIN32)
   include(cmake/VerifyCompiler.cmake)
 else()
-  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
+  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH} $ENV{ROCM_PATH}/llvm)
   find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
 endif()
 
