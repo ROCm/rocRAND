@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_SOBOL64_H_
-#define ROCRAND_SOBOL64_H_
+#ifndef ROCRAND_SOBOL32_H_
+#define ROCRAND_SOBOL32_H_
 
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand_common.h"
+#include "rocrand/rocrand_common.h"
 
 // S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom
 // sequence generator, 2003
@@ -34,22 +34,22 @@
 namespace rocrand_device {
 
 template<bool UseSharedVectors>
-struct sobol64_state
+struct sobol32_state
 {
-    unsigned long long int d;
-    unsigned long long int i;
-    unsigned long long int vectors[64];
+    unsigned int d;
+    unsigned int i;
+    unsigned int vectors[32];
 
     FQUALIFIERS
-    sobol64_state() { }
+    sobol32_state() { }
 
     FQUALIFIERS
-    sobol64_state(const unsigned long long int d,
-                  const unsigned long long int i,
-                  const unsigned long long int * vectors)
+    sobol32_state(const unsigned int d,
+                  const unsigned int i,
+                  const unsigned int * vectors)
         : d(d), i(i)
     {
-        for(int k = 0; k < 64; k++)
+        for(int k = 0; k < 32; k++)
         {
             this->vectors[k] = vectors[k];
         }
@@ -57,34 +57,34 @@ struct sobol64_state
 };
 
 template<>
-struct sobol64_state<true>
+struct sobol32_state<true>
 {
-    unsigned long long int d;
-    unsigned long long int i;
-    const unsigned long long int * vectors;
+    unsigned int d;
+    unsigned int i;
+    const unsigned int * vectors;
 
     FQUALIFIERS
-    sobol64_state() { }
+    sobol32_state() { }
 
     FQUALIFIERS
-    sobol64_state(const unsigned long long int d,
-                  const unsigned long long int i,
-                  const unsigned long long int * vectors)
+    sobol32_state(const unsigned int d,
+                  const unsigned int i,
+                  const unsigned int * vectors)
         : d(d), i(i), vectors(vectors) { }
 };
 
 template<bool UseSharedVectors>
-class sobol64_engine
+class sobol32_engine
 {
 public:
 
-    typedef struct sobol64_state<UseSharedVectors> sobol64_state;
+    typedef struct sobol32_state<UseSharedVectors> sobol32_state;
 
     FQUALIFIERS
-    sobol64_engine() { }
+    sobol32_engine() { }
 
     FQUALIFIERS
-    sobol64_engine(const unsigned long long int * vectors,
+    sobol32_engine(const unsigned int * vectors,
                    const unsigned int offset)
         : m_state(0, 0, vectors)
     {
@@ -92,7 +92,7 @@ public:
     }
 
     FQUALIFIERS
-    ~sobol64_engine() { }
+    ~sobol32_engine() { }
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS
@@ -115,21 +115,21 @@ public:
     }
 
     FQUALIFIERS
-    unsigned long long int operator()()
+    unsigned int operator()()
     {
         return this->next();
     }
 
     FQUALIFIERS
-    unsigned long long int next()
+    unsigned int next()
     {
-        unsigned long long int p = m_state.d;
+        unsigned int p = m_state.d;
         discard_state();
         return p;
     }
 
     FQUALIFIERS
-    unsigned long long int current()
+    unsigned int current()
     {
         return m_state.d;
     }
@@ -137,14 +137,14 @@ public:
 protected:
     // Advances the internal state by offset times.
     FQUALIFIERS
-    void discard_state(unsigned long long int offset)
+    void discard_state(unsigned int offset)
     {
         m_state.i += offset;
-        const unsigned long long int g = m_state.i ^ (m_state.i >> 1ull);
+        const unsigned int g = m_state.i ^ (m_state.i >> 1);
         m_state.d = 0;
-        for(int i = 0; i < 64; i++)
+        for(int i = 0; i < 32; i++)
         {
-            m_state.d ^= (g & (1ull << i) ? m_state.vectors[i] : 0ull);
+            m_state.d ^= (g & (1 << i) ? m_state.vectors[i] : 0);
         }
     }
 
@@ -157,7 +157,7 @@ protected:
     }
 
     FQUALIFIERS
-    void discard_state_power2(unsigned long long int stride)
+    void discard_state_power2(unsigned int stride)
     {
         // Leap frog
         //
@@ -178,18 +178,17 @@ protected:
 
     // Returns the index of the rightmost zero bit in the binary expansion of
     // x (Gray code of the current element's index)
-    // NOTE changing unsigned long long int to unit64_t will cause compile failure on device
     FQUALIFIERS
-    unsigned int rightmost_zero_bit(unsigned long long int x)
+    unsigned int rightmost_zero_bit(unsigned int x)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int z = __ffsll(~x);
+        unsigned int z = __ffs(~x);
         return z ? z - 1 : 0;
         #else
         if(x == 0)
             return 0;
-        unsigned long long int y = x;
-        unsigned long long int z = 1;
+        unsigned int y = x;
+        unsigned int z = 1;
         while(y & 1)
         {
             y >>= 1;
@@ -201,9 +200,9 @@ protected:
 
 protected:
     // State
-    sobol64_state m_state;
+    sobol32_state m_state;
 
-}; // sobol64_engine class
+}; // sobol32_engine class
 
 } // end namespace rocrand_device
 
@@ -213,13 +212,13 @@ protected:
  */
 
 /// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
-typedef rocrand_device::sobol64_engine<false> rocrand_state_sobol64;
+typedef rocrand_device::sobol32_engine<false> rocrand_state_sobol32;
 /// \endcond
 
 /**
- * \brief Initialize sobol64 state.
+ * \brief Initialize SOBOL32 state.
  *
- * Initializes the sobol64 generator \p state with the given
+ * Initializes the SOBOL32 generator \p state with the given
  * direction \p vectors and \p offset.
  *
  * \param vectors - Direction vectors
@@ -227,45 +226,45 @@ typedef rocrand_device::sobol64_engine<false> rocrand_state_sobol64;
  * \param state - Pointer to state to initialize
  */
 FQUALIFIERS
-void rocrand_init(const unsigned long long int * vectors,
+void rocrand_init(const unsigned int * vectors,
                   const unsigned int offset,
-                  rocrand_state_sobol64 * state)
+                  rocrand_state_sobol32 * state)
 {
-    *state = rocrand_state_sobol64(vectors, offset);
+    *state = rocrand_state_sobol32(vectors, offset);
 }
 
 /**
  * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
- * from [0; 2^64 - 1] range.
+ * from [0; 2^32 - 1] range.
  *
  * Generates and returns uniformly distributed random <tt>unsigned int</tt>
- * value from [0; 2^64 - 1] range using sobol64 generator in \p state.
+ * value from [0; 2^32 - 1] range using Sobol32 generator in \p state.
  * State is incremented by one position.
  *
  * \param state - Pointer to a state to use
  *
- * \return Quasirandom value (64-bit) as an <tt>unsigned int</tt>
+ * \return Quasirandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
-unsigned long long int rocrand(rocrand_state_sobol64 * state)
+unsigned int rocrand(rocrand_state_sobol32 * state)
 {
     return state->next();
 }
 
 /**
- * \brief Updates sobol64 state to skip ahead by \p offset elements.
+ * \brief Updates SOBOL32 state to skip ahead by \p offset elements.
  *
- * Updates the sobol64 state in \p state to skip ahead by \p offset elements.
+ * Updates the SOBOL32 state in \p state to skip ahead by \p offset elements.
  *
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
  */
 FQUALIFIERS
-void skipahead(unsigned int offset, rocrand_state_sobol64 * state)
+void skipahead(unsigned long long offset, rocrand_state_sobol32 * state)
 {
     return state->discard(offset);
 }
 
 /** @} */ // end of group rocranddevice
 
-#endif // ROCRAND_sobol64_H_
+#endif // ROCRAND_SOBOL32_H_

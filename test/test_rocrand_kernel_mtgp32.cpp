@@ -27,8 +27,8 @@
 #include <hip/hip_runtime.h>
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
-#include <rocrand_kernel.h>
-#include <rocrand_mtgp32_11213.h>
+#include <rocrand/rocrand_kernel.h>
+#include <rocrand/rocrand_mtgp32_11213.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
