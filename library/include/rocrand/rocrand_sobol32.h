@@ -27,10 +27,6 @@
 
 #include "rocrand/rocrand_common.h"
 
-// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom
-// sequence generator, 2003
-// http://doi.acm.org/10.1145/641876.641879
-
 namespace rocrand_device {
 
 template<bool UseSharedVectors>
