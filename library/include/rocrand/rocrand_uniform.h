@@ -30,12 +30,12 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-#include "rocrand_philox4x32_10.h"
-#include "rocrand_mrg32k3a.h"
-#include "rocrand_xorwow.h"
-#include "rocrand_sobol32.h"
-#include "rocrand_sobol64.h"
-#include "rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_mrg32k3a.h"
+#include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_sobol32.h"
+#include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_mtgp32.h"
 
 namespace rocrand_device {
 namespace detail {

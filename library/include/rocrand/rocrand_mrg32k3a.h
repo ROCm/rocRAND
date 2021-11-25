@@ -25,8 +25,8 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand_common.h"
-#include "rocrand_mrg32k3a_precomputed.h"
+#include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_mrg32k3a_precomputed.h"
 
 #define ROCRAND_MRG32K3A_POW32 4294967296
 #define ROCRAND_MRG32K3A_M1 4294967087

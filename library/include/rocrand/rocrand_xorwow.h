@@ -25,8 +25,8 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand_common.h"
-#include "rocrand_xorwow_precomputed.h"
+#include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_xorwow_precomputed.h"
 
 /** \rocrand_internal \addtogroup rocranddevice
  *

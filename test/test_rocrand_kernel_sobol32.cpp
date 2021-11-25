@@ -27,8 +27,8 @@
 #include <hip/hip_runtime.h>
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
-#include <rocrand_kernel.h>
-#include <rocrand_sobol32_precomputed.h>
+#include <rocrand/rocrand_kernel.h>
+#include <rocrand/rocrand_sobol32_precomputed.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"

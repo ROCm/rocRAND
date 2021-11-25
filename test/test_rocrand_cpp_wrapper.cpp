@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.hpp>
+#include <rocrand/rocrand.hpp>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"

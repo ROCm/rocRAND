@@ -57,7 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include "rocrand_common.h"
+#include "rocrand/rocrand_common.h"
 
 // Constants from Random123
 // See https://www.deshawresearch.com/resources_random123.html

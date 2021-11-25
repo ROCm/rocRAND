@@ -117,7 +117,7 @@ int main(int argc, char const *argv[])
     if (argc != 2 || std::string(argv[1]) == "--help")
     {
         std::cout << "Usage:" << std::endl;
-        std::cout << "  ./mrg32k3a_precomputed_generator ../../library/include/rocrand_mrg32k3a_precomputed.h" << std::endl;
+        std::cout << "  ./mrg32k3a_precomputed_generator ../../library/include/rocrand/rocrand_mrg32k3a_precomputed.h" << std::endl;
         return -1;
     }
 

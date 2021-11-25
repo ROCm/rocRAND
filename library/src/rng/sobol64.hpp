@@ -25,8 +25,8 @@
 #include <iostream>
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
-#include <rocrand_sobol64_precomputed.h>
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_sobol64_precomputed.h>
 
 #include "common.hpp"
 #include "generator_type.hpp"

@@ -31,8 +31,8 @@
 #include <type_traits>
 #include <limits>
 
-#include "rocrand.h"
-#include "rocrand_kernel.h"
+#include "rocrand/rocrand.h"
+#include "rocrand/rocrand_kernel.h"
 
 namespace rocrand_cpp {
 
@@ -1812,7 +1812,7 @@ typedef xorwow default_random_engine;
 ///
 /// Example:
 /// \code
-/// #include <rocrand.hpp>
+/// #include <rocrand/rocrand.hpp>
 ///
 /// int main()
 /// {

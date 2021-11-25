@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <vector>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "device_distributions.hpp"
 

@@ -25,7 +25,7 @@
 #define FQUALIFIERS __forceinline__ __device__ __host__
 #endif
 
-#include <rocrand_common.h>
+#include <rocrand/rocrand_common.h>
 
 template<class T, unsigned int N>
 struct alignas(sizeof(T) * N) aligned_vec_type

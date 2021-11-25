@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "common.hpp"
 #include "generator_type.hpp"

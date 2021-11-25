@@ -22,7 +22,7 @@
 #define ROCRAND_RNG_GENERATOR_TYPE_H_
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 struct rocrand_generator_base_type
 {
