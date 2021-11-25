@@ -92,8 +92,6 @@ if (AMDGPU_TARGETS)
     set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
 endif()
 
-#set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
-
 # Verify that hcc compiler is used on ROCM platform
 # TODO: Fix VerifyCompiler for Windows
 if (NOT WIN32)
