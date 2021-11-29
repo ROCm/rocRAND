@@ -220,13 +220,6 @@ protected:
 
         const double average = 1.0 / size;
 
-        // For detailed descrition of Vose's algorithm see
-        // Darts, Dice, and Coins: Sampling from a Discrete Distribution
-        // by Keith Schwarz
-        // http://www.keithschwarz.com/darts-dice-coins/
-        //
-        // The algorithm is O(n).
-
         std::vector<unsigned int> small;
         std::vector<unsigned int> large;
 

@@ -6,8 +6,7 @@
 rocRAND Python Wrapper
 ======================
 
-This wrapper has API similar to **pyculib.rand**
-(http://pyculib.readthedocs.io/en/latest/curand.html).
+This wrapper has an API similar to **pyculib.rand**.
 
 .. toctree::
    :maxdepth: 2
