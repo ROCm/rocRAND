@@ -108,7 +108,7 @@ int main(int argc, char const *argv[])
     if (argc != 3 || std::string(argv[1]) == "--help")
     {
         std::cout << "Usage:" << std::endl;
-        std::cout << "  ./sobol32_direction_vector_generator new-joe-kuo-6.21201 ../../library/include/rocrand_sobol32_precomputed.h" << std::endl;
+        std::cout << "  ./sobol32_direction_vector_generator new-joe-kuo-6.21201 ../../library/include/rocrand/rocrand_sobol32_precomputed.h" << std::endl;
         std::cout << "  (the source file can be downloaded here: http://web.maths.unsw.edu.au/~fkuo/sobol/)" << std::endl;
         return -1;
     }

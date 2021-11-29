@@ -19,8 +19,8 @@ endif()
 
 # Configure a header file to pass the rocRAND version
 configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand_version.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand_version.h"
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_version.h.in"
+    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_version.h"
     @ONLY
 )
 
@@ -54,8 +54,6 @@ rocm_install(
     INCLUDE
         "${CMAKE_SOURCE_DIR}/library/include"
         "${CMAKE_BINARY_DIR}/library/include"
-    INCLUDE_SUBDIR rocrand
-    PREFIX rocrand
 )
 
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
@@ -68,14 +66,12 @@ configure_file(
 if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(
         TARGETS roc::rocrand
-        PREFIX rocrand
         NAMESPACE roc::
         INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
     )
 else()
     rocm_export_targets(
         TARGETS roc::rocrand
-        PREFIX rocrand
         NAMESPACE roc::
         DEPENDS PACKAGE hip
         INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
@@ -95,8 +91,6 @@ if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
 
-rocm_install_symlink_subdir(rocrand)
-
 # Package (make package)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt")
 if(WIN32)
@@ -112,24 +106,7 @@ else()
     if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
         set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
-
-    rocm_join_if_set(", " CPACK_DEBIAN_RUNTIME_PACKAGE_RECOMMENDS 
-        "hiprand (>=${rocRAND_VERSION})")
-    rocm_join_if_set(", " CPACK_DEBIAN_DEVEL_PACKAGE_RECOMMENDS 
-        "hiprand-dev (>=${rocRAND_VERSION})")
-    execute_process(
-        COMMAND ${RPM_EXECUTABLE} --suggests
-        ERROR_QUIET
-        RESULT_VARIABLE RPMBUILD_SUGGESTS_RESULT)
-    
-    if (RPMBUILD_SUGGESTS_RESULT EQUAL 0)
-        rocm_join_if_set(", " CPACK_RPM_RUNTIME_PACKAGE_SUGGESTS 
-            "hiprand >= ${rocRAND_VERSION}")
-        rocm_join_if_set(", " CPACK_RPM_DEVEL_PACKAGE_SUGGESTS
-            "hiprand-devel >= ${rocRAND_VERSION}")
-    endif()
 endif()
-
 
 if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
     rocm_package_add_dependencies("hip-rocclr >= 3.5.0")
@@ -146,6 +123,20 @@ else()
 endif()
 
 set(ROCRAND_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
+
+if(WIN32)
+    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" OFF)
+else()
+    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" ON)
+endif()
+if(BUILD_HIPRAND)
+    if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/hipRAND)
+        set(HIPRAND_SUBMODULE ON CACHE BOOL "Build hipRAND as a submodule of rocRAND." FORCE)
+        add_subdirectory(${CMAKE_SOURCE_DIR}/hipRAND ${CMAKE_BINARY_DIR}/hipRAND)
+    else()
+        message(WARNING "Could not find the hipRAND submodule, building rocRAND independently.")
+    endif()
+endif()
 
 rocm_create_package(
     NAME ${package_name}
