@@ -17,6 +17,7 @@ function display_help()
     echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
     echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
     echo "    [--address-sanitizer] build with address sanitizer enabled"
+    echo "    [--no-hiprand] build without integrated hipRAND"
 }
 
 
@@ -33,6 +34,7 @@ rocm_path=/opt/rocm
 build_relocatable=false
 install_dependencies=false
 build_address_sanitizer=false
+no_hiprand=false
 
 # #################################################
 # Parameter parsing
@@ -41,7 +43,7 @@ build_address_sanitizer=false
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,address-sanitizer --options hicgtprd -- "$@")
+    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,address-sanitizer,no-hiprand --options hicgtprd -- "$@")
 else
     echo "Need a new version of getopt"
     exit 1
@@ -93,6 +95,9 @@ while true; do
         shift ;;
     --address-sanitizer)
         build_address_sanitizer=true
+        shift ;;
+    --no-hiprand)
+        no_hiprand=true
         shift ;;
 	--) shift ; break ;;
 	*)  echo "Unexpected command line parameter received; aborting";
@@ -155,7 +160,14 @@ if ($build_address_sanitizer); then
 fi
 
 if($install_dependencies); then
-cmake_common_options="${cmake_common_options} -DDEPENDENCIES_FORCE_DOWNLOAD=ON"
+    cmake_common_options="${cmake_common_options} -DDEPENDENCIES_FORCE_DOWNLOAD=ON"
+    if ! ($no_hiprand); then
+        git submodule update --init
+    fi
+fi
+
+if ($no_hiprand); then
+    cmake_common_options="${cmake_common_options} -DBUILD_HIPRAND=OFF"
 fi
 
 if [[ "${build_relocatable}" == true ]]; then
