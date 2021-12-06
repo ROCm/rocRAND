@@ -92,7 +92,7 @@ if(COMMAND rocm_check_target_ids)
 else()
     # Use target ID syntax if supported for AMDGPU_TARGETS
     if(TARGET_ID_SUPPORT)
-        set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx1030")
+        set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx1030;gfx940:xnack-;gfx940:xnack+")
     else()
         set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908")
     endif()
