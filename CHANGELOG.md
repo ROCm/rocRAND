@@ -10,6 +10,9 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - rocRAND still includes hipRAND using a submodule
   - The rocRAND package also sets the provides field with hipRAND, so projects which require hipRAND can begin to specify it.
 
+### Fixed
+- Fix offset behaviour for MRG32K3A generator
+
 ## (Unreleased) rocRAND-2.10.12 for ROCm 4.5.0
 ### Addded
 - Initial HIP on Windows support. See README for instructions on how to build and install.
