@@ -13,14 +13,14 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ### Added
 - Generating a random sequence different sizes now produces the same sequence without gaps
   indepent of how many values are generated per call.
-  - Only in the case of XORWOW, MRG32K3A and SOBOL32
+  - Only in the case of XORWOW, MRG32K3A, PHILOX4X32_10 and SOBOL32
   - This only holds true if the size in each call is a divisor of the distributions
     `output_width` due to performance
   - Similarly the output pointer has to be aligned to `output_width * sizeof(output_type)`
 
 ### Fixed
-- Fix offset behaviour for XORWOW and MRG32K3A generator, setting offset now correctly generates the same sequence
-starting from the offset.
+- Fix offset behaviour for XORWOW, MRG32K3A and PHILOX4X32_10 generator, setting offset now
+  correctly generates the same sequence starting from the offset.
   - Only uniform int and float will work as these can be generated with a single call to the generator
 
 ## (Unreleased) rocRAND-2.10.12 for ROCm 4.5.0
