@@ -2,8 +2,12 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## (Unreleased) rocRAND-2.10.12 for ROCm 4.5.0
-### Addded
+## rocRAND-2.10.12 for ROCm 5.0.0
+### Changed
+- No updates or changes for ROCm 5.0.0.
+
+## rocRAND-2.10.12 for ROCm 4.5.0
+### Added
 - Initial HIP on Windows support. See README for instructions on how to build and install.
 ### Changed
 - Packaging split into a runtime package called rocrand and a development package called rocrand-devel. The development package depends on runtime. The runtime package suggests the development package for all supported OSes except CentOS 7 to aid in the transition. The suggests feature in packaging is introduced as a deprecated feature and will be removed in a future rocm release.
@@ -13,7 +17,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ### Known issues
 - kernel_xorwow test is failing for certain GPU architectures.
 
-## [Unreleased rocRAND-2.10.11 for ROCm 4.4.0]
+## [rocRAND-2.10.11 for ROCm 4.4.0]
 ### Added
 - Sobol64 support added.
 - Benchmark time measurement improvement
@@ -22,7 +26,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - nvcc backend fix
 - Fix ranges of MRG32k3a device functions.
 
-## [Unreleased rocRAND-2.10.10 for ROCm 4.3.0]
+## [rocRAND-2.10.10 for ROCm 4.3.0]
 ### Added
 - gfx90a support added.
 - gfx1030 support added
