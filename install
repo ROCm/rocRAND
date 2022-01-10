@@ -161,13 +161,12 @@ fi
 
 if($install_dependencies); then
     cmake_common_options="${cmake_common_options} -DDEPENDENCIES_FORCE_DOWNLOAD=ON"
-    if ! ($no_hiprand); then
-        git submodule update --init
-    fi
 fi
 
 if ($no_hiprand); then
     cmake_common_options="${cmake_common_options} -DBUILD_HIPRAND=OFF"
+elif ! [ -f "hipRAND/CMakeLists.txt" ]; then
+    git submodule update --init --force
 fi
 
 if [[ "${build_relocatable}" == true ]]; then
