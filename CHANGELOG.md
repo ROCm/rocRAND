@@ -10,6 +10,19 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - rocRAND still includes hipRAND using a submodule
   - The rocRAND package also sets the provides field with hipRAND, so projects which require hipRAND can begin to specify it.
 
+### Added
+- Generating a random sequence different sizes now produces the same sequence without gaps
+  indepent of how many values are generated per call.
+  - Only in the case of XORWOW and SOBOL32
+  - This only holds true if the size in each call is a divisor of the distributions
+    `output_width` due to performance
+  - Similarly the output pointer has to be aligned to `output_width * sizeof(output_type)`
+
+### Fixed
+- Fix offset behaviour for XORWOW generator, setting offset now correctly generates the same sequence
+starting from the offset.
+  - Only uniform int and float will work as these can be generated with a single call to the generator
+
 ## (Unreleased) rocRAND-2.10.12 for ROCm 4.5.0
 ### Addded
 - Initial HIP on Windows support. See README for instructions on how to build and install.

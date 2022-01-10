@@ -67,6 +67,7 @@ void run_benchmark(const cli::Parser& parser,
     const size_t size0 = parser.get<size_t>("size");
     const size_t trials = parser.get<size_t>("trials");
     const size_t dimensions = parser.get<size_t>("dimensions");
+    const size_t offset = parser.get<size_t>("offset");
     const size_t size = (size0 / dimensions) * dimensions;
 
     T * data;
@@ -82,6 +83,12 @@ void run_benchmark(const cli::Parser& parser,
     }
 
     ROCRAND_CHECK(rocrand_set_stream(generator, stream));
+
+    status = rocrand_set_offset(generator, offset);
+    if (status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not pseudo-random
+    {
+        ROCRAND_CHECK(status);
+    }
 
     // Warm-up
     for (size_t i = 0; i < 5; i++)
@@ -291,6 +298,7 @@ int main(int argc, char *argv[])
 
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
     parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
+    parser.set_optional<size_t>("offset", "offset", 0, "offset of generated pseudo-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
     parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
