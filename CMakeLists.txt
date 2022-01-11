@@ -87,7 +87,7 @@ set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
 # Set the AMDGPU_TARGETS with backward compatiblity
 if(COMMAND rocm_check_target_ids)
    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-       TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030"
+       TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030;gfx940:xnack-;gfx940:xnack+"
    )
 else()
     # Use target ID syntax if supported for AMDGPU_TARGETS
