@@ -1,6 +1,22 @@
-// S. Joe and F. Y. Kuo, Remark on Algorithm 659: Implementing Sobol's quasirandom
-// sequence generator, 2003
-// http://doi.acm.org/10.1145/641876.641879
+// Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
 #include <iostream>
 #include <fstream>
@@ -92,8 +108,7 @@ int main(int argc, char const *argv[])
     if (argc != 3 || std::string(argv[1]) == "--help")
     {
         std::cout << "Usage:" << std::endl;
-        std::cout << "  ./sobol32_direction_vector_generator new-joe-kuo-6.21201 ../../library/include/rocrand_sobol32_precomputed.h" << std::endl;
-        std::cout << "  (the source file can be downloaded here: http://web.maths.unsw.edu.au/~fkuo/sobol/)" << std::endl;
+        std::cout << "  ./sobol32_direction_vector_generator <sets of direction numbers file> ../../library/include/rocrand/rocrand_sobol32_precomputed.h" << std::endl;
         return -1;
     }
 
