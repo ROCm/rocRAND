@@ -27,6 +27,8 @@ configure_file(
 add_library(rocrand ${rocRAND_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
 
+target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand)
+
 # Build library
 if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
