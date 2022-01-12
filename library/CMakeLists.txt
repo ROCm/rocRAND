@@ -27,6 +27,10 @@ configure_file(
 add_library(rocrand ${rocRAND_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
 
+# Add interface include directory so that other CMake applications can maintain previous behaviour.
+# This will be removed with upcoming packaging changes.
+target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
+
 # Build library
 if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
