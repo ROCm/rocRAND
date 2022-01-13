@@ -63,7 +63,8 @@ namespace detail {
       defined(__gfx904__) || \
       defined(__gfx906__) || \
       defined(__gfx908__) || \
-      defined(__gfx909__) )
+      defined(__gfx909__) || \
+      defined(__gfx1030__))
   #if !defined(ROCRAND_ENABLE_INLINE_ASM)
     #define ROCRAND_ENABLE_INLINE_ASM
   #endif
@@ -80,8 +81,14 @@ unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const
   #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__) \
     && defined(ROCRAND_ENABLE_INLINE_ASM)
 
+  #if __AMDGCN_WAVEFRONT_SIZE == 64u
+    using sgpr_t = unsigned long long;
+  #elif __AMDGCN_WAVEFRONT_SIZE == 32u
+    using sgpr_t = unsigned int;
+  #endif
+
     unsigned long long r;
-    unsigned long long c; // carry bits, SGPR, unused
+    sgpr_t c; // carry bits, SGPR, unused
     // x has "r" constraint. This allows to use both VGPR and SGPR
     // (to save VGPR) as input.
     // y and z have "v" constraints, because only one SGPR or literal
