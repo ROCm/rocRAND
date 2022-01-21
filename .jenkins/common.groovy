@@ -15,12 +15,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 
     def command = """#!/usr/bin/env bash
                 set -x
-                cd ${project.paths.project_build_prefix}
-                mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
-                # gfxTargetParser reads gfxarch and adds target features such as xnack
-                ${auxiliary.gfxTargetParser()}
-                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} ${amdgpuTargets} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
-                make -j\$(nproc)
+                exit 1
                 """
 
     platform.runCommand(this, command)
@@ -35,9 +30,7 @@ def runTestCommand (platform, project)
 
     def command = """#!/usr/bin/env bash
                 set -x
-                cd ${project.paths.project_build_prefix}/build/release
-                make -j4
-                ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ${testCommand}
+                exit 1
             """
 
     platform.runCommand(this, command)
