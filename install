@@ -165,7 +165,7 @@ fi
 
 if ($no_hiprand); then
     cmake_common_options="${cmake_common_options} -DBUILD_HIPRAND=OFF"
-elif ! [ -f "hipRAND/CMakeLists.txt" ]; then
+elif ! [ -f "../../hipRAND/CMakeLists.txt" ]; then
     git submodule update --init --force
 fi
 

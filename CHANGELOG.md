@@ -2,7 +2,7 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## (Unreleased) rocRAND -2.10.13 for ROCm 5.1.0
+## (Unreleased) rocRAND-2.10.13 for ROCm 5.1.0
 ### Changed
 - [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) split into a separate package
 - Header file installation location changed to match other libraries.
