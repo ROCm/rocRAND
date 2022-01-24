@@ -27,6 +27,10 @@ configure_file(
 add_library(rocrand ${rocRAND_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
 
+# Add interface include directory so that other CMake applications can maintain previous behaviour.
+# This will be removed with upcoming packaging changes.
+target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
+
 # Build library
 if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_SRCS}
@@ -55,6 +59,27 @@ rocm_install(
         "${CMAKE_SOURCE_DIR}/library/include"
         "${CMAKE_BINARY_DIR}/library/include"
 )
+
+# Create symlinks
+if(WIN32)
+    set(SYMLINK_COMMAND "file(COPY \${SRC} DESTINATION \${DEST_DIR})" )
+else()
+    set(SYMLINK_COMMAND "execute_process(COMMAND ln -sf \${SRC_REL} \${DEST})" )
+endif()
+set(INSTALL_SYMLINK_COMMAND "
+    set(SRC_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/include/rocrand)
+    file(GLOB_RECURSE FILES RELATIVE \${SRC_DIR} \${SRC_DIR}/*)
+    foreach(FILE \${FILES})
+        set(SRC \${SRC_DIR}/\${FILE})
+        set(DEST \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/rocrand/include/\${FILE})
+        get_filename_component(DEST_DIR \${DEST} DIRECTORY)
+        file(MAKE_DIRECTORY \${DEST_DIR})
+        file(RELATIVE_PATH SRC_REL \${DEST_DIR} \${SRC})
+        message(STATUS \"symlink: \${SRC_REL} -> \${DEST}\")
+        ${SYMLINK_COMMAND}
+    endforeach()
+")
+rocm_install(CODE "${INSTALL_SYMLINK_COMMAND}")
 
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
 configure_file(

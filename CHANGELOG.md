@@ -2,14 +2,7 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## (Unreleased) rocRAND for ROCm 5.0.0
-### Changed
-- [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) split into a separate package
-- Header file installation location changed to match other libraries.
-  - Using the `rocrand.h` header file should now use `#include <rocrand/rocrand.h>`, rather than `#include <rocrand/rocrand.h>`
-- rocRAND still includes hipRAND using a submodule
-  - The rocRAND package also sets the provides field with hipRAND, so projects which require hipRAND can begin to specify it.
-
+## (Unreleased) rocRAND-2.10.13 for ROCm 5.1.0
 ### Added
 - Generating a random sequence different sizes now produces the same sequence without gaps
   indepent of how many values are generated per call.
@@ -17,13 +10,24 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
   - This only holds true if the size in each call is a divisor of the distributions
     `output_width` due to performance
   - Similarly the output pointer has to be aligned to `output_width * sizeof(output_type)`
-
+### Changed
+- [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) split into a separate package
+- Header file installation location changed to match other libraries.
+  - Using the `rocrand.h` header file should now use `#include <rocrand/rocrand.h>`, rather than `#include <rocrand/rocrand.h>`
+- rocRAND still includes hipRAND using a submodule
+  - The rocRAND package also sets the provides field with hipRAND, so projects which require hipRAND can begin to specify it.
 ### Fixed
 - Fix offset behaviour for XORWOW, MRG32K3A and PHILOX4X32_10 generator, setting offset now
   correctly generates the same sequence starting from the offset.
-  - Only uniform int and float will work as these can be generated with a single call to the generator
+  - Only uniform int and float will work as these can be generated with a single call to the generator  
+### Known issues
+- kernel_xorwow unit test is failing for certain GPU architectures.
 
-## (Unreleased) rocRAND-2.10.12 for ROCm 4.5.0
+## rocRAND-2.10.12 for ROCm 5.0.0
+### Changed
+- No updates or changes for ROCm 5.0.0.
+
+## rocRAND-2.10.12 for ROCm 4.5.0
 ### Addded
 - Initial HIP on Windows support. See README for instructions on how to build and install.
 ### Changed
@@ -34,7 +38,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ### Known issues
 - kernel_xorwow test is failing for certain GPU architectures.
 
-## [Unreleased rocRAND-2.10.11 for ROCm 4.4.0]
+## [rocRAND-2.10.11 for ROCm 4.4.0]
 ### Added
 - Sobol64 support added.
 - Benchmark time measurement improvement
@@ -43,7 +47,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - nvcc backend fix
 - Fix ranges of MRG32k3a device functions.
 
-## [Unreleased rocRAND-2.10.10 for ROCm 4.3.0]
+## [rocRAND-2.10.10 for ROCm 4.3.0]
 ### Added
 - gfx90a support added.
 - gfx1030 support added
