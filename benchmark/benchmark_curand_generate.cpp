@@ -55,6 +55,7 @@ void run_benchmark(const cli::Parser& parser,
 {
     const size_t size = parser.get<size_t>("size");
     const size_t trials = parser.get<size_t>("trials");
+    const size_t offset = parser.get<size_t>("offset");
 
     T * data;
     CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
@@ -65,6 +66,12 @@ void run_benchmark(const cli::Parser& parser,
     const size_t dimensions = parser.get<size_t>("dimensions");
     curandStatus_t status = curandSetQuasiRandomGeneratorDimensions(generator, dimensions);
     if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
+    {
+        CURAND_CALL(status);
+    }
+
+    status = curandSetGeneratorOffset(generator, offset);
+    if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not pseudo-random
     {
         CURAND_CALL(status);
     }
@@ -244,6 +251,7 @@ int main(int argc, char *argv[])
 
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
     parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
+    parser.set_optional<size_t>("offset", "offset", 0, "offset of generated pseudo-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
     parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());

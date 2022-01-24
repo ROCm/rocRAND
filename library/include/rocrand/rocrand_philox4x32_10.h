@@ -216,23 +216,7 @@ public:
         uint4 ret = m_state.result;
         this->discard_state();
         m_state.result = this->ten_rounds(m_state.counter, m_state.key);
-        switch(m_state.substate)
-        {
-            case 0:
-                return ret;
-            case 1:
-                ret = { ret.y, ret.z, ret.w, m_state.result.x };
-                break;
-            case 2:
-                ret = { ret.z, ret.w, m_state.result.x, m_state.result.y };
-                break;
-            case 3:
-                ret = { ret.w, m_state.result.x, m_state.result.y, m_state.result.z };
-                break;
-            default:
-                return ret;
-        }
-        return ret;
+        return this->interleave(ret, m_state.result);
     }
 
 protected:
@@ -281,11 +265,35 @@ protected:
     FQUALIFIERS
     void discard_state()
     {
-        m_state.counter.x++;
-        uint add = m_state.counter.x == 0 ? 1 : 0;
-        m_state.counter.y += add; add = m_state.counter.y == 0 ? add : 0;
-        m_state.counter.z += add; add = m_state.counter.z == 0 ? add : 0;
-        m_state.counter.w += add;
+        m_state.counter = this->bump_counter(m_state.counter);
+    }
+
+    FQUALIFIERS
+    static uint4 bump_counter(uint4 counter)
+    {
+        counter.x++;
+        uint add = counter.x == 0 ? 1 : 0;
+        counter.y += add; add = counter.y == 0 ? add : 0;
+        counter.z += add; add = counter.z == 0 ? add : 0;
+        counter.w += add;
+        return counter;
+    }
+
+    FQUALIFIERS
+    uint4 interleave(const uint4 prev, const uint4 next) const
+    {
+        switch(m_state.substate)
+        {
+            case 0:
+                return prev;
+            case 1:
+                return uint4{ prev.y, prev.z, prev.w, next.x };
+            case 2:
+                return uint4{ prev.z, prev.w, next.x, next.y };
+            case 3:
+                return uint4{ prev.w, next.x, next.y, next.z };
+        }
+        __builtin_unreachable();
     }
 
     // 10 Philox4x32 rounds
