@@ -53,7 +53,7 @@ void rocrand_init_kernel(GeneratorState * states,
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // causes hang/memory access fault on MI200
 void rocrand_kernel(unsigned int * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -93,7 +93,7 @@ void rocrand_uniform_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // causes hang/memory access fault on MI200
 void rocrand_normal_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -118,7 +118,7 @@ void rocrand_normal_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // causes hang/memory access fault on MI200
 void rocrand_log_normal_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;

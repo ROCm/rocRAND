@@ -625,6 +625,11 @@ const std::vector<std::string> all_distributions = {
     "discrete-custom",
 };
 
+const std::vector<std::string> all_formats = {
+    "console",
+    "csv",
+};
+
 int main(int argc, char *argv[])
 {
     cli::Parser parser(argc, argv);
@@ -654,6 +659,7 @@ int main(int argc, char *argv[])
     parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
     parser.set_optional<std::vector<double>>("lambda", "lambda", {10.0}, "space-separated list of lambdas of Poisson distribution");
+    parser.set_optional<std::vector<std::string>>("format", "format", {"console"}, "output format: console, or csv");
     parser.run_and_exit_if_error();
 
     std::vector<std::string> engines;
