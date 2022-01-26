@@ -35,7 +35,7 @@
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // causes hang/memory access fault on MI200
 void rocrand_init_kernel(GeneratorState * states,
                          const size_t states_size,
                          unsigned long long seed,
