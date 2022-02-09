@@ -60,27 +60,6 @@ rocm_install(
         "${CMAKE_BINARY_DIR}/library/include"
 )
 
-# Create symlinks
-if(WIN32)
-    set(SYMLINK_COMMAND "file(COPY \${SRC} DESTINATION \${DEST_DIR})" )
-else()
-    set(SYMLINK_COMMAND "execute_process(COMMAND ln -sf \${SRC_REL} \${DEST})" )
-endif()
-set(INSTALL_SYMLINK_COMMAND "
-    set(SRC_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/include/rocrand)
-    file(GLOB_RECURSE FILES RELATIVE \${SRC_DIR} \${SRC_DIR}/*)
-    foreach(FILE \${FILES})
-        set(SRC \${SRC_DIR}/\${FILE})
-        set(DEST \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/rocrand/include/\${FILE})
-        get_filename_component(DEST_DIR \${DEST} DIRECTORY)
-        file(MAKE_DIRECTORY \${DEST_DIR})
-        file(RELATIVE_PATH SRC_REL \${DEST_DIR} \${SRC})
-        message(STATUS \"symlink: \${SRC_REL} -> \${DEST}\")
-        ${SYMLINK_COMMAND}
-    endforeach()
-")
-rocm_install(CODE "${INSTALL_SYMLINK_COMMAND}")
-
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
 configure_file(
     src/rocrand-fortran-config.cmake.in
