@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <cmath>
+#include <type_traits>
 
 #include <hip/hip_runtime.h>
 
@@ -465,6 +466,8 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_poisson)
 TEST_P(rocrand_kernel_xorwow_poisson, rocrand_discrete)
 {
     typedef rocrand_state_xorwow state_type;
+    static_assert(std::is_trivially_copyable<state_type>::value);
+    static_assert(std::is_trivially_destructible<state_type>::value);
 
     const double lambda = GetParam();
 
