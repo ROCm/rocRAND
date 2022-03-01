@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <cmath>
+#include <type_traits>
 
 #include <hip/hip_runtime.h>
 
@@ -199,8 +200,11 @@ void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_d
 
 TEST(rocrand_kernel_mrg32k3a, rocrand_state_mrg32k3a_type)
 {
-    EXPECT_EQ(sizeof(rocrand_state_mrg32k3a), 12 * sizeof(unsigned int));
-    EXPECT_EQ(sizeof(rocrand_state_mrg32k3a[32]), 32 * sizeof(rocrand_state_mrg32k3a));
+    typedef rocrand_state_mrg32k3a state_type;
+    EXPECT_EQ(sizeof(state_type), 12 * sizeof(unsigned int));
+    EXPECT_EQ(sizeof(state_type[32]), 32 * sizeof(state_type));
+    EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);
+    EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
 }
 
 TEST(rocrand_kernel_mrg32k3a, rocrand)

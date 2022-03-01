@@ -111,9 +111,6 @@ public:
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
         #endif
-
-        FQUALIFIERS
-        ~philox4x32_10_state() { }
     };
 
     FQUALIFIERS
@@ -134,9 +131,6 @@ public:
     {
         this->seed(seed, subsequence, offset);
     }
-
-    FQUALIFIERS
-    ~philox4x32_10_engine() { }
 
     /// Reinitializes the internal state of the PRNG using new
     /// seed value \p seed_value, skips \p subsequence subsequences

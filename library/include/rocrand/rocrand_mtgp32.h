@@ -119,9 +119,6 @@ struct mtgp32_params
     unsigned int sh1_tbl[MTGP_BN_MAX];
     unsigned int sh2_tbl[MTGP_BN_MAX];
     unsigned int mask[1];
-
-    FQUALIFIERS
-    ~mtgp32_params() { }
 };
 
 typedef mtgp32_params_fast_t mtgp32_fast_params;
@@ -131,9 +128,6 @@ struct mtgp32_state
     int offset;
     int id;
     unsigned int status[MTGP_STATE];
-
-    FQUALIFIERS
-    ~mtgp32_state() { }
 };
 
 inline
@@ -180,9 +174,6 @@ public:
             single_temper_tbl[j] = params->single_temper_tbl[bid][j];
         }
     }
-
-    FQUALIFIERS
-    ~mtgp32_engine() { }
 
     FQUALIFIERS
     void copy(const mtgp32_engine * m_engine)
