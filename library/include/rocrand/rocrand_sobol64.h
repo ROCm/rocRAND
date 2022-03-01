@@ -87,9 +87,6 @@ public:
         discard_state(offset);
     }
 
-    FQUALIFIERS
-    ~sobol64_engine() { }
-
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS
     void discard(unsigned int offset)
