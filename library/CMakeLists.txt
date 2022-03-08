@@ -112,6 +112,10 @@ else()
     endif()
 endif()
 
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.txt)
+rocm_install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION share/doc/rocrand)
+set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+
 if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
     rocm_package_add_dependencies("hip-rocclr >= 3.5.0")
 elseif( HIP_RUNTIME STREQUAL "cuda" )
