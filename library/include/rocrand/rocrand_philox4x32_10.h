@@ -189,7 +189,7 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        #if defined(__HIP_PLATFORM_HCC__)
+        #if defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)
             unsigned int ret = m_state.result.data[m_state.substate];
         #else
             unsigned int ret = (&m_state.result.x)[m_state.substate];
