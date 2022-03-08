@@ -94,7 +94,7 @@ endif()
 
 if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
     rocm_install(
-        DIRECTORY "${CMAKE_BINARY_DIR}/library/rocrand"
+        DIRECTORY "${PROJECT_BINARY_DIR}/library/rocrand"
         DESTINATION "."
     )
 endif()
