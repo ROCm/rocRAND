@@ -60,6 +60,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
     add_relative_test(${test_name} ${test_name})
+    rocm_install(TARGETS ${test_name} COMPONENT tests)
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)

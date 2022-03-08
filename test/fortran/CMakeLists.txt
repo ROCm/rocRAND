@@ -22,3 +22,4 @@ set_target_properties(${test_rocrand}
 )
 
 add_relative_test(${test_rocrand} ${test_rocrand})
+rocm_install(TARGETS ${test_rocrand} COMPONENT tests)

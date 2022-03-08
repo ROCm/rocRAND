@@ -150,13 +150,19 @@ add_subdirectory(tools)
 # also includes Fortran wrapper
 add_subdirectory(library)
 
+if(BUILD_TEST OR BUILD_BENCHMARK)
+  rocm_package_setup_component(clients)
+endif()
+
 # Tests
 if (BUILD_TEST)
     enable_testing()
+    rocm_package_setup_client_component(tests)
     add_subdirectory(test)
 endif()
 
 # Benchmarks
 if (BUILD_BENCHMARK)
+    rocm_package_setup_client_component(benchmarks)
     add_subdirectory(benchmark)
 endif()

@@ -41,6 +41,7 @@ function(add_rocrand_link_test TEST_SOURCES)
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
     add_relative_test(${TEST_TARGET} ${TEST_TARGET})
+    rocm_install(TARGETS ${TEST_TARGET} COMPONENT tests)
 endfunction()
 
 add_rocrand_link_test("test_rocrand_linkage.cpp;get_rocrand_version.cpp")
