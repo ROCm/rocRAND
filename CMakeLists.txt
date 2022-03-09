@@ -50,7 +50,7 @@ list(APPEND CMAKE_MODULE_PATH
 #
 # rocRAND project
 #
-project(rocrand CXX)
+project(rocRAND CXX)
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -146,9 +146,9 @@ endif()
 
 # Set version variables
 rocm_setup_version( VERSION "2.10.9" )
-set ( rocrand_VERSION ${rocrand_VERSION} )
+set ( rocrand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
-math(EXPR rocrand_VERSION_NUMBER "${rocrand_VERSION_MAJOR} * 100000 + ${rocrand_VERSION_MINOR} * 100 + ${rocrand_VERSION_PATCH}")
+math(EXPR rocrand_VERSION_NUMBER "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
 set(rocrand_SOVERSION 1.1)
 
 # Print configuration summary
