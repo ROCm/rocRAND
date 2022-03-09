@@ -4,6 +4,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 
 ## rocRAND-2.10.13 for ROCm 5.1.0
 ### Added
+- Backward compatibility for deprecated `#include <rocrand.h>` using wrapper header files.
 - Generating a random sequence different sizes now produces the same sequence without gaps
   indepent of how many values are generated per call.
   - Only in the case of XORWOW, MRG32K3A, PHILOX4X32_10, SOBOL32 and SOBOL64

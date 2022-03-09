@@ -24,6 +24,16 @@ configure_file(
     @ONLY
 )
 
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+    rocm_wrap_header_file(
+        rocrand_version.h
+        GUARDS SYMLINK WRAPPER
+        WRAPPER_LOCATIONS include rocrand/include
+        OUTPUT_LOCATIONS library/include library/rocrand/include
+        HEADER_LOCATION include/rocrand
+    )
+endif()
+
 add_library(rocrand ${rocRAND_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
 
@@ -79,6 +89,13 @@ else()
         NAMESPACE roc::
         DEPENDS PACKAGE hip
         INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
+    )
+endif()
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+    rocm_install(
+        DIRECTORY "${PROJECT_BINARY_DIR}/library/rocrand"
+        DESTINATION "."
     )
 endif()
 
