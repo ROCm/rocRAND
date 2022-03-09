@@ -131,6 +131,19 @@ if(BUILD_ADDRESS_SANITIZER AND BUILD_SHARED_LIBS)
   add_link_options(-fuse-ld=lld)
 endif()
 
+# FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_wrap_header_dir(
+    "${PROJECT_SOURCE_DIR}/library/include/rocrand"
+    HEADER_LOCATION include/rocrand
+    GUARDS SYMLINK WRAPPER
+    WRAPPER_LOCATIONS include rocrand/include
+    OUTPUT_LOCATIONS library/include library/rocrand/include
+    PATTERNS *.h *.hpp
+  )
+endif()
+
 # Set version variables
 rocm_setup_version( VERSION "2.10.9" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )

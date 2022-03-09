@@ -35,6 +35,7 @@ build_relocatable=false
 install_dependencies=false
 build_address_sanitizer=false
 no_hiprand=false
+build_freorg_bkwdcomp=true
 
 # #################################################
 # Parameter parsing
@@ -43,7 +44,7 @@ no_hiprand=false
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,address-sanitizer,no-hiprand --options hicgtprd -- "$@")
+    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,address-sanitizer,no-hiprand,rm-legacy-include-dir --options hicgtprd -- "$@")
 else
     echo "Need a new version of getopt"
     exit 1
@@ -99,6 +100,9 @@ while true; do
     --no-hiprand)
         no_hiprand=true
         shift ;;
+    --rm-legacy-include-dir)
+        build_freorg_bkwdcomp=false
+        shift ;;
 	--) shift ; break ;;
 	*)  echo "Unexpected command line parameter received; aborting";
 	    exit 1
@@ -151,7 +155,7 @@ compiler="hipcc"
 
 cmake_executable="cmake"
 
-if($build_clients); then
+if ($build_clients); then
     clients=" -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON "
 fi
 
@@ -159,7 +163,7 @@ if ($build_address_sanitizer); then
     cmake_common_options="$cmake_common_options -DBUILD_ADDRESS_SANITIZER=ON"
 fi
 
-if($install_dependencies); then
+if ($install_dependencies); then
     cmake_common_options="${cmake_common_options} -DDEPENDENCIES_FORCE_DOWNLOAD=ON"
 fi
 
@@ -167,6 +171,12 @@ if ($no_hiprand); then
     cmake_common_options="${cmake_common_options} -DBUILD_HIPRAND=OFF"
 elif ! [ -f "../../hipRAND/CMakeLists.txt" ]; then
     git submodule update --init --force
+fi
+
+if ($build_freorg_bkwdcomp); then
+    cmake_common_options="${cmake_common_options} -DBUILD_FILE_REORG_BACKWARD_COMPATIBILITY=ON"
+else
+    cmake_common_options="${cmake_common_options} -DBUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF"
 fi
 
 if [[ "${build_relocatable}" == true ]]; then
