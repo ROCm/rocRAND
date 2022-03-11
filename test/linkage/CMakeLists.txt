@@ -16,7 +16,7 @@ function(add_rocrand_link_test TEST_SOURCES)
     endif()
     target_include_directories(${TEST_TARGET}
         PUBLIC
-            ${PROJECT_SOURCE_DIR}/library/src
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/src>
     )
     if(TARGET GTest::GTest)
         target_link_libraries(${TEST_TARGET}

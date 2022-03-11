@@ -35,7 +35,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     endif()
     target_include_directories(${test_name}
         PUBLIC
-            ${PROJECT_SOURCE_DIR}/library/src
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/src>
     )
     if(TARGET GTest::GTest)
         target_link_libraries(${test_name}
