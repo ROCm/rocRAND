@@ -5,6 +5,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ## (Unreleased) rocRAND-2.10.14 for ROCm 5.2.0
 ### Added
 - Backward compatibility for deprecated `#include <rocrand.h>` using wrapper header files.
+- Packages for test and benchmark executables on all supported OSes using CPack.
 
 ## (Unreleased) rocRAND-2.10.13 for ROCm 5.1.0
 ### Added
