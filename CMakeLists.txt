@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,39 +66,53 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 # Include cmake scripts
 include(cmake/Dependencies.cmake)
 
-# Detect compiler support for target ID
-# This section is deprecated. Please use rocm_check_target_ids for future use.
-if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-        OUTPUT_VARIABLE CXX_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_STRIP_TRAILING_WHITESPACE)
-    string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
-endif()
-
-set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
-# Set the AMDGPU_TARGETS
-rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030"
-)
-if (AMDGPU_TARGETS)
-    if( AMDGPU_TARGETS STREQUAL "all" )
-      set( gpus "${DEFAULT_AMDGPU_TARGETS}")
-    else()
-      set( gpus "${AMDGPU_TARGETS}")
-    endif()
-    # must FORCE set this AMDGPU_TARGETS before any find_package( hip ...), in this file
-    # to override CACHE var and set --offload-arch flags via hip-config.cmake hip::device dependency
-    set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
-endif()
-
-# Verify that hcc compiler is used on ROCM platform
-# TODO: Fix VerifyCompiler for Windows
-if (NOT WIN32)
-  include(cmake/VerifyCompiler.cmake)
+option(ROCRAND_CMAKE_HIP_LANGUAGE "Use CMake's HIP language support" OFF)
+if(ROCRAND_CMAKE_HIP_LANGUAGE)
+  enable_language(HIP)
+  set(CMAKE_HIP_ARCHITECTURES
+    gfx803
+    gfx900:xnack-
+    gfx906:xnack-
+    gfx908:xnack-
+    gfx90a:xnack-
+    gfx90a:xnack+
+    gfx1030
+  )
 else()
-  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
-  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
+  # Detect compiler support for target ID
+  # This section is deprecated. Please use rocm_check_target_ids for future use.
+  if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
+      execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
+          OUTPUT_VARIABLE CXX_OUTPUT
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+          ERROR_STRIP_TRAILING_WHITESPACE)
+      string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
+  endif()
+
+  set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
+  # Set the AMDGPU_TARGETS
+  rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+      TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030"
+  )
+  if (AMDGPU_TARGETS)
+      if( AMDGPU_TARGETS STREQUAL "all" )
+        set( gpus "${DEFAULT_AMDGPU_TARGETS}")
+      else()
+        set( gpus "${AMDGPU_TARGETS}")
+      endif()
+      # must FORCE set this AMDGPU_TARGETS before any find_package( hip ...), in this file
+      # to override CACHE var and set --offload-arch flags via hip-config.cmake hip::device dependency
+      set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
+  endif()
+
+  # Verify that hcc compiler is used on ROCM platform
+  # TODO: Fix VerifyCompiler for Windows
+  if (NOT WIN32)
+    include(cmake/VerifyCompiler.cmake)
+  else()
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
+    find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
+  endif()
 endif()
 
 # Build option to disable -Werror
@@ -108,6 +122,9 @@ option(DISABLE_WERROR "Disable building with Werror" ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_HIP_STANDARD 11)
+set(CMAKE_HIP_STANDARD_REQUIRED ON)
+set(CMAKE_HIP_EXTENSIONS OFF)
 if(DISABLE_WERROR)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -mf16c")
 else()

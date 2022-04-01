@@ -19,6 +19,12 @@ endfunction()
 
 # Get rocRAND tests source files
 file(GLOB rocRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+if(ROCRAND_CMAKE_HIP_LANGUAGE)
+    set_source_files_properties(${rocRAND_TEST_SRCS}
+      PROPERTIES
+        LANGUAGE HIP
+    )
+endif()
 
 # Build rocRAND tests
 foreach(test_src ${rocRAND_TEST_SRCS})
@@ -52,7 +58,9 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         rocrand
     )
     if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-        target_link_libraries(${test_name} hip::device)
+        if(NOT ROCRAND_CMAKE_HIP_LANGUAGE)
+            target_link_libraries(${test_name} hip::device)
+        endif()
     endif()
     set_target_properties(
         ${test_name}
