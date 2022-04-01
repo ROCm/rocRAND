@@ -92,9 +92,6 @@ public:
 
         // Xorshift values (160 bits)
         unsigned int x[5];
-
-        FQUALIFIERS
-        ~xorwow_state() { }
     };
 
     FQUALIFIERS
@@ -138,9 +135,6 @@ public:
         m_state.boxmuller_double_state = 0;
         #endif
     }
-
-    FQUALIFIERS
-    ~xorwow_engine() { }
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS

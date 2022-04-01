@@ -35,7 +35,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     endif()
     target_include_directories(${test_name}
         PUBLIC
-            ${PROJECT_SOURCE_DIR}/library/src
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/src>
     )
     if(TARGET GTest::GTest)
         target_link_libraries(${test_name}
@@ -60,6 +60,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
     add_relative_test(${test_name} ${test_name})
+    rocm_install(TARGETS ${test_name} COMPONENT tests)
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
