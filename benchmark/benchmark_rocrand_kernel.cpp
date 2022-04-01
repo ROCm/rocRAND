@@ -747,6 +747,7 @@ int main(int argc, char *argv[])
     hipDeviceProp_t props;
     HIP_CHECK(hipGetDeviceProperties(&props, device_id));
 
+    std::cout << "benchmark_rocrand_kernel" << std::endl;
     std::cout << "rocRAND: " << version << " ";
     std::cout << "Runtime: " << runtime_version << " ";
     std::cout << "Device: " << props.name;
