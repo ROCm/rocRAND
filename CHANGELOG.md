@@ -7,7 +7,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - Backward compatibility for deprecated `#include <rocrand.h>` using wrapper header files.
 - Packages for test and benchmark executables on all supported OSes using CPack.
 
-## (Unreleased) rocRAND-2.10.13 for ROCm 5.1.0
+## rocRAND-2.10.13 for ROCm 5.1.0
 ### Added
 - Generating a random sequence different sizes now produces the same sequence without gaps
   indepent of how many values are generated per call.
@@ -24,7 +24,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ### Fixed
 - Fix offset behaviour for XORWOW, MRG32K3A and PHILOX4X32_10 generator, setting offset now
   correctly generates the same sequence starting from the offset.
-  - Only uniform int and float will work as these can be generated with a single call to the generator  
+  - Only uniform int and float will work as these can be generated with a single call to the generator
 ### Known issues
 - kernel_xorwow unit test is failing for certain GPU architectures.
 
