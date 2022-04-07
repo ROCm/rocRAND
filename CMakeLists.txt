@@ -69,15 +69,6 @@ include(cmake/Dependencies.cmake)
 option(ROCRAND_CMAKE_HIP_LANGUAGE "Use CMake's HIP language support" OFF)
 if(ROCRAND_CMAKE_HIP_LANGUAGE)
   enable_language(HIP)
-  set(CMAKE_HIP_ARCHITECTURES
-    gfx803
-    gfx900:xnack-
-    gfx906:xnack-
-    gfx908:xnack-
-    gfx90a:xnack-
-    gfx90a:xnack+
-    gfx1030
-  )
 else()
   # Detect compiler support for target ID
   # This section is deprecated. Please use rocm_check_target_ids for future use.
