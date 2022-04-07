@@ -27,7 +27,7 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
   * [HIP-clang](https://github.com/ROCm-Developer-Tools/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
     set as C++ compiler on ROCm platform.
 * For CUDA platforms:
-  * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
+  * [HIP](https://github.com/ROCm-Developer-Tools/HIP)
   * Latest CUDA SDK
 * Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
@@ -58,7 +58,7 @@ cd rocRAND; mkdir build; cd build
 # Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_SHARED_LIBS (on by default)
 #
 # ! IMPORTANT !
-# Set C++ compiler to HCC or HIP-clang. You can do it by adding 'CXX=<path-to-compiler>'
+# Set C++ compiler to HIP-clang. You can do it by adding 'CXX=<path-to-compiler>'
 # before 'cmake' or setting cmake option 'CMAKE_CXX_COMPILER' to path to the compiler.
 #
 # The python interface do not work with static library.
@@ -72,8 +72,6 @@ cd rocRAND; mkdir build; cd build
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
-# For ROCM-1.6, if a HCC runtime error is caught, consider setting
-# HCC_AMDGPU_TARGET=<arch> in front of make as a workaround
 make -j4
 
 # Optionally, run tests if they're enabled
