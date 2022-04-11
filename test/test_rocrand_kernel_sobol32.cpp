@@ -23,12 +23,13 @@
 
 #include <vector>
 #include <cmath>
+#include <type_traits>
 
 #include <hip/hip_runtime.h>
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
-#include <rocrand_kernel.h>
-#include <rocrand_sobol32_precomputed.h>
+#include <rocrand/rocrand_kernel.h>
+#include <rocrand/rocrand_sobol32_precomputed.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
@@ -142,8 +143,11 @@ void rocrand_poisson_kernel(unsigned int * output, unsigned int * vectors, const
 
 TEST(rocrand_kernel_sobol32, rocrand_state_sobol32_type)
 {
-    EXPECT_EQ(sizeof(rocrand_state_sobol32), 34 * sizeof(unsigned int));
-    EXPECT_EQ(sizeof(rocrand_state_sobol32[32]), 32 * sizeof(rocrand_state_sobol32));
+    typedef rocrand_state_sobol32 state_type;
+    EXPECT_EQ(sizeof(state_type), 34 * sizeof(unsigned int));
+    EXPECT_EQ(sizeof(state_type[32]), 32 * sizeof(state_type));
+    EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);
+    EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
 }
 
 TEST(rocrand_kernel_sobol32, rocrand)

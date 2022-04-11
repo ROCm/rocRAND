@@ -7,10 +7,7 @@ programming language and optimised for AMD's latest discrete GPUs. It is designe
 of AMD's Radeon Open Compute [ROCm](https://rocm.github.io/) runtime, but it also works on
 CUDA enabled GPUs.
 
-Additionally, the project includes a wrapper library called hipRAND which allows user to easily port
-CUDA applications that use cuRAND library to the [HIP](https://github.com/ROCm-Developer-Tools/HIP)
-layer. In [ROCm](https://rocm.github.io/) environment hipRAND uses rocRAND, however in CUDA
-environment cuRAND is used instead.
+Prior to ROCm version 5.0, this project included the [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) wrapper. As of version 5.0, this has been split into a separate library.
 
 ## Supported Random Number Generators
 
@@ -23,7 +20,7 @@ environment cuRAND is used instead.
 ## Requirements
 
 * Git
-* cmake (3.0.2 or later)
+* cmake (3.16 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
   * [ROCm](https://rocm.github.io/install.html) (1.7 or later)
@@ -177,8 +174,8 @@ doxygen Doxyfile
 
 ## Wrappers
 
-* C++ wrappers for host API of rocRAND and hipRAND are in files [`rocrand.hpp`](./library/include/rocrand.hpp)
-and [`hiprand.hpp`](./library/include/hiprand.hpp).
+* C++ wrappers for host API of rocRAND and hipRAND are in files [`rocrand.hpp`](./library/include/rocrand/rocrand.hpp)
+and [`hiprand.hpp`](./library/include/rocrand/hiprand.hpp).
 * [Fortran wrappers](./library/src/fortran/).
 * [Python wrappers](./python/): [rocRAND](./python/rocrand) and [hipRAND](./python/hiprand).
 

@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "common.hpp"
 #include "generator_type.hpp"
@@ -39,17 +39,19 @@ namespace detail {
     ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void init_engines_kernel(xorwow_device_engine * engines,
+                             const unsigned int start_engine_id,
                              unsigned long long seed,
                              unsigned long long offset)
     {
         const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        engines[engine_id] = xorwow_device_engine(seed, engine_id, offset);
+        engines[engine_id] = xorwow_device_engine(seed, engine_id, offset + (engine_id < start_engine_id ? 1 : 0));
     }
 
     template<class T, class Distribution>
     ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
     void generate_kernel(xorwow_device_engine * engines,
+                         const unsigned int start_engine_id,
                          T * data, const size_t n,
                          Distribution distribution)
     {
@@ -58,11 +60,11 @@ namespace detail {
 
         using vec_type = aligned_vec_type<T, output_width>;
 
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         const unsigned int stride = hipGridDim_x * hipBlockDim_x;
-        size_t index = engine_id;
 
-        // Load device engine
+        // Stride MUST be a power of two
+        const unsigned int engine_id = (id + start_engine_id) & (stride - 1);
         xorwow_device_engine engine = engines[engine_id];
 
         unsigned int input[input_width];
@@ -78,6 +80,7 @@ namespace detail {
         const size_t vec_n = (n - head_size) / output_width;
 
         vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
+        size_t index = id;
         while(index < vec_n)
         {
             for(unsigned int i = 0; i < input_width; i++)
@@ -182,10 +185,12 @@ public:
         if (m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
+        m_start_engine_id = m_offset % m_engines_size;
+
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, m_seed, m_offset
+            m_engines, m_start_engine_id, m_seed, m_offset / m_engines_size
         );
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
@@ -207,11 +212,18 @@ public:
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
+            m_engines, m_start_engine_id, data, data_size, distribution
         );
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        // Generating data_size values will use this many distributions
+        const auto touched_engines =
+            (data_size + Distribution::output_width - 1) /
+            Distribution::output_width;
+
+        m_start_engine_id = (m_start_engine_id + touched_engines) % m_engines_size;
 
         return ROCRAND_STATUS_SUCCESS;
     }
@@ -263,6 +275,8 @@ private:
 
     // m_seed from base_type
     // m_offset from base_type
+
+    unsigned int m_start_engine_id;
 };
 
 #endif // ROCRAND_RNG_XORWOW_H_

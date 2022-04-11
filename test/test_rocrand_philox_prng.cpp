@@ -20,9 +20,11 @@
 
 #include <stdio.h>
 #include <gtest/gtest.h>
+#include <vector>
+#include <numeric>
 
 #include <hip/hip_runtime.h>
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include <rng/generator_type.hpp>
 #include <rng/generators.hpp>
@@ -371,4 +373,156 @@ TEST(rocrand_philox_prng_state_tests, discard_sequence_test)
     EXPECT_EQ(state.counter.y, 2U);
     EXPECT_EQ(state.counter.z, 0U);
     EXPECT_EQ(state.counter.w, 6U);
+}
+
+template <typename T>
+class rocrand_philox_prng_offset : public ::testing::Test {
+public:
+  using output_type = T;
+};
+
+using RocrandPhiloxPrngOffsetTypes = ::testing::Types<unsigned int, float>;
+TYPED_TEST_SUITE(rocrand_philox_prng_offset, RocrandPhiloxPrngOffsetTypes);
+
+TYPED_TEST(rocrand_philox_prng_offset, offsets_test)
+{
+    using T = typename TestFixture::output_type;
+    const size_t size = 131313;
+
+    constexpr size_t offsets[] = { 0, 1, 4, 11, 65536, 112233 };
+
+    for(const auto offset : offsets)
+    {
+        SCOPED_TRACE(::testing::Message() << "with offset=" << offset);
+
+        const size_t size0 = size;
+        const size_t size1 = (size + offset);
+        T* data0;
+        T* data1;
+        hipMalloc(&data0, sizeof(T) * size0);
+        hipMalloc(&data1, sizeof(T) * size1);
+
+        rocrand_philox4x32_10 g0;
+        g0.set_offset(offset);
+        g0.generate(data0, size0);
+    
+        rocrand_philox4x32_10 g1;
+        g1.generate(data1, size1);
+
+        std::vector<T> host_data0(size0);
+        std::vector<T> host_data1(size1);
+        hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost);
+        hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost);
+        hipDeviceSynchronize();
+    
+        for(size_t i = 0; i < size; ++i)
+        {
+            ASSERT_EQ(host_data0[i], host_data1[i + offset]);
+        }
+
+        hipFree(data0);
+        hipFree(data1);
+    }
+}
+
+// Check that subsequent generations of different sizes produce one
+// sequence without gaps, no matter how many values are generated per call.
+template<typename T, typename GenerateFunc>
+void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
+{
+    std::vector<size_t> sizes0({ 100, 1, 24783, 3, 2, 776543, 1048576 });
+    std::vector<size_t> sizes1({ 1024, 55, 65536, 623456, 30, 1048576, 111331 });
+    if (divisor > 1)
+    {
+        for (size_t& s : sizes0) s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+        for (size_t& s : sizes1) s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+    }
+
+    const size_t size0 = std::accumulate(sizes0.cbegin(), sizes0.cend(), std::size_t{0});
+    const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
+
+    T * data0;
+    T * data1;
+    hipMalloc(&data0, sizeof(T) * size0);
+    hipMalloc(&data1, sizeof(T) * size1);
+
+    rocrand_philox4x32_10 g0;
+    rocrand_philox4x32_10 g1;
+
+    std::vector<T> host_data0(size0);
+    std::vector<T> host_data1(size1);
+
+    size_t current0 = 0;
+    for (size_t s : sizes0)
+    {
+        generate_func(g0, data0, s);
+        hipMemcpy(
+            host_data0.data() + current0,
+            data0,
+            sizeof(T) * s, hipMemcpyDefault);
+        current0 += s;
+    }
+    size_t current1 = 0;
+    for (size_t s : sizes1)
+    {
+        generate_func(g1, data1, s);
+        hipMemcpy(
+            host_data1.data() + current1,
+            data1,
+            sizeof(T) * s, hipMemcpyDefault);
+        current1 += s;
+    }
+
+    for(size_t i = 0; i < std::min(size0, size1); i++)
+    {
+        ASSERT_EQ(host_data0[i], host_data1[i]);
+    }
+
+    hipFree(data0);
+    hipFree(data1);
+}
+
+TEST(rocrand_philox_prng_tests, continuity_uniform_uint_test)
+{
+    continuity_test<unsigned int>([](rocrand_philox4x32_10& g, unsigned int * data, size_t s) { g.generate(data, s); });
+}
+
+TEST(rocrand_philox_prng_tests, continuity_uniform_char_test)
+{
+    continuity_test<unsigned char>([](rocrand_philox4x32_10& g, unsigned char * data, size_t s) { g.generate(data, s); }, 4);
+}
+
+TEST(rocrand_philox_prng_tests, continuity_uniform_float_test)
+{
+    continuity_test<float>([](rocrand_philox4x32_10& g, float * data, size_t s) { g.generate_uniform(data, s); });
+}
+
+TEST(rocrand_philox_prng_tests, continuity_uniform_double_test)
+{
+    continuity_test<double>([](rocrand_philox4x32_10& g, double * data, size_t s) { g.generate_uniform(data, s); });
+}
+
+TEST(rocrand_philox_prng_tests, continuity_normal_float_test)
+{
+    continuity_test<float>([](rocrand_philox4x32_10& g, float * data, size_t s) { g.generate_normal(data, s, 0.0f, 1.0f); }, 2);
+}
+
+TEST(rocrand_philox_prng_tests, continuity_normal_double_test)
+{
+    continuity_test<double>([](rocrand_philox4x32_10& g, double * data, size_t s) { g.generate_normal(data, s, 0.0, 1.0); }, 2);
+}
+
+TEST(rocrand_philox_prng_tests, continuity_log_normal_float_test)
+{
+    continuity_test<float>([](rocrand_philox4x32_10& g, float * data, size_t s) { g.generate_log_normal(data, s, 0.0f, 1.0f); }, 2);
+}
+
+TEST(rocrand_philox_prng_tests, continuity_log_normal_double_test)
+{
+    continuity_test<double>([](rocrand_philox4x32_10& g, double * data, size_t s) { g.generate_log_normal(data, s, 0.0, 1.0); }, 2);
+}
+
+TEST(rocrand_philox_prng_tests, continuity_poisson_test)
+{
+    continuity_test<unsigned int>([](rocrand_philox4x32_10& g, unsigned int * data, size_t s) { g.generate_poisson(data, s, 100.0); });
 }

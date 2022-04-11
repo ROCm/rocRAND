@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <hip/hip_runtime.h>
 
-#include <rocrand.h>
+#include <rocrand/rocrand.h>
 
 #include "common.hpp"
 #include "generator_type.hpp"
@@ -65,19 +65,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace rocrand_host {
 namespace detail {
-
-    inline __device__ unsigned int warp_reduce_min(unsigned int val, int size) {
-      for (int offset = size/2; offset > 0; offset /= 2) {
-        #if defined(__HIP_PLATFORM_NVCC__) && __CUDACC_VER_MAJOR__ >= 9
-        unsigned int temp = __shfl_xor_sync(0xffffffff, (int)val, offset);
-        #else
-        unsigned int temp = __shfl_xor((int)val, offset);
-        #endif
-        val = (temp < val) ? temp : val;
-      }
-      return val;
-    }
-
     struct philox4x32_10_device_engine : public ::rocrand_device::philox4x32_10_engine
     {
         typedef ::rocrand_device::philox4x32_10_engine base_type;
@@ -102,6 +89,12 @@ namespace detail {
         uint4 next4_leap(unsigned int leap)
         {
             uint4 ret = m_state.result;
+            if(m_state.substate > 0) {
+                const uint4 next_counter = this->bump_counter(m_state.counter);
+                const uint4 next = this->ten_rounds(next_counter, m_state.key);
+                ret = this->interleave(ret, next);
+            }
+
             this->discard_state(leap);
             m_state.result = this->ten_rounds(m_state.counter, m_state.key);
             return ret;
@@ -110,20 +103,11 @@ namespace detail {
         // m_state from base class
     };
 
-    ROCRAND_KERNEL
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-    void init_engines_kernel(philox4x32_10_device_engine * engines,
-                             const unsigned long long seed,
-                             const unsigned long long offset)
-    {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        engines[engine_id] = philox4x32_10_device_engine(seed, engine_id, offset);
-    }
 
-    template<unsigned int ThreadsPerEngine, class T, class Distribution>
+    template<class T, class Distribution>
     ROCRAND_KERNEL
     __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-    void generate_kernel(philox4x32_10_device_engine * engines,
+    void generate_kernel(philox4x32_10_device_engine engine,
                          T * data, const size_t n,
                          Distribution distribution)
     {
@@ -137,17 +121,7 @@ namespace detail {
         using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
 
         const unsigned int thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int engine_id = thread_id/ThreadsPerEngine;
         const unsigned int stride = hipGridDim_x * hipBlockDim_x;
-        size_t index = thread_id;
-
-        // Load device engine
-        philox4x32_10_device_engine engine = engines[engine_id];
-        if(hipThreadIdx_x%ThreadsPerEngine > 0)
-        {
-            // Skips hipThreadIdx_x%ThreadsPerEngine states
-            engine.discard(4 * (hipThreadIdx_x%ThreadsPerEngine));
-        }
 
         unsigned int input[input_width];
         T output[output_per_thread][output_width];
@@ -161,11 +135,35 @@ namespace detail {
         const unsigned int tail_size = (n - head_size) % full_output_width;
         const size_t vec_n = (n - head_size) / full_output_width;
 
+        const unsigned int engine_offset = 4 * thread_id + (thread_id == 0 ? 0 : head_size);
+        engine.discard(engine_offset);
+
+        // If data is not aligned by sizeof(vec_type)
+        if(thread_id == 0 && head_size > 0) {
+            for(unsigned int s = 0; s < output_per_thread; ++s) {
+                if(s * output_width >= head_size) {
+                    break;
+                }
+
+                for(unsigned int i = 0; i < input_width; ++i) {
+                    input[i] = engine();
+                }
+                distribution(input, output[s]);
+
+                for(unsigned int o = 0; o < output_width; ++o) {
+                    if(s * output_width + o < head_size) {
+                        data[s * output_width + o] = output[s][o];
+                    }
+                }
+            }
+        }
+
         // Save multiple values as one vec_type
         vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
+        size_t index = thread_id;
         while(index < vec_n)
         {
-            const uint4 v = engine.next4_leap(ThreadsPerEngine);
+            const uint4 v = engine.next4_leap(stride);
             const unsigned int vs[4] = { v.x, v.y, v.z, v.w };
             for(unsigned int s = 0; s < output_per_thread; s++)
             {
@@ -180,66 +178,28 @@ namespace detail {
             index += stride;
         }
 
-        // Find thread with the smallest state of the engine which id is engine_id
-        unsigned int index_min = warp_reduce_min(index, ThreadsPerEngine);
-        const bool smallest_state = (index == index_min);
-
-        // Check if we need to save head and tail.
+        // Check if we need to save tail.
         // Those numbers should be generated by the thread that would
         // save next vec_type.
-        // If this condition is met, then we know that (index == index_min)
-        // is also true for that thread, so we don't need to check that.
-        if(index == vec_n)
+        if(index == vec_n && tail_size > 0)
         {
-            // If data is not aligned by sizeof(vec_type)
-            if(head_size > 0)
-            {
-                const uint4 v = engine.next4_leap(ThreadsPerEngine);
-                const unsigned int vs[4] = { v.x, v.y, v.z, v.w };
-                for(unsigned int s = 0; s < output_per_thread; s++)
-                {
-                    for(unsigned int i = 0; i < input_width; i++)
-                    {
-                        input[i] = vs[s * input_width + i];
-                    }
-                    distribution(input, output[s]);
-
-                    for(unsigned int o = 0; o < output_width; o++)
-                    {
-                        if(s * output_width + o < head_size)
-                        {
-                            data[s * output_width + o] = output[s][o];
-                        }
-                    }
+            for(unsigned int s = 0; s < output_per_thread; ++s) {
+                if(s * output_width >= tail_size) {
+                    break;
                 }
-            }
 
-            if(tail_size > 0)
-            {
-                const uint4 v = engine.next4_leap(ThreadsPerEngine);
-                const unsigned int vs[4] = { v.x, v.y, v.z, v.w };
-                for(unsigned int s = 0; s < output_per_thread; s++)
-                {
-                    for(unsigned int i = 0; i < input_width; i++)
-                    {
-                        input[i] = vs[s * input_width + i];
-                    }
-                    distribution(input, output[s]);
+                for(unsigned int i = 0; i < input_width; ++i) {
+                    input[i] = engine();
+                }
+                distribution(input, output[s]);
 
-                    for(unsigned int o = 0; o < output_width; o++)
-                    {
-                        if(s * output_width + o < tail_size)
-                        {
-                            data[n - tail_size + s * output_width + o] = output[s][o];
-                        }
+                for(unsigned int o = 0; o < output_width; ++o) {
+                    if(s * output_width + o < tail_size) {
+                        data[n - tail_size + s * output_width + o] = output[s][o];
                     }
                 }
             }
         }
-
-        // Save engine
-        if(smallest_state)
-            engines[engine_id] = engine;
     }
 
 } // end namespace detail
@@ -247,8 +207,6 @@ namespace detail {
 
 class rocrand_philox4x32_10 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
 {
-    static constexpr unsigned int s_threads_per_engine = 16;
-
 public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>;
     using engine_type = ::rocrand_host::detail::philox4x32_10_device_engine;
@@ -257,20 +215,8 @@ public:
                           unsigned long long offset = 0,
                           hipStream_t stream = 0)
         : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL),
-          m_engines_size(s_threads * s_blocks / s_threads_per_engine)
+          m_engines_initialized(false)
     {
-        // Allocate device random number engines
-        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
-    }
-
-    ~rocrand_philox4x32_10()
-    {
-        hipFree(m_engines);
     }
 
     void reset()
@@ -296,14 +242,7 @@ public:
         if(m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
-            dim3(s_blocks/s_threads_per_engine), dim3(s_threads), 0, m_stream,
-            m_engines, m_seed, m_offset
-        );
-        // Check kernel status
-        if(hipGetLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        m_engine = engine_type{m_seed, 0, m_offset};
 
         m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
@@ -318,13 +257,20 @@ public:
             return status;
 
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<s_threads_per_engine>),
+            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
             dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
+            m_engine, data, data_size, distribution
         );
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+        // Generating data_size values will use this many distributions
+        const auto num_applied_generators =
+            (data_size + Distribution::output_width - 1) /
+            Distribution::output_width * Distribution::input_width;
+
+        m_engine.discard(num_applied_generators);
 
         return ROCRAND_STATUS_SUCCESS;
     }
@@ -365,8 +311,7 @@ public:
 
 private:
     bool m_engines_initialized;
-    engine_type * m_engines;
-    const size_t m_engines_size;
+    engine_type  m_engine;
 
     const static uint32_t s_threads = 256;
     const static uint32_t s_blocks = 1024;

@@ -23,12 +23,13 @@
 
 #include <vector>
 #include <cmath>
+#include <type_traits>
 
 #include <hip/hip_runtime.h>
 
 #define FQUALIFIERS __forceinline__ __host__ __device__
-#include <rocrand_kernel.h>
-#include <rocrand_mtgp32_11213.h>
+#include <rocrand/rocrand_kernel.h>
+#include <rocrand/rocrand_mtgp32_11213.h>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
@@ -186,8 +187,11 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
 
 TEST(rocrand_kernel_mtgp32, rocrand_state_mtgp32_type)
 {
-    EXPECT_EQ(sizeof(rocrand_state_mtgp32), 1078 * sizeof(unsigned int));
-    EXPECT_EQ(sizeof(rocrand_state_mtgp32[32]), 32 * sizeof(rocrand_state_mtgp32));
+    typedef rocrand_state_mtgp32 state_type;
+    EXPECT_EQ(sizeof(state_type), 1078 * sizeof(unsigned int));
+    EXPECT_EQ(sizeof(state_type[32]), 32 * sizeof(state_type));
+    EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);
+    EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
 }
 
 TEST(rocrand_kernel_mtgp32, rocrand)
