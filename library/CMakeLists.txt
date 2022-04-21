@@ -103,8 +103,23 @@ endif()
 if (WIN32)
     install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
     if (BUILD_TEST)
-        install (TARGETS rocrand DESTINATION "${PROJECT_BINARY_DIR}/test")
+	    add_custom_command(
+		    TARGET rocrand 
+		    POST_BUILD
+		    COMMAND ${CMAKE_COMMAND} -E copy
+			    $<TARGET_FILE:rocrand>
+			    ${PROJECT_BINARY_DIR}/test/$<TARGET_FILE_NAME:rocrand>
+	    )
     endif()
+    if (BUILD_BENCHMARK)
+	    add_custom_command(
+		    TARGET rocrand 
+		    POST_BUILD
+		    COMMAND ${CMAKE_COMMAND} -E copy
+			    $<TARGET_FILE:rocrand>
+			    ${PROJECT_BINARY_DIR}/benchmark/$<TARGET_FILE_NAME:rocrand>
+	    )
+    endif()	
 endif()
 
 # Fortran wrappers for hipRAND and rocRAND
