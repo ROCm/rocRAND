@@ -155,6 +155,7 @@ def config_cmd():
           cmake_options.append( f"-D{i}" )
 
     cmake_options.append( f"{src_path}")
+    cmake_options.append("-DROCM_USE_DEV_COMPONENT=ON
 
 #   case "${ID}" in
 #     centos|rhel)
