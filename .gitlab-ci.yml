@@ -37,9 +37,27 @@ include:
       - /rules.yaml
 
 stages:
+  - lint
   - build
   - test
   - benchmark
+
+clang-format:
+  extends:
+    - .deps:rocm
+  stage: lint
+  needs: []
+  tags:
+    - rocm-build
+  variables:
+    CLANG_FORMAT: "/opt/rocm/llvm/bin/clang-format"
+    GIT_CLANG_FORMAT: "/opt/rocm/llvm/bin/git-clang-format"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - cd $CI_PROJECT_DIR
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - scripts/code-format/check-format.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA --binary "$CLANG_FORMAT"
 
 .rocm:cmake-minimum:
   variables:
@@ -142,6 +160,7 @@ stages:
 build:rocm-cmake-minimum:
   tags:
     - rocm-build
+  needs: []
   extends:
     - .rocm:cmake-minimum
     - .rocm:build
@@ -152,6 +171,7 @@ build:rocm-cmake-minimum:
 build:rocm-static-cmake-minimum:
   tags:
     - rocm-build
+  needs: []
   extends:
     - .rocm:cmake-minimum
     - .rocm:build
@@ -161,6 +181,7 @@ build:rocm-static-cmake-minimum:
 build:rocm-cmake-latest:
   tags:
     - rocm-build
+  needs: []
   extends:
     - .rocm:cmake-latest
     - .rocm:build
@@ -170,6 +191,7 @@ build:rocm-cmake-latest:
 build:rocm-static-cmake-latest:
   tags:
     - rocm-build
+  needs: []
   extends:
     - .rocm:cmake-latest
     - .rocm:build
@@ -179,6 +201,7 @@ build:rocm-static-cmake-latest:
 build:nvcc-cmake-minimum:
   tags:
     - nvcc-build
+  needs: []
   extends:
     - .nvcc:cmake-minimum
     - .nvcc:build
@@ -189,6 +212,7 @@ build:nvcc-cmake-minimum:
 build:nvcc-static-cmake-minimum:
   tags:
     - nvcc-build
+  needs: []
   extends:
     - .nvcc:cmake-minimum
     - .nvcc:build
@@ -198,6 +222,7 @@ build:nvcc-static-cmake-minimum:
 build:nvcc-cmake-latest:
   tags:
     - nvcc-build
+  needs: []
   extends:
     - .nvcc:cmake-latest
     - .nvcc:build
@@ -207,6 +232,7 @@ build:nvcc-cmake-latest:
 build:nvcc-static-cmake-latest:
   tags:
     - nvcc-build
+  needs: []
   extends:
     - .nvcc:cmake-latest
     - .nvcc:build
