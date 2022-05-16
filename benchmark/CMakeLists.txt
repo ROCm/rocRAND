@@ -37,9 +37,9 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmark"
     )
     rocm_install(TARGETS ${BENCHMARK_TARGET} COMPONENT benchmarks)
-    if (WIN32 AND NOT DEFINED DLLS_COPIED)
-      set(DLLS_COPIED "YES")
-      set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
+    if (WIN32 AND NOT DEFINED DLLS_COPIED_BENCHMARKS)
+      set(DLLS_COPIED_BENCHMARKS "YES")
+      set(DLLS_COPIED_BENCHMARKS ${DLLS_COPIED_BENCHMARKS} PARENT_SCOPE)
       # for now adding in all .dll as dependency chain is not cmake based on win32
       file( GLOB third_party_dlls
       LIST_DIRECTORIES ON
