@@ -88,7 +88,7 @@ def config_cmd():
     
     if (OS_info["ID"] == 'windows'):
         # we don't have ROCM on windows but have hip, ROCM can be downloaded if required
-        rocm_path = os.getenv( 'ROCM_PATH', "C:/github/rocm-cmake-master") #C:/hip") # rocm/Utils/cmake-rocm4.2.0"
+        rocm_path = os.getenv( 'ROCM_CMAKE_PATH', "C:/github/rocm-cmake-master") #C:/hip") # rocm/Utils/cmake-rocm4.2.0"
         cmake_executable = "cmake.exe"
         toolchain = os.path.join( src_path, "toolchain-windows.cmake" )
         #set CPACK_PACKAGING_INSTALL_PREFIX= defined as blank as it is appended to end of path for archive creation
