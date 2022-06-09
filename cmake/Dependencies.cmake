@@ -25,12 +25,6 @@
 # HIP dependency is handled earlier in the project cmake file
 # when VerifyCompiler.cmake is included.
 
-# GIT
-find_package(Git REQUIRED)
-if(NOT Git_FOUND)
-    message(FATAL_ERROR "Please ensure Git is installed on the system")
-endif()
-
 # For downloading, building, and installing required dependencies
 include(cmake/DownloadProject.cmake)
 
