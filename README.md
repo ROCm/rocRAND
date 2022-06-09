@@ -19,8 +19,7 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 
 ## Requirements
 
-* Git
-* cmake (3.16 or later)
+* CMake (3.16 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
   * [ROCm](https://rocm.github.io/install.html) (1.7 or later)
