@@ -94,6 +94,7 @@ typedef enum rocrand_rng_type
     ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
     ROCRAND_RNG_PSEUDO_MRG31K3P      = 405, ///< MRG31k3p pseudorandom generator
+    ROCRAND_RNG_PSEUDO_LFSR113       = 406, ///< LFSR113 pseudorandom generator
     ROCRAND_RNG_QUASI_DEFAULT        = 500, ///< Default quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL32        = 501, ///< Sobol32 quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL64        = 504 ///< Sobol64 quasirandom generator

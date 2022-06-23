@@ -26,6 +26,7 @@
 #endif // FQUALIFIERS
 
 #include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_lfsr113.h"
 #include "rocrand/rocrand_mrg31k3p.h"
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"

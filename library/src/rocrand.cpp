@@ -64,6 +64,10 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
         {
             *generator = new rocrand_mtgp32();
         }
+        else if(rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+        {
+            *generator = new rocrand_lfsr113();
+        }
         else
         {
             return ROCRAND_STATUS_TYPE_ERROR;
@@ -144,6 +148,13 @@ rocrand_generate(rocrand_generator generator,
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate(output_data, n);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -196,6 +207,12 @@ rocrand_generate_char(rocrand_generator generator,
         rocrand_mtgp32 * rocrand_mtgp32_generator =
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate(output_data, n);
     }
 
     return ROCRAND_STATUS_TYPE_ERROR;
@@ -251,6 +268,12 @@ rocrand_generate_short(rocrand_generator generator,
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate(output_data, n);
+    }
 
     return ROCRAND_STATUS_TYPE_ERROR;
 }
@@ -305,6 +328,13 @@ rocrand_generate_uniform(rocrand_generator generator,
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_uniform(output_data, n);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -358,6 +388,13 @@ rocrand_generate_uniform_double(rocrand_generator generator,
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_uniform(output_data, n);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -410,6 +447,12 @@ rocrand_generate_uniform_half(rocrand_generator generator,
         rocrand_mtgp32 * rocrand_mtgp32_generator =
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_uniform(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_uniform(output_data, n);
     }
 
     return ROCRAND_STATUS_TYPE_ERROR;
@@ -472,6 +515,14 @@ rocrand_generate_normal(rocrand_generator generator,
         return rocrand_mtgp32_generator->generate_normal(output_data, n,
                                                          mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_normal(output_data, n,
+                                                          mean, stddev);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -532,6 +583,14 @@ rocrand_generate_normal_double(rocrand_generator generator,
         return rocrand_mtgp32_generator->generate_normal(output_data, n,
                                                          mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_normal(output_data, n,
+                                                          mean, stddev);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -591,6 +650,13 @@ rocrand_generate_normal_half(rocrand_generator generator,
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_normal(output_data, n,
                                                          mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_normal(output_data, n,
+                                                          mean, stddev);
     }
 
     return ROCRAND_STATUS_TYPE_ERROR;
@@ -653,6 +719,14 @@ rocrand_generate_log_normal(rocrand_generator generator,
         return rocrand_mtgp32_generator->generate_log_normal(output_data, n,
                                                              mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_log_normal(output_data, n,
+                                                              mean, stddev);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -713,6 +787,14 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
         return rocrand_mtgp32_generator->generate_log_normal(output_data, n,
                                                              mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_log_normal(output_data, n,
+                                                              mean, stddev);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -772,6 +854,13 @@ rocrand_generate_log_normal_half(rocrand_generator generator,
             static_cast<rocrand_mtgp32 *>(generator);
         return rocrand_mtgp32_generator->generate_log_normal(output_data, n,
                                                              mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_log_normal(output_data, n,
+                                                              mean, stddev);
     }
 
     return ROCRAND_STATUS_TYPE_ERROR;
@@ -838,6 +927,14 @@ rocrand_generate_poisson(rocrand_generator generator,
         return rocrand_mtgp32_generator->generate_poisson(output_data, n,
                                                           lambda);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        rocrand_lfsr113 * rocrand_lfsr113_generator =
+            static_cast<rocrand_lfsr113 *>(generator);
+        return rocrand_lfsr113_generator->generate_poisson(output_data, n,
+                                                           lambda);
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -877,6 +974,11 @@ rocrand_initialize_generator(rocrand_generator generator)
     {
         return static_cast<rocrand_mtgp32 *>(generator)->init();
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        return static_cast<rocrand_lfsr113 *>(generator)->init();
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -923,6 +1025,12 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
         static_cast<rocrand_mtgp32 *>(generator)->set_stream(stream);
         return ROCRAND_STATUS_SUCCESS;
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        static_cast<rocrand_lfsr113 *>(generator)->set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -962,11 +1070,17 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed)
         static_cast<rocrand_xorwow *>(generator)->set_seed(seed);
         return ROCRAND_STATUS_SUCCESS;
     }
-    if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
     {
         static_cast<rocrand_mtgp32 *>(generator)->set_seed(seed);
         return ROCRAND_STATUS_SUCCESS;
     }
+    else if (generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        static_cast<rocrand_lfsr113 *>(generator)->set_seed(seed);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
@@ -1013,6 +1127,12 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
         // Can't set offset for MTGP32
         return ROCRAND_STATUS_TYPE_ERROR;
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        static_cast<rocrand_lfsr113 *>(generator)->set_offset(offset);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 

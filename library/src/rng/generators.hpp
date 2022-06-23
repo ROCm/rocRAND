@@ -21,6 +21,7 @@
 #ifndef ROCRAND_RNG_GENERATORS_H_
 #define ROCRAND_RNG_GENERATORS_H_
 
+#include "lfsr113.hpp"
 #include "mrg31k3p.hpp"
 #include "mrg32k3a.hpp"
 #include "mtgp32.hpp"
