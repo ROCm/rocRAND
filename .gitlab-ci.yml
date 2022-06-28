@@ -151,6 +151,7 @@ clang-format:
       - $CI_PROJECT_DIR/build/test/test_*
       - $CI_PROJECT_DIR/build/test/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/benchmark/benchmark_*
+      - $CI_PROJECT_DIR/build/deps/googlebenchmark/
       - $CI_PROJECT_DIR/build/CMakeCache.txt
       - $CI_PROJECT_DIR/build/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/*.deb
@@ -273,7 +274,7 @@ test:nvcc:
   stage: benchmark
   script:
     - cd $CI_PROJECT_DIR/build
-    - ./benchmark/benchmark_rocrand_generate --dis all --engine all --trials 5
+    - ./benchmark/benchmark_rocrand_generate --trials 5
     - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
 
 benchmark:rocm:
