@@ -21,6 +21,7 @@
 #ifndef ROCRAND_RNG_LFSR113_H_
 #define ROCRAND_RNG_LFSR113_H_
 
+#include <algorithm>
 #include <hip/hip_runtime.h>
 
 #include <rocrand/rocrand.h>
@@ -40,7 +41,7 @@ namespace detail {
                              const unsigned int start_engine_id,
                              const unsigned int offset)
     {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x * hipThreadIdx_x;
+        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
         engines[engine_id] = lfsr113_device_engine(engine_id, offset + (engine_id < start_engine_id ? 1 : 0));
     }
 
