@@ -22,16 +22,15 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
       )
     endif()
     if(HIP_COMPILER STREQUAL "nvcc")
-        target_link_libraries(${BENCHMARK_TARGET}
-            rocrand
-            ${CUDA_curand_LIBRARY}
-        )
+        target_link_libraries(${BENCHMARK_TARGET} ${CUDA_curand_LIBRARY})
     else()
-        target_link_libraries(${BENCHMARK_TARGET}
-            rocrand
-            hip::device
-        )
+        target_link_libraries(${BENCHMARK_TARGET} hip::device)
     endif()
+    target_link_libraries(${BENCHMARK_TARGET}
+      rocrand
+      benchmark::benchmark
+    )
+
     set_target_properties(${BENCHMARK_TARGET}
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmark"

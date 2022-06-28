@@ -69,6 +69,44 @@ if(BUILD_TEST)
   endif()
 endif()
 
+
+# Benchmark dependencies
+if(BUILD_BENCHMARK)
+  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+    # Google Benchmark (https://github.com/google/benchmark.git)
+    find_package(benchmark QUIET)
+  endif()
+
+  if(NOT benchmark_FOUND)
+    message(STATUS "Google Benchmark not found or force download Google Benchmark on. Downloading and building Google Benchmark.")
+    if(CMAKE_CONFIGURATION_TYPES)
+      message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
+    endif()
+    set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/googlebenchmark CACHE PATH "")
+    if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+      # hip-clang cannot compile googlebenchmark for some reason
+      set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
+    endif()
+
+    download_project(
+      PROJ           googlebenchmark
+      GIT_REPOSITORY https://github.com/google/benchmark.git
+      GIT_TAG        v1.6.1
+      INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
+      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${COMPILER_OVERRIDE}
+      LOG_DOWNLOAD   TRUE
+      LOG_CONFIGURE  TRUE
+      LOG_BUILD      TRUE
+      LOG_INSTALL    TRUE
+      BUILD_PROJECT  TRUE
+      UPDATE_DISCONNECTED TRUE
+    )
+  endif()
+  find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT})
+endif()
+
+set(PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern)
+
 # Find or download/install rocm-cmake project
 find_package(ROCM 0.7.3 QUIET CONFIG PATHS $ENV{ROCM_PATH})
 if(NOT ROCM_FOUND)

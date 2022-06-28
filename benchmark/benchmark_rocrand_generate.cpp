@@ -18,66 +18,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-#include <iomanip>
-#include <vector>
-#include <string>
-#include <numeric>
-#include <utility>
-#include <algorithm>
+#include "benchmark_utils.hpp"
+
+#include <rocrand/rocrand.h>
+
+// Google Benchmark
+#include <benchmark/benchmark.h>
 
 #include "cmdparser.hpp"
 
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
 
-#define HIP_CHECK(condition)         \
-  {                                  \
-    hipError_t error = condition;    \
-    if(error != hipSuccess){         \
-        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
-        exit(error); \
-    } \
-  }
-
-#define ROCRAND_CHECK(condition)                 \
-  {                                              \
-    rocrand_status _status = condition;           \
-    if(_status != ROCRAND_STATUS_SUCCESS) {       \
-        std::cout << "ROCRAND error: " << _status << " line: " << __LINE__ << std::endl; \
-        exit(_status); \
-    } \
-  }
+#include <map>
+#include <string>
+#include <vector>
 
 #ifndef DEFAULT_RAND_N
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 #endif
 
 typedef rocrand_rng_type rng_type_t;
+template<typename T>
+using generate_func_type = std::function<rocrand_status(rocrand_generator, T*, size_t)>;
 
 template<typename T>
-using generate_func_type = std::function<rocrand_status(rocrand_generator, T *, size_t)>;
-
-template<typename T>
-void run_benchmark(const cli::Parser& parser,
-                   const rng_type_t rng_type,
-                   hipStream_t stream,
-                   generate_func_type<T> generate_func)
+void run_benchmark(benchmark::State&     state,
+                   generate_func_type<T> generate_func,
+                   const size_t          size,
+                   const size_t          trials,
+                   const size_t          dimensions,
+                   const size_t          offset,
+                   const rng_type_t      rng_type,
+                   hipStream_t           stream)
 {
-    const size_t size0 = parser.get<size_t>("size");
-    const size_t trials = parser.get<size_t>("trials");
-    const size_t dimensions = parser.get<size_t>("dimensions");
-    const size_t offset = parser.get<size_t>("offset");
-    const size_t size = (size0 / dimensions) * dimensions;
 
-    T * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
+    const size_t rounded_size = (size / dimensions) * dimensions;
+
+    T* data;
+    HIP_CHECK(hipMalloc(&data, rounded_size * sizeof(T)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
 
     rocrand_status status = rocrand_set_quasi_random_generator_dimensions(generator, dimensions);
-    if (status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
+    if(status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
     {
         ROCRAND_CHECK(status);
     }
@@ -85,320 +69,270 @@ void run_benchmark(const cli::Parser& parser,
     ROCRAND_CHECK(rocrand_set_stream(generator, stream));
 
     status = rocrand_set_offset(generator, offset);
-    if (status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not pseudo-random
+    if(status != ROCRAND_STATUS_TYPE_ERROR) // If the RNG is not pseudo-random
     {
         ROCRAND_CHECK(status);
     }
 
     // Warm-up
-    for (size_t i = 0; i < 15; i++)
+    for(size_t i = 0; i < 15; i++)
     {
-        ROCRAND_CHECK(generate_func(generator, data, size));
+        ROCRAND_CHECK(generate_func(generator, data, rounded_size));
     }
     HIP_CHECK(hipDeviceSynchronize());
 
-    // Measurement
     hipEvent_t start, stop;
     HIP_CHECK(hipEventCreate(&start));
     HIP_CHECK(hipEventCreate(&stop));
-    HIP_CHECK(hipEventRecord(start, stream));
-    for (size_t i = 0; i < trials; i++)
+    for(auto _ : state)
     {
-        ROCRAND_CHECK(generate_func(generator, data, size));
+        HIP_CHECK(hipEventRecord(start, stream));
+        for(size_t i = 0; i < trials; i++)
+        {
+            ROCRAND_CHECK(generate_func(generator, data, rounded_size));
+        }
+        HIP_CHECK(hipEventRecord(stop, stream));
+        HIP_CHECK(hipEventSynchronize(stop));
+
+        float elapsed = 0.0f;
+        HIP_CHECK(hipEventElapsedTime(&elapsed, start, stop));
+
+        state.SetIterationTime(elapsed / 1000.f);
     }
-    HIP_CHECK(hipEventRecord(stop, stream));
-    HIP_CHECK(hipEventSynchronize(stop));
-    float elapsed;
-    HIP_CHECK(hipEventElapsedTime(&elapsed, start, stop));
-    HIP_CHECK(hipEventDestroy(start));
+    state.SetBytesProcessed(trials * state.iterations() * rounded_size * sizeof(T));
+    state.SetItemsProcessed(trials * state.iterations() * rounded_size);
+
     HIP_CHECK(hipEventDestroy(stop));
-
-    std::cout << std::fixed << std::setprecision(3)
-              << "      "
-              << "Throughput = "
-              << std::setw(8) << (trials * size * sizeof(T)) /
-                    (elapsed / 1e3 * (1 << 30))
-              << " GB/s, Samples = "
-              << std::setw(8) << (trials * size) /
-                    (elapsed / 1e3 * (1 << 30))
-              << " GSample/s, AvgTime (1 trial) = "
-              << std::setw(8) << elapsed / trials
-              << " ms, Time (all) = "
-              << std::setw(8) << elapsed
-              << " ms, Size = " << size
-              << std::endl;
-
+    HIP_CHECK(hipEventDestroy(start));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
     HIP_CHECK(hipFree(data));
 }
 
-void run_benchmarks(const cli::Parser& parser,
-                    const rng_type_t rng_type,
-                    const std::string& distribution,
-                    hipStream_t stream)
+int main(int argc, char* argv[])
 {
-    if (distribution == "uniform-uint")
-    {
-        run_benchmark<unsigned int>(parser, rng_type, stream,
-            [](rocrand_generator gen, unsigned int * data, size_t size) {
-                return rocrand_generate(gen, data, size);
-            }
-        );
-    }
-    if (distribution == "uniform-uchar")
-    {
-        run_benchmark<unsigned char>(parser, rng_type, stream,
-            [](rocrand_generator gen, unsigned char * data, size_t size) {
-                return rocrand_generate_char(gen, data, size);
-            }
-        );
-    }
-    if (distribution == "uniform-ushort")
-    {
-        run_benchmark<unsigned short>(parser, rng_type, stream,
-            [](rocrand_generator gen, unsigned short * data, size_t size) {
-                return rocrand_generate_short(gen, data, size);
-            }
-        );
-    }
-    if (distribution == "uniform-half")
-    {
-        run_benchmark<__half>(parser, rng_type, stream,
-            [](rocrand_generator gen, __half * data, size_t size) {
-                return rocrand_generate_uniform_half(gen, data, size);
-            }
-        );
-    }
-    if (distribution == "uniform-float")
-    {
-        run_benchmark<float>(parser, rng_type, stream,
-            [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_uniform(gen, data, size);
-            }
-        );
-    }
-    if (distribution == "uniform-double")
-    {
-        run_benchmark<double>(parser, rng_type, stream,
-            [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_uniform_double(gen, data, size);
-            }
-        );
-    }
-    if (distribution == "normal-half")
-    {
-        run_benchmark<__half>(parser, rng_type, stream,
-            [](rocrand_generator gen, __half * data, size_t size) {
-                return rocrand_generate_normal_half(gen, data, size, 0.0f, 1.0f);
-            }
-        );
-    }
-    if (distribution == "normal-float")
-    {
-        run_benchmark<float>(parser, rng_type, stream,
-            [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_normal(gen, data, size, 0.0f, 1.0f);
-            }
-        );
-    }
-    if (distribution == "normal-double")
-    {
-        run_benchmark<double>(parser, rng_type, stream,
-            [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_normal_double(gen, data, size, 0.0, 1.0);
-            }
-        );
-    }
-    if (distribution == "log-normal-half")
-    {
-        run_benchmark<__half>(parser, rng_type, stream,
-            [](rocrand_generator gen, __half * data, size_t size) {
-                return rocrand_generate_log_normal_half(gen, data, size, 0.0f, 1.0f);
-            }
-        );
-    }
-    if (distribution == "log-normal-float")
-    {
-        run_benchmark<float>(parser, rng_type, stream,
-            [](rocrand_generator gen, float * data, size_t size) {
-                return rocrand_generate_log_normal(gen, data, size, 0.0f, 1.0f);
-            }
-        );
-    }
-    if (distribution == "log-normal-double")
-    {
-        run_benchmark<double>(parser, rng_type, stream,
-            [](rocrand_generator gen, double * data, size_t size) {
-                return rocrand_generate_log_normal_double(gen, data, size, 0.0, 1.0);
-            }
-        );
-    }
-    if (distribution == "poisson")
-    {
-        const auto lambdas = parser.get<std::vector<double>>("lambda");
-        for (double lambda : lambdas)
-        {
-            std::cout << "    " << "lambda "
-                 << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_benchmark<unsigned int>(parser, rng_type, stream,
-                [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
-                    return rocrand_generate_poisson(gen, data, size, lambda);
-                }
-            );
-        }
-    }
-}
 
-const std::vector<std::string> all_engines = {
-    "xorwow",
-    "mrg31k3p",
-    "mrg32k3a",
-    "mtgp32",
-    "philox",
-    "lfsr113",
-    "sobol32",
-    "scrambled_sobol32",
-    "sobol64",
-    "scrambled_sobol64",
-};
+    // Parse argv
+    benchmark::Initialize(&argc, argv);
 
-const std::vector<std::string> all_distributions = {
-    "uniform-uint",
-    "uniform-uchar",
-    "uniform-ushort",
-    "uniform-half",
-    // "uniform-long-long",
-    "uniform-float",
-    "uniform-double",
-    "normal-half",
-    "normal-float",
-    "normal-double",
-    "log-normal-half",
-    "log-normal-float",
-    "log-normal-double",
-    "poisson"
-};
-
-int main(int argc, char *argv[])
-{
     cli::Parser parser(argc, argv);
-
-    const std::string distribution_desc =
-        "space-separated list of distributions:" +
-        std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
-            [](std::string a, std::string b) {
-                return a + "\n      " + b;
-            }
-        ) +
-        "\n      or all";
-    const std::string engine_desc =
-        "space-separated list of random number engines:" +
-        std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-            [](std::string a, std::string b) {
-                return a + "\n      " + b;
-            }
-        ) +
-        "\n      or all";
-
     parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
-    parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
+    parser.set_optional<size_t>("dimensions",
+                                "dimensions",
+                                1,
+                                "number of dimensions of quasi-random values");
     parser.set_optional<size_t>("offset", "offset", 0, "offset of generated pseudo-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
-    parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
-    parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
-    parser.set_optional<std::vector<double>>("lambda", "lambda", {10.0}, "space-separated list of lambdas of Poisson distribution");
+    parser.set_optional<std::vector<double>>(
+        "lambda",
+        "lambda",
+        {10.0},
+        "space-separated list of lambdas of Poisson distribution");
     parser.run_and_exit_if_error();
-
-    std::vector<std::string> engines;
-    {
-        auto es = parser.get<std::vector<std::string>>("engine");
-        if (std::find(es.begin(), es.end(), "all") != es.end())
-        {
-            engines = all_engines;
-        }
-        else
-        {
-            for (auto e : all_engines)
-            {
-                if (std::find(es.begin(), es.end(), e) != es.end())
-                    engines.push_back(e);
-            }
-        }
-    }
-
-    std::vector<std::string> distributions;
-    {
-        auto ds = parser.get<std::vector<std::string>>("dis");
-        if (std::find(ds.begin(), ds.end(), "all") != ds.end())
-        {
-            distributions = all_distributions;
-        }
-        else
-        {
-            for (auto d : all_distributions)
-            {
-                if (std::find(ds.begin(), ds.end(), d) != ds.end())
-                    distributions.push_back(d);
-            }
-        }
-    }
-
-    int version;
-    ROCRAND_CHECK(rocrand_get_version(&version));
-    int runtime_version;
-    HIP_CHECK(hipRuntimeGetVersion(&runtime_version));
-    int device_id;
-    HIP_CHECK(hipGetDevice(&device_id));
-    hipDeviceProp_t props;
-    HIP_CHECK(hipGetDeviceProperties(&props, device_id));
-
-    std::cout << "rocRAND: " << version << " ";
-    std::cout << "Runtime: " << runtime_version << " ";
-    std::cout << "Device: " << props.name;
-    std::cout << std::endl << std::endl;
 
     hipStream_t stream;
     HIP_CHECK(hipStreamCreate(&stream));
 
-    for (auto engine : engines)
+    // Benchmark info
+    add_common_benchmark_info();
+
+    const size_t              size            = parser.get<size_t>("size");
+    const size_t              trials          = parser.get<size_t>("trials");
+    const size_t              dimensions      = parser.get<size_t>("dimensions");
+    const size_t              offset          = parser.get<size_t>("offset");
+    const std::vector<double> poisson_lambdas = parser.get<std::vector<double>>("lambda");
+
+    benchmark::AddCustomContext("size", std::to_string(size));
+    benchmark::AddCustomContext("trials", std::to_string(trials));
+    benchmark::AddCustomContext("dimensions", std::to_string(dimensions));
+    benchmark::AddCustomContext("offset", std::to_string(offset));
+
+    const std::map<rng_type_t, std::string> engine_type_map{
+        {       ROCRAND_RNG_PSEUDO_MTGP32,   "mtgp32"},
+        {       ROCRAND_RNG_PSEUDO_XORWOW,   "xorwow"},
+        {     ROCRAND_RNG_PSEUDO_MRG32K3A, "mrg32k3a"},
+        {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,   "philox"},
+        {       ROCRAND_RNG_QUASI_SOBOL32,  "sobol32"},
+        {       ROCRAND_RNG_QUASI_SOBOL64,  "sobol64"},
+    };
+
+    const std::string benchmark_name_prefix = "device_generate";
+    // Add benchmarks
+    std::vector<benchmark::internal::Benchmark*> benchmarks = {};
+    for(std::pair<rng_type_t, std::string> engine : engine_type_map)
     {
-        rng_type_t rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
-        if (engine == "xorwow")
-            rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
-        else if(engine == "mrg31k3p")
-            rng_type = ROCRAND_RNG_PSEUDO_MRG31K3P;
-        else if (engine == "mrg32k3a")
-            rng_type = ROCRAND_RNG_PSEUDO_MRG32K3A;
-        else if (engine == "philox")
-            rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
-        else if (engine == "sobol32")
-            rng_type = ROCRAND_RNG_QUASI_SOBOL32;
-        else if(engine == "scrambled_sobol32")
-            rng_type = ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32;
-        else if (engine == "sobol64")
-            rng_type = ROCRAND_RNG_QUASI_SOBOL64;
-        else if(engine == "scrambled_sobol64")
-            rng_type = ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64;
-        else if (engine == "mtgp32")
-            rng_type = ROCRAND_RNG_PSEUDO_MTGP32;
-        else if(engine == "lfsr113")
-            rng_type = ROCRAND_RNG_PSEUDO_LFSR113;
-        else
-        {
-            std::cout << "Wrong engine name" << std::endl;
-            exit(1);
-        }
 
-        std::cout << engine << ":" << std::endl;
+        const rng_type_t  engine_type        = engine.first;
+        const std::string name_engine_prefix = benchmark_name_prefix + "<" + engine.second + ",";
 
-        for (auto distribution : distributions)
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "uniform-uint>").c_str(),
+            &run_benchmark<unsigned int>,
+            [](rocrand_generator gen, unsigned int* data, size_t size_gen)
+            { return rocrand_generate(gen, data, size_gen); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "uniform-uchar>").c_str(),
+            &run_benchmark<unsigned char>,
+            [](rocrand_generator gen, unsigned char* data, size_t size_gen)
+            { return rocrand_generate_char(gen, data, size_gen); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "uniform-ushort>").c_str(),
+            &run_benchmark<unsigned short>,
+            [](rocrand_generator gen, unsigned short* data, size_t size_gen)
+            { return rocrand_generate_short(gen, data, size_gen); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "uniform-half>").c_str(),
+            &run_benchmark<__half>,
+            [](rocrand_generator gen, __half* data, size_t size_gen)
+            { return rocrand_generate_uniform_half(gen, data, size_gen); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(
+            benchmark::RegisterBenchmark((name_engine_prefix + "uniform-float>").c_str(),
+                                         &run_benchmark<float>,
+                                         [](rocrand_generator gen, float* data, size_t size_gen)
+                                         { return rocrand_generate_uniform(gen, data, size_gen); },
+                                         size,
+                                         trials,
+                                         dimensions,
+                                         offset,
+                                         engine_type,
+                                         stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "uniform-double>").c_str(),
+            &run_benchmark<double>,
+            [](rocrand_generator gen, double* data, size_t size_gen)
+            { return rocrand_generate_uniform_double(gen, data, size_gen); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "normal-half>").c_str(),
+            &run_benchmark<__half>,
+            [](rocrand_generator gen, __half* data, size_t size_gen)
+            { return rocrand_generate_normal_half(gen, data, size_gen, 0.0f, 1.0f); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "normal-float>").c_str(),
+            &run_benchmark<float>,
+            [](rocrand_generator gen, float* data, size_t size_gen)
+            { return rocrand_generate_normal(gen, data, size_gen, 0.0f, 1.0f); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "normal-double>").c_str(),
+            &run_benchmark<double>,
+            [](rocrand_generator gen, double* data, size_t size_gen)
+            { return rocrand_generate_normal_double(gen, data, size_gen, 0.0, 1.0); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "log-normal-half>").c_str(),
+            &run_benchmark<__half>,
+            [](rocrand_generator gen, __half* data, size_t size_gen)
+            { return rocrand_generate_log_normal_half(gen, data, size_gen, 0.0f, 1.0f); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "log-normal-float>").c_str(),
+            &run_benchmark<float>,
+            [](rocrand_generator gen, float* data, size_t size_gen)
+            { return rocrand_generate_log_normal(gen, data, size_gen, 0.0f, 1.0f); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        benchmarks.emplace_back(benchmark::RegisterBenchmark(
+            (name_engine_prefix + "log-normal-double>").c_str(),
+            &run_benchmark<double>,
+            [](rocrand_generator gen, double* data, size_t size_gen)
+            { return rocrand_generate_log_normal_double(gen, data, size_gen, 0.0, 1.0); },
+            size,
+            trials,
+            dimensions,
+            offset,
+            engine_type,
+            stream));
+
+        for(auto lambda : poisson_lambdas)
         {
-            std::cout << "  " << distribution << ":" << std::endl;
-            run_benchmarks(parser, rng_type, distribution, stream);
+            const std::string poisson_dis_name
+                = std::string("poisson(lambda=") + std::to_string(lambda) + ")";
+            benchmarks.emplace_back(benchmark::RegisterBenchmark(
+                (name_engine_prefix + poisson_dis_name).c_str(),
+                &run_benchmark<unsigned int>,
+                [lambda](rocrand_generator gen, unsigned int* data, size_t size_gen)
+                { return rocrand_generate_poisson(gen, data, size_gen, lambda); },
+                size,
+                trials,
+                dimensions,
+                offset,
+                engine_type,
+                stream));
         }
-        std::cout << std::endl;
     }
-
+    // Use manual timing
+    for(auto& b : benchmarks)
+    {
+        b->UseManualTime();
+        b->Unit(benchmark::kMillisecond);
+    }
+    // Run benchmarks
+    benchmark::RunSpecifiedBenchmarks();
     HIP_CHECK(hipStreamDestroy(stream));
 
     return 0;
