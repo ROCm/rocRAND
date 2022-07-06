@@ -62,7 +62,6 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
-set(ROCM_SYMLINK_LIBS OFF)
 
 # Include cmake scripts
 include(cmake/Dependencies.cmake)
