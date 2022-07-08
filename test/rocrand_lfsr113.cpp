@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <chrono>
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand_kernel.h>
@@ -32,21 +33,53 @@ void generate_lfsr113(const size_t size, unsigned int * output) {
     HIP_CHECK(hipFree(d_output));
 }
 
+void generate_lfsr113_uniform(const size_t size, float * output) {
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::nanoseconds;
+
+    const rocrand_rng_type rng_type = ROCRAND_RNG_PSEUDO_LFSR113;
+
+    rocrand_generator g = NULL;
+    ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
+    
+    float * d_output;
+
+    HIP_CHECK(hipMalloc(&d_output, sizeof(d_output[0]) * size));
+
+    auto t1 = high_resolution_clock::now();
+
+    ROCRAND_CHECK(rocrand_generate_uniform(g, d_output, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    auto t2 = high_resolution_clock::now();
+
+    duration<double, std::nano> time = t2 - t1;
+    std::cout << "Size: " << size << std::endl;
+    std::cout << "Execution time: " << time.count() << " ns." << std::endl;
+
+    HIP_CHECK(hipMemcpy(output, d_output, sizeof(output[0]) * size, hipMemcpyDeviceToHost));
+
+    ROCRAND_CHECK(rocrand_destroy_generator(g));
+    HIP_CHECK(hipFree(d_output));
+}
+
 int main(int argc, char ** argv) {
     size_t size = 256;
 
     if (argc > 1)
         size = atoi(argv[1]);
 
-    std::vector<unsigned int> output(size);
+    // std::vector<unsigned int> output(size);
+    std::vector<float> output(size);
 
-    generate_lfsr113(size, output.data());
+    generate_lfsr113_uniform(size, output.data());
 
-    std::cout << "x,y" << std::endl;
-
-    for (size_t i = 0; i < size; i+=2) {
-        std::cout << output[i] << "," << output[i+1] << std::endl;
-    }
+    // std::cout << "x" << std::endl;
+    // for (size_t i = 0; i < size; i++) {
+        // std::cout << output[i] << std::endl;
+    // }
 }
 
 #endif
