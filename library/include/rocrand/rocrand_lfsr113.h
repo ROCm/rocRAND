@@ -47,8 +47,8 @@ public:
     };
 
     FQUALIFIERS
-    lfsr113_engine(const unsigned int subsequence,
-                   const unsigned int offset)
+    lfsr113_engine(const unsigned int subsequence=0,
+                   const unsigned int offset=0)
     {
         m_state.stream[0] = m_state.curr_stream[0];
         m_state.stream[1] = m_state.curr_stream[1];
@@ -247,7 +247,7 @@ protected:
 typedef rocrand_device::lfsr113_engine rocrand_state_lfsr113;
 
 FQUALIFIERS
-void rocrand_init(/*const unsigned int seed[4],*/
+void rocrand_init(const unsigned long long /* seed */,
                   const unsigned int subsequence,
                   const unsigned int offset,
                   rocrand_state_lfsr113 * state) 

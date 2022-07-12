@@ -32,6 +32,7 @@
 
 #include <math.h>
 
+#include "rocrand/rocrand_lfsr113.h"
 #include "rocrand/rocrand_mrg31k3p.h"
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
@@ -362,6 +363,23 @@ unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
  */
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_sobol64 * state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
+}
+
+/**
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using LFSR113 generator.
+ *
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using LFSR113 generator in \p state. State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ * \param lambda - Lambda parameter of the Poisson distribution
+ *
+ * \return Poisson-distributed <tt>unsigned int</tt>
+ */
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_lfsr113 * state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }

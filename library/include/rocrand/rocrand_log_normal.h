@@ -32,6 +32,7 @@
 
 #include <math.h>
 
+#include "rocrand/rocrand_lfsr113.h"
 #include "rocrand/rocrand_mrg31k3p.h"
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
@@ -39,6 +40,7 @@
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
 #include "rocrand/rocrand_xorwow.h"
+
 
 #include "rocrand/rocrand_normal.h"
 
@@ -704,6 +706,44 @@ float rocrand_log_normal(rocrand_state_sobol64 * state, double mean, double stdd
  */
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_sobol64 * state, double mean, double stddev)
+{
+    double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+    return exp(mean + (stddev * r));
+}
+
+/**
+ * \brief Returns a log-normally distributed \p float value.
+ *
+ * Generates and returns a log-normally distributed \p float value using LFSR113
+ * generator in \p state, and increments position of the generator by one.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Log-normally distributed \p float value
+ */
+FQUALIFIERS
+float rocrand_log_normal(rocrand_state_lfsr113 * state, float mean, float stddev)
+{
+    float r = rocrand_device::detail::normal_distribution(rocrand(state));
+    return expf(mean + (stddev * r));
+}
+
+/**
+ * \brief Returns a log-normally distributed \p double value.
+ *
+ * Generates and returns a log-normally distributed \p double value using LFSR113
+ * generator in \p state, and increments position of the generator by one.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Log-normally distributed \p double value
+ */
+FQUALIFIERS
+double rocrand_log_normal_double(rocrand_state_lfsr113 * state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));

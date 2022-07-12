@@ -610,6 +610,7 @@ const std::vector<std::string> all_engines = {
     // "scrambled_sobol32",
     "sobol64",
     // "scrambled_sobol64",
+    "lfsr113"
 };
 
 const std::vector<std::string> all_distributions = {
@@ -742,6 +743,10 @@ int main(int argc, char *argv[])
             else if (engine == "mtgp32")
             {
                 run_benchmarks<rocrand_state_mtgp32>(parser, distribution, stream);
+            }
+            else if (engine == "lfsr113")
+            {
+                run_benchmarks<rocrand_state_lfsr113>(parser, distribution, stream);
             }
         }
         std::cout << std::endl;
