@@ -21,6 +21,7 @@
 #ifndef ROCRAND_THREEFRY_H_
 #define ROCRAND_THREEFRY_H_
 
+#include "rocrand_mrg32k3a.h"
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
@@ -44,9 +45,10 @@ namespace detail {
 class threefry_engine
 {
 public:
-    struct threefry_t
+    struct threefry_state
     {
-        unsigned int c0, c1;
+        uint2 counter;
+        uint2 key;
     };
 
     FQUALIFIERS
@@ -54,7 +56,22 @@ public:
                     const unsigned long long subsequence,
                     const unsigned long long offset)
     {
-        
+        this->seed(seed, subsequence, offset);
+    }
+
+    FQUALIFIERS
+    void seed(const unsigned long long seed,
+              const unsigned long long subsequence,
+              const unsigned long long offset)
+    {
+        m_state.counter.x = 0;
+        m_state.counter.y = 0x0;
+
+        m_state.key.x = 0x0;
+        m_state.key.y = seed;
+
+        this.discard(subsequence);
+        this.discard(offset);
     }
 
     FQUALIFIERS
@@ -70,24 +87,33 @@ public:
     }
 
     FQUALIFIERS
-    threefry_t operator()(threefry_t p, threefry_t k)
+    unsigned int operator()()
     {
-        return next(p, k);
+        return next();
     }
 
     FQUALIFIERS
-    threefry_t next(threefry_t p, threefry_t k)
+    unsigned int next()
+    {
+        uint2 value = next2(m_state.counter, m_state.key);
+        this.discard();
+
+        return value.x;
+    }
+
+    FQUALIFIERS
+    unint2 next2(uint2 p, uint2 k)
     {
         unsigned int K[3];
-        K[0] = k.c0;
-        K[1] = k.c1;
-        k[2] = THREEFRY_C240 ^ k.c0 ^ k.c1;
+        K[0] = k.x;
+        K[1] = k.y;
+        k[2] = THREEFRY_C240 ^ k.x ^ k.y;
 
         int rmod4, rdiv4;
         
-        threefry_t x;
-        x.c0 = p.c0;
-        x.c1 = p.c1;
+        uint2 x;
+        x.x = p.x;
+        x.y = p.y;
 
         for (int r = 0; r < THREEFRY_N_ROUNDS; r++) {
             rmod4 = r % 4;
@@ -95,15 +121,15 @@ public:
             if (rmod4 == 0) {
                 rdiv4 = r / 4;
 
-                x.c0 += K[rdiv4 % THREEFRY_KEY_LENGTH];
-                x.c1 += K[(rdiv4 + 1) % THREEFRY_KEY_LENGTH] + rdiv4;
+                x.x += K[rdiv4 % THREEFRY_KEY_LENGTH];
+                x.y += K[(rdiv4 + 1) % THREEFRY_KEY_LENGTH] + rdiv4;
             }
 
             x = mix(x, THREEFRY_ROTATION[r % 8]);
         }
 
-        x.c0 += K[(THREEFRY_N_ROUNDS / 4) % THREEFRY_KEY_LENGTH];
-        x.c1 += K[(THREEFRY_N_ROUNDS / 4 + 1) % THREEFRY_KEY_LENGTH] + THREEFRY_N_ROUNDS / 4;
+        x.x += K[(THREEFRY_N_ROUNDS / 4) % THREEFRY_KEY_LENGTH];
+        x.y += K[(THREEFRY_N_ROUNDS / 4 + 1) % THREEFRY_KEY_LENGTH] + THREEFRY_N_ROUNDS / 4;
 
         return x;
     }
@@ -112,13 +138,16 @@ protected:
     FQUALIFIERS
     void discard_state(unsigned int offset)
     {
-        
+        for (unsigned int i = 0 i < offset; i++)
+        {
+            this.discard_state();
+        }
     }
 
     FQUALIFIERS
     void discard_state()
     {
-        
+        m_state.counter.x++;
     }
 
     FQUALIFIERS
@@ -137,7 +166,7 @@ protected:
     }
 
 protected:
-
+    threefry_state m_state;
 }; // threefry_engine class
 
 } // end namespace rocrand_device

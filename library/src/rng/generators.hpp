@@ -32,5 +32,6 @@
 #include "sobol32.hpp"
 #include "sobol64.hpp"
 #include "xorwow.hpp"
+#include "threefry.hpp"
 
 #endif // ROCRAND_RNG_GENERATORS_H_
