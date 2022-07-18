@@ -64,10 +64,10 @@ public:
               const unsigned long long offset = 0)
     {
         m_state.counter.x = 0;
-        m_state.counter.y = 0x0;
+        m_state.counter.y = 0;
 
-        m_state.key.x = 0x0;
-        m_state.key.y = seed;
+        m_state.key.x = seed;
+        m_state.key.y = 0;
 
         this->discard(subsequence);
         this->discard(offset);
@@ -94,10 +94,10 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        uint2 value = this->next2(m_state.counter, m_state.key);
-        this->discard();
+        uint2 x = this->next2(this->m_state.counter, this->m_state.key);
+        this->m_state.counter.x++;
 
-        return value.x;
+        return x.x;
     }
 
     FQUALIFIERS
