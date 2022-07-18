@@ -44,10 +44,15 @@ namespace detail {
 class threefry_engine
 {
 public:
+    struct uint2_64 
+    {
+        unsigned long long x, y;
+    };
+
     struct threefry_state
     {
-        uint2 counter;
-        uint2 key;
+        uint_64 counter;
+        uint_64 key;
     };
 
     FQUALIFIERS
@@ -94,23 +99,23 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        uint2 x = this->next2(this->m_state.counter, this->m_state.key);
+        uint2_64 x = this->next2(this->m_state.counter, this->m_state.key);
         this->m_state.counter.x++;
 
         return x.x;
     }
 
     FQUALIFIERS
-    uint2 next2(uint2 p, uint2 k)
+    uint2_64 next2(uint2_64 p, uint2_64 k)
     {
-        unsigned int K[3];
+        unsigned long long K[3];
         K[0] = k.x;
         K[1] = k.y;
         K[2] = THREEFRY_C240 ^ k.x ^ k.y;
 
         int rmod4, rdiv4;
         
-        uint2 x;
+        uint2_64 x;
         x.x = p.x;
         x.y = p.y;
 
@@ -150,13 +155,13 @@ protected:
     }
 
     FQUALIFIERS
-    unsigned int rotl(unsigned int x, int d)
+    unsigned long long rotl(unsigned long long x, int d)
     {
         return ((x << d) | (x >> (64 - d)));
     }
 
     FQUALIFIERS
-    uint2 mix(uint2 x, int R)
+    uint2_64 mix(uint2_64 x, int R)
     {
         x.x += x.x;
         x.y = rotl(x.y, R) ^ x.x;
