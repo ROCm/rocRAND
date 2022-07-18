@@ -98,6 +98,7 @@ typedef enum rocrand_rng_type
     ROCRAND_RNG_PSEUDO_MRG31K3P         = 405, ///< MRG31k3p pseudorandom generator
     ROCRAND_RNG_PSEUDO_LFSR113          = 406, ///< LFSR113 pseudorandom generator
     ROCRAND_RNG_PSEUDO_MT19937          = 407, ///< Mersenne Twister MT19937 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY         = 408, ///< ThreeFry pseudorandom generator
     ROCRAND_RNG_QUASI_DEFAULT           = 500, ///< Default quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL32           = 501, ///< Sobol32 quasirandom generator
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502, ///< Scrambled Sobol32 quasirandom generator
@@ -133,6 +134,7 @@ typedef enum rocrand_ordering
  * - ROCRAND_RNG_PSEUDO_MTGP32
  * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
  * - ROCRAND_RNG_PSEUDO_LFSR113
+ * - ROCRAND_RNG_PSEUDO_THREEFRY
  * - ROCRAND_RNG_QUASI_SOBOL32
  * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
  * - ROCRAND_RNG_QUASI_SOBOL64

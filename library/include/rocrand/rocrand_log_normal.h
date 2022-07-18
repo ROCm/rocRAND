@@ -42,6 +42,7 @@
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
 #include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_threefry.h"
 
 #include "rocrand/rocrand_normal.h"
 
@@ -875,6 +876,44 @@ double2 rocrand_log_normal_double2(rocrand_state_lfsr113* state, double mean, do
     double2 r = rocrand_device::detail::normal_distribution_double2(
         uint4{state1, state2, state3, state4});
     return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
+}
+
+/**
+ * \brief Returns a log-normally distributed \p double value.
+ *
+ * Generates and returns a log-normally distributed \p double value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Log-normally distributed \p double value
+ */
+FQUALIFIERS
+float rocrand_log_normal(rocrand_state_threefry * state, double mean, double stddev)
+{
+    float r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+    return exp(mean + (stddev * r));
+}
+
+/**
+ * \brief Returns a log-normally distributed \p double value.
+ *
+ * Generates and returns a log-normally distributed \p double value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Log-normally distributed \p double value
+ */
+FQUALIFIERS
+double rocrand_log_normal_double(rocrand_state_threefry * state, double mean, double stddev)
+{
+    double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+    return exp(mean + (stddev * r));
 }
 
 /** @} */ // end of group rocranddevice

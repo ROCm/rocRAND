@@ -40,6 +40,7 @@
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
 #include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_threefry.h"
 
 #include "rocrand/rocrand_common.h"
 
@@ -654,6 +655,46 @@ float rocrand_uniform(rocrand_state_lfsr113* state)
  */
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_lfsr113* state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_threefry * state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * Note: In this implementation returned \p double value is generated
+ * from only 32 random bits (one <tt>unsigned int</tt> value).
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS
+double rocrand_uniform_double(rocrand_state_threefry * state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }

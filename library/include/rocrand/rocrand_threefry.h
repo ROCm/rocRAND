@@ -21,7 +21,6 @@
 #ifndef ROCRAND_THREEFRY_H_
 #define ROCRAND_THREEFRY_H_
 
-#include "rocrand_mrg32k3a.h"
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
@@ -52,17 +51,17 @@ public:
     };
 
     FQUALIFIERS
-    threefry_engine(const unsigned long long seed
-                    const unsigned long long subsequence,
-                    const unsigned long long offset)
+    threefry_engine(const unsigned long long seed = 0,
+                    const unsigned long long subsequence = 0,
+                    const unsigned long long offset = 0)
     {
         this->seed(seed, subsequence, offset);
     }
 
     FQUALIFIERS
-    void seed(const unsigned long long seed,
-              const unsigned long long subsequence,
-              const unsigned long long offset)
+    void seed(const unsigned long long seed = 0,
+              const unsigned long long subsequence = 0,
+              const unsigned long long offset = 0)
     {
         m_state.counter.x = 0;
         m_state.counter.y = 0x0;
@@ -70,8 +69,8 @@ public:
         m_state.key.x = 0x0;
         m_state.key.y = seed;
 
-        this.discard(subsequence);
-        this.discard(offset);
+        this->discard(subsequence);
+        this->discard(offset);
     }
 
     FQUALIFIERS
@@ -95,19 +94,19 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        uint2 value = next2(m_state.counter, m_state.key);
-        this.discard();
+        uint2 value = this->next2(m_state.counter, m_state.key);
+        this->discard();
 
         return value.x;
     }
 
     FQUALIFIERS
-    unint2 next2(uint2 p, uint2 k)
+    uint2 next2(uint2 p, uint2 k)
     {
         unsigned int K[3];
         K[0] = k.x;
         K[1] = k.y;
-        k[2] = THREEFRY_C240 ^ k.x ^ k.y;
+        K[2] = THREEFRY_C240 ^ k.x ^ k.y;
 
         int rmod4, rdiv4;
         
@@ -138,9 +137,9 @@ protected:
     FQUALIFIERS
     void discard_state(unsigned int offset)
     {
-        for (unsigned int i = 0 i < offset; i++)
+        for (unsigned int i = 0; i < offset; i++)
         {
-            this.discard_state();
+            this->discard_state();
         }
     }
 
@@ -157,10 +156,10 @@ protected:
     }
 
     FQUALIFIERS
-    threefry_t mix(threefry_t x, int R)
+    uint2 mix(uint2 x, int R)
     {
-        x.c0 += x.c1;
-        x.c1 = rotl(x.c1, R) ^ x.c0;
+        x.x += x.x;
+        x.y = rotl(x.y, R) ^ x.x;
 
         return x; 
     }
