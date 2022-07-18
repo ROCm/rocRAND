@@ -34,7 +34,7 @@
 #define THREEFRY_MASK 0xffffffffffffffff
 #define THREEFRY_DOUBLE_MULT 5.421010862427522e-20
 
-static const int THREEFRY_ROTATION[] = {16, 42, 12, 31, 16, 32, 24, 21};
+static const __device__ int THREEFRY_ROTATION[] = {16, 42, 12, 31, 16, 32, 24, 21};
 
 namespace rocrand_device {
 namespace detail {
@@ -44,15 +44,10 @@ namespace detail {
 class threefry_engine
 {
 public:
-    struct uint2_64 
-    {
-        unsigned long long x, y;
-    };
-
     struct threefry_state
     {
-        uint_64 counter;
-        uint_64 key;
+        ulonglong2 counter;
+        ulonglong2 key;
     };
 
     FQUALIFIERS
@@ -99,14 +94,14 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        uint2_64 x = this->next2(this->m_state.counter, this->m_state.key);
+        ulonglong2 x = this->next2(this->m_state.counter, this->m_state.key);
         this->m_state.counter.x++;
 
         return x.x;
     }
 
     FQUALIFIERS
-    uint2_64 next2(uint2_64 p, uint2_64 k)
+    ulonglong2 next2(ulonglong2 p, ulonglong2 k)
     {
         unsigned long long K[3];
         K[0] = k.x;
@@ -114,8 +109,8 @@ public:
         K[2] = THREEFRY_C240 ^ k.x ^ k.y;
 
         int rmod4, rdiv4;
-        
-        uint2_64 x;
+
+        ulonglong2 x;
         x.x = p.x;
         x.y = p.y;
 
@@ -161,12 +156,12 @@ protected:
     }
 
     FQUALIFIERS
-    uint2_64 mix(uint2_64 x, int R)
+    ulonglong2 mix(ulonglong2 x, int R)
     {
-        x.x += x.x;
+        x.x += x.y;
         x.y = rotl(x.y, R) ^ x.x;
 
-        return x; 
+        return x;
     }
 
 protected:
@@ -181,7 +176,7 @@ FQUALIFIERS
 void rocrand_init(const unsigned long long seed,
                   const unsigned long long subsequence,
                   const unsigned long long offset,
-                  rocrand_state_threefry * state) 
+                  rocrand_state_threefry * state)
 {
     *state = rocrand_state_threefry(seed, subsequence, offset);
 }
