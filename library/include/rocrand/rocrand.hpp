@@ -1592,7 +1592,7 @@ constexpr typename mtgp32_engine<DefaultSeed>::seed_type mtgp32_engine<DefaultSe
 /// \brief Random number engine based on the LFSR113 algorithm.
 ///
 /// lfsr113_engine is a random number engine based on the LFSR113 algorithm
-template<unsigned int DefaultSeed = ROCRAND_LFSR113_DEFAULT_SEED>
+template<unsigned long long DefaultSeed = ROCRAND_LFSR113_DEFAULT_SEED>
 class lfsr113_engine
 {
 public:
@@ -1620,7 +1620,7 @@ public:
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
         try
         {
-            if (offst_value > 0)
+            if (offset_value > 0)
             {
                 this->offset(offset_value);
             }
