@@ -91,7 +91,7 @@ void run_benchmark(const cli::Parser& parser,
     }
 
     // Warm-up
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < 15; i++)
     {
         ROCRAND_CHECK(generate_func(generator, data, size));
     }
