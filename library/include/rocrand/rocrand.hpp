@@ -2666,9 +2666,8 @@ sobol32_engine<DefaultNumDimensions>::default_num_dimensions;
 
 /// \brief Pseudorandom number engine based ThreeFry.
 ///
-/// threefry_engine is an implementation of ThreeFry pseudorandom number generator,
-/// which is a Counter Based Generator created by Pierre de Buyl.
-/// It produces random 32-bit \p unsigned \p int values on the interval [0; 2^32 - 1].
+/// It generates random numbers of type \p unsigned \p int on the interval [0; 2^32 - 1].
+/// Random numbers are generated in sets of two.
 template<unsigned long long DefaultSeed = 0>
 class threefry_engine
 {
@@ -2755,7 +2754,7 @@ public:
     /// \copydoc philox4x32_10_engine::min()
     result_type min() const
     {
-        return 1;
+        return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()

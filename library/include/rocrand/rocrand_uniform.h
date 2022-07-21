@@ -661,21 +661,21 @@ double rocrand_uniform_double(rocrand_state_lfsr113* state)
 
 
 /**
- * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
  * from (0; 1] range.
  *
- * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
  * \param state - Pointer to a state to use
  *
- * \return Uniformly distributed \p double value from (0; 1] range.
+ * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_threefry * state)
 {
-    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 /**

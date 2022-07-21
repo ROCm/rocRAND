@@ -1075,19 +1075,19 @@ double2 rocrand_normal_double2(rocrand_state_lfsr113* state)
 /**
  * \brief Returns a normally distributed \p double value.
  *
- * Generates and returns a normally distributed \p double value using ThreeFry
+ * Generates and returns a normally distributed \p float value using ThreeFry
  * generator in \p state, and increments position of the generator by one.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
  *
  * \param state - Pointer to a state to use
  *
- * \return Normally distributed \p double value
+ * \return Normally distributed \p float value
  */
 FQUALIFIERS
 float rocrand_normal(rocrand_state_threefry * state)
 {
-    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+    return rocrand_device::detail::normal_distribution(rocrand(state));
 }
 
 /**

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,19 +27,13 @@
 
 #include "rocrand/rocrand_common.h"
 
-#define THREEFRY_N_WORDS 2
 #define THREEFRY_KEY_LENGTH 3
-#define THREEFRY_C240 0x1BD11BDAA9FC1A22
+#define THREEFRY_C240 0x1BD11BDAA9FC1A22ULL
 #define THREEFRY_N_ROUNDS 20
-#define THREEFRY_MASK 0xffffffffffffffff
-#define THREEFRY_DOUBLE_MULT 5.421010862427522e-20
 
 static const __device__ int THREEFRY_ROTATION[] = {16, 42, 12, 31, 16, 32, 24, 21};
 
 namespace rocrand_device {
-namespace detail {
-
-} // end namespace detail
 
 class threefry_engine
 {
@@ -69,7 +63,7 @@ public:
         m_state.key.x = seed;
         m_state.key.y = 0;
 
-        this->discard(subsequence);
+        this->discard_subsequence(subsequence);
         this->discard(offset);
     }
 
@@ -86,6 +80,12 @@ public:
     }
 
     FQUALIFIERS
+    void discard_subsequence(unsigned int subsequence)
+    {
+        this->m_state.counter.y += subsequence;
+    }
+
+    FQUALIFIERS
     unsigned int operator()()
     {
         return next();
@@ -94,27 +94,38 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        ulonglong2 x = this->next2(this->m_state.counter, this->m_state.key);
+        ulonglong2 x = this->threefry_compute(this->m_state.counter, this->m_state.key);
         this->m_state.counter.x++;
 
         return x.x;
     }
 
     FQUALIFIERS
-    ulonglong2 next2(ulonglong2 p, ulonglong2 k)
+    uint2 next2()
     {
-        unsigned long long K[3];
-        K[0] = k.x;
-        K[1] = k.y;
-        K[2] = THREEFRY_C240 ^ k.x ^ k.y;
+        ulonglong2 x = this->threefry_compute(this->m_state.counter, this->m_state.key);
+        this->m_state.counter.x++;
+
+        uint2 y;
+
+        y.x = x.x;
+        y.y = x.y;
+
+        return y;
+    }
+
+    FQUALIFIERS
+    ulonglong2 threefry_compute(ulonglong2 counter, ulonglong2 key)
+    {
+        const unsigned long long K[3] = {
+            key.x, key.y, THREEFRY_C240 ^ key.x ^ key.y
+        };
 
         int rmod4, rdiv4;
 
-        ulonglong2 x;
-        x.x = p.x;
-        x.y = p.y;
+        ulonglong2 x = counter;
 
-        for (int r = 0; r < THREEFRY_N_ROUNDS; r++) {
+        for (unsigned int r = 0; r < THREEFRY_N_ROUNDS; r++) {
             rmod4 = r % 4;
 
             if (rmod4 == 0) {
@@ -137,16 +148,13 @@ protected:
     FQUALIFIERS
     void discard_state(unsigned int offset)
     {
-        for (unsigned int i = 0; i < offset; i++)
-        {
-            this->discard_state();
-        }
+        this->m_state.counter.x += offset;
     }
 
     FQUALIFIERS
     void discard_state()
     {
-        m_state.counter.x++;
+        this->m_state.counter.x++;
     }
 
     FQUALIFIERS

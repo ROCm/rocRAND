@@ -16,10 +16,8 @@
     exit(EXIT_FAILURE);}} while(0)
 
 void generate_data(rocrand_rng_type rng_type) {
-    const size_t size = 1e11;
-    const size_t nb_run = 50;
-
-    size_t run_size = size / nb_run;
+    const size_t size = 1e8;
+    const size_t nb_run = 1000;
 
     rocrand_generator g = NULL;
     ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
@@ -27,19 +25,24 @@ void generate_data(rocrand_rng_type rng_type) {
     unsigned int * output;
     unsigned int * d_output;
 
-    for (size_t i = 0; i < size; i += run_size) {
-        output = (unsigned int *) malloc(sizeof(output[0]) * run_size);
-        HIP_CHECK(hipMalloc(&d_output, sizeof(d_output[0]) * run_size));
+    std::cerr << "Starting the loop. (" << size * nb_run << " numbers)" << std::endl;
+
+    for (size_t i = 0; i < nb_run; i++) {
+        output = (unsigned int *) malloc(sizeof(output[0]) * size);
+        HIP_CHECK(hipMalloc(&d_output, sizeof(d_output[0]) * size));
     
-        ROCRAND_CHECK(rocrand_generate(g, d_output, run_size));
+        ROCRAND_CHECK(rocrand_generate(g, d_output, size));
         HIP_CHECK(hipDeviceSynchronize());
 
-        HIP_CHECK(hipMemcpy(output, d_output, sizeof(output[0]) * run_size, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipMemcpy(output, d_output, sizeof(output[0]) * size, hipMemcpyDeviceToHost));
 
-        fwrite(output, sizeof(unsigned int), run_size, stdout);
+        fwrite(output, sizeof(unsigned int), size, stdout);
 
         free(output);
+        HIP_CHECK(hipFree(d_output));
     }
+
+    std::cerr << "Loop ended." << std::endl;
 
     ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
