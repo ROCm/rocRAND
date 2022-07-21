@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,9 +31,6 @@
 #define ROCRAND_LFSR113_DEFAULT_SEED 0ULL
 
 namespace rocrand_device {
-namespace detail {
-
-} // end namespace detail
 
 class lfsr113_engine
 {
@@ -107,7 +104,7 @@ public:
             ((b >> 24) & 0x000000FF);
         m_state.curr_stream[3] = z;
 
-        discard(subsequence);
+        discard_subsequence(subsequence);
         discard(offset);
     }
 
@@ -121,6 +118,14 @@ public:
     void discard()
     {
         discard_state();
+    }
+
+    FQUALIFIERS
+    void discard_subsequence(unsigned int subsequence) 
+    {
+        for (unsigned int i = 0; i < subsequence; i++) {
+            resetNextSubstream();
+        }
     }
 
     FQUALIFIERS
