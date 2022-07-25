@@ -2,6 +2,9 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 ## (Unreleased) rocRAND-2.10.15 for ROCm 5.3.0
+### Added
+- New benchmark for the host api using googlebenchmark replacing `benchmark_rocrand_generate`,
+  `benchmark_rocrand_generate` is deprecated and will be removed in a future version.
 ### Changed
 - Increased number of warmup iterations for rocrand_benchmark_generate from 5 to 15 to eliminate corner cases that would generate artificially high benchmark scores.
 
