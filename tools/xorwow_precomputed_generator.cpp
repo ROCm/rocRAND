@@ -205,7 +205,7 @@ int main(int argc, char const *argv[]) {
 
     const std::string file_path(argv[1]);
     std::ofstream fout(file_path, std::ios_base::out | std::ios_base::trunc);
-    fout << R"(// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+    fout << R"(// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
