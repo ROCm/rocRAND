@@ -83,10 +83,6 @@ if(BUILD_BENCHMARK)
       message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
     endif()
     set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/googlebenchmark CACHE PATH "")
-    if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-      # hip-clang cannot compile googlebenchmark for some reason
-      set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
-    endif()
 
     download_project(
       PROJ           googlebenchmark
