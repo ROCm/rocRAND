@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -115,14 +115,13 @@ struct uniform_distribution<__half>
     }
 };
 
+// Mrg32k3a and Mrg31k3p
 
-// Mrg32k3a
+template<class T, typename engine>
+struct mrg_engine_uniform_distribution;
 
-template<class T>
-struct mrg_uniform_distribution;
-
-template<>
-struct mrg_uniform_distribution<unsigned int>
+template<typename engine>
+struct mrg_engine_uniform_distribution<unsigned int, engine>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
@@ -130,13 +129,13 @@ struct mrg_uniform_distribution<unsigned int>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
         output[0] = v;
     }
 };
 
-template<>
-struct mrg_uniform_distribution<unsigned char>
+template<typename engine>
+struct mrg_engine_uniform_distribution<unsigned char, engine>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 4;
@@ -144,13 +143,13 @@ struct mrg_uniform_distribution<unsigned char>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
         *reinterpret_cast<unsigned int *>(output) = v;
     }
 };
 
-template<>
-struct mrg_uniform_distribution<unsigned short>
+template<typename engine>
+struct mrg_engine_uniform_distribution<unsigned short, engine>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 2;
@@ -158,13 +157,13 @@ struct mrg_uniform_distribution<unsigned short>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
         *reinterpret_cast<unsigned int *>(output) = v;
     }
 };
 
-template<>
-struct mrg_uniform_distribution<float>
+template<typename engine>
+struct mrg_engine_uniform_distribution<float, engine>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
@@ -172,12 +171,12 @@ struct mrg_uniform_distribution<float>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], float (&output)[1]) const
     {
-        output[0] = rocrand_device::detail::mrg_uniform_distribution(input[0]);
+        output[0] = rocrand_device::detail::mrg_uniform_distribution<engine>(input[0]);
     }
 };
 
-template<>
-struct mrg_uniform_distribution<double>
+template<typename engine>
+struct mrg_engine_uniform_distribution<double, engine>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
@@ -185,12 +184,12 @@ struct mrg_uniform_distribution<double>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], double (&output)[1]) const
     {
-        output[0] = rocrand_device::detail::mrg_uniform_distribution_double(input[0]);
+        output[0] = rocrand_device::detail::mrg_uniform_distribution_double<engine>(input[0]);
     }
 };
 
-template<>
-struct mrg_uniform_distribution<__half>
+template<typename engine>
+struct mrg_engine_uniform_distribution<__half, engine>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 2;
@@ -198,12 +197,46 @@ struct mrg_uniform_distribution<__half>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
         output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
         output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
     }
 };
 
+// Mrg32k3a (compatibility API)
+
+template<class T>
+struct mrg_uniform_distribution;
+
+template<>
+struct mrg_uniform_distribution<unsigned int>
+    : mrg_engine_uniform_distribution<unsigned int, rocrand_device::mrg32k3a_engine>
+{};
+
+template<>
+struct mrg_uniform_distribution<unsigned char>
+    : mrg_engine_uniform_distribution<unsigned char, rocrand_device::mrg32k3a_engine>
+{};
+
+template<>
+struct mrg_uniform_distribution<unsigned short>
+    : mrg_engine_uniform_distribution<unsigned short, rocrand_device::mrg32k3a_engine>
+{};
+
+template<>
+struct mrg_uniform_distribution<float>
+    : mrg_engine_uniform_distribution<float, rocrand_device::mrg32k3a_engine>
+{};
+
+template<>
+struct mrg_uniform_distribution<double>
+    : mrg_engine_uniform_distribution<double, rocrand_device::mrg32k3a_engine>
+{};
+
+template<>
+struct mrg_uniform_distribution<__half>
+    : mrg_engine_uniform_distribution<__half, rocrand_device::mrg32k3a_engine>
+{};
 
 // Sobol
 

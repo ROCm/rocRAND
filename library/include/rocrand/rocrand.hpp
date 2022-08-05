@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -1193,6 +1193,143 @@ template<unsigned long long DefaultSeed>
 constexpr typename xorwow_engine<DefaultSeed>::seed_type xorwow_engine<DefaultSeed>::default_seed;
 /// \endcond
 
+/// \brief Pseudorandom number engine based MRG31k3p CMRG.
+///
+/// mrg31k3p_engine is an implementation of MRG31k3p pseudorandom number generator,
+/// which is a Combined Multiple Recursive Generator (CMRG) created by Pierre L'Ecuyer.
+/// It produces random 32-bit \p unsigned \p int values on the interval [0; 2^32 - 1].
+template<unsigned long long DefaultSeed = ROCRAND_MRG31K3P_DEFAULT_SEED>
+class mrg31k3p_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef unsigned long long seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed = DefaultSeed;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
+    mrg31k3p_engine(seed_type seed_value = DefaultSeed, offset_type offset_value = 0)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    mrg31k3p_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~mrg31k3p_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 1;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_MRG31K3P;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned long long DefaultSeed>
+constexpr
+    typename mrg31k3p_engine<DefaultSeed>::seed_type mrg31k3p_engine<DefaultSeed>::default_seed;
+/// \endcond
+
 /// \brief Pseudorandom number engine based MRG32k3a CMRG.
 ///
 /// mrg32k3a_engine is an implementation of MRG32k3a pseudorandom number generator,
@@ -1782,6 +1919,9 @@ typedef philox4x32_10_engine<> philox4x32_10;
 /// \typedef xorwow
 /// \brief Typedef of rocrand_cpp::xorwow_engine PRNG engine with default seed (#ROCRAND_XORWOW_DEFAULT_SEED).
 typedef xorwow_engine<> xorwow;
+/// \typedef mrg31k3p
+/// \brief Typedef of rocrand_cpp::mrg31k3p_engine PRNG engine with default seed (#ROCRAND_MRG31K3P_DEFAULT_SEED).
+typedef mrg31k3p_engine<> mrg31k3a;
 /// \typedef mrg32k3a
 /// \brief Typedef of rocrand_cpp::mrg32k3a_engine PRNG engine with default seed (#ROCRAND_MRG32K3A_DEFAULT_SEED).
 typedef mrg32k3a_engine<> mrg32k3a;

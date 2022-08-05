@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -137,15 +137,36 @@ TEST(normal_distribution_tests, half_test)
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
 
-TEST(mrg_normal_distribution_tests, float_test)
+template<typename mrg, unsigned int m1>
+struct mrg_normal_distribution_test_type
+{
+    typedef mrg                   mrg_type;
+    static constexpr unsigned int mrg_m1 = m1;
+};
+
+template<typename test_type>
+struct mrg_normal_distribution_tests : public ::testing::Test
+{
+    typedef typename test_type::mrg_type mrg_type;
+    static constexpr unsigned int        mrg_m1 = test_type::mrg_m1;
+};
+
+typedef ::testing::Types<
+    mrg_normal_distribution_test_type<rocrand_device::mrg31k3p_engine, ROCRAND_MRG31K3P_M1>,
+    mrg_normal_distribution_test_type<rocrand_device::mrg32k3a_engine, ROCRAND_MRG32K3A_M1>>
+    mrg_normal_distribution_test_types;
+
+TYPED_TEST_SUITE(mrg_normal_distribution_tests, mrg_normal_distribution_test_types);
+
+TYPED_TEST(mrg_normal_distribution_tests, float_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+    std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
     const size_t size = 4000;
     float val[size];
-    mrg_normal_distribution<float> u(2.0f, 5.0f);
+    mrg_engine_normal_distribution<float, typename TestFixture::mrg_type> u(2.0f, 5.0f);
 
     // Calculate mean
     float mean = 0.0f;
@@ -174,15 +195,15 @@ TEST(mrg_normal_distribution_tests, float_test)
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 }
 
-TEST(mrg_normal_distribution_tests, double_test)
+TYPED_TEST(mrg_normal_distribution_tests, double_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+    std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
     const size_t size = 4000;
     double val[size];
-    mrg_normal_distribution<double> u(2.0, 5.0);
+    mrg_engine_normal_distribution<double, typename TestFixture::mrg_type> u(2.0, 5.0);
 
     // Calculate mean
     double mean = 0.0;
@@ -211,15 +232,15 @@ TEST(mrg_normal_distribution_tests, double_test)
     EXPECT_NEAR(5.0, std, 1.0); // 20%
 }
 
-TEST(mrg_normal_distribution_tests, half_test)
+TYPED_TEST(mrg_normal_distribution_tests, half_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+    std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
     const size_t size = 4000;
     half val[size];
-    mrg_normal_distribution<half> u(2.0f, 5.0f);
+    mrg_engine_normal_distribution<half, typename TestFixture::mrg_type> u(2.0f, 5.0f);
 
     // Calculate mean
     float mean = 0.0f;

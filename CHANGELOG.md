@@ -9,6 +9,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ### Added
 - Backward compatibility for deprecated `#include <rocrand.h>` using wrapper header files.
 - Packages for test and benchmark executables on all supported OSes using CPack.
+- Implemented the MRG31K3P generator. 
 
 ## rocRAND-2.10.13 for ROCm 5.1.0
 ### Added

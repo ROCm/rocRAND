@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -86,17 +86,18 @@ typedef enum rocrand_status {
 /**
  * \brief rocRAND generator type
  */
-typedef enum rocrand_rng_type {
-    ROCRAND_RNG_PSEUDO_DEFAULT = 400, ///< Default pseudorandom generator
-    ROCRAND_RNG_PSEUDO_XORWOW = 401, ///< XORWOW pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG32K3A = 402, ///< MRG32k3a pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MTGP32 = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+typedef enum rocrand_rng_type
+{
+    ROCRAND_RNG_PSEUDO_DEFAULT       = 400, ///< Default pseudorandom generator
+    ROCRAND_RNG_PSEUDO_XORWOW        = 401, ///< XORWOW pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG32K3A      = 402, ///< MRG32k3a pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
-    ROCRAND_RNG_QUASI_DEFAULT = 500,  ///< Default quasirandom generator
-    ROCRAND_RNG_QUASI_SOBOL32 = 501, ///< Sobol32 quasirandom generator
-    ROCRAND_RNG_QUASI_SOBOL64 = 504 ///< Sobol64 quasirandom generator
+    ROCRAND_RNG_PSEUDO_MRG31K3P      = 405, ///< MRG31k3p pseudorandom generator
+    ROCRAND_RNG_QUASI_DEFAULT        = 500, ///< Default quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL32        = 501, ///< Sobol32 quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL64        = 504 ///< Sobol64 quasirandom generator
 } rocrand_rng_type;
-
 
 // Host API function
 
@@ -108,6 +109,7 @@ typedef enum rocrand_rng_type {
  *
  * Values for \p rng_type are:
  * - ROCRAND_RNG_PSEUDO_XORWOW
+ * - ROCRAND_RNG_PSEUDO_MRG31K3P
  * - ROCRAND_RNG_PSEUDO_MRG32K3A
  * - ROCRAND_RNG_PSEUDO_MTGP32
  * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
@@ -497,9 +499,9 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's offset.
  *
- * For a MRG32K3a generator seed value can't be zero. If \p seed is
- * equal zero and generator's type is ROCRAND_RNG_PSEUDO_MRG32K3A,
- * value \p 12345 is used as a seed instead.
+ * For an MRG32K3a or MRG31K3p generator the seed value can't be zero. If \p seed is
+ * equal to zero and generator's type is ROCRAND_RNG_PSEUDO_MRG32K3A or ROCRAND_RNG_PSEUDO_MRG31K3P,
+ * value \p 12345 is used as seed instead.
  *
  * \param generator - Pseudo-random number generator
  * \param seed - New seed value

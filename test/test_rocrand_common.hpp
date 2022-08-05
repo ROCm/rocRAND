@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,13 +25,12 @@
 
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
-const rocrand_rng_type rng_types[] = {
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
-    ROCRAND_RNG_PSEUDO_MRG32K3A,
-    ROCRAND_RNG_PSEUDO_XORWOW,
-    ROCRAND_RNG_PSEUDO_MTGP32,
-    ROCRAND_RNG_QUASI_SOBOL32,
-    ROCRAND_RNG_QUASI_SOBOL64
-};
+const rocrand_rng_type rng_types[] = {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+                                      ROCRAND_RNG_PSEUDO_MRG31K3P,
+                                      ROCRAND_RNG_PSEUDO_MRG32K3A,
+                                      ROCRAND_RNG_PSEUDO_XORWOW,
+                                      ROCRAND_RNG_PSEUDO_MTGP32,
+                                      ROCRAND_RNG_QUASI_SOBOL32,
+                                      ROCRAND_RNG_QUASI_SOBOL64};
 
 #endif // TEST_ROCRAND_COMMON_HPP_

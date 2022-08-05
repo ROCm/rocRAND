@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,10 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
         if(rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
         {
             *generator = new rocrand_philox4x32_10();
+        }
+        else if(rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+        {
+            *generator = new rocrand_mrg31k3p();
         }
         else if(rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
         {
@@ -105,6 +109,11 @@ rocrand_generate(rocrand_generator generator,
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -152,6 +161,11 @@ rocrand_generate_char(rocrand_generator generator,
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate(output_data, n);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
@@ -202,6 +216,11 @@ rocrand_generate_short(rocrand_generator generator,
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -251,6 +270,11 @@ rocrand_generate_uniform(rocrand_generator generator,
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_uniform(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -299,6 +323,11 @@ rocrand_generate_uniform_double(rocrand_generator generator,
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_uniform(output_data, n);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_uniform(output_data, n);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -346,6 +375,11 @@ rocrand_generate_uniform_half(rocrand_generator generator,
         rocrand_philox4x32_10 * philox4x32_10_generator =
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_uniform(output_data, n);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_uniform(output_data, n);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
@@ -397,6 +431,11 @@ rocrand_generate_normal(rocrand_generator generator,
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_normal(output_data, n,
                                                         mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_normal(output_data, n, mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
@@ -453,6 +492,11 @@ rocrand_generate_normal_double(rocrand_generator generator,
         return philox4x32_10_generator->generate_normal(output_data, n,
                                                         mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_normal(output_data, n, mean, stddev);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -507,6 +551,11 @@ rocrand_generate_normal_half(rocrand_generator generator,
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_normal(output_data, n,
                                                         mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_normal(output_data, n, mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
@@ -564,6 +613,11 @@ rocrand_generate_log_normal(rocrand_generator generator,
         return philox4x32_10_generator->generate_log_normal(output_data, n,
                                                             mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_log_normal(output_data, n, mean, stddev);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -619,6 +673,11 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
         return philox4x32_10_generator->generate_log_normal(output_data, n,
                                                             mean, stddev);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_log_normal(output_data, n, mean, stddev);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -673,6 +732,11 @@ rocrand_generate_log_normal_half(rocrand_generator generator,
             static_cast<rocrand_philox4x32_10 *>(generator);
         return philox4x32_10_generator->generate_log_normal(output_data, n,
                                                             mean, stddev);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_log_normal(output_data, n, mean, stddev);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
@@ -734,6 +798,11 @@ rocrand_generate_poisson(rocrand_generator generator,
         return philox4x32_10_generator->generate_poisson(output_data, n,
                                                          lambda);
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        rocrand_mrg31k3p* mrg31k3p_generator = static_cast<rocrand_mrg31k3p*>(generator);
+        return mrg31k3p_generator->generate_poisson(output_data, n, lambda);
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         rocrand_mrg32k3a * mrg32k3a_generator =
@@ -784,6 +853,10 @@ rocrand_initialize_generator(rocrand_generator generator)
     {
         return static_cast<rocrand_philox4x32_10 *>(generator)->init();
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        return static_cast<rocrand_mrg31k3p*>(generator)->init();
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         return static_cast<rocrand_mrg32k3a *>(generator)->init();
@@ -818,6 +891,11 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
     {
         static_cast<rocrand_philox4x32_10 *>(generator)->set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        static_cast<rocrand_mrg31k3p*>(generator)->set_stream(stream);
         return ROCRAND_STATUS_SUCCESS;
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
@@ -861,6 +939,15 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed)
         static_cast<rocrand_philox4x32_10 *>(generator)->set_seed(seed);
         return ROCRAND_STATUS_SUCCESS;
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        if(seed == 0ULL)
+        {
+            seed = ROCRAND_MRG31K3P_DEFAULT_SEED;
+        }
+        static_cast<rocrand_mrg31k3p*>(generator)->set_seed(seed);
+        return ROCRAND_STATUS_SUCCESS;
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         if(seed == 0ULL)
@@ -894,6 +981,11 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
     {
         static_cast<rocrand_philox4x32_10 *>(generator)->set_offset(offset);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        static_cast<rocrand_mrg31k3p*>(generator)->set_offset(offset);
         return ROCRAND_STATUS_SUCCESS;
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)

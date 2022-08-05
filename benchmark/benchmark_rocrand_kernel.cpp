@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -601,6 +601,7 @@ void run_benchmarks(const cli::Parser& parser,
 
 const std::vector<std::string> all_engines = {
     "xorwow",
+    "mrg31k3p",
     "mrg32k3a",
     "mtgp32",
     // "mt19937",
@@ -717,6 +718,10 @@ int main(int argc, char *argv[])
             if (engine == "xorwow")
             {
                 run_benchmarks<rocrand_state_xorwow>(parser, distribution, stream);
+            }
+            else if(engine == "mrg31k3p")
+            {
+                run_benchmarks<rocrand_state_mrg31k3p>(parser, distribution, stream);
             }
             else if (engine == "mrg32k3a")
             {
