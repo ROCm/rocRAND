@@ -11,6 +11,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - The `mrg_<distribution>_distribution` structures, which provided numbers based on MRG32K3A, are now replaced by `mrg_engine_<distribution>_distribution`, where `<distribution>` is `log_normal`, `normal`, `poisson`, or `uniform`. These structures provide numbers for MRG31K3P (with template type `rocrand_state_mrg31k3p`) and MRG32K3A (with template type `rocrand_state_mrg32k3a`).
 ### Fixed
 - Sobol64 now returns 64 bit instead of 32 bit random numbers.
+- Fixed a bug that prevented compiling code in C++ mode (with a host compiler) when it included the rocRAND headers on Windows.
 
 ## (Released) rocRAND-2.10.14 for ROCm 5.2.0
 ### Added
