@@ -162,40 +162,22 @@ public:
         // First component
         uint32_t tmp = (((m_state.x1[1] & ROCRAND_MRG31K3P_MASK12) << 22) + (m_state.x1[1] >> 9))
                        + (((m_state.x1[2] & ROCRAND_MRG31K3P_MASK13) << 7) + (m_state.x1[2] >> 24));
-        if(tmp > ROCRAND_MRG31K3P_M1)
-        {
-            tmp -= ROCRAND_MRG31K3P_M1;
-        }
+        tmp -= (tmp > ROCRAND_MRG31K3P_M1) * ROCRAND_MRG31K3P_M1;
         tmp += m_state.x1[2];
-        if(tmp > ROCRAND_MRG31K3P_M1)
-        {
-            tmp -= ROCRAND_MRG31K3P_M1;
-        }
+        tmp -= (tmp > ROCRAND_MRG31K3P_M1) * ROCRAND_MRG31K3P_M1;
         m_state.x1[2] = m_state.x1[1];
         m_state.x1[1] = m_state.x1[0];
         m_state.x1[0] = tmp;
 
         // Second component
         tmp = (((m_state.x2[0] & ROCRAND_MRG31K3P_MASK21) << 15) + 21069 * (m_state.x2[0] >> 16));
-        if(tmp > ROCRAND_MRG31K3P_M2)
-        {
-            tmp -= ROCRAND_MRG31K3P_M2;
-        }
+        tmp -= (tmp > ROCRAND_MRG31K3P_M2) * ROCRAND_MRG31K3P_M2;
         tmp += ((m_state.x2[2] & ROCRAND_MRG31K3P_MASK21) << 15);
-        if(tmp > ROCRAND_MRG31K3P_M2)
-        {
-            tmp -= ROCRAND_MRG31K3P_M2;
-        }
+        tmp -= (tmp > ROCRAND_MRG31K3P_M2) * ROCRAND_MRG31K3P_M2;
         tmp += 21069 * (m_state.x2[2] >> 16);
-        if(tmp > ROCRAND_MRG31K3P_M2)
-        {
-            tmp -= ROCRAND_MRG31K3P_M2;
-        }
+        tmp -= (tmp > ROCRAND_MRG31K3P_M2) * ROCRAND_MRG31K3P_M2;
         tmp += m_state.x2[2];
-        if(tmp > ROCRAND_MRG31K3P_M2)
-        {
-            tmp -= ROCRAND_MRG31K3P_M2;
-        }
+        tmp -= (tmp > ROCRAND_MRG31K3P_M2) * ROCRAND_MRG31K3P_M2;
         m_state.x2[2] = m_state.x2[1];
         m_state.x2[1] = m_state.x2[0];
         m_state.x2[0] = tmp;
