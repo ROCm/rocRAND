@@ -127,37 +127,35 @@ __half uniform_distribution_half(unsigned short v)
 
 // For an unsigned integer produced by an MRG-based engine, returns a value
 // in range [0, UINT32_MAX].
-template<typename engine>
-FQUALIFIERS unsigned int mrg_uniform_distribution_uint(unsigned int v);
+template<typename state_type>
+FQUALIFIERS unsigned int mrg_uniform_distribution_uint(unsigned int v) = delete;
 
 template<>
-FQUALIFIERS unsigned int
-    mrg_uniform_distribution_uint<rocrand_device::mrg31k3p_engine>(unsigned int v)
+FQUALIFIERS unsigned int mrg_uniform_distribution_uint<rocrand_state_mrg31k3p>(unsigned int v)
 {
     return static_cast<unsigned int>((v - 1) * ROCRAND_MRG31K3P_UINT32_NORM);
 }
 
 template<>
-FQUALIFIERS unsigned int
-    mrg_uniform_distribution_uint<rocrand_device::mrg32k3a_engine>(unsigned int v)
+FQUALIFIERS unsigned int mrg_uniform_distribution_uint<rocrand_state_mrg32k3a>(unsigned int v)
 {
     return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
 // For an unsigned integer produced by an MRG-based engine, returns value between
 // 0.0f and 1.0f, excluding 0.0f and including 1.0f.
-template<typename engine>
-FQUALIFIERS float mrg_uniform_distribution(unsigned int v);
+template<typename state_type>
+FQUALIFIERS float mrg_uniform_distribution(unsigned int v) = delete;
 
 template<>
-FQUALIFIERS float mrg_uniform_distribution<rocrand_device::mrg31k3p_engine>(unsigned int v)
+FQUALIFIERS float mrg_uniform_distribution<rocrand_state_mrg31k3p>(unsigned int v)
 {
     double ret = static_cast<double>(v) * ROCRAND_MRG31K3P_NORM_DOUBLE;
     return static_cast<float>(ret);
 }
 
 template<>
-FQUALIFIERS float mrg_uniform_distribution<rocrand_device::mrg32k3a_engine>(unsigned int v)
+FQUALIFIERS float mrg_uniform_distribution<rocrand_state_mrg32k3a>(unsigned int v)
 {
     double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
     return static_cast<float>(ret);
@@ -165,18 +163,18 @@ FQUALIFIERS float mrg_uniform_distribution<rocrand_device::mrg32k3a_engine>(unsi
 
 // For an unsigned integer produced by an MRG generator, returns value between
 // 0.0 and 1.0, excluding 0.0 and including 1.0.
-template<typename engine>
-FQUALIFIERS double mrg_uniform_distribution_double(unsigned int v);
+template<typename state_type>
+FQUALIFIERS double mrg_uniform_distribution_double(unsigned int v) = delete;
 
 template<>
-FQUALIFIERS double mrg_uniform_distribution_double<rocrand_device::mrg31k3p_engine>(unsigned int v)
+FQUALIFIERS double mrg_uniform_distribution_double<rocrand_state_mrg31k3p>(unsigned int v)
 {
     double ret = static_cast<double>(v) * ROCRAND_MRG31K3P_NORM_DOUBLE;
     return ret;
 }
 
 template<>
-FQUALIFIERS double mrg_uniform_distribution_double<rocrand_device::mrg32k3a_engine>(unsigned int v)
+FQUALIFIERS double mrg_uniform_distribution_double<rocrand_state_mrg32k3a>(unsigned int v)
 {
     double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
     return ret;
@@ -316,8 +314,7 @@ double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 * state)
  */
 FQUALIFIERS float rocrand_uniform(rocrand_state_mrg31k3p* state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution<rocrand_device::mrg31k3p_engine>(
-        state->next());
+    return rocrand_device::detail::mrg_uniform_distribution<rocrand_state_mrg31k3p>(state->next());
 }
 
 /**
@@ -337,7 +334,7 @@ FQUALIFIERS float rocrand_uniform(rocrand_state_mrg31k3p* state)
  */
 FQUALIFIERS double rocrand_uniform_double(rocrand_state_mrg31k3p* state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_device::mrg31k3p_engine>(
+    return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_state_mrg31k3p>(
         state->next());
 }
 
@@ -356,8 +353,7 @@ FQUALIFIERS double rocrand_uniform_double(rocrand_state_mrg31k3p* state)
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution<rocrand_device::mrg32k3a_engine>(
-        state->next());
+    return rocrand_device::detail::mrg_uniform_distribution<rocrand_state_mrg32k3a>(state->next());
 }
 
  /**
@@ -378,7 +374,7 @@ float rocrand_uniform(rocrand_state_mrg32k3a * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_device::mrg32k3a_engine>(
+    return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_state_mrg32k3a>(
         state->next());
 }
 

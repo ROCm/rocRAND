@@ -106,11 +106,11 @@ struct log_normal_distribution<__half>
 
 // Mrg32k3a and Mrg31k3p
 
-template<class T, typename engine>
+template<class T, typename state_type>
 struct mrg_engine_log_normal_distribution;
 
-template<typename engine>
-struct mrg_engine_log_normal_distribution<float, engine>
+template<typename state_type>
+struct mrg_engine_log_normal_distribution<float, state_type>
 {
     static constexpr unsigned int input_width = 2;
     static constexpr unsigned int output_width = 2;
@@ -125,14 +125,14 @@ struct mrg_engine_log_normal_distribution<float, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[2], float (&output)[2]) const
     {
-        float2 v  = rocrand_device::detail::mrg_normal_distribution2<engine>(input[0], input[1]);
+        float2 v = rocrand_device::detail::mrg_normal_distribution2<state_type>(input[0], input[1]);
         output[0] = expf(mean + v.x * stddev);
         output[1] = expf(mean + v.y * stddev);
     }
 };
 
-template<typename engine>
-struct mrg_engine_log_normal_distribution<double, engine>
+template<typename state_type>
+struct mrg_engine_log_normal_distribution<double, state_type>
 {
     static constexpr unsigned int input_width = 2;
     static constexpr unsigned int output_width = 2;
@@ -147,15 +147,15 @@ struct mrg_engine_log_normal_distribution<double, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[2], double (&output)[2]) const
     {
-        double2 v
-            = rocrand_device::detail::mrg_normal_distribution_double2<engine>(input[0], input[1]);
+        double2 v = rocrand_device::detail::mrg_normal_distribution_double2<state_type>(input[0],
+                                                                                        input[1]);
         output[0] = exp(mean + v.x * stddev);
         output[1] = exp(mean + v.y * stddev);
     }
 };
 
-template<typename engine>
-struct mrg_engine_log_normal_distribution<__half, engine>
+template<typename state_type>
+struct mrg_engine_log_normal_distribution<__half, state_type>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 2;
@@ -170,7 +170,7 @@ struct mrg_engine_log_normal_distribution<__half, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
-        __half2 v = rocrand_device::detail::mrg_normal_distribution_half2<engine>(input[0]);
+        __half2 v = rocrand_device::detail::mrg_normal_distribution_half2<state_type>(input[0]);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)
         *reinterpret_cast<__half2 *>(output) = h2exp(__hfma2(v, stddev, mean));
         #else
@@ -187,7 +187,7 @@ struct mrg_log_normal_distribution;
 
 template<>
 struct mrg_log_normal_distribution<float>
-    : mrg_engine_log_normal_distribution<float, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_log_normal_distribution<float, rocrand_state_mrg32k3a>
 {
     __host__ __device__ mrg_log_normal_distribution(float mean, float stddev)
         : mrg_engine_log_normal_distribution(mean, stddev)
@@ -196,7 +196,7 @@ struct mrg_log_normal_distribution<float>
 
 template<>
 struct mrg_log_normal_distribution<double>
-    : mrg_engine_log_normal_distribution<double, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_log_normal_distribution<double, rocrand_state_mrg32k3a>
 {
     __host__ __device__ mrg_log_normal_distribution(double mean, double stddev)
         : mrg_engine_log_normal_distribution(mean, stddev)
@@ -205,7 +205,7 @@ struct mrg_log_normal_distribution<double>
 
 template<>
 struct mrg_log_normal_distribution<__half>
-    : mrg_engine_log_normal_distribution<__half, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_log_normal_distribution<__half, rocrand_state_mrg32k3a>
 {
     __host__ __device__ mrg_log_normal_distribution(__half mean, __half stddev)
         : mrg_engine_log_normal_distribution(mean, stddev)

@@ -117,12 +117,12 @@ __half2 box_muller_half(unsigned short x, unsigned short y)
     #endif
 }
 
-template<typename engine>
+template<typename state_type>
 FQUALIFIERS float2 mrg_box_muller(unsigned int x, unsigned int y)
 {
     float2 result;
-    float  u = rocrand_device::detail::mrg_uniform_distribution<engine>(x);
-    float  v = rocrand_device::detail::mrg_uniform_distribution<engine>(y) * ROCRAND_2PI;
+    float  u = rocrand_device::detail::mrg_uniform_distribution<state_type>(x);
+    float  v = rocrand_device::detail::mrg_uniform_distribution<state_type>(y) * ROCRAND_2PI;
     float s = sqrtf(-2.0f * logf(u));
     #ifdef __HIP_DEVICE_COMPILE__
         __sincosf(v, &result.x, &result.y);
@@ -135,12 +135,12 @@ FQUALIFIERS float2 mrg_box_muller(unsigned int x, unsigned int y)
     return result;
 }
 
-template<typename engine>
+template<typename state_type>
 FQUALIFIERS double2 mrg_box_muller_double(unsigned int x, unsigned int y)
 {
     double2 result;
-    double  u = rocrand_device::detail::mrg_uniform_distribution<engine>(x);
-    double  v = rocrand_device::detail::mrg_uniform_distribution<engine>(y) * 2.0;
+    double  u = rocrand_device::detail::mrg_uniform_distribution<state_type>(x);
+    double  v = rocrand_device::detail::mrg_uniform_distribution<state_type>(y) * 2.0;
     double s = sqrt(-2.0 * log(u));
     #ifdef __HIP_DEVICE_COMPILE__
         sincospi(v, &result.x, &result.y);
@@ -267,22 +267,22 @@ __half2 normal_distribution_half2(unsigned int v)
     );
 }
 
-template<typename engine>
+template<typename state_type>
 FQUALIFIERS float2 mrg_normal_distribution2(unsigned int v1, unsigned int v2)
 {
-    return ::rocrand_device::detail::mrg_box_muller<engine>(v1, v2);
+    return ::rocrand_device::detail::mrg_box_muller<state_type>(v1, v2);
 }
 
-template<typename engine>
+template<typename state_type>
 FQUALIFIERS double2 mrg_normal_distribution_double2(unsigned int v1, unsigned int v2)
 {
-    return ::rocrand_device::detail::mrg_box_muller_double<engine>(v1, v2);
+    return ::rocrand_device::detail::mrg_box_muller_double<state_type>(v1, v2);
 }
 
-template<typename engine>
+template<typename state_type>
 FQUALIFIERS __half2 mrg_normal_distribution_half2(unsigned int v)
 {
-    v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(v);
+    v = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(v);
     return ::rocrand_device::detail::box_muller_half(
         static_cast<unsigned short>(v),
         static_cast<unsigned short>(v >> 16)
@@ -472,8 +472,7 @@ FQUALIFIERS float rocrand_normal(rocrand_state_mrg31k3p* state)
     auto state2 = state->next();
 
     float2 r
-        = rocrand_device::detail::mrg_normal_distribution2<rocrand_device::mrg31k3p_engine>(state1,
-                                                                                            state2);
+        = rocrand_device::detail::mrg_normal_distribution2<rocrand_state_mrg31k3p>(state1, state2);
     bm_helper::save_float(state, r.y);
     return r.x;
 }
@@ -498,9 +497,7 @@ FQUALIFIERS float2 rocrand_normal2(rocrand_state_mrg31k3p* state)
     auto state1 = state->next();
     auto state2 = state->next();
 
-    return rocrand_device::detail::mrg_normal_distribution2<rocrand_device::mrg31k3p_engine>(
-        state1,
-        state2);
+    return rocrand_device::detail::mrg_normal_distribution2<rocrand_state_mrg31k3p>(state1, state2);
 }
 
 /**
@@ -531,9 +528,8 @@ FQUALIFIERS double rocrand_normal_double(rocrand_state_mrg31k3p* state)
     auto state2 = state->next();
 
     double2 r
-        = rocrand_device::detail::mrg_normal_distribution_double2<rocrand_device::mrg31k3p_engine>(
-            state1,
-            state2);
+        = rocrand_device::detail::mrg_normal_distribution_double2<rocrand_state_mrg31k3p>(state1,
+                                                                                          state2);
     bm_helper::save_double(state, r.y);
     return r.x;
 }
@@ -558,9 +554,8 @@ FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_mrg31k3p* state)
     auto state1 = state->next();
     auto state2 = state->next();
 
-    return rocrand_device::detail::mrg_normal_distribution_double2<rocrand_device::mrg31k3p_engine>(
-        state1,
-        state2);
+    return rocrand_device::detail::mrg_normal_distribution_double2<rocrand_state_mrg31k3p>(state1,
+                                                                                           state2);
 }
 
     /**
@@ -592,8 +587,7 @@ float rocrand_normal(rocrand_state_mrg32k3a * state)
     auto state2 = state->next();
 
     float2 r
-        = rocrand_device::detail::mrg_normal_distribution2<rocrand_device::mrg32k3a_engine>(state1,
-                                                                                            state2);
+        = rocrand_device::detail::mrg_normal_distribution2<rocrand_state_mrg32k3a>(state1, state2);
     bm_helper::save_float(state, r.y);
     return r.x;
 }
@@ -619,9 +613,7 @@ float2 rocrand_normal2(rocrand_state_mrg32k3a * state)
     auto state1 = state->next();
     auto state2 = state->next();
 
-    return rocrand_device::detail::mrg_normal_distribution2<rocrand_device::mrg32k3a_engine>(
-        state1,
-        state2);
+    return rocrand_device::detail::mrg_normal_distribution2<rocrand_state_mrg32k3a>(state1, state2);
 }
 
 /**
@@ -653,9 +645,8 @@ double rocrand_normal_double(rocrand_state_mrg32k3a * state)
     auto state2 = state->next();
 
     double2 r
-        = rocrand_device::detail::mrg_normal_distribution_double2<rocrand_device::mrg32k3a_engine>(
-            state1,
-            state2);
+        = rocrand_device::detail::mrg_normal_distribution_double2<rocrand_state_mrg32k3a>(state1,
+                                                                                          state2);
     bm_helper::save_double(state, r.y);
     return r.x;
 }
@@ -681,9 +672,8 @@ double2 rocrand_normal_double2(rocrand_state_mrg32k3a * state)
     auto state1 = state->next();
     auto state2 = state->next();
 
-    return rocrand_device::detail::mrg_normal_distribution_double2<rocrand_device::mrg32k3a_engine>(
-        state1,
-        state2);
+    return rocrand_device::detail::mrg_normal_distribution_double2<rocrand_state_mrg32k3a>(state1,
+                                                                                           state2);
 }
 
 /**

@@ -19,35 +19,35 @@
 // THE SOFTWARE.
 
 #ifndef ROCRAND_MRG31K3P_H_
-    #define ROCRAND_MRG31K3P_H_
+#define ROCRAND_MRG31K3P_H_
 
-    #ifndef FQUALIFIERS
-        #define FQUALIFIERS __forceinline__ __device__
-    #endif // FQUALIFIERS_
+#ifndef FQUALIFIERS
+    #define FQUALIFIERS __forceinline__ __device__
+#endif // FQUALIFIERS_
 
-    #include <cstdint>
+#include <cstdint>
 
-    #include "rocrand/rocrand_common.h"
-    #include "rocrand/rocrand_mrg31k3p_precomputed.h"
+#include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_mrg31k3p_precomputed.h"
 
-    #define ROCRAND_MRG31K3P_M1 2147483647U // 2 ^ 31 - 1
-    #define ROCRAND_MRG31K3P_M2 2147462579U // 2 ^ 31 - 21069
-    #define ROCRAND_MRG31K3P_MASK12 511U // 2 ^ 9 - 1
-    #define ROCRAND_MRG31K3P_MASK13 16777215U // 2 ^ 24 - 1
-    #define ROCRAND_MRG31K3P_MASK21 65535U // 2 ^ 16 - 1
-    #define ROCRAND_MRG31K3P_NORM_DOUBLE (4.656612875245796923e-10) // 1 / ROCRAND_MRG31K3P_M1
-    #define ROCRAND_MRG31K3P_UINT32_NORM \
-        (2.000000001396983862) // UINT32_MAX / (ROCRAND_MRG31K3P_M1 - 1)
+#define ROCRAND_MRG31K3P_M1 2147483647U // 2 ^ 31 - 1
+#define ROCRAND_MRG31K3P_M2 2147462579U // 2 ^ 31 - 21069
+#define ROCRAND_MRG31K3P_MASK12 511U // 2 ^ 9 - 1
+#define ROCRAND_MRG31K3P_MASK13 16777215U // 2 ^ 24 - 1
+#define ROCRAND_MRG31K3P_MASK21 65535U // 2 ^ 16 - 1
+#define ROCRAND_MRG31K3P_NORM_DOUBLE (4.656612875245796923e-10) // 1 / ROCRAND_MRG31K3P_M1
+#define ROCRAND_MRG31K3P_UINT32_NORM \
+    (2.000000001396983862) // UINT32_MAX / (ROCRAND_MRG31K3P_M1 - 1)
 
 /** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
  */
-    /**
+/**
  * \def ROCRAND_MRG31K3P_DEFAULT_SEED
  * \brief Default seed for MRG31K3P PRNG.
  */
-    #define ROCRAND_MRG31K3P_DEFAULT_SEED 12345ULL
+#define ROCRAND_MRG31K3P_DEFAULT_SEED 12345ULL
 /** @} */ // end of group rocranddevice
 
 namespace rocrand_device
@@ -58,10 +58,10 @@ class mrg31k3p_engine
 public:
     struct mrg31k3p_state
     {
-        uint32_t x1[3];
-        uint32_t x2[3];
+        std::uint32_t x1[3];
+        std::uint32_t x2[3];
 
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -71,7 +71,7 @@ public:
         unsigned int boxmuller_double_state; // is there a double in boxmuller_double
         float        boxmuller_float; // normally distributed float
         double       boxmuller_double; // normally distributed double
-    #endif
+#endif
     };
 
     FQUALIFIERS mrg31k3p_engine()
@@ -143,10 +143,10 @@ public:
 
     FQUALIFIERS void restart(const unsigned long long subsequence, const unsigned long long offset)
     {
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
         m_state.boxmuller_float_state  = 0;
         m_state.boxmuller_double_state = 0;
-    #endif
+#endif
         this->discard_subsequence_impl(subsequence);
         this->discard_impl(offset);
     }
@@ -160,8 +160,9 @@ public:
     FQUALIFIERS unsigned int next()
     {
         // First component
-        uint32_t tmp = (((m_state.x1[1] & ROCRAND_MRG31K3P_MASK12) << 22) + (m_state.x1[1] >> 9))
-                       + (((m_state.x1[2] & ROCRAND_MRG31K3P_MASK13) << 7) + (m_state.x1[2] >> 24));
+        std::uint32_t tmp
+            = (((m_state.x1[1] & ROCRAND_MRG31K3P_MASK12) << 22) + (m_state.x1[1] >> 9))
+              + (((m_state.x1[2] & ROCRAND_MRG31K3P_MASK13) << 7) + (m_state.x1[2] >> 24));
         tmp -= (tmp > ROCRAND_MRG31K3P_M1) * ROCRAND_MRG31K3P_M1;
         tmp += m_state.x1[2];
         tmp -= (tmp > ROCRAND_MRG31K3P_M1) * ROCRAND_MRG31K3P_M1;
@@ -203,13 +204,13 @@ protected:
         {
             if(subsequence & 1)
             {
-    #if defined(__HIP_DEVICE_COMPILE__)
+#if defined(__HIP_DEVICE_COMPILE__)
                 mod_mat_vec_m1(d_mrg31k3p_A1P72 + i, m_state.x1);
                 mod_mat_vec_m2(d_mrg31k3p_A2P72 + i, m_state.x2);
-    #else
+#else
                 mod_mat_vec_m1(h_mrg31k3p_A1P72 + i, m_state.x1);
                 mod_mat_vec_m2(h_mrg31k3p_A2P72 + i, m_state.x2);
-    #endif
+#endif
             }
             subsequence >>= 1;
             i += 9;
@@ -225,13 +226,13 @@ protected:
         {
             if(sequence & 1)
             {
-    #if defined(__HIP_DEVICE_COMPILE__)
+#if defined(__HIP_DEVICE_COMPILE__)
                 mod_mat_vec_m1(d_mrg31k3p_A1P134 + i, m_state.x1);
                 mod_mat_vec_m2(d_mrg31k3p_A2P134 + i, m_state.x2);
-    #else
+#else
                 mod_mat_vec_m1(h_mrg31k3p_A1P134 + i, m_state.x1);
                 mod_mat_vec_m2(h_mrg31k3p_A2P134 + i, m_state.x2);
-    #endif
+#endif
             }
             sequence >>= 1;
             i += 9;
@@ -247,13 +248,13 @@ protected:
         {
             if(offset & 1)
             {
-    #if defined(__HIP_DEVICE_COMPILE__)
+#if defined(__HIP_DEVICE_COMPILE__)
                 mod_mat_vec_m1(d_mrg31k3p_A1 + i, m_state.x1);
                 mod_mat_vec_m2(d_mrg31k3p_A2 + i, m_state.x2);
-    #else
+#else
                 mod_mat_vec_m1(h_mrg31k3p_A1 + i, m_state.x1);
                 mod_mat_vec_m2(h_mrg31k3p_A2 + i, m_state.x2);
-    #endif
+#endif
             }
             offset >>= 1;
             i += 9;
@@ -321,9 +322,9 @@ protected:
     // State
     mrg31k3p_state m_state;
 
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
     friend struct detail::engine_boxmuller_helper<mrg31k3p_engine>;
-    #endif
+#endif
 }; // mrg31k3p_engine class
 
 } // end namespace rocrand_device
@@ -416,6 +417,6 @@ FQUALIFIERS void skipahead_sequence(unsigned long long sequence, rocrand_state_m
     return state->discard_sequence(sequence);
 }
 
-#endif // ROCRAND_MRG31K3P_H_
-
 /** @} */ // end of group rocranddevice
+
+#endif // ROCRAND_MRG31K3P_H_

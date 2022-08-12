@@ -109,6 +109,7 @@ class TestParamsPRNG(TestRNGBase):
 
 make_test(TestParamsPRNG, "DEFAULT",       rngtype=PRNG.DEFAULT)
 make_test(TestParamsPRNG, "XORWOW",        rngtype=PRNG.XORWOW)
+make_test(TestParamsPRNG, "MRG31K3P",      rngtype=PRNG.MRG31K3P)
 make_test(TestParamsPRNG, "MRG32K3A",      rngtype=PRNG.MRG32K3A)
 make_test(TestParamsPRNG, "PHILOX4_32_10", rngtype=PRNG.PHILOX4_32_10)
 
@@ -272,6 +273,7 @@ class TestGenerate(TestRNGBase):
 
 make_test(TestGenerate, "PRNG" + "DEFAULT",       klass=PRNG, rngtype=PRNG.DEFAULT)
 make_test(TestGenerate, "PRNG" + "XORWOW",        klass=PRNG, rngtype=PRNG.XORWOW)
+make_test(TestGenerate, "PRNG" + "MRG31K3P",      klass=PRNG, rngtype=PRNG.MRG31K3P)
 make_test(TestGenerate, "PRNG" + "MRG32K3A",      klass=PRNG, rngtype=PRNG.MRG32K3A)
 make_test(TestGenerate, "PRNG" + "MTGP32",        klass=PRNG, rngtype=PRNG.MTGP32)
 make_test(TestGenerate, "PRNG" + "PHILOX4_32_10", klass=PRNG, rngtype=PRNG.PHILOX4_32_10)

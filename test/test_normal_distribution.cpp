@@ -152,8 +152,8 @@ struct mrg_normal_distribution_tests : public ::testing::Test
 };
 
 typedef ::testing::Types<
-    mrg_normal_distribution_test_type<rocrand_device::mrg31k3p_engine, ROCRAND_MRG31K3P_M1>,
-    mrg_normal_distribution_test_type<rocrand_device::mrg32k3a_engine, ROCRAND_MRG32K3A_M1>>
+    mrg_normal_distribution_test_type<rocrand_state_mrg31k3p, ROCRAND_MRG31K3P_M1>,
+    mrg_normal_distribution_test_type<rocrand_state_mrg32k3a, ROCRAND_MRG32K3A_M1>>
     mrg_normal_distribution_test_types;
 
 TYPED_TEST_SUITE(mrg_normal_distribution_tests, mrg_normal_distribution_test_types);

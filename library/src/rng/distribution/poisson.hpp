@@ -145,7 +145,7 @@ private:
 
 // Mrg32k3a and Mrg31k3p
 
-template<typename engine>
+template<typename state_type>
 struct mrg_engine_poisson_distribution
 {
     static constexpr unsigned int input_width = 1;
@@ -165,14 +165,15 @@ struct mrg_engine_poisson_distribution
         // so probabilities are slightly different than expected,
         // some values can not be generated at all.
         // Hence the "raw" value is remapped to [0, UINT_MAX]:
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
+        unsigned int v
+            = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
         output[0] = dis(v);
     }
 };
 
 // Mrg32ka (compatibility API)
 
-struct mrg_poisson_distribution : mrg_engine_poisson_distribution<rocrand_device::mrg32k3a_engine>
+struct mrg_poisson_distribution : mrg_engine_poisson_distribution<rocrand_state_mrg32k3a>
 {
     mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
         : mrg_engine_poisson_distribution(dis)

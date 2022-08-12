@@ -117,11 +117,11 @@ struct uniform_distribution<__half>
 
 // Mrg32k3a and Mrg31k3p
 
-template<class T, typename engine>
+template<class T, typename state_type>
 struct mrg_engine_uniform_distribution;
 
-template<typename engine>
-struct mrg_engine_uniform_distribution<unsigned int, engine>
+template<typename state_type>
+struct mrg_engine_uniform_distribution<unsigned int, state_type>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
@@ -129,13 +129,14 @@ struct mrg_engine_uniform_distribution<unsigned int, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
+        unsigned int v
+            = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
         output[0] = v;
     }
 };
 
-template<typename engine>
-struct mrg_engine_uniform_distribution<unsigned char, engine>
+template<typename state_type>
+struct mrg_engine_uniform_distribution<unsigned char, state_type>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 4;
@@ -143,13 +144,14 @@ struct mrg_engine_uniform_distribution<unsigned char, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
+        unsigned int v
+            = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
         *reinterpret_cast<unsigned int *>(output) = v;
     }
 };
 
-template<typename engine>
-struct mrg_engine_uniform_distribution<unsigned short, engine>
+template<typename state_type>
+struct mrg_engine_uniform_distribution<unsigned short, state_type>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 2;
@@ -157,13 +159,14 @@ struct mrg_engine_uniform_distribution<unsigned short, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
+        unsigned int v
+            = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
         *reinterpret_cast<unsigned int *>(output) = v;
     }
 };
 
-template<typename engine>
-struct mrg_engine_uniform_distribution<float, engine>
+template<typename state_type>
+struct mrg_engine_uniform_distribution<float, state_type>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
@@ -171,12 +174,12 @@ struct mrg_engine_uniform_distribution<float, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], float (&output)[1]) const
     {
-        output[0] = rocrand_device::detail::mrg_uniform_distribution<engine>(input[0]);
+        output[0] = rocrand_device::detail::mrg_uniform_distribution<state_type>(input[0]);
     }
 };
 
-template<typename engine>
-struct mrg_engine_uniform_distribution<double, engine>
+template<typename state_type>
+struct mrg_engine_uniform_distribution<double, state_type>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
@@ -184,12 +187,12 @@ struct mrg_engine_uniform_distribution<double, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], double (&output)[1]) const
     {
-        output[0] = rocrand_device::detail::mrg_uniform_distribution_double<engine>(input[0]);
+        output[0] = rocrand_device::detail::mrg_uniform_distribution_double<state_type>(input[0]);
     }
 };
 
-template<typename engine>
-struct mrg_engine_uniform_distribution<__half, engine>
+template<typename state_type>
+struct mrg_engine_uniform_distribution<__half, state_type>
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 2;
@@ -197,7 +200,8 @@ struct mrg_engine_uniform_distribution<__half, engine>
     __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint<engine>(input[0]);
+        unsigned int v
+            = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
         output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
         output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
     }
@@ -210,32 +214,32 @@ struct mrg_uniform_distribution;
 
 template<>
 struct mrg_uniform_distribution<unsigned int>
-    : mrg_engine_uniform_distribution<unsigned int, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_uniform_distribution<unsigned int, rocrand_state_mrg32k3a>
 {};
 
 template<>
 struct mrg_uniform_distribution<unsigned char>
-    : mrg_engine_uniform_distribution<unsigned char, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_uniform_distribution<unsigned char, rocrand_state_mrg32k3a>
 {};
 
 template<>
 struct mrg_uniform_distribution<unsigned short>
-    : mrg_engine_uniform_distribution<unsigned short, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_uniform_distribution<unsigned short, rocrand_state_mrg32k3a>
 {};
 
 template<>
 struct mrg_uniform_distribution<float>
-    : mrg_engine_uniform_distribution<float, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_uniform_distribution<float, rocrand_state_mrg32k3a>
 {};
 
 template<>
 struct mrg_uniform_distribution<double>
-    : mrg_engine_uniform_distribution<double, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_uniform_distribution<double, rocrand_state_mrg32k3a>
 {};
 
 template<>
 struct mrg_uniform_distribution<__half>
-    : mrg_engine_uniform_distribution<__half, rocrand_device::mrg32k3a_engine>
+    : mrg_engine_uniform_distribution<__half, rocrand_state_mrg32k3a>
 {};
 
 // Sobol
