@@ -132,18 +132,18 @@ void write_matrices(std::ofstream&      fout,
                     bool                is_device)
 {
     fout << "static const ";
-    fout << (is_device ? "__device__ " : "") << "unsigned long long " << name
-         << "[MRG31K3P_N] = " << std::endl;
-    fout << "    {" << std::endl;
-    fout << "        ";
+    fout << (is_device ? "__device__ " : "") << "unsigned long long " << name << "[MRG31K3P_N] = {"
+         << std::endl;
+    fout << "    // clang-format off" << std::endl;
+    fout << "    ";
     for(int k = 0; k < n; k++)
     {
         fout << a[k] << ", ";
         if((k + 1) % bits == 0 && k != 1)
-            fout << std::endl << "        ";
+            fout << std::endl << "    ";
     }
-    fout << std::endl;
-    fout << "    };" << std::endl;
+    fout << "// clang-format on" << std::endl;
+    fout << "};" << std::endl;
     fout << std::endl;
 }
 
