@@ -32,15 +32,15 @@
 
 #include <math.h>
 
-    #include "rocrand/rocrand_mrg31k3p.h"
-    #include "rocrand/rocrand_mrg32k3a.h"
-    #include "rocrand/rocrand_mtgp32.h"
-    #include "rocrand/rocrand_philox4x32_10.h"
-    #include "rocrand/rocrand_sobol32.h"
-    #include "rocrand/rocrand_sobol64.h"
-    #include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_mrg31k3p.h"
+#include "rocrand/rocrand_mrg32k3a.h"
+#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_sobol32.h"
+#include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_xorwow.h"
 
-    #include "rocrand/rocrand_uniform.h"
+#include "rocrand/rocrand_uniform.h"
 
 namespace rocrand_device {
 namespace detail {
@@ -444,7 +444,7 @@ double4 rocrand_normal_double4(rocrand_state_philox4x32_10 * state)
     };
 }
 
-    /**
+/**
  * \brief Returns a normally distributed \p float value.
  *
  * Generates and returns a normally distributed \p float value using MRG31k3p
@@ -458,7 +458,7 @@ double4 rocrand_normal_double4(rocrand_state_philox4x32_10 * state)
  *
  * \return Normally distributed \p float value
  */
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 FQUALIFIERS float rocrand_normal(rocrand_state_mrg31k3p* state)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg31k3p> bm_helper;
@@ -476,7 +476,7 @@ FQUALIFIERS float rocrand_normal(rocrand_state_mrg31k3p* state)
     bm_helper::save_float(state, r.y);
     return r.x;
 }
-    #endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two normally distributed \p float values.
@@ -514,7 +514,7 @@ FQUALIFIERS float2 rocrand_normal2(rocrand_state_mrg31k3p* state)
  *
  * \return Normally distributed \p double value
  */
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 FQUALIFIERS double rocrand_normal_double(rocrand_state_mrg31k3p* state)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg31k3p> bm_helper;
@@ -533,7 +533,7 @@ FQUALIFIERS double rocrand_normal_double(rocrand_state_mrg31k3p* state)
     bm_helper::save_double(state, r.y);
     return r.x;
 }
-    #endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two normally distributed \p double values.
@@ -558,7 +558,7 @@ FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_mrg31k3p* state)
                                                                                            state2);
 }
 
-    /**
+/**
  * \brief Returns a normally distributed \p float value.
  *
  * Generates and returns a normally distributed \p float value using MRG32k3a
@@ -572,7 +572,7 @@ FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_mrg31k3p* state)
  *
  * \return Normally distributed \p float value
  */
-    #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_normal(rocrand_state_mrg32k3a * state)
 {
@@ -903,6 +903,6 @@ double rocrand_normal_double(rocrand_state_sobol64 * state)
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }
 
-#endif // ROCRAND_NORMAL_H_
-
 /** @} */ // end of group rocranddevice
+
+#endif // ROCRAND_NORMAL_H_

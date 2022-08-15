@@ -32,16 +32,16 @@
 
 #include <math.h>
 
-    #include "rocrand/rocrand_mrg31k3p.h"
-    #include "rocrand/rocrand_mrg32k3a.h"
-    #include "rocrand/rocrand_mtgp32.h"
-    #include "rocrand/rocrand_philox4x32_10.h"
-    #include "rocrand/rocrand_sobol32.h"
-    #include "rocrand/rocrand_sobol64.h"
-    #include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_mrg31k3p.h"
+#include "rocrand/rocrand_mrg32k3a.h"
+#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_sobol32.h"
+#include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_xorwow.h"
 
-    #include "rocrand/rocrand_normal.h"
-    #include "rocrand/rocrand_uniform.h"
+#include "rocrand/rocrand_normal.h"
+#include "rocrand/rocrand_uniform.h"
 
 namespace rocrand_device {
 namespace detail {
@@ -259,7 +259,7 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
 }
 #endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 
-    /**
+/**
  * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using MRG31k3p generator.
  *
  * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
@@ -270,14 +270,14 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_mrg31k3p* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution(state, lambda);
 }
-    #endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 
-    /**
+/**
  * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using MRG32k3a generator.
  *
  * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
@@ -288,7 +288,7 @@ FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_mrg31k3p* state, double l
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-    #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
 {
@@ -366,6 +366,6 @@ unsigned int rocrand_poisson(rocrand_state_sobol64 * state, double lambda)
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
 
-#endif // ROCRAND_POISSON_H_
-
 /** @} */ // end of group rocranddevice
+
+#endif // ROCRAND_POISSON_H_

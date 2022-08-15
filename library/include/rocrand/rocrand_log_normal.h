@@ -32,17 +32,17 @@
 
 #include <math.h>
 
-    #include "rocrand/rocrand_mrg31k3p.h"
-    #include "rocrand/rocrand_mrg32k3a.h"
-    #include "rocrand/rocrand_mtgp32.h"
-    #include "rocrand/rocrand_philox4x32_10.h"
-    #include "rocrand/rocrand_sobol32.h"
-    #include "rocrand/rocrand_sobol64.h"
-    #include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_mrg31k3p.h"
+#include "rocrand/rocrand_mrg32k3a.h"
+#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_sobol32.h"
+#include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_xorwow.h"
 
-    #include "rocrand/rocrand_normal.h"
+#include "rocrand/rocrand_normal.h"
 
-    /**
+/**
  * \brief Returns a log-normally distributed \p float value.
  *
  * Generates and returns a log-normally distributed \p float value using Philox
@@ -57,7 +57,7 @@
  *
  * \return Log-normally distributed \p float value
  */
-    #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
 {
@@ -210,7 +210,7 @@ double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double m
     };
 }
 
-    /**
+/**
  * \brief Returns a log-normally distributed \p float value.
  *
  * Generates and returns a log-normally distributed \p float value using MRG31k3p
@@ -225,7 +225,7 @@ double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double m
  *
  * \return Log-normally distributed \p float value
  */
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 FQUALIFIERS float rocrand_log_normal(rocrand_state_mrg31k3p* state, float mean, float stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg31k3p> bm_helper;
@@ -243,7 +243,7 @@ FQUALIFIERS float rocrand_log_normal(rocrand_state_mrg31k3p* state, float mean, 
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-    #endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
@@ -269,7 +269,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_mrg31k3p* state, float mean
     return float2{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y))};
 }
 
-    /**
+/**
  * \brief Returns a log-normally distributed \p double value.
  *
  * Generates and returns a log-normally distributed \p double value using MRG31k3p
@@ -284,7 +284,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_mrg31k3p* state, float mean
  *
  * \return Log-normally distributed \p double value
  */
-    #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 FQUALIFIERS double
     rocrand_log_normal_double(rocrand_state_mrg31k3p* state, double mean, double stddev)
 {
@@ -304,7 +304,7 @@ FQUALIFIERS double
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
-    #endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.
@@ -333,7 +333,7 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_mrg31k3p* state,
     return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
-    /**
+/**
  * \brief Returns a log-normally distributed \p float value.
  *
  * Generates and returns a log-normally distributed \p float value using MRG32k3a
@@ -348,7 +348,7 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_mrg31k3p* state,
  *
  * \return Log-normally distributed \p float value
  */
-    #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stddev)
 {
@@ -709,7 +709,6 @@ double rocrand_log_normal_double(rocrand_state_sobol64 * state, double mean, dou
     return exp(mean + (stddev * r));
 }
 
+/** @} */ // end of group rocranddevice
 
 #endif // ROCRAND_LOG_NORMAL_H_
-
-/** @} */ // end of group rocranddevice

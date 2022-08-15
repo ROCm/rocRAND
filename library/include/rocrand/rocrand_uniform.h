@@ -30,13 +30,13 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-    #include "rocrand/rocrand_mrg31k3p.h"
-    #include "rocrand/rocrand_mrg32k3a.h"
-    #include "rocrand/rocrand_mtgp32.h"
-    #include "rocrand/rocrand_philox4x32_10.h"
-    #include "rocrand/rocrand_sobol32.h"
-    #include "rocrand/rocrand_sobol64.h"
-    #include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_mrg31k3p.h"
+#include "rocrand/rocrand_mrg32k3a.h"
+#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_sobol32.h"
+#include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_xorwow.h"
 
 namespace rocrand_device {
 namespace detail {
@@ -537,6 +537,6 @@ double rocrand_uniform_double(rocrand_state_sobol64 * state)
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
-#endif // ROCRAND_UNIFORM_H_
-
 /** @} */ // end of group rocranddevice
+
+#endif // ROCRAND_UNIFORM_H_

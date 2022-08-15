@@ -27,17 +27,17 @@
 
 #include <math.h>
 
-    #include "rocrand/rocrand_mrg31k3p.h"
-    #include "rocrand/rocrand_mrg32k3a.h"
-    #include "rocrand/rocrand_mtgp32.h"
-    #include "rocrand/rocrand_philox4x32_10.h"
-    #include "rocrand/rocrand_sobol32.h"
-    #include "rocrand/rocrand_sobol64.h"
-    #include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_mrg31k3p.h"
+#include "rocrand/rocrand_mrg32k3a.h"
+#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_sobol32.h"
+#include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_xorwow.h"
 
-    #include "rocrand/rocrand_discrete_types.h"
-    #include "rocrand/rocrand_normal.h"
-    #include "rocrand/rocrand_uniform.h"
+#include "rocrand/rocrand_discrete_types.h"
+#include "rocrand/rocrand_normal.h"
+#include "rocrand/rocrand_uniform.h"
 
 // Alias method
 //
@@ -298,6 +298,6 @@ unsigned int rocrand_discrete(rocrand_state_sobol64 * state, const rocrand_discr
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
 
-#endif // ROCRAND_DISCRETE_H_
-
 /** @} */ // end of group rocranddevice
+
+#endif // ROCRAND_DISCRETE_H_
