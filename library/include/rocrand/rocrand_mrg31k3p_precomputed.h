@@ -27,7 +27,7 @@
 #define MRG31K3P_DIM 64
 #define MRG31K3P_N 576
 
-static const __device__ unsigned long long d_mrg31k3p_A1[MRG31K3P_N] = {
+static const __device__ uint32_t d_mrg31k3p_A1[MRG31K3P_N] = {
     // clang-format off
     0, 4194304, 129, 1, 0, 0, 0, 1, 0, 
     4194304, 129, 0, 0, 4194304, 129, 1, 0, 0, 
@@ -96,7 +96,7 @@ static const __device__ unsigned long long d_mrg31k3p_A1[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const unsigned long long h_mrg31k3p_A1[MRG31K3P_N] = {
+static const uint32_t h_mrg31k3p_A1[MRG31K3P_N] = {
     // clang-format off
     0, 4194304, 129, 1, 0, 0, 0, 1, 0, 
     4194304, 129, 0, 0, 4194304, 129, 1, 0, 0, 
@@ -165,7 +165,7 @@ static const unsigned long long h_mrg31k3p_A1[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const __device__ unsigned long long d_mrg31k3p_A2[MRG31K3P_N] = {
+static const __device__ uint32_t d_mrg31k3p_A2[MRG31K3P_N] = {
     // clang-format off
     32768, 0, 32769, 1, 0, 0, 0, 1, 0, 
     1073741824, 32769, 1073774592, 32768, 0, 32769, 1, 0, 0, 
@@ -234,7 +234,7 @@ static const __device__ unsigned long long d_mrg31k3p_A2[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const unsigned long long h_mrg31k3p_A2[MRG31K3P_N] = {
+static const uint32_t h_mrg31k3p_A2[MRG31K3P_N] = {
     // clang-format off
     32768, 0, 32769, 1, 0, 0, 0, 1, 0, 
     1073741824, 32769, 1073774592, 32768, 0, 32769, 1, 0, 0, 
@@ -303,7 +303,7 @@ static const unsigned long long h_mrg31k3p_A2[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const __device__ unsigned long long d_mrg31k3p_A1P72[MRG31K3P_N] = {
+static const __device__ uint32_t d_mrg31k3p_A1P72[MRG31K3P_N] = {
     // clang-format off
     1516919229, 758510237, 499121365, 1884998244, 1516919229, 335398200, 601897748, 1884998244, 358115744, 
     1698053532, 465195060, 1970364842, 1530165711, 1698053532, 667727351, 920769984, 1530165711, 1964690609, 
@@ -372,7 +372,7 @@ static const __device__ unsigned long long d_mrg31k3p_A1P72[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const unsigned long long h_mrg31k3p_A1P72[MRG31K3P_N] = {
+static const uint32_t h_mrg31k3p_A1P72[MRG31K3P_N] = {
     // clang-format off
     1516919229, 758510237, 499121365, 1884998244, 1516919229, 335398200, 601897748, 1884998244, 358115744, 
     1698053532, 465195060, 1970364842, 1530165711, 1698053532, 667727351, 920769984, 1530165711, 1964690609, 
@@ -441,7 +441,7 @@ static const unsigned long long h_mrg31k3p_A1P72[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const __device__ unsigned long long d_mrg31k3p_A2P72[MRG31K3P_N] = {
+static const __device__ uint32_t d_mrg31k3p_A2P72[MRG31K3P_N] = {
     // clang-format off
     1228857673, 1496414766, 954677935, 1133297478, 1407477216, 1496414766, 2002613992, 1639496704, 1407477216, 
     1282690299, 1795612190, 365601547, 1650534289, 420160462, 1795612190, 237875349, 92797448, 420160462, 
@@ -510,7 +510,7 @@ static const __device__ unsigned long long d_mrg31k3p_A2P72[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const unsigned long long h_mrg31k3p_A2P72[MRG31K3P_N] = {
+static const uint32_t h_mrg31k3p_A2P72[MRG31K3P_N] = {
     // clang-format off
     1228857673, 1496414766, 954677935, 1133297478, 1407477216, 1496414766, 2002613992, 1639496704, 1407477216, 
     1282690299, 1795612190, 365601547, 1650534289, 420160462, 1795612190, 237875349, 92797448, 420160462, 
@@ -579,7 +579,7 @@ static const unsigned long long h_mrg31k3p_A2P72[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const __device__ unsigned long long d_mrg31k3p_A1P134[MRG31K3P_N] = {
+static const __device__ uint32_t d_mrg31k3p_A1P134[MRG31K3P_N] = {
     // clang-format off
     1702500920, 1849582496, 1656874625, 828554832, 1702500920, 1512419905, 1143731069, 828554832, 102237247, 
     645483870, 620564265, 664205456, 770918242, 645483870, 1281758597, 575939555, 770918242, 765993804, 
@@ -648,7 +648,7 @@ static const __device__ unsigned long long d_mrg31k3p_A1P134[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const unsigned long long h_mrg31k3p_A1P134[MRG31K3P_N] = {
+static const uint32_t h_mrg31k3p_A1P134[MRG31K3P_N] = {
     // clang-format off
     1702500920, 1849582496, 1656874625, 828554832, 1702500920, 1512419905, 1143731069, 828554832, 102237247, 
     645483870, 620564265, 664205456, 770918242, 645483870, 1281758597, 575939555, 770918242, 765993804, 
@@ -717,7 +717,7 @@ static const unsigned long long h_mrg31k3p_A1P134[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const __device__ unsigned long long d_mrg31k3p_A2P134[MRG31K3P_N] = {
+static const __device__ uint32_t d_mrg31k3p_A2P134[MRG31K3P_N] = {
     // clang-format off
     796789021, 1464208080, 607337906, 1241679051, 1431130166, 1464208080, 1401213391, 1178684362, 1431130166, 
     449379819, 1859560334, 1507943303, 281118586, 1370017681, 1859560334, 586645827, 1155666658, 1370017681, 
@@ -786,7 +786,7 @@ static const __device__ unsigned long long d_mrg31k3p_A2P134[MRG31K3P_N] = {
     // clang-format on
 };
 
-static const unsigned long long h_mrg31k3p_A2P134[MRG31K3P_N] = {
+static const uint32_t h_mrg31k3p_A2P134[MRG31K3P_N] = {
     // clang-format off
     796789021, 1464208080, 607337906, 1241679051, 1431130166, 1464208080, 1401213391, 1178684362, 1431130166, 
     449379819, 1859560334, 1507943303, 281118586, 1370017681, 1859560334, 586645827, 1155666658, 1370017681, 

@@ -268,34 +268,26 @@ protected:
     }
 
 private:
-    FQUALIFIERS void mod_mat_vec_m1(const unsigned long long* A, unsigned int* s)
+    FQUALIFIERS void mod_mat_vec_m1(const uint32_t* A, unsigned int* s)
     {
-        unsigned long long x[3];
+        uint64_t x[3] = {s[0], s[1], s[2]};
 
-        x[0] = mod_m1(mod_m1(A[0] * s[0]) + mod_m1(A[1] * s[1]) + mod_m1(A[2] * s[2]));
+        s[0] = mod_m1(mod_m1(A[0] * x[0]) + mod_m1(A[1] * x[1]) + mod_m1(A[2] * x[2]));
 
-        x[1] = mod_m1(mod_m1(A[3] * s[0]) + mod_m1(A[4] * s[1]) + mod_m1(A[5] * s[2]));
+        s[1] = mod_m1(mod_m1(A[3] * x[0]) + mod_m1(A[4] * x[1]) + mod_m1(A[5] * x[2]));
 
-        x[2] = mod_m1(mod_m1(A[6] * s[0]) + mod_m1(A[7] * s[1]) + mod_m1(A[8] * s[2]));
-
-        s[0] = x[0];
-        s[1] = x[1];
-        s[2] = x[2];
+        s[2] = mod_m1(mod_m1(A[6] * x[0]) + mod_m1(A[7] * x[1]) + mod_m1(A[8] * x[2]));
     }
 
-    FQUALIFIERS void mod_mat_vec_m2(const unsigned long long* A, unsigned int* s)
+    FQUALIFIERS void mod_mat_vec_m2(const uint32_t* A, unsigned int* s)
     {
-        unsigned long long x[3];
+        uint64_t x[3] = {s[0], s[1], s[2]};
 
-        x[0] = mod_m2(mod_m2(A[0] * s[0]) + mod_m2(A[1] * s[1]) + mod_m2(A[2] * s[2]));
+        s[0] = mod_m2(mod_m2(A[0] * x[0]) + mod_m2(A[1] * x[1]) + mod_m2(A[2] * x[2]));
 
-        x[1] = mod_m2(mod_m2(A[3] * s[0]) + mod_m2(A[4] * s[1]) + mod_m2(A[5] * s[2]));
+        s[1] = mod_m2(mod_m2(A[3] * x[0]) + mod_m2(A[4] * x[1]) + mod_m2(A[5] * x[2]));
 
-        x[2] = mod_m2(mod_m2(A[6] * s[0]) + mod_m2(A[7] * s[1]) + mod_m2(A[8] * s[2]));
-
-        s[0] = x[0];
-        s[1] = x[1];
-        s[2] = x[2];
+        s[2] = mod_m2(mod_m2(A[6] * x[0]) + mod_m2(A[7] * x[1]) + mod_m2(A[8] * x[2]));
     }
 
     FQUALIFIERS unsigned long long mod_mul_m1(unsigned int i, unsigned long long j)

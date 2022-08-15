@@ -26,77 +26,78 @@
 
 using namespace std;
 
-#define ROCRAND_MRG31K3P_M1 2147483647 // 2 ^ 31 - 1
-#define ROCRAND_MRG31K3P_M2 2147462579 // 2 ^ 31 - 21069
-#define ROCRAND_MRG31K3P_A12 4194304 // 2 ^ 22
-#define ROCRAND_MRG31K3P_A13 129 // 2 ^ 7 + 1
-#define ROCRAND_MRG31K3P_A21 32768 // 2 ^ 15
-#define ROCRAND_MRG31K3P_A23 32769 // 2 ^ 15 + 1
+#define ROCRAND_MRG31K3P_M1 2147483647U // 2 ^ 31 - 1
+#define ROCRAND_MRG31K3P_M2 2147462579U // 2 ^ 31 - 21069
+#define ROCRAND_MRG31K3P_A12 4194304U // 2 ^ 22
+#define ROCRAND_MRG31K3P_A13 129U // 2 ^ 7 + 1
+#define ROCRAND_MRG31K3P_A21 32768U // 2 ^ 15
+#define ROCRAND_MRG31K3P_A23 32769U // 2 ^ 15 + 1
 
 // Modulo multiplication with this matrix progresses g1 by one.
-unsigned long long A1[9] = {0, ROCRAND_MRG31K3P_A12, ROCRAND_MRG31K3P_A13, 1, 0, 0, 0, 1, 0};
+uint32_t A1[9] = {0, ROCRAND_MRG31K3P_A12, ROCRAND_MRG31K3P_A13, 1, 0, 0, 0, 1, 0};
 
 // Modulo multiplication with this matrix progresses g2 by one.
-unsigned long long A2[9] = {ROCRAND_MRG31K3P_A21, 0, ROCRAND_MRG31K3P_A23, 1, 0, 0, 0, 1, 0};
+uint32_t A2[9] = {ROCRAND_MRG31K3P_A21, 0, ROCRAND_MRG31K3P_A23, 1, 0, 0, 0, 1, 0};
 
 // A1^(2^72)
-unsigned long long A1p72[9] = {1516919229,
-                               758510237,
-                               499121365,
-                               1884998244,
-                               1516919229,
-                               335398200,
-                               601897748,
-                               1884998244,
-                               358115744};
+uint32_t A1p72[9] = {1516919229,
+                     758510237,
+                     499121365,
+                     1884998244,
+                     1516919229,
+                     335398200,
+                     601897748,
+                     1884998244,
+                     358115744};
 
 // A2^(2^72)
-unsigned long long A2p72[9] = {1228857673,
-                               1496414766,
-                               954677935,
-                               1133297478,
-                               1407477216,
-                               1496414766,
-                               2002613992,
-                               1639496704,
-                               1407477216};
+uint32_t A2p72[9] = {1228857673,
+                     1496414766,
+                     954677935,
+                     1133297478,
+                     1407477216,
+                     1496414766,
+                     2002613992,
+                     1639496704,
+                     1407477216};
 
 // A1^(2^134)
-unsigned long long A1p134[9] = {1702500920,
-                                1849582496,
-                                1656874625,
-                                828554832,
-                                1702500920,
-                                1512419905,
-                                1143731069,
-                                828554832,
-                                102237247};
+uint32_t A1p134[9] = {1702500920,
+                      1849582496,
+                      1656874625,
+                      828554832,
+                      1702500920,
+                      1512419905,
+                      1143731069,
+                      828554832,
+                      102237247};
 
 // A2^(2^134)
-unsigned long long A2p134[9] = {796789021,
-                                1464208080,
-                                607337906,
-                                1241679051,
-                                1431130166,
-                                1464208080,
-                                1401213391,
-                                1178684362,
-                                1431130166};
+uint32_t A2p134[9] = {796789021,
+                      1464208080,
+                      607337906,
+                      1241679051,
+                      1431130166,
+                      1464208080,
+                      1401213391,
+                      1178684362,
+                      1431130166};
 
-void mod_mat_sq(unsigned long long* A, unsigned long long m)
+void mod_mat_sq(uint32_t* A, uint32_t m)
 {
-    unsigned long long x[9];
-    unsigned long long a;
+    uint32_t x[9];
     for(size_t i = 0; i < 3; i++)
     {
         for(size_t j = 0; j < 3; j++)
         {
-            a = 0;
+            uint64_t a = 0;
             for(size_t k = 0; k < 3; k++)
             {
-                a += (A[i + 3 * k] * A[k + 3 * j]) % m;
+                uint64_t aik = A[i + 3 * k];
+                uint64_t akj = A[k + 3 * j];
+                a += (aik * akj) % m;
             }
-            x[i + 3 * j] = a % m;
+            x[i + 3 * j] = static_cast<uint32_t>(a % m);
         }
     }
     for(size_t i = 0; i < 3; i++)
@@ -107,9 +108,9 @@ void mod_mat_sq(unsigned long long* A, unsigned long long m)
     }
 }
 
-void init_matrices(unsigned long long* matrix, unsigned long long* A, int n, unsigned long long m)
+void init_matrices(uint32_t* matrix, uint32_t* A, int n, uint32_t m)
 {
-    unsigned long long x[9];
+    uint32_t x[9];
     for(int i = 0; i < 9; i++)
         x[i] = A[i];
 
@@ -124,15 +125,11 @@ void init_matrices(unsigned long long* matrix, unsigned long long* A, int n, uns
     }
 }
 
-void write_matrices(std::ofstream&      fout,
-                    const std::string   name,
-                    unsigned long long* a,
-                    int                 n,
-                    int                 bits,
-                    bool                is_device)
+void write_matrices(
+    std::ofstream& fout, const std::string name, uint32_t* a, int n, int bits, bool is_device)
 {
     fout << "static const ";
-    fout << (is_device ? "__device__ " : "") << "unsigned long long " << name << "[MRG31K3P_N] = {"
+    fout << (is_device ? "__device__ " : "") << "uint32_t " << name << "[MRG31K3P_N] = {"
          << std::endl;
     fout << "    // clang-format off" << std::endl;
     fout << "    ";
@@ -158,14 +155,14 @@ int main(int argc, char const* argv[])
         return -1;
     }
 
-    unsigned int        MRG31K3P_DIM = 64;
-    unsigned int        MRG31K3P_N   = MRG31K3P_DIM * 9;
-    unsigned long long* A1_          = new unsigned long long[MRG31K3P_N];
-    unsigned long long* A2_          = new unsigned long long[MRG31K3P_N];
-    unsigned long long* A1p72_       = new unsigned long long[MRG31K3P_N];
-    unsigned long long* A2p72_       = new unsigned long long[MRG31K3P_N];
-    unsigned long long* A1p134_      = new unsigned long long[MRG31K3P_N];
-    unsigned long long* A2p134_      = new unsigned long long[MRG31K3P_N];
+    unsigned int MRG31K3P_DIM = 64;
+    unsigned int MRG31K3P_N   = MRG31K3P_DIM * 9;
+    uint32_t*    A1_          = new uint32_t[MRG31K3P_N];
+    uint32_t*    A2_          = new uint32_t[MRG31K3P_N];
+    uint32_t*    A1p72_       = new uint32_t[MRG31K3P_N];
+    uint32_t*    A2p72_       = new uint32_t[MRG31K3P_N];
+    uint32_t*    A1p134_      = new uint32_t[MRG31K3P_N];
+    uint32_t*    A2p134_      = new uint32_t[MRG31K3P_N];
 
     init_matrices(A1_, A1, MRG31K3P_DIM, ROCRAND_MRG31K3P_M1);
     init_matrices(A2_, A2, MRG31K3P_DIM, ROCRAND_MRG31K3P_M2);
