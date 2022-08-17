@@ -25,8 +25,6 @@
     #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS_
 
-#include <cstdint>
-
 #include "rocrand/rocrand_common.h"
 #include "rocrand/rocrand_mrg31k3p_precomputed.h"
 
@@ -58,8 +56,8 @@ class mrg31k3p_engine
 public:
     struct mrg31k3p_state
     {
-        std::uint32_t x1[3];
-        std::uint32_t x2[3];
+        unsigned int x1[3];
+        unsigned int x2[3];
 
 #ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
@@ -160,7 +158,7 @@ public:
     FQUALIFIERS unsigned int next()
     {
         // First component
-        std::uint32_t tmp
+        unsigned int tmp
             = (((m_state.x1[1] & ROCRAND_MRG31K3P_MASK12) << 22) + (m_state.x1[1] >> 9))
               + (((m_state.x1[2] & ROCRAND_MRG31K3P_MASK13) << 7) + (m_state.x1[2] >> 24));
         tmp -= (tmp >= ROCRAND_MRG31K3P_M1) ? ROCRAND_MRG31K3P_M1 : 0;
@@ -268,9 +266,9 @@ protected:
     }
 
 private:
-    FQUALIFIERS void mod_mat_vec_m1(const uint32_t* A, unsigned int* s)
+    FQUALIFIERS void mod_mat_vec_m1(const unsigned int* A, unsigned int* s)
     {
-        uint64_t x[3] = {s[0], s[1], s[2]};
+        unsigned long long x[3] = {s[0], s[1], s[2]};
 
         s[0] = mod_m1(mod_m1(A[0] * x[0]) + mod_m1(A[1] * x[1]) + mod_m1(A[2] * x[2]));
 
@@ -279,9 +277,9 @@ private:
         s[2] = mod_m1(mod_m1(A[6] * x[0]) + mod_m1(A[7] * x[1]) + mod_m1(A[8] * x[2]));
     }
 
-    FQUALIFIERS void mod_mat_vec_m2(const uint32_t* A, unsigned int* s)
+    FQUALIFIERS void mod_mat_vec_m2(const unsigned int* A, unsigned int* s)
     {
-        uint64_t x[3] = {s[0], s[1], s[2]};
+        unsigned long long x[3] = {s[0], s[1], s[2]};
 
         s[0] = mod_m2(mod_m2(A[0] * x[0]) + mod_m2(A[1] * x[1]) + mod_m2(A[2] * x[2]));
 

@@ -295,8 +295,8 @@ private:
     engine_type* m_engines;
     size_t       m_engines_size;
 
-    static const uint32_t s_threads = 256;
-    static const uint32_t s_blocks  = 512;
+    static const unsigned int s_threads = 256;
+    static const unsigned int s_blocks  = 512;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> m_poisson;
