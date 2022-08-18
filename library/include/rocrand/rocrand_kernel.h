@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,13 @@
 #endif // FQUALIFIERS
 
 #include "rocrand/rocrand_common.h"
-#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_mrg31k3p.h"
 #include "rocrand/rocrand_mrg32k3a.h"
-#include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
-#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_xorwow.h"
 
 #include "rocrand/rocrand_uniform.h"
 #include "rocrand/rocrand_normal.h"

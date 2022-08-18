@@ -251,6 +251,7 @@ void run_benchmarks(const cli::Parser& parser,
 
 const std::vector<std::string> all_engines = {
     "xorwow",
+    "mrg31k3p",
     "mrg32k3a",
     "mtgp32",
     "philox",
@@ -361,6 +362,8 @@ int main(int argc, char *argv[])
         rng_type_t rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
         if (engine == "xorwow")
             rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
+        else if(engine == "mrg31k3p")
+            rng_type = ROCRAND_RNG_PSEUDO_MRG31K3P;
         else if (engine == "mrg32k3a")
             rng_type = ROCRAND_RNG_PSEUDO_MRG32K3A;
         else if (engine == "philox")

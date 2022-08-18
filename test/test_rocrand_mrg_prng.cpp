@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
 #include <gtest/gtest.h>
-#include <vector>
 #include <numeric>
+#include <stdio.h>
+#include <vector>
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand.h>
@@ -34,12 +34,10 @@
 
 using rocrand_device::detail::mad_u64_u32;
 
-__global__
-__launch_bounds__(1)
-void mad_u64_u32_kernel(const unsigned int * x,
-                        const unsigned int * y,
-                        const unsigned long long * z,
-                        unsigned long long * r)
+__global__ __launch_bounds__(1) void mad_u64_u32_kernel(const unsigned int*       x,
+                                                        const unsigned int*       y,
+                                                        const unsigned long long* z,
+                                                        unsigned long long*       r)
 {
     r[0] = mad_u64_u32(x[0], y[0], z[0]);
     r[1] = mad_u64_u32(x[1], y[1], z[1]);
@@ -51,27 +49,35 @@ void mad_u64_u32_kernel(const unsigned int * x,
     r[7] = mad_u64_u32(23, 45, 67ULL);
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
+TEST(rocrand_mrg_prng_tests, mad_u64_u32_test)
 {
     const size_t size = 8;
 
-    unsigned int * x;
-    unsigned int * y;
-    unsigned long long * z;
-    unsigned long long * r;
-    HIP_CHECK(hipMallocHelper((void **)&x, size * sizeof(unsigned int)));
-    HIP_CHECK(hipMallocHelper((void **)&y, size * sizeof(unsigned int)));
-    HIP_CHECK(hipMallocHelper((void **)&z, size * sizeof(unsigned long long)));
-    HIP_CHECK(hipMallocHelper((void **)&r, size * sizeof(unsigned long long)));
+    unsigned int*       x;
+    unsigned int*       y;
+    unsigned long long* z;
+    unsigned long long* r;
+    HIP_CHECK(hipMallocHelper((void**)&x, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void**)&y, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void**)&z, size * sizeof(unsigned long long)));
+    HIP_CHECK(hipMallocHelper((void**)&r, size * sizeof(unsigned long long)));
 
-    unsigned int h_x[size];
-    unsigned int h_y[size];
+    unsigned int       h_x[size];
+    unsigned int       h_y[size];
     unsigned long long h_z[size];
 
-    h_x[0] = 3492343451; h_y[0] = 1234; h_z[0] = 1231314234234265ULL;
-    h_x[1] = 2; h_y[1] = UINT_MAX; h_z[1] = 10ULL;
-    h_x[2] = 0; h_y[2] = 2342345; h_z[2] = 53483747345345ULL;
-    h_x[3] = 1324423423; h_y[3] = 1; h_z[3] = 0ULL;
+    h_x[0] = 3492343451;
+    h_y[0] = 1234;
+    h_z[0] = 1231314234234265ULL;
+    h_x[1] = 2;
+    h_y[1] = UINT_MAX;
+    h_z[1] = 10ULL;
+    h_x[2] = 0;
+    h_y[2] = 2342345;
+    h_z[2] = 53483747345345ULL;
+    h_x[3] = 1324423423;
+    h_y[3] = 1;
+    h_z[3] = 0ULL;
     h_y[4] = 575675676;
     h_x[5] = 12;
 
@@ -79,11 +85,7 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
     HIP_CHECK(hipMemcpy(y, h_y, size * sizeof(unsigned int), hipMemcpyDefault));
     HIP_CHECK(hipMemcpy(z, h_z, size * sizeof(unsigned long long), hipMemcpyDefault));
 
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(mad_u64_u32_kernel),
-        dim3(1), dim3(1), 0, 0,
-        x, y, z, r
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(mad_u64_u32_kernel), dim3(1), dim3(1), 0, 0, x, y, z, r);
     HIP_CHECK(hipGetLastError());
 
     unsigned long long h_r[size];
@@ -104,13 +106,23 @@ TEST(rocrand_mrg32k3a_prng_tests, mad_u64_u32_test)
     HIP_CHECK(hipFree(r));
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
+template<typename test_type>
+struct rocrand_mrg_prng_tests : public ::testing::Test
 {
-    const size_t size = 1313;
-    unsigned int * data;
+    typedef test_type mrg_type;
+};
+
+typedef ::testing::Types<rocrand_mrg31k3p, rocrand_mrg32k3a> rocrand_mrg_prng_test_types;
+
+TYPED_TEST_SUITE(rocrand_mrg_prng_tests, rocrand_mrg_prng_test_types);
+
+TYPED_TEST(rocrand_mrg_prng_tests, uniform_uint_test)
+{
+    const size_t  size = 1313;
+    unsigned int* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
-    rocrand_mrg32k3a g;
+    typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -129,13 +141,13 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_uint_test)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
+TYPED_TEST(rocrand_mrg_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
-    float * data;
+    float*       data;
     hipMallocHelper(&data, sizeof(float) * size);
 
-    rocrand_mrg32k3a g;
+    typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -154,13 +166,13 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_test)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, uniform_double_test)
+TYPED_TEST(rocrand_mrg_prng_tests, uniform_double_test)
 {
     const size_t size = 1313;
-    double * data;
+    double*      data;
     hipMallocHelper(&data, sizeof(double) * size);
 
-    rocrand_mrg32k3a g;
+    typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -179,17 +191,17 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_double_test)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, uniform_float_range_test)
+TYPED_TEST(rocrand_mrg_prng_tests, uniform_float_range_test)
 {
     const size_t size = 1 << 26;
-    float * data;
+    float*       data;
     hipMallocHelper(&data, sizeof(float) * size);
 
-    rocrand_mrg32k3a g;
+    typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
-    float * host_data = new float[size];
+    float* host_data = new float[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -203,17 +215,17 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_float_range_test)
     delete[] host_data;
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, uniform_double_range_test)
+TYPED_TEST(rocrand_mrg_prng_tests, uniform_double_range_test)
 {
     const size_t size = 1 << 26;
-    double * data;
+    double*      data;
     hipMallocHelper(&data, sizeof(double) * size);
 
-    rocrand_mrg32k3a g;
+    typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
-    double * host_data = new double[size];
+    double* host_data = new double[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(double) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -227,13 +239,13 @@ TEST(rocrand_mrg32k3a_prng_tests, uniform_double_range_test)
     delete[] host_data;
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
+TYPED_TEST(rocrand_mrg_prng_tests, normal_float_test)
 {
     const size_t size = 1314;
-    float * data;
+    float*       data;
     hipMallocHelper(&data, sizeof(float) * size);
 
-    rocrand_mrg32k3a g;
+    typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -261,13 +273,13 @@ TEST(rocrand_mrg32k3a_prng_tests, normal_float_test)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
+TYPED_TEST(rocrand_mrg_prng_tests, poisson_test)
 {
-    const size_t size = 1313;
-    unsigned int * data;
+    const size_t  size = 1313;
+    unsigned int* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
-    rocrand_mrg32k3a g;
+    typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -298,15 +310,15 @@ TEST(rocrand_mrg32k3a_prng_tests, poisson_test)
 
 // Check if the numbers generated by first generate() call are different from
 // the numbers generated by the 2nd call (same generator)
-TEST(rocrand_mrg32k3a_prng_tests, state_progress_test)
+TYPED_TEST(rocrand_mrg_prng_tests, state_progress_test)
 {
     // Device data
-    const size_t size = 1025;
-    unsigned int * data;
+    const size_t  size = 1025;
+    unsigned int* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
-    rocrand_mrg32k3a g0;
+    typename TestFixture::mrg_type g0;
 
     // Generate using g0 and copy to host
     ROCRAND_CHECK(g0.generate(data, size));
@@ -327,7 +339,8 @@ TEST(rocrand_mrg32k3a_prng_tests, state_progress_test)
     size_t same = 0;
     for(size_t i = 0; i < size; i++)
     {
-        if(host_data1[i] == host_data2[i]) same++;
+        if(host_data1[i] == host_data2[i])
+            same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -338,17 +351,17 @@ TEST(rocrand_mrg32k3a_prng_tests, state_progress_test)
 
 // Checks if generators with the same seed and in the same state
 // generate the same numbers
-TEST(rocrand_mrg32k3a_prng_tests, same_seed_test)
+TYPED_TEST(rocrand_mrg_prng_tests, same_seed_test)
 {
     const unsigned long long seed = 0xdeadbeefdeadbeefULL;
 
     // Device side data
-    const size_t size = 1024;
-    unsigned int * data;
+    const size_t  size = 1024;
+    unsigned int* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
-    rocrand_mrg32k3a g0, g1;
+    typename TestFixture::mrg_type g0, g1;
     // Set same seeds
     g0.set_seed(seed);
     g1.set_seed(seed);
@@ -381,18 +394,18 @@ TEST(rocrand_mrg32k3a_prng_tests, same_seed_test)
 
 // Checks if generators with the same seed and in the same state generate
 // the same numbers
-TEST(rocrand_mrg32k3a_prng_tests, different_seed_test)
+TYPED_TEST(rocrand_mrg_prng_tests, different_seed_test)
 {
     const unsigned long long seed0 = 0xdeadbeefdeadbeefULL;
     const unsigned long long seed1 = 0xbeefdeadbeefdeadULL;
 
     // Device side data
-    const size_t size = 1024;
-    unsigned int * data;
+    const size_t  size = 1024;
+    unsigned int* data;
     HIP_CHECK(hipMallocHelper((void**)&data, sizeof(unsigned int) * size));
 
     // Generators
-    rocrand_mrg32k3a g0, g1;
+    typename TestFixture::mrg_type g0, g1;
     // Set different seeds
     g0.set_seed(seed0);
     g1.set_seed(seed1);
@@ -417,7 +430,8 @@ TEST(rocrand_mrg32k3a_prng_tests, different_seed_test)
     size_t same = 0;
     for(size_t i = 0; i < size; i++)
     {
-        if(g1_host_data[i] == g0_host_data[i]) same++;
+        if(g1_host_data[i] == g0_host_data[i])
+            same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -426,24 +440,31 @@ TEST(rocrand_mrg32k3a_prng_tests, different_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, discard_test)
+TYPED_TEST(rocrand_mrg_prng_tests, discard_test)
 {
-    const unsigned long long seed = 12345ULL;
-    rocrand_mrg32k3a::engine_type engine1(seed, 0, 678ULL);
-    rocrand_mrg32k3a::engine_type engine2(seed, 0, 677ULL);
+    typedef typename TestFixture::mrg_type mrg_type;
+    const unsigned long long               seed = 12345ULL;
+    typename mrg_type::engine_type         engine1(seed, 0, 678ULL);
+    typename mrg_type::engine_type         engine2(seed, 0, 677ULL);
 
     (void)engine2.next();
 
     EXPECT_EQ(engine1(), engine2());
 
-    const unsigned long long ds[] = {
-        1ULL, 4ULL, 37ULL, 583ULL, 7452ULL,
-        21032ULL, 35678ULL, 66778ULL, 10313475ULL, 82120230ULL
-    };
+    const unsigned long long ds[] = {1ULL,
+                                     4ULL,
+                                     37ULL,
+                                     583ULL,
+                                     7452ULL,
+                                     21032ULL,
+                                     35678ULL,
+                                     66778ULL,
+                                     10313475ULL,
+                                     82120230ULL};
 
-    for (auto d : ds)
+    for(auto d : ds)
     {
-        for (unsigned long long i = 0; i < d; i++)
+        for(unsigned long long i = 0; i < d; i++)
         {
             (void)engine1.next();
         }
@@ -453,15 +474,16 @@ TEST(rocrand_mrg32k3a_prng_tests, discard_test)
     }
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, discard_sequence_test)
+TYPED_TEST(rocrand_mrg_prng_tests, discard_sequence_test)
 {
-    const unsigned long long seed = 23456ULL;
-    rocrand_mrg32k3a::engine_type engine1(seed, 123ULL, 444ULL);
-    rocrand_mrg32k3a::engine_type engine2(seed, 123ULL, 444ULL);
+    typedef typename TestFixture::mrg_type mrg_type;
+    const unsigned long long               seed = 23456ULL;
+    typename mrg_type::engine_type         engine1(seed, 123ULL, 444ULL);
+    typename mrg_type::engine_type         engine2(seed, 123ULL, 444ULL);
 
     EXPECT_EQ(engine1(), engine2());
 
-    engine1.discard( 5356446450ULL);
+    engine1.discard(5356446450ULL);
     engine1.discard_sequence(123ULL);
     engine1.discard(30000000006ULL);
 
@@ -479,17 +501,18 @@ TEST(rocrand_mrg32k3a_prng_tests, discard_sequence_test)
     EXPECT_EQ(engine1(), engine2());
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, discard_subsequence_test)
+TYPED_TEST(rocrand_mrg_prng_tests, discard_subsequence_test)
 {
-    const unsigned long long seed = 23456ULL;
-    rocrand_mrg32k3a::engine_type engine1(seed, 0, 444ULL);
-    rocrand_mrg32k3a::engine_type engine2(seed, 123ULL, 444ULL);
+    typedef typename TestFixture::mrg_type mrg_type;
+    const unsigned long long               seed = 23456ULL;
+    typename mrg_type::engine_type         engine1(seed, 0, 444ULL);
+    typename mrg_type::engine_type         engine2(seed, 123ULL, 444ULL);
 
     engine1.discard_subsequence(123ULL);
 
     EXPECT_EQ(engine1(), engine2());
 
-    engine1.discard( 5356446450ULL);
+    engine1.discard(5356446450ULL);
     engine1.discard_subsequence(123ULL);
     engine1.discard(30000000006ULL);
 
@@ -507,36 +530,50 @@ TEST(rocrand_mrg32k3a_prng_tests, discard_subsequence_test)
     EXPECT_EQ(engine1(), engine2());
 }
 
-template <typename T>
-class rocrand_mrg32k3a_prng_offset : public ::testing::Test {
-public:
-  using output_type = T;
+template<typename T, typename mrg>
+struct rocrand_mrg_prng_offset_type
+{
+    typedef T   output_type;
+    typedef mrg mrg_type;
 };
 
-using RocrandMrg32k3aPrngOffsetTypes = ::testing::Types<unsigned int, float>;
-TYPED_TEST_SUITE(rocrand_mrg32k3a_prng_offset, RocrandMrg32k3aPrngOffsetTypes);
-
-TYPED_TEST(rocrand_mrg32k3a_prng_offset, offsets_test)
+template<typename test_type>
+struct rocrand_mrg_prng_offset : public ::testing::Test
 {
-    using T = typename TestFixture::output_type;
-    const size_t size = 131313;
+    typedef typename test_type::output_type output_type;
+    typedef typename test_type::mrg_type    mrg_type;
+};
 
-    constexpr size_t offsets[] = { 0, 1, 11, 112233 };
+typedef ::testing::Types<rocrand_mrg_prng_offset_type<unsigned int, rocrand_mrg31k3p>,
+                         rocrand_mrg_prng_offset_type<unsigned int, rocrand_mrg32k3a>,
+                         rocrand_mrg_prng_offset_type<float, rocrand_mrg31k3p>,
+                         rocrand_mrg_prng_offset_type<float, rocrand_mrg32k3a>>
+    rocrand_mrg_prng_offset_types;
+
+TYPED_TEST_SUITE(rocrand_mrg_prng_offset, rocrand_mrg_prng_offset_types);
+
+TYPED_TEST(rocrand_mrg_prng_offset, offsets_test)
+{
+    typedef typename TestFixture::output_type T;
+    typedef typename TestFixture::mrg_type    mrg_type;
+    const size_t                              size = 131313;
+
+    constexpr size_t offsets[] = {0, 1, 11, 112233};
 
     for(const auto offset : offsets)
     {
         const size_t size0 = size;
         const size_t size1 = (size + offset);
-        T* data0;
-        T* data1;
+        T*           data0;
+        T*           data1;
         hipMalloc(&data0, sizeof(T) * size0);
         hipMalloc(&data1, sizeof(T) * size1);
 
-        rocrand_mrg32k3a g0;
+        mrg_type g0;
         g0.set_offset(offset);
         g0.generate(data0, size0);
-    
-        rocrand_mrg32k3a g1;
+
+        mrg_type g1;
         g1.generate(data1, size1);
 
         std::vector<T> host_data0(size0);
@@ -544,7 +581,7 @@ TYPED_TEST(rocrand_mrg32k3a_prng_offset, offsets_test)
         hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost);
         hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost);
         hipDeviceSynchronize();
-    
+
         for(size_t i = 0; i < size; ++i)
         {
             ASSERT_EQ(host_data0[i], host_data1[i + offset]);
@@ -557,49 +594,45 @@ TYPED_TEST(rocrand_mrg32k3a_prng_offset, offsets_test)
 
 // Check that subsequent generations of different sizes produce one
 // sequence without gaps, no matter how many values are generated per call.
-template<typename T, typename GenerateFunc>
+template<typename T, typename GeneratorType, typename GenerateFunc>
 void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
 {
-    std::vector<size_t> sizes0({ 100, 1, 24783, 3, 2, 776543 });
-    std::vector<size_t> sizes1({ 1024, 55, 65536, 623456, 30, 111331 });
-    if (divisor > 1)
+    std::vector<size_t> sizes0({100, 1, 24783, 3, 2, 776543});
+    std::vector<size_t> sizes1({1024, 55, 65536, 623456, 30, 111331});
+    if(divisor > 1)
     {
-        for (size_t& s : sizes0) s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
-        for (size_t& s : sizes1) s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+        for(size_t& s : sizes0)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+        for(size_t& s : sizes1)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
     }
 
     const size_t size0 = std::accumulate(sizes0.cbegin(), sizes0.cend(), std::size_t{0});
     const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
 
-    T * data0;
-    T * data1;
+    T* data0;
+    T* data1;
     hipMalloc(&data0, sizeof(T) * size0);
     hipMalloc(&data1, sizeof(T) * size1);
 
-    rocrand_mrg32k3a g0;
-    rocrand_mrg32k3a g1;
+    GeneratorType g0;
+    GeneratorType g1;
 
     std::vector<T> host_data0(size0);
     std::vector<T> host_data1(size1);
 
     size_t current0 = 0;
-    for (size_t s : sizes0)
+    for(size_t s : sizes0)
     {
         generate_func(g0, data0, s);
-        hipMemcpy(
-            host_data0.data() + current0,
-            data0,
-            sizeof(T) * s, hipMemcpyDefault);
+        hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault);
         current0 += s;
     }
     size_t current1 = 0;
-    for (size_t s : sizes1)
+    for(size_t s : sizes1)
     {
         generate_func(g1, data1, s);
-        hipMemcpy(
-            host_data1.data() + current1,
-            data1,
-            sizeof(T) * s, hipMemcpyDefault);
+        hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault);
         current1 += s;
     }
 
@@ -612,47 +645,70 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
     hipFree(data1);
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_uniform_uint_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_uint_test)
 {
-    continuity_test<unsigned int>([](rocrand_mrg32k3a& g, unsigned int * data, size_t s) { g.generate(data, s); });
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<unsigned int, mrg_type>([](mrg_type& g, unsigned int* data, size_t s)
+                                            { g.generate(data, s); });
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_uniform_char_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_char_test)
 {
-    continuity_test<unsigned char>([](rocrand_mrg32k3a& g, unsigned char * data, size_t s) { g.generate(data, s); }, 4);
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<unsigned char, mrg_type>([](mrg_type& g, unsigned char* data, size_t s)
+                                             { g.generate(data, s); },
+                                             4);
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_uniform_float_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_float_test)
 {
-    continuity_test<float>([](rocrand_mrg32k3a& g, float * data, size_t s) { g.generate_uniform(data, s); });
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<float, mrg_type>([](mrg_type& g, float* data, size_t s)
+                                     { g.generate_uniform(data, s); });
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_uniform_double_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_double_test)
 {
-    continuity_test<double>([](rocrand_mrg32k3a& g, double * data, size_t s) { g.generate_uniform(data, s); });
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<double, mrg_type>([](mrg_type& g, double* data, size_t s)
+                                      { g.generate_uniform(data, s); });
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_normal_float_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_normal_float_test)
 {
-    continuity_test<float>([](rocrand_mrg32k3a& g, float * data, size_t s) { g.generate_normal(data, s, 0.0f, 1.0f); }, 2);
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<float, mrg_type>([](mrg_type& g, float* data, size_t s)
+                                     { g.generate_normal(data, s, 0.0f, 1.0f); },
+                                     2);
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_normal_double_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_normal_double_test)
 {
-    continuity_test<double>([](rocrand_mrg32k3a& g, double * data, size_t s) { g.generate_normal(data, s, 0.0, 1.0); }, 2);
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<double, mrg_type>([](mrg_type& g, double* data, size_t s)
+                                      { g.generate_normal(data, s, 0.0, 1.0); },
+                                      2);
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_log_normal_float_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_log_normal_float_test)
 {
-    continuity_test<float>([](rocrand_mrg32k3a& g, float * data, size_t s) { g.generate_log_normal(data, s, 0.0f, 1.0f); }, 2);
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<float, mrg_type>([](mrg_type& g, float* data, size_t s)
+                                     { g.generate_log_normal(data, s, 0.0f, 1.0f); },
+                                     2);
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_log_normal_double_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_log_normal_double_test)
 {
-    continuity_test<double>([](rocrand_mrg32k3a& g, double * data, size_t s) { g.generate_log_normal(data, s, 0.0, 1.0); }, 2);
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<double, mrg_type>([](mrg_type& g, double* data, size_t s)
+                                      { g.generate_log_normal(data, s, 0.0, 1.0); },
+                                      2);
 }
 
-TEST(rocrand_mrg32k3a_prng_tests, continuity_poisson_test)
+TYPED_TEST(rocrand_mrg_prng_tests, continuity_poisson_test)
 {
-    continuity_test<unsigned int>([](rocrand_mrg32k3a& g, unsigned int * data, size_t s) { g.generate_poisson(data, s, 100.0); });
+    typedef typename TestFixture::mrg_type mrg_type;
+    continuity_test<unsigned int, mrg_type>([](mrg_type& g, unsigned int* data, size_t s)
+                                            { g.generate_poisson(data, s, 100.0); });
 }

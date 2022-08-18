@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -69,6 +69,7 @@ ROCRAND_RNG_PSEUDO_XORWOW = 401
 ROCRAND_RNG_PSEUDO_MRG32K3A = 402
 ROCRAND_RNG_PSEUDO_MTGP32 = 403
 ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
+ROCRAND_RNG_PSEUDO_MRG31K3P = 405
 ROCRAND_RNG_QUASI_DEFAULT = 500
 ROCRAND_RNG_QUASI_SOBOL32 = 501
 
@@ -339,6 +340,8 @@ class PRNG(RNG):
     DEFAULT       = ROCRAND_RNG_PSEUDO_DEFAULT
     """Default pseudo-random generator type, :const:`XORWOW`"""
     XORWOW        = ROCRAND_RNG_PSEUDO_XORWOW
+    """MRG31k3p pseudo-random generator type"""
+    MRG31K3P      = ROCRAND_RNG_PSEUDO_MRG31K3P
     """XORWOW pseudo-random generator type"""
     MRG32K3A      = ROCRAND_RNG_PSEUDO_MRG32K3A
     """MRG32k3a pseudo-random generator type"""
@@ -358,6 +361,7 @@ class PRNG(RNG):
 
         * :const:`DEFAULT`
         * :const:`XORWOW`
+        * :const:`MRG31K3P`
         * :const:`MRG32K3A`
         * :const:`MTGP32`
         * :const:`PHILOX4_32_10`
