@@ -24,7 +24,7 @@ configure_file(
     @ONLY
 )
 
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
     rocm_wrap_header_file(
         rocrand_version.h
         GUARDS SYMLINK WRAPPER
@@ -92,7 +92,7 @@ else()
     )
 endif()
 
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
     rocm_install(
         DIRECTORY "${PROJECT_BINARY_DIR}/library/rocrand"
         DESTINATION "."
