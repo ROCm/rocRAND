@@ -65,9 +65,7 @@ make_test(TestCtorPRNG, "MRG32K3A",      rngtype=PRNG.MRG32K3A)
 make_test(TestCtorPRNG, "PHILOX4_32_10", rngtype=PRNG.PHILOX4_32_10)
 make_test(TestCtorPRNG, "LFSR113",       rngtype=PRNG.LFSR113)
 
-class TestCtorPRNGMTGP32(TestRNGBase):
-    rngtype = PRNG.MTGP32
-
+class TestCtorPRNGMT(TestRNGBase):
     def test_ctor(self):
         PRNG(self.rngtype)
         PRNG(self.rngtype, seed=123456)
@@ -75,6 +73,9 @@ class TestCtorPRNGMTGP32(TestRNGBase):
             PRNG(self.rngtype, offset=987654)
         with self.assertRaises(RocRandError):
             PRNG(self.rngtype, seed=2345678, offset=7654)
+
+make_test(TestCtorPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
+make_test(TestCtorPRNGMT, "MT19937", rngtype=PRNG.MT19937)
 
 class TestCtorQRNG(TestRNGBase):
     def test_ctor(self):
@@ -118,11 +119,9 @@ make_test(TestParamsPRNG, "MRG32K3A",      rngtype=PRNG.MRG32K3A)
 make_test(TestParamsPRNG, "PHILOX4_32_10", rngtype=PRNG.PHILOX4_32_10)
 make_test(TestParamsPRNG, "LFSR113",       rngtype=PRNG.LFSR113)
 
-class TestParamsPRNGMTGP32(TestRNGBase):
-    rngtype = PRNG.MTGP32
-
+class TestParamsPRNGMT(TestRNGBase):
     def setUp(self):
-        super(TestParamsPRNGMTGP32, self).setUp()
+        super(TestParamsPRNGMT, self).setUp()
         self.rng = PRNG(self.rngtype)
 
     def tearDown(self):
@@ -139,6 +138,9 @@ class TestParamsPRNGMTGP32(TestRNGBase):
         self.assertEqual(self.rng.offset, 0)
         with self.assertRaises(RocRandError):
             self.rng.offset = 2323423
+
+make_test(TestParamsPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
+make_test(TestParamsPRNGMT, "MT19937", rngtype=PRNG.MT19937)
 
 class TestParamsQRNG(TestRNGBase):
     def setUp(self):
@@ -284,6 +286,7 @@ make_test(TestGenerate, "PRNG" + "XORWOW",            klass=PRNG, rngtype=PRNG.X
 make_test(TestGenerate, "PRNG" + "MRG31K3P",          klass=PRNG, rngtype=PRNG.MRG31K3P)
 make_test(TestGenerate, "PRNG" + "MRG32K3A",          klass=PRNG, rngtype=PRNG.MRG32K3A)
 make_test(TestGenerate, "PRNG" + "MTGP32",            klass=PRNG, rngtype=PRNG.MTGP32)
+make_test(TestGenerate, "PRNG" + "MT19937",           klass=PRNG, rngtype=PRNG.MT19937)
 make_test(TestGenerate, "PRNG" + "PHILOX4_32_10",     klass=PRNG, rngtype=PRNG.PHILOX4_32_10)
 make_test(TestGenerate, "QRNG" + "DEFAULT",           klass=QRNG, rngtype=QRNG.DEFAULT)
 make_test(TestGenerate, "QRNG" + "SOBOL32",           klass=QRNG, rngtype=QRNG.SOBOL32)

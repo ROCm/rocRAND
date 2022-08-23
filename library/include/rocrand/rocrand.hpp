@@ -1828,6 +1828,133 @@ constexpr typename lfsr113_engine<DefaultSeedX, DefaultSeedY, DefaultSeedZ, Defa
     lfsr113_engine<DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW>::default_seed;
 /// \endcond
 
+/// \brief Random number engine based on the Mersenne Twister algorithm.
+///
+/// mt19937 is a random number engine based on the Mersenne Twister algorithm
+/// as proposed in "Mersenne Twister: A 623-Dimensionally Equidistributed Uniform
+/// Pseudo-Random Number Generator". It produces high quality random numbers of
+/// type \p unsigned \p int on the interval [0; 2^32 - 1].
+template<unsigned long long DefaultSeed = 0ULL>
+class mt19937_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef unsigned long long seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed = DefaultSeed;
+
+    /// \brief Constructs the pseudo-random number engine.
+    ///
+    /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
+    mt19937_engine(seed_type seed_value = DefaultSeed)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    mt19937_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~mt19937_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_MT19937;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned long long DefaultSeed>
+constexpr typename mt19937_engine<DefaultSeed>::seed_type mt19937_engine<DefaultSeed>::default_seed;
+/// \endcond
+
 /// \brief Sobol's quasi-random sequence generator
 ///
 /// sobol32_engine is quasi-random number engine which produced Sobol sequences.
@@ -2549,6 +2676,9 @@ typedef mtgp32_engine<> mtgp32;
 /// \typedef lfsr113
 /// \brief Typedef of rocrand_cpp::lfsr113_engine PRNG engine with default seed (#ROCRAND_LFSR113_DEFAULT_SEED).
 typedef lfsr113_engine<> lfsr113;
+/// \typedef mt19937
+/// \brief Typedef of rocrand_cpp::mt19937_engine PRNG engine with default seed (0).
+typedef mt19937_engine<> mt19937;
 /// \typedef sobol32
 /// \brief Typedef of rocrand_cpp::sobol32_engine QRNG engine with default number of dimensions (1).
 typedef sobol32_engine<> sobol32;
