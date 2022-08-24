@@ -26,24 +26,25 @@
 #ifndef ROCRAND_H_
 #define ROCRAND_H_
 
-#include <hip/hip_runtime.h>
 #include <hip/hip_fp16.h>
+#include <hip/hip_runtime.h>
+#include <hip/hip_vector_types.h>
 
 #include "rocrand/rocrand_discrete_types.h"
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
-#ifdef WIN32
-  #ifdef rocrand_EXPORTS
-  /* We are building this library */
-    #define ROCRANDAPI __declspec(dllexport)
-  #else
-    /* We are using this library */
-    #define ROCRANDAPI __declspec(dllimport)
-  #endif
-#else
-  #define ROCRANDAPI
-#endif
+    #ifdef WIN32
+        #ifdef rocrand_EXPORTS
+            /* We are building this library */
+            #define ROCRANDAPI __declspec(dllexport)
+        #else
+            /* We are using this library */
+            #define ROCRANDAPI __declspec(dllimport)
+        #endif
+    #else
+        #define ROCRANDAPI
+    #endif
 #endif
 /// \endcond
 
@@ -94,6 +95,7 @@ typedef enum rocrand_rng_type
     ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
     ROCRAND_RNG_PSEUDO_MRG31K3P      = 405, ///< MRG31k3p pseudorandom generator
+    ROCRAND_RNG_PSEUDO_LFSR113       = 406, ///< LFSR113 pseudorandom generator
     ROCRAND_RNG_QUASI_DEFAULT        = 500, ///< Default quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL32        = 501, ///< Sobol32 quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL64        = 504 ///< Sobol64 quasirandom generator
@@ -503,6 +505,11 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
  * equal to zero and generator's type is ROCRAND_RNG_PSEUDO_MRG32K3A or ROCRAND_RNG_PSEUDO_MRG31K3P,
  * value \p 12345 is used as seed instead.
  *
+ * For a LFSR113 generator seed values must be larger than 1, 7, 15,
+ * 127. The \p seed upper and lower 32 bits used as first and
+ * second seed value. If those values smaller than 2 and/or 8, those
+ * are increased with 1 and/or 7.
+ *
  * \param generator - Pseudo-random number generator
  * \param seed - New seed value
  *
@@ -515,6 +522,30 @@ rocrand_status ROCRANDAPI
 rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
 
 /**
+ * \brief Sets the seeds of a pseudo-random number generator.
+ *
+ * Sets the seed of the pseudo-random number generator. Currently only for LFSR113
+ *
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's offset.
+ *
+ * Only usable for LFSR113.
+ *
+ * For a LFSR113 generator seed values must be bigger than 1, 7, 15,
+ * 127. If those values smaller, than the requested minimum values [2, 8, 16, 128], then
+ * it will be increased with the minimum values minus 1 [1, 7, 15, 127].
+ *
+ * \param generator - Pseudo-random number generator
+ * \param seed - New seed value
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_TYPE_ERROR if the generator is a quasi-random number generator \n
+ * - ROCRAND_STATUS_SUCCESS if seed was set successfully \n
+ */
+rocrand_status ROCRANDAPI rocrand_set_seed_uint4(rocrand_generator generator, uint4 seed);
+
+/**
  * \brief Sets the offset of a random number generator.
  *
  * Sets the absolute offset of the random number generator.
@@ -522,7 +553,8 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's seed.
  *
- * Absolute offset cannot be set if generator's type is ROCRAND_RNG_PSEUDO_MTGP32.
+ * Absolute offset cannot be set if generator's type is ROCRAND_RNG_PSEUDO_MTGP32 or
+ * ROCRAND_RNG_PSEUDO_LFSR113.
  *
  * \param generator - Random number generator
  * \param offset - New absolute offset
@@ -530,7 +562,8 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_SUCCESS if offset was successfully set \n
- * - ROCRAND_STATUS_TYPE_ERROR if generator's type is ROCRAND_RNG_PSEUDO_MTGP32
+ * - ROCRAND_STATUS_TYPE_ERROR if generator's type is ROCRAND_RNG_PSEUDO_MTGP32 or
+ * ROCRAND_RNG_PSEUDO_LFSR113
  */
 rocrand_status ROCRANDAPI
 rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
@@ -633,6 +666,6 @@ rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_dis
 }
 #endif /* __cplusplus */
 
-#endif // ROCRAND_H_
-
 /** @} */ // end of group rocrandhost
+
+#endif // ROCRAND_H_

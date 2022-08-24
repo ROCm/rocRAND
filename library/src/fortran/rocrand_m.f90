@@ -27,6 +27,7 @@ module rocrand_m
     integer, public :: ROCRAND_RNG_PSEUDO_MTGP32 = 403
     integer, public :: ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
     integer, public :: ROCRAND_RNG_PSEUDO_MRG31K3P = 405
+    integer, public :: ROCRAND_RNG_PSEUDO_LFSR113 = 406
     integer, public :: ROCRAND_RNG_QUASI_DEFAULT = 500
     integer, public :: ROCRAND_RNG_QUASI_SOBOL32 = 501
     integer, public :: HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504

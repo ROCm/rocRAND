@@ -123,7 +123,7 @@ ctest
 cd rocRAND; cd build
 
 # To run benchmark for generate functions:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, sobol32
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, sobol32, sobol64
 # distribution -> all, uniform-uint, uniform-uchar, uniform-ushort, 
 #                 uniform-half, uniform-float, uniform-double, 
 #                 normal-half, normal-float, normal-double,
@@ -132,7 +132,7 @@ cd rocRAND; cd build
 ./benchmark/benchmark_rocrand_generate --engine <engine> --dis <distribution>
 
 # To run benchmark for device kernel functions:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, sobol32
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, sobol32, sobol64
 # distribution -> all, uniform-uint, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson, discrete-poisson, discrete-custom
 # further option can be found using --help
@@ -151,7 +151,7 @@ cd rocRAND; cd build
 
 # To run Pearson Chi-squared and Anderson-Darling tests, which verify
 # that distribution of random number agrees with the requested distribution:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, sobol32
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, sobol32, sobol64
 # distribution -> all, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson
 ./test/stat_test_rocrand_generate --engine <engine> --dis <distribution>

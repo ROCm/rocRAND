@@ -27,6 +27,7 @@
 
 #include <math.h>
 
+#include "rocrand/rocrand_lfsr113.h"
 #include "rocrand/rocrand_mrg31k3p.h"
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
@@ -294,6 +295,25 @@ unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discr
  */
 FQUALIFIERS
 unsigned int rocrand_discrete(rocrand_state_sobol64 * state, const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
+ *
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using LFSR113 generator in \p state, and increments
+ * the position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ * \param discrete_distribution - Related discrete distribution
+ *
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned int rocrand_discrete(rocrand_state_lfsr113*              state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }

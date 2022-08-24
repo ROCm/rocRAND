@@ -55,7 +55,7 @@ def load_rocrand():
     load_hip()
 
 # Delay the loading of rocrand to the first use
-# so no code is executed when loading this module 
+# so no code is executed when loading this module
 class _load_rocrand_on_access(object):
     def __getattribute__(self, name):
         global rocrand
@@ -70,6 +70,7 @@ ROCRAND_RNG_PSEUDO_MRG32K3A = 402
 ROCRAND_RNG_PSEUDO_MTGP32 = 403
 ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
 ROCRAND_RNG_PSEUDO_MRG31K3P = 405
+ROCRAND_RNG_PSEUDO_LFSR113 = 406
 ROCRAND_RNG_QUASI_DEFAULT = 500
 ROCRAND_RNG_QUASI_SOBOL32 = 501
 
@@ -340,15 +341,17 @@ class PRNG(RNG):
     DEFAULT       = ROCRAND_RNG_PSEUDO_DEFAULT
     """Default pseudo-random generator type, :const:`XORWOW`"""
     XORWOW        = ROCRAND_RNG_PSEUDO_XORWOW
-    """MRG31k3p pseudo-random generator type"""
-    MRG31K3P      = ROCRAND_RNG_PSEUDO_MRG31K3P
     """XORWOW pseudo-random generator type"""
+    MRG31K3P      = ROCRAND_RNG_PSEUDO_MRG31K3P
+    """MRG31k3p pseudo-random generator type"""
     MRG32K3A      = ROCRAND_RNG_PSEUDO_MRG32K3A
     """MRG32k3a pseudo-random generator type"""
     MTGP32        = ROCRAND_RNG_PSEUDO_MTGP32
     """Mersenne Twister MTGP32 pseudo-random generator type"""
     PHILOX4_32_10 = ROCRAND_RNG_PSEUDO_PHILOX4_32_10
     """PHILOX_4x32 (10 rounds) pseudo-random generator type"""
+    LFSR113      = ROCRAND_RNG_PSEUDO_LFSR113
+    """LFSR113 pseudo-random generator type"""
 
     def __init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None):
         """__init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None)
@@ -365,6 +368,7 @@ class PRNG(RNG):
         * :const:`MRG32K3A`
         * :const:`MTGP32`
         * :const:`PHILOX4_32_10`
+        * :const:`LFSR113`
 
         :param rngtype: Type of pseudo-random number generator to create
         :param seed:    Initial seed value

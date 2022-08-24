@@ -32,6 +32,7 @@
 
 #include <math.h>
 
+#include "rocrand/rocrand_lfsr113.h"
 #include "rocrand/rocrand_mrg31k3p.h"
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
@@ -707,6 +708,95 @@ double rocrand_log_normal_double(rocrand_state_sobol64 * state, double mean, dou
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
+}
+
+/**
+ * \brief Returns a log-normally distributed \p float value.
+ *
+ * Generates and returns a log-normally distributed \p float value using LFSR113
+ * generator in \p state, and increments position of the generator by one.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Log-normally distributed \p float value
+ */
+FQUALIFIERS
+float rocrand_log_normal(rocrand_state_lfsr113* state, float mean, float stddev)
+{
+    float r = rocrand_device::detail::normal_distribution(rocrand(state));
+    return expf(mean + (stddev * r));
+}
+
+/**
+ * \brief Returns two log-normally distributed \p float values.
+ *
+ * Generates and returns two log-normally distributed \p float values using LFSR113
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Two log-normally distributed \p float value as \p float2
+ */
+FQUALIFIERS
+float2 rocrand_log_normal2(rocrand_state_lfsr113* state, float mean, float stddev)
+{
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
+    return float2{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y))};
+}
+
+/**
+ * \brief Returns a log-normally distributed \p double value.
+ *
+ * Generates and returns a log-normally distributed \p double value using LFSR113
+ * generator in \p state, and increments position of the generator by one.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Log-normally distributed \p double value
+ */
+FQUALIFIERS
+double rocrand_log_normal_double(rocrand_state_lfsr113* state, double mean, double stddev)
+{
+    double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
+    return exp(mean + (stddev * r));
+}
+
+/**
+ * \brief Returns two log-normally distributed \p double values.
+ *
+ * Generates and returns two log-normally distributed \p double values using LFSR113
+ * generator in \p state, and increments position of the generator by two.
+ * The function uses the Box-Muller transform method to generate two normally distributed
+ * values, transforms them to log-normally distributed values, and returns both.
+ *
+ * \param state  - Pointer to a state to use
+ * \param mean   - Mean of the related log-normal distribution
+ * \param stddev - Standard deviation of the related log-normal distribution
+ *
+ * \return Two log-normally distributed \p double values as \p double2
+ */
+FQUALIFIERS
+double2 rocrand_log_normal_double2(rocrand_state_lfsr113* state, double mean, double stddev)
+{
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    auto state3 = rocrand(state);
+    auto state4 = rocrand(state);
+
+    double2 r = rocrand_device::detail::normal_distribution_double2(
+        uint4{state1, state2, state3, state4});
+    return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
 /** @} */ // end of group rocranddevice
