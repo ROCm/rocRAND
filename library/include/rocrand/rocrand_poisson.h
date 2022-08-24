@@ -37,6 +37,8 @@
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
 #include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_scrambled_sobol32.h"
+#include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
 #include "rocrand/rocrand_xorwow.h"
@@ -351,6 +353,23 @@ unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
 }
 
 /**
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using SCRAMBLED_SOBOL32 generator.
+ *
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using SCRAMBLED_SOBOL32 generator in \p state. State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ * \param lambda - Lambda parameter of the Poisson distribution
+ *
+ * \return Poisson-distributed <tt>unsigned int</tt>
+ */
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_scrambled_sobol32* state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
+}
+
+/**
  * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using SOBOL64 generator.
  *
  * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
@@ -363,6 +382,23 @@ unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
  */
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_sobol64 * state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
+}
+
+/**
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using SCRAMBLED_SOBOL64 generator.
+ *
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using SCRAMBLED_SOBOL64 generator in \p state. State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ * \param lambda - Lambda parameter of the Poisson distribution
+ *
+ * \return Poisson-distributed <tt>unsigned int</tt>
+ */
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_scrambled_sobol64* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }

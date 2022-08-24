@@ -26,6 +26,8 @@
 #include "mrg32k3a.hpp"
 #include "mtgp32.hpp"
 #include "philox4x32_10.hpp"
+#include "scrambled_sobol32.hpp"
+#include "scrambled_sobol64.hpp"
 #include "sobol32.hpp"
 #include "sobol64.hpp"
 #include "xorwow.hpp"

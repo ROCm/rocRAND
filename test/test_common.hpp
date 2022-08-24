@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,10 @@
 #ifndef TEST_COMMON_HPP_
 #define TEST_COMMON_HPP_
 
+#include <hip/hip_runtime.h>
+
 #include <cstdlib>
+#include <iostream>
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 

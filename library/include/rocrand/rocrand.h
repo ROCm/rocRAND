@@ -26,11 +26,11 @@
 #ifndef ROCRAND_H_
 #define ROCRAND_H_
 
+#include "rocrand/rocrand_discrete_types.h"
+
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_vector_types.h>
-
-#include "rocrand/rocrand_discrete_types.h"
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
@@ -89,16 +89,18 @@ typedef enum rocrand_status {
  */
 typedef enum rocrand_rng_type
 {
-    ROCRAND_RNG_PSEUDO_DEFAULT       = 400, ///< Default pseudorandom generator
-    ROCRAND_RNG_PSEUDO_XORWOW        = 401, ///< XORWOW pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG32K3A      = 402, ///< MRG32k3a pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG31K3P      = 405, ///< MRG31k3p pseudorandom generator
-    ROCRAND_RNG_PSEUDO_LFSR113       = 406, ///< LFSR113 pseudorandom generator
-    ROCRAND_RNG_QUASI_DEFAULT        = 500, ///< Default quasirandom generator
-    ROCRAND_RNG_QUASI_SOBOL32        = 501, ///< Sobol32 quasirandom generator
-    ROCRAND_RNG_QUASI_SOBOL64        = 504 ///< Sobol64 quasirandom generator
+    ROCRAND_RNG_PSEUDO_DEFAULT          = 400, ///< Default pseudorandom generator
+    ROCRAND_RNG_PSEUDO_XORWOW           = 401, ///< XORWOW pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG32K3A         = 402, ///< MRG32k3a pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MTGP32           = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10    = 404, ///< PHILOX-4x32-10 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG31K3P         = 405, ///< MRG31k3p pseudorandom generator
+    ROCRAND_RNG_PSEUDO_LFSR113          = 406, ///< LFSR113 pseudorandom generator
+    ROCRAND_RNG_QUASI_DEFAULT           = 500, ///< Default quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL32           = 501, ///< Sobol32 quasirandom generator
+    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502, ///< Scrambled Sobol32 quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL64           = 504, ///< Sobol64 quasirandom generator
+    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505 ///< Scrambled Sobol64 quasirandom generator
 } rocrand_rng_type;
 
 // Host API function
@@ -115,7 +117,11 @@ typedef enum rocrand_rng_type
  * - ROCRAND_RNG_PSEUDO_MRG32K3A
  * - ROCRAND_RNG_PSEUDO_MTGP32
  * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_PSEUDO_LFSR113
  * - ROCRAND_RNG_QUASI_SOBOL32
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
+ * - ROCRAND_RNG_QUASI_SOBOL64
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
  *
  * \param generator - Pointer to generator
  * \param rng_type - Type of generator to create
@@ -465,7 +471,7 @@ rocrand_generate_poisson(rocrand_generator generator,
  *
  * If rocrand_initialize() was not called for a generator, it will be
  * automatically called by functions which generates random numbers like
- * rocrand_generate(), rocrang_generate_uniform() etc.
+ * rocrand_generate(), rocrand_generate_uniform() etc.
  *
  * \param generator - Generator to initialize
  *
