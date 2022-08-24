@@ -4,6 +4,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ## (Unreleased) rocRAND-2.10.15 for ROCm 5.3.0
 ### Added
 - MRG31K3P pseudorandom number generator based on [L'Ecuyer and Touzin, 2000](https://dl.acm.org/doi/10.5555/510378.510476). 
+- LFSR113 pseudo random number generator based on L'Ecuyer, 1999, Tables of maximally equidistributed combined LFSR generators.
 ### Changed
 - Increased number of warmup iterations for rocrand_benchmark_generate from 5 to 15 to eliminate corner cases that would generate artificially high benchmark scores.
 - The `mrg_<distribution>_distribution` structures, which provided numbers based on MRG32K3A, are now replaced by `mrg_engine_<distribution>_distribution`, where `<distribution>` is `log_normal`, `normal`, `poisson`, or `uniform`. These structures provide numbers for MRG31K3P (with template type `rocrand_state_mrg31k3p`) and MRG32K3A (with template type `rocrand_state_mrg32k3a`).

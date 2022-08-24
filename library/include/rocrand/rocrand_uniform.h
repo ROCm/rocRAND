@@ -538,7 +538,7 @@ double rocrand_uniform_double(rocrand_state_sobol64 * state)
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
- /**
+/**
  * \brief Returns a uniformly distributed random <tt>float</tt> value
  * from (0; 1] range.
  *
@@ -551,7 +551,7 @@ double rocrand_uniform_double(rocrand_state_sobol64 * state)
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_lfsr113 * state)
+float rocrand_uniform(rocrand_state_lfsr113* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -572,7 +572,7 @@ float rocrand_uniform(rocrand_state_lfsr113 * state)
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_lfsr113 * state)
+double rocrand_uniform_double(rocrand_state_lfsr113* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }

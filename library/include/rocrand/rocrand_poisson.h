@@ -379,7 +379,7 @@ unsigned int rocrand_poisson(rocrand_state_sobol64 * state, double lambda)
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
 FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_lfsr113 * state, double lambda)
+unsigned int rocrand_poisson(rocrand_state_lfsr113* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }

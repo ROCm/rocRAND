@@ -22,109 +22,70 @@
 #define ROCRAND_LFSR113_H_
 
 #ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
+    #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
 #include "rocrand/rocrand_common.h"
 
-//#define ROCRAND_LFSR113_DEFAULT_SEED {3, 9, 17, 129}
-#define ROCRAND_LFSR113_DEFAULT_SEED 0ULL
+#define ROCRAND_LFSR113_DEFAULT_SEED_X 2
+#define ROCRAND_LFSR113_DEFAULT_SEED_Y 8
+#define ROCRAND_LFSR113_DEFAULT_SEED_Z 16
+#define ROCRAND_LFSR113_DEFAULT_SEED_W 128
 
-namespace rocrand_device {
+namespace rocrand_device
+{
 
 class lfsr113_engine
 {
 public:
     struct lfsr113_state
     {
-        unsigned int z[4];
-        unsigned int stream[4];
-        unsigned int substream[4];
-        unsigned int curr_stream[4] = {987654321, 987654321, 987654321, 987654321};
+        uint4 z;
+        uint4 subsequence;
     };
 
+    /// Initializes the internal state of the PRNG using
+    /// seed value \p seed, goes to \p subsequence -th subsequence
+    ///
+    /// A subsequence is 2^55 numbers long.
     FQUALIFIERS
-    lfsr113_engine(const unsigned int subsequence=0,
-                   const unsigned int offset=0)
+    lfsr113_engine(const uint4        seed        = {ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                     ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                     ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                     ROCRAND_LFSR113_DEFAULT_SEED_W},
+                   const unsigned int subsequence = 0)
     {
-        m_state.stream[0] = m_state.curr_stream[0];
-        m_state.stream[1] = m_state.curr_stream[1];
-        m_state.stream[2] = m_state.curr_stream[2];
-        m_state.stream[3] = m_state.curr_stream[3];
+        this->seed(seed, subsequence);
+    }
 
-        resetStartStream();
+    /// Reinitializes the internal state of the PRNG using new
+    /// seed value \p seed_value, skips \p subsequence subsequences.
+    ///
+    /// A subsequence is 2^55 numbers long.
+    FQUALIFIERS
+    void seed(uint4 seed_value, const unsigned long long subsequence)
+    {
+        m_state.subsequence = seed_value;
 
-        int z, b;
-
-        z = m_state.curr_stream[0] & -2;
-        b = (z << 6) ^ z;
-
-        z = (z) ^ (z << 2) ^ (z << 3) ^ (z << 10) ^ (z << 13) ^
-            (z << 16) ^ (z << 19) ^ (z << 22) ^ (z << 25) ^
-            (z << 27) ^ (z << 28) ^
-            ((b >> 3) & 0x1FFFFFFF) ^
-            ((b >> 4) & 0x0FFFFFFF) ^
-            ((b >> 6) & 0x03FFFFFF) ^
-            ((b >> 9) & 0x007FFFFF) ^
-            ((b >> 12) & 0x000FFFFF) ^
-            ((b >> 15) & 0x0001FFFF) ^
-            ((b >> 18) & 0x00003FFF) ^
-            ((b >> 21) & 0x000007FF);
-        m_state.curr_stream[0] = z;
-
-        z = m_state.curr_stream[1] & -8;
-        b = (z << 2) ^ z;
-        z = ((b >> 13) & 0x0007FFFF) ^ (z << 16);
-        m_state.curr_stream[1] = z;
-
-        z = m_state.curr_stream[2] & -16;
-        b = (z << 13) ^ z;
-        z = (z << 2) ^ (z << 4) ^ (z << 10) ^ (z << 12) ^ (z << 13) ^
-            (z << 17) ^ (z << 25) ^
-            ((b >> 3) & 0x1FFFFFFF) ^
-            ((b >> 11) & 0x001FFFFF) ^
-            ((b >> 15) & 0x0001FFFF) ^
-            ((b >> 16) & 0x0000FFFF) ^
-            ((b >> 24) & 0x000000FF);
-        m_state.curr_stream[2] = z;
-
-        z = m_state.curr_stream[3] & -128;
-        b = (z << 3) ^ z;
-        z = (z << 9) ^ (z << 10) ^ (z << 11) ^ (z << 14) ^ (z << 16) ^
-            (z << 18) ^ (z << 23) ^ (z << 24) ^
-            ((b >> 1) & 0x7FFFFFFF) ^
-            ((b >> 2) & 0x3FFFFFFF) ^
-            ((b >> 7) & 0x01FFFFFF) ^
-            ((b >> 9) & 0x007FFFFF) ^
-            ((b >> 11) & 0x001FFFFF) ^
-            ((b >> 14) & 0x0003FFFF) ^
-            ((b >> 15) & 0x0001FFFF) ^
-            ((b >> 16) & 0x0000FFFF) ^
-            ((b >> 23) & 0x000001FF) ^
-            ((b >> 24) & 0x000000FF);
-        m_state.curr_stream[3] = z;
-
+        reset_start_subsequence();
         discard_subsequence(subsequence);
-        discard(offset);
     }
 
-    FQUALIFIERS
-    void discard(unsigned int offset)
-    {
-        discard_state(offset);
-    }
-
+    /// Advances the internal state to skip one number.
     FQUALIFIERS
     void discard()
     {
         discard_state();
     }
 
+    /// Advances the internal state to skip \p subsequence subsequences.
+    /// A subsequence is 2^55 numbers long.
     FQUALIFIERS
-    void discard_subsequence(unsigned int subsequence) 
+    void discard_subsequence(unsigned int subsequence)
     {
-        for (unsigned int i = 0; i < subsequence; i++) {
-            resetNextSubstream();
+        for(unsigned int i = 0; i < subsequence; i++)
+        {
+            reset_next_subsequence();
         }
     }
 
@@ -137,66 +98,65 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        unsigned long b;
+        unsigned int b;
 
-        b = (((m_state.z[0] << 6) ^ m_state.z[0]) >> 13);
-        m_state.z[0] = (((m_state.z[0] & 4294967294U) << 18) ^ b);
+        b           = (((m_state.z.x << 6) ^ m_state.z.x) >> 13);
+        m_state.z.x = (((m_state.z.x & 4294967294U) << 18) ^ b);
 
-        b = (((m_state.z[1] << 2) ^ m_state.z[1]) >> 27);
-        m_state.z[1] = (((m_state.z[1] & 4294967288U) << 2) ^ b);
+        b           = (((m_state.z.y << 2) ^ m_state.z.y) >> 27);
+        m_state.z.y = (((m_state.z.y & 4294967288U) << 2) ^ b);
 
-        b = (((m_state.z[2] << 13) ^ m_state.z[2]) >> 21);
-        m_state.z[2] = (((m_state.z[2] & 4294967280U) << 7) ^ b);
+        b           = (((m_state.z.z << 13) ^ m_state.z.z) >> 21);
+        m_state.z.z = (((m_state.z.z & 4294967280U) << 7) ^ b);
 
-        b = (((m_state.z[3] << 3) ^ m_state.z[3]) >> 12);
-        m_state.z[3] = (((m_state.z[3] & 4294967168U) << 13) ^ b);
+        b           = (((m_state.z.w << 3) ^ m_state.z.w) >> 12);
+        m_state.z.w = (((m_state.z.w & 4294967168U) << 13) ^ b);
 
-        return (m_state.z[0] ^ m_state.z[1] ^ m_state.z[2] ^ m_state.z[3]);
+        return (m_state.z.x ^ m_state.z.y ^ m_state.z.z ^ m_state.z.w);
     }
 
+protected:
+    /// Resets the state to the start of the current subsequence.
     FQUALIFIERS
-    void resetStartStream()
+    void reset_start_subsequence()
     {
-        m_state.substream[0] = m_state.stream[0];
-        m_state.substream[1] = m_state.stream[1];
-        m_state.substream[2] = m_state.stream[2];
-        m_state.substream[3] = m_state.stream[3];
-
-        resetStartSubstream();
+        m_state.z.x = m_state.subsequence.x;
+        m_state.z.y = m_state.subsequence.y;
+        m_state.z.z = m_state.subsequence.z;
+        m_state.z.w = m_state.subsequence.w;
     }
 
+    /// Advances the subsequence by one and sets the state to the start of that subsequence.
     FQUALIFIERS
-    void resetStartSubstream()
+    void reset_next_subsequence()
     {
-        m_state.z[0] = m_state.substream[0];
-        m_state.z[1] = m_state.substream[1];
-        m_state.z[2] = m_state.substream[2];
-        m_state.z[3] = m_state.substream[3];
-    }
-
-    FQUALIFIERS
-    void resetNextSubstream() // Advance state
-    {
+        /* The following operations make the jump ahead with
+    	2 ^ 55 iterations for every component of the generator.
+    	The internal state after the jump, however, is slightly different
+    	from 2 ^ 55 iterations since it ignores the state in
+    	which are found the first bits of each components,
+    	since they are ignored in the recurrence.The state becomes
+    	identical to what one would with normal iterations
+    	after a call nextValue().*/
         int z, b;
 
-        z = m_state.substream[0] & -2;
-        b = (z) ^ (z << 3) ^ (z << 4) ^ (z << 6) ^ (z << 7) ^
-            (z << 8) ^ (z << 10) ^ (z << 11) ^ (z << 13) ^ (z << 14) ^
-            (z << 16) ^ (z << 17) ^ (z << 18) ^ (z << 22) ^
-            (z << 24) ^ (z << 25) ^ (z << 26) ^ (z << 28) ^ (z << 30);
-        z ^= ((b >> 1) & 0x7FFFFFFF) ^ ((b >> 3) & 0x1FFFFFFF) ^
-             ((b >> 5) & 0x07FFFFFF) ^ ((b >> 6) & 0x03FFFFFF) ^
-             ((b >> 7) & 0x01FFFFFF) ^ ((b >> 9) & 0x007FFFFF) ^
-             ((b >> 13) & 0x0007FFFF) ^ ((b >> 14) & 0x0003FFFF) ^
-             ((b >> 15) & 0x0001FFFF) ^ ((b >> 17) & 0x00007FFF) ^
-             ((b >> 18) & 0x00003FFF) ^ ((b >> 20) & 0x00000FFF) ^
-             ((b >> 21) & 0x000007FF) ^ ((b >> 23) & 0x000001FF) ^
-             ((b >> 24) & 0x000000FF) ^ ((b >> 25) & 0x0000007F) ^
-             ((b >> 26) & 0x0000003F) ^ ((b >> 27) & 0x0000001F) ^
-             ((b >> 30) & 0x00000003);
-        m_state.substream[0] = z;
+        z = m_state.subsequence.x & -2;
+        b = (z << 6) ^ z;
 
-        z = m_state.substream[1] & -8;
+        z = (z) ^ (z << 3) ^ (z << 4) ^ (z << 6) ^ (z << 7) ^ (z << 8) ^ (z << 10) ^ (z << 11)
+            ^ (z << 13) ^ (z << 14) ^ (z << 16) ^ (z << 17) ^ (z << 18) ^ (z << 22) ^ (z << 24)
+            ^ (z << 25) ^ (z << 26) ^ (z << 28) ^ (z << 30);
+
+        z ^= ((b >> 1) & 0x7FFFFFFF) ^ ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 5) & 0x07FFFFFF)
+             ^ ((b >> 6) & 0x03FFFFFF) ^ ((b >> 7) & 0x01FFFFFF) ^ ((b >> 9) & 0x007FFFFF)
+             ^ ((b >> 13) & 0x0007FFFF) ^ ((b >> 14) & 0x0003FFFF) ^ ((b >> 15) & 0x0001FFFF)
+             ^ ((b >> 17) & 0x00007FFF) ^ ((b >> 18) & 0x00003FFF) ^ ((b >> 20) & 0x00000FFF)
+             ^ ((b >> 21) & 0x000007FF) ^ ((b >> 23) & 0x000001FF) ^ ((b >> 24) & 0x000000FF)
+             ^ ((b >> 25) & 0x0000007F) ^ ((b >> 26) & 0x0000003F) ^ ((b >> 27) & 0x0000001F)
+             ^ ((b >> 30) & 0x00000003);
+        m_state.subsequence.x = z;
+
+        z = m_state.subsequence.y & -8;
         b = z ^ (z << 1);
         b ^= (b << 2);
         b ^= (b << 4);
@@ -204,38 +164,28 @@ public:
 
         b <<= 8;
         b ^= (z << 22) ^ (z << 25) ^ (z << 27);
-        if ((z & 0x80000000) != 0) b ^= 0xABFFF000;
-        if ((z & 0x40000000) != 0) b ^= 0x55FFF800;
-        z = b ^ ((z >> 7) & 0x01FFFFFF) ^
-                ((z >> 20) & 0x00000FFF) ^
-                ((z >> 21) & 0x000007FF);
-        m_state.substream[1] = z;
+        if((z & 0x80000000) != 0)
+            b ^= 0xABFFF000;
+        if((z & 0x40000000) != 0)
+            b ^= 0x55FFF800;
+        z = b ^ ((z >> 7) & 0x01FFFFFF) ^ ((z >> 20) & 0x00000FFF) ^ ((z >> 21) & 0x000007FF);
+        m_state.subsequence.y = z;
 
-        z = m_state.substream[2] & -16;
+        z = m_state.subsequence.z & -16;
         b = (z << 13) ^ z;
-        z = ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 17) & 0x00007FFF) ^
-            (z << 10) ^ (z << 11) ^ (z << 25);
-        m_state.substream[2] = z;
+        z = ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 17) & 0x00007FFF) ^ (z << 10) ^ (z << 11) ^ (z << 25);
+        m_state.subsequence.z = z;
 
-        z = m_state.substream[3] & -128;
+        z = m_state.subsequence.w & -128;
         b = (z << 3) ^ z;
-        z = (z << 14) ^ (z << 16) ^ (z << 20) ^
-            ((b >> 5) & 0x07FFFFFF) ^
-            ((b >> 9) & 0x007FFFFF) ^
-            ((b >> 11) & 0x001FFFFF);
-        m_state.substream[3] = z;
+        z = (z << 14) ^ (z << 16) ^ (z << 20) ^ ((b >> 5) & 0x07FFFFFF) ^ ((b >> 9) & 0x007FFFFF)
+            ^ ((b >> 11) & 0x001FFFFF);
+        m_state.subsequence.w = z;
 
-        resetStartSubstream();
+        reset_start_subsequence();
     }
 
-protected:
-    FQUALIFIERS
-    void discard_state(unsigned int offset)
-    {
-        for (unsigned int i = 0; i < offset; i++)
-            this->next();
-    }
-
+    // Advances the internal state to the next state.
     FQUALIFIERS
     void discard_state()
     {
@@ -249,19 +199,44 @@ protected:
 
 } // end namespace rocrand_device
 
+/** \rocrand_internal \addtogroup rocranddevice
+ *
+ *  @{
+ */
+
+/// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::lfsr113_engine rocrand_state_lfsr113;
 
+/**
+ * \brief Initializes LFSR113 state.
+ *
+ * Initializes the LFSR113 generator \p state with the given
+ * \p seed, \p subsequence, and \p offset.
+ *
+ * \param seed - Value to use as a seed
+ * \param subsequence - Subsequence to start at
+ * \param state - Pointer to state to initialize
+ */
 FQUALIFIERS
-void rocrand_init(const unsigned long long /* seed */,
-                  const unsigned int subsequence,
-                  const unsigned int offset,
-                  rocrand_state_lfsr113 * state) 
+void rocrand_init(const uint4 seed, const unsigned int subsequence, rocrand_state_lfsr113* state)
 {
-    *state = rocrand_state_lfsr113(subsequence, offset);
+    *state = rocrand_state_lfsr113(seed, subsequence);
 }
 
+/**
+ * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * from [0; 2^32 - 1] range.
+ *
+ * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * value from [0; 2^32 - 1] range using LFSR113 generator in \p state.
+ * State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
+ */
 FQUALIFIERS
-unsigned int rocrand(rocrand_state_lfsr113 * state)
+unsigned int rocrand(rocrand_state_lfsr113* state)
 {
     return state->next();
 }

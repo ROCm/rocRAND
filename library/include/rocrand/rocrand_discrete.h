@@ -312,7 +312,8 @@ unsigned int rocrand_discrete(rocrand_state_sobol64 * state, const rocrand_discr
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_lfsr113 * state, const rocrand_discrete_distribution discrete_distribution)
+unsigned int rocrand_discrete(rocrand_state_lfsr113*              state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }

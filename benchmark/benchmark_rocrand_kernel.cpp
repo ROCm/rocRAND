@@ -222,6 +222,72 @@ struct runner<rocrand_state_mtgp32>
     }
 };
 
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
+    rocrand_state_lfsr113* states, const uint4 seed)
+{
+    const unsigned int    state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    rocrand_state_lfsr113 state;
+    rocrand_init(seed, state_id, &state);
+    states[state_id] = state;
+}
+
+template<>
+struct runner<rocrand_state_lfsr113>
+{
+    rocrand_state_lfsr113* states;
+    size_t                 dimensions;
+
+    runner(const size_t /* dimensions */,
+           const size_t blocks,
+           const size_t threads,
+           const unsigned long long /* seed */,
+           const unsigned long long /* offset */)
+    {
+        const size_t states_size = blocks * threads;
+        HIP_CHECK(hipMalloc((void**)&states, states_size * sizeof(rocrand_state_lfsr113)));
+
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
+                           dim3(blocks),
+                           dim3(threads),
+                           0,
+                           0,
+                           states,
+                           uint4{ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                 ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                 ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                 ROCRAND_LFSR113_DEFAULT_SEED_W});
+
+        HIP_CHECK(hipGetLastError());
+        HIP_CHECK(hipDeviceSynchronize());
+    }
+
+    ~runner()
+    {
+        HIP_CHECK(hipFree(states));
+    }
+
+    template<typename T, typename GenerateFunc, typename Extra>
+    void generate(const size_t        blocks,
+                  const size_t        threads,
+                  hipStream_t         stream,
+                  T*                  data,
+                  const size_t        size,
+                  const GenerateFunc& generate_func,
+                  const Extra         extra)
+    {
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
+                           dim3(blocks),
+                           dim3(threads),
+                           0,
+                           stream,
+                           states,
+                           data,
+                           size,
+                           generate_func,
+                           extra);
+    }
+};
+
 template<typename Directions>
 __global__
 __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
@@ -599,19 +665,17 @@ void run_benchmarks(const cli::Parser& parser,
     }
 }
 
-const std::vector<std::string> all_engines = {
-    "xorwow",
-    "mrg31k3p",
-    "mrg32k3a",
-    "mtgp32",
-    // "mt19937",
-    "philox",
-    "sobol32",
-    // "scrambled_sobol32",
-    "sobol64",
-    // "scrambled_sobol64",
-    "lfsr113"
-};
+const std::vector<std::string> all_engines = {"xorwow",
+                                              "mrg31k3p",
+                                              "mrg32k3a",
+                                              "mtgp32",
+                                              // "mt19937",
+                                              "philox",
+                                              "sobol32",
+                                              // "scrambled_sobol32",
+                                              "sobol64",
+                                              // "scrambled_sobol64",
+                                              "lfsr113"};
 
 const std::vector<std::string> all_distributions = {
     "uniform-uint",
@@ -744,7 +808,7 @@ int main(int argc, char *argv[])
             {
                 run_benchmarks<rocrand_state_mtgp32>(parser, distribution, stream);
             }
-            else if (engine == "lfsr113")
+            else if(engine == "lfsr113")
             {
                 run_benchmarks<rocrand_state_lfsr113>(parser, distribution, stream);
             }

@@ -27,131 +27,132 @@
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
-#include "generator_type.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
+#include "generator_type.hpp"
 
-namespace rocrand_host {
-namespace detail {
-    typedef ::rocrand_device::lfsr113_engine lfsr113_device_engine;
+namespace rocrand_host
+{
+namespace detail
+{
+typedef ::rocrand_device::lfsr113_engine lfsr113_device_engine;
 
-    ROCRAND_KERNEL
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-    void init_engines_kernel(lfsr113_device_engine * engines,
-                             const unsigned int start_engine_id,
-                             const unsigned int offset)
+ROCRAND_KERNEL
+__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
+    lfsr113_device_engine* engines, uint4 seeds)
+{
+    const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    engines[engine_id]           = lfsr113_device_engine(seeds, engine_id);
+}
+
+template<class T, class Distribution>
+ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
+    lfsr113_device_engine* engines,
+    const unsigned int     start_engine_id,
+    T*                     data,
+    const size_t           n,
+    Distribution           distribution)
+{
+    constexpr unsigned int input_width  = Distribution::input_width;
+    constexpr unsigned int output_width = Distribution::output_width;
+
+    using vec_type = aligned_vec_type<T, output_width>;
+
+    const unsigned int id     = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+
+    const unsigned int    engine_id = (id + start_engine_id) & (stride - 1);
+    lfsr113_device_engine engine    = engines[engine_id];
+
+    unsigned int input[input_width];
+    T            output[output_width];
+
+    const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
+    const size_t misalignment = (output_width - uintptr / sizeof(T) % output_width) % output_width;
+    const unsigned int head_size = min(n, misalignment);
+    const unsigned int tail_size = (n - head_size) % output_width;
+    const size_t       vec_n     = (n - head_size) / output_width;
+
+    vec_type* vec_data = reinterpret_cast<vec_type*>(data + misalignment);
+    size_t    index    = id;
+
+    while(index < vec_n)
     {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        engines[engine_id] = lfsr113_device_engine(engine_id, offset + (engine_id < start_engine_id ? 1 : 0));
+        for(unsigned int i = 0; i < input_width; i++)
+        {
+            input[i] = engine();
+        }
+
+        distribution(input, output);
+
+        vec_data[index] = *reinterpret_cast<vec_type*>(output);
+        index += stride;
     }
 
-    template<class T, class Distribution>
-    ROCRAND_KERNEL
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-    void generate_kernel(lfsr113_device_engine * engines,
-                         const unsigned int start_engine_id,
-                         T * data, const size_t n,
-                         Distribution distribution)
+    if(output_width > 1 && index == vec_n)
     {
-        constexpr unsigned int input_width = Distribution::input_width;
-        constexpr unsigned int output_width = Distribution::output_width;
-
-        using vec_type = aligned_vec_type<T, output_width>;
-
-        const unsigned int id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-        const unsigned int engine_id = (id + start_engine_id) & (stride - 1);
-        lfsr113_device_engine engine = engines[engine_id];
-
-        unsigned int input[input_width];
-        T output[output_width];
-
-        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
-        const size_t misalignment =
-            (
-                output_width - uintptr / sizeof(T) % output_width
-            ) % output_width;
-        const unsigned int head_size = min(n, misalignment);
-        const unsigned int tail_size = (n - head_size) % output_width;
-        const size_t vec_n = (n - head_size) / output_width;
-
-        vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
-        size_t index = id;
-
-        while (index < vec_n)
+        if(head_size > 0)
         {
-            for (unsigned int i = 0; i < input_width; i++)
+            for(unsigned int i = 0; i < input_width; i++)
             {
                 input[i] = engine();
             }
 
             distribution(input, output);
 
-            vec_data[index] = *reinterpret_cast<vec_type *>(output);
-            index += stride;
+            for(unsigned int o = 0; o < output_width; o++)
+            {
+                if(o < head_size)
+                {
+                    data[o] = output[o];
+                }
+            }
         }
 
-        if (output_width > 1 && index == vec_n)
+        if(tail_size > 0)
         {
-            if (head_size > 0)
+            for(unsigned int i = 0; i < input_width; i++)
             {
-                for (unsigned int i = 0; i < input_width; i++)
-                {
-                    input[i] = engine();
-                }
-
-                distribution(input, output);
-
-                for (unsigned int o = 0; o < output_width; o++)
-                {
-                    if (o < head_size)
-                    {
-                        data[o] = output[o];
-                    }
-                }
+                input[i] = engine();
             }
 
-            if (tail_size > 0)
+            distribution(input, output);
+
+            for(unsigned int o = 0; o < output_width; o++)
             {
-                for (unsigned int i = 0; i < input_width; i++)
+                if(o < tail_size)
                 {
-                    input[i] = engine();
-                }
-
-                distribution(input, output);
-
-                for (unsigned int o = 0; o < output_width; o++)
-                {
-                    if (o < tail_size)
-                    {
-                        data[n - tail_size + o] = output[o];
-                    }
+                    data[n - tail_size + o] = output[o];
                 }
             }
         }
-
-        engines[engine_id] = engine;
     }
-} // end namespace detail
-} // end namepsace rocrand_host
 
-class rocrand_lfsr113 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113>
+    engines[engine_id] = engine;
+}
+} // end namespace detail
+} // namespace rocrand_host
+
+class rocrand_lfsr113 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113, uint4>
 {
 public:
-    using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113>;
+    using base_type   = rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113, uint4>;
     using engine_type = ::rocrand_host::detail::lfsr113_device_engine;
 
-    rocrand_lfsr113(/* unsigned int seed[4] = {3, 9, 17, 127}, */
-                    unsigned long long seed = 0,
+    rocrand_lfsr113(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                 ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                 ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                 ROCRAND_LFSR113_DEFAULT_SEED_W},
                     unsigned long long offset = 0,
-                    hipStream_t stream = 0)
-        : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(s_threads * s_blocks)
+                    hipStream_t        stream = 0)
+        : base_type(seeds, offset, stream)
+        , m_engines_initialized(false)
+        , m_engines(NULL)
+        , m_engines_size(s_threads * s_blocks)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
-        if (error != hipSuccess)
+        if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
@@ -164,30 +165,61 @@ public:
 
     void set_seed(unsigned long long seed)
     {
-        m_seed = seed;
+        uint4 seeds = uint4{static_cast<unsigned int>(seed),
+                            static_cast<unsigned int>(seed >> 16),
+                            static_cast<unsigned int>(seed >> 32),
+                            static_cast<unsigned int>(seed >> 48)};
+
+        if(seeds.x < ROCRAND_LFSR113_DEFAULT_SEED_X)
+            seeds.x += ROCRAND_LFSR113_DEFAULT_SEED_X;
+
+        if(seeds.y < ROCRAND_LFSR113_DEFAULT_SEED_Y)
+            seeds.y += ROCRAND_LFSR113_DEFAULT_SEED_Y;
+
+        m_seed                = seeds;
+        m_engines_initialized = false;
+    }
+
+    void set_seed(uint4 seed)
+    {
+        if(seed.x < ROCRAND_LFSR113_DEFAULT_SEED_X)
+            seed.x += ROCRAND_LFSR113_DEFAULT_SEED_X;
+
+        if(seed.y < ROCRAND_LFSR113_DEFAULT_SEED_Y)
+            seed.y += ROCRAND_LFSR113_DEFAULT_SEED_Y;
+
+        if(seed.z < ROCRAND_LFSR113_DEFAULT_SEED_Z)
+            seed.z += ROCRAND_LFSR113_DEFAULT_SEED_Z;
+
+        if(seed.w < ROCRAND_LFSR113_DEFAULT_SEED_W)
+            seed.w += ROCRAND_LFSR113_DEFAULT_SEED_W;
+
+        m_seed                = seed;
         m_engines_initialized = false;
     }
 
     void set_offset(unsigned long long offset)
     {
-        m_offset = offset;
+        m_offset              = offset;
         m_engines_initialized = false;
     }
 
     rocrand_status init()
     {
-        if (m_engines_initialized)
+        if(m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
         m_start_engine_id = m_offset % m_engines_size;
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, m_start_engine_id, /*m_seed,*/ m_offset / m_engines_size
-        );
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
+                           dim3(s_blocks),
+                           dim3(s_threads),
+                           0,
+                           m_stream,
+                           m_engines,
+                           m_seed);
         // Check kernel status
-        if (hipGetLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
         m_engines_initialized = true;
@@ -195,26 +227,29 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = uniform_distribution<T> >
-    rocrand_status generate(T * data, size_t data_size,
-                            Distribution distribution = Distribution())
+    template<class T, class Distribution = uniform_distribution<T>>
+    rocrand_status generate(T* data, size_t data_size, Distribution distribution = Distribution())
     {
         rocrand_status status = init();
-        if (status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, m_start_engine_id, data, data_size, distribution
-        );
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
+                           dim3(s_blocks),
+                           dim3(s_threads),
+                           0,
+                           m_stream,
+                           m_engines,
+                           m_start_engine_id,
+                           data,
+                           data_size,
+                           distribution);
 
-        if (hipGetLastError() != hipSuccess)
+        if(hipGetLastError() != hipSuccess)
             return ROCRAND_STATUS_LAUNCH_FAILURE;
 
-        const auto touched_engines =
-            (data_size + Distribution::output_width - 1) /
-            Distribution::output_width;
+        const auto touched_engines
+            = (data_size + Distribution::output_width - 1) / Distribution::output_width;
 
         m_start_engine_id = (m_start_engine_id + touched_engines) % m_engines_size;
 
@@ -222,33 +257,33 @@ public:
     }
 
     template<class T>
-    rocrand_status generate_uniform(T * data, size_t data_size)
+    rocrand_status generate_uniform(T* data, size_t data_size)
     {
         uniform_distribution<T> distribution;
         return generate(data, data_size, distribution);
     }
 
     template<class T>
-    rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
+    rocrand_status generate_normal(T* data, size_t data_size, T mean, T stddev)
     {
         normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
-    rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
+    rocrand_status generate_log_normal(T* data, size_t data_size, T mean, T stddev)
     {
         log_normal_distribution<T> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
-    rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
+    rocrand_status generate_poisson(unsigned int* data, size_t data_size, double lambda)
     {
         try
         {
             m_poisson.set_lambda(lambda);
         }
-        catch (rocrand_status status)
+        catch(rocrand_status status)
         {
             return status;
         }
@@ -256,12 +291,12 @@ public:
     }
 
 private:
-    bool m_engines_initialized;
-    engine_type * m_engines;
-    size_t m_engines_size;
+    bool         m_engines_initialized;
+    engine_type* m_engines;
+    size_t       m_engines_size;
 
     static const uint32_t s_threads = 256;
-    static const uint32_t s_blocks = 512;
+    static const uint32_t s_blocks  = 512;
 
     poisson_distribution_manager<> m_poisson;
 
