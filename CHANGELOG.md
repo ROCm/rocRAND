@@ -1,11 +1,11 @@
 # Change Log for rocRAND
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
-## (Unreleased) rocRAND-2.10.15 for ROCm 5.3.0
+## rocRAND-2.10.15 for ROCm 5.3.0
 ### Changed
 - Increased number of warmup iterations for rocrand_benchmark_generate from 5 to 15 to eliminate corner cases that would generate artificially high benchmark scores.
 
-## (Released) rocRAND-2.10.14 for ROCm 5.2.0
+## rocRAND-2.10.14 for ROCm 5.2.0
 ### Added
 - Backward compatibility for deprecated `#include <rocrand.h>` using wrapper header files.
 - Packages for test and benchmark executables on all supported OSes using CPack.
