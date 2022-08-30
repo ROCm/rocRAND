@@ -225,7 +225,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand)
     double mean = 0;
     for(auto v : output_host)
     {
-        mean += static_cast<double>(v) / UINT_MAX;
+        mean += static_cast<double>(v) / ULLONG_MAX;
     }
     mean = mean / output_size;
     EXPECT_NEAR(mean, 0.5, 0.1);

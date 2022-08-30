@@ -66,6 +66,8 @@ class threefry2x32_20_engine : public threefry_engine2_base<uint2, unsigned int,
 {
 public:
 
+    typedef threefry_engine2_base<uint2, unsigned int, 20>::threefry_state_2 threefry2x32_20_state;
+
     /// Initializes the internal state of the PRNG using
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.

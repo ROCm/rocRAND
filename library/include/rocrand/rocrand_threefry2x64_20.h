@@ -65,6 +65,9 @@ namespace rocrand_device
 class threefry2x64_20_engine : public threefry_engine2_base<ulonglong2, unsigned long long, 20>
 {
 public:
+
+    typedef threefry_engine2_base<ulonglong2, unsigned long long, 20>::threefry_state_2 threefry2x64_20_state;
+
     /// Initializes the internal state of the PRNG using
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.

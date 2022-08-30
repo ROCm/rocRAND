@@ -115,6 +115,108 @@ struct uniform_distribution<__half>
     }
 };
 
+// 64 bit Universal
+
+template<class T>
+struct uniform_distribution_64;
+
+template<>
+struct uniform_distribution_64<unsigned long long>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
+
+    __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned long long (&output)[1]) const
+    {
+        unsigned long long v = input[0];
+        output[0] = v;
+    }
+};
+
+template<>
+struct uniform_distribution_64<unsigned char>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 4;
+
+    __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned char (&output)[4]) const
+    {
+        unsigned long long v = input[0];
+        *reinterpret_cast<unsigned long long *>(output) = v;
+    }
+};
+
+template<>
+struct uniform_distribution_64<unsigned short>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned short (&output)[2]) const
+    {
+        unsigned long long v = input[0];
+        *reinterpret_cast<unsigned long long *>(output) = v;
+    }
+};
+
+template<>
+struct uniform_distribution_64<unsigned int>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned int (&output)[2]) const
+    {
+        unsigned long long v = input[0];
+        *reinterpret_cast<unsigned long long *>(output) = v;
+    }
+};
+
+template<>
+struct uniform_distribution_64<float>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 1;
+
+    __host__ __device__
+    void operator()(const unsigned long long (&input)[1], float (&output)[1]) const
+    {
+        output[0] = rocrand_device::detail::uniform_distribution(input[0]);
+    }
+};
+
+template<>
+struct uniform_distribution_64<double>
+{
+    static constexpr unsigned int input_width = 2;
+    static constexpr unsigned int output_width = 1;
+
+    __host__ __device__
+    void operator()(const unsigned long long (&input)[2], double (&output)[1]) const
+    {
+        output[0] = rocrand_device::detail::uniform_distribution_double(input[0], input[1]);
+    }
+};
+
+template<>
+struct uniform_distribution_64<__half>
+{
+    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int output_width = 2;
+
+    __host__ __device__
+    void operator()(const unsigned long long (&input)[1], __half (&output)[2]) const
+    {
+        unsigned long long v = input[0];
+        output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
+        output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
+    }
+};
+
 // Mrg32k3a and Mrg31k3p
 
 template<class T, typename state_type>

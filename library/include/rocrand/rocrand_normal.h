@@ -71,6 +71,27 @@ float2 box_muller(unsigned int x, unsigned int y)
 }
 
 FQUALIFIERS
+float2 box_muller(unsigned long long v)
+{
+    unsigned int x = static_cast<unsigned int>(v);
+    unsigned int y = static_cast<unsigned int>(v>>32);
+
+    float2 result;
+    float u = ROCRAND_2POW32_INV + (x * ROCRAND_2POW32_INV);
+    float w = ROCRAND_2POW32_INV_2PI + (y * ROCRAND_2POW32_INV_2PI);
+    float s = sqrtf(-2.0f * logf(u));
+    #ifdef __HIP_DEVICE_COMPILE__
+        __sincosf(w, &result.x, &result.y);
+        result.x *= s;
+        result.y *= s;
+    #else
+        result.x = sinf(w) * s;
+        result.y = cosf(w) * s;
+    #endif
+    return result;
+}
+
+FQUALIFIERS
 double2 box_muller_double(uint4 v)
 {
     double2 result;
@@ -79,6 +100,27 @@ double2 box_muller_double(uint4 v)
     double u = ROCRAND_2POW53_INV_DOUBLE + (v1 * ROCRAND_2POW53_INV_DOUBLE);
     unsigned long long int v2 = (unsigned long long int)v.z ^
         ((unsigned long long int)v.w << (53 - 32));
+    double w = (ROCRAND_2POW53_INV_DOUBLE * 2.0) +
+        (v2 * (ROCRAND_2POW53_INV_DOUBLE * 2.0));
+    double s = sqrt(-2.0 * log(u));
+    #ifdef __HIP_DEVICE_COMPILE__
+        sincospi(w, &result.x, &result.y);
+        result.x *= s;
+        result.y *= s;
+    #else
+        result.x = sin(w * ROCRAND_PI_DOUBLE) * s;
+        result.y = cos(w * ROCRAND_PI_DOUBLE) * s;
+    #endif
+    return result;
+}
+
+FQUALIFIERS
+double2 box_muller_double(ulonglong2 v)
+{
+    double2 result;
+    unsigned long long int v1 = v.x>>11;
+    double u = ROCRAND_2POW53_INV_DOUBLE + (v1 * ROCRAND_2POW53_INV_DOUBLE);
+    unsigned long long int v2 = v.y>>11;
     double w = (ROCRAND_2POW53_INV_DOUBLE * 2.0) +
         (v2 * (ROCRAND_2POW53_INV_DOUBLE * 2.0));
     double s = sqrt(-2.0 * log(u));
@@ -239,10 +281,48 @@ float2 normal_distribution2(unsigned int v1, unsigned int v2)
 }
 
 FQUALIFIERS
+float2 normal_distribution2(uint2 v)
+{
+    return ::rocrand_device::detail::box_muller(v.x, v.y);
+}
+
+FQUALIFIERS
+float2 normal_distribution2(unsigned long long v)
+{
+    return ::rocrand_device::detail::box_muller(v);
+}
+
+FQUALIFIERS
 float4 normal_distribution4(uint4 v)
 {
     float2 r1 = ::rocrand_device::detail::box_muller(v.x, v.y);
     float2 r2 = ::rocrand_device::detail::box_muller(v.z, v.w);
+    return float4{
+        r1.x,
+        r1.y,
+        r2.x,
+        r2.y
+    };
+}
+
+FQUALIFIERS
+float4 normal_distribution4(longlong2 v)
+{
+    float2 r1 = ::rocrand_device::detail::box_muller(v.x);
+    float2 r2 = ::rocrand_device::detail::box_muller(v.y);
+    return float4{
+        r1.x,
+        r1.y,
+        r2.x,
+        r2.y
+    };
+}
+
+FQUALIFIERS
+float4 normal_distribution4(unsigned long long v1, unsigned long long v2)
+{
+    float2 r1 = ::rocrand_device::detail::box_muller(v1);
+    float2 r2 = ::rocrand_device::detail::box_muller(v2);
     return float4{
         r1.x,
         r1.y,
@@ -274,11 +354,26 @@ double2 normal_distribution_double2(uint4 v)
 }
 
 FQUALIFIERS
+double2 normal_distribution_double2(ulonglong2 v)
+{
+    return ::rocrand_device::detail::box_muller_double(v);
+}
+
+FQUALIFIERS
 __half2 normal_distribution_half2(unsigned int v)
 {
     return ::rocrand_device::detail::box_muller_half(
         static_cast<unsigned short>(v),
         static_cast<unsigned short>(v >> 16)
+    );
+}
+
+FQUALIFIERS
+__half2 normal_distribution_half2(unsigned long long v)
+{
+    return ::rocrand_device::detail::box_muller_half(
+        static_cast<unsigned short>(v),
+        static_cast<unsigned short>(v >> 32)
     );
 }
 
@@ -1110,10 +1205,7 @@ float rocrand_normal(rocrand_state_threefry2x32_20* state)
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_threefry2x32_20* state)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-
-    return rocrand_device::detail::normal_distribution2(state1, state2);
+    return rocrand_device::detail::normal_distribution2(rocrand2(state));
 }
 
 /**
@@ -1195,10 +1287,7 @@ float rocrand_normal(rocrand_state_threefry2x64_20* state)
 FQUALIFIERS
 float2 rocrand_normal2(rocrand_state_threefry2x64_20* state)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-
-    return rocrand_device::detail::normal_distribution2(state1, state2);
+    return rocrand_device::detail::normal_distribution2(rocrand(state));
 }
 
 /**
@@ -1321,13 +1410,7 @@ double rocrand_normal_double(rocrand_state_threefry4x32_20* state)
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_threefry4x32_20* state)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-    auto state3 = rocrand(state);
-    auto state4 = rocrand(state);
-
-    return rocrand_device::detail::normal_distribution_double2(
-        uint4{state1, state2, state3, state4});
+    return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
 }
 
 /**
@@ -1408,11 +1491,9 @@ double2 rocrand_normal_double2(rocrand_state_threefry4x64_20* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
-    auto state3 = rocrand(state);
-    auto state4 = rocrand(state);
 
     return rocrand_device::detail::normal_distribution_double2(
-        uint4{state1, state2, state3, state4});
+        ulonglong2{state1, state2});
 }
 
 /** @} */ // end of group rocranddevice

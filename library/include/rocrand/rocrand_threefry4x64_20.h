@@ -66,6 +66,8 @@ class threefry4x64_20_engine : public threefry_engine4_base<ulonglong4, unsigned
 {
 public:
 
+    typedef threefry_engine4_base<ulonglong4, unsigned long long, 20>::threefry_state_4 threefry4x64_20_state;
+
     /// Initializes the internal state of the PRNG using
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.
@@ -159,6 +161,6 @@ unsigned long long rocrand(rocrand_state_threefry4x64_20* state)
 FQUALIFIERS
 ulonglong4 rocrand4(rocrand_state_threefry4x64_20 * state)
 {
-    return state->next2();
+    return state->next4();
 }
 #endif // ROCRAND_THREEFRY4X64_20_H_

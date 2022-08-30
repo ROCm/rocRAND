@@ -2809,7 +2809,7 @@ class threefry2x64_20_engine
 {
 public:
     /// \copydoc philox4x32_10_engine::result_type
-    typedef unsigned int result_type;
+    typedef unsigned long long result_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -2886,7 +2886,7 @@ public:
     void operator()(result_type* output, size_t size)
     {
         rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
+        status = rocrand_generate_64(m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -3081,7 +3081,7 @@ class threefry4x64_20_engine
 {
 public:
     /// \copydoc philox4x32_10_engine::result_type
-    typedef unsigned int result_type;
+    typedef unsigned long long result_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -3158,7 +3158,7 @@ public:
     void operator()(result_type* output, size_t size)
     {
         rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
+        status = rocrand_generate_64(m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
