@@ -176,6 +176,31 @@ rocrand_generate(rocrand_generator generator,
                  unsigned int * output_data, size_t n);
 
 /**
+ * \brief Generates uniformly distributed 64-bit unsigned integers.
+ *
+ * Generates \p n uniformly distributed 64-bit unsigned integers and
+ * saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0 and \p 2^64, including \p 0 and
+ * excluding \p 2^64.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of 64-bit unsigned integers to generate
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
+ * - ROCRAND_TYPE_ERROR if the generator can't natively generate 64-bit random numbers \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+rocrand_status ROCRANDAPI rocrand_generate_long_long(rocrand_generator       generator,
+                                                     unsigned long long int* output_data,
+                                                     size_t                  n);
+
+/**
 * \brief Generates uniformly distributed 8-bit unsigned integers.
 *
 * Generates \p n uniformly distributed 8-bit unsigned integers and

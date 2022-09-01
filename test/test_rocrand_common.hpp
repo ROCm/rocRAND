@@ -38,4 +38,7 @@ const rocrand_rng_type rng_types[] = {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
                                       ROCRAND_RNG_QUASI_SOBOL64,
                                       ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64};
 
+const rocrand_rng_type long_long_rng_types[]
+    = {ROCRAND_RNG_QUASI_SOBOL64, ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64};
+
 #endif // TEST_ROCRAND_COMMON_HPP_

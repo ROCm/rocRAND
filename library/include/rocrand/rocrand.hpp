@@ -140,18 +140,18 @@ private:
 
 /// \class uniform_int_distribution
 ///
-/// \brief Produces random integer values uniformly distributed on the interval [0, 2^32 - 1].
+/// \brief Produces random integer values uniformly distributed on the interval [0, 2^(sizeof(IntType)*8) - 1].
 ///
-/// \tparam IntType - type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int type is supported.
+/// \tparam IntType - type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int and \p unsigned \p long \p long \p int type is supported.
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
-    static_assert(
-        std::is_same<unsigned char, IntType>::value
-        || std::is_same<unsigned short, IntType>::value
-        || std::is_same<unsigned int, IntType>::value,
-        "Only unsigned char, unsigned short, and unsigned int types is supported in uniform_int_distribution"
-    );
+    static_assert(std::is_same<unsigned char, IntType>::value
+                      || std::is_same<unsigned short, IntType>::value
+                      || std::is_same<unsigned long long int, IntType>::value
+                      || std::is_same<unsigned int, IntType>::value,
+                  "Only unsigned char, unsigned short, unsigned int and unsigned long long int "
+                  "types are supported in uniform_int_distribution");
 
 public:
     typedef IntType result_type;
@@ -181,7 +181,7 @@ public:
     /// \brief Fills \p output with uniformly distributed random integer values.
     ///
     /// Generates \p size random integer values uniformly distributed
-    /// on the  interval [0, 2^32 - 1], and stores them into the device memory
+    /// on the  interval [0, 2^(sizeof(IntType)*8) - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
     /// \param g - An uniform random number generator object
@@ -233,6 +233,12 @@ private:
     rocrand_status generate(Generator& g, unsigned int * output, size_t size)
     {
         return rocrand_generate(g.m_generator, output, size);
+    }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, unsigned long long int* output, size_t size)
+    {
+        return rocrand_generate_long_long(g.m_generator, output, size);
     }
 };
 
@@ -2068,9 +2074,9 @@ class sobol64_engine
 {
 public:
     /// \copydoc philox4x32_10_engine::result_type
-    typedef unsigned int result_type;
+    typedef unsigned long long int result_type;
     /// \copydoc philox4x32_10_engine::offset_type
-    typedef unsigned long long offset_type;
+    typedef unsigned long long int offset_type;
     /// \typedef dimensions_num_type
     /// Quasi-random number engine type for number of dimensions.
     ///
@@ -2174,7 +2180,7 @@ public:
     void operator()(result_type * output, size_t size)
     {
         rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
+        status = rocrand_generate_long_long(m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 
@@ -2187,7 +2193,7 @@ public:
     /// \copydoc philox4x32_10_engine::max()
     result_type max() const
     {
-        return std::numeric_limits<unsigned int>::max();
+        return std::numeric_limits<result_type>::max();
     }
 
     /// \copydoc philox4x32_10_engine::type()
@@ -2227,9 +2233,9 @@ class scrambled_sobol64_engine
 {
 public:
     /// \copydoc philox4x32_10_engine::result_type
-    typedef unsigned int result_type;
+    typedef unsigned long long int result_type;
     /// \copydoc philox4x32_10_engine::offset_type
-    typedef unsigned long long offset_type;
+    typedef unsigned long long int offset_type;
     /// \typedef dimensions_num_type
     /// Quasi-random number engine type for number of dimensions.
     ///
@@ -2337,7 +2343,7 @@ public:
     void operator()(result_type* output, size_t size)
     {
         rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
+        status = rocrand_generate_long_long(m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }

@@ -265,7 +265,7 @@ public:
             m_stream,
             data,
             size,
-            static_cast<const unsigned long long int*>(m_direction_vectors),
+            m_direction_vectors,
             m_scramble_constants,
             m_current_offset,
             distribution);

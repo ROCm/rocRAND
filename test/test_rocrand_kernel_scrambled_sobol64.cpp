@@ -72,11 +72,27 @@ struct rocrand_uniform_f
     }
 };
 
+struct rocrand_uniform_double_f
+{
+    __device__ __forceinline__ double operator()(rocrand_state_scrambled_sobol64* state_ptr)
+    {
+        return rocrand_uniform_double(state_ptr);
+    }
+};
+
 struct rocrand_normal_f
 {
     __device__ __forceinline__ float operator()(rocrand_state_scrambled_sobol64* state_ptr)
     {
         return rocrand_normal(state_ptr);
+    }
+};
+
+struct rocrand_normal_double_f
+{
+    __device__ __forceinline__ double operator()(rocrand_state_scrambled_sobol64* state_ptr)
+    {
+        return rocrand_normal_double(state_ptr);
     }
 };
 
@@ -89,10 +105,19 @@ struct rocrand_log_normal_f
     }
 };
 
+struct rocrand_log_normal_double_f
+{
+    __device__ __forceinline__ float
+        operator()(rocrand_state_scrambled_sobol64* state_ptr, float mean, float std)
+    {
+        return rocrand_log_normal_double(state_ptr, mean, std);
+    }
+};
+
 struct rocrand_poisson_f
 {
-    __device__ __forceinline__ float operator()(rocrand_state_scrambled_sobol64* state_ptr,
-                                                double                           lambda)
+    __device__ __forceinline__ unsigned long long int
+        operator()(rocrand_state_scrambled_sobol64* state_ptr, double lambda)
     {
         return rocrand_poisson(state_ptr, lambda);
     }
@@ -148,6 +173,47 @@ void load_scrambled_sobol64_constants_to_gpu(const unsigned int       dimensions
                         hipMemcpyHostToDevice));
 }
 
+template<typename RESULT_T, class Distribution, typename... Args>
+void call_rocrand_kernel(std::vector<RESULT_T>& output_host,
+                         const unsigned int     dimensions,
+                         const size_t           size_per_dimension,
+                         Args... args)
+{
+    // output_size has to be a multiple of the dimensions for sobol
+    const size_t output_size = dimensions * size_per_dimension;
+    output_host.resize(output_size);
+
+    RESULT_T* output;
+    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(RESULT_T)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    unsigned long long int* m_vector;
+    unsigned long long int* m_scramble_constants;
+    load_scrambled_sobol64_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<Distribution>),
+                       dim3(8, dimensions),
+                       dim3(32),
+                       0,
+                       0,
+                       output,
+                       m_vector,
+                       m_scramble_constants,
+                       size_per_dimension,
+                       args...);
+    HIP_CHECK(hipGetLastError());
+
+    //std::vector<RESULT_T> output_host(output_size);
+    HIP_CHECK(hipMemcpy(output_host.data(),
+                        output,
+                        output_size * sizeof(RESULT_T),
+                        hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+    HIP_CHECK(hipFree(m_vector));
+    HIP_CHECK(hipFree(m_scramble_constants));
+}
+
 TEST(rocrand_kernel_scrambled_sobol64, rocrand_state_scrambled_sobol64_type)
 {
     typedef rocrand_state_scrambled_sobol64 state_type;
@@ -159,6 +225,213 @@ TEST(rocrand_kernel_scrambled_sobol64, rocrand_state_scrambled_sobol64_type)
 
 TEST(rocrand_kernel_scrambled_sobol64, rocrand)
 {
+    using RESULT_T     = unsigned long long int;
+    using Distribution = rocrand_f;
+
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+
+    std::vector<RESULT_T> output_host;
+    call_rocrand_kernel<RESULT_T, Distribution>(output_host, dimensions, size_per_dimension);
+
+    double mean = 0;
+    for(RESULT_T v : output_host)
+    {
+        // conversion from ULLONG_MAX to double loses precision -> implicit conversion generates a warning
+        mean += static_cast<double>(v) / static_cast<double>(ULLONG_MAX);
+    }
+    mean = mean / output_host.size();
+    EXPECT_NEAR(mean, 0.5, 0.1);
+}
+
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_uniform)
+{
+    using RESULT_T = float;
+    using Distribution = rocrand_uniform_f;
+
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+
+    std::vector<RESULT_T> output_host;
+    call_rocrand_kernel<RESULT_T, Distribution>(output_host, dimensions, size_per_dimension);
+
+    double mean = 0;
+    for(RESULT_T v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+    EXPECT_NEAR(mean, 0.5, 0.1);
+}
+
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_uniform_double)
+{
+    using RESULT_T     = double;
+    using Distribution = rocrand_uniform_double_f;
+
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+
+    std::vector<RESULT_T> output_host;
+    call_rocrand_kernel<RESULT_T, Distribution>(output_host, dimensions, size_per_dimension);
+
+    double mean = 0;
+    for(RESULT_T v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+    EXPECT_NEAR(mean, 0.5, 0.1);
+}
+
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_normal)
+{
+    using RESULT_T = float;
+    using Distribution = rocrand_normal_f;
+
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+
+    std::vector<RESULT_T> output_host;
+    call_rocrand_kernel<RESULT_T, Distribution>(output_host, dimensions, size_per_dimension);
+
+    double mean = 0;
+    for(RESULT_T v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+    EXPECT_NEAR(mean, 0.0, 0.2);
+
+    double stddev = 0;
+    for(RESULT_T v : output_host)
+    {
+        stddev += std::pow(static_cast<double>(v) - mean, 2);
+    }
+    stddev = stddev / output_host.size();
+    EXPECT_NEAR(stddev, 1.0, 0.2);
+}
+
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_normal_double)
+{
+    using RESULT_T     = double;
+    using Distribution = rocrand_normal_double_f;
+
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+
+    std::vector<RESULT_T> output_host;
+    call_rocrand_kernel<RESULT_T, Distribution>(output_host, dimensions, size_per_dimension);
+
+    double mean = 0;
+    for(RESULT_T v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+    EXPECT_NEAR(mean, 0.0, 0.2);
+
+    double stddev = 0;
+    for(RESULT_T v : output_host)
+    {
+        stddev += std::pow(static_cast<double>(v) - mean, 2);
+    }
+    stddev = stddev / output_host.size();
+    EXPECT_NEAR(stddev, 1.0, 0.2);
+}
+
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_log_normal)
+{
+    using RESULT_T = float;
+    using Distribution = rocrand_log_normal_f;
+
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+
+    constexpr RESULT_T ExpectedMean = 1.6f;
+    constexpr RESULT_T ExpectedStd  = 0.25f;
+
+    std::vector<RESULT_T> output_host;
+    call_rocrand_kernel<RESULT_T, Distribution>(output_host,
+                                                dimensions,
+                                                size_per_dimension,
+                                                ExpectedMean,
+                                                ExpectedStd);
+
+    double mean = 0;
+    for(RESULT_T v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+
+    double stddev = 0;
+    for(RESULT_T v : output_host)
+    {
+        stddev += std::pow(v - mean, 2);
+    }
+    stddev = std::sqrt(stddev / output_host.size());
+
+    double logmean = std::log(mean * mean / std::sqrt(stddev + mean * mean));
+    double logstd  = std::sqrt(std::log(1.0f + stddev / (mean * mean)));
+
+    EXPECT_NEAR(ExpectedMean, logmean, ExpectedMean * 0.2);
+    EXPECT_NEAR(ExpectedStd, logstd, ExpectedStd * 0.2);
+}
+
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_log_normal_double)
+{
+    using RESULT_T     = double;
+    using Distribution = rocrand_log_normal_double_f;
+
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+
+    constexpr RESULT_T ExpectedMean = 1.6f;
+    constexpr RESULT_T ExpectedStd  = 0.25f;
+
+    std::vector<RESULT_T> output_host;
+    call_rocrand_kernel<RESULT_T, Distribution>(output_host,
+                                                dimensions,
+                                                size_per_dimension,
+                                                ExpectedMean,
+                                                ExpectedStd);
+
+    double mean = 0;
+    for(RESULT_T v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+
+    double stddev = 0;
+    for(RESULT_T v : output_host)
+    {
+        stddev += std::pow(v - mean, 2);
+    }
+    stddev = std::sqrt(stddev / output_host.size());
+
+    double logmean = std::log(mean * mean / std::sqrt(stddev + mean * mean));
+    double logstd  = std::sqrt(std::log(1.0f + stddev / (mean * mean)));
+
+    EXPECT_NEAR(ExpectedMean, logmean, ExpectedMean * 0.2);
+    EXPECT_NEAR(ExpectedStd, logstd, ExpectedStd * 0.2);
+}
+
+class rocrand_kernel_scrambled_sobol64_poisson : public ::testing::TestWithParam<double>
+{};
+
+TEST_P(rocrand_kernel_scrambled_sobol64_poisson, rocrand_poisson)
+{
+    const double lambda = GetParam();
+
     using RESULT_T = unsigned long long int;
 
     constexpr size_t       size_per_dimension = 8192;
@@ -168,225 +441,6 @@ TEST(rocrand_kernel_scrambled_sobol64, rocrand)
 
     RESULT_T* output;
     HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(RESULT_T)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long int* m_vector;
-    unsigned long long int* m_scramble_constants;
-    load_scrambled_sobol64_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
-
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<rocrand_f>),
-                       dim3(8, dimensions),
-                       dim3(32),
-                       0,
-                       0,
-                       output,
-                       m_vector,
-                       m_scramble_constants,
-                       size_per_dimension);
-    HIP_CHECK(hipGetLastError());
-
-    std::vector<RESULT_T> output_host(output_size);
-    HIP_CHECK(hipMemcpy(output_host.data(),
-                        output,
-                        output_size * sizeof(RESULT_T),
-                        hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-    HIP_CHECK(hipFree(m_vector));
-    HIP_CHECK(hipFree(m_scramble_constants));
-
-    double mean = 0;
-    for(RESULT_T v : output_host)
-    {
-        // conversion from ULLONG_MAX to double loses precision -> implicit conversion generates a warning
-        mean += static_cast<double>(v) / static_cast<double>(ULLONG_MAX);
-    }
-    mean = mean / output_size;
-    EXPECT_NEAR(mean, 0.5, 0.1);
-}
-
-TEST(rocrand_kernel_scrambled_sobol64, rocrand_uniform)
-{
-    using RESULT_T = float;
-
-    constexpr size_t       size_per_dimension = 8192;
-    constexpr unsigned int dimensions         = 8;
-    // output_size has to be a multiple of the dimensions for sobol
-    constexpr size_t output_size = dimensions * size_per_dimension;
-
-    RESULT_T* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(RESULT_T)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long int* m_vector;
-    unsigned long long int* m_scramble_constants;
-    load_scrambled_sobol64_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
-
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<rocrand_uniform_f>),
-                       dim3(8, dimensions),
-                       dim3(32),
-                       0,
-                       0,
-                       output,
-                       m_vector,
-                       m_scramble_constants,
-                       size_per_dimension);
-    HIP_CHECK(hipGetLastError());
-
-    std::vector<RESULT_T> output_host(output_size);
-    HIP_CHECK(hipMemcpy(output_host.data(),
-                        output,
-                        output_size * sizeof(RESULT_T),
-                        hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-    HIP_CHECK(hipFree(m_vector));
-    HIP_CHECK(hipFree(m_scramble_constants));
-
-    double mean = 0;
-    for(RESULT_T v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
-    EXPECT_NEAR(mean, 0.5, 0.1);
-}
-
-TEST(rocrand_kernel_sobol64, rocrand_normal)
-{
-    using RESULT_T = float;
-
-    constexpr size_t       size_per_dimension = 8192;
-    constexpr unsigned int dimensions         = 8;
-    // output_size has to be a multiple of the dimensions for sobol
-    constexpr size_t output_size = dimensions * size_per_dimension;
-
-    RESULT_T* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(RESULT_T)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long int* m_vector;
-    unsigned long long int* m_scramble_constants;
-    load_scrambled_sobol64_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
-
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<rocrand_normal_f>),
-                       dim3(8, dimensions),
-                       dim3(32),
-                       0,
-                       0,
-                       output,
-                       m_vector,
-                       m_scramble_constants,
-                       size_per_dimension);
-    HIP_CHECK(hipGetLastError());
-
-    std::vector<RESULT_T> output_host(output_size);
-    HIP_CHECK(hipMemcpy(output_host.data(),
-                        output,
-                        output_size * sizeof(RESULT_T),
-                        hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-    HIP_CHECK(hipFree(m_vector));
-    HIP_CHECK(hipFree(m_scramble_constants));
-
-    double mean = 0;
-    for(RESULT_T v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
-    EXPECT_NEAR(mean, 0.0, 0.2);
-
-    double stddev = 0;
-    for(auto v : output_host)
-    {
-        stddev += std::pow(static_cast<double>(v) - mean, 2);
-    }
-    stddev = stddev / output_size;
-    EXPECT_NEAR(stddev, 1.0, 0.2);
-}
-
-TEST(rocrand_kernel_sobol64, rocrand_log_normal)
-{
-    using RESULT_T = float;
-
-    constexpr size_t       size_per_dimension = 8192;
-    constexpr unsigned int dimensions         = 8;
-    // output_size has to be a multiple of the dimensions for sobol
-    constexpr size_t output_size = dimensions * size_per_dimension;
-
-    RESULT_T* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(RESULT_T)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long int* m_vector;
-    unsigned long long int* m_scramble_constants;
-    load_scrambled_sobol64_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
-
-    constexpr RESULT_T ExpectedMean = 1.6f;
-    constexpr RESULT_T ExpectedStd  = 0.25f;
-
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<rocrand_log_normal_f>),
-                       dim3(8, dimensions),
-                       dim3(32),
-                       0,
-                       0,
-                       output,
-                       m_vector,
-                       m_scramble_constants,
-                       size_per_dimension,
-                       ExpectedMean,
-                       ExpectedStd);
-    HIP_CHECK(hipGetLastError());
-
-    std::vector<RESULT_T> output_host(output_size);
-    HIP_CHECK(hipMemcpy(output_host.data(),
-                        output,
-                        output_size * sizeof(RESULT_T),
-                        hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-    HIP_CHECK(hipFree(m_vector));
-    HIP_CHECK(hipFree(m_scramble_constants));
-
-    double mean = 0;
-    for(RESULT_T v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
-
-    double stddev = 0;
-    for(auto v : output_host)
-    {
-        stddev += std::pow(v - mean, 2);
-    }
-    stddev = std::sqrt(stddev / output_size);
-
-    double logmean = std::log(mean * mean / std::sqrt(stddev + mean * mean));
-    double logstd  = std::sqrt(std::log(1.0f + stddev / (mean * mean)));
-
-    EXPECT_NEAR(ExpectedMean, logmean, ExpectedMean * 0.2);
-    EXPECT_NEAR(ExpectedStd, logstd, ExpectedStd * 0.2);
-}
-
-class rocrand_kernel_sobol64_poisson : public ::testing::TestWithParam<double>
-{};
-
-TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
-{
-    const double lambda = GetParam();
-
-    using RESULT_T = unsigned int;
-
-    constexpr size_t       size_per_dimension = 8192;
-    constexpr unsigned int dimensions         = 8;
-    // output_size has to be a multiple of the dimensions for sobol
-    constexpr size_t output_size = dimensions * size_per_dimension;
-
-    RESULT_T* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long int* m_vector;
@@ -435,6 +489,6 @@ TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
 
 const double lambdas[] = {1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0};
 
-INSTANTIATE_TEST_SUITE_P(rocrand_kernel_sobol64_poisson,
-                         rocrand_kernel_sobol64_poisson,
+INSTANTIATE_TEST_SUITE_P(rocrand_kernel_scrambled_sobol64_poisson,
+                         rocrand_kernel_scrambled_sobol64_poisson,
                          ::testing::ValuesIn(lambdas));

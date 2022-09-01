@@ -158,3 +158,37 @@ TEST(rocrand_generate_tests, neg_test)
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_tests,
                         rocrand_generate_tests,
                         ::testing::ValuesIn(rng_types));
+
+class rocrand_generate_long_long_tests : public ::testing::TestWithParam<rocrand_rng_type>
+{};
+
+TEST_P(rocrand_generate_long_long_tests, long_long_test)
+{
+    const rocrand_rng_type rng_type = GetParam();
+
+    rocrand_generator generator;
+    ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
+
+    const size_t            size = 12563;
+    unsigned long long int* data;
+    HIP_CHECK(hipMallocHelper((void**)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // Any sizes
+    ROCRAND_CHECK(rocrand_generate_long_long(generator, data, 1));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // Any alignment
+    ROCRAND_CHECK(rocrand_generate_long_long(generator, data + 1, 2));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    ROCRAND_CHECK(rocrand_generate_long_long(generator, data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    HIP_CHECK(hipFree(data));
+    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+}
+
+INSTANTIATE_TEST_SUITE_P(rocrand_generate_long_long_tests,
+                         rocrand_generate_long_long_tests,
+                         ::testing::ValuesIn(long_long_rng_types));
