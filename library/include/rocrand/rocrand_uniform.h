@@ -563,7 +563,7 @@ double rocrand_uniform_double(rocrand_state_scrambled_sobol32* state)
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_sobol64 * state)
+float rocrand_uniform(rocrand_state_sobol64* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }

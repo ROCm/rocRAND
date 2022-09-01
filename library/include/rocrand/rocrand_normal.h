@@ -927,7 +927,7 @@ double rocrand_normal_double(rocrand_state_scrambled_sobol32* state)
  * \return Normally distributed \p float value
  */
 FQUALIFIERS
-float rocrand_normal(rocrand_state_sobol64 * state)
+float rocrand_normal(rocrand_state_sobol64* state)
 {
     return rocrand_device::detail::normal_distribution(rocrand(state));
 }

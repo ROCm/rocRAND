@@ -26,61 +26,15 @@
 #endif // FQUALIFIERS_
 
 #include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_sobol64.h"
 
 namespace rocrand_device
 {
 
 template<bool UseSharedVectors>
-struct scrambled_sobol64_state
-{
-    unsigned long long int d;
-    unsigned long long int i;
-    unsigned long long int vectors[64];
-    unsigned long long int scramble_constant;
-
-    FQUALIFIERS
-    scrambled_sobol64_state() {}
-
-    FQUALIFIERS
-    scrambled_sobol64_state(const unsigned long long int  d,
-                            const unsigned long long int  i,
-                            const unsigned long long int* vectors,
-                            const unsigned int            scramble_constant)
-        : d(d), i(i), scramble_constant(scramble_constant)
-    {
-        for(int k = 0; k < 64; k++)
-        {
-            this->vectors[k] = vectors[k];
-        }
-    }
-};
-
-template<>
-struct scrambled_sobol64_state<true>
-{
-    unsigned long long int        d;
-    unsigned long long int        i;
-    const unsigned long long int* vectors;
-    unsigned long long int        scramble_constant;
-
-    FQUALIFIERS
-    scrambled_sobol64_state() {}
-
-    FQUALIFIERS
-    scrambled_sobol64_state(const unsigned long long int  d,
-                            const unsigned long long int  i,
-                            const unsigned long long int* vectors,
-                            const unsigned long long int  scramble_constant)
-        : d(d), i(i), vectors(vectors), scramble_constant(scramble_constant)
-    {}
-};
-
-template<bool UseSharedVectors>
 class scrambled_sobol64_engine
 {
 public:
-    typedef struct scrambled_sobol64_state<UseSharedVectors> scrambled_sobol64_state;
-
     FQUALIFIERS
     scrambled_sobol64_engine() {}
 
@@ -88,29 +42,29 @@ public:
     scrambled_sobol64_engine(const unsigned long long int* vectors,
                              const unsigned long long int  scramble_constant,
                              const unsigned int            offset)
-        : m_state(0, 0, vectors, scramble_constant)
+        : m_engine(vectors, 0), scramble_constant(scramble_constant)
     {
-        discard_state(offset);
+        discard(offset);
     }
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS
-    void discard(unsigned int offset)
+    void discard(unsigned long long int offset)
     {
-        discard_state(offset);
+        m_engine.discard(offset);
     }
 
     FQUALIFIERS
     void discard()
     {
-        discard_state();
+        m_engine.discard();
     }
 
     /// Advances the internal state by stride times, where stride is power of 2
     FQUALIFIERS
-    void discard_stride(unsigned int stride)
+    void discard_stride(unsigned long long int stride)
     {
-        discard_state_power2(stride);
+        m_engine.discard_stride(stride);
     }
 
     FQUALIFIERS
@@ -122,84 +76,22 @@ public:
     FQUALIFIERS
     unsigned long long int next()
     {
-        unsigned long long int p = m_state.d ^ m_state.scramble_constant;
-        discard_state();
-        return p;
+        unsigned long long int p = m_engine.next();
+        return p ^ scramble_constant;
     }
 
     FQUALIFIERS
     unsigned long long int current()
     {
-        return m_state.d ^ m_state.scramble_constant;
+        unsigned long long int p = m_engine.current();
+        return p ^ scramble_constant;
     }
 
 protected:
-    // Advances the internal state by offset times.
-    FQUALIFIERS
-    void discard_state(unsigned long long int offset)
-    {
-        m_state.i += offset;
-        const unsigned long long int g = m_state.i ^ (m_state.i >> 1ull);
-        m_state.d                      = 0;
-        for(int i = 0; i < 64; i++)
-        {
-            m_state.d ^= (g & (1ull << i) ? m_state.vectors[i] : 0ull);
-        }
-    }
-
-    // Advances the internal state to the next state
-    FQUALIFIERS
-    void discard_state()
-    {
-        m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i)];
-        m_state.i++;
-    }
-
-    FQUALIFIERS
-    void discard_state_power2(unsigned long long int stride)
-    {
-        // Leap frog
-        //
-        // T Bradley, J Toit, M Giles, R Tong, P Woodhams
-        // Parallelisation Techniques for Random Number Generators
-        // GPU Computing Gems, 2011
-        //
-        // For power of 2 jumps only 2 bits in Gray code change values
-        // All bits lower than log2(stride) flip 2, 4... times, i.e.
-        // do not change their values.
-
-        // log2(stride) bit
-        m_state.d ^= m_state.vectors[rightmost_zero_bit(~stride) - 1];
-        // the rightmost zero bit of i, not including the lower log2(stride) bits
-        m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i | (stride - 1))];
-        m_state.i += stride;
-    }
-
-    // Returns the index of the rightmost zero bit in the binary expansion of
-    // x (Gray code of the current element's index)
-    FQUALIFIERS
-    unsigned int rightmost_zero_bit(unsigned long long int x)
-    {
-#if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int z = __ffsll(~x);
-        return z ? z - 1 : 0;
-#else
-        if(x == 0)
-            return 0;
-        unsigned long long int y = x;
-        unsigned long long int z = 1;
-        while(y & 1)
-        {
-            y >>= 1;
-            z++;
-        }
-        return z - 1;
-#endif
-    }
-
-protected:
-    // State
-    scrambled_sobol64_state m_state;
+    // Underlying sobol64 engine
+    sobol64_engine<UseSharedVectors> m_engine;
+    // scrambling constant
+    unsigned long long int scramble_constant;
 
 }; // scrambled_sobol64_engine class
 

@@ -243,7 +243,7 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand)
 
 TEST(rocrand_kernel_scrambled_sobol32, rocrand_uniform)
 {
-    using RESULT_T = float;
+    using RESULT_T     = float;
     using Distribution = rocrand_uniform_f;
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
@@ -285,7 +285,7 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_uniform_double)
 
 TEST(rocrand_kernel_scrambled_sobol32, rocrand_normal)
 {
-    using RESULT_T = float;
+    using RESULT_T     = float;
     using Distribution = rocrand_normal_f;
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
@@ -343,7 +343,7 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_normal_double)
 
 TEST(rocrand_kernel_scrambled_sobol32, rocrand_log_normal)
 {
-    using RESULT_T = float;
+    using RESULT_T     = float;
     using Distribution = rocrand_log_normal_f;
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
