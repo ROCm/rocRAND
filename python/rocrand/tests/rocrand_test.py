@@ -86,8 +86,8 @@ class TestCtorQRNG(TestRNGBase):
 make_test(TestCtorQRNG, "DEFAULT", rngtype=QRNG.DEFAULT)
 make_test(TestCtorQRNG, "SOBOL32", rngtype=QRNG.SOBOL32)
 make_test(TestCtorQRNG, "SCRAMBLED_SOBOL32", rngtype=QRNG.SCRAMBLED_SOBOL32)
-#make_test(TestCtorQRNG, "SOBOL64", rngtype=QRNG.SOBOL64)
-#make_test(TestCtorQRNG, "SCRAMBLED_SOBOL64", rngtype=QRNG.SCRAMBLED_SOBOL64)
+make_test(TestCtorQRNG, "SOBOL64", rngtype=QRNG.SOBOL64)
+make_test(TestCtorQRNG, "SCRAMBLED_SOBOL64", rngtype=QRNG.SCRAMBLED_SOBOL64)
 
 class TestParamsPRNG(TestRNGBase):
     def setUp(self):
@@ -171,8 +171,8 @@ class TestParamsQRNG(TestRNGBase):
 make_test(TestParamsQRNG, "DEFAULT", rngtype=QRNG.DEFAULT)
 make_test(TestParamsQRNG, "SOBOL32", rngtype=QRNG.SOBOL32)
 make_test(TestParamsQRNG, "SCRAMBLED_SOBOL32", rngtype=QRNG.SCRAMBLED_SOBOL32)
-#make_test(TestParamsQRNG, "SOBOL64", rngtype=QRNG.SOBOL64)
-#make_test(TestParamsQRNG, "SCRAMBLED_SOBOL64", rngtype=QRNG.SCRAMBLED_SOBOL64)
+make_test(TestParamsQRNG, "SOBOL64", rngtype=QRNG.SOBOL64)
+make_test(TestParamsQRNG, "SCRAMBLED_SOBOL64", rngtype=QRNG.SCRAMBLED_SOBOL64)
 
 OUTPUT_SIZE = 8192
 
@@ -288,8 +288,8 @@ make_test(TestGenerate, "PRNG" + "PHILOX4_32_10",     klass=PRNG, rngtype=PRNG.P
 make_test(TestGenerate, "QRNG" + "DEFAULT",           klass=QRNG, rngtype=QRNG.DEFAULT)
 make_test(TestGenerate, "QRNG" + "SOBOL32",           klass=QRNG, rngtype=QRNG.SOBOL32)
 make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL32", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL32)
-#make_test(TestGenerate, "QRNG" + "SOBOL64",           klass=QRNG, rngtype=QRNG.SOBOL64)
-#make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64)
+make_test(TestGenerate, "QRNG" + "SOBOL64",           klass=QRNG, rngtype=QRNG.SOBOL64)
+make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64)
 make_test(TestGenerate, "PRNG" + "LFSR113",           klass=PRNG, rngtype=PRNG.LFSR113)
 
 

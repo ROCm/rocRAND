@@ -74,8 +74,8 @@ ROCRAND_RNG_PSEUDO_LFSR113 = 406
 ROCRAND_RNG_QUASI_DEFAULT = 500
 ROCRAND_RNG_QUASI_SOBOL32 = 501
 ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502
-#ROCRAND_RNG_QUASI_SOBOL64 = 504
-#ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505
+ROCRAND_RNG_QUASI_SOBOL64 = 504
+ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505
 
 ROCRAND_STATUS_SUCCESS = 0
 ROCRAND_STATUS_VERSION_MISMATCH = 100
@@ -418,10 +418,10 @@ class QRNG(RNG):
     """Sobol32 quasi-random generator type"""
     SCRAMBLED_SOBOL32           = ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
     """Scrambled Sobol32 quasi-random generator type"""
-#    SOBOL64           = ROCRAND_RNG_QUASI_SOBOL64
-#    """Sobol64 quasi-random generator type"""
-#    SCRAMBLED_SOBOL64           = ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
-#    """Scrambled Sobol64 quasi-random generator type"""
+    SOBOL64           = ROCRAND_RNG_QUASI_SOBOL64
+    """Sobol64 quasi-random generator type"""
+    SCRAMBLED_SOBOL64           = ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
+    """Scrambled Sobol64 quasi-random generator type"""
 
     def __init__(self, rngtype=DEFAULT, ndim=None, offset=None, stream=None):
         """__init__(self, rngtype=DEFAULT, ndim=None, offset=None, stream=None)
