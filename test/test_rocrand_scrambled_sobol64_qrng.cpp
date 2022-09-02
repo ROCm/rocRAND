@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <limits>
 #include <numeric>
 #include <stdio.h>
 #include <vector>
@@ -33,172 +34,147 @@
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
-#if 0
-struct int128
+template<typename T>
+struct rocrand_scrambled_sobol64_float_tests : public ::testing::Test
 {
-    unsigned long long int data[2] = {0, 0};
-    int128& operator+=(unsigned long long int operand)
-    {
-        if(std::abs<long long>(data[0] - operand) > (UINT64_MAX - data[0]))
-        {
-            data[1]++;
-        }
-        data[0] += operand;
-        return *this;
-    }
+    using type = T;
 };
 
-std::ostream &operator<<(std::ostream &output, const int128& ref)
-{
-    output << std::hex << "0x" << ref.data[1] << " : 0x" << ref.data[0];
-    return output;
-}
+using FloatReturnTypes = ::testing::Types<float, double>;
 
-TEST(rocrand_scrambled_sobol64_qrng_tests, uniform_uint64_test)
+TYPED_TEST_SUITE(rocrand_scrambled_sobol64_float_tests, FloatReturnTypes);
+
+TYPED_TEST(rocrand_scrambled_sobol64_float_tests, uniform_test)
 {
-    using T = unsigned long long int;
-    //constexpr size_t size = 1313;
+    using RESULT_T = typename TestFixture::type;
+
     constexpr size_t size = 1313;
-    T * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
+    RESULT_T*        data;
+    HIP_CHECK(hipMalloc(&data, sizeof(RESULT_T) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
-    T host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(T) * size, hipMemcpyDeviceToHost));
+    std::vector<RESULT_T> host_data(size);
+    HIP_CHECK(hipMemcpy(&host_data[0], data, sizeof(RESULT_T) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
-
-    //unsigned long long int sum = 0;
-    int128 sum;
-    for(size_t i = 0; i < size; i++)
-    {
-        //std::cout << host_data[i] << " - ";
-        sum += host_data[i];
-        //std::cout << sum << "\n";
-    }
-    //std::cout << std::endl;
-    //const T mean = sum / size;
-    //ASSERT_NEAR(mean, UINT64_MAX / 2lu, UINT64_MAX / 20lu);
 
     HIP_CHECK(hipFree(data));
-}
-#endif
-
-TEST(rocrand_scrambled_sobol64_qrng_tests, uniform_double_test)
-{
-    constexpr size_t size = 1313;
-    double*          data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
-
-    rocrand_scrambled_sobol64 g;
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    double host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(double) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
 
     double sum = 0;
-    for(size_t i = 0; i < size; i++)
+    for(RESULT_T v : host_data)
     {
-        ASSERT_GT(host_data[i], 0.0f);
-        ASSERT_LE(host_data[i], 1.0f);
-        sum += host_data[i];
+        ASSERT_GT(v, 0.0f);
+        ASSERT_LE(v, 1.0f);
+        sum += v;
     }
     const double mean = sum / size;
-    ASSERT_NEAR(mean, 0.5f, 0.05f);
 
-    HIP_CHECK(hipFree(data));
+    ASSERT_NEAR(mean, 0.5f, 0.05f);
 }
 
-TEST(rocrand_scrambled_sobol64_qrng_tests, uniform_uint_test)
+template<typename T>
+struct rocrand_scrambled_sobol64_integer_tests : public ::testing::Test
 {
-    const size_t  size = 1313;
-    unsigned int* data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    using type = T;
+};
+
+using UniformIntegerReturnTypes = ::testing::Types<unsigned int, unsigned long long int>;
+
+TYPED_TEST_SUITE(rocrand_scrambled_sobol64_integer_tests, UniformIntegerReturnTypes);
+
+TYPED_TEST(rocrand_scrambled_sobol64_integer_tests, uniform_integer_test)
+{
+    using RESULT_T = typename TestFixture::type;
+
+    const size_t size = 1313;
+    RESULT_T*    data;
+    HIP_CHECK(hipMalloc(&data, sizeof(RESULT_T) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
 
-    unsigned int host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+    std::vector<RESULT_T> host_data(size);
+    HIP_CHECK(hipMemcpy(&host_data[0], data, sizeof(RESULT_T) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long int sum = 0;
-    for(size_t i = 0; i < size; i++)
-    {
-        sum += host_data[i];
-    }
-
-    const unsigned int mean = sum / size;
-    ASSERT_NEAR(mean, UINT_MAX / 2, UINT_MAX / 20);
 
     HIP_CHECK(hipFree(data));
+
+    double mean = 0.0;
+    for(RESULT_T v : host_data)
+    {
+        mean += v;
+    }
+    mean /= static_cast<double>(std::numeric_limits<RESULT_T>::max());
+    mean /= size;
+
+    ASSERT_NEAR(mean, 0.5, 0.05);
 }
 
-TEST(rocrand_scrambled_sobol64_qrng_tests, normal_double_test)
+TYPED_TEST(rocrand_scrambled_sobol64_float_tests, normal_test)
 {
+    using RESULT_T = typename TestFixture::type;
+
+    RESULT_T ExpectedMean = 2.0f;
+    RESULT_T ExpectedStd  = 5.0f;
+
     const size_t size = 1313;
-    double*      data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    RESULT_T*    data;
+    HIP_CHECK(hipMalloc(&data, sizeof(RESULT_T) * size));
 
     rocrand_scrambled_sobol64 g;
-    ROCRAND_CHECK(g.generate_normal(data, size, 2.0, 5.0));
+    ROCRAND_CHECK(g.generate_normal(data, size, ExpectedMean, ExpectedStd));
     HIP_CHECK(hipDeviceSynchronize());
 
-    double host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(double) * size, hipMemcpyDeviceToHost));
+    std::vector<RESULT_T> host_data(size);
+    HIP_CHECK(hipMemcpy(&host_data[0], data, sizeof(RESULT_T) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
-    double mean = 0.0f;
-    for(size_t i = 0; i < size; i++)
+    HIP_CHECK(hipFree(data));
+
+    double mean = 0.0;
+    double std  = 0.0;
+    for(RESULT_T v : host_data)
     {
-        mean += host_data[i];
+        mean += v;
     }
     mean = mean / size;
-
-    double std = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for(RESULT_T v : host_data)
     {
-        std += std::pow(host_data[i] - mean, 2);
+        std += std::pow(v - mean, 2);
     }
     std = sqrt(std / size);
 
-    EXPECT_NEAR(2.0, mean, 0.4); // 20%
-    EXPECT_NEAR(5.0, std, 1.0); // 20%
-
-    HIP_CHECK(hipFree(data));
+    EXPECT_NEAR(ExpectedMean, mean, ExpectedMean * 0.1); // 10%
+    EXPECT_NEAR(ExpectedStd, std, ExpectedStd * 0.1); // 10%
 }
 
-TEST(rocrand_scrambled_sobol64_qrng_tests, poisson_test_32bit)
+TYPED_TEST(rocrand_scrambled_sobol64_integer_tests, poisson_test)
 {
-    using T               = unsigned int;
+    using RESULT_T        = typename TestFixture::type;
     constexpr size_t size = 1313;
-    T*               data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
+    RESULT_T*        data;
+    HIP_CHECK(hipMalloc(&data, sizeof(RESULT_T) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
     HIP_CHECK(hipDeviceSynchronize());
 
-    T host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(T) * size, hipMemcpyDeviceToHost));
+    std::vector<RESULT_T> host_data(size);
+    HIP_CHECK(hipMemcpy(&host_data[0], data, sizeof(RESULT_T) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     double mean = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for(RESULT_T v : host_data)
     {
-        mean += host_data[i];
+        mean += v;
     }
-    mean = mean / size;
-
+    mean       = mean / size;
     double var = 0.0;
-    for(size_t i = 0; i < size; i++)
+    for(RESULT_T v : host_data)
     {
-        double x = host_data[i] - mean;
-        var += x * x;
+        var += std::pow(v - mean, 2);
     }
     var = var / size;
 
@@ -208,43 +184,7 @@ TEST(rocrand_scrambled_sobol64_qrng_tests, poisson_test_32bit)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_scrambled_sobol64_qrng_tests, poisson_test_64bit)
-{
-    using T               = unsigned long long int;
-    constexpr size_t size = 1313;
-    T*               data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
-
-    rocrand_scrambled_sobol64 g;
-    ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    T host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(T) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    double mean = 0.0;
-    for(size_t i = 0; i < size; i++)
-    {
-        mean += host_data[i];
-    }
-    mean = mean / size;
-
-    double var = 0.0;
-    for(size_t i = 0; i < size; i++)
-    {
-        double x = host_data[i] - mean;
-        var += x * x;
-    }
-    var = var / size;
-
-    EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
-    EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
-
-    HIP_CHECK(hipFree(data));
-}
-
-TEST(rocrand_scrambled_sobol64_qrng_tests, dimesions_test)
+TEST(rocrand_scrambled_sobol64_qrng_tests, dimensions_test)
 {
     const size_t size = 12345;
     double*      data;
@@ -372,12 +312,12 @@ TEST_P(rocrand_scrambled_sobol64_qrng_offset, offsets_test)
 
     const size_t size = 1313;
 
-    const size_t  size0 = size * dimensions;
-    const size_t  size1 = (size + offset) * dimensions;
-    unsigned int* data0;
-    unsigned int* data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    const size_t            size0 = size * dimensions;
+    const size_t            size1 = (size + offset) * dimensions;
+    unsigned long long int* data0;
+    unsigned long long int* data1;
+    hipMalloc(&data0, sizeof(unsigned long long int) * size0);
+    hipMalloc(&data1, sizeof(unsigned long long int) * size1);
 
     rocrand_scrambled_sobol64 g0;
     g0.set_offset(offset);
@@ -388,10 +328,16 @@ TEST_P(rocrand_scrambled_sobol64_qrng_offset, offsets_test)
     g1.set_dimensions(dimensions);
     g1.generate(data1, size1);
 
-    std::vector<unsigned int> host_data0(size0);
-    std::vector<unsigned int> host_data1(size1);
-    hipMemcpy(host_data0.data(), data0, sizeof(unsigned int) * size0, hipMemcpyDeviceToHost);
-    hipMemcpy(host_data1.data(), data1, sizeof(unsigned int) * size1, hipMemcpyDeviceToHost);
+    std::vector<unsigned long long int> host_data0(size0);
+    std::vector<unsigned long long int> host_data1(size1);
+    hipMemcpy(host_data0.data(),
+              data0,
+              sizeof(unsigned long long int) * size0,
+              hipMemcpyDeviceToHost);
+    hipMemcpy(host_data1.data(),
+              data1,
+              sizeof(unsigned long long int) * size1,
+              hipMemcpyDeviceToHost);
     hipDeviceSynchronize();
 
     for(unsigned int d = 0; d < dimensions; d++)
@@ -432,18 +378,18 @@ TEST_P(rocrand_scrambled_sobol64_qrng_continuity, continuity_test)
     const size_t size0 = s0 * dimensions;
     const size_t size1 = s1 * dimensions;
 
-    unsigned int* data0;
-    unsigned int* data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    unsigned long long int* data0;
+    unsigned long long int* data1;
+    hipMalloc(&data0, sizeof(unsigned long long int) * size0);
+    hipMalloc(&data1, sizeof(unsigned long long int) * size1);
 
     rocrand_sobol32 g0;
     rocrand_sobol32 g1;
     g0.set_dimensions(dimensions);
     g1.set_dimensions(dimensions);
 
-    std::vector<unsigned int> host_data0(size0);
-    std::vector<unsigned int> host_data1(size1);
+    std::vector<unsigned long long int> host_data0(size0);
+    std::vector<unsigned long long int> host_data1(size1);
 
     // host_data0 contains all s0 values of dim0, then all s0 values of dim1...
     // host_data1 contains all s1 values of dim0, then all s1 values of dim1...
@@ -455,7 +401,7 @@ TEST_P(rocrand_scrambled_sobol64_qrng_continuity, continuity_test)
         {
             hipMemcpy(host_data0.data() + s0 * d + current0,
                       data0 + d * s,
-                      sizeof(unsigned int) * s,
+                      sizeof(unsigned long long int) * s,
                       hipMemcpyDefault);
         }
         current0 += s;
@@ -468,7 +414,7 @@ TEST_P(rocrand_scrambled_sobol64_qrng_continuity, continuity_test)
         {
             hipMemcpy(host_data1.data() + s1 * d + current1,
                       data1 + d * s,
-                      sizeof(unsigned int) * s,
+                      sizeof(unsigned long long int) * s,
                       hipMemcpyDefault);
         }
         current1 += s;
