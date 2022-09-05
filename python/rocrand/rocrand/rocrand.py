@@ -435,6 +435,8 @@ class QRNG(RNG):
         * :const:`DEFAULT`
         * :const:`SOBOL32`
         * :const:`SCRAMBLED_SOBOL32`
+        * :const:`SOBOL64`
+        * :const:`SCRAMBLED_SOBOL64`
 
         Values if **ndim** are 1 to 20000.
 

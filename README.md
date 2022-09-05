@@ -17,6 +17,9 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 * Mersenne Twister for Graphic Processors (MTGP32)
 * Philox (4x32, 10 rounds)
 * Sobol32
+* Scrambled Sobol32
+* Sobol64
+* Scrambled Sobol64
 
 ## Requirements
 
