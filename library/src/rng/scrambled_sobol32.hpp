@@ -180,7 +180,7 @@ public:
         }
         error = hipMemcpy(m_scramble_constants,
                           h_scrambled_sobol32_constants,
-                          sizeof(unsigned int) * SOBOL_DIM,
+                          sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
                           hipMemcpyHostToDevice);
         if(error != hipSuccess)
         {
@@ -207,7 +207,7 @@ public:
 
     rocrand_status set_dimensions(unsigned int dimensions)
     {
-        if(dimensions < 1 || dimensions > SOBOL_DIM)
+        if(dimensions < 1 || dimensions > SCRAMBLED_SOBOL_DIM)
         {
             return ROCRAND_STATUS_OUT_OF_RANGE;
         }
