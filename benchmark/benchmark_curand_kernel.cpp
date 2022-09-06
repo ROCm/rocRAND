@@ -213,7 +213,7 @@ __global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_ker
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
     GeneratorState     state;
-    curand_init(&directions[dimension * 32], offset + state_id, &state);
+    curand_init(&directions[dimension * sizeof(SobolType) * 8], offset + state_id, &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
@@ -224,16 +224,16 @@ __global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
     GeneratorState     state;
-    curand_init(&directions[dimension * 64],
+    curand_init(&directions[dimension * sizeof(SobolType) * 8],
                 scramble_constants[dimension],
                 offset + state_id,
                 &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
-// generate_kernel for sobol32 and scrambled_sobol32
+// generate_kernel for the sobol generators
 template<typename GeneratorState, typename T, typename GenerateFunc, typename Extra>
-__global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol32_kernel(
+__global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
     GeneratorState* states,
     T*              data,
     const size_t    size,
@@ -254,7 +254,7 @@ __global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol
         index += stride;
     }
     state = states[gridDim.x * blockDim.x * dimension + state_id];
-    skipahead(static_cast<unsigned int>(size), &state);
+    skipahead(size, &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
@@ -308,11 +308,11 @@ struct runner<curandStateSobol32_t>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        generate_sobol32_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
-                                                                         data,
-                                                                         size / dimensions,
-                                                                         generate_func,
-                                                                         extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
     }
 };
 
@@ -379,40 +379,13 @@ struct runner<curandStateScrambledSobol32_t>
                   const Extra         extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        generate_sobol32_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
-                                                                         data,
-                                                                         size / dimensions,
-                                                                         generate_func,
-                                                                         extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
     }
 };
-
-// generate_kernel for sobol64 and scrambled_sobol64
-template<typename GeneratorState, typename T, typename GenerateFunc, typename Extra>
-__global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol64_kernel(
-    GeneratorState* states,
-    T*              data,
-    const size_t    size,
-    GenerateFunc    generate_func,
-    const Extra     extra)
-{
-    const unsigned int dimension = blockIdx.y;
-    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride = gridDim.x * blockDim.x;
-
-    GeneratorState state  = states[gridDim.x * blockDim.x * dimension + state_id];
-    const size_t   offset = dimension * size;
-    unsigned int index = state_id;
-    while(index < size)
-    {
-        data[offset + index] = generate_func(&state, extra);
-        skipahead(stride - 1, &state);
-        index += stride;
-    }
-    state = states[gridDim.x * blockDim.x * dimension + state_id];
-    skipahead(static_cast<unsigned long long int>(size), &state);
-    states[gridDim.x * blockDim.x * dimension + state_id] = state;
-}
 
 template<>
 struct runner<curandStateSobol64_t>
@@ -461,11 +434,11 @@ struct runner<curandStateSobol64_t>
                   const Extra         extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        generate_sobol64_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
-                                                                         data,
-                                                                         size / dimensions,
-                                                                         generate_func,
-                                                                         extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
     }
 };
 
@@ -531,11 +504,11 @@ struct runner<curandStateScrambledSobol64_t>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        generate_sobol64_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
-                                                                         data,
-                                                                         size / dimensions,
-                                                                         generate_func,
-                                                                         extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
     }
 };
 

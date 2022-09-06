@@ -292,31 +292,46 @@ struct runner<rocrand_state_lfsr113>
     }
 };
 
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
-    rocrand_state_sobol32* states, const unsigned int* directions, const unsigned long long offset)
+template<typename GeneratorState, typename SobolType>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_kernel(
+    GeneratorState* states, SobolType* directions, SobolType offset)
 {
     const unsigned int dimension = hipBlockIdx_y;
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    rocrand_state_sobol32 state;
-    rocrand_init(&directions[dimension * 32], offset + state_id, &state);
+    GeneratorState     state;
+    rocrand_init(&directions[dimension * sizeof(SobolType) * 8], offset + state_id, &state);
     states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
 }
 
-template<typename T, typename GenerateFunc, typename Extra>
-__global__
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-void generate_kernel(rocrand_state_sobol32 * states,
-                     T * data,
-                     const size_t size,
-                     GenerateFunc generate_func,
-                     const Extra extra)
+template<typename GeneratorState, typename SobolType>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled_sobol_kernel(
+    GeneratorState* states, SobolType* directions, SobolType* scramble_constants, SobolType offset)
+{
+    const unsigned int dimension = hipBlockIdx_y;
+    const unsigned int state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    GeneratorState     state;
+    rocrand_init(&directions[dimension * sizeof(SobolType) * 8],
+                 scramble_constants[dimension],
+                 offset + state_id,
+                 &state);
+    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
+}
+
+// generate_kernel for the normal and scrambled sobol generators
+template<typename GeneratorState, typename T, typename GenerateFunc, typename Extra>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
+    GeneratorState* states,
+    T*              data,
+    const size_t    size,
+    GenerateFunc    generate_func,
+    const Extra     extra)
 {
     const unsigned int dimension = hipBlockIdx_y;
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const unsigned int stride = hipGridDim_x * hipBlockDim_x;
 
-    rocrand_state_sobol32 state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
-    const unsigned int offset = dimension * size;
+    GeneratorState state  = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
+    const size_t   offset = dimension * size;
     unsigned int index = state_id;
     while(index < size)
     {
@@ -352,11 +367,14 @@ struct runner<rocrand_state_sobol32>
         HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(init_kernel),
-            dim3(blocks_x, dimensions), dim3(threads), 0, 0,
-            states, directions, offset
-        );
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
+                           dim3(blocks_x, dimensions),
+                           dim3(threads),
+                           0,
+                           0,
+                           states,
+                           directions,
+                           static_cast<unsigned int>(offset));
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -379,56 +397,18 @@ struct runner<rocrand_state_sobol32>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(generate_kernel),
-            dim3(blocks_x, dimensions), dim3(threads), 0, stream,
-            states, data, size / dimensions, generate_func, extra
-        );
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
+                           dim3(blocks_x, dimensions),
+                           dim3(threads),
+                           0,
+                           stream,
+                           states,
+                           data,
+                           size / dimensions,
+                           generate_func,
+                           extra);
     }
 };
-
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
-    rocrand_state_scrambled_sobol32* states,
-    const unsigned int*              directions,
-    const unsigned int*              scramble_constants,
-    const unsigned long long         offset)
-{
-    const unsigned int              dimension = hipBlockIdx_y;
-    const unsigned int              state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    rocrand_state_scrambled_sobol32 state;
-    rocrand_init(&directions[dimension * 32],
-                 scramble_constants[dimension],
-                 offset + state_id,
-                 &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
-}
-
-template<typename T, typename GenerateFunc, typename Extra>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    rocrand_state_scrambled_sobol32* states,
-    T*                               data,
-    const size_t                     size,
-    GenerateFunc                     generate_func,
-    const Extra                      extra)
-{
-    const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride    = hipGridDim_x * hipBlockDim_x;
-
-    rocrand_state_scrambled_sobol32 state
-        = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
-    const unsigned int offset = dimension * size;
-    unsigned int       index  = state_id;
-    while(index < size)
-    {
-        data[offset + index] = generate_func(&state, extra);
-        skipahead(stride - 1, &state);
-        index += stride;
-    }
-    state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
-    skipahead(static_cast<unsigned int>(size), &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
-}
 
 template<>
 struct runner<rocrand_state_scrambled_sobol32>
@@ -465,7 +445,7 @@ struct runner<rocrand_state_scrambled_sobol32>
                             hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
                            dim3(blocks_x, dimensions),
                            dim3(threads),
                            0,
@@ -473,7 +453,7 @@ struct runner<rocrand_state_scrambled_sobol32>
                            states,
                            directions,
                            scramble_constants,
-                           offset);
+                           static_cast<unsigned int>(offset));
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -497,7 +477,7 @@ struct runner<rocrand_state_scrambled_sobol32>
                   const Extra         extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
                            dim3(blocks_x, dimensions),
                            dim3(threads),
                            0,
@@ -509,45 +489,6 @@ struct runner<rocrand_state_scrambled_sobol32>
                            extra);
     }
 };
-
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
-    rocrand_state_sobol64*    states,
-    const unsigned long long* directions,
-    const unsigned long long  offset)
-{
-    const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    rocrand_state_sobol64 state;
-    rocrand_init(&directions[dimension * 64], offset + state_id, &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
-}
-
-template<typename T, typename GenerateFunc, typename Extra>
-__global__
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-void generate_kernel(rocrand_state_sobol64 * states,
-                     T * data,
-                     const size_t size,
-                     GenerateFunc generate_func,
-                     const Extra extra)
-{
-    const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
-
-    rocrand_state_sobol64 state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
-    const unsigned int offset = dimension * size;
-    unsigned int index = state_id;
-    while(index < size)
-    {
-        data[offset + index] = generate_func(&state, extra);
-        skipahead(stride - 1, &state);
-        index += stride;
-    }
-    state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
-    skipahead(static_cast<unsigned int>(size), &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
-}
 
 template<>
 struct runner<rocrand_state_sobol64>
@@ -572,11 +513,14 @@ struct runner<rocrand_state_sobol64>
         HIP_CHECK(hipMemcpy(directions, h_sobol64_direction_vectors, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(init_kernel),
-            dim3(blocks_x, dimensions), dim3(threads), 0, 0,
-            states, directions, offset
-        );
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
+                           dim3(blocks_x, dimensions),
+                           dim3(threads),
+                           0,
+                           0,
+                           states,
+                           directions,
+                           offset);
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -599,56 +543,18 @@ struct runner<rocrand_state_sobol64>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(generate_kernel),
-            dim3(blocks_x, dimensions), dim3(threads), 0, stream,
-            states, data, size / dimensions, generate_func, extra
-        );
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
+                           dim3(blocks_x, dimensions),
+                           dim3(threads),
+                           0,
+                           stream,
+                           states,
+                           data,
+                           size / dimensions,
+                           generate_func,
+                           extra);
     }
 };
-
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
-    rocrand_state_scrambled_sobol64* states,
-    const unsigned long long*        directions,
-    const unsigned long long*        scramble_constants,
-    const unsigned long long         offset)
-{
-    const unsigned int              dimension = hipBlockIdx_y;
-    const unsigned int              state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    rocrand_state_scrambled_sobol64 state;
-    rocrand_init(&directions[dimension * 64],
-                 scramble_constants[dimension],
-                 offset + state_id,
-                 &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
-}
-
-template<typename T, typename GenerateFunc, typename Extra>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    rocrand_state_scrambled_sobol64* states,
-    T*                               data,
-    const size_t                     size,
-    GenerateFunc                     generate_func,
-    const Extra                      extra)
-{
-    const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride    = hipGridDim_x * hipBlockDim_x;
-
-    rocrand_state_scrambled_sobol64 state
-        = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
-    const unsigned int offset = dimension * size;
-    unsigned int       index  = state_id;
-    while(index < size)
-    {
-        data[offset + index] = generate_func(&state, extra);
-        skipahead(stride - 1, &state);
-        index += stride;
-    }
-    state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
-    skipahead(static_cast<unsigned int>(size), &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
-}
 
 template<>
 struct runner<rocrand_state_scrambled_sobol64>
@@ -685,7 +591,7 @@ struct runner<rocrand_state_scrambled_sobol64>
                             hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
                            dim3(blocks_x, dimensions),
                            dim3(threads),
                            0,
@@ -717,7 +623,7 @@ struct runner<rocrand_state_scrambled_sobol64>
                   const Extra         extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
                            dim3(blocks_x, dimensions),
                            dim3(threads),
                            0,
