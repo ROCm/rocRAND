@@ -557,9 +557,6 @@ double rocrand_uniform_double(rocrand_state_scrambled_sobol32* state)
  *
  * \param state - Pointer to a state to use
  *
- * Note: In this implementation returned \p float value is generated
- * from only 32 random bits (one <tt>unsigned int</tt> value).
- *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
@@ -577,9 +574,6 @@ float rocrand_uniform(rocrand_state_sobol64* state)
  * increments position of the generator by one.
  *
  * \param state - Pointer to a state to use
- *
- * Note: In this implementation returned \p double value is generated
- * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
@@ -599,9 +593,6 @@ double rocrand_uniform_double(rocrand_state_sobol64 * state)
  *
  * \param state - Pointer to a state to use
  *
- * Note: In this implementation returned \p float value is generated
- * from only 32 random bits (one <tt>unsigned int</tt> value).
- *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
 FQUALIFIERS
@@ -619,9 +610,6 @@ float rocrand_uniform(rocrand_state_scrambled_sobol64* state)
  * increments position of the generator by one.
  *
  * \param state - Pointer to a state to use
- *
- * Note: In this implementation returned \p double value is generated
- * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
