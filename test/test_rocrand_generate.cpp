@@ -171,7 +171,7 @@ TEST_P(rocrand_generate_long_long_tests, long_long_test)
 
     const size_t            size = 12563;
     unsigned long long int* data;
-    HIP_CHECK(hipMallocHelper((void**)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper((void**)&data, size * sizeof(unsigned long long int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes

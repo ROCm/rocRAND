@@ -181,8 +181,8 @@ public:
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
         error = hipMemcpy(m_scramble_constants,
-                          h_scrambled_sobol32_constants,
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
+                          h_scrambled_sobol64_constants,
+                          sizeof(unsigned long long int) * SCRAMBLED_SOBOL_DIM,
                           hipMemcpyHostToDevice);
         if(error != hipSuccess)
         {
