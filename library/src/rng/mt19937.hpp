@@ -815,6 +815,8 @@ public:
 
     rocrand_status init()
     {
+        hipError_t err;
+
         if(m_engines_initialized)
         {
             return ROCRAND_STATUS_SUCCESS;
@@ -833,23 +835,23 @@ public:
         }
 
         engine_type* d_engines{};
-        auto         error = hipMalloc(&d_engines, generator_count * sizeof(engine_type));
-        if(error != hipSuccess)
+        err = hipMalloc(&d_engines, generator_count * sizeof(engine_type));
+        if(err != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
-        hipMemcpy(d_engines,
-                  h_engines,
-                  generator_count * sizeof(engine_type),
-                  hipMemcpyHostToDevice);
+        err = hipMemcpy(d_engines,
+                        h_engines,
+                        generator_count * sizeof(engine_type),
+                        hipMemcpyHostToDevice);
 
         free(h_engines);
 
-        if(hipGetLastError() != hipSuccess)
+        if(err != hipSuccess)
         {
             hipFree(h_engines);
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
         hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel<thread_count>),
@@ -860,14 +862,18 @@ public:
                            m_engines,
                            d_engines);
 
-        // check kernel status
-        if(hipGetLastError() != hipSuccess)
+        err = hipStreamSynchronize(m_stream);
+        if(err != hipSuccess)
         {
-            hipFree(h_engines);
+            hipFree(d_engines);
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
 
-        hipFree(h_engines);
+        err = hipFree(d_engines);
+        if(err != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
         m_engines_initialized = true;
 
