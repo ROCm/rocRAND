@@ -396,20 +396,20 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
                        d_octo_engines,
                        d_engines,
                        subsequence_size);
-    HIP_CHECK(hipGetLastError());
+    HIP_CHECK(hipDeviceSynchronize());
 
     // Device side data
     const size_t  size = (12345 / threads_per_generator) * threads_per_generator;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned int)));
 
     // Generate the data
     hipLaunchKernelGGL(generate_kernel, dim3(1), dim3(16), 0, 0, d_octo_engines, data, size);
-    HIP_CHECK(hipGetLastError());
-
     HIP_CHECK(hipDeviceSynchronize());
-    unsigned int host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+
+    unsigned int* host_data = static_cast<unsigned int*>(malloc(size * sizeof(unsigned int)));
+    HIP_CHECK(hipMemcpy(host_data, data, size * sizeof(unsigned int), hipMemcpyDeviceToHost));
+    HIP_CHECK(hipFree(data));
 
     constexpr unsigned int offset = 2U * threads_per_generator;
     for(unsigned int i = 0; i < size / offset; i++)
@@ -419,9 +419,9 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
             unsigned int idx0 = offset * i + j;
             unsigned int idx1 = offset * i + threads_per_generator + j;
             SCOPED_TRACE(testing::Message() << "idx0 = " << idx0 << " idx1 = " << idx1);
-            ASSERT_EQ(data[idx0], data[idx1]);
+            ASSERT_EQ(host_data[idx0], host_data[idx1]);
         }
     }
 
-    HIP_CHECK(hipFree(data));
+    free(host_data);
 }
