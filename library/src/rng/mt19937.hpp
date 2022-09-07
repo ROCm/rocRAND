@@ -717,7 +717,7 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
 
     mt19937_octo_engine engine = engines[thread_id];
 
-    // each iteration saves multiple output_width values T as one vec_type.
+    // each iteration saves output_width values T as one vec_type.
     // the number of vec_types produced by the loop is a multiple of threads_per_generator
     // since all threads_per_generator must contribute to produce the next values
     vec_type* vec_data = reinterpret_cast<vec_type*>(data + misalignment);
@@ -741,12 +741,14 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
 
     // number of elements T that come before and after the aligned elements
     const unsigned int remainder = tail_size + head_size;
-    // round up to ensure that all eight threads participate in the calculation
+    // number of output_width values T, rounded up
+    // also round up to threads_per_generator ensure that all eight threads participate in the calculation
     const unsigned int remainder_ceil = (remainder + full_output_width - 1) / full_output_width;
     // number of elements T computed so far
     const unsigned int offset = output_width * vec_n;
 
-    while(index < offset + remainder_ceil)
+    // each iteration saves at most output_width values T
+    while(index < vec_n + remainder_ceil)
     {
         for(unsigned int i = 0; i < input_width; i++)
         {
@@ -759,8 +761,8 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
         {
             // only write the elements that are still required, which means
             // that some random numbers get discarded
-            unsigned int idx = index * output_width + o;
-            if(o < offset + remainder)
+            unsigned int idx = output_width * index + o;
+            if(o < output_width * vec_n + remainder)
             {
                 // tail elements get wrapped around
                 data[idx % size] = output[o];
