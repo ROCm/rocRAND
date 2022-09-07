@@ -255,7 +255,7 @@ const std::vector<std::string> all_engines = {
     "mrg32k3a",
     "mtgp32",
     "philox",
-    "lfsr113"
+    "lfsr113",
     "sobol32",
     "scrambled_sobol32",
     "sobol64",
