@@ -32,11 +32,9 @@ void write_matrices(std::ofstream&       fout,
                     DirectionVectorType* directions,
                     int32_t              n,
                     int32_t              bits,
-                    uint32_t             offset,
-                    bool                 is_device)
+                    uint32_t             offset)
 {
     fout << "static const ";
-    fout << (is_device ? "__device__ " : "");
     fout << ((sizeof(DirectionVectorType) == 4) ? "unsigned int " : "unsigned long long int ");
     fout << name
          << ((sizeof(DirectionVectorType) == 4) ? "[SCRAMBLED_SOBOL32_N] = "
@@ -114,8 +112,7 @@ int main(int argc, char const* argv[])
                    h_sobol64_direction_vectors,
                    SOBOL64_N,
                    64,
-                   1280000,
-                   false);
+                   1280000);
 
     fout << R"(
 #endif // ROCRAND_SCRAMBLED_SOBOL64_PRECOMPUTED_H_

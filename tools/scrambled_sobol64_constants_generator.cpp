@@ -30,11 +30,9 @@ template<typename DirectionVectorType>
 void write_constants(std::ofstream&    fout,
                      const std::string name,
                      int32_t           n,
-                     int32_t           numbers_per_line,
-                     bool              is_device)
+                     int32_t           numbers_per_line)
 {
     fout << "static const ";
-    fout << (is_device ? "__device__ " : "");
     fout << ((sizeof(DirectionVectorType) == 4) ? "unsigned int " : "unsigned long long int ");
     fout << name << "[SCRAMBLED_SOBOL_DIM] = {" << std::endl;
     fout << "    ";
@@ -61,7 +59,7 @@ int main(int argc, char const* argv[])
     if(argc != 2 || std::string(argv[1]) == "--help")
     {
         std::cout << "Usage:" << std::endl;
-        std::cout << "  ./scrambled_sobol64_direction_vector_generator "
+        std::cout << "  ./scrambled_sobol64_direction_constants_generator "
                      "../../library/include/rocrand/rocrand_scrambled_sobol64_constants.h"
                   << std::endl;
         return -1;
@@ -105,7 +103,7 @@ int main(int argc, char const* argv[])
     fout << "#endif" << std::endl;
     fout << std::endl;
 
-    write_constants<uint64_t>(fout, "h_scrambled_sobol64_constants", SCRAMBLED_SOBOL_DIM, 4, false);
+    write_constants<uint64_t>(fout, "h_scrambled_sobol64_constants", SCRAMBLED_SOBOL_DIM, 4);
 
     fout << R"(
 #endif // ROCRAND_SCRAMBLED_SOBOL64_CONSTANTS_H_
