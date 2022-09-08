@@ -35,9 +35,13 @@
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
 #include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_scrambled_sobol32.h"
+#include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
 #include "rocrand/rocrand_xorwow.h"
+
+#include "rocrand/rocrand_common.h"
 
 namespace rocrand_device {
 namespace detail {
@@ -60,6 +64,14 @@ FQUALIFIERS
 float uniform_distribution(unsigned int v)
 {
     return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
+}
+
+// For unsigned long long int between 0 and ULLONG_MAX, returns value between
+// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+FQUALIFIERS
+float uniform_distribution(unsigned long long int v)
+{
+    return ROCRAND_2POW64_INV_DOUBLE + (v * ROCRAND_2POW64_INV_DOUBLE);
 }
 
 FQUALIFIERS
@@ -497,11 +509,29 @@ double rocrand_uniform_double(rocrand_state_sobol32 * state)
 }
 
 /**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0f, including \p 1.0f) using SCRAMBLED_SOBOL32 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_scrambled_sobol32* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
+}
+
+/**
  * \brief Returns a uniformly distributed random <tt>double</tt> value
  * from (0; 1] range.
  *
  * Generates and returns a uniformly distributed \p double value from (0; 1] range
- * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
+ * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL32 generator in \p state, and
  * increments position of the generator by one.
  *
  * \param state - Pointer to a state to use
@@ -512,9 +542,27 @@ double rocrand_uniform_double(rocrand_state_sobol32 * state)
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_sobol64 * state)
+double rocrand_uniform_double(rocrand_state_scrambled_sobol32* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_sobol64* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 /**
@@ -527,13 +575,46 @@ float rocrand_uniform(rocrand_state_sobol64 * state)
  *
  * \param state - Pointer to a state to use
  *
- * Note: In this implementation returned \p double value is generated
- * from only 32 random bits (one <tt>unsigned int</tt> value).
- *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_sobol64 * state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_scrambled_sobol64* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS
+double rocrand_uniform_double(rocrand_state_scrambled_sobol64* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }

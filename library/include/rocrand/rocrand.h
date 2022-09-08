@@ -26,11 +26,11 @@
 #ifndef ROCRAND_H_
 #define ROCRAND_H_
 
+#include "rocrand/rocrand_discrete_types.h"
+
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_vector_types.h>
-
-#include "rocrand/rocrand_discrete_types.h"
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
@@ -89,16 +89,18 @@ typedef enum rocrand_status {
  */
 typedef enum rocrand_rng_type
 {
-    ROCRAND_RNG_PSEUDO_DEFAULT       = 400, ///< Default pseudorandom generator
-    ROCRAND_RNG_PSEUDO_XORWOW        = 401, ///< XORWOW pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG32K3A      = 402, ///< MRG32k3a pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG31K3P      = 405, ///< MRG31k3p pseudorandom generator
-    ROCRAND_RNG_PSEUDO_LFSR113       = 406, ///< LFSR113 pseudorandom generator
-    ROCRAND_RNG_QUASI_DEFAULT        = 500, ///< Default quasirandom generator
-    ROCRAND_RNG_QUASI_SOBOL32        = 501, ///< Sobol32 quasirandom generator
-    ROCRAND_RNG_QUASI_SOBOL64        = 504 ///< Sobol64 quasirandom generator
+    ROCRAND_RNG_PSEUDO_DEFAULT          = 400, ///< Default pseudorandom generator
+    ROCRAND_RNG_PSEUDO_XORWOW           = 401, ///< XORWOW pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG32K3A         = 402, ///< MRG32k3a pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MTGP32           = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10    = 404, ///< PHILOX-4x32-10 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG31K3P         = 405, ///< MRG31k3p pseudorandom generator
+    ROCRAND_RNG_PSEUDO_LFSR113          = 406, ///< LFSR113 pseudorandom generator
+    ROCRAND_RNG_QUASI_DEFAULT           = 500, ///< Default quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL32           = 501, ///< Sobol32 quasirandom generator
+    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502, ///< Scrambled Sobol32 quasirandom generator
+    ROCRAND_RNG_QUASI_SOBOL64           = 504, ///< Sobol64 quasirandom generator
+    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505 ///< Scrambled Sobol64 quasirandom generator
 } rocrand_rng_type;
 
 // Host API function
@@ -115,7 +117,11 @@ typedef enum rocrand_rng_type
  * - ROCRAND_RNG_PSEUDO_MRG32K3A
  * - ROCRAND_RNG_PSEUDO_MTGP32
  * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_PSEUDO_LFSR113
  * - ROCRAND_RNG_QUASI_SOBOL32
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
+ * - ROCRAND_RNG_QUASI_SOBOL64
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
  *
  * \param generator - Pointer to generator
  * \param rng_type - Type of generator to create
@@ -168,6 +174,31 @@ rocrand_destroy_generator(rocrand_generator generator);
 rocrand_status ROCRANDAPI
 rocrand_generate(rocrand_generator generator,
                  unsigned int * output_data, size_t n);
+
+/**
+ * \brief Generates uniformly distributed 64-bit unsigned integers.
+ *
+ * Generates \p n uniformly distributed 64-bit unsigned integers and
+ * saves them to \p output_data.
+ *
+ * Generated numbers are between \p 0 and \p 2^64, including \p 0 and
+ * excluding \p 2^64.
+ *
+ * \param generator - Generator to use
+ * \param output_data - Pointer to memory to store generated numbers
+ * \param n - Number of 64-bit unsigned integers to generate
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_LAUNCH_FAILURE if a HIP kernel launch failed \n
+ * - ROCRAND_STATUS_LENGTH_NOT_MULTIPLE if \p n is not a multiple of the dimension
+ * of used quasi-random generator \n
+ * - ROCRAND_TYPE_ERROR if the generator can't natively generate 64-bit random numbers \n
+ * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
+ */
+rocrand_status ROCRANDAPI rocrand_generate_long_long(rocrand_generator       generator,
+                                                     unsigned long long int* output_data,
+                                                     size_t                  n);
 
 /**
 * \brief Generates uniformly distributed 8-bit unsigned integers.
@@ -465,7 +496,7 @@ rocrand_generate_poisson(rocrand_generator generator,
  *
  * If rocrand_initialize() was not called for a generator, it will be
  * automatically called by functions which generates random numbers like
- * rocrand_generate(), rocrang_generate_uniform() etc.
+ * rocrand_generate(), rocrand_generate_uniform() etc.
  *
  * \param generator - Generator to initialize
  *

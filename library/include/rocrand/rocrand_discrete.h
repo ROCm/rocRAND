@@ -32,6 +32,8 @@
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
 #include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_scrambled_sobol32.h"
+#include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
 #include "rocrand/rocrand_xorwow.h"
@@ -284,8 +286,8 @@ unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discr
 /**
  * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
  *
- * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
- * \p discrete_distribution using SOBOL64 generator in \p state, and increments
+ * Returns a <tt>unsigned int</tt> distributed according to discrete distribution
+ * \p discrete_distribution using SCRAMBLED_SOBOL32 generator in \p state, and increments
  * the position of the generator by one.
  *
  * \param state - Pointer to a state to use
@@ -294,7 +296,46 @@ unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discr
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_sobol64 * state, const rocrand_discrete_distribution discrete_distribution)
+unsigned int rocrand_discrete(rocrand_state_scrambled_sobol32*    state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
+ * \brief Returns a discrete distributed <tt>unsigned long long int</tt> value.
+ *
+ * Returns a <tt>unsigned long long int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using SOBOL64 generator in \p state, and increments
+ * the position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ * \param discrete_distribution - Related discrete distribution
+ *
+ * \return <tt>unsigned long long int</tt> value distributed according to \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned long long int rocrand_discrete(rocrand_state_sobol64*              state,
+                                        const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
+ * \brief Returns a discrete distributed <tt>unsigned long long int</tt> value.
+ *
+ * Returns a <tt>unsigned long long int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using SCRAMBLED_SOBOL64 generator in \p state, and increments
+ * the position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ * \param discrete_distribution - Related discrete distribution
+ *
+ * \return <tt>unsigned long long int</tt> value distributed according to \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned long long int rocrand_discrete(rocrand_state_scrambled_sobol64*    state,
+                                        const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }

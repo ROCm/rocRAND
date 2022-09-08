@@ -37,6 +37,8 @@
 #include "rocrand/rocrand_mrg32k3a.h"
 #include "rocrand/rocrand_mtgp32.h"
 #include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_scrambled_sobol32.h"
+#include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
 #include "rocrand/rocrand_xorwow.h"
@@ -212,6 +214,14 @@ double roc_d_erfinv(double x)
 
 FQUALIFIERS
 float normal_distribution(unsigned int x)
+{
+    float p = ::rocrand_device::detail::uniform_distribution(x);
+    float v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_f_erfinv(2.0f * p - 1.0f);
+    return v;
+}
+
+FQUALIFIERS
+float normal_distribution(unsigned long long int x)
 {
     float p = ::rocrand_device::detail::uniform_distribution(x);
     float v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_f_erfinv(2.0f * p - 1.0f);
@@ -869,9 +879,27 @@ double rocrand_normal_double(rocrand_state_sobol32 * state)
 }
 
 /**
+ * \brief Returns a normally distributed \p float value.
+ *
+ * Generates and returns a normally distributed \p float value using SCRAMBLED_SOBOL32
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS
+float rocrand_normal(rocrand_state_scrambled_sobol32* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
  * \brief Returns a normally distributed \p double value.
  *
- * Generates and returns a normally distributed \p double value using SOBOL64
+ * Generates and returns a normally distributed \p double value using SCRAMBLED_SOBOL32
  * generator in \p state, and increments position of the generator by one.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
@@ -881,9 +909,27 @@ double rocrand_normal_double(rocrand_state_sobol32 * state)
  * \return Normally distributed \p double value
  */
 FQUALIFIERS
-float rocrand_normal(rocrand_state_sobol64 * state)
+double rocrand_normal_double(rocrand_state_scrambled_sobol32* state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p float value.
+ *
+ * Generates and returns a normally distributed \p float value using SOBOL64
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS
+float rocrand_normal(rocrand_state_sobol64* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
 }
 
 /**
@@ -905,9 +951,27 @@ double rocrand_normal_double(rocrand_state_sobol64 * state)
 }
 
 /**
+ * \brief Returns a normally distributed \p float value.
+ *
+ * Generates and returns a normally distributed \p float value using SCRAMBLED_SOBOL64
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS
+float rocrand_normal(rocrand_state_scrambled_sobol64* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
  * \brief Returns a normally distributed \p double value.
  *
- * Generates and returns a normally distributed \p double value using LFSR113
+ * Generates and returns a normally distributed \p double value using SCRAMBLED_SOBOL64
  * generator in \p state, and increments position of the generator by one.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
@@ -917,9 +981,27 @@ double rocrand_normal_double(rocrand_state_sobol64 * state)
  * \return Normally distributed \p double value
  */
 FQUALIFIERS
-float rocrand_normal(rocrand_state_lfsr113* state)
+double rocrand_normal_double(rocrand_state_scrambled_sobol64* state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p float value.
+ *
+ * Generates and returns a normally distributed \p float value using LFSR113
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS
+float rocrand_normal(rocrand_state_lfsr113* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
 }
 
 /**

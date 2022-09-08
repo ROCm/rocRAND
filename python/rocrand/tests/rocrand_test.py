@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -85,6 +85,9 @@ class TestCtorQRNG(TestRNGBase):
 
 make_test(TestCtorQRNG, "DEFAULT", rngtype=QRNG.DEFAULT)
 make_test(TestCtorQRNG, "SOBOL32", rngtype=QRNG.SOBOL32)
+make_test(TestCtorQRNG, "SCRAMBLED_SOBOL32", rngtype=QRNG.SCRAMBLED_SOBOL32)
+make_test(TestCtorQRNG, "SOBOL64", rngtype=QRNG.SOBOL64)
+make_test(TestCtorQRNG, "SCRAMBLED_SOBOL64", rngtype=QRNG.SCRAMBLED_SOBOL64)
 
 class TestParamsPRNG(TestRNGBase):
     def setUp(self):
@@ -167,6 +170,9 @@ class TestParamsQRNG(TestRNGBase):
 
 make_test(TestParamsQRNG, "DEFAULT", rngtype=QRNG.DEFAULT)
 make_test(TestParamsQRNG, "SOBOL32", rngtype=QRNG.SOBOL32)
+make_test(TestParamsQRNG, "SCRAMBLED_SOBOL32", rngtype=QRNG.SCRAMBLED_SOBOL32)
+make_test(TestParamsQRNG, "SOBOL64", rngtype=QRNG.SOBOL64)
+make_test(TestParamsQRNG, "SCRAMBLED_SOBOL64", rngtype=QRNG.SCRAMBLED_SOBOL64)
 
 OUTPUT_SIZE = 8192
 
@@ -273,15 +279,18 @@ class TestGenerate(TestRNGBase):
         self.assertTrue((output[:OUTPUT_SIZE] <= 1.0).all())
         self.assertTrue((output[OUTPUT_SIZE:] == 10.0).all())
 
-make_test(TestGenerate, "PRNG" + "DEFAULT",       klass=PRNG, rngtype=PRNG.DEFAULT)
-make_test(TestGenerate, "PRNG" + "XORWOW",        klass=PRNG, rngtype=PRNG.XORWOW)
-make_test(TestGenerate, "PRNG" + "MRG31K3P",      klass=PRNG, rngtype=PRNG.MRG31K3P)
-make_test(TestGenerate, "PRNG" + "MRG32K3A",      klass=PRNG, rngtype=PRNG.MRG32K3A)
-make_test(TestGenerate, "PRNG" + "MTGP32",        klass=PRNG, rngtype=PRNG.MTGP32)
-make_test(TestGenerate, "PRNG" + "PHILOX4_32_10", klass=PRNG, rngtype=PRNG.PHILOX4_32_10)
-make_test(TestGenerate, "QRNG" + "DEFAULT",       klass=QRNG, rngtype=QRNG.DEFAULT)
-make_test(TestGenerate, "QRNG" + "SOBOL32",       klass=QRNG, rngtype=QRNG.SOBOL32)
-make_test(TestGenerate, "PRNG" + "LFSR113",       klass=PRNG, rngtype=PRNG.LFSR113)
+make_test(TestGenerate, "PRNG" + "DEFAULT",           klass=PRNG, rngtype=PRNG.DEFAULT)
+make_test(TestGenerate, "PRNG" + "XORWOW",            klass=PRNG, rngtype=PRNG.XORWOW)
+make_test(TestGenerate, "PRNG" + "MRG31K3P",          klass=PRNG, rngtype=PRNG.MRG31K3P)
+make_test(TestGenerate, "PRNG" + "MRG32K3A",          klass=PRNG, rngtype=PRNG.MRG32K3A)
+make_test(TestGenerate, "PRNG" + "MTGP32",            klass=PRNG, rngtype=PRNG.MTGP32)
+make_test(TestGenerate, "PRNG" + "PHILOX4_32_10",     klass=PRNG, rngtype=PRNG.PHILOX4_32_10)
+make_test(TestGenerate, "QRNG" + "DEFAULT",           klass=QRNG, rngtype=QRNG.DEFAULT)
+make_test(TestGenerate, "QRNG" + "SOBOL32",           klass=QRNG, rngtype=QRNG.SOBOL32)
+make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL32", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL32)
+make_test(TestGenerate, "QRNG" + "SOBOL64",           klass=QRNG, rngtype=QRNG.SOBOL64)
+make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64)
+make_test(TestGenerate, "PRNG" + "LFSR113",           klass=PRNG, rngtype=PRNG.LFSR113)
 
 
 if __name__ == "__main__":

@@ -30,7 +30,9 @@ module rocrand_m
     integer, public :: ROCRAND_RNG_PSEUDO_LFSR113 = 406
     integer, public :: ROCRAND_RNG_QUASI_DEFAULT = 500
     integer, public :: ROCRAND_RNG_QUASI_SOBOL32 = 501
-    integer, public :: HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504
+    integer, public :: ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502
+    integer, public :: ROCRAND_RNG_QUASI_SOBOL64 = 504
+    integer, public :: ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505
 
     integer, public :: ROCRAND_STATUS_SUCCESS = 0
     integer, public :: ROCRAND_STATUS_VERSION_MISMATCH  = 100
