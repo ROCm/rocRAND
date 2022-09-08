@@ -67,7 +67,7 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
         vectors[hipThreadIdx_x] = direction_vectors[dimension * 64 + hipThreadIdx_x];
     }
     __syncthreads();
-    const unsigned int scramble_constant = scramble_constants[dimension];
+    const unsigned long long int scramble_constant = scramble_constants[dimension];
 
     data += dimension * n;
 

@@ -278,7 +278,7 @@ struct runner<curandStateSobol32_t>
         curandDirectionVectors32_t * h_directions;
         CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
-        const size_t  size = dimensions * sizeof(curandDirectionVectors32_t);
+        const size_t  size = dimensions * sizeof(unsigned int) * 32;
         CUDA_CALL(cudaMalloc((void**)&directions, size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
@@ -407,7 +407,7 @@ struct runner<curandStateSobol64_t>
         curandDirectionVectors64_t * h_directions;
         CURAND_CALL(curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
         unsigned long long int* directions;
-        const size_t            size = dimensions * sizeof(unsigned long long);
+        const size_t            size = dimensions * sizeof(unsigned long long) * 64;
         CUDA_CALL(cudaMalloc((void**)&directions, size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
