@@ -26,8 +26,11 @@
  *  @{
  */
 
+#include "rocrand/rocrand_discrete_types.h"
+
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
+#include <hip/hip_vector_types.h>
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
