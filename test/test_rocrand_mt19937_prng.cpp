@@ -337,7 +337,8 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     constexpr unsigned int generator_count  = 2U;
 
     // Constants to skip subsequence_size states.
-    constexpr unsigned int jump[p_size] = {
+    // Generated with tools/mt19937_precomputed_generator.cpp
+    constexpr unsigned int jump[mt19937_p_size] = {
         0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
         0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 1U, 0U, 0U, 0U, 0U, 0U, 0U,
         0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,

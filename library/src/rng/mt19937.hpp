@@ -66,20 +66,12 @@
 
 namespace
 {
-#ifdef __HIP_PLATFORM_AMD__
-static constexpr unsigned int warp_size = warpSize;
-#else
-static constexpr unsigned int warp_size = 32U;
-#endif
-
 /// Number of independent generators. Value is fixed to produce deterministic number stream.
 static constexpr unsigned int generator_count = 8192U;
 /// Number of threads that cooporate to run one generator. Value is fixed in implementation.
 static constexpr unsigned int threads_per_generator = 8U;
-/// Minimum number of active warps per multiprocessor.
-static constexpr unsigned int min_warps_per_execution_unit = 2U;
 /// Number of threads per block. Can be tweaked for performance.
-static constexpr unsigned int thread_count = warp_size * min_warps_per_execution_unit;
+static constexpr unsigned int thread_count = 256U;
 static_assert(thread_count % threads_per_generator == 0U,
               "all eight threads of the generator must be in the same block");
 } // namespace
@@ -111,8 +103,7 @@ struct mt19937_engine
 
     static constexpr unsigned int qq = 7;
     /// <tt>ll = 2 ^ qq<\tt>.
-    static constexpr unsigned int ll  = 128;
-    static constexpr unsigned int lsb = 0x00000001U;
+    static constexpr unsigned int ll = 128;
 
     struct mt19937_state
     {
@@ -135,7 +126,7 @@ struct mt19937_engine
     /// Advances the internal state to skip a single subsequence, which is <tt>2 ^ 1000</tt> states long.
     MT_FQUALIFIERS_HOST void discard_subsequence()
     {
-        m_state = discard_subsequence_impl(h_jump, m_state);
+        m_state = discard_subsequence_impl(mt19937_jump, m_state);
     }
 
     // Generates the next state.
@@ -170,10 +161,12 @@ struct mt19937_engine
     }
 
     /// Return the i-th coefficient of the polynomial pf.
-    static MT_FQUALIFIERS_HOST unsigned long get_coef(const unsigned int pf[p_size],
+    static MT_FQUALIFIERS_HOST unsigned long get_coef(const unsigned int pf[mt19937_p_size],
                                                       unsigned int       deg)
     {
-        return (pf[deg >> 5] & (lsb << (deg & 0x1ful))) != 0;
+        constexpr unsigned int log_w_size  = 5U;
+        constexpr unsigned int w_size_mask = 0x1FU;
+        return (pf[deg >> log_w_size] & (mt19937_lsb << (deg & w_size_mask))) != 0;
     }
 
     /// Copy state \p ss into state <tt>ts</tt>.
@@ -275,12 +268,12 @@ struct mt19937_engine
     }
 
     /// Compute pf(ss) using Sliding window algorithm.
-    static MT_FQUALIFIERS_HOST mt19937_state calc_state(const unsigned int   pf[p_size],
+    static MT_FQUALIFIERS_HOST mt19937_state calc_state(const unsigned int   pf[mt19937_p_size],
                                                         const mt19937_state& ss,
                                                         const mt19937_state  vec_h[ll])
     {
         mt19937_state tmp{};
-        int           i = mexp - 1;
+        int           i = mt19937_mexp - 1;
 
         while(get_coef(pf, i) == 0)
         {
@@ -322,8 +315,8 @@ struct mt19937_engine
     }
 
     /// Computes jumping ahead with Sliding window algorithm.
-    static MT_FQUALIFIERS_HOST mt19937_state discard_subsequence_impl(const unsigned int pf[p_size],
-                                                                      const mt19937_state& ss)
+    static MT_FQUALIFIERS_HOST mt19937_state
+        discard_subsequence_impl(const unsigned int pf[mt19937_p_size], const mt19937_state& ss)
     {
         // skip state
         mt19937_state vec_h[ll];
@@ -428,17 +421,11 @@ struct mt19937_octo_engine
         }
 
         // initialize the elements that do not follow a regular pattern
-        switch(tid)
-        {
-            case 0: m_state.mt[i000_0] = engine->m_state.mt[0]; break;
-            case 1: m_state.mt[i113_1] = engine->m_state.mt[113]; break;
-            case 2: m_state.mt[i170_2] = engine->m_state.mt[170]; break;
-            case 3: m_state.mt[i283_3] = engine->m_state.mt[283]; break;
-            case 4: m_state.mt[i340_4] = engine->m_state.mt[340]; break;
-            case 5: m_state.mt[i397_5] = engine->m_state.mt[397]; break;
-            case 6: m_state.mt[i510_6] = engine->m_state.mt[510]; break;
-            case 7: m_state.mt[i567_7] = engine->m_state.mt[567]; break;
-        }
+        constexpr unsigned int dest_idx[threads_per_generator]
+            = {i000_0, i113_1, i170_2, i283_3, i340_4, i397_5, i510_6, i567_7};
+        constexpr unsigned int src_idx[threads_per_generator]
+            = {0, 113, 170, 283, 340, 397, 510, 567};
+        m_state.mt[dest_idx[tid]] = engine->m_state.mt[src_idx[tid]];
 
         // set to n, to indicate that a batch of n values can be calculated at a time
         m_state.mti = n;
@@ -678,19 +665,20 @@ private:
     mt19937_octo_state m_state;
 };
 
-template<unsigned int block_size>
 ROCRAND_KERNEL
-    __launch_bounds__(thread_count) void init_engines_kernel(mt19937_octo_engine* octo_engines,
-                                                             mt19937_engine*      engines)
+__launch_bounds__(thread_count) void init_engines_kernel(mt19937_octo_engine* octo_engines,
+                                                         mt19937_engine*      engines)
 {
-    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
+    const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     // every eight octo engines gather from the same engine
     octo_engines[thread_id].gather(&engines[thread_id / threads_per_generator]);
 }
 
-template<unsigned int block_size, class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(thread_count, min_warps_per_execution_unit) void generate_kernel(
-    mt19937_octo_engine* engines, T* data, const size_t size, Distribution distribution)
+template<class T, class Distribution>
+ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo_engine* engines,
+                                                                    T*                   data,
+                                                                    const size_t         size,
+                                                                    Distribution distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
@@ -700,7 +688,7 @@ ROCRAND_KERNEL __launch_bounds__(thread_count, min_warps_per_execution_unit) voi
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int     thread_id = blockIdx.x * block_size + threadIdx.x;
+    const unsigned int     thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     constexpr unsigned int stride    = threads_per_generator * generator_count;
 
     unsigned int input[input_width];
@@ -842,6 +830,7 @@ public:
         err = hipMalloc(&d_engines, generator_count * sizeof(engine_type));
         if(err != hipSuccess)
         {
+            free(h_engines);
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
@@ -854,12 +843,12 @@ public:
 
         if(err != hipSuccess)
         {
-            hipFree(h_engines);
+            hipFree(d_engines);
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel<thread_count>),
-                           dim3(m_block_count),
+        hipLaunchKernelGGL(rocrand_host::detail::init_engines_kernel,
+                           dim3(block_count),
                            dim3(thread_count),
                            0,
                            m_stream,
@@ -893,8 +882,8 @@ public:
             return status;
         }
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<thread_count>),
-                           dim3(m_block_count),
+        hipLaunchKernelGGL(rocrand_host::detail::generate_kernel,
+                           dim3(block_count),
                            dim3(thread_count),
                            0,
                            m_stream,
@@ -950,9 +939,9 @@ private:
     bool              m_engines_initialized;
     octo_engine_type* m_engines;
 
-    static constexpr unsigned int m_generators_per_block = thread_count / threads_per_generator;
-    static constexpr unsigned int m_block_count          = generator_count / m_generators_per_block;
-    static_assert(generator_count % m_generators_per_block == 0,
+    static constexpr unsigned int generators_per_block = thread_count / threads_per_generator;
+    static constexpr unsigned int block_count          = generator_count / generators_per_block;
+    static_assert(generator_count % generators_per_block == 0,
                   "generator count must be a multiple of generators per block");
 
     // For caching of Poisson for consecutive generations with the same lambda

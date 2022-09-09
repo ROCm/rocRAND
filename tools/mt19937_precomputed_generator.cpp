@@ -49,7 +49,9 @@ void set_coef(const char p[mexp + 1], unsigned int pf[p_size])
         if(p[i] == '1')
         {
             // Set the coefficient of the polynomial pf with 1.
-            pf[j >> 5] ^= lsb << (j & 0x1FU);
+            constexpr unsigned int log_w_size  = 5U;
+            constexpr unsigned int w_size_mask = 0x1FU;
+            pf[j >> log_w_size] ^= lsb << (j & w_size_mask);
         }
     }
 }
@@ -95,17 +97,16 @@ int main(int argc, char const* argv[])
 
 )";
 
-    fout << "constexpr unsigned int lsb    = " << lsb << "U;\n";
-    fout << "constexpr unsigned int mexp   = " << mexp << "U;\n";
-    fout << "constexpr unsigned int p_size = " << p_size << "U;\n";
+    fout << "constexpr unsigned int mt19937_lsb    = " << lsb << "U;\n";
+    fout << "constexpr unsigned int mt19937_mexp   = " << mexp << "U;\n";
+    fout << "constexpr unsigned int mt19937_p_size = " << p_size << "U;\n";
 
-    unsigned int pf[p_size];
+    unsigned int pf[p_size] = {};
 
     fout << "\n"
             "// clang-format off\n"
-            "static constexpr unsigned int h_jump[p_size] = {\n    ";
+            "static constexpr unsigned int mt19937_jump[mt19937_p_size] = {\n    ";
 
-    memset(pf, 0, sizeof(pf));
     set_coef(jump, pf);
 
     for(size_t i = 0; i < p_size; i++)
