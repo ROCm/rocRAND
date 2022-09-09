@@ -288,7 +288,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
     ::rocrand_host::detail::mt19937_engine*      engines,
     unsigned int                                 subsequence_size)
 {
-    const unsigned int     thread_id             = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
     constexpr unsigned int threads_per_generator = 8U;
     unsigned int           engine_id             = thread_id / threads_per_generator;
     ::rocrand_host::detail::mt19937_octo_engine engine = octo_engines[thread_id];
@@ -308,7 +308,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
     ::rocrand_host::detail::mt19937_octo_engine* engines, unsigned int* data, unsigned int n)
 {
-    const unsigned int     thread_id             = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
     constexpr unsigned int threads_per_generator = 8U;
     constexpr unsigned int generator_count       = 2U;
     constexpr unsigned int stride                = threads_per_generator * generator_count;

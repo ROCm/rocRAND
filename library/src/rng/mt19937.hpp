@@ -70,8 +70,10 @@ namespace
 static constexpr unsigned int generator_count = 8192U;
 /// Number of threads that cooporate to run one generator. Value is fixed in implementation.
 static constexpr unsigned int threads_per_generator = 8U;
+/// Minimum number of active warps per multiprocessor.
+static constexpr unsigned int min_warps_per_execution_unit = 2U;
 /// Number of threads per block. Can be tweaked for performance.
-static constexpr unsigned int thread_count = 256U;
+static constexpr unsigned int thread_count = warpSize * min_warps_per_execution_unit;
 static_assert(thread_count % threads_per_generator == 0U,
               "all eight threads of the generator must be in the same block");
 } // namespace
@@ -406,7 +408,7 @@ struct mt19937_octo_engine
         static constexpr unsigned int offsets[off_cnt]
             = {1U, 57U, 114U, 171U, 227U, 284U, 341U, 398U, 454U, 511U, 568U};
 
-        const unsigned int tid = hipThreadIdx_x & 7U;
+        const unsigned int tid = threadIdx.x & 7U;
 
         // initialize the elements that follow a regular pattern
         for(unsigned int i = 0; i < off_cnt; i++)
@@ -457,7 +459,7 @@ struct mt19937_octo_engine
     static MT_FQUALIFIERS unsigned int
         comp(unsigned int mt_i, unsigned int mt_i_1, unsigned int mt_i_m)
     {
-        unsigned int y = (mt_i & upper_mask) | (mt_i_1 & lower_mask);
+        const unsigned int y = (mt_i & upper_mask) | (mt_i_1 & lower_mask);
         /// mag01[x] = x * matrix_a for x in [0, 1]
         const unsigned int mag = (y & 0x1U) * matrix_a;
         return mt_i_m ^ (y >> 1) ^ mag;
@@ -494,12 +496,10 @@ struct mt19937_octo_engine
     /// Eights threads collaborate in computing the n next values.
     MT_FQUALIFIERS void gen_next_n()
     {
-        const unsigned int tid = hipThreadIdx_x & 7U;
+        const unsigned int tid = threadIdx.x & 7U;
 
         // compute eleven vectors that follow a regular pattern and compute
         // eight special values for a total of n new elements.
-        // the order of computations is for the most part fixed due to
-        // dependencies between the values, as indicated by comments
         // ' indicates new value
 
         // compute   0': needs   1 and 397
@@ -677,13 +677,13 @@ ROCRAND_KERNEL
     __launch_bounds__(thread_count) void init_engines_kernel(mt19937_octo_engine* octo_engines,
                                                              mt19937_engine*      engines)
 {
-    const unsigned int thread_id = hipBlockIdx_x * block_size + hipThreadIdx_x;
+    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
     // every eight octo engines gather from the same engine
     octo_engines[thread_id].gather(&engines[thread_id / threads_per_generator]);
 }
 
 template<unsigned int block_size, class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo_engine* engines,
+ROCRAND_KERNEL __launch_bounds__(thread_count, min_warps_per_execution_unit) void generate_kernel(mt19937_octo_engine* engines,
                                                                     T*                   data,
                                                                     const size_t         size,
                                                                     Distribution distribution)
@@ -696,7 +696,7 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int     thread_id = hipBlockIdx_x * block_size + hipThreadIdx_x;
+    const unsigned int     thread_id = blockIdx.x * block_size + threadIdx.x;
     constexpr unsigned int stride    = threads_per_generator * generator_count;
 
     unsigned int input[input_width];
