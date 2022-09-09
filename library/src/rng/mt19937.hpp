@@ -744,8 +744,6 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
     // number of output_width values T, rounded up
     // also round up to threads_per_generator ensure that all eight threads participate in the calculation
     const unsigned int remainder_ceil = (remainder + full_output_width - 1) / full_output_width;
-    // number of elements T computed so far
-    const unsigned int offset = output_width * vec_n;
 
     // each iteration saves at most output_width values T
     while(index < vec_n + remainder_ceil)
