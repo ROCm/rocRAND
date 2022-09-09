@@ -66,6 +66,12 @@
 
 namespace
 {
+#ifdef __HIP_PLATFORM_AMD__
+static constexpr unsigned int warp_size = warpSize;
+#else
+static constexpr unsigned int warp_size = 32U;
+#endif
+
 /// Number of independent generators. Value is fixed to produce deterministic number stream.
 static constexpr unsigned int generator_count = 8192U;
 /// Number of threads that cooporate to run one generator. Value is fixed in implementation.
@@ -73,7 +79,7 @@ static constexpr unsigned int threads_per_generator = 8U;
 /// Minimum number of active warps per multiprocessor.
 static constexpr unsigned int min_warps_per_execution_unit = 2U;
 /// Number of threads per block. Can be tweaked for performance.
-static constexpr unsigned int thread_count = warpSize * min_warps_per_execution_unit;
+static constexpr unsigned int thread_count = warp_size * min_warps_per_execution_unit;
 static_assert(thread_count % threads_per_generator == 0U,
               "all eight threads of the generator must be in the same block");
 } // namespace
@@ -683,10 +689,8 @@ ROCRAND_KERNEL
 }
 
 template<unsigned int block_size, class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(thread_count, min_warps_per_execution_unit) void generate_kernel(mt19937_octo_engine* engines,
-                                                                    T*                   data,
-                                                                    const size_t         size,
-                                                                    Distribution distribution)
+ROCRAND_KERNEL __launch_bounds__(thread_count, min_warps_per_execution_unit) void generate_kernel(
+    mt19937_octo_engine* engines, T* data, const size_t size, Distribution distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;

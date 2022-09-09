@@ -288,10 +288,10 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
     ::rocrand_host::detail::mt19937_engine*      engines,
     unsigned int                                 subsequence_size)
 {
-    const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
-    constexpr unsigned int threads_per_generator = 8U;
-    unsigned int           engine_id             = thread_id / threads_per_generator;
-    ::rocrand_host::detail::mt19937_octo_engine engine = octo_engines[thread_id];
+    const unsigned int                          thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    constexpr unsigned int                      threads_per_generator = 8U;
+    unsigned int                                engine_id = thread_id / threads_per_generator;
+    ::rocrand_host::detail::mt19937_octo_engine engine    = octo_engines[thread_id];
     engine.gather(&engines[engine_id]);
 
     if(engine_id == 0)
