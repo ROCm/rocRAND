@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #endif
 
 #define ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#define ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
 #define ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
 #define ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
 

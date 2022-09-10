@@ -211,9 +211,9 @@ const std::vector<std::string> all_engines = {
     // "mt19937",
     "philox",
     "sobol32",
-    // "scrambled_sobol32",
+    "scrambled_sobol32",
     "sobol64",
-    // "scrambled_sobol64",
+    "scrambled_sobol64",
 };
 
 const std::vector<std::string> all_distributions = {
