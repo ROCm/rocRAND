@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,15 @@
 // At least C++11 required
 #if defined(__cplusplus) && __cplusplus >= 201103L
 
-#include <random>
-#include <exception>
-#include <string>
-#include <sstream>
-#include <type_traits>
-#include <limits>
+    #include "rocrand/rocrand.h"
+    #include "rocrand/rocrand_kernel.h"
 
-#include "rocrand/rocrand.h"
-#include "rocrand/rocrand_kernel.h"
+    #include <exception>
+    #include <limits>
+    #include <random>
+    #include <sstream>
+    #include <string>
+    #include <type_traits>
 
 namespace rocrand_cpp {
 
@@ -140,18 +140,18 @@ private:
 
 /// \class uniform_int_distribution
 ///
-/// \brief Produces random integer values uniformly distributed on the interval [0, 2^32 - 1].
+/// \brief Produces random integer values uniformly distributed on the interval [0, 2^(sizeof(IntType)*8) - 1].
 ///
-/// \tparam IntType - type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int type is supported.
+/// \tparam IntType - type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int and \p unsigned \p long \p long \p int type is supported.
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
-    static_assert(
-        std::is_same<unsigned char, IntType>::value
-        || std::is_same<unsigned short, IntType>::value
-        || std::is_same<unsigned int, IntType>::value,
-        "Only unsigned char, unsigned short, and unsigned int types is supported in uniform_int_distribution"
-    );
+    static_assert(std::is_same<unsigned char, IntType>::value
+                      || std::is_same<unsigned short, IntType>::value
+                      || std::is_same<unsigned long long int, IntType>::value
+                      || std::is_same<unsigned int, IntType>::value,
+                  "Only unsigned char, unsigned short, unsigned int and unsigned long long int "
+                  "types are supported in uniform_int_distribution");
 
 public:
     typedef IntType result_type;
@@ -181,7 +181,7 @@ public:
     /// \brief Fills \p output with uniformly distributed random integer values.
     ///
     /// Generates \p size random integer values uniformly distributed
-    /// on the  interval [0, 2^32 - 1], and stores them into the device memory
+    /// on the  interval [0, 2^(sizeof(IntType)*8) - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
     /// \param g - An uniform random number generator object
@@ -233,6 +233,12 @@ private:
     rocrand_status generate(Generator& g, unsigned int * output, size_t size)
     {
         return rocrand_generate(g.m_generator, output, size);
+    }
+
+    template<class Generator>
+    rocrand_status generate(Generator& g, unsigned long long int* output, size_t size)
+    {
+        return rocrand_generate_long_long(g.m_generator, output, size);
     }
 };
 
@@ -1193,6 +1199,143 @@ template<unsigned long long DefaultSeed>
 constexpr typename xorwow_engine<DefaultSeed>::seed_type xorwow_engine<DefaultSeed>::default_seed;
 /// \endcond
 
+/// \brief Pseudorandom number engine based MRG31k3p CMRG.
+///
+/// mrg31k3p_engine is an implementation of MRG31k3p pseudorandom number generator,
+/// which is a Combined Multiple Recursive Generator (CMRG) created by Pierre L'Ecuyer.
+/// It produces random 32-bit \p unsigned \p int values on the interval [0; 2^32 - 1].
+template<unsigned long long DefaultSeed = ROCRAND_MRG31K3P_DEFAULT_SEED>
+class mrg31k3p_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef unsigned long long seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed = DefaultSeed;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
+    mrg31k3p_engine(seed_type seed_value = DefaultSeed, offset_type offset_value = 0)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    mrg31k3p_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~mrg31k3p_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 1;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_MRG31K3P;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned long long DefaultSeed>
+constexpr
+    typename mrg31k3p_engine<DefaultSeed>::seed_type mrg31k3p_engine<DefaultSeed>::default_seed;
+/// \endcond
+
 /// \brief Pseudorandom number engine based MRG32k3a CMRG.
 ///
 /// mrg32k3a_engine is an implementation of MRG32k3a pseudorandom number generator,
@@ -1452,6 +1595,152 @@ template<unsigned long long DefaultSeed>
 constexpr typename mtgp32_engine<DefaultSeed>::seed_type mtgp32_engine<DefaultSeed>::default_seed;
 /// \endcond
 
+/// \brief Random number engine based on the LFSR113 algorithm.
+///
+/// lfsr113_engine is an implementation of LFSR113 pseudorandom number generator,
+/// which is a linear feedback shift resgisters (LFSR) based generator created by Pierre L'Ecuyer.
+/// It produces random 32-bit \p unsigned \p int values on the interval [0; 2^32 - 1].
+template<unsigned int DefaultSeedX = ROCRAND_LFSR113_DEFAULT_SEED_X,
+         unsigned int DefaultSeedY = ROCRAND_LFSR113_DEFAULT_SEED_Y,
+         unsigned int DefaultSeedZ = ROCRAND_LFSR113_DEFAULT_SEED_Z,
+         unsigned int DefaultSeedW = ROCRAND_LFSR113_DEFAULT_SEED_W>
+class lfsr113_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef uint4 seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed
+        = {DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW};
+
+    /// \brief Constructs the pseudo-random number engine.
+    ///
+    /// LFSR113 does not accept offset.
+    ///
+    /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
+    ///
+    /// See also: hiprandCreateGenerator()
+    lfsr113_engine(seed_type seed_value = {DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW})
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    lfsr113_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~lfsr113_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(unsigned long long value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed_uint4(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_LFSR113;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned int DefaultSeedX,
+         unsigned int DefaultSeedY,
+         unsigned int DefaultSeedZ,
+         unsigned int DefaultSeedW>
+constexpr typename lfsr113_engine<DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW>::seed_type
+    lfsr113_engine<DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW>::default_seed;
+/// \endcond
+
 /// \brief Sobol's quasi-random sequence generator
 ///
 /// sobol32_engine is quasi-random number engine which produced Sobol sequences.
@@ -1611,9 +1900,173 @@ private:
     /// \endcond
 };
 
+/// \brief Sobol's scrambled quasi-random sequence generator
+///
+/// scrambled_sobol32_engine is a quasi-random number engine which produces scrambled Sobol sequences.
+/// This implementation supports generating sequences in up to 20,000 dimensions.
+/// The engine produces random unsigned integers on the interval [0, 2^32 - 1].
+template<unsigned int DefaultNumDimensions = 1>
+class scrambled_sobol32_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \typedef dimensions_num_type
+    /// Quasi-random number engine type for number of dimensions.
+    ///
+    /// See also dimensions()
+    typedef unsigned int dimensions_num_type;
+    /// \brief The default number of dimenstions, equal to \p DefaultNumDimensions.
+    static constexpr dimensions_num_type default_num_dimensions = DefaultNumDimensions;
+
+    /// \brief Constructs the pseudo-random number engine.
+    ///
+    /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
+    /// \param offset_value - number of internal states that should be skipped, see also offset()
+    ///
+    /// See also: rocrand_create_generator()
+    scrambled_sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
+                             offset_type         offset_value      = 0)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->dimensions(num_of_dimensions);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    scrambled_sobol32_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~scrambled_sobol32_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \brief Set the number of dimensions of a quasi-random number generator.
+    ///
+    /// Supported values of \p dimensions are 1 to 20000.
+    ///
+    /// - This operation resets the generator's internal state.
+    /// - This operation does not change the generator's offset.
+    ///
+    /// \param value - Number of dimensions
+    ///
+    /// See also: rocrand_set_quasi_random_generator_dimensions()
+    void dimensions(dimensions_num_type value)
+    {
+        rocrand_status status
+            = rocrand_set_quasi_random_generator_dimensions(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \brief Fills \p output with uniformly distributed random integer values.
+    ///
+    /// Generates \p size random integer values uniformly distributed
+    /// on the interval [0, 2^32 - 1], and stores them into the device memory
+    /// referenced by \p output pointer.
+    ///
+    /// \param output - Pointer to device memory to store results
+    /// \param size - Number of values to generate
+    ///
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
+    /// and be large enough to store at least \p size values of \p IntType type.
+    /// * \p size must be a multiple of the engine's number of dimensions.
+    ////
+    /// See also: rocrand_generate()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
 /// \brief Sobol's quasi-random sequence generator
 ///
-/// sobol64 is quasi-random number engine which produced Sobol sequences.
+/// sobol64 is a quasi-random number engine which produces Sobol sequences.
 /// This implementation supports generating sequences in up to 20,000 dimensions.
 /// The engine produces random unsigned integers on the interval [0, 2^64 - 1].
 template<unsigned int DefaultNumDimensions = 1>
@@ -1621,9 +2074,9 @@ class sobol64_engine
 {
 public:
     /// \copydoc philox4x32_10_engine::result_type
-    typedef unsigned int result_type;
+    typedef unsigned long long int result_type;
     /// \copydoc philox4x32_10_engine::offset_type
-    typedef unsigned long long offset_type;
+    typedef unsigned long long int offset_type;
     /// \typedef dimensions_num_type
     /// Quasi-random number engine type for number of dimensions.
     ///
@@ -1727,7 +2180,7 @@ public:
     void operator()(result_type * output, size_t size)
     {
         rocrand_status status;
-        status = rocrand_generate(m_generator, output, size);
+        status = rocrand_generate_long_long(m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
     }
 
@@ -1740,13 +2193,177 @@ public:
     /// \copydoc philox4x32_10_engine::max()
     result_type max() const
     {
-        return std::numeric_limits<unsigned int>::max();
+        return std::numeric_limits<result_type>::max();
     }
 
     /// \copydoc philox4x32_10_engine::type()
     static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_QUASI_SOBOL64;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \brief Sobol's scrambled quasi-random sequence generator
+///
+/// scrambled_sobol64_engine is a quasi-random number engine which produces scrambled Sobol sequences.
+/// This implementation supports generating sequences in up to 20,000 dimensions.
+/// The engine produces random unsigned long long integers on the interval [0, 2^64 - 1].
+template<unsigned int DefaultNumDimensions = 1>
+class scrambled_sobol64_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned long long int result_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long int offset_type;
+    /// \typedef dimensions_num_type
+    /// Quasi-random number engine type for number of dimensions.
+    ///
+    /// See also dimensions()
+    typedef unsigned int dimensions_num_type;
+    /// \brief The default number of dimenstions, equal to \p DefaultNumDimensions.
+    static constexpr dimensions_num_type default_num_dimensions = DefaultNumDimensions;
+
+    /// \brief Constructs the pseudo-random number engine.
+    ///
+    /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
+    /// \param offset_value - number of internal states that should be skipped, see also offset()
+    ///
+    /// See also: rocrand_create_generator()
+    scrambled_sobol64_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
+                             offset_type         offset_value      = 0)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->dimensions(num_of_dimensions);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    scrambled_sobol64_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~scrambled_sobol64_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \brief Set the number of dimensions of a quasi-random number generator.
+    ///
+    /// Supported values of \p dimensions are 1 to 20000.
+    ///
+    /// - This operation resets the generator's internal state.
+    /// - This operation does not change the generator's offset.
+    ///
+    /// \param value - Number of dimensions
+    ///
+    /// See also: rocrand_set_quasi_random_generator_dimensions()
+    void dimensions(dimensions_num_type value)
+    {
+        rocrand_status status
+            = rocrand_set_quasi_random_generator_dimensions(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \brief Fills \p output with uniformly distributed random integer values.
+    ///
+    /// Generates \p size random integer values uniformly distributed
+    /// on the interval [0, 2^64 - 1], and stores them into the device memory
+    /// referenced by \p output pointer.
+    ///
+    /// \param output - Pointer to device memory to store results
+    /// \param size - Number of values to generate
+    ///
+    /// Requirements:
+    /// * The device memory pointed by \p output must have been previously allocated
+    /// and be large enough to store at least \p size values of \p IntType type.
+    /// * \p size must be a multiple of the engine's number of dimensions.
+    ////
+    /// See also: rocrand_generate()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate_long_long(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<result_type>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64;
     }
 
 private:
@@ -1782,18 +2399,30 @@ typedef philox4x32_10_engine<> philox4x32_10;
 /// \typedef xorwow
 /// \brief Typedef of rocrand_cpp::xorwow_engine PRNG engine with default seed (#ROCRAND_XORWOW_DEFAULT_SEED).
 typedef xorwow_engine<> xorwow;
+/// \typedef mrg31k3p
+/// \brief Typedef of rocrand_cpp::mrg31k3p_engine PRNG engine with default seed (#ROCRAND_MRG31K3P_DEFAULT_SEED).
+typedef mrg31k3p_engine<> mrg31k3a;
 /// \typedef mrg32k3a
 /// \brief Typedef of rocrand_cpp::mrg32k3a_engine PRNG engine with default seed (#ROCRAND_MRG32K3A_DEFAULT_SEED).
 typedef mrg32k3a_engine<> mrg32k3a;
 /// \typedef mtgp32
 /// \brief Typedef of rocrand_cpp::mtgp32_engine PRNG engine with default seed (0).
 typedef mtgp32_engine<> mtgp32;
+/// \typedef lfsr113
+/// \brief Typedef of rocrand_cpp::lfsr113_engine PRNG engine with default seed (#ROCRAND_LFSR113_DEFAULT_SEED).
+typedef lfsr113_engine<> lfsr113;
 /// \typedef sobol32
-/// \brief Typedef of rocrand_cpp::sobol32_engine PRNG engine with default number of dimensions (1).
+/// \brief Typedef of rocrand_cpp::sobol32_engine QRNG engine with default number of dimensions (1).
 typedef sobol32_engine<> sobol32;
+/// \typedef scrambled_sobol32
+/// \brief Typedef of rocrand_cpp::scrambled_sobol32_engine QRNG engine with default number of dimensions (1).
+typedef scrambled_sobol32_engine<> scrambled_sobol32;
 /// \typedef sobol64
-/// \brief Typedef of rocrand_cpp::sobol64_engine PRNG engine with default number of dimensions (1).
+/// \brief Typedef of rocrand_cpp::sobol64_engine QRNG engine with default number of dimensions (1).
 typedef sobol64_engine<> sobol64;
+/// \typedef scrambled_sobol64
+/// \brief Typedef of rocrand_cpp::scrambled_sobol64_engine QRNG engine with default number of dimensions (1).
+typedef scrambled_sobol64_engine<> scrambled_sobol64;
 
 /// \typedef default_random_engine
 /// \brief Default random engine.

@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -266,7 +266,7 @@ protected:
     static uint4 bump_counter(uint4 counter)
     {
         counter.x++;
-        uint add = counter.x == 0 ? 1 : 0;
+        unsigned int add      = counter.x == 0 ? 1 : 0;
         counter.y += add; add = counter.y == 0 ? add : 0;
         counter.z += add; add = counter.z == 0 ? add : 0;
         counter.w += add;
