@@ -788,6 +788,14 @@ public:
         }
     }
 
+    rocrand_mt19937(const rocrand_mt19937&) = delete;
+
+    rocrand_mt19937(rocrand_mt19937&&) = delete;
+
+    rocrand_mt19937& operator=(const rocrand_mt19937&) = delete;
+
+    rocrand_mt19937& operator=(rocrand_mt19937&&) = delete;
+
     ~rocrand_mt19937()
     {
         hipFree(m_engines);
