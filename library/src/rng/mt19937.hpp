@@ -87,7 +87,7 @@ namespace
 
 /// Number of elements in the state vector.
 static constexpr unsigned int n = 624U;
-/// The next value of element \p i depends on <tt>i + 1 % n<\tt> and <tt>i + m % n<\tt>.
+/// The next value of element \p i depends on <tt>(i + 1) % n<\tt> and <tt>(i + m) % n<\tt>.
 static constexpr unsigned int m = 397U;
 /// Constant vector A.
 static constexpr unsigned int matrix_a = 0x9908B0DFU;
@@ -101,9 +101,8 @@ struct mt19937_engine
 {
     // Jumping constants.
 
-    static constexpr unsigned int qq = 7;
-    /// <tt>ll = 2 ^ qq<\tt>.
-    static constexpr unsigned int ll = 128;
+    static constexpr unsigned int qq = 7U;
+    static constexpr unsigned int ll = 1U << qq;
 
     struct mt19937_state
     {
@@ -114,13 +113,13 @@ struct mt19937_engine
 
     MT_FQUALIFIERS_HOST mt19937_engine(unsigned long long seed)
     {
-        const unsigned int seedu = (seed >> 32) ^ seed;
-        m_state.mt[0]            = seedu;
+        const unsigned int seedu = (seed >> 32U) ^ seed;
+        m_state.mt[0U]           = seedu;
         for(unsigned int i = 1; i < n; i++)
         {
-            m_state.mt[i] = 1812433253U * (m_state.mt[i - 1] ^ (m_state.mt[i - 1] >> 30)) + i;
+            m_state.mt[i] = 1812433253U * (m_state.mt[i - 1U] ^ (m_state.mt[i - 1U] >> 30U)) + i;
         }
-        m_state.ptr = 0;
+        m_state.ptr = 0U;
     }
 
     /// Advances the internal state to skip a single subsequence, which is <tt>2 ^ 1000</tt> states long.
@@ -133,46 +132,43 @@ struct mt19937_engine
     static MT_FQUALIFIERS_HOST void gen_next(mt19937_state& state)
     {
         /// mag01[x] = x * matrix_a for x in [0, 1]
-        constexpr unsigned int mag01[2] = {0x0U, matrix_a};
-        int                    num;
-        unsigned int           y;
-        int                    tmp_n = n;
-        int                    tmp_m = m;
+        constexpr unsigned int mag01[2U] = {0x0U, matrix_a};
 
-        num = state.ptr;
-        if(num < tmp_n - tmp_m)
+        if(state.ptr + m < n)
         {
-            y             = (state.mt[num] & upper_mask) | (state.mt[num + 1] & lower_mask);
-            state.mt[num] = state.mt[num + tmp_m] ^ (y >> 1) ^ mag01[y & 0x1U];
+            unsigned int y
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1U] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr + m] ^ (y >> 1U) ^ mag01[y & 0x1U];
             state.ptr++;
         }
-        else if(num < tmp_n - 1)
+        else if(state.ptr < n - 1U)
         {
-            y             = (state.mt[num] & upper_mask) | (state.mt[num + 1] & lower_mask);
-            state.mt[num] = state.mt[num + (tmp_m - tmp_n)] ^ (y >> 1) ^ mag01[y & 0x1U];
+            unsigned int y
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1U] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr - (n - m)] ^ (y >> 1U) ^ mag01[y & 0x1U];
             state.ptr++;
         }
-        else if(num == tmp_n - 1)
+        else if(state.ptr == n - 1U)
         {
-            y                   = (state.mt[tmp_n - 1] & upper_mask) | (state.mt[0] & lower_mask);
-            state.mt[tmp_n - 1] = state.mt[tmp_m - 1] ^ (y >> 1) ^ mag01[y & 0x1U];
-            state.ptr           = 0;
+            unsigned int y   = (state.mt[n - 1U] & upper_mask) | (state.mt[0U] & lower_mask);
+            state.mt[n - 1U] = state.mt[m - 1U] ^ (y >> 1U) ^ mag01[y & 0x1U];
+            state.ptr        = 0U;
         }
     }
 
     /// Return the i-th coefficient of the polynomial pf.
-    static MT_FQUALIFIERS_HOST unsigned long get_coef(const unsigned int pf[mt19937_p_size],
-                                                      unsigned int       deg)
+    static MT_FQUALIFIERS_HOST unsigned int get_coef(const unsigned int pf[mt19937_p_size],
+                                                     unsigned int       deg)
     {
         constexpr unsigned int log_w_size  = 5U;
         constexpr unsigned int w_size_mask = 0x1FU;
-        return (pf[deg >> log_w_size] & (mt19937_lsb << (deg & w_size_mask))) != 0;
+        return (pf[deg >> log_w_size] & (mt19937_lsb << (deg & w_size_mask))) != 0U;
     }
 
     /// Copy state \p ss into state <tt>ts</tt>.
     static MT_FQUALIFIERS_HOST void copy_state(mt19937_state& ts, const mt19937_state& ss)
     {
-        for(size_t i = 0; i < n; i++)
+        for(unsigned int i = 0U; i < n; i++)
         {
             ts.mt[i] = ss.mt[i];
         }
@@ -183,37 +179,36 @@ struct mt19937_engine
     /// Add state \p s2 to state <tt>s1</tt>.
     static MT_FQUALIFIERS_HOST void add_state(mt19937_state& s1, const mt19937_state& s2)
     {
-        int i, pt1 = s1.ptr, pt2 = s2.ptr;
-        int tmp_n = n;
-
-        if(pt2 - pt1 >= 0)
+        if(s2.ptr >= s1.ptr)
         {
-            for(i = 0; i < tmp_n - pt2; i++)
+            unsigned int i = 0U;
+            for(; i < n - s2.ptr; i++)
             {
-                s1.mt[i + pt1] ^= s2.mt[i + pt2];
+                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
             }
-            for(; i < tmp_n - pt1; i++)
+            for(; i < n - s1.ptr; i++)
             {
-                s1.mt[i + pt1] ^= s2.mt[i + (pt2 - tmp_n)];
+                s1.mt[i + s1.ptr] ^= s2.mt[i - (n - s2.ptr)];
             }
-            for(; i < tmp_n; i++)
+            for(; i < n; i++)
             {
-                s1.mt[i + (pt1 - tmp_n)] ^= s2.mt[i + (pt2 - tmp_n)];
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
             }
         }
         else
         {
-            for(i = 0; i < tmp_n - pt1; i++)
+            unsigned int i = 0U;
+            for(; i < n - s1.ptr; i++)
             {
-                s1.mt[i + pt1] ^= s2.mt[i + pt2];
+                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
             }
-            for(; i < tmp_n - pt2; i++)
+            for(; i < n - s2.ptr; i++)
             {
-                s1.mt[i + (pt1 - tmp_n)] ^= s2.mt[i + pt2];
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i + s2.ptr];
             }
-            for(; i < tmp_n; i++)
+            for(; i < n; i++)
             {
-                s1.mt[i + (pt1 - tmp_n)] ^= s2.mt[i + (pt2 - tmp_n)];
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
             }
         }
     }
@@ -221,18 +216,18 @@ struct mt19937_engine
     /// Generate Gray code.
     static MT_FQUALIFIERS_HOST void gray_code(unsigned int h[ll])
     {
-        h[0] = 0;
+        h[0U] = 0U;
 
-        unsigned int l    = 1;
+        unsigned int l    = 1U;
         unsigned int term = ll;
-        unsigned int j    = 1;
-        for(unsigned int i = 1; i <= qq; i++)
+        unsigned int j    = 1U;
+        for(unsigned int i = 1U; i <= qq; i++)
         {
-            l    = (l << 1);
-            term = (term >> 1);
+            l    = (l << 1U);
+            term = (term >> 1U);
             for(; j < l; j++)
             {
-                h[j] = h[l - j - 1] ^ term;
+                h[j] = h[l - j - 1U] ^ term;
             }
         }
     }
@@ -247,22 +242,22 @@ struct mt19937_engine
 
         gray_code(h);
 
-        copy_state(vec_h[0], ss);
+        copy_state(vec_h[0U], ss);
 
-        for(unsigned int i = 0; i < qq; i++)
+        for(unsigned int i = 0U; i < qq; i++)
         {
-            gen_next(vec_h[0]);
+            gen_next(vec_h[0U]);
         }
 
-        for(unsigned int i = 1; i < ll; i++)
+        for(unsigned int i = 1U; i < ll; i++)
         {
             copy_state(v, ss);
-            unsigned int g = h[i] ^ h[i - 1];
-            for(unsigned int k = 1; k < g; k = (k << 1))
+            unsigned int g = h[i] ^ h[i - 1U];
+            for(unsigned int k = 1; k < g; k = (k << 1U))
             {
                 gen_next(v);
             }
-            copy_state(vec_h[h[i]], vec_h[h[i - 1]]);
+            copy_state(vec_h[h[i]], vec_h[h[i - 1U]]);
             add_state(vec_h[h[i]], v);
         }
     }
@@ -273,22 +268,22 @@ struct mt19937_engine
                                                         const mt19937_state  vec_h[ll])
     {
         mt19937_state tmp{};
-        int           i = mt19937_mexp - 1;
+        int           i = mt19937_mexp - 1U;
 
-        while(get_coef(pf, i) == 0)
+        while(get_coef(pf, i) == 0U)
         {
             i--;
         }
 
         for(; i >= static_cast<int>(qq); i--)
         {
-            if(get_coef(pf, i) != 0)
+            if(get_coef(pf, i) != 0U)
             {
-                for(int j = 0; j < static_cast<int>(qq) + 1; j++)
+                for(unsigned int j = 0U; j < qq + 1U; j++)
                 {
                     gen_next(tmp);
                 }
-                int digit = 0;
+                unsigned int digit = 0U;
                 for(int j = 0; j < static_cast<int>(qq); j++)
                 {
                     digit = (digit << 1) ^ get_coef(pf, i - j - 1);
@@ -305,7 +300,7 @@ struct mt19937_engine
         for(; i > -1; i--)
         {
             gen_next(tmp);
-            if(get_coef(pf, i) == 1)
+            if(get_coef(pf, i) == 1U)
             {
                 add_state(tmp, ss);
             }
