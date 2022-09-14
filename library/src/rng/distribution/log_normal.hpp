@@ -214,11 +214,11 @@ struct mrg_log_normal_distribution<__half>
 
 // Sobol
 
-template<class RESULT_T, typename INPUT_T>
+template<class T>
 struct sobol_log_normal_distribution;
 
-template<typename INPUT_T>
-struct sobol_log_normal_distribution<float, INPUT_T>
+template<>
+struct sobol_log_normal_distribution<float>
 {
     const float mean;
     const float stddev;
@@ -227,15 +227,16 @@ struct sobol_log_normal_distribution<float, INPUT_T>
     sobol_log_normal_distribution(float mean, float stddev)
         : mean(mean), stddev(stddev) {}
 
-    __host__ __device__ float operator()(const INPUT_T x) const
+    template<class DirectionVectorType>
+    __host__ __device__ float operator()(const DirectionVectorType x) const
     {
         float v = rocrand_device::detail::normal_distribution(x);
         return expf(mean + (stddev * v));
     }
 };
 
-template<typename INPUT_T>
-struct sobol_log_normal_distribution<double, INPUT_T>
+template<>
+struct sobol_log_normal_distribution<double>
 {
     const double mean;
     const double stddev;
@@ -244,15 +245,16 @@ struct sobol_log_normal_distribution<double, INPUT_T>
     sobol_log_normal_distribution(double mean, double stddev)
         : mean(mean), stddev(stddev) {}
 
-    __host__ __device__ double operator()(const INPUT_T x) const
+    template<class DirectionVectorType>
+    __host__ __device__ double operator()(const DirectionVectorType x) const
     {
         double v = rocrand_device::detail::normal_distribution_double(x);
         return exp(mean + (stddev * v));
     }
 };
 
-template<typename INPUT_T>
-struct sobol_log_normal_distribution<__half, INPUT_T>
+template<>
+struct sobol_log_normal_distribution<__half>
 {
     const __half mean;
     const __half stddev;
@@ -261,7 +263,8 @@ struct sobol_log_normal_distribution<__half, INPUT_T>
     sobol_log_normal_distribution(__half mean, __half stddev)
         : mean(mean), stddev(stddev) {}
 
-    __host__ __device__ __half operator()(const INPUT_T x) const
+    template<class DirectionVectorType>
+    __host__ __device__ __half operator()(const DirectionVectorType x) const
     {
         float v = rocrand_device::detail::normal_distribution(x);
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)

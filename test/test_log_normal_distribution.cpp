@@ -306,7 +306,7 @@ TYPED_TEST(sobol_log_normal_distribution_tests, float_test)
 
     const size_t size = 4000;
     float val[size];
-    sobol_log_normal_distribution<float, T> u(0.2f, 0.5f);
+    sobol_log_normal_distribution<float> u(0.2f, 0.5f);
 
     // Calculate mean
     float mean = 0.0f;
@@ -341,7 +341,7 @@ TYPED_TEST(sobol_log_normal_distribution_tests, double_test)
 
     const size_t size = 4000;
     double val[size];
-    sobol_log_normal_distribution<double, T> u(0.2, 0.5);
+    sobol_log_normal_distribution<double> u(0.2, 0.5);
 
     // Calculate mean
     double mean = 0.0;
@@ -377,7 +377,7 @@ TYPED_TEST(sobol_log_normal_distribution_tests, half_test)
 
     const size_t size = 4000;
     half val[size];
-    sobol_log_normal_distribution<half, T> u(0.2f, 0.5f);
+    sobol_log_normal_distribution<half> u(0.2f, 0.5f);
 
     // Calculate mean
     float mean = 0.0f;
