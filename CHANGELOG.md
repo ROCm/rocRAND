@@ -11,6 +11,8 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 ### Fixed
 - Sobol64 now returns 64 bit instead of 32 bit random numbers.
 - Fixed a bug that prevented compiling code in C++ mode (with a host compiler) when it included the rocRAND headers on Windows.
+- ### Known issues
+- uniform, normal, and lognormal distributions for `float` produce incorrect values for Sobol 64 and Scrambled Sobol 64.
 
 ## (Unreleased) rocRAND-2.10.15 for ROCm 5.3.0
 ### Changed
