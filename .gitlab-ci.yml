@@ -276,6 +276,8 @@ test:nvcc:
     - cd $CI_PROJECT_DIR/build
     - ./benchmark/benchmark_rocrand_host_api --trials 5
     - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
+    - ./benchmark/benchmark_curand_generate --trials 5
+
 
 benchmark:rocm:
   needs:
