@@ -3,7 +3,12 @@
 # Get sources
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_rocrand*.cpp)
 set(rocRAND_BENCHMARK_SRCS ${tmp})
-if(HIP_COMPILER STREQUAL "nvcc")
+if(ROCRAND_CMAKE_HIP_LANGUAGE)
+    set_source_files_properties(${rocRAND_BENCHMARK_SRCS}
+      PROPERTIES
+        LANGUAGE HIP
+    )
+elseif(HIP_COMPILER STREQUAL "nvcc")
     file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_curand*.cpp)
     set(rocRAND_BENCHMARK_SRCS ${rocRAND_BENCHMARK_SRCS} ${tmp})
 endif()
@@ -29,7 +34,7 @@ foreach(benchmark_src ${rocRAND_BENCHMARK_SRCS})
     else()
         target_link_libraries(${BENCHMARK_TARGET}
             rocrand
-            hip::device
+            $<$<NOT:$<BOOL:ROCRAND_CMAKE_HIP_LANGUAGE>>:hip::device>
         )
     endif()
     set_target_properties(${BENCHMARK_TARGET}

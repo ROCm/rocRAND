@@ -48,11 +48,18 @@ if(HIP_COMPILER STREQUAL "nvcc")
     )
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 else()
-    target_link_libraries(rocrand PRIVATE hip::device)
-    if(NOT WIN32)
-        foreach(amdgpu_target ${AMDGPU_TARGETS})
-            target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
-        endforeach()
+    if(ROCRAND_CMAKE_HIP_LANGUAGE)
+        set_source_files_properties(${rocRAND_SRCS}
+          PROPERTIES
+            LANGUAGE HIP
+        )
+    else()
+        target_link_libraries(rocrand PRIVATE hip::device)
+        if(NOT WIN32)
+            foreach(amdgpu_target ${AMDGPU_TARGETS})
+                target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
+            endforeach()
+        endif()
     endif()
 endif()
 
