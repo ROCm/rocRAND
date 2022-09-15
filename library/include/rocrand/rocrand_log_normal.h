@@ -728,7 +728,7 @@ FQUALIFIERS
 float rocrand_log_normal(rocrand_state_sobol64* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return exp(mean + (stddev * r));
+    return expf(mean + (stddev * r));
 }
 
 /**
@@ -766,7 +766,7 @@ FQUALIFIERS
 float rocrand_log_normal(rocrand_state_scrambled_sobol64* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return exp(mean + (stddev * r));
+    return expf(mean + (stddev * r));
 }
 
 /**
