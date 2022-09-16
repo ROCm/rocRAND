@@ -18,20 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-#include <iomanip>
-#include <vector>
-#include <string>
-#include <chrono>
-#include <numeric>
-#include <utility>
-#include <algorithm>
-
-// Google benchmark
-#include <benchmark/benchmark.h>
-
+#include "benchmark_utils.hpp"
 #include "cmdparser.hpp"
-
 #include <cuda_runtime.h>
 #include <curand.h>
 
@@ -58,7 +46,8 @@ void run_benchmark(benchmark::State&     state,
                    const size_t          size,
                    const size_t          trials,
                    const size_t          offset,
-                   const size_t          dimensions)
+                   const size_t          dimensions,
+                   cudaStream_t          stream)
 {
     T * data;
     CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
@@ -86,14 +75,30 @@ void run_benchmark(benchmark::State&     state,
     CUDA_CALL(cudaDeviceSynchronize());
 
     // Measurement
-    auto start = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < trials; i++)
+    cudaEvent_t start, stop;
+    CUDA_CALL(cudaEventCreate(&start));
+    CUDA_CALL(cudaEventCreate(&stop));
+
+    for(auto _ : state)
     {
-        CURAND_CALL(generate_func(generator, data, size));
+        CUDA_CALL(cudaEventRecord(start, stream));
+        for(size_t i = 0; i < trials; i++)
+        {
+            CURAND_CALL(generate_func(generator, data, size));
+        }
+        CUDA_CALL(cudaEventRecord(stop, stream));
+        CUDA_CALL(cudaEventSynchronize(stop));
+
+        float elapsed = 0.0f;
+        CUDA_CALL(cudaEventElapsedTime(&elapsed, start, stop));
+        state.SetIterationTime(elapsed / 1000.f);
     }
-    CUDA_CALL(cudaDeviceSynchronize());
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
+
+    state.SetBytesProcessed(trials * state.iterations() * size * sizeof(T));
+    state.SetItemsProcessed(trials * state.iterations() * size);
+
+    CUDA_CALL(cudaEventDestroy(stop));
+    CUDA_CALL(cudaEventDestroy(start));
 
     CURAND_CALL(curandDestroyGenerator(generator));
     CUDA_CALL(cudaFree(data));
@@ -117,12 +122,15 @@ void configure_parser(cli::Parser& parser)
 
 int main(int argc, char* argv[])
 {
-    benchmark::Initialize(&argc, argv)
+    benchmark::Initialize(&argc, argv);
 
     // Parse arguments from command line
     cli::Parser parser(argc, argv);
     configure_parser(parser);
     parser.run_and_exit_if_error();
+
+    cudaStream_t stream;
+    CUDA_CALL(cudaStreamCreate(&stream));
 
     add_common_benchmark_info();
 
@@ -169,7 +177,8 @@ int main(int argc, char* argv[])
                 size,
                 trials,
                 offset,
-                dimensions));
+                dimensions,
+                stream));
         else
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
                 (benchmark_name_engine + "uniform-long-long>").c_str(),
@@ -180,29 +189,32 @@ int main(int argc, char* argv[])
                 size,
                 trials,
                 offset,
-                dimensions));
+                dimensions,
+                stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
-                (benchmark_name_engine + "uniform-float>").c_str(),
-                &run_benchmark<float>,
-                engine_type,
-                [](curandGenerator_t gen, float* data, size_t size)
-                { return curandGenerateUniform(gen, data, size); },
-                size,
-                trials,
-                offset,
-                dimensions));
-        
+            (benchmark_name_engine + "uniform-float>").c_str(),
+            &run_benchmark<float>,
+            engine_type,
+            [](curandGenerator_t gen, float* data, size_t size)
+            { return curandGenerateUniform(gen, data, size); },
+            size,
+            trials,
+            offset,
+            dimensions,
+            stream));
+
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
-                (benchmark_name_engine + "uniform-double>").c_str(),
-                &run_benchmark<double>,
-                engine_type,
-                [](curandGenerator_t gen, double* data, size_t size)
-                { return curandGenerateUniformDouble(gen, data, size); },
-                size,
-                trials,
-                offset,
-                dimensions));
+            (benchmark_name_engine + "uniform-double>").c_str(),
+            &run_benchmark<double>,
+            engine_type,
+            [](curandGenerator_t gen, double* data, size_t size)
+            { return curandGenerateUniformDouble(gen, data, size); },
+            size,
+            trials,
+            offset,
+            dimensions,
+            stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
             (benchmark_name_engine + "normal-float>").c_str(),
@@ -213,7 +225,8 @@ int main(int argc, char* argv[])
             size,
             trials,
             offset,
-            dimensions));
+            dimensions,
+            stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
             (benchmark_name_engine + "normal-double>").c_str(),
@@ -224,7 +237,8 @@ int main(int argc, char* argv[])
             size,
             trials,
             offset,
-            dimensions));
+            dimensions,
+            stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
             (benchmark_name_engine + "log-normal-float>").c_str(),
@@ -235,7 +249,8 @@ int main(int argc, char* argv[])
             size,
             trials,
             offset,
-            dimensions));
+            dimensions,
+            stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
             (benchmark_name_engine + "log-normal-double>").c_str(),
@@ -246,7 +261,8 @@ int main(int argc, char* argv[])
             size,
             trials,
             offset,
-            dimensions));
+            dimensions,
+            stream));
 
         for(auto lambda : poisson_lambdas)
         {
@@ -262,7 +278,8 @@ int main(int argc, char* argv[])
                 size,
                 trials,
                 offset,
-                dimensions));
+                dimensions,
+                stream));
         }
     }
     // Use manual timing
@@ -271,8 +288,8 @@ int main(int argc, char* argv[])
         b->UseManualTime();
         b->Unit(benchmark::kMillisecond);
     }
-
     benchmark::RunSpecifiedBenchmarks();
+    CUDA_CALL(cudaStreamDestroy(stream));
 
     return 0;
 }

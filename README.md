@@ -139,11 +139,13 @@ cd rocRAND; cd build
 # To run specific benchmarks:
 ./benchmark/benchmark_rocrand_host_api --benchmark_filter=<regex>
 # For example to run benchmarks with engine sobol64:
-./benchmark_rocrand_host_api --benchmark_filter="device_generate<sobol64*"
+./benchmark/benchmark_rocrand_host_api --benchmark_filter="device_generate<sobol64*"
 # To view all registered benchmarks:
-./benchmark_rocrand_host_api --benchmark_list_tests=true
+./benchmark/benchmark_rocrand_host_api --benchmark_list_tests=true
 # The benchmark also supports user input:
-./benchmark_rocrand_host_api --size <number> --trials <number> --offset <number> --dimensions <number> --lambda <float float float ...>
+./benchmark/benchmark_rocrand_host_api --size <number> --trials <number> --offset <number> --dimensions <number> --lambda <float float float ...>
+# And can print output in different formats:
+./benchmark/benchmark_rocrand_host_api --benchmark_format=<console|json|csv>
 
 # To run benchmark for device kernel functions:
 # engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
@@ -154,7 +156,7 @@ cd rocRAND; cd build
 ./benchmark/benchmark_rocrand_kernel --engine <engine> --dis <distribution>
 
 # To compare against cuRAND (cuRAND must be supported):
-./benchmark/benchmark_curand_generate --engine <engine> --dis <distribution>
+./benchmark/benchmark_curand_generate [google benchmark options]
 ./benchmark/benchmark_curand_kernel --engine <engine> --dis <distribution>
 ```
 
