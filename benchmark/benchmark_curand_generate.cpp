@@ -148,7 +148,6 @@ int main(int argc, char* argv[])
     const std::map<rng_type_t, std::string> engine_type_map{
         {          CURAND_RNG_PSEUDO_MTGP32,            "mtgp32"},
         {        CURAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"},
-        {         CURAND_RNG_PSEUDO_MT19937,           "mt19937"},
         {   CURAND_RNG_PSEUDO_PHILOX4_32_10,            "philox"},
         {CURAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32"},
         {CURAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64"},
