@@ -37,7 +37,7 @@ const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 typedef curandRngType rng_type_t;
 
 template<typename T>
-using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T *, size_t)>;
+using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T*, size_t)>;
 
 template<typename T>
 void run_benchmark(benchmark::State&     state,
@@ -49,8 +49,8 @@ void run_benchmark(benchmark::State&     state,
                    const size_t          dimensions,
                    cudaStream_t          stream)
 {
-    T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
+    T* data;
+    CUDA_CALL(cudaMalloc((void**)&data, size * sizeof(T)));
 
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
@@ -191,29 +191,29 @@ int main(int argc, char* argv[])
                 dimensions,
                 stream));
 
-        benchmarks.emplace_back(benchmark::RegisterBenchmark(
-            (benchmark_name_engine + "uniform-float>").c_str(),
-            &run_benchmark<float>,
-            engine_type,
-            [](curandGenerator_t gen, float* data, size_t size)
-            { return curandGenerateUniform(gen, data, size); },
-            size,
-            trials,
-            offset,
-            dimensions,
-            stream));
+        benchmarks.emplace_back(
+            benchmark::RegisterBenchmark((benchmark_name_engine + "uniform-float>").c_str(),
+                                         &run_benchmark<float>,
+                                         engine_type,
+                                         [](curandGenerator_t gen, float* data, size_t size)
+                                         { return curandGenerateUniform(gen, data, size); },
+                                         size,
+                                         trials,
+                                         offset,
+                                         dimensions,
+                                         stream));
 
-        benchmarks.emplace_back(benchmark::RegisterBenchmark(
-            (benchmark_name_engine + "uniform-double>").c_str(),
-            &run_benchmark<double>,
-            engine_type,
-            [](curandGenerator_t gen, double* data, size_t size)
-            { return curandGenerateUniformDouble(gen, data, size); },
-            size,
-            trials,
-            offset,
-            dimensions,
-            stream));
+        benchmarks.emplace_back(
+            benchmark::RegisterBenchmark((benchmark_name_engine + "uniform-double>").c_str(),
+                                         &run_benchmark<double>,
+                                         engine_type,
+                                         [](curandGenerator_t gen, double* data, size_t size)
+                                         { return curandGenerateUniformDouble(gen, data, size); },
+                                         size,
+                                         trials,
+                                         offset,
+                                         dimensions,
+                                         stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
             (benchmark_name_engine + "normal-float>").c_str(),
