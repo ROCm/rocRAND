@@ -23,12 +23,26 @@
 #include <cuda_runtime.h>
 #include <curand.h>
 
-#define CUDA_CALL(x) do { if((x)!=cudaSuccess) { \
-    printf("Error at %s:%d\n",__FILE__,__LINE__);\
-    exit(EXIT_FAILURE);}} while(0)
-#define CURAND_CALL(x) do { if((x)!=CURAND_STATUS_SUCCESS) { \
-    printf("Error at %s:%d\n",__FILE__,__LINE__);\
-    exit(EXIT_FAILURE);}} while(0)
+#define CUDA_CALL(x)                                        \
+    do                                                      \
+    {                                                       \
+        if((x) != cudaSuccess)                              \
+        {                                                   \
+            printf("Error at %s:%d\n", __FILE__, __LINE__); \
+            exit(EXIT_FAILURE);                             \
+        }                                                   \
+    }                                                       \
+    while(0)
+#define CURAND_CALL(x)                                      \
+    do                                                      \
+    {                                                       \
+        if((x) != CURAND_STATUS_SUCCESS)                    \
+        {                                                   \
+            printf("Error at %s:%d\n", __FILE__, __LINE__); \
+            exit(EXIT_FAILURE);                             \
+        }                                                   \
+    }                                                       \
+    while(0)
 
 #ifndef DEFAULT_RAND_N
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
@@ -56,7 +70,7 @@ void run_benchmark(benchmark::State&     state,
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
 
     curandStatus_t status = curandSetQuasiRandomGeneratorDimensions(generator, dimensions);
-    if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
+    if(status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
     {
         CURAND_CALL(status);
     }
@@ -64,13 +78,13 @@ void run_benchmark(benchmark::State&     state,
     CURAND_CALL(curandSetStream(generator, stream));
 
     status = curandSetGeneratorOffset(generator, offset);
-    if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not pseudo-random
+    if(status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not pseudo-random
     {
         CURAND_CALL(status);
     }
 
     // Warm-up
-    for (size_t i = 0; i < 15; i++)
+    for(size_t i = 0; i < 15; i++)
     {
         CURAND_CALL(generate_func(generator, data, size));
     }

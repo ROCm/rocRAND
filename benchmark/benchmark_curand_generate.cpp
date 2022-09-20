@@ -49,9 +49,9 @@ template<typename T>
 using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T *, size_t)>;
 
 template<typename T>
-void run_benchmark(const cli::Parser& parser,
-                   const rng_type_t rng_type,
-                   cudaStream_t stream,
+void run_benchmark(const cli::Parser&    parser,
+                   const rng_type_t      rng_type,
+                   cudaStream_t          stream,
                    generate_func_type<T> generate_func)
 {
     const size_t size = parser.get<size_t>("size");
@@ -80,7 +80,7 @@ void run_benchmark(const cli::Parser& parser,
     }
 
     // Warm-up
-    for (size_t i = 0; i < 15; i++)
+    for(size_t i = 0; i < 15; i++)
     {
         CURAND_CALL(generate_func(generator, data, size));
     }
@@ -105,19 +105,13 @@ void run_benchmark(const cli::Parser& parser,
     CUDA_CALL(cudaEventDestroy(stop));
     CUDA_CALL(cudaEventDestroy(start));
 
-    std::cout << std::fixed << std::setprecision(3)
-              << "      "
-              << "Throughput = "
-              << std::setw(8) << (trials * size * sizeof(T)) /
-                    (elapsed / 1e3 * (1 << 30))
-              << " GB/s, Samples = "
-              << std::setw(8) << (trials * size) /
-                    (elapsed / 1e3 * (1 << 30))
-              << " GSample/s, AvgTime (1 trial) = "
-              << std::setw(8) << elapsed / trials
-              << " ms, Time (all) = "
-              << std::setw(8) << elapsed
-              << " ms, Size = " << size
+    std::cout << std::fixed << std::setprecision(3) << "      "
+              << "Throughput = " << std::setw(8)
+              << (trials * size * sizeof(T)) / (elapsed / 1e3 * (1 << 30))
+              << " GB/s, Samples = " << std::setw(8)
+              << (trials * size) / (elapsed / 1e3 * (1 << 30))
+              << " GSample/s, AvgTime (1 trial) = " << std::setw(8) << elapsed / trials
+              << " ms, Time (all) = " << std::setw(8) << elapsed << " ms, Size = " << size
               << std::endl;
 
     CURAND_CALL(curandDestroyGenerator(generator));
@@ -125,20 +119,20 @@ void run_benchmark(const cli::Parser& parser,
 }
 
 void run_benchmarks(const cli::Parser& parser,
-                    const rng_type_t rng_type,
+                    const rng_type_t   rng_type,
                     const std::string& distribution,
-                    cudaStream_t stream)
+                    cudaStream_t       stream)
 {
     if (distribution == "uniform-uint")
     {
         if (rng_type != CURAND_RNG_QUASI_SOBOL64 &&
             rng_type != CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
         {
-            run_benchmark<unsigned int>(parser, rng_type, stream,
-                [](curandGenerator_t gen, unsigned int * data, size_t size) {
-                    return curandGenerate(gen, data, size);
-                }
-            );
+            run_benchmark<unsigned int>(parser,
+                                        rng_type,
+                                        stream,
+                                        [](curandGenerator_t gen, unsigned int* data, size_t size)
+                                        { return curandGenerate(gen, data, size); });
         }
     }
     if (distribution == "uniform-long-long")
@@ -146,60 +140,62 @@ void run_benchmarks(const cli::Parser& parser,
         if (rng_type == CURAND_RNG_QUASI_SOBOL64 ||
             rng_type == CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
         {
-            run_benchmark<unsigned long long>(parser, rng_type, stream,
-                [](curandGenerator_t gen, unsigned long long * data, size_t size) {
-                    return curandGenerateLongLong(gen, data, size);
-                }
-            );
+            run_benchmark<unsigned long long>(
+                parser,
+                rng_type,
+                stream,
+                [](curandGenerator_t gen, unsigned long long* data, size_t size)
+                { return curandGenerateLongLong(gen, data, size); });
         }
     }
     if (distribution == "uniform-float")
     {
-        run_benchmark<float>(parser, rng_type, stream,
-            [](curandGenerator_t gen, float * data, size_t size) {
-                return curandGenerateUniform(gen, data, size);
-            }
-        );
+        run_benchmark<float>(parser,
+                             rng_type,
+                             stream,
+                             [](curandGenerator_t gen, float* data, size_t size)
+                             { return curandGenerateUniform(gen, data, size); });
     }
     if (distribution == "uniform-double")
     {
-        run_benchmark<double>(parser, rng_type, stream,
-            [](curandGenerator_t gen, double * data, size_t size) {
-                return curandGenerateUniformDouble(gen, data, size);
-            }
-        );
+        run_benchmark<double>(parser,
+                              rng_type,
+                              stream,
+                              [](curandGenerator_t gen, double* data, size_t size)
+                              { return curandGenerateUniformDouble(gen, data, size); });
+     }
     }
     if (distribution == "normal-float")
     {
-        run_benchmark<float>(parser, rng_type, stream,
-            [](curandGenerator_t gen, float * data, size_t size) {
-                return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
-            }
-        );
+        run_benchmark<float>(parser,
+                             rng_type,
+                             stream,
+                             [](curandGenerator_t gen, float* data, size_t size)
+                             { return curandGenerateNormal(gen, data, size, 0.0f, 1.0f); });
     }
     if (distribution == "normal-double")
     {
-        run_benchmark<double>(parser, rng_type, stream,
-            [](curandGenerator_t gen, double * data, size_t size) {
-                return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
-            }
-        );
+        run_benchmark<double>(parser,
+                              rng_type,
+                              stream,
+                              [](curandGenerator_t gen, double* data, size_t size)
+                              { return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0); });
     }
     if (distribution == "log-normal-float")
     {
-        run_benchmark<float>(parser, rng_type, stream,
-            [](curandGenerator_t gen, float * data, size_t size) {
-                return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
-            }
-        );
+        run_benchmark<float>(parser,
+                             rng_type,
+                             stream,
+                             [](curandGenerator_t gen, float* data, size_t size)
+                             { return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f); });
     }
     if (distribution == "log-normal-double")
     {
-        run_benchmark<double>(parser, rng_type, stream,
-            [](curandGenerator_t gen, double * data, size_t size) {
-                return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
-            }
-        );
+        run_benchmark<double>(parser,
+                              rng_type,
+                              stream,
+                              [](curandGenerator_t gen, double* data, size_t size)
+                              { return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0); });
     }
     if (distribution == "poisson")
     {
@@ -208,11 +204,12 @@ void run_benchmarks(const cli::Parser& parser,
         {
             std::cout << "    " << "lambda "
                  << std::fixed << std::setprecision(1) << lambda << std::endl;
-            run_benchmark<unsigned int>(parser, rng_type, stream,
-                [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
-                    return curandGeneratePoisson(gen, data, size, lambda);
-                }
-            );
+            run_benchmark<unsigned int>(
+                parser,
+                rng_type,
+                stream,
+                [lambda](curandGenerator_t gen, unsigned int* data, size_t size)
+                { return curandGeneratePoisson(gen, data, size, lambda); });
         }
     }
 }
