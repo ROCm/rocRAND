@@ -283,6 +283,7 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
+/// Initialize the octo engines for both generators. Skip \p subsequence_size for the first generator.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
     ::rocrand_host::detail::mt19937_octo_engine* octo_engines,
     ::rocrand_host::detail::mt19937_engine*      engines,
@@ -305,21 +306,23 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
     octo_engines[thread_id] = engine;
 }
 
+/// Each generator produces \p n elements in its own \p data section.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
     ::rocrand_host::detail::mt19937_octo_engine* engines, unsigned int* data, unsigned int n)
 {
-    const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int     local_thread_id       = threadIdx.x & 7U;
     constexpr unsigned int threads_per_generator = 8U;
-    constexpr unsigned int generator_count       = 2U;
-    constexpr unsigned int stride                = threads_per_generator * generator_count;
+    const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int           engine_id             = thread_id / threads_per_generator;
+    unsigned int*          ptr                   = data + engine_id * n;
 
     ::rocrand_host::detail::mt19937_octo_engine engine = engines[thread_id];
 
-    size_t index = thread_id;
+    size_t index = local_thread_id;
     while(index < n)
     {
-        data[index] = engine();
-        index += stride;
+        ptr[index] = engine();
+        index += threads_per_generator;
     }
 
     engines[thread_id] = engine;
@@ -331,42 +334,60 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
     constexpr unsigned int           threads_per_generator = 8U;
     constexpr unsigned long long int seed                  = 1ULL;
-    // Should be a multiple of 624 (state vector size) to ensure that the order
-    // of both sequences are the same.
-    constexpr unsigned int subsequence_size = 1248U;
-    constexpr unsigned int generator_count  = 2U;
+    constexpr unsigned int           subsequence_size      = 552552U;
+    // The size of the subsequence must be a multiple of threads per generator
+    // otherwise the non-jumping generator cannot align due to generating
+    // threads_per_generator per call
+    static_assert(subsequence_size % threads_per_generator == 0,
+                  "size of subsequence must be multiple of eight");
+    constexpr unsigned int generator_count = 2U;
+    constexpr unsigned int state_size      = 624U;
 
     // Constants to skip subsequence_size states.
     // Generated with tools/mt19937_precomputed_generator.cpp
-    constexpr unsigned int jump[mt19937_p_size] = {
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 1U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U, 0U,
-        0U, 0U, 0U};
+    // clang-format off
+    static constexpr unsigned int jump[mt19937_p_size] = {
+        16836620U, 1241597017U, 2267910466U, 3327083746U, 1938175615U, 2308764182U, 3494318232U, 233458728U, 3431172561U, 4034658304U, 540715081U, 2223083524U, 1290021546U, 4615588U, 2755265028U, 1487667568U, 817793568U, 688998677U, 4177128730U, 1327584593U, 3083575336U, 3130198036U, 1730866499U, 236199859U, 1319739361U, 1227620352U, 2030748367U, 338426818U, 3401904732U, 2068477099U, 9314332U, 1394U, 1631647232U, 3360850049U, 3947386387U, 169910306U, 3403351184U, 2759828497U, 3936398567U, 3981649994U, 3545643632U, 1211945956U, 4214442729U, 1516073261U, 1973528206U, 3127605291U, 1657881179U, 2639065177U, 1695629247U, 1483473424U, 1922960899U, 147373172U, 2671913376U, 3824567940U, 719742235U, 3137653860U, 464968244U, 1223024043U, 130661U, 1203785820U, 4020201862U, 2505398286U, 3526255407U, 419792716U, 523023476U, 371258051U, 3673049403U, 1836542343U, 2302995407U, 89010016U, 345597150U, 215916134U, 302835354U, 1549276007U, 78962U, 2610524389U, 3144872708U, 1810683989U, 3751221315U, 1590451824U, 3344450054U, 700934502U, 110016935U, 2156795150U, 3785730224U, 2631375440U, 1974637886U, 3292329605U, 3142139957U, 3701811334U, 1549078486U, 129980226U, 1391930951U, 2556241742U, 2185354446U, 887051003U, 3413484806U, 1342283353U, 1424278535U, 2917569624U, 3429457066U, 924053705U, 4113066678U, 3805305864U, 3627143398U, 4011722511U, 479136705U, 2075096001U, 1721089795U, 3074239461U, 4254620365U, 3246832812U, 2600113446U, 2754943943U, 3388450324U, 1677024071U, 2500806419U, 158791876U, 3463832935U, 2458673960U, 2747463520U, 3548197763U, 3182431084U, 17380539U, 1557533732U, 2107756592U, 46491733U, 1796341916U, 1240657450U, 3670925904U, 546492343U, 4211712370U, 3978286571U, 2301647531U, 4277260054U, 1195041504U, 3554107626U, 3536404767U, 3391935859U, 2250749215U, 882048618U, 2827024245U, 569173904U, 2149235115U, 60945640U, 3833593866U, 956451456U, 1021006574U, 4236771596U, 2265058560U, 2215696731U, 778465250U, 1751590318U, 741942625U, 3458004120U, 248619343U, 3843017115U, 839840654U, 1828044965U, 2617355055U, 3779651646U, 525835946U, 537395281U, 992151708U, 1321781591U, 478234930U, 3884143138U, 2864985020U, 2015099986U, 2965894308U, 1428387075U, 1310499846U, 1109267475U, 1075643877U, 2258267789U, 1069867669U, 4205025922U, 2634970836U, 3132427367U, 2853906496U, 2678425777U, 4276765991U, 2575927964U, 2671947668U, 1121017226U, 2080611588U, 2727225830U, 503316657U, 4042256386U, 1112199335U, 464744163U, 3572201075U, 636055961U, 3899908992U, 892046540U, 896896758U, 393156791U, 49352486U, 3161122923U, 2585141935U, 4006516250U, 2805665689U, 1866241881U, 462229762U, 1563106787U, 551098178U, 2128817785U, 3135100052U, 4260031810U, 2726884032U, 892574702U, 3308689842U, 2326295075U, 3099353849U, 1166714571U, 1734201378U, 3476395591U, 4061325047U, 2522521477U, 357030804U, 3726519752U, 2630348914U, 2394970464U, 539386556U, 500917831U, 2573533705U, 3575402563U, 1930818072U, 2100596270U, 1470081741U, 1740257674U, 3408964191U, 3883874908U, 3501867562U, 3979810829U, 491029434U, 3873155198U, 767047573U, 3512288254U, 3973630301U, 918919925U, 505569179U, 2622866775U, 476301621U, 1653555785U, 588982683U, 2892810634U, 1481364624U, 2900983412U, 1237365144U, 654858224U, 3888079105U, 880084185U, 2319840370U, 4149829702U, 2598788559U, 1795697197U, 1141358839U, 1488115545U, 2023012969U, 1700767613U, 318307034U, 3741324886U, 2723508372U, 2877869759U, 1089131774U, 3746529157U, 2032861327U, 1916908398U, 3979971761U, 1104333434U, 164965263U, 2861111U, 4061197830U, 1227752574U, 1557686937U, 1372189256U, 1320514631U, 3006463383U, 995374202U, 2475599921U, 2062684198U, 273818196U, 230102535U, 846172554U, 549643817U, 1291845833U, 313868405U, 1684607830U, 3007524804U, 2696481972U, 1496449755U, 2336358181U, 2907909674U, 2046381710U, 1616425720U, 2784933411U, 3488376037U, 4237079453U, 239405390U, 2260619063U, 4248573305U, 2538035035U, 3162243525U, 1688422919U, 4214141536U, 2822423904U, 3616596572U, 1124198315U, 561546231U, 1450818809U, 1395937417U, 2624134660U, 1180897824U, 1879143185U, 2716824526U, 269138413U, 147307449U, 2713808648U, 1397164069U, 3082484694U, 3996518249U, 3822948465U, 2600900044U, 2073322101U, 3405864806U, 1465988883U, 2263895854U, 1193632090U, 878563614U, 3633274523U, 832840620U, 1918686864U, 52700353U, 2164193894U, 4099319060U, 1271654821U, 2934121786U, 4003740838U, 2025639926U, 1964764541U, 3711204924U, 1811665390U, 2651395047U, 2574986913U, 2946806898U, 3374950428U, 407088658U, 3098475549U, 3678329103U, 1442862364U, 1149148015U, 3829525455U, 1129287955U, 1691241488U, 2948237333U, 4111137958U, 3121299510U, 3228891983U, 1422674833U, 1046218249U, 4255146817U, 1789888035U, 2790533305U, 2766564283U, 882036014U, 3138447493U, 1705216849U, 4086442903U, 2084466724U, 1452448031U, 2518232572U, 2826320536U, 1155360986U, 1652202635U, 3192309572U, 4278103747U, 4207611316U, 3471787642U, 3949425339U, 2428040116U, 3916643455U, 1047874548U, 3522678507U, 679503438U, 3367670533U, 3305388393U, 1545534614U, 365979387U, 3813719383U, 2293866348U, 2311446870U, 1294235417U, 1239874267U, 3149790803U, 3459617970U, 3553443070U, 4294547149U, 677815218U, 2480790846U, 42062043U, 2099057395U, 608270600U, 555980767U, 3040155855U, 4220769542U, 442527978U, 4264098298U, 748043208U, 1510266257U, 605080615U, 1870700985U, 2815631381U, 3546827936U, 389630240U, 530771376U, 1023017605U, 570366154U, 943073743U, 2345589488U, 3331719336U, 3393668839U, 2125550217U, 3316487643U, 2926149375U, 1563725876U, 2234336736U, 2691239566U, 4276736289U, 1534407008U, 634560074U, 537405234U, 1007405586U, 3435919387U, 3526571791U, 1251978681U, 2423612524U, 4240584245U, 3077336530U, 1394628396U, 667872456U, 3838386423U, 1264339781U, 2977905273U, 2493098225U, 1408656392U, 458665826U, 1193671488U, 3192651130U, 3408345436U, 3416261569U, 2099306740U, 1457701667U, 1798196661U, 4078467644U, 1823475953U, 3683947560U, 3421638713U, 1333246224U, 2253616524U, 3468957120U, 2028012393U, 3950669141U, 3379074497U, 264072228U, 1478066089U, 3810691100U, 105177718U, 3239667112U, 548511418U, 462182385U, 1880566371U, 3449712347U, 3945393228U, 1722247886U, 834860904U, 2023403204U, 1764955460U, 2314861647U, 2541662287U, 174235623U, 1025135151U, 4183459969U, 140612992U, 2179351739U, 838789589U, 2321249467U, 3580648575U, 1937895840U, 4082767776U, 4208618097U, 1150513792U, 3159007105U, 957333854U, 3121611318U, 1468699888U, 2600870933U, 1887140383U, 1158880479U, 2021223243U, 4216226924U, 3362953576U, 148281745U, 743454457U, 2055203028U, 1388596477U, 3430662102U, 14508704U, 3293390847U, 868061153U, 2803772691U, 167322815U, 702986243U, 970691543U, 3211870732U, 132211178U, 1878239493U, 493828035U, 578005384U, 2083193988U, 618003366U, 3516838252U, 1628942083U, 771893287U, 1783055259U, 2664147198U, 1123182254U, 3428230259U, 4246995520U, 540075809U, 3006764017U, 2048903824U, 4018761289U, 1959828143U, 1058168427U, 2139631077U, 2641577125U, 1819365340U, 391416789U, 408543984U, 2374873865U, 2638340220U, 2279187081U, 3509490132U, 109546995U, 2943006029U, 301017297U, 2159298247U, 1201337642U, 3955051167U, 1131485785U, 4026925695U, 2288659668U, 3259615238U, 610986470U, 1262822694U, 3447317355U, 3261746329U, 900784498U, 4163475604U, 3571695718U, 95546624U, 765597843U, 1239045105U, 1375372467U, 2689038155U, 246401506U, 1717907899U, 2072005013U, 2562942296U, 1328060883U, 3345146601U, 2369611890U, 1541866911U, 3503192374U, 1705689374U, 444830279U, 308855830U, 1960063476U, 1642058452U, 1044063781U, 239034752U, 2929660102U, 2476585518U, 3525477572U, 4104693897U, 2573076031U, 4190865194U, 2395897238U, 2400843904U, 1695065775U, 4178846862U, 826627422U, 914883664U, 2172966192U, 375087119U, 1284236820U, 2458751356U, 2286795808U, 648305751U, 2336236161U, 3238612623U, 3320228067U, 769191U, 430179840U, 2186883080U, 1430612668U, 973149413U, 1121709821U, 90179392U, 411379749U, 552994832U, 10U, 4016980240U, 2433283182U, 1182819972U, 2993305185U, 1410353515U, 2105574608U, 38722U, 1668746496U, 2299044730U, 4019202397U, 0U
+    };
+    // clang-format on
+
+    // Starting from state zero or from a jump,
+    // the generated number with index i's original position is permutation_table[i]
+    constexpr unsigned int permutation_table[state_size] = {
+        // clang-format off
+        // First, eight special values
+          0U, 113U, 170U, 283U, 340U, 397U, 510U, 567U,
+        // Then, the regular pattern
+          1U,   8U,  15U,  22U,  29U,  36U,  43U,  50U,   2U,   9U,  16U,  23U,  30U,  37U,  44U,  51U,   3U,  10U,  17U,  24U,  31U,  38U,  45U,  52U,   4U,  11U,  18U,  25U,  32U,  39U,  46U,  53U,   5U,  12U,  19U,  26U,  33U,  40U,  47U,  54U,   6U,  13U,  20U,  27U,  34U,  41U,  48U,  55U,   7U,  14U,  21U,  28U,  35U,  42U,  49U,  56U, 
+         57U,  64U,  71U,  78U,  85U,  92U,  99U, 106U,  58U,  65U,  72U,  79U,  86U,  93U, 100U, 107U,  59U,  66U,  73U,  80U,  87U,  94U, 101U, 108U,  60U,  67U,  74U,  81U,  88U,  95U, 102U, 109U,  61U,  68U,  75U,  82U,  89U,  96U, 103U, 110U,  62U,  69U,  76U,  83U,  90U,  97U, 104U, 111U,  63U,  70U,  77U,  84U,  91U,  98U, 105U, 112U, 
+        114U, 121U, 128U, 135U, 142U, 149U, 156U, 163U, 115U, 122U, 129U, 136U, 143U, 150U, 157U, 164U, 116U, 123U, 130U, 137U, 144U, 151U, 158U, 165U, 117U, 124U, 131U, 138U, 145U, 152U, 159U, 166U, 118U, 125U, 132U, 139U, 146U, 153U, 160U, 167U, 119U, 126U, 133U, 140U, 147U, 154U, 161U, 168U, 120U, 127U, 134U, 141U, 148U, 155U, 162U, 169U, 
+        171U, 178U, 185U, 192U, 199U, 206U, 213U, 220U, 172U, 179U, 186U, 193U, 200U, 207U, 214U, 221U, 173U, 180U, 187U, 194U, 201U, 208U, 215U, 222U, 174U, 181U, 188U, 195U, 202U, 209U, 216U, 223U, 175U, 182U, 189U, 196U, 203U, 210U, 217U, 224U, 176U, 183U, 190U, 197U, 204U, 211U, 218U, 225U, 177U, 184U, 191U, 198U, 205U, 212U, 219U, 226U, 
+        227U, 234U, 241U, 248U, 255U, 262U, 269U, 276U, 228U, 235U, 242U, 249U, 256U, 263U, 270U, 277U, 229U, 236U, 243U, 250U, 257U, 264U, 271U, 278U, 230U, 237U, 244U, 251U, 258U, 265U, 272U, 279U, 231U, 238U, 245U, 252U, 259U, 266U, 273U, 280U, 232U, 239U, 246U, 253U, 260U, 267U, 274U, 281U, 233U, 240U, 247U, 254U, 261U, 268U, 275U, 282U, 
+        284U, 291U, 298U, 305U, 312U, 319U, 326U, 333U, 285U, 292U, 299U, 306U, 313U, 320U, 327U, 334U, 286U, 293U, 300U, 307U, 314U, 321U, 328U, 335U, 287U, 294U, 301U, 308U, 315U, 322U, 329U, 336U, 288U, 295U, 302U, 309U, 316U, 323U, 330U, 337U, 289U, 296U, 303U, 310U, 317U, 324U, 331U, 338U, 290U, 297U, 304U, 311U, 318U, 325U, 332U, 339U, 
+        341U, 348U, 355U, 362U, 369U, 376U, 383U, 390U, 342U, 349U, 356U, 363U, 370U, 377U, 384U, 391U, 343U, 350U, 357U, 364U, 371U, 378U, 385U, 392U, 344U, 351U, 358U, 365U, 372U, 379U, 386U, 393U, 345U, 352U, 359U, 366U, 373U, 380U, 387U, 394U, 346U, 353U, 360U, 367U, 374U, 381U, 388U, 395U, 347U, 354U, 361U, 368U, 375U, 382U, 389U, 396U, 
+        398U, 405U, 412U, 419U, 426U, 433U, 440U, 447U, 399U, 406U, 413U, 420U, 427U, 434U, 441U, 448U, 400U, 407U, 414U, 421U, 428U, 435U, 442U, 449U, 401U, 408U, 415U, 422U, 429U, 436U, 443U, 450U, 402U, 409U, 416U, 423U, 430U, 437U, 444U, 451U, 403U, 410U, 417U, 424U, 431U, 438U, 445U, 452U, 404U, 411U, 418U, 425U, 432U, 439U, 446U, 453U, 
+        454U, 461U, 468U, 475U, 482U, 489U, 496U, 503U, 455U, 462U, 469U, 476U, 483U, 490U, 497U, 504U, 456U, 463U, 470U, 477U, 484U, 491U, 498U, 505U, 457U, 464U, 471U, 478U, 485U, 492U, 499U, 506U, 458U, 465U, 472U, 479U, 486U, 493U, 500U, 507U, 459U, 466U, 473U, 480U, 487U, 494U, 501U, 508U, 460U, 467U, 474U, 481U, 488U, 495U, 502U, 509U, 
+        511U, 518U, 525U, 532U, 539U, 546U, 553U, 560U, 512U, 519U, 526U, 533U, 540U, 547U, 554U, 561U, 513U, 520U, 527U, 534U, 541U, 548U, 555U, 562U, 514U, 521U, 528U, 535U, 542U, 549U, 556U, 563U, 515U, 522U, 529U, 536U, 543U, 550U, 557U, 564U, 516U, 523U, 530U, 537U, 544U, 551U, 558U, 565U, 517U, 524U, 531U, 538U, 545U, 552U, 559U, 566U, 
+        568U, 575U, 582U, 589U, 596U, 603U, 610U, 617U, 569U, 576U, 583U, 590U, 597U, 604U, 611U, 618U, 570U, 577U, 584U, 591U, 598U, 605U, 612U, 619U, 571U, 578U, 585U, 592U, 599U, 606U, 613U, 620U, 572U, 579U, 586U, 593U, 600U, 607U, 614U, 621U, 573U, 580U, 587U, 594U, 601U, 608U, 615U, 622U, 574U, 581U, 588U, 595U, 602U, 609U, 616U, 623U,
+        // clang-format on
+    };
+
+    constexpr unsigned int rev_permutation_table[state_size] = {
+        // clang-format off
+          0U,   8U,  16U,  24U,  32U,  40U,  48U,  56U, 
+          9U,  17U,  25U,  33U,  41U,  49U,  57U,  10U,  18U,  26U,  34U,  42U,  50U,  58U,  11U,  19U,  27U,  35U,  43U,  51U,  59U,  12U,  20U,  28U,  36U,  44U,  52U,  60U,  13U,  21U,  29U,  37U,  45U,  53U,  61U,  14U,  22U,  30U,  38U,  46U,  54U,  62U,  15U,  23U,  31U,  39U,  47U,  55U,  63U,  64U,  72U,  80U,  88U,  96U, 104U, 112U, 
+         65U,  73U,  81U,  89U,  97U, 105U, 113U,  66U,  74U,  82U,  90U,  98U, 106U, 114U,  67U,  75U,  83U,  91U,  99U, 107U, 115U,  68U,  76U,  84U,  92U, 100U, 108U, 116U,  69U,  77U,  85U,  93U, 101U, 109U, 117U,  70U,  78U,  86U,  94U, 102U, 110U, 118U,  71U,  79U,  87U,  95U, 103U, 111U, 119U,   1U, 120U, 128U, 136U, 144U, 152U, 160U, 
+        168U, 121U, 129U, 137U, 145U, 153U, 161U, 169U, 122U, 130U, 138U, 146U, 154U, 162U, 170U, 123U, 131U, 139U, 147U, 155U, 163U, 171U, 124U, 132U, 140U, 148U, 156U, 164U, 172U, 125U, 133U, 141U, 149U, 157U, 165U, 173U, 126U, 134U, 142U, 150U, 158U, 166U, 174U, 127U, 135U, 143U, 151U, 159U, 167U, 175U,   2U, 176U, 184U, 192U, 200U, 208U, 
+        216U, 224U, 177U, 185U, 193U, 201U, 209U, 217U, 225U, 178U, 186U, 194U, 202U, 210U, 218U, 226U, 179U, 187U, 195U, 203U, 211U, 219U, 227U, 180U, 188U, 196U, 204U, 212U, 220U, 228U, 181U, 189U, 197U, 205U, 213U, 221U, 229U, 182U, 190U, 198U, 206U, 214U, 222U, 230U, 183U, 191U, 199U, 207U, 215U, 223U, 231U, 232U, 240U, 248U, 256U, 264U, 
+        272U, 280U, 233U, 241U, 249U, 257U, 265U, 273U, 281U, 234U, 242U, 250U, 258U, 266U, 274U, 282U, 235U, 243U, 251U, 259U, 267U, 275U, 283U, 236U, 244U, 252U, 260U, 268U, 276U, 284U, 237U, 245U, 253U, 261U, 269U, 277U, 285U, 238U, 246U, 254U, 262U, 270U, 278U, 286U, 239U, 247U, 255U, 263U, 271U, 279U, 287U,   3U, 288U, 296U, 304U, 312U, 
+        320U, 328U, 336U, 289U, 297U, 305U, 313U, 321U, 329U, 337U, 290U, 298U, 306U, 314U, 322U, 330U, 338U, 291U, 299U, 307U, 315U, 323U, 331U, 339U, 292U, 300U, 308U, 316U, 324U, 332U, 340U, 293U, 301U, 309U, 317U, 325U, 333U, 341U, 294U, 302U, 310U, 318U, 326U, 334U, 342U, 295U, 303U, 311U, 319U, 327U, 335U, 343U,   4U, 344U, 352U, 360U, 
+        368U, 376U, 384U, 392U, 345U, 353U, 361U, 369U, 377U, 385U, 393U, 346U, 354U, 362U, 370U, 378U, 386U, 394U, 347U, 355U, 363U, 371U, 379U, 387U, 395U, 348U, 356U, 364U, 372U, 380U, 388U, 396U, 349U, 357U, 365U, 373U, 381U, 389U, 397U, 350U, 358U, 366U, 374U, 382U, 390U, 398U, 351U, 359U, 367U, 375U, 383U, 391U, 399U,   5U, 400U, 408U, 
+        416U, 424U, 432U, 440U, 448U, 401U, 409U, 417U, 425U, 433U, 441U, 449U, 402U, 410U, 418U, 426U, 434U, 442U, 450U, 403U, 411U, 419U, 427U, 435U, 443U, 451U, 404U, 412U, 420U, 428U, 436U, 444U, 452U, 405U, 413U, 421U, 429U, 437U, 445U, 453U, 406U, 414U, 422U, 430U, 438U, 446U, 454U, 407U, 415U, 423U, 431U, 439U, 447U, 455U, 456U, 464U, 
+        472U, 480U, 488U, 496U, 504U, 457U, 465U, 473U, 481U, 489U, 497U, 505U, 458U, 466U, 474U, 482U, 490U, 498U, 506U, 459U, 467U, 475U, 483U, 491U, 499U, 507U, 460U, 468U, 476U, 484U, 492U, 500U, 508U, 461U, 469U, 477U, 485U, 493U, 501U, 509U, 462U, 470U, 478U, 486U, 494U, 502U, 510U, 463U, 471U, 479U, 487U, 495U, 503U, 511U,   6U, 512U, 
+        520U, 528U, 536U, 544U, 552U, 560U, 513U, 521U, 529U, 537U, 545U, 553U, 561U, 514U, 522U, 530U, 538U, 546U, 554U, 562U, 515U, 523U, 531U, 539U, 547U, 555U, 563U, 516U, 524U, 532U, 540U, 548U, 556U, 564U, 517U, 525U, 533U, 541U, 549U, 557U, 565U, 518U, 526U, 534U, 542U, 550U, 558U, 566U, 519U, 527U, 535U, 543U, 551U, 559U, 567U,   7U, 
+        568U, 576U, 584U, 592U, 600U, 608U, 616U, 569U, 577U, 585U, 593U, 601U, 609U, 617U, 570U, 578U, 586U, 594U, 602U, 610U, 618U, 571U, 579U, 587U, 595U, 603U, 611U, 619U, 572U, 580U, 588U, 596U, 604U, 612U, 620U, 573U, 581U, 589U, 597U, 605U, 613U, 621U, 574U, 582U, 590U, 598U, 606U, 614U, 622U, 575U, 583U, 591U, 599U, 607U, 615U, 623U,
+        // clang-format on
+    };
 
     engine_type* h_engines
         = static_cast<engine_type*>(malloc(generator_count * sizeof(engine_type)));
@@ -382,6 +403,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
                         h_engines,
                         generator_count * sizeof(engine_type),
                         hipMemcpyHostToDevice));
+    free(h_engines);
 
     octo_engine_type* d_octo_engines{};
     HIP_CHECK(hipMalloc(&d_octo_engines,
@@ -391,38 +413,92 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     // Generate subsequence_size elements from the first engine.
     hipLaunchKernelGGL(init_engines_kernel,
                        dim3(1),
-                       dim3(16),
+                       dim3(threads_per_generator * 2),
                        0,
                        0,
                        d_octo_engines,
                        d_engines,
                        subsequence_size);
     HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(d_engines));
 
     // Device side data
-    const size_t  size = (12345 / threads_per_generator) * threads_per_generator;
-    unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned int)));
+    constexpr unsigned int elements_per_generator = (12345789U / state_size) * state_size;
+    constexpr size_t       bytes_per_generator    = elements_per_generator * sizeof(unsigned int);
+    unsigned int*          d_data;
+    HIP_CHECK(hipMallocHelper(&d_data, 2 * bytes_per_generator));
 
     // Generate the data
-    hipLaunchKernelGGL(generate_kernel, dim3(1), dim3(16), 0, 0, d_octo_engines, data, size);
+    hipLaunchKernelGGL(generate_kernel,
+                       dim3(1),
+                       dim3(threads_per_generator * 2),
+                       0,
+                       0,
+                       d_octo_engines,
+                       d_data,
+                       elements_per_generator);
     HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(d_octo_engines));
 
-    unsigned int* host_data = static_cast<unsigned int*>(malloc(size * sizeof(unsigned int)));
-    HIP_CHECK(hipMemcpy(host_data, data, size * sizeof(unsigned int), hipMemcpyDeviceToHost));
-    HIP_CHECK(hipFree(data));
+    unsigned int* h_data = static_cast<unsigned int*>(malloc(2 * bytes_per_generator));
+    HIP_CHECK(hipMemcpy(h_data, d_data, 2 * bytes_per_generator, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipFree(d_data));
 
-    constexpr unsigned int offset = 2U * threads_per_generator;
-    for(unsigned int i = 0; i < size / offset; i++)
+    // Output of the two generators
+    unsigned int* data0 = h_data;
+    unsigned int* data1 = h_data + elements_per_generator;
+
+    // The absolute index for each generator, from which point dataxsize number of full state_size blocks are produced
+    unsigned int data0min = ((subsequence_size + state_size - 1) / state_size) * state_size;
+    unsigned int data1min = subsequence_size;
+
+    // The number of full state_size blocks
+    unsigned int data0size
+        = (subsequence_size * 2) / state_size - (subsequence_size + state_size - 1) / state_size;
+    unsigned int data1size = subsequence_size / state_size;
+
+    unsigned int checks0to1 = 0;
+    unsigned int checks1to0 = 0;
+    for(unsigned int i = 0; i < elements_per_generator / state_size; i++)
     {
-        for(unsigned int j = 0; j < threads_per_generator; j++)
+        for(unsigned int j = 0; j < state_size; j++)
         {
-            unsigned int idx0 = offset * i + j;
-            unsigned int idx1 = offset * i + threads_per_generator + j;
-            SCOPED_TRACE(testing::Message() << "idx0 = " << idx0 << " idx1 = " << idx1);
-            ASSERT_EQ(host_data[idx0], host_data[idx1]);
+            unsigned int idx = state_size * i + j;
+            SCOPED_TRACE(testing::Message() << "idx = " << idx);
+
+            // For idx, get the absolute index in the sequence produced by the generators
+            unsigned int idx_rel = subsequence_size + idx;
+            unsigned int idx0
+                = (idx_rel / state_size) * state_size + permutation_table[idx_rel % state_size];
+            unsigned int idx1 = subsequence_size + (idx / state_size) * state_size
+                                + permutation_table[idx % state_size];
+
+            // If absolute index idx0 is within the range of full
+            // state_size blocks produced by generator 1
+            if(data1min <= idx0 && idx0 < data1min + data1size * state_size)
+            {
+                EXPECT_TRUE(idx0 >= subsequence_size);
+                unsigned int tmp = idx0 - subsequence_size;
+                unsigned int idx1rel
+                    = (tmp / state_size) * state_size + rev_permutation_table[tmp % state_size];
+                ASSERT_EQ(data0[idx], data1[idx1rel]);
+                checks0to1++;
+            }
+
+            // If absolute index idx1 is within the range of full
+            // state_size blocks produced by generator 0
+            if(data0min <= idx1 && idx1 < data0min + data0size * state_size)
+            {
+                unsigned int tmp     = ((idx1 / state_size) * state_size) - subsequence_size;
+                unsigned int idx0rel = tmp + rev_permutation_table[idx1 % state_size];
+                ASSERT_EQ(data0[idx0rel], data1[idx]);
+                checks1to0++;
+            }
         }
     }
 
-    free(host_data);
+    ASSERT_TRUE(checks0to1 > 0);
+    ASSERT_TRUE(checks1to0 > 0);
+
+    free(h_data);
 }
