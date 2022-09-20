@@ -24,23 +24,23 @@
 #include <iostream>
 #include <string>
 
-constexpr unsigned int lsb = 0x00000001U;
 /// Number of bits in the state space of MT19937.
-constexpr unsigned int mexp = 19937U;
+constexpr unsigned int mexp = 19937;
 /// Number of bits in an unsigned int.
-constexpr unsigned int w_size = 32U;
+constexpr unsigned int w_size = 32;
 /// Minimum number of unsigned ints to represent mexp bits.
 constexpr unsigned int p_size = (mexp + w_size - 1) / w_size;
 
 /// String in this array contains the constants to skip <tt>2 ^ 1000</tt> states.
 /// Values are produced using minipoly_mt19937.c as distributed in:
 /// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/JUMP/jump_ahead_1.02.tar.gz
-/// Size of tables is mexp + 1 to account for null-terminator.
+/// Size of tables is <tt>mexp + 1</tt> to account for null-terminator.
 namespace
 {
 extern const char jump[mexp + 1];
 } // namespace
 
+/// Set the coefficients of polynomial \p pf based on <tt>p</tt>.
 void set_coef(const char p[mexp + 1], unsigned int pf[p_size])
 {
     for(size_t i = 0; i < mexp; i++)
@@ -48,10 +48,10 @@ void set_coef(const char p[mexp + 1], unsigned int pf[p_size])
         size_t j = mexp - i - 1;
         if(p[i] == '1')
         {
-            // Set the coefficient of the polynomial pf with 1.
+            // Set coefficient j of the polynomial pf.
             constexpr unsigned int log_w_size  = 5U;
-            constexpr unsigned int w_size_mask = 0x1FU;
-            pf[j >> log_w_size] ^= lsb << (j & w_size_mask);
+            constexpr unsigned int w_size_mask = (1U << log_w_size) - 1;
+            pf[j >> log_w_size] ^= 1U << (j & w_size_mask);
         }
     }
 }
@@ -64,7 +64,7 @@ int main(int argc, char const* argv[])
         std::cout << "  ./mt19937_precomputed_generator "
                      "../../library/include/rocrand/rocrand_mt19937_precomputed.h"
                   << std::endl;
-        return -1;
+        return argc != 2 ? -1 : 0;
     }
 
     const std::string file_path(argv[1]);
@@ -97,9 +97,8 @@ int main(int argc, char const* argv[])
 
 )";
 
-    fout << "constexpr unsigned int mt19937_lsb    = " << lsb << "U;\n";
-    fout << "constexpr unsigned int mt19937_mexp   = " << mexp << "U;\n";
-    fout << "constexpr unsigned int mt19937_p_size = " << p_size << "U;\n";
+    fout << "constexpr unsigned int mt19937_mexp   = " << mexp << ";\n";
+    fout << "constexpr unsigned int mt19937_p_size = " << p_size << ";\n";
 
     unsigned int pf[p_size] = {};
 
@@ -111,10 +110,15 @@ int main(int argc, char const* argv[])
 
     for(size_t i = 0; i < p_size; i++)
     {
+        fout << std::setw(10);
         fout << pf[i] << "U";
         if(i + 1 < p_size)
         {
             fout << ", ";
+            if((i + 1) % 8 == 0)
+            {
+                fout << "\n    ";
+            }
         }
     }
 

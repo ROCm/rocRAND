@@ -67,13 +67,13 @@
 namespace
 {
 /// Number of independent generators. Value is fixed to produce deterministic number stream.
-static constexpr unsigned int generator_count = 8192U;
-/// Number of threads that cooporate to run one generator. Value is fixed in implementation.
-static constexpr unsigned int threads_per_generator = 8U;
+static constexpr unsigned int generator_count = 8192;
+/// Number of threads that cooperate to run one generator. Value is fixed in implementation.
+static constexpr unsigned int threads_per_generator = 8;
 /// Number of threads per block. Can be tweaked for performance.
-static constexpr unsigned int thread_count = 256U;
-static_assert(thread_count % threads_per_generator == 0U,
-              "all eight threads of the generator must be in the same block");
+static constexpr unsigned int thread_count = 256;
+static_assert(thread_count % threads_per_generator == 0,
+              "All eight threads of the generator must be in the same block");
 } // namespace
 
 namespace rocrand_host
@@ -86,22 +86,23 @@ namespace
 // MT19937 constants.
 
 /// Number of elements in the state vector.
-static constexpr unsigned int n = 624U;
-/// The next value of element \p i depends on <tt>(i + 1) % n<\tt> and <tt>(i + m) % n<\tt>.
-static constexpr unsigned int m = 397U;
-/// Constant vector A.
+static constexpr unsigned int n = 624;
+/// The next value of element \p i depends on <tt>(i + 1) % n</tt> and <tt>(i + m) % n</tt>.
+static constexpr unsigned int m = 397;
+/// Vector constant used in masking operation to represent multiplication by matrix A.
 static constexpr unsigned int matrix_a = 0x9908B0DFU;
-/// Most significant <tt>w - r<\tt> bits.
+/// Mask to select the most significant <tt>w - r</tt> bits from a \p w bits word, where
+/// \p w is the number of bits per generated word (32) and \p r is an algorithm constant.
 static constexpr unsigned int upper_mask = 0x80000000U;
-/// Least significant \p r bits.
+/// Mask to select the least significant \p r bits from a \p w bits word, where
+/// \p w is the number of bits per generated word (32) and \p r is an algorithm constant.
 static constexpr unsigned int lower_mask = 0x7FFFFFFFU;
 } // namespace
 
 struct mt19937_engine
 {
     // Jumping constants.
-
-    static constexpr unsigned int qq = 7U;
+    static constexpr unsigned int qq = 7;
     static constexpr unsigned int ll = 1U << qq;
 
     struct mt19937_state
@@ -111,15 +112,17 @@ struct mt19937_engine
         unsigned int ptr;
     };
 
+    mt19937_state m_state;
+
     MT_FQUALIFIERS_HOST mt19937_engine(unsigned long long seed)
     {
-        const unsigned int seedu = (seed >> 32U) ^ seed;
-        m_state.mt[0U]           = seedu;
+        const unsigned int seedu = (seed >> 32) ^ seed;
+        m_state.mt[0]            = seedu;
         for(unsigned int i = 1; i < n; i++)
         {
-            m_state.mt[i] = 1812433253U * (m_state.mt[i - 1U] ^ (m_state.mt[i - 1U] >> 30U)) + i;
+            m_state.mt[i] = 1812433253 * (m_state.mt[i - 1] ^ (m_state.mt[i - 1] >> 30)) + i;
         }
-        m_state.ptr = 0U;
+        m_state.ptr = 0;
     }
 
     /// Advances the internal state to skip a single subsequence, which is <tt>2 ^ 1000</tt> states long.
@@ -132,43 +135,43 @@ struct mt19937_engine
     static MT_FQUALIFIERS_HOST void gen_next(mt19937_state& state)
     {
         /// mag01[x] = x * matrix_a for x in [0, 1]
-        constexpr unsigned int mag01[2U] = {0x0U, matrix_a};
+        constexpr unsigned int mag01[2] = {0x0U, matrix_a};
 
         if(state.ptr + m < n)
         {
             unsigned int y
-                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1U] & lower_mask);
-            state.mt[state.ptr] = state.mt[state.ptr + m] ^ (y >> 1U) ^ mag01[y & 0x1U];
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr + m] ^ (y >> 1) ^ mag01[y & 0x1U];
             state.ptr++;
         }
-        else if(state.ptr < n - 1U)
+        else if(state.ptr < n - 1)
         {
             unsigned int y
-                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1U] & lower_mask);
-            state.mt[state.ptr] = state.mt[state.ptr - (n - m)] ^ (y >> 1U) ^ mag01[y & 0x1U];
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr - (n - m)] ^ (y >> 1) ^ mag01[y & 0x1U];
             state.ptr++;
         }
-        else if(state.ptr == n - 1U)
+        else // state.ptr == n - 1
         {
-            unsigned int y   = (state.mt[n - 1U] & upper_mask) | (state.mt[0U] & lower_mask);
-            state.mt[n - 1U] = state.mt[m - 1U] ^ (y >> 1U) ^ mag01[y & 0x1U];
-            state.ptr        = 0U;
+            unsigned int y  = (state.mt[n - 1] & upper_mask) | (state.mt[0] & lower_mask);
+            state.mt[n - 1] = state.mt[m - 1] ^ (y >> 1) ^ mag01[y & 0x1U];
+            state.ptr       = 0;
         }
     }
 
-    /// Return the i-th coefficient of the polynomial pf.
+    /// Return coefficient \p deg of the polynomial <tt>pf</tt>.
     static MT_FQUALIFIERS_HOST unsigned int get_coef(const unsigned int pf[mt19937_p_size],
                                                      unsigned int       deg)
     {
-        constexpr unsigned int log_w_size  = 5U;
-        constexpr unsigned int w_size_mask = 0x1FU;
-        return (pf[deg >> log_w_size] & (mt19937_lsb << (deg & w_size_mask))) != 0U;
+        constexpr unsigned int log_w_size  = 5;
+        constexpr unsigned int w_size_mask = (1U << log_w_size) - 1;
+        return (pf[deg >> log_w_size] & (1U << (deg & w_size_mask))) != 0;
     }
 
     /// Copy state \p ss into state <tt>ts</tt>.
     static MT_FQUALIFIERS_HOST void copy_state(mt19937_state& ts, const mt19937_state& ss)
     {
-        for(unsigned int i = 0U; i < n; i++)
+        for(unsigned int i = 0; i < n; i++)
         {
             ts.mt[i] = ss.mt[i];
         }
@@ -181,7 +184,7 @@ struct mt19937_engine
     {
         if(s2.ptr >= s1.ptr)
         {
-            unsigned int i = 0U;
+            unsigned int i = 0;
             for(; i < n - s2.ptr; i++)
             {
                 s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
@@ -197,7 +200,7 @@ struct mt19937_engine
         }
         else
         {
-            unsigned int i = 0U;
+            unsigned int i = 0;
             for(; i < n - s1.ptr; i++)
             {
                 s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
@@ -218,23 +221,23 @@ struct mt19937_engine
     {
         h[0U] = 0U;
 
-        unsigned int l    = 1U;
+        unsigned int l    = 1;
         unsigned int term = ll;
-        unsigned int j    = 1U;
-        for(unsigned int i = 1U; i <= qq; i++)
+        unsigned int j    = 1;
+        for(unsigned int i = 1; i <= qq; i++)
         {
-            l    = (l << 1U);
-            term = (term >> 1U);
+            l    = (l << 1);
+            term = (term >> 1);
             for(; j < l; j++)
             {
-                h[j] = h[l - j - 1U] ^ term;
+                h[j] = h[l - j - 1] ^ term;
             }
         }
     }
 
-    /// Compute h(f)ss where h(t) are exact q-degree polynomials,
-    /// f is the transition function, and ss is the initial state
-    /// the results are stored in vec_h[0] , ... , vec_h[ll-1].
+    /// Compute \p h(f)ss where \p h(t) are exact <tt>q</tt>-degree polynomials,
+    /// \p f is the transition function, and \p ss is the initial state
+    /// the results are stored in <tt>vec_h[0] , ... , vec_h[ll - 1]</tt>.
     static MT_FQUALIFIERS_HOST void gen_vec_h(const mt19937_state& ss, mt19937_state vec_h[ll])
     {
         mt19937_state v{};
@@ -242,22 +245,22 @@ struct mt19937_engine
 
         gray_code(h);
 
-        copy_state(vec_h[0U], ss);
+        copy_state(vec_h[0], ss);
 
-        for(unsigned int i = 0U; i < qq; i++)
+        for(unsigned int i = 0; i < qq; i++)
         {
-            gen_next(vec_h[0U]);
+            gen_next(vec_h[0]);
         }
 
-        for(unsigned int i = 1U; i < ll; i++)
+        for(unsigned int i = 1; i < ll; i++)
         {
             copy_state(v, ss);
-            unsigned int g = h[i] ^ h[i - 1U];
-            for(unsigned int k = 1; k < g; k = (k << 1U))
+            unsigned int g = h[i] ^ h[i - 1];
+            for(unsigned int k = 1; k < g; k = (k << 1))
             {
                 gen_next(v);
             }
-            copy_state(vec_h[h[i]], vec_h[h[i - 1U]]);
+            copy_state(vec_h[h[i]], vec_h[h[i - 1]]);
             add_state(vec_h[h[i]], v);
         }
     }
@@ -268,22 +271,22 @@ struct mt19937_engine
                                                         const mt19937_state  vec_h[ll])
     {
         mt19937_state tmp{};
-        int           i = mt19937_mexp - 1U;
+        int           i = mt19937_mexp - 1;
 
-        while(get_coef(pf, i) == 0U)
+        while(get_coef(pf, i) == 0)
         {
             i--;
         }
 
         for(; i >= static_cast<int>(qq); i--)
         {
-            if(get_coef(pf, i) != 0U)
+            if(get_coef(pf, i) != 0)
             {
-                for(unsigned int j = 0U; j < qq + 1U; j++)
+                for(unsigned int j = 0; j < qq + 1; j++)
                 {
                     gen_next(tmp);
                 }
-                unsigned int digit = 0U;
+                unsigned int digit = 0;
                 for(int j = 0; j < static_cast<int>(qq); j++)
                 {
                     digit = (digit << 1) ^ get_coef(pf, i - j - 1);
@@ -300,7 +303,7 @@ struct mt19937_engine
         for(; i > -1; i--)
         {
             gen_next(tmp);
-            if(get_coef(pf, i) == 1U)
+            if(get_coef(pf, i) == 1)
             {
                 add_state(tmp, ss);
             }
@@ -338,9 +341,6 @@ struct mt19937_engine
 
         return new_state;
     }
-
-public:
-    mt19937_state m_state;
 };
 
 struct mt19937_octo_engine
@@ -353,13 +353,13 @@ struct mt19937_octo_engine
         /// Thread 0 has element   0, thread 1 has element 113, thread 2 has element 170,
         /// thread 3 had element 283, thread 4 has element 340, thread 5 has element 397,
         /// thread 6 has element 510, thread 7 has element 567.
-        /// Thread i for i in [0, 7), has the following elements:
+        /// Thread i for i in [0, 7) has the following elements (ipt = items_per_thread):
         /// [  1 + ipt * i,   1 + ipt * (i + 1)), [398 + ipt * i, 398 + ipt * (i + 1)), [171 + ipt * i, 171 + ipt * (i + 1)),
         /// [568 + ipt * i, 568 + ipt * (i + 1)), [341 + ipt * i, 341 + ipt * (i + 1)), [114 + ipt * i, 114 + ipt * (i + 1)),
         /// [511 + ipt * i, 511 + ipt * (i + 1)), [284 + ipt * i, 284 + ipt * (i + 1)), [ 57 + ipt * i,  57 + ipt * (i + 1)),
         /// [454 + ipt * i, 454 + ipt * (i + 1)), [227 + ipt * i, 227 + ipt * (i + 1))
         ///
-        /// which are 1 + 11 * 7 = 77 values per thread.
+        /// which are 1 + 11 * 7 = 78 values per thread.
         unsigned int mt[1U + items_per_thread * 11U];
         /// The index of the next value to be returned in global array of values.
         /// The actual returned values are of a different order per n elements.
@@ -370,37 +370,37 @@ struct mt19937_octo_engine
     /// Constants to map the indices to \p mt19937_octo_state.mt_extra indices.
     /// For example, \p i000_0 is the index of \p 0 owned by thread 0.
 
-    static constexpr unsigned int i000_0 = 0U;
-    static constexpr unsigned int i113_1 = 0U;
-    static constexpr unsigned int i170_2 = 0U;
-    static constexpr unsigned int i283_3 = 0U;
-    static constexpr unsigned int i340_4 = 0U;
-    static constexpr unsigned int i397_5 = 0U;
-    static constexpr unsigned int i510_6 = 0U;
-    static constexpr unsigned int i567_7 = 0U;
+    static constexpr unsigned int i000_0 = 0;
+    static constexpr unsigned int i113_1 = 0;
+    static constexpr unsigned int i170_2 = 0;
+    static constexpr unsigned int i283_3 = 0;
+    static constexpr unsigned int i340_4 = 0;
+    static constexpr unsigned int i397_5 = 0;
+    static constexpr unsigned int i510_6 = 0;
+    static constexpr unsigned int i567_7 = 0;
 
     /// Constants used to map the indices to \p mt19937_octo_state.mt indices.
     /// For example, \p i001 is the index of <tt>1 + tid * ipt</tt>.
 
-    static constexpr unsigned int i001 = 1U + items_per_thread * 0U;
-    static constexpr unsigned int i057 = 1U + items_per_thread * 1U;
-    static constexpr unsigned int i114 = 1U + items_per_thread * 2U;
-    static constexpr unsigned int i171 = 1U + items_per_thread * 3U;
-    static constexpr unsigned int i227 = 1U + items_per_thread * 4U;
-    static constexpr unsigned int i284 = 1U + items_per_thread * 5U;
-    static constexpr unsigned int i341 = 1U + items_per_thread * 6U;
-    static constexpr unsigned int i398 = 1U + items_per_thread * 7U;
-    static constexpr unsigned int i454 = 1U + items_per_thread * 8U;
-    static constexpr unsigned int i511 = 1U + items_per_thread * 9U;
-    static constexpr unsigned int i568 = 1U + items_per_thread * 10U;
+    static constexpr unsigned int i001 = 1 + items_per_thread * 0;
+    static constexpr unsigned int i057 = 1 + items_per_thread * 1;
+    static constexpr unsigned int i114 = 1 + items_per_thread * 2;
+    static constexpr unsigned int i171 = 1 + items_per_thread * 3;
+    static constexpr unsigned int i227 = 1 + items_per_thread * 4;
+    static constexpr unsigned int i284 = 1 + items_per_thread * 5;
+    static constexpr unsigned int i341 = 1 + items_per_thread * 6;
+    static constexpr unsigned int i398 = 1 + items_per_thread * 7;
+    static constexpr unsigned int i454 = 1 + items_per_thread * 8;
+    static constexpr unsigned int i511 = 1 + items_per_thread * 9;
+    static constexpr unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
     MT_FQUALIFIERS void gather(const mt19937_engine* engine)
     {
-        constexpr unsigned int off_cnt = 11U;
+        constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
         static constexpr unsigned int offsets[off_cnt]
-            = {1U, 57U, 114U, 171U, 227U, 284U, 341U, 398U, 454U, 511U, 568U};
+            = {1, 57, 114, 171, 227, 284, 341, 398, 454, 511, 568};
 
         const unsigned int tid = threadIdx.x & 7U;
 
@@ -429,26 +429,25 @@ struct mt19937_octo_engine
     /// Returns \p val from thread <tt>tid mod 8</tt>.
     static MT_FQUALIFIERS unsigned int shuffle(unsigned int val, unsigned int tid)
     {
-        return __shfl(val, tid, 8U);
+        return __shfl(val, tid, 8);
     }
 
     /// For thread i, returns \p val from thread <tt>(i + 1) mod 8</tt>
     static MT_FQUALIFIERS unsigned int shuffle_down(unsigned int val)
     {
-        return __shfl_down(val, 1U, 8U);
+        return __shfl_down(val, 1, 8);
     }
 
     /// For thread i, returns \p val from thread <tt>(i - 1) mod 8</tt>
     static MT_FQUALIFIERS unsigned int shuffle_up(unsigned int val)
     {
-        return __shfl_up(val, 1U, 8U);
+        return __shfl_up(val, 1, 8);
     }
     /// Calculates value of index \p i using values <tt>i</tt>, <tt>(i + 1) % n</tt>, and <tt>(i + m) % n</tt>.
     static MT_FQUALIFIERS unsigned int
         comp(unsigned int mt_i, unsigned int mt_i_1, unsigned int mt_i_m)
     {
-        const unsigned int y = (mt_i & upper_mask) | (mt_i_1 & lower_mask);
-        /// mag01[x] = x * matrix_a for x in [0, 1]
+        const unsigned int y   = (mt_i & upper_mask) | (mt_i_1 & lower_mask);
         const unsigned int mag = (y & 0x1U) * matrix_a;
         return mt_i_m ^ (y >> 1) ^ mag;
     }
@@ -546,7 +545,7 @@ struct mt19937_octo_engine
             unsigned int first_dep = shuffle_up(m_state.mt[i001 + items_per_thread - 1]);
             first_dep              = tid == 0 ? m_state.mt[i000_0] : first_dep;
 
-            // extract the first iteration from the loop
+            // extract the first and last iterations from the loop
             unsigned int j       = 0;
             m_state.mt[i227 + j] = comp(m_state.mt[i227 + j], m_state.mt[i227 + j + 1], first_dep);
             for(j = 1; j < items_per_thread - 1; j++)
@@ -708,8 +707,8 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
     // the number of vec_types produced by the loop is a multiple of threads_per_generator
     // since all threads_per_generator must contribute to produce the next values
     vec_type* vec_data = reinterpret_cast<vec_type*>(data + misalignment);
-    size_t    index    = thread_id;
-    while(index < vec_n)
+    size_t    index;
+    for(index = thread_id; index < vec_n; index += stride)
     {
         for(unsigned int i = 0; i < input_width; i++)
         {
@@ -719,9 +718,6 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
         distribution(input, output);
 
         vec_data[index] = *reinterpret_cast<vec_type*>(output);
-
-        // next position
-        index += stride;
     }
 
     // deal with the non-aligned elements
@@ -819,13 +815,14 @@ public:
 
         // initialize the engines on the host due to high memory requirement
         // for jumping subsequences
-        engine_type* h_engines
-            = static_cast<engine_type*>(malloc(generator_count * sizeof(engine_type)));
-        h_engines[0] = engine_type(m_seed);
+        std::vector<engine_type> h_engines;
+        h_engines.reserve(generator_count);
+        // initialize the first engine with the seed and no skips
+        h_engines.emplace_back(m_seed);
         for(size_t i = 1; i < generator_count; i++)
         {
             // every consecutive engine is one subsequence away from the previous
-            h_engines[i] = h_engines[i - 1];
+            h_engines.push_back(h_engines.back());
             h_engines[i].discard_subsequence();
         }
 
@@ -833,16 +830,13 @@ public:
         err = hipMalloc(&d_engines, generator_count * sizeof(engine_type));
         if(err != hipSuccess)
         {
-            free(h_engines);
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
         err = hipMemcpy(d_engines,
-                        h_engines,
+                        h_engines.data(),
                         generator_count * sizeof(engine_type),
                         hipMemcpyHostToDevice);
-
-        free(h_engines);
 
         if(err != hipSuccess)
         {

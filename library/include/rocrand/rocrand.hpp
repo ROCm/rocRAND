@@ -1877,6 +1877,14 @@ public:
         generator = NULL;
     }
 
+    mt19937_engine(const mt19937_engine&) = delete;
+
+    mt19937_engine(mt19937_engine&&) = delete;
+
+    mt19937_engine& operator=(const mt19937_engine&) = delete;
+
+    mt19937_engine& operator=(mt19937_engine&&) = delete;
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~mt19937_engine() noexcept(false)
     {
