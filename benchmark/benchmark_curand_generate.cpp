@@ -163,7 +163,6 @@ void run_benchmarks(const cli::Parser& parser,
                               stream,
                               [](curandGenerator_t gen, double* data, size_t size)
                               { return curandGenerateUniformDouble(gen, data, size); });
-    
     }
     if (distribution == "normal-float")
     {
