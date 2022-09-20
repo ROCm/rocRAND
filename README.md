@@ -156,8 +156,10 @@ cd rocRAND; cd build
 ./benchmark/benchmark_rocrand_kernel --engine <engine> --dis <distribution>
 
 # To compare against cuRAND (cuRAND must be supported):
-./benchmark/benchmark_curand_generate [google benchmark options]
+./benchmark/benchmark_curand_generate --engine <engine> --dis <distribution>
 ./benchmark/benchmark_curand_kernel --engine <engine> --dis <distribution>
+# Or with Google Benchmark:
+./benchmark/benchmark_curand_host_api [google benchmark options]
 ```
 
 ### Legacy benchmarks

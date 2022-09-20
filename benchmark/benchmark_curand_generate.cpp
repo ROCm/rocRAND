@@ -18,8 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "benchmark_utils.hpp"
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <string>
+#include <chrono>
+#include <numeric>
+#include <utility>
+#include <algorithm>
+
 #include "cmdparser.hpp"
+
 #include <cuda_runtime.h>
 #include <curand.h>
 
@@ -37,29 +46,32 @@ const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 typedef curandRngType rng_type_t;
 
 template<typename T>
-using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T*, size_t)>;
+using generate_func_type = std::function<curandStatus_t(curandGenerator_t, T *, size_t)>;
 
 template<typename T>
-void run_benchmark(benchmark::State&     state,
-                   const rng_type_t      rng_type,
-                   generate_func_type<T> generate_func,
-                   const size_t          size,
-                   const size_t          trials,
-                   const size_t          offset,
-                   const size_t          dimensions,
-                   cudaStream_t          stream)
+void run_benchmark(const cli::Parser& parser,
+                   const rng_type_t rng_type,
+                   cudaStream_t stream,
+                   generate_func_type<T> generate_func)
 {
-    T* data;
-    CUDA_CALL(cudaMalloc((void**)&data, size * sizeof(T)));
+    const size_t size = parser.get<size_t>("size");
+    const size_t trials = parser.get<size_t>("trials");
+    const size_t offset = parser.get<size_t>("offset");
+
+    T * data;
+    CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
 
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));
 
+    const size_t dimensions = parser.get<size_t>("dimensions");
     curandStatus_t status = curandSetQuasiRandomGeneratorDimensions(generator, dimensions);
     if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
     {
         CURAND_CALL(status);
     }
+
+    CURAND_CALL(curandSetStream(generator, stream));
 
     status = curandSetGeneratorOffset(generator, offset);
     if (status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not pseudo-random
@@ -68,7 +80,7 @@ void run_benchmark(benchmark::State&     state,
     }
 
     // Warm-up
-    for (size_t i = 0; i < 5; i++)
+    for (size_t i = 0; i < 15; i++)
     {
         CURAND_CALL(generate_func(generator, data, size));
     }
@@ -79,215 +91,274 @@ void run_benchmark(benchmark::State&     state,
     CUDA_CALL(cudaEventCreate(&start));
     CUDA_CALL(cudaEventCreate(&stop));
 
-    for(auto _ : state)
+    CUDA_CALL(cudaEventRecord(start, stream));
+    for (size_t i = 0; i < trials; i++)
     {
-        CUDA_CALL(cudaEventRecord(start, stream));
-        for(size_t i = 0; i < trials; i++)
-        {
-            CURAND_CALL(generate_func(generator, data, size));
-        }
-        CUDA_CALL(cudaEventRecord(stop, stream));
-        CUDA_CALL(cudaEventSynchronize(stop));
-
-        float elapsed = 0.0f;
-        CUDA_CALL(cudaEventElapsedTime(&elapsed, start, stop));
-        state.SetIterationTime(elapsed / 1000.f);
+        CURAND_CALL(generate_func(generator, data, size));
     }
+    CUDA_CALL(cudaEventRecord(stop, stream));
+    CUDA_CALL(cudaEventSynchronize(stop));
 
-    state.SetBytesProcessed(trials * state.iterations() * size * sizeof(T));
-    state.SetItemsProcessed(trials * state.iterations() * size);
+    float elapsed;
+    CUDA_CALL(cudaEventElapsedTime(&elapsed, start, stop));
 
     CUDA_CALL(cudaEventDestroy(stop));
     CUDA_CALL(cudaEventDestroy(start));
+
+    std::cout << std::fixed << std::setprecision(3)
+              << "      "
+              << "Throughput = "
+              << std::setw(8) << (trials * size * sizeof(T)) /
+                    (elapsed / 1e3 * (1 << 30))
+              << " GB/s, Samples = "
+              << std::setw(8) << (trials * size) /
+                    (elapsed / 1e3 * (1 << 30))
+              << " GSample/s, AvgTime (1 trial) = "
+              << std::setw(8) << elapsed / trials
+              << " ms, Time (all) = "
+              << std::setw(8) << elapsed
+              << " ms, Size = " << size
+              << std::endl;
 
     CURAND_CALL(curandDestroyGenerator(generator));
     CUDA_CALL(cudaFree(data));
 }
 
-void configure_parser(cli::Parser& parser)
+void run_benchmarks(const cli::Parser& parser,
+                    const rng_type_t rng_type,
+                    const std::string& distribution,
+                    cudaStream_t stream)
 {
-    parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
-    parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
-    parser.set_optional<size_t>("offset", "offset", 0, "offset of generated pseudo-random values");
-    parser.set_optional<size_t>("dimensions",
-                                "dimensions",
-                                1,
-                                "number of dimensions of quasi-random values");
-    parser.set_optional<std::vector<double>>(
-        "lambda",
-        "lambda",
-        {10.0},
-        "space-separated list of lambdas of Poisson distribution");
+    if (distribution == "uniform-uint")
+    {
+        if (rng_type != CURAND_RNG_QUASI_SOBOL64 &&
+            rng_type != CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
+        {
+            run_benchmark<unsigned int>(parser, rng_type, stream,
+                [](curandGenerator_t gen, unsigned int * data, size_t size) {
+                    return curandGenerate(gen, data, size);
+                }
+            );
+        }
+    }
+    if (distribution == "uniform-long-long")
+    {
+        if (rng_type == CURAND_RNG_QUASI_SOBOL64 ||
+            rng_type == CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
+        {
+            run_benchmark<unsigned long long>(parser, rng_type, stream,
+                [](curandGenerator_t gen, unsigned long long * data, size_t size) {
+                    return curandGenerateLongLong(gen, data, size);
+                }
+            );
+        }
+    }
+    if (distribution == "uniform-float")
+    {
+        run_benchmark<float>(parser, rng_type, stream,
+            [](curandGenerator_t gen, float * data, size_t size) {
+                return curandGenerateUniform(gen, data, size);
+            }
+        );
+    }
+    if (distribution == "uniform-double")
+    {
+        run_benchmark<double>(parser, rng_type, stream,
+            [](curandGenerator_t gen, double * data, size_t size) {
+                return curandGenerateUniformDouble(gen, data, size);
+            }
+        );
+    }
+    if (distribution == "normal-float")
+    {
+        run_benchmark<float>(parser, rng_type, stream,
+            [](curandGenerator_t gen, float * data, size_t size) {
+                return curandGenerateNormal(gen, data, size, 0.0f, 1.0f);
+            }
+        );
+    }
+    if (distribution == "normal-double")
+    {
+        run_benchmark<double>(parser, rng_type, stream,
+            [](curandGenerator_t gen, double * data, size_t size) {
+                return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0);
+            }
+        );
+    }
+    if (distribution == "log-normal-float")
+    {
+        run_benchmark<float>(parser, rng_type, stream,
+            [](curandGenerator_t gen, float * data, size_t size) {
+                return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f);
+            }
+        );
+    }
+    if (distribution == "log-normal-double")
+    {
+        run_benchmark<double>(parser, rng_type, stream,
+            [](curandGenerator_t gen, double * data, size_t size) {
+                return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0);
+            }
+        );
+    }
+    if (distribution == "poisson")
+    {
+        const auto lambdas = parser.get<std::vector<double>>("lambda");
+        for (double lambda : lambdas)
+        {
+            std::cout << "    " << "lambda "
+                 << std::fixed << std::setprecision(1) << lambda << std::endl;
+            run_benchmark<unsigned int>(parser, rng_type, stream,
+                [lambda](curandGenerator_t gen, unsigned int * data, size_t size) {
+                    return curandGeneratePoisson(gen, data, size, lambda);
+                }
+            );
+        }
+    }
 }
 
-int main(int argc, char* argv[])
-{
-    benchmark::Initialize(&argc, argv);
+const std::vector<std::string> all_engines = {
+    "xorwow",
+    "mrg32k3a",
+    "mtgp32",
+    // "mt19937",
+    "philox",
+    "sobol32",
+    "scrambled_sobol32",
+    "sobol64",
+    "scrambled_sobol64",
+};
 
-    // Parse arguments from command line
+const std::vector<std::string> all_distributions = {
+    "uniform-uint",
+    "uniform-long-long",
+    "uniform-float",
+    "uniform-double",
+    "normal-float",
+    "normal-double",
+    "log-normal-float",
+    "log-normal-double",
+    "poisson"
+};
+
+int main(int argc, char *argv[])
+{
     cli::Parser parser(argc, argv);
-    configure_parser(parser);
+
+    const std::string distribution_desc =
+        "space-separated list of distributions:" +
+        std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
+            [](std::string a, std::string b) {
+                return a + "\n      " + b;
+            }
+        ) +
+        "\n      or all";
+    const std::string engine_desc =
+        "space-separated list of random number engines:" +
+        std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
+            [](std::string a, std::string b) {
+                return a + "\n      " + b;
+            }
+        ) +
+        "\n      or all";
+
+    parser.set_optional<size_t>("size", "size", DEFAULT_RAND_N, "number of values");
+    parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
+    parser.set_optional<size_t>("offset", "offset", 0, "offset of generated pseudo-random values");
+    parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
+    parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
+    parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
+    parser.set_optional<std::vector<double>>("lambda", "lambda", {10.0}, "space-separated list of lambdas of Poisson distribution");
     parser.run_and_exit_if_error();
+
+    std::vector<std::string> engines;
+    {
+        auto es = parser.get<std::vector<std::string>>("engine");
+        if (std::find(es.begin(), es.end(), "all") != es.end())
+        {
+            engines = all_engines;
+        }
+        else
+        {
+            for (auto e : all_engines)
+            {
+                if (std::find(es.begin(), es.end(), e) != es.end())
+                    engines.push_back(e);
+            }
+        }
+    }
+
+    std::vector<std::string> distributions;
+    {
+        auto ds = parser.get<std::vector<std::string>>("dis");
+        if (std::find(ds.begin(), ds.end(), "all") != ds.end())
+        {
+            distributions = all_distributions;
+        }
+        else
+        {
+            for (auto d : all_distributions)
+            {
+                if (std::find(ds.begin(), ds.end(), d) != ds.end())
+                    distributions.push_back(d);
+            }
+        }
+    }
+
+    int version;
+    CURAND_CALL(curandGetVersion(&version));
+    int runtime_version;
+    CUDA_CALL(cudaRuntimeGetVersion(&runtime_version));
+    int device_id;
+    CUDA_CALL(cudaGetDevice(&device_id));
+    cudaDeviceProp props;
+    CUDA_CALL(cudaGetDeviceProperties(&props, device_id));
+
+    std::cout << "cuRAND: " << version << " ";
+    std::cout << "Runtime: " << runtime_version << " ";
+    std::cout << "Device: " << props.name;
+    std::cout << std::endl << std::endl;
 
     cudaStream_t stream;
     CUDA_CALL(cudaStreamCreate(&stream));
 
-    add_common_benchmark_info();
-
-    const size_t              size            = parser.get<size_t>("size");
-    const size_t              trials          = parser.get<size_t>("trials");
-    const size_t              offset          = parser.get<size_t>("offset");
-    const size_t              dimensions      = parser.get<size_t>("dimensions");
-    const std::vector<double> poisson_lambdas = parser.get<std::vector<double>>("lambda");
-
-    benchmark::AddCustomContext("size", std::to_string(size));
-    benchmark::AddCustomContext("trials", std::to_string(trials));
-    benchmark::AddCustomContext("offset", std::to_string(offset));
-    benchmark::AddCustomContext("dimensions", std::to_string(dimensions));
-
-    const std::map<rng_type_t, std::string> engine_type_map{
-        {          CURAND_RNG_PSEUDO_MTGP32,            "mtgp32"},
-        {        CURAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"},
-        {   CURAND_RNG_PSEUDO_PHILOX4_32_10,            "philox"},
-        {CURAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32"},
-        {CURAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64"},
-        {          CURAND_RNG_QUASI_SOBOL32,           "sobol32"},
-        {          CURAND_RNG_QUASI_SOBOL64,           "sobol64"},
-        {          CURAND_RNG_PSEUDO_XORWOW,            "xorwow"},
-    };
-
-    const std::string                            benchmark_name_prefix = "device_generate";
-    std::vector<benchmark::internal::Benchmark*> benchmarks            = {};
-
-    // Add benchmarks
-    for(std::pair<rng_type_t, std::string> engine : engine_type_map)
+    for (auto engine : engines)
     {
-        const rng_type_t  engine_type           = engine.first;
-        const std::string benchmark_name_engine = benchmark_name_prefix + "<" + engine.second + ",";
-
-        if(engine_type != CURAND_RNG_QUASI_SOBOL64
-           && engine_type != CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
-            benchmarks.emplace_back(benchmark::RegisterBenchmark(
-                (benchmark_name_engine + "uniform-uint>").c_str(),
-                &run_benchmark<unsigned int>,
-                engine_type,
-                [](curandGenerator_t gen, unsigned int* data, size_t size)
-                { return curandGenerate(gen, data, size); },
-                size,
-                trials,
-                offset,
-                dimensions,
-                stream));
+        rng_type_t rng_type = CURAND_RNG_PSEUDO_XORWOW;
+        if (engine == "xorwow")
+            rng_type = CURAND_RNG_PSEUDO_XORWOW;
+        else if (engine == "mrg32k3a")
+            rng_type = CURAND_RNG_PSEUDO_MRG32K3A;
+        else if (engine == "mtgp32")
+            rng_type = CURAND_RNG_PSEUDO_MTGP32;
+        else if (engine == "mt19937")
+            rng_type = CURAND_RNG_PSEUDO_MT19937;
+        else if (engine == "philox")
+            rng_type = CURAND_RNG_PSEUDO_PHILOX4_32_10;
+        else if (engine == "sobol32")
+            rng_type = CURAND_RNG_QUASI_SOBOL32;
+        else if (engine == "scrambled_sobol32")
+            rng_type = CURAND_RNG_QUASI_SCRAMBLED_SOBOL32;
+        else if (engine == "sobol64")
+            rng_type = CURAND_RNG_QUASI_SOBOL64;
+        else if (engine == "scrambled_sobol64")
+            rng_type = CURAND_RNG_QUASI_SCRAMBLED_SOBOL64;
         else
-            benchmarks.emplace_back(benchmark::RegisterBenchmark(
-                (benchmark_name_engine + "uniform-long-long>").c_str(),
-                &run_benchmark<unsigned long long>,
-                engine_type,
-                [](curandGenerator_t gen, unsigned long long* data, size_t size)
-                { return curandGenerateLongLong(gen, data, size); },
-                size,
-                trials,
-                offset,
-                dimensions,
-                stream));
-
-        benchmarks.emplace_back(
-            benchmark::RegisterBenchmark((benchmark_name_engine + "uniform-float>").c_str(),
-                                         &run_benchmark<float>,
-                                         engine_type,
-                                         [](curandGenerator_t gen, float* data, size_t size)
-                                         { return curandGenerateUniform(gen, data, size); },
-                                         size,
-                                         trials,
-                                         offset,
-                                         dimensions,
-                                         stream));
-
-        benchmarks.emplace_back(
-            benchmark::RegisterBenchmark((benchmark_name_engine + "uniform-double>").c_str(),
-                                         &run_benchmark<double>,
-                                         engine_type,
-                                         [](curandGenerator_t gen, double* data, size_t size)
-                                         { return curandGenerateUniformDouble(gen, data, size); },
-                                         size,
-                                         trials,
-                                         offset,
-                                         dimensions,
-                                         stream));
-
-        benchmarks.emplace_back(benchmark::RegisterBenchmark(
-            (benchmark_name_engine + "normal-float>").c_str(),
-            &run_benchmark<float>,
-            engine_type,
-            [](curandGenerator_t gen, float* data, size_t size)
-            { return curandGenerateNormal(gen, data, size, 0.0f, 1.0f); },
-            size,
-            trials,
-            offset,
-            dimensions,
-            stream));
-
-        benchmarks.emplace_back(benchmark::RegisterBenchmark(
-            (benchmark_name_engine + "normal-double>").c_str(),
-            &run_benchmark<double>,
-            engine_type,
-            [](curandGenerator_t gen, double* data, size_t size)
-            { return curandGenerateNormalDouble(gen, data, size, 0.0, 1.0); },
-            size,
-            trials,
-            offset,
-            dimensions,
-            stream));
-
-        benchmarks.emplace_back(benchmark::RegisterBenchmark(
-            (benchmark_name_engine + "log-normal-float>").c_str(),
-            &run_benchmark<float>,
-            engine_type,
-            [](curandGenerator_t gen, float* data, size_t size)
-            { return curandGenerateLogNormal(gen, data, size, 0.0f, 1.0f); },
-            size,
-            trials,
-            offset,
-            dimensions,
-            stream));
-
-        benchmarks.emplace_back(benchmark::RegisterBenchmark(
-            (benchmark_name_engine + "log-normal-double>").c_str(),
-            &run_benchmark<double>,
-            engine_type,
-            [](curandGenerator_t gen, double* data, size_t size)
-            { return curandGenerateLogNormalDouble(gen, data, size, 0.0, 1.0); },
-            size,
-            trials,
-            offset,
-            dimensions,
-            stream));
-
-        for(auto lambda : poisson_lambdas)
         {
-            const std::string poisson_dis_name
-                = std::string("poisson(lambda=") + std::to_string(lambda) + ")>";
-
-            benchmarks.emplace_back(benchmark::RegisterBenchmark(
-                (benchmark_name_engine + poisson_dis_name).c_str(),
-                &run_benchmark<unsigned int>,
-                engine_type,
-                [lambda](curandGenerator_t gen, unsigned int* data, size_t size)
-                { return curandGeneratePoisson(gen, data, size, lambda); },
-                size,
-                trials,
-                offset,
-                dimensions,
-                stream));
+            std::cout << "Wrong engine name" << std::endl;
+            exit(1);
         }
+
+        std::cout << engine << ":" << std::endl;
+
+        for (auto distribution : distributions)
+        {
+            std::cout << "  " << distribution << ":" << std::endl;
+            run_benchmarks(parser, rng_type, distribution, stream);
+        }
+        std::cout << std::endl;
     }
-    // Use manual timing
-    for(auto& b : benchmarks)
-    {
-        b->UseManualTime();
-        b->Unit(benchmark::kMillisecond);
-    }
-    benchmark::RunSpecifiedBenchmarks();
+
     CUDA_CALL(cudaStreamDestroy(stream));
 
     return 0;
