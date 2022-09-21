@@ -468,9 +468,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     h_engines.reserve(generator_count);
     h_engines.emplace_back(seed);
     h_engines.push_back(h_engines.back());
-    h_engines[1].m_state
-        = rocrand_host::detail::mt19937_engine::discard_subsequence_impl(jump,
-                                                                         h_engines[1].m_state);
+    h_engines[1].m_state = engine_type::discard_subsequence_impl(jump, h_engines[1].m_state);
 
     engine_type* d_engines{};
     HIP_CHECK(hipMalloc(&d_engines, generator_count * sizeof(engine_type)));
