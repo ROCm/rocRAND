@@ -318,11 +318,9 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
 
     ::rocrand_host::detail::mt19937_octo_engine engine = engines[thread_id];
 
-    size_t index = local_thread_id;
-    while(index < n)
+    for(size_t index = local_thread_id; index < n; index += threads_per_generator)
     {
         ptr[index] = engine();
-        index += threads_per_generator;
     }
 
     engines[thread_id] = engine;

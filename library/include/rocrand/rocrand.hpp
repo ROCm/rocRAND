@@ -1840,8 +1840,6 @@ class mt19937_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
-    /// \copydoc philox4x32_10_engine::offset_type
-    typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
     typedef unsigned long long seed_type;
     /// \copydoc philox4x32_10_engine::default_seed
