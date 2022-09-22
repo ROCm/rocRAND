@@ -35,15 +35,17 @@ struct rocrand_generator_base_type
 
 // rocRAND random number generator base class
 template<rocrand_rng_type GeneratorType = ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
-         class SeedType                 = unsigned long long>
+         class SeedType                 = unsigned long long,
+         class OrderingType             = rocrand_ordering>
 struct rocrand_generator_type : public rocrand_generator_base_type
 {
     using base_type = rocrand_generator_base_type;
 
     rocrand_generator_type(SeedType           seed   = SeedType{0},
                            unsigned long long offset = 0,
+                           rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                            hipStream_t        stream = 0)
-        : base_type(GeneratorType), m_seed(seed), m_offset(offset), m_stream(stream)
+        : base_type(GeneratorType), m_seed(seed), m_offset(offset), m_order(order), m_stream(stream)
     {
 
     }
@@ -64,6 +66,11 @@ struct rocrand_generator_type : public rocrand_generator_base_type
         return m_offset;
     }
 
+    OrderingType get_order() const
+    {
+        return m_order;
+    }
+
     hipStream_t get_stream() const
     {
         return m_stream;
@@ -75,10 +82,10 @@ struct rocrand_generator_type : public rocrand_generator_base_type
     }
 
 protected:
-    // ordering type
     SeedType           m_seed;
     unsigned long long m_offset;
-    hipStream_t m_stream;
+    OrderingType       m_order;
+    hipStream_t        m_stream;
 };
 
 #endif // ROCRAND_RNG_GENERATOR_TYPE_H_

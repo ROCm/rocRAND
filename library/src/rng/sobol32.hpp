@@ -150,10 +150,9 @@ public:
     using engine_type = ::rocrand_host::detail::sobol32_device_engine;
 
     rocrand_sobol32(unsigned long long offset = 0,
-                    hipStream_t stream = 0)
-        : base_type(0, offset, stream),
-          m_initialized(false),
-          m_dimensions(1)
+                    rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
+                    hipStream_t        stream = 0)
+        : base_type(0, offset, order, stream), m_initialized(false), m_dimensions(1)
     {
         // Allocate direction vectors
         hipError_t error;
@@ -182,6 +181,12 @@ public:
     void set_offset(unsigned long long offset)
     {
         m_offset = offset;
+        m_initialized = false;
+    }
+
+    void set_order(rocrand_ordering order)
+    {
+        m_order       = order;
         m_initialized = false;
     }
 

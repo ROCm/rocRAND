@@ -103,6 +103,19 @@ typedef enum rocrand_rng_type
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505 ///< Scrambled Sobol64 quasirandom generator
 } rocrand_rng_type;
 
+/**
+ * \brief rocRAND generator ordering
+ */
+typedef enum rocrand_ordering
+{
+    ROCRAND_ORDERING_PSEUDO_BEST    = 100, ///< Best ordering for pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_DEFAULT = 101, ///< Default ordering for pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_SEEDED  = 102, ///< Fast lower quality pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_LEGACY  = 103, ///< Legacy ordering for pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_DYNAMIC = 104, ///< Adjust to the device executed the generator
+    ROCRAND_ORDERING_QUASI_DEFAULT  = 201 ///< n-dimensional ordering for quasirandom results
+} rocrand_ordering;
+
 // Host API function
 
 /**
@@ -598,6 +611,28 @@ rocrand_status ROCRANDAPI rocrand_set_seed_uint4(rocrand_generator generator, ui
  */
 rocrand_status ROCRANDAPI
 rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
+
+/**
+ * \brief Sets the ordering of a random number generator.
+ *
+ * Sets the ordering of the results of a random number generator.
+ *
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's seed.
+ *
+ * Absolute offset cannot be set if generator's type is ROCRAND_RNG_PSEUDO_MTGP32 or
+ * ROCRAND_RNG_PSEUDO_LFSR113.
+ *
+ * \param generator - Random number generator
+ * \param order - New ordering of results
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if the ordering is not valid \n
+ * - ROCRAND_STATUS_SUCCESS if offset was successfully set \n
+ * - ROCRAND_STATUS_TYPE_ERROR if generator's type is not valid
+ */
+rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocrand_ordering order);
 
 /**
  * \brief Set the number of dimensions of a quasi-random number generator.

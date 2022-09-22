@@ -1366,6 +1366,21 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
+rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocrand_ordering order)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        static_cast<rocrand_mrg32k3a*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
 rocrand_status ROCRANDAPI
 rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
                                               unsigned int dimensions)
