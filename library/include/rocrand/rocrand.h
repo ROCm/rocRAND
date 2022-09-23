@@ -112,7 +112,7 @@ typedef enum rocrand_ordering
     ROCRAND_ORDERING_PSEUDO_DEFAULT = 101, ///< Default ordering for pseudorandom results
     ROCRAND_ORDERING_PSEUDO_SEEDED  = 102, ///< Fast lower quality pseudorandom results
     ROCRAND_ORDERING_PSEUDO_LEGACY  = 103, ///< Legacy ordering for pseudorandom results
-    ROCRAND_ORDERING_PSEUDO_DYNAMIC = 104, ///< Adjust to the device executed the generator
+    ROCRAND_ORDERING_PSEUDO_DYNAMIC = 104, ///< Adjust to the device executing the generator
     ROCRAND_ORDERING_QUASI_DEFAULT  = 201 ///< n-dimensional ordering for quasirandom results
 } rocrand_ordering;
 
@@ -620,16 +620,30 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's seed.
  *
- * Absolute offset cannot be set if generator's type is ROCRAND_RNG_PSEUDO_MTGP32 or
- * ROCRAND_RNG_PSEUDO_LFSR113.
- *
  * \param generator - Random number generator
  * \param order - New ordering of results
+ *
+ * The ordering choices for pseudorandom sequences are
+ * ROCRAND_ORDERING_PSEUDO_DEFAULT,
+ * ROCRAND_ORDERING_PSEUDO_LEGACY,
+ * ROCRAND_ORDERING_PSEUDO_BEST,
+ * ROCRAND_ORDERING_PSEUDO_SEEDED and
+ * ROCRAND_ORDERING_PSEUDO_DYNAMIC.
+ * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT.
+ * 
+ * The ROCRAND_ORDERING_PSEUDO_DYNAMIC ordering is currently only supported
+ * with the generators:
+ * ROCRAND_RNG_PSEUDO_XORWOW,
+ * ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+ * ROCRAND_RNG_PSEUDO_MRG32K3A and
+ * ROCRAND_RNG_PSEUDO_MTGP32.
+ *
+ * For quasirandom sequences there is only one ordering, ROCRAND_ORDERING_QUASI_DEFAULT.
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
  * - ROCRAND_STATUS_OUT_OF_RANGE if the ordering is not valid \n
- * - ROCRAND_STATUS_SUCCESS if offset was successfully set \n
+ * - ROCRAND_STATUS_SUCCESS if the ordering was successfully set \n
  * - ROCRAND_STATUS_TYPE_ERROR if generator's type is not valid
  */
 rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocrand_ordering order);
