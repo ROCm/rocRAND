@@ -994,7 +994,8 @@ public:
     void order(order_type value)
     {
         rocrand_status status = rocrand_set_ordering(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
     }
 
     /// \brief Sets the offset of a random number engine.
@@ -1435,7 +1436,8 @@ public:
     void order(order_type value)
     {
         rocrand_status status = rocrand_set_ordering(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::offset()
