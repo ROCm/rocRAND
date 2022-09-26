@@ -1105,6 +1105,8 @@ class xorwow_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -1113,14 +1115,16 @@ public:
     static constexpr seed_type default_seed = DefaultSeed;
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
-    xorwow_engine(seed_type seed_value = DefaultSeed,
-                  offset_type offset_value = 0)
+    xorwow_engine(seed_type   seed_value   = DefaultSeed,
+                  offset_type offset_value = 0,
+                  order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             if(offset_value > 0)
             {
                 this->offset(offset_value);
@@ -1157,6 +1161,14 @@ public:
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::offset()
@@ -1237,6 +1249,8 @@ class mrg31k3p_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -1245,7 +1259,9 @@ public:
     static constexpr seed_type default_seed = DefaultSeed;
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
-    mrg31k3p_engine(seed_type seed_value = DefaultSeed, offset_type offset_value = 0)
+    mrg31k3p_engine(seed_type   seed_value   = DefaultSeed,
+                    offset_type offset_value = 0,
+                    order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -1253,6 +1269,7 @@ public:
             throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             if(offset_value > 0)
             {
                 this->offset(offset_value);
@@ -1288,6 +1305,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -1374,12 +1399,12 @@ class mrg32k3a_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
     typedef unsigned long long seed_type;
-    /// \copydoc philox4x32_10_engine::order_type
-    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
@@ -1393,11 +1418,11 @@ public:
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             if(offset_value > 0)
             {
                 this->offset(offset_value);
             }
-            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)
@@ -1519,6 +1544,8 @@ class mtgp32_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -1533,13 +1560,15 @@ public:
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
     ///
     /// See also: hiprandCreateGenerator()
-    mtgp32_engine(seed_type seed_value = DefaultSeed)
+    mtgp32_engine(seed_type  seed_value  = DefaultSeed,
+                  order_type order_value = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)
@@ -1572,6 +1601,14 @@ public:
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::seed()
@@ -1648,8 +1685,8 @@ class lfsr113_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
-    /// \copydoc philox4x32_10_engine::offset_type
-    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::seed_type
     typedef uint4 seed_type;
     /// \copydoc philox4x32_10_engine::default_seed
@@ -1661,9 +1698,11 @@ public:
     /// LFSR113 does not accept offset.
     ///
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
+    /// \param order_value - ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: hiprandCreateGenerator()
-    lfsr113_engine(seed_type seed_value = {DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW})
+    lfsr113_engine(seed_type  seed_value = {DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW},
+                   order_type order_value = ROCRAND_ORDERING_QUASI_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -1671,6 +1710,7 @@ public:
             throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)
@@ -1702,6 +1742,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -1791,6 +1839,8 @@ class sobol32_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \typedef dimensions_num_type
@@ -1805,16 +1855,19 @@ public:
     ///
     /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
+    /// \param order_value - ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
-                   offset_type offset_value = 0)
+                   offset_type         offset_value      = 0,
+                   order_type          order_value       = ROCRAND_ORDERING_QUASI_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             if(offset_value > 0)
             {
                 this->offset(offset_value);
@@ -1851,6 +1904,14 @@ public:
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::offset()
@@ -1952,6 +2013,8 @@ public:
     typedef unsigned int result_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \typedef dimensions_num_type
     /// Quasi-random number engine type for number of dimensions.
     ///
@@ -1967,7 +2030,8 @@ public:
     ///
     /// See also: rocrand_create_generator()
     scrambled_sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
-                             offset_type         offset_value      = 0)
+                             offset_type         offset_value      = 0,
+                             order_type          order_value       = ROCRAND_ORDERING_QUASI_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -1975,6 +2039,7 @@ public:
             throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             if(offset_value > 0)
             {
                 this->offset(offset_value);
@@ -2010,6 +2075,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -2116,6 +2189,8 @@ public:
     typedef unsigned long long int result_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long int offset_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \typedef dimensions_num_type
     /// Quasi-random number engine type for number of dimensions.
     ///
@@ -2128,16 +2203,19 @@ public:
     ///
     /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
+    /// \param order_value - ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     sobol64_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
-                   offset_type offset_value = 0)
+                   offset_type         offset_value      = 0,
+                   order_type          order_value       = ROCRAND_ORDERING_QUASI_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             if(offset_value > 0)
             {
                 this->offset(offset_value);
@@ -2174,6 +2252,14 @@ public:
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::offset()
@@ -2273,6 +2359,8 @@ class scrambled_sobol64_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned long long int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long int offset_type;
     /// \typedef dimensions_num_type
@@ -2287,10 +2375,12 @@ public:
     ///
     /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
+    /// \param order_value - ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     scrambled_sobol64_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
-                             offset_type         offset_value      = 0)
+                             offset_type         offset_value      = 0,
+                             order_type          order_value       = ROCRAND_ORDERING_QUASI_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -2298,6 +2388,7 @@ public:
             throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             if(offset_value > 0)
             {
                 this->offset(offset_value);
@@ -2333,6 +2424,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }

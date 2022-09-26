@@ -624,20 +624,11 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  * \param order - New ordering of results
  *
  * The ordering choices for pseudorandom sequences are
- * ROCRAND_ORDERING_PSEUDO_DEFAULT,
- * ROCRAND_ORDERING_PSEUDO_LEGACY,
- * ROCRAND_ORDERING_PSEUDO_BEST,
- * ROCRAND_ORDERING_PSEUDO_SEEDED and
- * ROCRAND_ORDERING_PSEUDO_DYNAMIC.
- * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT.
+ * ROCRAND_ORDERING_PSEUDO_DEFAULT and
+ * ROCRAND_ORDERING_PSEUDO_LEGACY.
+ * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT, which is equal to 
+ * ROCRAND_ORDERING_PSEUDO_LEGACY for now.
  * 
- * The ROCRAND_ORDERING_PSEUDO_DYNAMIC ordering is currently only supported
- * with the generators:
- * ROCRAND_RNG_PSEUDO_XORWOW,
- * ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
- * ROCRAND_RNG_PSEUDO_MRG32K3A and
- * ROCRAND_RNG_PSEUDO_MTGP32.
- *
  * For quasirandom sequences there is only one ordering, ROCRAND_ORDERING_QUASI_DEFAULT.
  *
  * \return

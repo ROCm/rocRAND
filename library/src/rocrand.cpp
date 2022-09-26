@@ -1372,9 +1372,54 @@ rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocr
     {
         return ROCRAND_STATUS_NOT_CREATED;
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        static_cast<rocrand_philox4x32_10*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        static_cast<rocrand_mrg31k3p*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
     {
         static_cast<rocrand_mrg32k3a*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+    {
+        static_cast<rocrand_xorwow*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        static_cast<rocrand_sobol32*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32)
+    {
+        static_cast<rocrand_scrambled_sobol32*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        static_cast<rocrand_sobol64*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64)
+    {
+        static_cast<rocrand_scrambled_sobol64*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
+    {
+        static_cast<rocrand_mtgp32*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        static_cast<rocrand_lfsr113*>(generator)->set_order(order);
         return ROCRAND_STATUS_SUCCESS;
     }
 
