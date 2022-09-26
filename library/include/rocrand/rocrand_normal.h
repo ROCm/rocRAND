@@ -221,6 +221,14 @@ float normal_distribution(unsigned int x)
 }
 
 FQUALIFIERS
+float normal_distribution(unsigned long long int x)
+{
+    float p = ::rocrand_device::detail::uniform_distribution(x);
+    float v = ROCRAND_SQRT2 * ::rocrand_device::detail::roc_f_erfinv(2.0f * p - 1.0f);
+    return v;
+}
+
+FQUALIFIERS
 float2 normal_distribution2(unsigned int v1, unsigned int v2)
 {
     return ::rocrand_device::detail::box_muller(v1, v2);

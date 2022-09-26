@@ -227,9 +227,8 @@ class TestGenerate(TestRNGBase):
         self.assertAlmostEqual(output.mean(), 0.5, delta=0.2)
         self.assertAlmostEqual(output.std(), math.sqrt(1 / 12.0), delta=0.2 * math.sqrt(1 / 12.0))
 
-    # TODO: temporarily disable float for uniform distribution
-    # def test_uniform_float(self):
-    #     self._test_uniform(np.float32)
+    def test_uniform_float(self):
+        self._test_uniform(np.float32)
 
     def test_uniform_double(self):
         self._test_uniform(np.float64)
@@ -241,9 +240,8 @@ class TestGenerate(TestRNGBase):
         self.assertAlmostEqual(output.mean(), 0.0, delta=0.2)
         self.assertAlmostEqual(output.std(), 1.0, delta=0.2)
 
-    # TODO: temporarily disable float for normal distribution
-    # def test_normal_float(self):
-    #     self._test_normal_real(np.float32)
+    def test_normal_float(self):
+        self._test_normal_real(np.float32)
 
     def test_normal_double(self):
         self._test_normal_real(np.float64)
@@ -260,9 +258,8 @@ class TestGenerate(TestRNGBase):
         self.assertAlmostEqual(logmean, 1.6, delta=1.6 * 0.2)
         self.assertAlmostEqual(logstd, 0.25, delta=0.25 * 0.2)
 
-    # TODO: temporarily disable float for lognormal distribution
-    # def test_lognormal_float(self):
-    #     self._test_lognormal_real(np.float32)
+    def test_lognormal_float(self):
+        self._test_lognormal_real(np.float32)
 
     def test_lognormal_double(self):
         self._test_lognormal_real(np.float64)

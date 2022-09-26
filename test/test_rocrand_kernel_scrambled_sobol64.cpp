@@ -229,27 +229,26 @@ TEST(rocrand_kernel_scrambled_sobol64, rocrand)
     EXPECT_NEAR(mean, 0.5, 0.1);
 }
 
-// TODO: temporarily disable float for uniform distribution
-// TEST(rocrand_kernel_scrambled_sobol64, rocrand_uniform)
-// {
-//     using ResultType   = float;
-//     using Distribution = rocrand_uniform_f;
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_uniform)
+{
+    using ResultType   = float;
+    using Distribution = rocrand_uniform_f;
 
-//     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
-//     constexpr size_t       size_per_dimension = 8192;
-//     constexpr unsigned int dimensions         = 8;
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
 
-//     std::vector<ResultType> output_host;
-//     call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
+    std::vector<ResultType> output_host;
+    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
 
-//     double mean = 0;
-//     for(ResultType v : output_host)
-//     {
-//         mean += static_cast<double>(v);
-//     }
-//     mean = mean / output_host.size();
-//     EXPECT_NEAR(mean, 0.5, 0.1);
-// }
+    double mean = 0;
+    for(ResultType v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+    EXPECT_NEAR(mean, 0.5, 0.1);
+}
 
 TEST(rocrand_kernel_scrambled_sobol64, rocrand_uniform_double)
 {
@@ -272,35 +271,34 @@ TEST(rocrand_kernel_scrambled_sobol64, rocrand_uniform_double)
     EXPECT_NEAR(mean, 0.5, 0.1);
 }
 
-// TODO: temporarily disable float for normal distribution
-// TEST(rocrand_kernel_scrambled_sobol64, rocrand_normal)
-// {
-//     using ResultType   = float;
-//     using Distribution = rocrand_normal_f;
+TEST(rocrand_kernel_scrambled_sobol64, rocrand_normal)
+{
+    using ResultType   = float;
+    using Distribution = rocrand_normal_f;
 
-//     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
-//     constexpr size_t       size_per_dimension = 8192;
-//     constexpr unsigned int dimensions         = 8;
+    // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
 
-//     std::vector<ResultType> output_host;
-//     call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
+    std::vector<ResultType> output_host;
+    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
 
-//     double mean = 0;
-//     for(ResultType v : output_host)
-//     {
-//         mean += static_cast<double>(v);
-//     }
-//     mean = mean / output_host.size();
-//     EXPECT_NEAR(mean, 0.0, 0.2);
+    double mean = 0;
+    for(ResultType v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_host.size();
+    EXPECT_NEAR(mean, 0.0, 0.2);
 
-//     double stddev = 0;
-//     for(ResultType v : output_host)
-//     {
-//         stddev += std::pow(static_cast<double>(v) - mean, 2);
-//     }
-//     stddev = stddev / output_host.size();
-//     EXPECT_NEAR(stddev, 1.0, 0.2);
-// }
+    double stddev = 0;
+    for(ResultType v : output_host)
+    {
+        stddev += std::pow(static_cast<double>(v) - mean, 2);
+    }
+    stddev = stddev / output_host.size();
+    EXPECT_NEAR(stddev, 1.0, 0.2);
+}
 
 TEST(rocrand_kernel_scrambled_sobol64, rocrand_normal_double)
 {

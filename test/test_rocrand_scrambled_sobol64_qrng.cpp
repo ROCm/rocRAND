@@ -38,9 +38,7 @@ struct rocrand_scrambled_sobol64_float_tests : public ::testing::Test
     using type = T;
 };
 
-// TODO: temporarily disable float for uniform and normal distributions
-// using FloatReturnTypes = ::testing::Types<float, double>;
-using FloatReturnTypes = ::testing::Types<double>;
+using FloatReturnTypes = ::testing::Types<float, double>;
 
 TYPED_TEST_SUITE(rocrand_scrambled_sobol64_float_tests, FloatReturnTypes);
 

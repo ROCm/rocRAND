@@ -66,6 +66,14 @@ float uniform_distribution(unsigned int v)
     return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
 }
 
+// For unsigned integer between 0 and ULLONG_MAX, returns value between
+// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+FQUALIFIERS
+float uniform_distribution(unsigned long long int v)
+{
+    return ROCRAND_2POW32_INV + (v >> 32) * ROCRAND_2POW32_INV;
+}
+
 FQUALIFIERS
 float4 uniform_distribution4(uint4 v)
 {
