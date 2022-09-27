@@ -13,6 +13,9 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - Fixed a bug that prevented compiling code in C++ mode (with a host compiler) when it included the rocRAND headers on Windows.
 
 ## (Unreleased) rocRAND-2.10.15 for ROCm 5.3.0
+### Added
+- New benchmark for the host api using googlebenchmark replacing `benchmark_rocrand_generate`,
+  `benchmark_rocrand_generate` is deprecated and will be removed in a future version.
 ### Changed
 - Increased number of warmup iterations for rocrand_benchmark_generate from 5 to 15 to eliminate corner cases that would generate artificially high benchmark scores.
 
