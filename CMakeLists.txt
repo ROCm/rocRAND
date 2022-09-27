@@ -64,6 +64,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # Include cmake scripts
+include(CMakeDependentOption)
 include(cmake/Dependencies.cmake)
 
 # Detect compiler support for target ID
@@ -125,6 +126,10 @@ option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 
+cmake_dependent_option(BUILD_LEGACY_BENCHMARK "Build the legacy benchmarks" ON "BUILD_BENCHMARK" OFF)
+if(BUILD_LEGACY_BENCHMARK)
+  message(DEPRECATION "Building the legacy benchmarks will be removed in a future release. Consider using the new benchmark suite.")
+endif()
 if(BUILD_ADDRESS_SANITIZER AND BUILD_SHARED_LIBS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
