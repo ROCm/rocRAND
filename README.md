@@ -53,7 +53,7 @@ not to use system-installed libraries, and to download all dependencies.
 
 ## Build and Install
 
-```
+```shell
 git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
 # Go to rocRAND directory, create and go to build directory
@@ -110,7 +110,7 @@ to `OFF`.
 
 ## Running Unit Tests
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -123,7 +123,7 @@ ctest
 
 ## Running Benchmarks
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -173,7 +173,7 @@ migrated to the new framework.
 
 ## Running Statistical Tests
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -190,7 +190,7 @@ cd rocRAND; cd build
 The latest rocRAND documentation and API description can be found [here](https://rocrand.readthedocs.io/en/latest/).
 
 It can also be build using the following commands
-```
+```shell
 # go to rocRAND doc directory
 cd rocRAND; cd doc
 
@@ -198,7 +198,6 @@ cd rocRAND; cd doc
 doxygen Doxyfile
 
 # open html/index.html
-
 ```
 
 ## Wrappers

@@ -101,7 +101,7 @@ TEST(rocrand_mt19937_prng_tests, normal_float_test)
     {
         mean += host_data[i];
     }
-    mean = mean / size;
+    mean /= size;
 
     float std = 0.0f;
     for(size_t i = 0; i < size; i++)
@@ -135,7 +135,7 @@ TEST(rocrand_mt19937_prng_tests, poisson_test)
     {
         mean += host_data[i];
     }
-    mean = mean / size;
+    mean /= size;
 
     double var = 0.0;
     for(size_t i = 0; i < size; i++)
@@ -143,7 +143,7 @@ TEST(rocrand_mt19937_prng_tests, poisson_test)
         double x = host_data[i] - mean;
         var += x * x;
     }
-    var = var / size;
+    var /= size;
 
     EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
     EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));

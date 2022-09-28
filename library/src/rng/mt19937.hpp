@@ -729,7 +729,7 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
     const unsigned int remainder_ceil = (remainder + full_output_width - 1) / full_output_width;
 
     // each iteration saves at most output_width values T
-    while(index < vec_n + remainder_ceil)
+    for(; index < vec_n + remainder_ceil; index += stride)
     {
         for(unsigned int i = 0; i < input_width; i++)
         {
@@ -749,8 +749,6 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo
                 data[idx % size] = output[o];
             }
         }
-
-        index += stride;
     }
 
     // save state
