@@ -185,11 +185,11 @@ public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MTGP32>;
     using engine_type = ::rocrand_host::detail::mtgp32_device_engine;
 
-    rocrand_mtgp32(unsigned long long seed   = 0,
+    rocrand_mtgp32(rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                   unsigned long long seed   = 0,
                    unsigned long long offset = 0,
-                   rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                    hipStream_t        stream = 0)
-        : base_type(seed, offset, order, stream)
+        : base_type(order, seed, offset, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_blocks)

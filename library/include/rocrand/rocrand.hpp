@@ -1114,7 +1114,7 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type,offset_type,order_type)
     xorwow_engine(seed_type   seed_value   = DefaultSeed,
                   offset_type offset_value = 0,
                   order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
@@ -1258,7 +1258,7 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type,offset_type,order_type)
     mrg31k3p_engine(seed_type   seed_value   = DefaultSeed,
                     offset_type offset_value = 0,
                     order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
@@ -1408,7 +1408,7 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type,offset_type,order_type)
     mrg32k3a_engine(seed_type   seed_value   = DefaultSeed,
                     offset_type offset_value = 0,
                     order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
