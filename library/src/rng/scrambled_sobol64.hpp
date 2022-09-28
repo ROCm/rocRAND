@@ -157,7 +157,7 @@ public:
     rocrand_scrambled_sobol64(rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                               unsigned long long offset = 0,
                               hipStream_t        stream = 0)
-        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1)
+        : base_type(0, offset, order, stream), m_initialized(false), m_dimensions(1)
     {
         // Allocate direction vectors
         hipError_t error;

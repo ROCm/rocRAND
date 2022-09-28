@@ -1379,7 +1379,7 @@ rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocr
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    const bool pseudo_type = (order != ROCRAND_ORDERING_QUASI_DEFAULT) ? true : false;
+    const bool pseudo_type = order != ROCRAND_ORDERING_QUASI_DEFAULT;
 
     if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
     {

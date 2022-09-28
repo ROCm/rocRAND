@@ -149,7 +149,7 @@ public:
                      unsigned long long seed   = 0,
                      unsigned long long offset = 0,
                      hipStream_t        stream = 0)
-        : base_type(order, seed, offset, stream)
+        : base_type(seed, offset, order, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_threads * s_blocks)
@@ -199,7 +199,7 @@ public:
     void set_order(rocrand_ordering order)
     {
         m_order               = order;
-        m_engines_initialized = false; // TODO
+        m_engines_initialized = false;
     }
 
     rocrand_status init()

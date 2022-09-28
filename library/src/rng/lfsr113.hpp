@@ -146,7 +146,7 @@ public:
                                                  ROCRAND_LFSR113_DEFAULT_SEED_W},
                     unsigned long long offset = 0,
                     hipStream_t        stream = 0)
-        : base_type(order, seeds, offset, stream)
+        : base_type(seeds, offset, order, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_threads * s_blocks)
