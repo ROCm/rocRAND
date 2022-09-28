@@ -189,7 +189,7 @@ public:
                    unsigned long long seed   = 0,
                    unsigned long long offset = 0,
                    hipStream_t        stream = 0)
-        : base_type(seed, offset, order, stream)
+        : base_type(order, seed, offset, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_blocks)
