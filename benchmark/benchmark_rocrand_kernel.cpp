@@ -994,7 +994,7 @@ int main(int argc, char *argv[])
             }
             else if(engine == "mrg31k3p")
             {
-                run_benchmarks<rocrand_state_mrg31k3p>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_mrg31k3p>(parser, distribution, engine, stream);
             }
             else if (engine == "mrg32k3a")
             {
@@ -1010,7 +1010,7 @@ int main(int argc, char *argv[])
             }
             else if(engine == "scrambled_sobol32")
             {
-                run_benchmarks<rocrand_state_sobol32>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_sobol32>(parser, distribution, engine, stream);
             }
             else if (engine == "sobol64")
             {
@@ -1018,7 +1018,7 @@ int main(int argc, char *argv[])
             }
             else if(engine == "scrambled_sobol64")
             {
-                run_benchmarks<rocrand_state_sobol64>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_sobol64>(parser, distribution, engine, stream);
             }
             else if (engine == "mtgp32")
             {
@@ -1026,7 +1026,7 @@ int main(int argc, char *argv[])
             }
             else if(engine == "lfsr113")
             {
-                run_benchmarks<rocrand_state_lfsr113>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_lfsr113>(parser, distribution, engine, stream);
             }
         }
         std::cout << std::endl;
