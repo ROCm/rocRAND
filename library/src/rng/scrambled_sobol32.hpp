@@ -154,8 +154,8 @@ public:
     using base_type   = rocrand_generator_type<ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32>;
     using engine_type = ::rocrand_host::detail::scrambled_sobol32_device_engine;
 
-    rocrand_scrambled_sobol32(rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
-                              unsigned long long offset = 0,
+    rocrand_scrambled_sobol32(unsigned long long offset = 0,
+                              rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                               hipStream_t        stream = 0)
         : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1)
     {

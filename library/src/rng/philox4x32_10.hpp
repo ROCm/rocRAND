@@ -211,9 +211,9 @@ public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>;
     using engine_type = ::rocrand_host::detail::philox4x32_10_device_engine;
 
-    rocrand_philox4x32_10(rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                          unsigned long long seed   = 0,
+    rocrand_philox4x32_10(unsigned long long seed   = 0,
                           unsigned long long offset = 0,
+                          rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                           hipStream_t        stream = 0)
         : base_type(order, seed, offset, stream), m_engines_initialized(false)
     {

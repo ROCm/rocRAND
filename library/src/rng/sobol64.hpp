@@ -150,8 +150,8 @@ public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_QUASI_SOBOL64>;
     using engine_type = ::rocrand_host::detail::sobol64_device_engine;
 
-    rocrand_sobol64(rocrand_ordering       order  = ROCRAND_ORDERING_QUASI_DEFAULT,
-                    unsigned long long int offset = 0,
+    rocrand_sobol64(unsigned long long int offset = 0,
+                    rocrand_ordering       order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                     hipStream_t            stream = 0)
         : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1)
     {
