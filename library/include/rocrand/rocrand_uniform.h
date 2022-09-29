@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +30,18 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_lfsr113.h"
+#include "rocrand/rocrand_mrg31k3p.h"
 #include "rocrand/rocrand_mrg32k3a.h"
-#include "rocrand/rocrand_xorwow.h"
+#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_philox4x32_10.h"
+#include "rocrand/rocrand_scrambled_sobol32.h"
+#include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
-#include "rocrand/rocrand_mtgp32.h"
+#include "rocrand/rocrand_xorwow.h"
+
+#include "rocrand/rocrand_common.h"
 
 namespace rocrand_device {
 namespace detail {
@@ -58,6 +64,14 @@ FQUALIFIERS
 float uniform_distribution(unsigned int v)
 {
     return ROCRAND_2POW32_INV + (v * ROCRAND_2POW32_INV);
+}
+
+// For unsigned integer between 0 and ULLONG_MAX, returns value between
+// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+FQUALIFIERS
+float uniform_distribution(unsigned long long int v)
+{
+    return ROCRAND_2POW32_INV + (v >> 32) * ROCRAND_2POW32_INV;
 }
 
 FQUALIFIERS
@@ -124,27 +138,56 @@ __half uniform_distribution_half(unsigned short v)
     return __float2half(ROCRAND_2POW16_INV + (v * ROCRAND_2POW16_INV));
 }
 
-// For unsigned integer in [1, ROCRAND_MRG32K3A_M1], returns value
-// in range [0, UINT_MAX] (MRG32K3A).
-FQUALIFIERS
-unsigned int mrg_uniform_distribution_uint(unsigned int v)
+// For an unsigned integer produced by an MRG-based engine, returns a value
+// in range [0, UINT32_MAX].
+template<typename state_type>
+FQUALIFIERS unsigned int mrg_uniform_distribution_uint(unsigned int v) = delete;
+
+template<>
+FQUALIFIERS unsigned int mrg_uniform_distribution_uint<rocrand_state_mrg31k3p>(unsigned int v)
+{
+    return static_cast<unsigned int>((v - 1) * ROCRAND_MRG31K3P_UINT32_NORM);
+}
+
+template<>
+FQUALIFIERS unsigned int mrg_uniform_distribution_uint<rocrand_state_mrg32k3a>(unsigned int v)
 {
     return static_cast<unsigned int>((v - 1) * ROCRAND_MRG32K3A_UINT_NORM);
 }
 
-// For unsigned integer in [1, ROCRAND_MRG32K3A_M1], returns value between
-// 0.0f and 1.0f, excluding 0.0f and including 1.0f (MRG32K3A).
-FQUALIFIERS
-float mrg_uniform_distribution(unsigned int v)
+// For an unsigned integer produced by an MRG-based engine, returns value between
+// 0.0f and 1.0f, excluding 0.0f and including 1.0f.
+template<typename state_type>
+FQUALIFIERS float mrg_uniform_distribution(unsigned int v) = delete;
+
+template<>
+FQUALIFIERS float mrg_uniform_distribution<rocrand_state_mrg31k3p>(unsigned int v)
+{
+    double ret = static_cast<double>(v) * ROCRAND_MRG31K3P_NORM_DOUBLE;
+    return static_cast<float>(ret);
+}
+
+template<>
+FQUALIFIERS float mrg_uniform_distribution<rocrand_state_mrg32k3a>(unsigned int v)
 {
     double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
     return static_cast<float>(ret);
 }
 
-// For unsigned integer in [1, ROCRAND_MRG32K3A_M1], returns value between
-// 0.0 and 1.0, excluding 0.0 and including 1.0 (MRG32K3A).
-FQUALIFIERS
-double mrg_uniform_distribution_double(unsigned int v)
+// For an unsigned integer produced by an MRG generator, returns value between
+// 0.0 and 1.0, excluding 0.0 and including 1.0.
+template<typename state_type>
+FQUALIFIERS double mrg_uniform_distribution_double(unsigned int v) = delete;
+
+template<>
+FQUALIFIERS double mrg_uniform_distribution_double<rocrand_state_mrg31k3p>(unsigned int v)
+{
+    double ret = static_cast<double>(v) * ROCRAND_MRG31K3P_NORM_DOUBLE;
+    return ret;
+}
+
+template<>
+FQUALIFIERS double mrg_uniform_distribution_double<rocrand_state_mrg32k3a>(unsigned int v)
 {
     double ret = static_cast<double>(v) * ROCRAND_MRG32K3A_NORM_DOUBLE;
     return ret;
@@ -270,6 +313,44 @@ double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 * state)
     return rocrand_device::detail::uniform_distribution_double4(rocrand4(state), rocrand4(state));
 }
 
+/**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0f, including \p 1.0f) using MRG31K3P generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS float rocrand_uniform(rocrand_state_mrg31k3p* state)
+{
+    return rocrand_device::detail::mrg_uniform_distribution<rocrand_state_mrg31k3p>(state->next());
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using MRG31K3P generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * Note: In this implementation returned \p double value is generated
+ * from only 32 random bits (one <tt>unsigned int</tt> value).
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS double rocrand_uniform_double(rocrand_state_mrg31k3p* state)
+{
+    return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_state_mrg31k3p>(
+        state->next());
+}
+
  /**
  * \brief Returns a uniformly distributed random <tt>float</tt> value
  * from (0; 1] range.
@@ -285,7 +366,7 @@ double4 rocrand_uniform_double4(rocrand_state_philox4x32_10 * state)
 FQUALIFIERS
 float rocrand_uniform(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution(state->next());
+    return rocrand_device::detail::mrg_uniform_distribution<rocrand_state_mrg32k3a>(state->next());
 }
 
  /**
@@ -306,7 +387,8 @@ float rocrand_uniform(rocrand_state_mrg32k3a * state)
 FQUALIFIERS
 double rocrand_uniform_double(rocrand_state_mrg32k3a * state)
 {
-    return rocrand_device::detail::mrg_uniform_distribution_double(state->next());
+    return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_state_mrg32k3a>(
+        state->next());
 }
 
  /**
@@ -427,11 +509,29 @@ double rocrand_uniform_double(rocrand_state_sobol32 * state)
 }
 
 /**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0f, including \p 1.0f) using SCRAMBLED_SOBOL32 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_scrambled_sobol32* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
+}
+
+/**
  * \brief Returns a uniformly distributed random <tt>double</tt> value
  * from (0; 1] range.
  *
  * Generates and returns a uniformly distributed \p double value from (0; 1] range
- * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
+ * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL32 generator in \p state, and
  * increments position of the generator by one.
  *
  * \param state - Pointer to a state to use
@@ -442,9 +542,27 @@ double rocrand_uniform_double(rocrand_state_sobol32 * state)
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
-float rocrand_uniform(rocrand_state_sobol64 * state)
+double rocrand_uniform_double(rocrand_state_scrambled_sobol32* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_sobol64* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
 /**
@@ -457,9 +575,6 @@ float rocrand_uniform(rocrand_state_sobol64 * state)
  *
  * \param state - Pointer to a state to use
  *
- * Note: In this implementation returned \p double value is generated
- * from only 32 random bits (one <tt>unsigned int</tt> value).
- *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
 FQUALIFIERS
@@ -468,6 +583,81 @@ double rocrand_uniform_double(rocrand_state_sobol64 * state)
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
-#endif // ROCRAND_UNIFORM_H_
+/**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_scrambled_sobol64* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL64 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS
+double rocrand_uniform_double(rocrand_state_scrambled_sobol64* state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>float</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p float value from (0; 1] range
+ * (excluding \p 0.0f, including \p 1.0f) using LFSR113 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Uniformly distributed \p float value from (0; 1] range.
+ */
+FQUALIFIERS
+float rocrand_uniform(rocrand_state_lfsr113* state)
+{
+    return rocrand_device::detail::uniform_distribution(rocrand(state));
+}
+
+/**
+ * \brief Returns a uniformly distributed random <tt>double</tt> value
+ * from (0; 1] range.
+ *
+ * Generates and returns a uniformly distributed \p double value from (0; 1] range
+ * (excluding \p 0.0, including \p 1.0) using LFSR113 generator in \p state, and
+ * increments position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * Note: In this implementation returned \p double value is generated
+ * from only 32 random bits (one <tt>unsigned int</tt> value).
+ *
+ * \return Uniformly distributed \p double value from (0; 1] range.
+ */
+FQUALIFIERS
+double rocrand_uniform_double(rocrand_state_lfsr113* state)
+{
+    return rocrand_device::detail::uniform_distribution_double(rocrand(state));
+}
 
 /** @} */ // end of group rocranddevice
+
+#endif // ROCRAND_UNIFORM_H_

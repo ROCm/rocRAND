@@ -1,3 +1,23 @@
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -30,19 +50,25 @@ unsigned long long A2_[9] =
     ROCRAND_MRG32K3A_A23, 0, ROCRAND_MRG32K3A_A21
 };
 
-unsigned long long A1p67[9] =
-{
-    82758667, 1871391091, 4127413238,
-    3672831523, 69195019, 1871391091,
-    3672091415, 3528743235, 69195019
-};
+unsigned long long A1p76[9] = {82758667,
+                               1871391091,
+                               4127413238,
+                               3672831523,
+                               69195019,
+                               1871391091,
+                               3672091415,
+                               3528743235,
+                               69195019};
 
-unsigned long long A2p67[9] =
-{
-    1511326704, 3759209742, 1610795712,
-    4292754251, 1511326704, 3889917532,
-    3859662829, 4292754251, 3708466080
-};
+unsigned long long A2p76[9] = {1511326704,
+                               3759209742,
+                               1610795712,
+                               4292754251,
+                               1511326704,
+                               3889917532,
+                               3859662829,
+                               4292754251,
+                               3708466080};
 
 unsigned long long A1p127[9] =
 {
@@ -98,17 +124,18 @@ void init_matrices(unsigned long long * matrix, unsigned long long * A, int n, u
 void write_matrices(std::ofstream& fout, const std::string name, unsigned long long * a, int n, int bits, bool is_device)
 {
     fout << "static const ";
-    fout << (is_device ? "__device__ " : "") << "unsigned long long " << name << "[MRG323A_N] = " << std::endl;
-    fout << "    {" << std::endl;
-    fout << "        ";
+    fout << (is_device ? "__device__ " : "") << "unsigned long long " << name << "[MRG323A_N] = {"
+         << std::endl;
+    fout << "    // clang-format off" << std::endl;
+    fout << "    ";
     for (int k = 0; k < n; k++)
     {
         fout << a[k] << ", ";
         if ((k + 1) % bits == 0 && k != 1)
-            fout  << std::endl << "        ";
+            fout << std::endl << "    ";
     }
-    fout << std::endl;
-    fout << "    };" << std::endl;
+    fout << "// clang-format on" << std::endl;
+    fout << "};" << std::endl;
     fout << std::endl;
 }
 
@@ -125,20 +152,20 @@ int main(int argc, char const *argv[])
     unsigned int MRG323A_N = MRG323A_DIM * 9;
     unsigned long long * A1 = new unsigned long long[MRG323A_N];
     unsigned long long * A2 = new unsigned long long[MRG323A_N];
-    unsigned long long * A1P67 = new unsigned long long[MRG323A_N];
-    unsigned long long * A2P67 = new unsigned long long[MRG323A_N];
+    unsigned long long*  A1P76       = new unsigned long long[MRG323A_N];
+    unsigned long long*  A2P76       = new unsigned long long[MRG323A_N];
     unsigned long long * A1P127 = new unsigned long long[MRG323A_N];
     unsigned long long * A2P127 = new unsigned long long[MRG323A_N];
 
     init_matrices(A1, A1_, MRG323A_DIM, ROCRAND_MRG32K3A_M1);
     init_matrices(A2, A2_, MRG323A_DIM, ROCRAND_MRG32K3A_M2);
-    init_matrices(A1P67, A1p67, MRG323A_DIM, ROCRAND_MRG32K3A_M1);
-    init_matrices(A2P67, A2p67, MRG323A_DIM, ROCRAND_MRG32K3A_M2);
+    init_matrices(A1P76, A1p76, MRG323A_DIM, ROCRAND_MRG32K3A_M1);
+    init_matrices(A2P76, A2p76, MRG323A_DIM, ROCRAND_MRG32K3A_M2);
     init_matrices(A1P127, A1p127, MRG323A_DIM, ROCRAND_MRG32K3A_M1);
     init_matrices(A2P127, A2p127, MRG323A_DIM, ROCRAND_MRG32K3A_M2);
     const std::string file_path(argv[1]);
     std::ofstream fout(file_path, std::ios_base::out | std::ios_base::trunc);
-    fout << R"(// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+    fout << R"(// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -174,10 +201,10 @@ int main(int argc, char const *argv[])
     write_matrices(fout, "h_A1", A1, MRG323A_N, 9, false);
     write_matrices(fout, "d_A2", A2, MRG323A_N, 9, true);
     write_matrices(fout, "h_A2", A2, MRG323A_N, 9, false);
-    write_matrices(fout, "d_A1P67", A1P67, MRG323A_N, 9, true);
-    write_matrices(fout, "h_A1P67", A1P67, MRG323A_N, 9, false);
-    write_matrices(fout, "d_A2P67", A2P67, MRG323A_N, 9, true);
-    write_matrices(fout, "h_A2P67", A2P67, MRG323A_N, 9, false);
+    write_matrices(fout, "d_A1P76", A1P76, MRG323A_N, 9, true);
+    write_matrices(fout, "h_A1P76", A1P76, MRG323A_N, 9, false);
+    write_matrices(fout, "d_A2P76", A2P76, MRG323A_N, 9, true);
+    write_matrices(fout, "h_A2P76", A2P76, MRG323A_N, 9, false);
     write_matrices(fout, "d_A1P127", A1P127, MRG323A_N, 9, true);
     write_matrices(fout, "h_A1P127", A1P127, MRG323A_N, 9, false);
     write_matrices(fout, "d_A2P127", A2P127, MRG323A_N, 9, true);
@@ -190,8 +217,8 @@ int main(int argc, char const *argv[])
 
     delete[] A1;
     delete[] A2;
-    delete[] A1P67;
-    delete[] A2P67;
+    delete[] A1P76;
+    delete[] A2P76;
     delete[] A1P127;
     delete[] A2P127;
 

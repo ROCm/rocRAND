@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -74,9 +74,6 @@ public:
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
         #endif
-
-        FQUALIFIERS
-        ~mrg32k3a_state() { }
     };
 
     FQUALIFIERS
@@ -92,7 +89,7 @@ public:
     /// New seed value should not be zero. If \p seed_value is equal
     /// zero, value \p ROCRAND_MRG32K3A_DEFAULT_SEED is used instead.
     ///
-    /// A subsequence is 2^67 numbers long.
+    /// A subsequence is 2^76 numbers long.
     FQUALIFIERS
     mrg32k3a_engine(const unsigned long long seed,
                     const unsigned long long subsequence,
@@ -101,9 +98,6 @@ public:
         this->seed(seed, subsequence, offset);
     }
 
-    FQUALIFIERS
-    ~mrg32k3a_engine() { }
-
     /// Reinitializes the internal state of the PRNG using new
     /// seed value \p seed_value, skips \p subsequence subsequences
     /// and \p offset random numbers.
@@ -111,7 +105,7 @@ public:
     /// New seed value should not be zero. If \p seed_value is equal
     /// zero, value \p ROCRAND_MRG32K3A_DEFAULT_SEED is used instead.
     ///
-    /// A subsequence is 2^67 numbers long.
+    /// A subsequence is 2^76 numbers long.
     FQUALIFIERS
     void seed(unsigned long long seed_value,
               const unsigned long long subsequence,
@@ -140,7 +134,7 @@ public:
     }
 
     /// Advances the internal state to skip \p subsequence subsequences.
-    /// A subsequence is 2^67 numbers long.
+    /// A subsequence is 2^76 numbers long.
     FQUALIFIERS
     void discard_subsequence(unsigned long long subsequence)
     {
@@ -229,11 +223,11 @@ protected:
         while(subsequence > 0) {
             if (subsequence & 1) {
                 #if defined(__HIP_DEVICE_COMPILE__)
-                mod_mat_vec_m1(d_A1P67 + i, m_state.g1);
-                mod_mat_vec_m2(d_A2P67 + i, m_state.g2);
+                mod_mat_vec_m1(d_A1P76 + i, m_state.g1);
+                mod_mat_vec_m2(d_A2P76 + i, m_state.g2);
                 #else
-                mod_mat_vec_m1(h_A1P67 + i, m_state.g1);
-                mod_mat_vec_m2(h_A2P67 + i, m_state.g2);
+                mod_mat_vec_m1(h_A1P76 + i, m_state.g1);
+                mod_mat_vec_m2(h_A2P76 + i, m_state.g2);
                 #endif
             }
             subsequence >>= 1;
@@ -472,7 +466,7 @@ void skipahead(unsigned long long offset, rocrand_state_mrg32k3a * state)
  * \brief Updates MRG32K3A state to skip ahead by \p subsequence subsequences.
  *
  * Updates the MRG32K3A state in \p state to skip ahead by \p subsequence subsequences.
- * Each subsequence is 2^67 numbers long.
+ * Each subsequence is 2^76 numbers long.
  *
  * \param subsequence - Number of subsequences to skip
  * \param state - Pointer to state to update

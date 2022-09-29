@@ -12,22 +12,26 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 ## Supported Random Number Generators
 
 * XORWOW
+* MRG31k3p
 * MRG32k3a
 * Mersenne Twister for Graphic Processors (MTGP32)
 * Philox (4x32, 10 rounds)
+* LFSR113
 * Sobol32
+* Scrambled Sobol32
+* Sobol64
+* Scrambled Sobol64
 
 ## Requirements
 
-* Git
-* cmake (3.16 or later)
+* CMake (3.16 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
   * [ROCm](https://rocm.github.io/install.html) (1.7 or later)
   * [HIP-clang](https://github.com/ROCm-Developer-Tools/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
     set as C++ compiler on ROCm platform.
 * For CUDA platforms:
-  * [HIP](https://github.com/ROCm-Developer-Tools/HIP) (hcc is not required)
+  * [HIP](https://github.com/ROCm-Developer-Tools/HIP)
   * Latest CUDA SDK
 * Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
@@ -58,7 +62,7 @@ cd rocRAND; mkdir build; cd build
 # Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_SHARED_LIBS (on by default)
 #
 # ! IMPORTANT !
-# Set C++ compiler to HCC or HIP-clang. You can do it by adding 'CXX=<path-to-compiler>'
+# Set C++ compiler to HIP-clang. You can do it by adding 'CXX=<path-to-compiler>'
 # before 'cmake' or setting cmake option 'CMAKE_CXX_COMPILER' to path to the compiler.
 #
 # The python interface do not work with static library.
@@ -72,8 +76,6 @@ cd rocRAND; mkdir build; cd build
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
-# For ROCM-1.6, if a HCC runtime error is caught, consider setting
-# HCC_AMDGPU_TARGET=<arch> in front of make as a workaround
 make -j4
 
 # Optionally, run tests if they're enabled
@@ -124,15 +126,28 @@ ctest
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
-# To run benchmark for generate functions:
-# engine -> all, xorwow, mrg32k3a, mtgp32, philox, sobol32
-# distribution -> all, uniform-uint, uniform-float, uniform-double, normal-float, normal-double,
-#                 log-normal-float, log-normal-double, poisson
+# To run benchmark for the host generate functions:
+# The benchmarks are registered with Google Benchmark as `device_generate<engine,distribution>`, where
+# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+#           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
+# distribution -> uniform-uint, uniform-uchar, uniform-ushort, 
+#                 uniform-half, uniform-float, uniform-double, 
+#                 normal-half, normal-float, normal-double,
+#                 log-normal-half, log-normal-float, log-normal-double, poisson
 # Further option can be found using --help
-./benchmark/benchmark_rocrand_generate --engine <engine> --dis <distribution>
+./benchmark/benchmark_rocrand_host_api
+# To run specific benchmarks:
+./benchmark/benchmark_rocrand_host_api --benchmark_filter=<regex>
+# For example to run benchmarks with engine sobol64:
+./benchmark_rocrand_host_api --benchmark_filter="device_generate<sobol64*"
+# To view all registered benchmarks:
+./benchmark_rocrand_host_api --benchmark_list_tests=true
+# The benchmark also supports user input:
+./benchmark_rocrand_host_api --size <number> --trials <number> --offset <number> --dimensions <number> --lambda <float float float ...>
 
 # To run benchmark for device kernel functions:
-# engine -> all, xorwow, mrg32k3a, mtgp32, philox, sobol32
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+#           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> all, uniform-uint, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson, discrete-poisson, discrete-custom
 # further option can be found using --help
@@ -143,6 +158,14 @@ cd rocRAND; cd build
 ./benchmark/benchmark_curand_kernel --engine <engine> --dis <distribution>
 ```
 
+### Legacy benchmarks
+
+The legacy benchmarks (before the move to using googlebenchmark) can be disabled by setting the
+cmake option `BUILD_LEGACY_BENCHMARK` to `OFF`. For compatibility, this settings defaults to `ON`
+when `BUILD_BENCHMARK` is set.
+The legacy benchmarks are deprecated and will be removed in a future version once all benchmarks are
+migrated to the new framework.
+
 ## Running Statistical Tests
 
 ```
@@ -151,7 +174,8 @@ cd rocRAND; cd build
 
 # To run Pearson Chi-squared and Anderson-Darling tests, which verify
 # that distribution of random number agrees with the requested distribution:
-# engine -> all, xorwow, mrg32k3a, mtgp32, philox, sobol32
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+#           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> all, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson
 ./test/stat_test_rocrand_generate --engine <engine> --dis <distribution>

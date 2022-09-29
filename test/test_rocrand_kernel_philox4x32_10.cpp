@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <cmath>
+#include <type_traits>
 
 #include <hip/hip_runtime.h>
 
@@ -188,8 +189,20 @@ void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_d
 
 TEST(rocrand_kernel_philox4x32_10, rocrand_state_philox4x32_10_type)
 {
-    EXPECT_EQ(sizeof(rocrand_state_philox4x32_10), 16 * sizeof(float));
-    EXPECT_EQ(sizeof(rocrand_state_philox4x32_10[32]), 32 * sizeof(rocrand_state_philox4x32_10));
+    typedef rocrand_state_philox4x32_10 state_type;
+    EXPECT_EQ(sizeof(state_type), 16 * sizeof(float));
+    EXPECT_EQ(sizeof(state_type[32]), 32 * sizeof(state_type));
+    EXPECT_TRUE(std::is_trivially_destructible<uint2>::value);
+    EXPECT_TRUE(std::is_trivially_destructible<uint4>::value);
+    EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
+}
+
+TEST(rocrand_kernel_philox4x32_10, DISABLED_rocrand_state_philox4x32_10_copyable)
+{
+    typedef rocrand_state_philox4x32_10 state_type;
+    EXPECT_TRUE(std::is_trivially_copyable<uint2>::value);
+    EXPECT_TRUE(std::is_trivially_copyable<uint4>::value);
+    EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);
 }
 
 TEST(rocrand_kernel_philox4x32_10, rocrand_init)

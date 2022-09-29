@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -80,19 +80,15 @@ public:
     sobol64_engine() { }
 
     FQUALIFIERS
-    sobol64_engine(const unsigned long long int * vectors,
-                   const unsigned int offset)
+    sobol64_engine(const unsigned long long int* vectors, const unsigned long long int offset)
         : m_state(0, 0, vectors)
     {
         discard_state(offset);
     }
 
-    FQUALIFIERS
-    ~sobol64_engine() { }
-
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS
-    void discard(unsigned int offset)
+    void discard(unsigned long long int offset)
     {
         discard_state(offset);
     }
@@ -105,7 +101,7 @@ public:
 
     /// Advances the internal state by stride times, where stride is power of 2
     FQUALIFIERS
-    void discard_stride(unsigned int stride)
+    void discard_stride(unsigned long long int stride)
     {
         discard_state_power2(stride);
     }
@@ -257,7 +253,7 @@ unsigned long long int rocrand(rocrand_state_sobol64 * state)
  * \param state - Pointer to state to update
  */
 FQUALIFIERS
-void skipahead(unsigned int offset, rocrand_state_sobol64 * state)
+void skipahead(unsigned long long int offset, rocrand_state_sobol64* state)
 {
     return state->discard(offset);
 }

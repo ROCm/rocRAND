@@ -24,6 +24,16 @@ configure_file(
     @ONLY
 )
 
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
+    rocm_wrap_header_file(
+        rocrand_version.h
+        GUARDS SYMLINK WRAPPER
+        WRAPPER_LOCATIONS include rocrand/include
+        OUTPUT_LOCATIONS library/include library/rocrand/include
+        HEADER_LOCATION include/rocrand
+    )
+endif()
+
 add_library(rocrand ${rocRAND_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
 
@@ -60,27 +70,6 @@ rocm_install(
         "${CMAKE_BINARY_DIR}/library/include"
 )
 
-# Create symlinks
-if(WIN32)
-    set(SYMLINK_COMMAND "file(COPY \${SRC} DESTINATION \${DEST_DIR})" )
-else()
-    set(SYMLINK_COMMAND "execute_process(COMMAND ln -sf \${SRC_REL} \${DEST})" )
-endif()
-set(INSTALL_SYMLINK_COMMAND "
-    set(SRC_DIR \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/include/rocrand)
-    file(GLOB_RECURSE FILES RELATIVE \${SRC_DIR} \${SRC_DIR}/*)
-    foreach(FILE \${FILES})
-        set(SRC \${SRC_DIR}/\${FILE})
-        set(DEST \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/rocrand/include/\${FILE})
-        get_filename_component(DEST_DIR \${DEST} DIRECTORY)
-        file(MAKE_DIRECTORY \${DEST_DIR})
-        file(RELATIVE_PATH SRC_REL \${DEST_DIR} \${SRC})
-        message(STATUS \"symlink: \${SRC_REL} -> \${DEST}\")
-        ${SYMLINK_COMMAND}
-    endforeach()
-")
-rocm_install(CODE "${INSTALL_SYMLINK_COMMAND}")
-
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
 configure_file(
     src/rocrand-fortran-config.cmake.in
@@ -103,70 +92,37 @@ else()
     )
 endif()
 
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
+    rocm_install(
+        DIRECTORY "${PROJECT_BINARY_DIR}/library/rocrand"
+        DESTINATION "."
+    )
+endif()
+
 # install library to C:\hipSDK\bin
 if (WIN32)
     install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
     if (BUILD_TEST)
-        install (TARGETS rocrand DESTINATION "${PROJECT_BINARY_DIR}/test")
+	    add_custom_command(
+		    TARGET rocrand 
+		    POST_BUILD
+		    COMMAND ${CMAKE_COMMAND} -E copy
+			    $<TARGET_FILE:rocrand>
+			    ${PROJECT_BINARY_DIR}/test/$<TARGET_FILE_NAME:rocrand>
+	    )
     endif()
+    if (BUILD_BENCHMARK)
+	    add_custom_command(
+		    TARGET rocrand 
+		    POST_BUILD
+		    COMMAND ${CMAKE_COMMAND} -E copy
+			    $<TARGET_FILE:rocrand>
+			    ${PROJECT_BINARY_DIR}/benchmark/$<TARGET_FILE_NAME:rocrand>
+	    )
+    endif()	
 endif()
 
 # Fortran wrappers for hipRAND and rocRAND
 if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()
-
-# Package (make package)
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt")
-if(WIN32)
-    set(CPACK_SOURCE_GENERATOR "ZIP")
-    set(CPACK_GENERATOR "ZIP")
-    set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE)
-    set(INSTALL_PREFIX "C:/hipSDK")
-    set(CPACK_SET_DESTDIR OFF)
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK")
-    set(CPACK_PACKAGING_INSTALL_PREFIX "")
-    set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
-else()
-    if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
-        set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-    endif()
-endif()
-
-if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
-    rocm_package_add_dependencies("hip-rocclr >= 3.5.0")
-elseif( HIP_RUNTIME STREQUAL "cuda" )
-    rocm_package_add_dependencies("hip-nvcc >= 3.5.0")
-endif( )
-
-set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include")
-
-if(HIP_COMPILER STREQUAL "nvcc")
-    set(package_name rocrand-alt)
-else()
-    set(package_name rocrand)
-endif()
-
-set(ROCRAND_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
-
-if(WIN32)
-    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" OFF)
-else()
-    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" ON)
-endif()
-if(BUILD_HIPRAND)
-    if(EXISTS ${CMAKE_SOURCE_DIR}/hipRAND/CMakeLists.txt)
-        set(HIPRAND_SUBMODULE ON CACHE BOOL "Build hipRAND as a submodule of rocRAND." FORCE)
-        add_subdirectory(${CMAKE_SOURCE_DIR}/hipRAND ${CMAKE_BINARY_DIR}/hipRAND)
-    else()
-        message(FATAL_ERROR "BUILD_HIPRAND was set, but the hipRAND submodule could not be found. Use git submodule update --init to clone the hipRAND submodule, or set BUILD_HIPRAND to OFF (--no-hiprand flag for ./install)")
-    endif()
-endif()
-
-rocm_create_package(
-    NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute RAND library"
-    MAINTAINER "rocRAND Maintainer <hiprand-maintainer@amd.com>"
-    LDCONFIG
-    # LDCONFIG_DIR ${ROCRAND_CONFIG_DIR}
-)

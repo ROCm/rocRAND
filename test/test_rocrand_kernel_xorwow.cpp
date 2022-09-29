@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <cmath>
+#include <type_traits>
 
 #include <hip/hip_runtime.h>
 
@@ -35,7 +36,7 @@
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // Causes errors on MI200/HIP on Windows gfx1030
 void rocrand_init_kernel(GeneratorState * states,
                          const size_t states_size,
                          unsigned long long seed,
@@ -53,7 +54,7 @@ void rocrand_init_kernel(GeneratorState * states,
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // Causes errors on MI200/HIP on Windows gfx1030
 void rocrand_kernel(unsigned int * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -73,7 +74,7 @@ void rocrand_kernel(unsigned int * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // Causes errors on MI200/HIP on Windows gfx1030
 void rocrand_uniform_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -93,7 +94,7 @@ void rocrand_uniform_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // Causes errors on MI200/HIP on Windows gfx1030
 void rocrand_normal_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -118,7 +119,7 @@ void rocrand_normal_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // Causes errors on MI200/HIP on Windows gfx1030
 void rocrand_log_normal_kernel(float * output, const size_t size)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -143,7 +144,7 @@ void rocrand_log_normal_kernel(float * output, const size_t size)
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // Causes errors on MI200/HIP on Windows gfx1030
 void rocrand_poisson_kernel(unsigned int * output, const size_t size, double lambda)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -163,7 +164,7 @@ void rocrand_poisson_kernel(unsigned int * output, const size_t size, double lam
 
 template <class GeneratorState>
 __global__
-__launch_bounds__(64)
+// __launch_bounds__(64) // Causes errors on MI200/HIP on Windows gfx1030
 void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_discrete_distribution discrete_distribution)
 {
     const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -183,8 +184,11 @@ void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_d
 
 TEST(rocrand_kernel_xorwow, rocrand_state_xorwow_type)
 {
-    EXPECT_EQ(sizeof(rocrand_state_xorwow), 12 * sizeof(unsigned int));
-    EXPECT_EQ(sizeof(rocrand_state_xorwow[32]), 32 * sizeof(rocrand_state_xorwow));
+    typedef rocrand_state_xorwow state_type;
+    EXPECT_EQ(sizeof(state_type), 12 * sizeof(unsigned int));
+    EXPECT_EQ(sizeof(state_type[32]), 32 * sizeof(rocrand_state_xorwow));
+    EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);
+    EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
 }
 
 TEST(rocrand_kernel_xorwow, rocrand_init)

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -95,7 +95,7 @@ void run_benchmark(const cli::Parser& parser,
     }
 
     // Warm-up
-    for (size_t i = 0; i < 5; i++)
+    for (size_t i = 0; i < 15; i++)
     {
         ROCRAND_CHECK(generate_func(generator, data, size));
     }
@@ -298,11 +298,15 @@ void run_benchmarks(const cli::Parser& parser,
 
 const std::vector<std::string> all_engines = {
     "xorwow",
+    "mrg31k3p",
     "mrg32k3a",
     "mtgp32",
     "philox",
+    "lfsr113",
     "sobol32",
+    "scrambled_sobol32",
     "sobol64",
+    "scrambled_sobol64",
 };
 
 const std::vector<std::string> all_distributions = {
@@ -421,16 +425,24 @@ int main(int argc, char *argv[])
         rng_type_t rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
         if (engine == "xorwow")
             rng_type = ROCRAND_RNG_PSEUDO_XORWOW;
+        else if(engine == "mrg31k3p")
+            rng_type = ROCRAND_RNG_PSEUDO_MRG31K3P;
         else if (engine == "mrg32k3a")
             rng_type = ROCRAND_RNG_PSEUDO_MRG32K3A;
         else if (engine == "philox")
             rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
         else if (engine == "sobol32")
             rng_type = ROCRAND_RNG_QUASI_SOBOL32;
+        else if(engine == "scrambled_sobol32")
+            rng_type = ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32;
         else if (engine == "sobol64")
             rng_type = ROCRAND_RNG_QUASI_SOBOL64;
+        else if(engine == "scrambled_sobol64")
+            rng_type = ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64;
         else if (engine == "mtgp32")
             rng_type = ROCRAND_RNG_PSEUDO_MTGP32;
+        else if(engine == "lfsr113")
+            rng_type = ROCRAND_RNG_PSEUDO_LFSR113;
         else
         {
             std::cout << "Wrong engine name" << std::endl;

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-#if __HIP_DEVICE_COMPILE__ && (defined(__HIP_PLATFORM_HCC__) || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
+#if __HIP_DEVICE_COMPILE__ && (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__) || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
 #define ROCRAND_HALF_MATH_SUPPORTED
 #endif
 
@@ -64,8 +64,7 @@ namespace detail {
       defined(__gfx906__) || \
       defined(__gfx908__) || \
       defined(__gfx909__) || \
-      defined(__gfx90a__) || \
-      defined(__gfx1030__))
+      defined(__gfx1030__) )
   #if !defined(ROCRAND_ENABLE_INLINE_ASM)
     #define ROCRAND_ENABLE_INLINE_ASM
   #endif

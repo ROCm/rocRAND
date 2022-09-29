@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -86,9 +86,6 @@ public:
     {
         discard_state(offset);
     }
-
-    FQUALIFIERS
-    ~sobol32_engine() { }
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS

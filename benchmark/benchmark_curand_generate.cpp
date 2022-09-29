@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -211,9 +211,9 @@ const std::vector<std::string> all_engines = {
     // "mt19937",
     "philox",
     "sobol32",
-    // "scrambled_sobol32",
+    "scrambled_sobol32",
     "sobol64",
-    // "scrambled_sobol64",
+    "scrambled_sobol64",
 };
 
 const std::vector<std::string> all_distributions = {

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -218,9 +218,10 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = mrg_uniform_distribution<T> >
-    rocrand_status generate(T * data, size_t data_size,
-                            Distribution distribution = Distribution())
+    template<class T,
+             class Distribution
+             = mrg_engine_uniform_distribution<T, rocrand_device::mrg32k3a_engine>>
+    rocrand_status generate(T* data, size_t data_size, Distribution distribution = Distribution())
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
@@ -248,21 +249,23 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        mrg_uniform_distribution<T> distribution;
+        mrg_engine_uniform_distribution<T, rocrand_device::mrg32k3a_engine> distribution;
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        mrg_normal_distribution<T> distribution(mean, stddev);
+        mrg_engine_normal_distribution<T, rocrand_device::mrg32k3a_engine> distribution(mean,
+                                                                                        stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        mrg_log_normal_distribution<T> distribution(mean, stddev);
+        mrg_engine_log_normal_distribution<T, rocrand_device::mrg32k3a_engine> distribution(mean,
+                                                                                            stddev);
         return generate(data, data_size, distribution);
     }
 
@@ -276,7 +279,8 @@ public:
         {
             return status;
         }
-        mrg_poisson_distribution distribution(m_poisson.dis);
+        mrg_engine_poisson_distribution<rocrand_device::mrg32k3a_engine> distribution(
+            m_poisson.dis);
         return generate(data, data_size, distribution);
     }
 

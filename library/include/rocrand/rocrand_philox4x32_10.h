@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -111,9 +111,6 @@ public:
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
         #endif
-
-        FQUALIFIERS
-        ~philox4x32_10_state() { }
     };
 
     FQUALIFIERS
@@ -134,9 +131,6 @@ public:
     {
         this->seed(seed, subsequence, offset);
     }
-
-    FQUALIFIERS
-    ~philox4x32_10_engine() { }
 
     /// Reinitializes the internal state of the PRNG using new
     /// seed value \p seed_value, skips \p subsequence subsequences
@@ -195,7 +189,7 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        #if defined(__HIP_PLATFORM_HCC__)
+        #if defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)
             unsigned int ret = m_state.result.data[m_state.substate];
         #else
             unsigned int ret = (&m_state.result.x)[m_state.substate];
@@ -272,7 +266,7 @@ protected:
     static uint4 bump_counter(uint4 counter)
     {
         counter.x++;
-        uint add = counter.x == 0 ? 1 : 0;
+        unsigned int add      = counter.x == 0 ? 1 : 0;
         counter.y += add; add = counter.y == 0 ? add : 0;
         counter.z += add; add = counter.z == 0 ? add : 0;
         counter.w += add;
