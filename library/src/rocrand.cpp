@@ -1366,6 +1366,95 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset)
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
+rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocrand_ordering order)
+{
+    if(generator == NULL)
+    {
+        return ROCRAND_STATUS_NOT_CREATED;
+    }
+
+    if(order != ROCRAND_ORDERING_PSEUDO_DEFAULT && order != ROCRAND_ORDERING_PSEUDO_LEGACY
+       && order != ROCRAND_ORDERING_QUASI_DEFAULT)
+    {
+        return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+
+    const bool pseudo_type = order != ROCRAND_ORDERING_QUASI_DEFAULT;
+
+    if(generator->rng_type == ROCRAND_RNG_PSEUDO_PHILOX4_32_10)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_philox4x32_10*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_mrg31k3p*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_mrg32k3a*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_XORWOW)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_xorwow*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
+    {
+        if(pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_sobol32*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32)
+    {
+        if(pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_scrambled_sobol32*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
+    {
+        if(pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_sobol64*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64)
+    {
+        if(pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_scrambled_sobol64*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MTGP32)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_mtgp32*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_LFSR113)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_lfsr113*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    return ROCRAND_STATUS_TYPE_ERROR;
+}
+
 rocrand_status ROCRANDAPI
 rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
                                               unsigned int dimensions)
