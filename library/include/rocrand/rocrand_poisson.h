@@ -41,8 +41,11 @@
 #include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_threefry2x32_20.h"
+#include "rocrand/rocrand_threefry2x64_20.h"
+#include "rocrand/rocrand_threefry4x32_20.h"
+#include "rocrand/rocrand_threefry4x64_20.h"
 #include "rocrand/rocrand_xorwow.h"
-#include "rocrand/rocrand_threefry.h"
 
 #include "rocrand/rocrand_normal.h"
 #include "rocrand/rocrand_uniform.h"
@@ -451,7 +454,58 @@ unsigned int rocrand_poisson(rocrand_state_lfsr113* state, double lambda)
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
 FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_threefry * state, double lambda)
+unsigned int rocrand_poisson(rocrand_state_threefry2x32_20* state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
+}
+
+/**
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using ThreeFry generator.
+ *
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using ThreeFry generator in \p state. State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ * \param lambda - Lambda parameter of the Poisson distribution
+ *
+ * \return Poisson-distributed <tt>unsigned int</tt>
+ */
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_threefry2x64_20* state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
+}
+
+/**
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using ThreeFry generator.
+ *
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using ThreeFry generator in \p state. State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ * \param lambda - Lambda parameter of the Poisson distribution
+ *
+ * \return Poisson-distributed <tt>unsigned int</tt>
+ */
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_threefry4x32_20* state, double lambda)
+{
+    return rocrand_device::detail::poisson_distribution_inv(state, lambda);
+}
+
+/**
+ * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using ThreeFry generator.
+ *
+ * Generates and returns Poisson-distributed distributed random <tt>unsigned int</tt>
+ * values using ThreeFry generator in \p state. State is incremented by one position.
+ *
+ * \param state - Pointer to a state to use
+ * \param lambda - Lambda parameter of the Poisson distribution
+ *
+ * \return Poisson-distributed <tt>unsigned int</tt>
+ */
+FQUALIFIERS
+unsigned int rocrand_poisson(rocrand_state_threefry4x64_20* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }

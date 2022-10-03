@@ -29,6 +29,10 @@ module rocrand_m
     integer, public :: ROCRAND_RNG_PSEUDO_MRG31K3P = 405
     integer, public :: ROCRAND_RNG_PSEUDO_LFSR113 = 406
     integer, public :: ROCRAND_RNG_PSEUDO_MT19937 = 407
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY2_32_20 = 408
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY2_64_20 = 409
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY4_32_20 = 410
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY4_64_20 = 411
     integer, public :: ROCRAND_RNG_QUASI_DEFAULT = 500
     integer, public :: ROCRAND_RNG_QUASI_SOBOL32 = 501
     integer, public :: ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502

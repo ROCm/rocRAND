@@ -317,6 +317,10 @@ const std::vector<std::string> all_engines = {
     "philox",
     "lfsr113",
     "mt19937",
+    "threefry2x32",
+    "threefry2x64",
+    "threefry4x32",
+    "threefry4x64",
     "sobol32",
     "scrambled_sobol32",
     "sobol64",
@@ -445,6 +449,14 @@ int main(int argc, char *argv[])
             rng_type = ROCRAND_RNG_PSEUDO_MRG32K3A;
         else if (engine == "philox")
             rng_type = ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
+        else if(engine == "threefry2x32")
+            rng_type = ROCRAND_RNG_PSEUDO_THREEFRY2_32_20;
+        else if(engine == "threefry2x64")
+            rng_type = ROCRAND_RNG_PSEUDO_THREEFRY2_64_20;
+        else if(engine == "threefry4x32")
+            rng_type = ROCRAND_RNG_PSEUDO_THREEFRY4_32_20;
+        else if(engine == "threefry4x64")
+            rng_type = ROCRAND_RNG_PSEUDO_THREEFRY4_64_20;
         else if (engine == "sobol32")
             rng_type = ROCRAND_RNG_QUASI_SOBOL32;
         else if(engine == "scrambled_sobol32")

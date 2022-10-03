@@ -873,7 +873,10 @@ const std::vector<std::string> all_engines = {"xorwow",
                                               "mtgp32",
                                               // "mt19937",
                                               "philox",
-                                              "threefry",
+                                              "threefry2x32",
+                                              "threefry2x64",
+                                              "threefry4x32",
+                                              "threefry4x64",
                                               "sobol32",
                                               "scrambled_sobol32",
                                               "sobol64",
@@ -1034,9 +1037,21 @@ int main(int argc, char *argv[])
             {
                 run_benchmarks<rocrand_state_lfsr113>(parser, distribution, engine, stream);
             }
-            else if (engine == "threefry")
+            else if(engine == "threefry2x32")
             {
-                run_benchmarks<rocrand_state_threefry>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_threefry2x32_20>(parser, distribution, stream);
+            }
+            else if(engine == "threefry2x64")
+            {
+                run_benchmarks<rocrand_state_threefry2x64_20>(parser, distribution, stream);
+            }
+            else if(engine == "threefry4x32")
+            {
+                run_benchmarks<rocrand_state_threefry4x32_20>(parser, distribution, stream);
+            }
+            else if(engine == "threefry4x64")
+            {
+                run_benchmarks<rocrand_state_threefry4x64_20>(parser, distribution, stream);
             }
         }
         std::cout << std::endl;

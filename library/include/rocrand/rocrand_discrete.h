@@ -36,8 +36,11 @@
 #include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_threefry2x32_20.h"
+#include "rocrand/rocrand_threefry2x64_20.h"
+#include "rocrand/rocrand_threefry4x32_20.h"
+#include "rocrand/rocrand_threefry4x64_20.h"
 #include "rocrand/rocrand_xorwow.h"
-#include "rocrand/rocrand_threefry.h"
 
 #include "rocrand/rocrand_discrete_types.h"
 #include "rocrand/rocrand_normal.h"
@@ -373,7 +376,65 @@ unsigned int rocrand_discrete(rocrand_state_lfsr113*              state,
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
 FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_threefry * state, const rocrand_discrete_distribution discrete_distribution)
+unsigned int rocrand_discrete(rocrand_state_threefry2x32_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
+ *
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using ThreeFry generator in \p state, and increments
+ * the position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ * \param discrete_distribution - Related discrete distribution
+ *
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned int rocrand_discrete(rocrand_state_threefry2x64_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
+ *
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using ThreeFry generator in \p state, and increments
+ * the position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ * \param discrete_distribution - Related discrete distribution
+ *
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned int rocrand_discrete(rocrand_state_threefry4x32_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
+{
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+}
+
+/**
+ * \brief Returns a discrete distributed <tt>unsigned int</tt> value.
+ *
+ * Returns a <tt>unsigned int</tt> distributed according to with discrete distribution
+ * \p discrete_distribution using ThreeFry generator in \p state, and increments
+ * the position of the generator by one.
+ *
+ * \param state - Pointer to a state to use
+ * \param discrete_distribution - Related discrete distribution
+ *
+ * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
+ */
+FQUALIFIERS
+unsigned int rocrand_discrete(rocrand_state_threefry4x64_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }

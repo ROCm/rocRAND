@@ -31,7 +31,10 @@
 #include "scrambled_sobol64.hpp"
 #include "sobol32.hpp"
 #include "sobol64.hpp"
+#include "threefry2x32_20.hpp"
+#include "threefry2x64_20.hpp"
+#include "threefry4x32_20.hpp"
+#include "threefry4x64_20.hpp"
 #include "xorwow.hpp"
-#include "threefry.hpp"
 
 #endif // ROCRAND_RNG_GENERATORS_H_
