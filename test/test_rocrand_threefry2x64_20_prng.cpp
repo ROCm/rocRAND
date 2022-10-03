@@ -256,12 +256,14 @@ TEST(rocrand_threefry_prng_state_tests, discard_test)
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
 
-    engine.discard(ULLONG_MAX * 2ULL);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
     EXPECT_EQ(state.counter.x, ULLONG_MAX);
     EXPECT_EQ(state.counter.y, 0ULL);
 
-    engine.discard(ULLONG_MAX * 2ULL);
-    EXPECT_EQ(state.counter.x, ULLONG_MAX - 1);
+    engine.discard(ULLONG_MAX - 1ULL);
+    engine.discard(ULLONG_MAX - 1ULL);
+    EXPECT_EQ(state.counter.x, ULLONG_MAX - 1ULL);
     EXPECT_EQ(state.counter.y, 1ULL);
 
     engine.discard(2 * 2ULL);
@@ -282,9 +284,9 @@ TEST(rocrand_threefry_prng_state_tests, discard_test)
 
     state.counter.x = ULLONG_MAX - 1;
     state.counter.y = 2;
-    engine.discard(2);
+    engine.discard(2ULL);
     engine.discard(ULLONG_MAX);
-    engine.discard(1);
+    engine.discard(2ULL);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 4ULL);
 }

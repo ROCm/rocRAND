@@ -34,6 +34,19 @@
 
 namespace rocrand_host {
 namespace detail {
+
+    template<class T>
+    constexpr int max_input_width()
+    {
+        return 4;
+    };
+
+    template<>
+    constexpr int max_input_width<double>()
+    {
+        return 2;
+    };
+
     struct threefry2x32_20_device_engine : public ::rocrand_device::threefry2x32_20_engine
     {
         typedef ::rocrand_device::threefry2x32_20_engine base_type;
@@ -83,8 +96,8 @@ namespace detail {
         constexpr unsigned int input_width = Distribution::input_width;
         constexpr unsigned int output_width = Distribution::output_width;
 
-        static_assert(4 % input_width == 0 && input_width <= 4, "Incorrect input_width");
-        constexpr unsigned int output_per_thread = 4 / input_width;
+        static_assert(2 % input_width == 0 && input_width <= 2, "Incorrect input_width");
+        constexpr unsigned int output_per_thread = 2 / input_width;
         constexpr unsigned int full_output_width = output_per_thread * output_width;
 
         using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
@@ -104,7 +117,7 @@ namespace detail {
         const unsigned int tail_size = (n - head_size) % full_output_width;
         const size_t vec_n = (n - head_size) / full_output_width;
 
-        const unsigned int engine_offset = 4 * thread_id + (thread_id == 0 ? 0 : head_size);
+        const unsigned int engine_offset = 2 * thread_id + (thread_id == 0 ? 0 : head_size);
         engine.discard(engine_offset);
 
         // If data is not aligned by sizeof(vec_type)
@@ -132,9 +145,8 @@ namespace detail {
         size_t index = thread_id;
         while(index < vec_n)
         {
-            const uint2 v1 = engine.next2_leap(stride);
-            const uint2 v2 = engine.next2_leap(stride);
-            const unsigned int vs[4] = { v1.x, v1.y, v2.x, v2.y };
+            const uint2 v = engine.next2_leap(stride);
+            const unsigned int vs[2] = { v.x, v.y };
             for(unsigned int s = 0; s < output_per_thread; s++)
             {
                 for(unsigned int i = 0; i < input_width; i++)
@@ -145,7 +157,7 @@ namespace detail {
             }
             vec_data[index] = *reinterpret_cast<vec_type *>(output);
             // Next position
-            index += stride * 2;
+            index += stride;
         }
 
         // Check if we need to save tail.
@@ -255,14 +267,14 @@ public:
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        normal_distribution<T> distribution(mean, stddev);
+        normal_distribution<T, unsigned int, rocrand_host::detail::max_input_width<T>()> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        log_normal_distribution<T> distribution(mean, stddev);
+        log_normal_distribution<T, unsigned int, rocrand_host::detail::max_input_width<T>()> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 

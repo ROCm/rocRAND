@@ -209,7 +209,7 @@ rocrand_generate(rocrand_generator generator,
  *
  * \param generator - Generator to use
  * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of 32-bit unsigned integers to generate
+ * \param n - Number of 64-bit unsigned integers to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n

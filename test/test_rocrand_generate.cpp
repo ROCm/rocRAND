@@ -33,9 +33,6 @@ TEST_P(rocrand_generate_tests, int_test)
 {
     const rocrand_rng_type rng_type = GetParam();
 
-    if( rng_type == ROCRAND_RNG_PSEUDO_THREEFRY2_64_20 ||  rng_type == ROCRAND_RNG_PSEUDO_THREEFRY4_64_20)
-        GTEST_SKIP();
-
     rocrand_generator generator;
     ROCRAND_CHECK(
         rocrand_create_generator(
@@ -74,7 +71,10 @@ TEST_P(rocrand_generate_tests, longlong_test)
 {
     const rocrand_rng_type rng_type = GetParam();
 
-    if( rng_type != ROCRAND_RNG_PSEUDO_THREEFRY2_64_20 && rng_type != ROCRAND_RNG_PSEUDO_THREEFRY4_64_20)
+    if( rng_type != ROCRAND_RNG_PSEUDO_THREEFRY2_64_20 &&
+        rng_type != ROCRAND_RNG_PSEUDO_THREEFRY4_64_20 &&
+        rng_type != ROCRAND_RNG_QUASI_SOBOL64 &&
+        rng_type != ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 )
         GTEST_SKIP();
 
     rocrand_generator generator;

@@ -216,7 +216,7 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = uniform_distribution_64<T> >
+    template<class T, class Distribution = uniform_distribution<T, unsigned long long> >
     rocrand_status generate(T * data, size_t data_size,
                             Distribution distribution = Distribution())
     {
@@ -246,21 +246,21 @@ public:
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
-        uniform_distribution_64<T> distribution;
+        uniform_distribution<T, unsigned long long> distribution;
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        normal_distribution_64<T> distribution(mean, stddev);
+        normal_distribution<T, unsigned long long> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T * data, size_t data_size, T mean, T stddev)
     {
-        log_normal_distribution_64<T> distribution(mean, stddev);
+        log_normal_distribution<T, unsigned long long>  distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 

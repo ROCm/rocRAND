@@ -76,19 +76,7 @@ float2 box_muller(unsigned long long v)
     unsigned int x = static_cast<unsigned int>(v);
     unsigned int y = static_cast<unsigned int>(v>>32);
 
-    float2 result;
-    float u = ROCRAND_2POW32_INV + (x * ROCRAND_2POW32_INV);
-    float w = ROCRAND_2POW32_INV_2PI + (y * ROCRAND_2POW32_INV_2PI);
-    float s = sqrtf(-2.0f * logf(u));
-    #ifdef __HIP_DEVICE_COMPILE__
-        __sincosf(w, &result.x, &result.y);
-        result.x *= s;
-        result.y *= s;
-    #else
-        result.x = sinf(w) * s;
-        result.y = cosf(w) * s;
-    #endif
-    return result;
+    return box_muller(x, y);
 }
 
 FQUALIFIERS
@@ -117,22 +105,12 @@ double2 box_muller_double(uint4 v)
 FQUALIFIERS
 double2 box_muller_double(ulonglong2 v)
 {
-    double2 result;
-    unsigned long long int v1 = v.x>>11;
-    double u = ROCRAND_2POW53_INV_DOUBLE + (v1 * ROCRAND_2POW53_INV_DOUBLE);
-    unsigned long long int v2 = v.y>>11;
-    double w = (ROCRAND_2POW53_INV_DOUBLE * 2.0) +
-        (v2 * (ROCRAND_2POW53_INV_DOUBLE * 2.0));
-    double s = sqrt(-2.0 * log(u));
-    #ifdef __HIP_DEVICE_COMPILE__
-        sincospi(w, &result.x, &result.y);
-        result.x *= s;
-        result.y *= s;
-    #else
-        result.x = sin(w * ROCRAND_PI_DOUBLE) * s;
-        result.y = cos(w * ROCRAND_PI_DOUBLE) * s;
-    #endif
-    return result;
+    unsigned int x = static_cast<unsigned int>(v.x);
+    unsigned int y = static_cast<unsigned int>(v.x>>32);
+    unsigned int z = static_cast<unsigned int>(v.y);
+    unsigned int w = static_cast<unsigned int>(v.y>>32);
+
+    return box_muller_double( make_uint4(x, y, z, w) );
 }
 
 FQUALIFIERS
@@ -1325,13 +1303,7 @@ double rocrand_normal_double(rocrand_state_threefry2x64_20* state)
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_threefry2x64_20* state)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-    auto state3 = rocrand(state);
-    auto state4 = rocrand(state);
-
-    return rocrand_device::detail::normal_distribution_double2(
-        uint4{state1, state2, state3, state4});
+    return rocrand_device::detail::normal_distribution_double2(rocrand2(state));
 }
 
 /**

@@ -282,9 +282,9 @@ TEST(rocrand_threefry_prng_state_tests, discard_test)
 
     state.counter.x = UINT_MAX - 1;
     state.counter.y = 2;
-    engine.discard(4ull + UINT_MAX * 2ULL);
+    engine.discard((3ULL + UINT_MAX) * 2ULL);
     EXPECT_EQ(state.counter.x, 0U);
-    EXPECT_EQ(state.counter.y, 4U);
+    EXPECT_EQ(state.counter.y, 3U);
 }
 
 TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)

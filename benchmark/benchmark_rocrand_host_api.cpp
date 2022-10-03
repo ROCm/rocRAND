@@ -161,7 +161,6 @@ int main(int argc, char* argv[])
         {ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32"},
         {          ROCRAND_RNG_QUASI_SOBOL64,           "sobol64"},
         {ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64"},
-
     };
 
     const std::string benchmark_name_prefix = "device_generate";
