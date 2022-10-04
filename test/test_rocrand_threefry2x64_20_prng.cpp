@@ -53,7 +53,7 @@ TEST(rocrand_threefry_prng_tests, uniform_ulonglong_test)
         sum += host_data[i];
     }
     const unsigned long long mean = sum / size;
-    ASSERT_NEAR(mean, ULLONG_MAX / 2, ULLONG_MAX / 20);
+    ASSERT_NEAR(mean, static_cast<double>(ULLONG_MAX / 2), static_cast<double>(ULLONG_MAX / 20));
 
     HIP_CHECK(hipFree(data));
 }
