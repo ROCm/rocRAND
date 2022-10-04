@@ -65,7 +65,6 @@ namespace rocrand_device
 class threefry2x32_20_engine : public threefry_engine2_base<uint2, unsigned int, 20>
 {
 public:
-
     typedef threefry_engine2_base<uint2, unsigned int, 20>::threefry_state_2 threefry2x32_20_state;
 
     /// Initializes the internal state of the PRNG using
@@ -141,7 +140,7 @@ void rocrand_init(const unsigned long long       seed,
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
-unsigned int rocrand(rocrand_state_threefry2x32_20 * state)
+unsigned int rocrand(rocrand_state_threefry2x32_20* state)
 {
     return state->next();
 }
@@ -159,7 +158,7 @@ unsigned int rocrand(rocrand_state_threefry2x32_20 * state)
  * \return Two pseudorandom values (32-bit) as an <tt>uint2</tt>
  */
 FQUALIFIERS
-uint2 rocrand2(rocrand_state_threefry2x32_20 * state)
+uint2 rocrand2(rocrand_state_threefry2x32_20* state)
 {
     return state->next2();
 }

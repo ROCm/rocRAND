@@ -65,8 +65,8 @@ namespace rocrand_device
 class threefry4x64_20_engine : public threefry_engine4_base<ulonglong4, unsigned long long, 20>
 {
 public:
-
-    typedef threefry_engine4_base<ulonglong4, unsigned long long, 20>::threefry_state_4 threefry4x64_20_state;
+    typedef threefry_engine4_base<ulonglong4, unsigned long long, 20>::threefry_state_4
+        threefry4x64_20_state;
 
     /// Initializes the internal state of the PRNG using
     /// seed value \p seed, goes to \p subsequence -th subsequence,
@@ -80,7 +80,6 @@ public:
     {
         this->seed(seed, subsequence, offset);
     }
-
 
     /// Reinitializes the internal state of the PRNG using new
     /// seed value \p seed_value, skips \p subsequence subsequences
@@ -159,7 +158,7 @@ unsigned long long rocrand(rocrand_state_threefry4x64_20* state)
  * \return Four pseudorandom values (64-bit) as an <tt>ulonglong4</tt>
  */
 FQUALIFIERS
-ulonglong4 rocrand4(rocrand_state_threefry4x64_20 * state)
+ulonglong4 rocrand4(rocrand_state_threefry4x64_20* state)
 {
     return state->next4();
 }

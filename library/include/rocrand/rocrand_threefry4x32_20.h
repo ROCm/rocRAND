@@ -64,7 +64,6 @@ namespace rocrand_device
 class threefry4x32_20_engine : public threefry_engine4_base<uint4, unsigned int, 20>
 {
 public:
-
     typedef threefry_engine4_base<uint4, unsigned int, 20>::threefry_state_4 threefry4x32_20_state;
 
     /// Initializes the internal state of the PRNG using
@@ -142,7 +141,7 @@ void rocrand_init(const unsigned long long       seed,
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
 FQUALIFIERS
-unsigned int rocrand(rocrand_state_threefry4x32_20 * state)
+unsigned int rocrand(rocrand_state_threefry4x32_20* state)
 {
     return state->next();
 }
@@ -160,7 +159,7 @@ unsigned int rocrand(rocrand_state_threefry4x32_20 * state)
  * \return Four pseudorandom values (32-bit) as an <tt>uint2</tt>
  */
 FQUALIFIERS
-uint4 rocrand4(rocrand_state_threefry4x32_20 * state)
+uint4 rocrand4(rocrand_state_threefry4x32_20* state)
 {
     return state->next4();
 }

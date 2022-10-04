@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
 #include <gtest/gtest.h>
-#include <vector>
 #include <numeric>
+#include <stdio.h>
+#include <vector>
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand.h>
@@ -34,16 +34,17 @@
 
 TEST(rocrand_threefry_prng_tests, uniform_ulonglong_test)
 {
-    const size_t size = 1313;
-    unsigned long long * data;
+    const size_t        size = 1313;
+    unsigned long long* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * (size + 1)));
 
     rocrand_threefry2x64_20 g;
-    ROCRAND_CHECK(g.generate(data+1, size));
+    ROCRAND_CHECK(g.generate(data + 1, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data+1, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(host_data, data + 1, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long sum = 0;
@@ -60,7 +61,7 @@ TEST(rocrand_threefry_prng_tests, uniform_ulonglong_test)
 TEST(rocrand_threefry_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
-    float * data;
+    float*       data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_threefry2x64_20 g;
@@ -89,8 +90,8 @@ TEST(rocrand_threefry_prng_tests, uniform_float_test)
 TEST(rocrand_threefry_prng_tests, state_progress_test)
 {
     // Device data
-    const size_t size = 1025;
-    unsigned long long * data;
+    const size_t        size = 1025;
+    unsigned long long* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * size));
 
     // Generator
@@ -101,7 +102,8 @@ TEST(rocrand_threefry_prng_tests, state_progress_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long host_data1[size];
-    HIP_CHECK(hipMemcpy(host_data1, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(host_data1, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Generate using g0 and copy to host
@@ -109,13 +111,15 @@ TEST(rocrand_threefry_prng_tests, state_progress_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long host_data2[size];
-    HIP_CHECK(hipMemcpy(host_data2, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(host_data2, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     size_t same = 0;
     for(size_t i = 0; i < size; i++)
     {
-        if(host_data1[i] == host_data2[i]) same++;
+        if(host_data1[i] == host_data2[i])
+            same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -130,8 +134,8 @@ TEST(rocrand_threefry_prng_tests, same_seed_test)
     const unsigned long long seed = 0xdeadbeefdeadbeefULL;
 
     // Device side data
-    const size_t size = 1024;
-    unsigned long long * data;
+    const size_t        size = 1024;
+    unsigned long long* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * size));
 
     // Generators
@@ -145,7 +149,8 @@ TEST(rocrand_threefry_prng_tests, same_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long g0_host_data[size];
-    HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(g0_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Generate using g1 and copy to host
@@ -153,7 +158,8 @@ TEST(rocrand_threefry_prng_tests, same_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long g1_host_data[size];
-    HIP_CHECK(hipMemcpy(g1_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(g1_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Numbers generated using same generator with same
@@ -173,8 +179,8 @@ TEST(rocrand_threefry_prng_tests, different_seed_test)
     const unsigned long long seed1 = 0xbeefdeadbeefdeadULL;
 
     // Device side data
-    const size_t size = 1024;
-    unsigned long long * data;
+    const size_t        size = 1024;
+    unsigned long long* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * size));
 
     // Generators
@@ -189,7 +195,8 @@ TEST(rocrand_threefry_prng_tests, different_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long g0_host_data[size];
-    HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(g0_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Generate using g1 and copy to host
@@ -197,13 +204,15 @@ TEST(rocrand_threefry_prng_tests, different_seed_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned long long g1_host_data[size];
-    HIP_CHECK(hipMemcpy(g1_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(g1_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     size_t same = 0;
     for(size_t i = 0; i < size; i++)
     {
-        if(g1_host_data[i] == g0_host_data[i]) same++;
+        if(g1_host_data[i] == g0_host_data[i])
+            same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -219,9 +228,8 @@ TEST(rocrand_threefry_prng_tests, different_seed_test)
 class rocrand_threefry2x64_engine_type_test : public rocrand_threefry2x64_20::engine_type
 {
 public:
-
-    __host__ rocrand_threefry2x64_engine_type_test()
-        : rocrand_threefry2x64_20::engine_type(0, 0, 0) {}
+    __host__ rocrand_threefry2x64_engine_type_test() : rocrand_threefry2x64_20::engine_type(0, 0, 0)
+    {}
 
     __host__ state_type& internal_state_ref()
     {
@@ -231,7 +239,7 @@ public:
 
 TEST(rocrand_threefry_prng_state_tests, seed_test)
 {
-    rocrand_threefry2x64_engine_type_test engine;
+    rocrand_threefry2x64_engine_type_test              engine;
     rocrand_threefry2x64_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0ULL);
@@ -250,7 +258,7 @@ TEST(rocrand_threefry_prng_state_tests, seed_test)
 // random number generation.
 TEST(rocrand_threefry_prng_state_tests, discard_test)
 {
-    rocrand_threefry2x64_engine_type_test engine;
+    rocrand_threefry2x64_engine_type_test              engine;
     rocrand_threefry2x64_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0ULL);
@@ -293,7 +301,7 @@ TEST(rocrand_threefry_prng_state_tests, discard_test)
 
 TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
 {
-    rocrand_threefry2x64_engine_type_test engine;
+    rocrand_threefry2x64_engine_type_test              engine;
     rocrand_threefry2x64_engine_type_test::state_type& state = engine.internal_state_ref();
 
     engine.discard_subsequence(ULLONG_MAX);
@@ -307,10 +315,11 @@ TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
     EXPECT_EQ(state.counter.y, 457ULL);
 }
 
-template <typename T>
-class rocrand_threefry_prng_offset : public ::testing::Test {
+template<typename T>
+class rocrand_threefry_prng_offset : public ::testing::Test
+{
 public:
-  using output_type = T;
+    using output_type = T;
 };
 
 using RocrandThreefryPrngOffsetTypes = ::testing::Types<unsigned long long, float>;
@@ -318,10 +327,10 @@ TYPED_TEST_SUITE(rocrand_threefry_prng_offset, RocrandThreefryPrngOffsetTypes);
 
 TYPED_TEST(rocrand_threefry_prng_offset, offsets_test)
 {
-    using T = typename TestFixture::output_type;
+    using T           = typename TestFixture::output_type;
     const size_t size = 131313;
 
-    constexpr size_t offsets[] = { 0, 1, 4, 11, 65536, 112233 };
+    constexpr size_t offsets[] = {0, 1, 4, 11, 65536, 112233};
 
     for(const auto offset : offsets)
     {
@@ -329,8 +338,8 @@ TYPED_TEST(rocrand_threefry_prng_offset, offsets_test)
 
         const size_t size0 = size;
         const size_t size1 = (size + offset);
-        T* data0;
-        T* data1;
+        T*           data0;
+        T*           data1;
         hipMalloc(&data0, sizeof(T) * size0);
         hipMalloc(&data1, sizeof(T) * size1);
 
@@ -362,19 +371,21 @@ TYPED_TEST(rocrand_threefry_prng_offset, offsets_test)
 template<typename T, typename GenerateFunc>
 void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
 {
-    std::vector<size_t> sizes0({ 100, 1, 24783, 3, 2, 776543, 1048576 });
-    std::vector<size_t> sizes1({ 1024, 55, 65536, 623456, 30, 1048576, 111331 });
-    if (divisor > 1)
+    std::vector<size_t> sizes0({100, 1, 24783, 3, 2, 776543, 1048576});
+    std::vector<size_t> sizes1({1024, 55, 65536, 623456, 30, 1048576, 111331});
+    if(divisor > 1)
     {
-        for (size_t& s : sizes0) s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
-        for (size_t& s : sizes1) s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+        for(size_t& s : sizes0)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+        for(size_t& s : sizes1)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
     }
 
     const size_t size0 = std::accumulate(sizes0.cbegin(), sizes0.cend(), std::size_t{0});
     const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
 
-    T * data0;
-    T * data1;
+    T* data0;
+    T* data1;
     hipMalloc(&data0, sizeof(T) * size0);
     hipMalloc(&data1, sizeof(T) * size1);
 
@@ -385,23 +396,17 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
     std::vector<T> host_data1(size1);
 
     size_t current0 = 0;
-    for (size_t s : sizes0)
+    for(size_t s : sizes0)
     {
         generate_func(g0, data0, s);
-        hipMemcpy(
-            host_data0.data() + current0,
-            data0,
-            sizeof(T) * s, hipMemcpyDefault);
+        hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault);
         current0 += s;
     }
     size_t current1 = 0;
-    for (size_t s : sizes1)
+    for(size_t s : sizes1)
     {
         generate_func(g1, data1, s);
-        hipMemcpy(
-            host_data1.data() + current1,
-            data1,
-            sizeof(T) * s, hipMemcpyDefault);
+        hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault);
         current1 += s;
     }
 
@@ -416,45 +421,61 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_uint_test)
 {
-    continuity_test<unsigned long long>([](rocrand_threefry2x64_20& g, unsigned long long * data, size_t s) { g.generate(data, s); });
+    continuity_test<unsigned long long>(
+        [](rocrand_threefry2x64_20& g, unsigned long long* data, size_t s)
+        { g.generate(data, s); });
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_char_test)
 {
-    continuity_test<unsigned char>([](rocrand_threefry2x64_20& g, unsigned char * data, size_t s) { g.generate(data, s); }, 4);
+    continuity_test<unsigned char>([](rocrand_threefry2x64_20& g, unsigned char* data, size_t s)
+                                   { g.generate(data, s); },
+                                   4);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_float_test)
 {
-    continuity_test<float>([](rocrand_threefry2x64_20& g, float * data, size_t s) { g.generate_uniform(data, s); });
+    continuity_test<float>([](rocrand_threefry2x64_20& g, float* data, size_t s)
+                           { g.generate_uniform(data, s); });
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_double_test)
 {
-    continuity_test<double>([](rocrand_threefry2x64_20& g, double * data, size_t s) { g.generate_uniform(data, s); });
+    continuity_test<double>([](rocrand_threefry2x64_20& g, double* data, size_t s)
+                            { g.generate_uniform(data, s); });
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_normal_float_test)
 {
-    continuity_test<float>([](rocrand_threefry2x64_20& g, float * data, size_t s) { g.generate_normal(data, s, 0.0f, 1.0f); }, 2);
+    continuity_test<float>([](rocrand_threefry2x64_20& g, float* data, size_t s)
+                           { g.generate_normal(data, s, 0.0f, 1.0f); },
+                           2);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_normal_double_test)
 {
-    continuity_test<double>([](rocrand_threefry2x64_20& g, double * data, size_t s) { g.generate_normal(data, s, 0.0, 1.0); }, 2);
+    continuity_test<double>([](rocrand_threefry2x64_20& g, double* data, size_t s)
+                            { g.generate_normal(data, s, 0.0, 1.0); },
+                            2);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_log_normal_float_test)
 {
-    continuity_test<float>([](rocrand_threefry2x64_20& g, float * data, size_t s) { g.generate_log_normal(data, s, 0.0f, 1.0f); }, 2);
+    continuity_test<float>([](rocrand_threefry2x64_20& g, float* data, size_t s)
+                           { g.generate_log_normal(data, s, 0.0f, 1.0f); },
+                           2);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_log_normal_double_test)
 {
-    continuity_test<double>([](rocrand_threefry2x64_20& g, double * data, size_t s) { g.generate_log_normal(data, s, 0.0, 1.0); }, 2);
+    continuity_test<double>([](rocrand_threefry2x64_20& g, double* data, size_t s)
+                            { g.generate_log_normal(data, s, 0.0, 1.0); },
+                            2);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_poisson_test)
 {
-    continuity_test<unsigned long long>([](rocrand_threefry2x64_20& g, unsigned long long * data, size_t s) { g.generate_poisson(data, s, 100.0); });
+    continuity_test<unsigned long long>(
+        [](rocrand_threefry2x64_20& g, unsigned long long* data, size_t s)
+        { g.generate_poisson(data, s, 100.0); });
 }

@@ -92,12 +92,10 @@ float4 uniform_distribution4(uint4 v)
 FQUALIFIERS
 float4 uniform_distribution4(ulonglong4 v)
 {
-   return float4 {
-       ROCRAND_2POW64_INV + (v.x * ROCRAND_2POW64_INV),
-       ROCRAND_2POW64_INV + (v.y * ROCRAND_2POW64_INV),
-       ROCRAND_2POW64_INV + (v.z * ROCRAND_2POW64_INV),
-       ROCRAND_2POW64_INV + (v.w * ROCRAND_2POW64_INV)
-   };
+    return float4{ROCRAND_2POW64_INV + (v.x * ROCRAND_2POW64_INV),
+                  ROCRAND_2POW64_INV + (v.y * ROCRAND_2POW64_INV),
+                  ROCRAND_2POW64_INV + (v.z * ROCRAND_2POW64_INV),
+                  ROCRAND_2POW64_INV + (v.w * ROCRAND_2POW64_INV)};
 }
 
 // For unsigned integer between 0 and UINT_MAX, returns value between
@@ -150,30 +148,22 @@ double4 uniform_distribution_double4(uint4 v1, uint4 v2)
 FQUALIFIERS
 double2 uniform_distribution_double2(ulonglong2 v)
 {
-    return double2 {
-        uniform_distribution_double(v.x),
-        uniform_distribution_double(v.y)
-    };
+    return double2{uniform_distribution_double(v.x), uniform_distribution_double(v.y)};
 }
 
 FQUALIFIERS
 double2 uniform_distribution_double2(ulonglong4 v)
 {
-    return double2 {
-        uniform_distribution_double(v.x),
-        uniform_distribution_double(v.y)
-    };
+    return double2{uniform_distribution_double(v.x), uniform_distribution_double(v.y)};
 }
 
 FQUALIFIERS
 double4 uniform_distribution_double4(ulonglong4 v)
 {
-    return double4 {
-        uniform_distribution_double(v.x),
-        uniform_distribution_double(v.z),
-        uniform_distribution_double(v.x),
-        uniform_distribution_double(v.z)
-    };
+    return double4{uniform_distribution_double(v.x),
+                   uniform_distribution_double(v.z),
+                   uniform_distribution_double(v.x),
+                   uniform_distribution_double(v.z)};
 }
 
 FQUALIFIERS

@@ -218,9 +218,9 @@ rocrand_generate(rocrand_generator generator,
  * of used quasi-random generator \n
  * - ROCRAND_STATUS_SUCCESS if random numbers were successfully generated \n
  */
-rocrand_status ROCRANDAPI
-rocrand_generate_64(rocrand_generator generator,
-                    unsigned long long * output_data, size_t n);
+rocrand_status ROCRANDAPI rocrand_generate_64(rocrand_generator   generator,
+                                              unsigned long long* output_data,
+                                              size_t              n);
 
 /**
  * \brief Generates uniformly distributed 64-bit unsigned integers.
