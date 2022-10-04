@@ -47,12 +47,11 @@ TEST(rocrand_threefry_prng_tests, uniform_ulonglong_test)
         hipMemcpy(host_data, data + 1, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
-    unsigned long long sum = 0;
+    double mean = 0.;
     for(size_t i = 0; i < size; i++)
     {
-        sum += host_data[i];
+        mean += host_data[i] / size;
     }
-    const unsigned long long mean = sum / size;
     ASSERT_NEAR(mean, static_cast<double>(ULLONG_MAX / 2), static_cast<double>(ULLONG_MAX / 20));
 
     HIP_CHECK(hipFree(data));
