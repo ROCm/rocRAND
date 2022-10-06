@@ -50,7 +50,7 @@ TEST(rocrand_threefry_prng_tests, uniform_ulonglong_test)
     double mean = 0.;
     for(size_t i = 0; i < size; i++)
     {
-        mean += host_data[i] / size;
+        mean += host_data[i] / static_cast<double>(size);
     }
     ASSERT_NEAR(mean, static_cast<double>(ULLONG_MAX / 2), static_cast<double>(ULLONG_MAX / 20));
 
