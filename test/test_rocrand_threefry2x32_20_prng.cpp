@@ -237,14 +237,17 @@ TEST(rocrand_threefry_prng_state_tests, seed_test)
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.discard(1 * 2ULL);
     EXPECT_EQ(state.counter.x, 1U);
     EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.seed(3331, 0, 5 * 2ULL);
     EXPECT_EQ(state.counter.x, 5U);
     EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.substate, 0U);
 }
 
 // Check if the threefry state counter is calculated correctly during
@@ -256,36 +259,46 @@ TEST(rocrand_threefry_prng_state_tests, discard_test)
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.discard(UINT_MAX * 2ULL);
     EXPECT_EQ(state.counter.x, UINT_MAX);
     EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.discard(UINT_MAX * 2ULL);
     EXPECT_EQ(state.counter.x, UINT_MAX - 1);
     EXPECT_EQ(state.counter.y, 1U);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.discard(2 * 2ULL);
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 2U);
+    EXPECT_EQ(state.substate, 0U);
 
     state.counter.x = 123;
     state.counter.y = 456;
+    state.substate  = 0;
     engine.discard(1 * 2ULL);
     EXPECT_EQ(state.counter.x, 124U);
     EXPECT_EQ(state.counter.y, 456U);
+    EXPECT_EQ(state.substate, 0U);
 
     state.counter.x = 123;
     state.counter.y = 0;
+    state.substate  = 0;
     engine.discard(1 * 2ULL);
     EXPECT_EQ(state.counter.x, 124U);
     EXPECT_EQ(state.counter.y, 0U);
+    EXPECT_EQ(state.substate, 0U);
 
     state.counter.x = UINT_MAX - 1;
     state.counter.y = 2;
+    state.substate  = 0;
     engine.discard((3ULL + UINT_MAX) * 2ULL);
     EXPECT_EQ(state.counter.x, 0U);
-    EXPECT_EQ(state.counter.y, 3U);
+    EXPECT_EQ(state.counter.y, 4U);
+    EXPECT_EQ(state.substate, 0U);
 }
 
 TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
@@ -296,12 +309,14 @@ TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
     engine.discard_subsequence(UINT_MAX);
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, UINT_MAX);
+    EXPECT_EQ(state.substate, 0U);
 
     state.counter.x = 123;
     state.counter.y = 456;
     engine.discard_subsequence(1);
     EXPECT_EQ(state.counter.x, 123U);
     EXPECT_EQ(state.counter.y, 457U);
+    EXPECT_EQ(state.substate, 0U);
 }
 
 template<typename T>

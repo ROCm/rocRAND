@@ -160,6 +160,24 @@ struct engine_boxmuller_helper
     }
 };
 
+template<typename T>
+FQUALIFIERS void split_ull(T& lo, T& hi, unsigned long long int val);
+
+template<>
+FQUALIFIERS void split_ull(unsigned int& lo, unsigned int& hi, unsigned long long int val)
+{
+    lo = val & 0xFFFFFFFF;
+    hi = (val >> 32) & 0xFFFFFFFF;
+}
+
+template<>
+FQUALIFIERS void
+    split_ull(unsigned long long int& lo, unsigned long long int& hi, unsigned long long int val)
+{
+    lo = val;
+    hi = 0;
+}
+
 } // end namespace detail
 } // end namespace rocrand_device
 

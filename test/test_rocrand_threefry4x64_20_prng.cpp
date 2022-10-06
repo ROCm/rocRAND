@@ -246,18 +246,21 @@ TEST(rocrand_threefry_prng_state_tests, seed_test)
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.discard(1 * 4ULL);
     EXPECT_EQ(state.counter.x, 1ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.seed(3331, 0, 5 * 4ULL);
     EXPECT_EQ(state.counter.x, 5ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0U);
 }
 
 // Check if the threefry state counter is calculated correctly during
@@ -271,72 +274,98 @@ TEST(rocrand_threefry_prng_state_tests, discard_test)
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
-    engine.discard(ULLONG_MAX * 4ULL);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
     EXPECT_EQ(state.counter.x, ULLONG_MAX);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
-    engine.discard(ULLONG_MAX * 4ULL);
-    EXPECT_EQ(state.counter.x, ULLONG_MAX - 1);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    EXPECT_EQ(state.counter.x, ULLONG_MAX - 1ULL);
     EXPECT_EQ(state.counter.y, 1ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
     engine.discard(2 * 4ULL);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 2ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
     state.counter.x = ULLONG_MAX;
     state.counter.y = ULLONG_MAX;
     state.counter.z = ULLONG_MAX;
+    state.counter.w = 0ULL;
+    state.substate  = 0ULL;
     engine.discard(1 * 4ULL);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 1ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
     state.counter.x = ULLONG_MAX;
     state.counter.y = ULLONG_MAX;
     state.counter.z = ULLONG_MAX;
+    state.counter.w = 0ULL;
+    state.substate  = 0ULL;
     engine.discard(1 * 4ULL);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 2ULL);
+    EXPECT_EQ(state.counter.w, 1ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
     state.counter.x = 123ULL;
     state.counter.y = 456ULL;
     state.counter.z = 789ULL;
     state.counter.w = 999ULL;
+    state.substate  = 0ULL;
     engine.discard(1 * 4ULL);
     EXPECT_EQ(state.counter.x, 124ULL);
     EXPECT_EQ(state.counter.y, 456ULL);
     EXPECT_EQ(state.counter.z, 789ULL);
     EXPECT_EQ(state.counter.w, 999ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
     state.counter.x = 123ULL;
     state.counter.y = 0ULL;
     state.counter.z = 0ULL;
     state.counter.w = 0ULL;
+    state.substate  = 0ULL;
     engine.discard(1 * 4ULL);
     EXPECT_EQ(state.counter.x, 124ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 
     state.counter.x = ULLONG_MAX - 1;
     state.counter.y = 2ULL;
     state.counter.z = 3ULL;
     state.counter.w = 4ULL;
-    engine.discard(((1ull << 64) + 2ull) * 4ULL);
+    state.substate  = 0ULL;
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    engine.discard(ULLONG_MAX);
+    engine.discard(12ULL);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 4ULL);
     EXPECT_EQ(state.counter.z, 3ULL);
     EXPECT_EQ(state.counter.w, 4ULL);
+    EXPECT_EQ(state.substate, 0ULL);
 }
 
 TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
@@ -349,40 +378,47 @@ TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, ULLONG_MAX);
     EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.discard_subsequence(ULLONG_MAX);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, ULLONG_MAX - 1);
     EXPECT_EQ(state.counter.w, 1ULL);
+    EXPECT_EQ(state.substate, 0U);
 
     engine.discard_subsequence(2);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 2ULL);
+    EXPECT_EQ(state.substate, 0U);
 
     state.counter.x = 123ULL;
     state.counter.y = 456ULL;
     state.counter.z = 789ULL;
     state.counter.w = 999ULL;
+    state.substate  = 0U;
     engine.discard_subsequence(1);
     EXPECT_EQ(state.counter.x, 123ULL);
     EXPECT_EQ(state.counter.y, 456ULL);
     EXPECT_EQ(state.counter.z, 790ULL);
     EXPECT_EQ(state.counter.w, 999ULL);
+    EXPECT_EQ(state.substate, 0U);
 
     state.counter.x = 1ULL;
     state.counter.y = 2ULL;
     state.counter.z = ULLONG_MAX - 1;
     state.counter.w = 4ULL;
-    engine.discard(2);
-    engine.discard(ULLONG_MAX);
-    engine.discard(1);
+    state.substate  = 0U;
+    engine.discard_subsequence(2);
+    engine.discard_subsequence(ULLONG_MAX);
+    engine.discard_subsequence(1);
     EXPECT_EQ(state.counter.x, 1ULL);
     EXPECT_EQ(state.counter.y, 2ULL);
     EXPECT_EQ(state.counter.z, 0ULL);
     EXPECT_EQ(state.counter.w, 6ULL);
+    EXPECT_EQ(state.substate, 0U);
 }
 
 template<typename T>

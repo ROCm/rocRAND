@@ -72,7 +72,7 @@ FQUALIFIERS value rotl(value x, int d);
 template<>
 FQUALIFIERS unsigned long long rotl<unsigned long long>(unsigned long long x, int d)
 {
-    return ((x << d) | (x >> (64 - d)));
+    return ((x << d) | (x >> (64 - d) & 63));
 };
 
 template<>

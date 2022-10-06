@@ -58,6 +58,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif // FQUALIFIERS
 
 #include "rocrand/rocrand_threefry_common.h"
+#include <rocrand/rocrand_common.h>
 
 #ifndef THREEFRY2x32_DEFAULT_ROUNDS
     #define THREEFRY2x32_DEFAULT_ROUNDS 20
@@ -124,10 +125,12 @@ public:
         m_state.result = this->threefry_rounds(m_state.counter, m_state.key);
     }
 
-    /// Advances the internal state to skip \p subsequence subsequences.
-    /// A subsequence is 2^33 numbers long for 32 bit and 2^65 for 64 bits generator.
-    FQUALIFIERS
-    void discard_subsequence(unsigned long long subsequence)
+    /// Advances the internal state to skip \p subsequence subsequences,
+    /// a subsequence consisting of 2 * (2 ^ b) random numbers,
+    /// where b is the number of bits of the value type of the generator.
+    /// In other words, this function is equivalent to calling \p discard
+    /// 2 * (2 ^ b) times without using the return value, but is much faster.
+    FQUALIFIERS void discard_subsequence(unsigned long long subsequence)
     {
         this->discard_subsequence_impl(subsequence);
         m_state.result = this->threefry_rounds(m_state.counter, m_state.key);
@@ -442,32 +445,38 @@ protected:
         return X;
     }
 
-    // Advances the internal state to skip \p offset numbers.
-    // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
+    /// Advances the internal state to skip \p offset numbers.
+    /// Does not calculate new values (or update <tt>m_state.result</tt>).
     FQUALIFIERS
     void discard_impl(unsigned long long offset)
     {
         // Adjust offset for subset
         m_state.substate += offset & 1;
-        offset += m_state.substate < 2 ? 0 : 2;
+        unsigned long long counter_offset = offset / 2;
+        counter_offset += m_state.substate < 2 ? 0 : 1;
         m_state.substate += m_state.substate < 2 ? 0 : -2;
         // Discard states
-        this->discard_state(offset / 2);
+        this->discard_state(counter_offset);
     }
 
-    // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
+    /// Does not calculate new values (or update <tt>m_state.result</tt>).
     FQUALIFIERS
     void discard_subsequence_impl(unsigned long long subsequence)
     {
         m_state.counter.y += subsequence;
     }
 
+    /// Advances the internal state by \p offset times.
+    /// Does not calculate new values (or update <tt>m_state.result</tt>).
     FQUALIFIERS
     void discard_state(unsigned long long offset)
     {
+        value lo, hi;
+        ::rocrand_device::detail::split_ull(lo, hi, offset);
+
         value old_counter = m_state.counter.x;
-        m_state.counter.x += offset;
-        m_state.counter.y += offset && m_state.counter.x <= old_counter ? 1 : 0;
+        m_state.counter.x += lo;
+        m_state.counter.y += hi + (m_state.counter.x < old_counter ? 1 : 0);
     }
 
     FQUALIFIERS

@@ -71,7 +71,7 @@ public:
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.
     ///
-    /// A subsequence is 2^33 numbers long.
+    /// A subsequence consists of 2 ^ 33 random numbers.
     FQUALIFIERS
     threefry2x32_20_engine(const unsigned long long seed        = 0,
                            const unsigned long long subsequence = 0,
@@ -84,7 +84,7 @@ public:
     /// seed value \p seed_value, skips \p subsequence subsequences
     /// and \p offset random numbers.
     ///
-    /// A subsequence is 2^33 numbers long.
+    /// A subsequence consists of 2 ^ 33 random numbers.
     FQUALIFIERS
     void seed(const unsigned long long seed        = 0,
               const unsigned long long subsequence = 0,
@@ -134,6 +134,8 @@ void rocrand_init(const unsigned long long       seed,
  * Generates and returns uniformly distributed random <tt>unsigned int</tt>
  * value from [0; 2^32 - 1] range using Threefry generator in \p state.
  * State is incremented by one position.
+ *
+ * Threefry2x32 has a period of 2 ^ 64 numbers.
  *
  * \param state - Pointer to a state to use
  *
