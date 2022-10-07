@@ -524,63 +524,86 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
     hipFree(data1);
 }
 
-TEST(rocrand_threefry_prng_tests, continuity_uniform_uint_test)
-{
-    continuity_test<unsigned long long>(
-        [](rocrand_threefry4x64_20& g, unsigned long long* data, size_t s)
-        { g.generate(data, s); });
-}
-
 TEST(rocrand_threefry_prng_tests, continuity_uniform_char_test)
 {
-    continuity_test<unsigned char>([](rocrand_threefry4x64_20& g, unsigned char* data, size_t s)
-                                   { g.generate(data, s); },
-                                   4);
+    typedef unsigned char output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        uniform_distribution<output_type, unsigned long long int>::output_width);
+}
+
+TEST(rocrand_threefry_prng_tests, continuity_uniform_uint_test)
+{
+    typedef unsigned int output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        uniform_distribution<output_type, unsigned long long int>::output_width);
+}
+
+TEST(rocrand_threefry_prng_tests, continuity_uniform_ullong_test)
+{
+    typedef unsigned long long int output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_float_test)
 {
-    continuity_test<float>([](rocrand_threefry4x64_20& g, float* data, size_t s)
-                           { g.generate_uniform(data, s); });
+    typedef float output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_double_test)
 {
-    continuity_test<double>([](rocrand_threefry4x64_20& g, double* data, size_t s)
-                            { g.generate_uniform(data, s); });
+    typedef double output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_normal_float_test)
 {
-    continuity_test<float>([](rocrand_threefry4x64_20& g, float* data, size_t s)
-                           { g.generate_normal(data, s, 0.0f, 1.0f); },
-                           2);
+    typedef float output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        { g.generate_normal(data, s, 0.f, 1.f); },
+        normal_distribution<output_type, unsigned long long int>::output_width);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_normal_double_test)
 {
-    continuity_test<double>([](rocrand_threefry4x64_20& g, double* data, size_t s)
-                            { g.generate_normal(data, s, 0.0, 1.0); },
-                            2);
+    typedef double output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        { g.generate_normal(data, s, 0., 1.); },
+        normal_distribution<output_type, unsigned long long int>::output_width);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_log_normal_float_test)
 {
-    continuity_test<float>([](rocrand_threefry4x64_20& g, float* data, size_t s)
-                           { g.generate_log_normal(data, s, 0.0f, 1.0f); },
-                           2);
+    typedef float output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        { g.generate_log_normal(data, s, 0.f, 1.f); },
+        normal_distribution<output_type, unsigned long long int>::output_width);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_log_normal_double_test)
 {
-    continuity_test<double>([](rocrand_threefry4x64_20& g, double* data, size_t s)
-                            { g.generate_log_normal(data, s, 0.0, 1.0); },
-                            2);
+    typedef double output_type;
+    continuity_test<output_type>(
+        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        { g.generate_log_normal(data, s, 0., 1.); },
+        normal_distribution<output_type, unsigned long long int>::output_width);
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_poisson_test)
 {
-    continuity_test<unsigned long long>(
-        [](rocrand_threefry4x64_20& g, unsigned long long* data, size_t s)
-        { g.generate_poisson(data, s, 100.0); });
+    typedef unsigned long long int output_type;
+    continuity_test<output_type>([](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+                                 { g.generate_poisson(data, s, 100.); },
+                                 1);
 }
