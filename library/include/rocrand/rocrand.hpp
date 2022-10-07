@@ -2569,6 +2569,14 @@ public:
             throw rocrand_cpp::error(status);
     }
 
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
     /// \copydoc philox4x32_10_engine::offset()
     void offset(offset_type value)
     {
@@ -2674,6 +2682,8 @@ class threefry2x32_20_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -2681,8 +2691,10 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
-    threefry2x32_20_engine(seed_type seed_value = DefaultSeed, offset_type offset_value = 0)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry2x32_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -2694,6 +2706,7 @@ public:
             {
                 this->offset(offset_value);
             }
+            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)
@@ -2725,6 +2738,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -2810,6 +2831,8 @@ class threefry2x64_20_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned long long result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -2817,8 +2840,10 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
-    threefry2x64_20_engine(seed_type seed_value = DefaultSeed, offset_type offset_value = 0)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry2x64_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -2830,6 +2855,7 @@ public:
             {
                 this->offset(offset_value);
             }
+            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)
@@ -2861,6 +2887,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -2946,6 +2980,8 @@ class threefry4x32_20_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -2953,8 +2989,10 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
-    threefry4x32_20_engine(seed_type seed_value = DefaultSeed, offset_type offset_value = 0)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry4x32_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -2966,6 +3004,7 @@ public:
             {
                 this->offset(offset_value);
             }
+            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)
@@ -2997,6 +3036,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -3082,6 +3129,8 @@ class threefry4x64_20_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned long long result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::offset_type
     typedef unsigned long long offset_type;
     /// \copydoc philox4x32_10_engine::seed_type
@@ -3089,8 +3138,10 @@ public:
     /// \copydoc philox4x32_10_engine::default_seed
     static constexpr seed_type default_seed = DefaultSeed;
 
-    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type)
-    threefry4x64_20_engine(seed_type seed_value = DefaultSeed, offset_type offset_value = 0)
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry4x64_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -3102,6 +3153,7 @@ public:
             {
                 this->offset(offset_value);
             }
+            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)

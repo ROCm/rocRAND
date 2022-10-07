@@ -1993,6 +1993,34 @@ rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocr
         static_cast<rocrand_lfsr113*>(generator)->set_order(order);
         return ROCRAND_STATUS_SUCCESS;
     }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY2_32_20)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_threefry2x32_20*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY2_64_20)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_threefry2x64_20*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY4_32_20)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_threefry4x32_20*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY4_64_20)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_threefry4x64_20*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
 
     return ROCRAND_STATUS_TYPE_ERROR;
 }

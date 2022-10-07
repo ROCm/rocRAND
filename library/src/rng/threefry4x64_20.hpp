@@ -184,8 +184,9 @@ public:
 
     rocrand_threefry4x64_20(unsigned long long seed   = 0,
                             unsigned long long offset = 0,
+                            rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                             hipStream_t        stream = 0)
-        : base_type(seed, offset, stream), m_engines_initialized(false)
+        : base_type(order, seed, offset, stream), m_engines_initialized(false)
     {}
 
     void reset()
@@ -203,6 +204,12 @@ public:
     void set_offset(unsigned long long offset)
     {
         m_offset              = offset;
+        m_engines_initialized = false;
+    }
+
+    void set_order(rocrand_ordering order)
+    {
+        m_order               = order;
         m_engines_initialized = false;
     }
 
