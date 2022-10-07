@@ -209,7 +209,7 @@ elseif( HIP_RUNTIME STREQUAL "cuda" )
     rocm_package_add_dependencies("hip-nvcc >= 3.5.0")
 endif( )
 
-set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include")
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" )
 
 if(HIP_COMPILER STREQUAL "nvcc")
     set(package_name rocrand-alt)
