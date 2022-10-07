@@ -85,14 +85,14 @@ TEST_P(rocrand_generate_tests, longlong_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
-    ROCRAND_CHECK(rocrand_generate_64(generator, data, 1));
+    ROCRAND_CHECK(rocrand_generate_long_long(generator, data, 1));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
-    ROCRAND_CHECK(rocrand_generate_64(generator, data + 1, 2));
+    ROCRAND_CHECK(rocrand_generate_long_long(generator, data + 1, 2));
     HIP_CHECK(hipDeviceSynchronize());
 
-    ROCRAND_CHECK(rocrand_generate_64(generator, data, size));
+    ROCRAND_CHECK(rocrand_generate_long_long(generator, data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));

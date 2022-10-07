@@ -2920,7 +2920,7 @@ public:
     void operator()(result_type* output, size_t size)
     {
         rocrand_status status;
-        status = rocrand_generate_64(m_generator, output, size);
+        status = rocrand_generate_long_long(m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -3210,7 +3210,7 @@ public:
     void operator()(result_type* output, size_t size)
     {
         rocrand_status status;
-        status = rocrand_generate_64(m_generator, output, size);
+        status = rocrand_generate_long_long(m_generator, output, size);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }

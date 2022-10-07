@@ -226,9 +226,9 @@ rocrand_generate(rocrand_generator generator,
     return ROCRAND_STATUS_TYPE_ERROR;
 }
 
-rocrand_status ROCRANDAPI rocrand_generate_64(rocrand_generator   generator,
-                                              unsigned long long* output_data,
-                                              size_t              n)
+rocrand_status ROCRANDAPI rocrand_generate_long_long(rocrand_generator       generator,
+                                                     unsigned long long int* output_data,
+                                                     size_t                  n)
 {
     if(generator == NULL)
     {
@@ -257,30 +257,6 @@ rocrand_status ROCRANDAPI rocrand_generate_64(rocrand_generator   generator,
         rocrand_threefry4x64_20* rocrand_threefry_generator
             = static_cast<rocrand_threefry4x64_20*>(generator);
         return rocrand_threefry_generator->generate(output_data, n);
-    }
-
-    return ROCRAND_STATUS_TYPE_ERROR;
-}
-
-rocrand_status ROCRANDAPI rocrand_generate_long_long(rocrand_generator       generator,
-                                                     unsigned long long int* output_data,
-                                                     size_t                  n)
-{
-    if(generator == NULL)
-    {
-        return ROCRAND_STATUS_NOT_CREATED;
-    }
-
-    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
-    {
-        rocrand_sobol64* rocrand_sobol64_generator = static_cast<rocrand_sobol64*>(generator);
-        return rocrand_sobol64_generator->generate(output_data, n);
-    }
-    else if(generator->rng_type == ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64)
-    {
-        rocrand_scrambled_sobol64* rocrand_scrambled_sobol64_generator
-            = static_cast<rocrand_scrambled_sobol64*>(generator);
-        return rocrand_scrambled_sobol64_generator->generate(output_data, n);
     }
 
     return ROCRAND_STATUS_TYPE_ERROR;
