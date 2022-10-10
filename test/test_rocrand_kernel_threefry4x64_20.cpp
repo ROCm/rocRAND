@@ -196,9 +196,9 @@ TEST(rocrand_kernel_threefry4x64_20, rocrand_state_threefry_type)
 #endif
 
     EXPECT_EQ(sizeof(state_type[32]), 32 * sizeof(state_type));
-    // TODO: Enable, when ulonglong2 trivially copyable.
+    // TODO: Enable once ulonglong4 trivially copyable.
     //EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);
-    //EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
+    EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
 }
 
 TEST(rocrand_kernel_threefry4x64_20, rocrand)

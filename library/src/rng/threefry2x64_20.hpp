@@ -49,8 +49,6 @@ struct threefry2x64_20_device_engine : public ::rocrand_device::threefry2x64_20_
         : base_type(seed, subsequence, offset)
     {}
 
-    __forceinline__ __device__ __host__ ~threefry2x64_20_device_engine() {}
-
     __forceinline__ __device__ __host__ ulonglong2 next2_leap(unsigned int leap)
     {
         ulonglong2 ret = m_state.result;

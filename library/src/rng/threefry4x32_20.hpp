@@ -49,8 +49,6 @@ struct threefry4x32_20_device_engine : public ::rocrand_device::threefry4x32_20_
         : base_type(seed, subsequence, offset)
     {}
 
-    __forceinline__ __device__ __host__ ~threefry4x32_20_device_engine() {}
-
     __forceinline__ __device__ __host__ uint4 next4_leap(unsigned int leap)
     {
         uint4 ret = m_state.result;

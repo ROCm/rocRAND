@@ -34,11 +34,9 @@ const rocrand_rng_type rng_types[] = {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
                                       ROCRAND_RNG_PSEUDO_MTGP32,
                                       ROCRAND_RNG_PSEUDO_LFSR113,
                                       ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
-                                      // TODO: FIX 64 bit support
-                                      //ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
+                                      ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
                                       ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,
-                                      // TODO: FIX 64 bit support
-                                      //ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,
+                                      ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,
                                       ROCRAND_RNG_QUASI_SOBOL32,
                                       ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
                                       ROCRAND_RNG_QUASI_SOBOL64,
