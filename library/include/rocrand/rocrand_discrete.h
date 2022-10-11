@@ -375,9 +375,8 @@ unsigned int rocrand_discrete(rocrand_state_lfsr113*              state,
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_threefry2x32_20*      state,
-                              const rocrand_discrete_distribution discrete_distribution)
+FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry2x32_20*      state,
+                                          const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -394,9 +393,8 @@ unsigned int rocrand_discrete(rocrand_state_threefry2x32_20*      state,
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_threefry2x64_20*      state,
-                              const rocrand_discrete_distribution discrete_distribution)
+FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry2x64_20*      state,
+                                          const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -413,9 +411,8 @@ unsigned int rocrand_discrete(rocrand_state_threefry2x64_20*      state,
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_threefry4x32_20*      state,
-                              const rocrand_discrete_distribution discrete_distribution)
+FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry4x32_20*      state,
+                                          const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -432,9 +429,8 @@ unsigned int rocrand_discrete(rocrand_state_threefry4x32_20*      state,
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_threefry4x64_20*      state,
-                              const rocrand_discrete_distribution discrete_distribution)
+FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry4x64_20*      state,
+                                          const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }

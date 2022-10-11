@@ -70,8 +70,7 @@ float2 box_muller(unsigned int x, unsigned int y)
     return result;
 }
 
-FQUALIFIERS
-float2 box_muller(unsigned long long v)
+FQUALIFIERS float2 box_muller(unsigned long long v)
 {
     unsigned int x = static_cast<unsigned int>(v);
     unsigned int y = static_cast<unsigned int>(v >> 32);
@@ -102,8 +101,7 @@ double2 box_muller_double(uint4 v)
     return result;
 }
 
-FQUALIFIERS
-double2 box_muller_double(ulonglong2 v)
+FQUALIFIERS double2 box_muller_double(ulonglong2 v)
 {
     unsigned int x = static_cast<unsigned int>(v.x);
     unsigned int y = static_cast<unsigned int>(v.x >> 32);
@@ -258,14 +256,12 @@ float2 normal_distribution2(unsigned int v1, unsigned int v2)
     return ::rocrand_device::detail::box_muller(v1, v2);
 }
 
-FQUALIFIERS
-float2 normal_distribution2(uint2 v)
+FQUALIFIERS float2 normal_distribution2(uint2 v)
 {
     return ::rocrand_device::detail::box_muller(v.x, v.y);
 }
 
-FQUALIFIERS
-float2 normal_distribution2(unsigned long long v)
+FQUALIFIERS float2 normal_distribution2(unsigned long long v)
 {
     return ::rocrand_device::detail::box_muller(v);
 }
@@ -283,16 +279,14 @@ float4 normal_distribution4(uint4 v)
     };
 }
 
-FQUALIFIERS
-float4 normal_distribution4(longlong2 v)
+FQUALIFIERS float4 normal_distribution4(longlong2 v)
 {
     float2 r1 = ::rocrand_device::detail::box_muller(v.x);
     float2 r2 = ::rocrand_device::detail::box_muller(v.y);
     return float4{r1.x, r1.y, r2.x, r2.y};
 }
 
-FQUALIFIERS
-float4 normal_distribution4(unsigned long long v1, unsigned long long v2)
+FQUALIFIERS float4 normal_distribution4(unsigned long long v1, unsigned long long v2)
 {
     float2 r1 = ::rocrand_device::detail::box_muller(v1);
     float2 r2 = ::rocrand_device::detail::box_muller(v2);
@@ -321,8 +315,7 @@ double2 normal_distribution_double2(uint4 v)
     return ::rocrand_device::detail::box_muller_double(v);
 }
 
-FQUALIFIERS
-double2 normal_distribution_double2(ulonglong2 v)
+FQUALIFIERS double2 normal_distribution_double2(ulonglong2 v)
 {
     return ::rocrand_device::detail::box_muller_double(v);
 }
@@ -336,8 +329,7 @@ __half2 normal_distribution_half2(unsigned int v)
     );
 }
 
-FQUALIFIERS
-__half2 normal_distribution_half2(unsigned long long v)
+FQUALIFIERS __half2 normal_distribution_half2(unsigned long long v)
 {
     return ::rocrand_device::detail::box_muller_half(static_cast<unsigned short>(v),
                                                      static_cast<unsigned short>(v >> 32));
@@ -1148,8 +1140,7 @@ double2 rocrand_normal_double2(rocrand_state_lfsr113* state)
  *
  * \return Normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_normal(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry2x32_20* state)
 {
     return rocrand_device::detail::normal_distribution(rocrand(state));
 }
@@ -1168,8 +1159,7 @@ float rocrand_normal(rocrand_state_threefry2x32_20* state)
  *
  * \return Two normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_normal2(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry2x32_20* state)
 {
     return rocrand_device::detail::normal_distribution2(rocrand2(state));
 }
@@ -1186,8 +1176,7 @@ float2 rocrand_normal2(rocrand_state_threefry2x32_20* state)
  *
  * \return Normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_normal_double(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry2x32_20* state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }
@@ -1206,8 +1195,7 @@ double rocrand_normal_double(rocrand_state_threefry2x32_20* state)
  *
  * \return Two normally distributed \p double value as \p double2
  */
-FQUALIFIERS
-double2 rocrand_normal_double2(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry2x32_20* state)
 {
     auto state1 = rocrand2(state);
     auto state2 = rocrand2(state);
@@ -1228,8 +1216,7 @@ double2 rocrand_normal_double2(rocrand_state_threefry2x32_20* state)
  *
  * \return Normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_normal(rocrand_state_threefry2x64_20* state)
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::normal_distribution(rocrand(state));
 }
@@ -1248,8 +1235,7 @@ float rocrand_normal(rocrand_state_threefry2x64_20* state)
  *
  * \return Two normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_normal2(rocrand_state_threefry2x64_20* state)
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::normal_distribution2(rocrand(state));
 }
@@ -1266,8 +1252,7 @@ float2 rocrand_normal2(rocrand_state_threefry2x64_20* state)
  *
  * \return Normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_normal_double(rocrand_state_threefry2x64_20* state)
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }
@@ -1286,8 +1271,7 @@ double rocrand_normal_double(rocrand_state_threefry2x64_20* state)
  *
  * \return Two normally distributed \p double value as \p double2
  */
-FQUALIFIERS
-double2 rocrand_normal_double2(rocrand_state_threefry2x64_20* state)
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::normal_distribution_double2(rocrand2(state));
 }
@@ -1304,8 +1288,7 @@ double2 rocrand_normal_double2(rocrand_state_threefry2x64_20* state)
  *
  * \return Normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_normal(rocrand_state_threefry4x32_20* state)
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry4x32_20* state)
 {
     return rocrand_device::detail::normal_distribution(rocrand(state));
 }
@@ -1324,8 +1307,7 @@ float rocrand_normal(rocrand_state_threefry4x32_20* state)
  *
  * \return Two normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_normal2(rocrand_state_threefry4x32_20* state)
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry4x32_20* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -1345,8 +1327,7 @@ float2 rocrand_normal2(rocrand_state_threefry4x32_20* state)
  *
  * \return Normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_normal_double(rocrand_state_threefry4x32_20* state)
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry4x32_20* state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }
@@ -1365,8 +1346,7 @@ double rocrand_normal_double(rocrand_state_threefry4x32_20* state)
  *
  * \return Two normally distributed \p double value as \p double2
  */
-FQUALIFIERS
-double2 rocrand_normal_double2(rocrand_state_threefry4x32_20* state)
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry4x32_20* state)
 {
     return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
 }
@@ -1383,8 +1363,7 @@ double2 rocrand_normal_double2(rocrand_state_threefry4x32_20* state)
  *
  * \return Normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_normal(rocrand_state_threefry4x64_20* state)
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry4x64_20* state)
 {
     return rocrand_device::detail::normal_distribution(rocrand(state));
 }
@@ -1403,8 +1382,7 @@ float rocrand_normal(rocrand_state_threefry4x64_20* state)
  *
  * \return Two normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_normal2(rocrand_state_threefry4x64_20* state)
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry4x64_20* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -1424,8 +1402,7 @@ float2 rocrand_normal2(rocrand_state_threefry4x64_20* state)
  *
  * \return Normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_normal_double(rocrand_state_threefry4x64_20* state)
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry4x64_20* state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }
@@ -1444,8 +1421,7 @@ double rocrand_normal_double(rocrand_state_threefry4x64_20* state)
  *
  * \return Two normally distributed \p double value as \p double2
  */
-FQUALIFIERS
-double2 rocrand_normal_double2(rocrand_state_threefry4x64_20* state)
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry4x64_20* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);

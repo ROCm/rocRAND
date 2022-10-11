@@ -72,10 +72,9 @@ public:
     /// and skips \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 33 random numbers.
-    FQUALIFIERS
-    threefry2x32_20_engine(const unsigned long long seed        = 0,
-                           const unsigned long long subsequence = 0,
-                           const unsigned long long offset      = 0)
+    FQUALIFIERS threefry2x32_20_engine(const unsigned long long seed        = 0,
+                                       const unsigned long long subsequence = 0,
+                                       const unsigned long long offset      = 0)
     {
         this->seed(seed, subsequence, offset);
     }
@@ -85,10 +84,9 @@ public:
     /// and \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 33 random numbers.
-    FQUALIFIERS
-    void seed(const unsigned long long seed        = 0,
-              const unsigned long long subsequence = 0,
-              const unsigned long long offset      = 0)
+    FQUALIFIERS void seed(const unsigned long long seed        = 0,
+                          const unsigned long long subsequence = 0,
+                          const unsigned long long offset      = 0)
     {
         m_state.counter  = {0U, 0U};
         m_state.result   = {0U, 0U};
@@ -118,11 +116,10 @@ typedef rocrand_device::threefry2x32_20_engine rocrand_state_threefry2x32_20;
  * \param offset - Absolute offset into subsequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const unsigned long long       seed,
-                  const unsigned long long       subsequence,
-                  const unsigned long long       offset,
-                  rocrand_state_threefry2x32_20* state)
+FQUALIFIERS void rocrand_init(const unsigned long long       seed,
+                              const unsigned long long       subsequence,
+                              const unsigned long long       offset,
+                              rocrand_state_threefry2x32_20* state)
 {
     *state = rocrand_state_threefry2x32_20(seed, subsequence, offset);
 }
@@ -141,8 +138,7 @@ void rocrand_init(const unsigned long long       seed,
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS unsigned int rocrand(rocrand_state_threefry2x32_20* state)
 {
     return state->next();
 }
@@ -159,8 +155,7 @@ unsigned int rocrand(rocrand_state_threefry2x32_20* state)
  *
  * \return Two pseudorandom values (32-bit) as an <tt>uint2</tt>
  */
-FQUALIFIERS
-uint2 rocrand2(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS uint2 rocrand2(rocrand_state_threefry2x32_20* state)
 {
     return state->next2();
 }

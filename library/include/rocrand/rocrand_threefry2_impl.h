@@ -112,15 +112,13 @@ public:
         unsigned int substate;
     };
 
-    FQUALIFIERS
-    void discard(unsigned long long offset)
+    FQUALIFIERS void discard(unsigned long long offset)
     {
         this->discard_impl(offset);
         m_state.result = this->threefry_rounds(m_state.counter, m_state.key);
     }
 
-    FQUALIFIERS
-    void discard()
+    FQUALIFIERS void discard()
     {
         m_state.result = this->threefry_rounds(m_state.counter, m_state.key);
     }
@@ -136,14 +134,12 @@ public:
         m_state.result = this->threefry_rounds(m_state.counter, m_state.key);
     }
 
-    FQUALIFIERS
-    value operator()()
+    FQUALIFIERS value operator()()
     {
         return this->next();
     }
 
-    FQUALIFIERS
-    value next()
+    FQUALIFIERS value next()
     {
 #if defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)
         value ret = m_state.result.data[m_state.substate];
@@ -160,8 +156,7 @@ public:
         return ret;
     }
 
-    FQUALIFIERS
-    state_value next2()
+    FQUALIFIERS state_value next2()
     {
         state_value ret = m_state.result;
         m_state.counter = this->bump_counter(m_state.counter);
@@ -171,8 +166,7 @@ public:
     }
 
 protected:
-    FQUALIFIERS
-    state_value threefry_rounds(state_value counter, state_value key)
+    FQUALIFIERS state_value threefry_rounds(state_value counter, state_value key)
     {
         state_value X;
         value       ks[2 + 1];
@@ -447,8 +441,7 @@ protected:
 
     /// Advances the internal state to skip \p offset numbers.
     /// Does not calculate new values (or update <tt>m_state.result</tt>).
-    FQUALIFIERS
-    void discard_impl(unsigned long long offset)
+    FQUALIFIERS void discard_impl(unsigned long long offset)
     {
         // Adjust offset for subset
         m_state.substate += offset & 1;
@@ -460,16 +453,14 @@ protected:
     }
 
     /// Does not calculate new values (or update <tt>m_state.result</tt>).
-    FQUALIFIERS
-    void discard_subsequence_impl(unsigned long long subsequence)
+    FQUALIFIERS void discard_subsequence_impl(unsigned long long subsequence)
     {
         m_state.counter.y += subsequence;
     }
 
     /// Advances the internal state by \p offset times.
     /// Does not calculate new values (or update <tt>m_state.result</tt>).
-    FQUALIFIERS
-    void discard_state(unsigned long long offset)
+    FQUALIFIERS void discard_state(unsigned long long offset)
     {
         value lo, hi;
         ::rocrand_device::detail::split_ull(lo, hi, offset);
@@ -479,8 +470,7 @@ protected:
         m_state.counter.y += hi + (m_state.counter.x < old_counter ? 1 : 0);
     }
 
-    FQUALIFIERS
-    static state_value bump_counter(state_value counter)
+    FQUALIFIERS static state_value bump_counter(state_value counter)
     {
         counter.x++;
         value add = counter.x == 0 ? 1 : 0;
@@ -488,8 +478,7 @@ protected:
         return counter;
     }
 
-    FQUALIFIERS
-    state_value interleave(const state_value prev, const state_value next) const
+    FQUALIFIERS state_value interleave(const state_value prev, const state_value next) const
     {
         switch(m_state.substate)
         {

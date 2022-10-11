@@ -89,8 +89,7 @@ float4 uniform_distribution4(uint4 v)
    };
 }
 
-FQUALIFIERS
-float4 uniform_distribution4(ulonglong4 v)
+FQUALIFIERS float4 uniform_distribution4(ulonglong4 v)
 {
     return float4{ROCRAND_2POW64_INV + (v.x * ROCRAND_2POW64_INV),
                   ROCRAND_2POW64_INV + (v.y * ROCRAND_2POW64_INV),
@@ -145,20 +144,17 @@ double4 uniform_distribution_double4(uint4 v1, uint4 v2)
     };
 }
 
-FQUALIFIERS
-double2 uniform_distribution_double2(ulonglong2 v)
+FQUALIFIERS double2 uniform_distribution_double2(ulonglong2 v)
 {
     return double2{uniform_distribution_double(v.x), uniform_distribution_double(v.y)};
 }
 
-FQUALIFIERS
-double2 uniform_distribution_double2(ulonglong4 v)
+FQUALIFIERS double2 uniform_distribution_double2(ulonglong4 v)
 {
     return double2{uniform_distribution_double(v.x), uniform_distribution_double(v.y)};
 }
 
-FQUALIFIERS
-double4 uniform_distribution_double4(ulonglong4 v)
+FQUALIFIERS double4 uniform_distribution_double4(ulonglong4 v)
 {
     return double4{uniform_distribution_double(v.x),
                    uniform_distribution_double(v.z),
@@ -704,8 +700,7 @@ double rocrand_uniform_double(rocrand_state_lfsr113* state)
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-FQUALIFIERS
-float rocrand_uniform(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS float rocrand_uniform(rocrand_state_threefry2x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -725,8 +720,7 @@ float rocrand_uniform(rocrand_state_threefry2x32_20* state)
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_threefry2x32_20* state)
+FQUALIFIERS double rocrand_uniform_double(rocrand_state_threefry2x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -743,8 +737,7 @@ double rocrand_uniform_double(rocrand_state_threefry2x32_20* state)
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-FQUALIFIERS
-float rocrand_uniform(rocrand_state_threefry2x64_20* state)
+FQUALIFIERS float rocrand_uniform(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -764,8 +757,7 @@ float rocrand_uniform(rocrand_state_threefry2x64_20* state)
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_threefry2x64_20* state)
+FQUALIFIERS double rocrand_uniform_double(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -782,8 +774,7 @@ double rocrand_uniform_double(rocrand_state_threefry2x64_20* state)
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-FQUALIFIERS
-float rocrand_uniform(rocrand_state_threefry4x32_20* state)
+FQUALIFIERS float rocrand_uniform(rocrand_state_threefry4x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -803,8 +794,7 @@ float rocrand_uniform(rocrand_state_threefry4x32_20* state)
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_threefry4x32_20* state)
+FQUALIFIERS double rocrand_uniform_double(rocrand_state_threefry4x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -821,8 +811,7 @@ double rocrand_uniform_double(rocrand_state_threefry4x32_20* state)
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-FQUALIFIERS
-float rocrand_uniform(rocrand_state_threefry4x64_20* state)
+FQUALIFIERS float rocrand_uniform(rocrand_state_threefry4x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -842,8 +831,7 @@ float rocrand_uniform(rocrand_state_threefry4x64_20* state)
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-FQUALIFIERS
-double rocrand_uniform_double(rocrand_state_threefry4x64_20* state)
+FQUALIFIERS double rocrand_uniform_double(rocrand_state_threefry4x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
