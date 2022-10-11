@@ -82,16 +82,16 @@ FQUALIFIERS unsigned int rotl<unsigned int>(unsigned int x, int d)
 };
 
 template<typename value>
-FQUALIFIERS value skein_ks_party();
+FQUALIFIERS value skein_ks_parity();
 
 template<>
-FQUALIFIERS unsigned int skein_ks_party<unsigned int>()
+FQUALIFIERS unsigned int skein_ks_parity<unsigned int>()
 {
     return SKEIN_KS_PARITY32;
 }
 
 template<>
-FQUALIFIERS unsigned long long skein_ks_party<unsigned long long>()
+FQUALIFIERS unsigned long long skein_ks_parity<unsigned long long>()
 {
     return SKEIN_KS_PARITY64;
 }

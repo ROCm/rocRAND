@@ -173,7 +173,7 @@ protected:
 
         static_assert(Nrounds <= 32, "32 or less only supported in threefry rounds");
 
-        ks[2] = skein_ks_party<value>();
+        ks[2] = skein_ks_parity<value>();
 
         ks[0] = key.x;
         ks[1] = key.y;

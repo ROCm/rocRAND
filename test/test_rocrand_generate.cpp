@@ -67,38 +67,6 @@ TEST_P(rocrand_generate_tests, int_test)
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
-TEST_P(rocrand_generate_tests, longlong_test)
-{
-    const rocrand_rng_type rng_type = GetParam();
-
-    if(rng_type != ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
-       && rng_type != ROCRAND_RNG_PSEUDO_THREEFRY4_64_20 && rng_type != ROCRAND_RNG_QUASI_SOBOL64
-       && rng_type != ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64)
-        GTEST_SKIP();
-
-    rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
-
-    const size_t        size = 12563;
-    unsigned long long* data;
-    HIP_CHECK(hipMallocHelper((void**)&data, size * sizeof(unsigned long long)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Any sizes
-    ROCRAND_CHECK(rocrand_generate_long_long(generator, data, 1));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Any alignment
-    ROCRAND_CHECK(rocrand_generate_long_long(generator, data + 1, 2));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    ROCRAND_CHECK(rocrand_generate_long_long(generator, data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    HIP_CHECK(hipFree(data));
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
-}
-
 TEST_P(rocrand_generate_tests, char_test)
 {
     const rocrand_rng_type rng_type = GetParam();
