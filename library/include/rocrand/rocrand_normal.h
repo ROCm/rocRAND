@@ -1157,7 +1157,7 @@ float rocrand_normal(rocrand_state_threefry2x32_20* state)
 /**
  * \brief Returns two normally distributed \p float values.
  *
- * Generates and returns two normally distributed \p float values using Philox
+ * Generates and returns two normally distributed \p float values using ThreeFry
  * generator in \p state, and increments position of the generator by two.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
@@ -1195,8 +1195,8 @@ double rocrand_normal_double(rocrand_state_threefry2x32_20* state)
 /**
  * \brief Returns two normally distributed \p double values.
  *
- * Generates and returns two normally distributed \p double values using THREEFRY
- * generator in \p state, and increments position of the generator by two.
+ * Generates and returns two normally distributed \p double values using ThreeFry
+ * generator in \p state, and increments position of the generator by four.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
  * The function uses the Box-Muller transform method to generate two normally
@@ -1209,13 +1209,11 @@ double rocrand_normal_double(rocrand_state_threefry2x32_20* state)
 FQUALIFIERS
 double2 rocrand_normal_double2(rocrand_state_threefry2x32_20* state)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-    auto state3 = rocrand(state);
-    auto state4 = rocrand(state);
+    auto state1 = rocrand2(state);
+    auto state2 = rocrand2(state);
 
     return rocrand_device::detail::normal_distribution_double2(
-        uint4{state1, state2, state3, state4});
+        uint4{state1.x, state1.y, state2.x, state2.y});
 }
 
 /**
@@ -1239,8 +1237,8 @@ float rocrand_normal(rocrand_state_threefry2x64_20* state)
 /**
  * \brief Returns two normally distributed \p float values.
  *
- * Generates and returns two normally distributed \p float values using Philox
- * generator in \p state, and increments position of the generator by two.
+ * Generates and returns two normally distributed \p float values using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
  * The function uses the Box-Muller transform method to generate two normally
@@ -1277,7 +1275,7 @@ double rocrand_normal_double(rocrand_state_threefry2x64_20* state)
 /**
  * \brief Returns two normally distributed \p double values.
  *
- * Generates and returns two normally distributed \p double values using THREEFRY
+ * Generates and returns two normally distributed \p double values using ThreeFry
  * generator in \p state, and increments position of the generator by two.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
@@ -1315,7 +1313,7 @@ float rocrand_normal(rocrand_state_threefry4x32_20* state)
 /**
  * \brief Returns two normally distributed \p float values.
  *
- * Generates and returns two normally distributed \p float values using Philox
+ * Generates and returns two normally distributed \p float values using ThreeFry
  * generator in \p state, and increments position of the generator by two.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
@@ -1356,8 +1354,8 @@ double rocrand_normal_double(rocrand_state_threefry4x32_20* state)
 /**
  * \brief Returns two normally distributed \p double values.
  *
- * Generates and returns two normally distributed \p double values using THREEFRY
- * generator in \p state, and increments position of the generator by two.
+ * Generates and returns two normally distributed \p double values using ThreeFry
+ * generator in \p state, and increments position of the generator by four.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
  * The function uses the Box-Muller transform method to generate two normally
@@ -1394,7 +1392,7 @@ float rocrand_normal(rocrand_state_threefry4x64_20* state)
 /**
  * \brief Returns two normally distributed \p float values.
  *
- * Generates and returns two normally distributed \p float values using Philox
+ * Generates and returns two normally distributed \p float values using ThreeFry
  * generator in \p state, and increments position of the generator by two.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.
@@ -1435,7 +1433,7 @@ double rocrand_normal_double(rocrand_state_threefry4x64_20* state)
 /**
  * \brief Returns two normally distributed \p double values.
  *
- * Generates and returns two normally distributed \p double values using THREEFRY
+ * Generates and returns two normally distributed \p double values using ThreeFry
  * generator in \p state, and increments position of the generator by two.
  * Used normal distribution has mean value equal to 0.0f, and standard deviation
  * equal to 1.0f.

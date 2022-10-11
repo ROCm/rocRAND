@@ -897,13 +897,13 @@ FQUALIFIERS
 float rocrand_log_normal(rocrand_state_threefry2x32_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return exp(mean + (stddev * r));
+    return expf(mean + (stddev * r));
 }
 
 /**
  * \brief Returns two log-normally distributed \p float values.
  *
- * Generates and returns two log-normally distributed \p float values using THREEFRY
+ * Generates and returns two log-normally distributed \p float values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
@@ -946,7 +946,7 @@ double rocrand_log_normal_double(rocrand_state_threefry2x32_20* state, double me
 /**
  * \brief Returns two log-normally distributed \p double values.
  *
- * Generates and returns two log-normally distributed \p double values using THREEFRY
+ * Generates and returns two log-normally distributed \p double values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
@@ -986,13 +986,13 @@ FQUALIFIERS
 float rocrand_log_normal(rocrand_state_threefry2x64_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return exp(mean + (stddev * r));
+    return expf(mean + (stddev * r));
 }
 
 /**
  * \brief Returns two log-normally distributed \p float values.
  *
- * Generates and returns two log-normally distributed \p float values using THREEFRY
+ * Generates and returns two log-normally distributed \p float values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
@@ -1035,7 +1035,7 @@ double rocrand_log_normal_double(rocrand_state_threefry2x64_20* state, double me
 /**
  * \brief Returns two log-normally distributed \p double values.
  *
- * Generates and returns two log-normally distributed \p double values using THREEFRY
+ * Generates and returns two log-normally distributed \p double values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
@@ -1075,7 +1075,7 @@ FQUALIFIERS
 float rocrand_log_normal(rocrand_state_threefry4x32_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return exp(mean + (stddev * r));
+    return expf(mean + (stddev * r));
 }
 
 /**
@@ -1124,7 +1124,7 @@ double rocrand_log_normal_double(rocrand_state_threefry4x32_20* state, double me
 /**
  * \brief Returns two log-normally distributed \p double values.
  *
- * Generates and returns two log-normally distributed \p double values using THREEFRY
+ * Generates and returns two log-normally distributed \p double values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
@@ -1164,13 +1164,13 @@ FQUALIFIERS
 float rocrand_log_normal(rocrand_state_threefry4x64_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
-    return exp(mean + (stddev * r));
+    return expf(mean + (stddev * r));
 }
 
 /**
  * \brief Returns two log-normally distributed \p float values.
  *
- * Generates and returns two log-normally distributed \p float values using THREEFRY
+ * Generates and returns two log-normally distributed \p float values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
@@ -1213,7 +1213,7 @@ double rocrand_log_normal_double(rocrand_state_threefry4x64_20* state, double me
 /**
  * \brief Returns two log-normally distributed \p double values.
  *
- * Generates and returns two log-normally distributed \p double values using THREEFRY
+ * Generates and returns two log-normally distributed \p double values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
