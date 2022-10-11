@@ -299,12 +299,31 @@ void run_benchmarks(const cli::Parser& parser,
                 std::cout << "    " << "lambda "
                     << std::fixed << std::setprecision(1) << lambda << std::endl;
             }
-            run_benchmark<unsigned int>(parser, rng_type, stream,
-                [lambda](rocrand_generator gen, unsigned int * data, size_t size) {
-                    return rocrand_generate_poisson(gen, data, size, lambda);
-                },
-                distribution, engine, lambda
-            );
+            if(rng_type == ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+               || rng_type == ROCRAND_RNG_PSEUDO_THREEFRY4_64_20)
+            {
+                run_benchmark<unsigned long long int>(
+                    parser,
+                    rng_type,
+                    stream,
+                    [lambda](rocrand_generator gen, unsigned long long int* data, size_t size)
+                    { return rocrand_generate_poisson_long_long(gen, data, size, lambda); },
+                    distribution,
+                    engine,
+                    lambda);
+            }
+            else
+            {
+                run_benchmark<unsigned int>(
+                    parser,
+                    rng_type,
+                    stream,
+                    [lambda](rocrand_generator gen, unsigned int* data, size_t size)
+                    { return rocrand_generate_poisson(gen, data, size, lambda); },
+                    distribution,
+                    engine,
+                    lambda);
+            }
         }
     }
 }
