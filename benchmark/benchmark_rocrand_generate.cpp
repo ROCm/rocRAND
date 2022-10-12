@@ -303,6 +303,7 @@ const std::vector<std::string> all_engines = {
     "mtgp32",
     "philox",
     "lfsr113",
+    "mt19937",
     "sobol32",
     "scrambled_sobol32",
     "sobol64",
@@ -443,6 +444,8 @@ int main(int argc, char *argv[])
             rng_type = ROCRAND_RNG_PSEUDO_MTGP32;
         else if(engine == "lfsr113")
             rng_type = ROCRAND_RNG_PSEUDO_LFSR113;
+        else if(engine == "mt19937")
+            rng_type = ROCRAND_RNG_PSEUDO_MT19937;
         else
         {
             std::cout << "Wrong engine name" << std::endl;

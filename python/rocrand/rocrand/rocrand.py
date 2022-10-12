@@ -71,6 +71,7 @@ ROCRAND_RNG_PSEUDO_MTGP32 = 403
 ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
 ROCRAND_RNG_PSEUDO_MRG31K3P = 405
 ROCRAND_RNG_PSEUDO_LFSR113 = 406
+ROCRAND_RNG_PSEUDO_MT19937 = 407
 ROCRAND_RNG_QUASI_DEFAULT = 500
 ROCRAND_RNG_QUASI_SOBOL32 = 501
 ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502
@@ -351,6 +352,8 @@ class PRNG(RNG):
     """MRG32k3a pseudo-random generator type"""
     MTGP32        = ROCRAND_RNG_PSEUDO_MTGP32
     """Mersenne Twister MTGP32 pseudo-random generator type"""
+    MT19937       = ROCRAND_RNG_PSEUDO_MT19937
+    """Mersenne Twister pseudo-random generator type"""
     PHILOX4_32_10 = ROCRAND_RNG_PSEUDO_PHILOX4_32_10
     """PHILOX_4x32 (10 rounds) pseudo-random generator type"""
     LFSR113      = ROCRAND_RNG_PSEUDO_LFSR113
@@ -370,6 +373,7 @@ class PRNG(RNG):
         * :const:`MRG31K3P`
         * :const:`MRG32K3A`
         * :const:`MTGP32`
+        * :const:`MT19937`
         * :const:`PHILOX4_32_10`
         * :const:`LFSR113`
 

@@ -14,6 +14,7 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 * XORWOW
 * MRG31k3p
 * MRG32k3a
+* Mersenne Twister (MT19937)
 * Mersenne Twister for Graphic Processors (MTGP32)
 * Philox (4x32, 10 rounds)
 * LFSR113
@@ -52,7 +53,7 @@ not to use system-installed libraries, and to download all dependencies.
 
 ## Build and Install
 
-```
+```shell
 git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
 # Go to rocRAND directory, create and go to build directory
@@ -109,7 +110,7 @@ to `OFF`.
 
 ## Running Unit Tests
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -122,13 +123,13 @@ ctest
 
 ## Running Benchmarks
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
 # To run benchmark for the host generate functions:
 # The benchmarks are registered with Google Benchmark as `device_generate<engine,distribution>`, where
-# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> uniform-uint, uniform-uchar, uniform-ushort, 
 #                 uniform-half, uniform-float, uniform-double, 
@@ -148,7 +149,7 @@ cd rocRAND; cd build
 ./benchmark/benchmark_rocrand_host_api --benchmark_format=<console|json|csv>
 
 # To run benchmark for device kernel functions:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> all, uniform-uint, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson, discrete-poisson, discrete-custom
@@ -172,13 +173,13 @@ migrated to the new framework.
 
 ## Running Statistical Tests
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
 # To run Pearson Chi-squared and Anderson-Darling tests, which verify
 # that distribution of random number agrees with the requested distribution:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> all, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson
@@ -189,7 +190,7 @@ cd rocRAND; cd build
 The latest rocRAND documentation and API description can be found [here](https://rocrand.readthedocs.io/en/latest/).
 
 It can also be build using the following commands
-```
+```shell
 # go to rocRAND doc directory
 cd rocRAND; cd doc
 
@@ -197,7 +198,6 @@ cd rocRAND; cd doc
 doxygen Doxyfile
 
 # open html/index.html
-
 ```
 
 ## Wrappers

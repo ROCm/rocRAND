@@ -148,6 +148,7 @@ int main(int argc, char* argv[])
 
     const std::map<rng_type_t, std::string> engine_type_map{
         {          ROCRAND_RNG_PSEUDO_MTGP32,            "mtgp32"},
+        {         ROCRAND_RNG_PSEUDO_MT19937,           "mt19937"},
         {          ROCRAND_RNG_PSEUDO_XORWOW,            "xorwow"},
         {        ROCRAND_RNG_PSEUDO_MRG31K3P,          "mrg31k3p"},
         {        ROCRAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"},

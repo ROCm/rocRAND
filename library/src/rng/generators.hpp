@@ -24,6 +24,7 @@
 #include "lfsr113.hpp"
 #include "mrg31k3p.hpp"
 #include "mrg32k3a.hpp"
+#include "mt19937.hpp"
 #include "mtgp32.hpp"
 #include "philox4x32_10.hpp"
 #include "scrambled_sobol32.hpp"
