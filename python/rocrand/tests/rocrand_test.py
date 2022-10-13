@@ -306,6 +306,8 @@ class TestGenerate(TestRNGBase):
         self._test_lognormal_real(np.float64)
 
     def test_poisson(self):
+        if self.rngtype == PRNG.THREEFRY2_64_20 or self.rngtype == PRNG.THREEFRY4_64_20:
+            self.skipTest("64-bits Threefry cannot generate 32-bits Poisson numbers")
         for lambda_value in [1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0]:
             output = np.empty(OUTPUT_SIZE, np.uint32)
             self.rng.poisson(output, lambda_value)
@@ -333,10 +335,10 @@ make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL32", klass=QRNG, rngtype=QRNG.S
 make_test(TestGenerate, "QRNG" + "SOBOL64",           klass=QRNG, rngtype=QRNG.SOBOL64)
 make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64)
 make_test(TestGenerate, "PRNG" + "LFSR113",           klass=PRNG, rngtype=PRNG.LFSR113)
-make_test(TestGenerate, "PRNG" + "THREEFRY2_32_20", klass=PRNG, rngtype=PRNG.THREEFRY2_32_20)
-make_test(TestGenerate, "PRNG" + "THREEFRY2_64_20", klass=PRNG, rngtype=PRNG.THREEFRY2_64_20)
-make_test(TestGenerate, "PRNG" + "THREEFRY4_32_20", klass=PRNG, rngtype=PRNG.THREEFRY4_32_20)
-make_test(TestGenerate, "PRNG" + "THREEFRY4_64_20", klass=PRNG, rngtype=PRNG.THREEFRY4_64_20)
+make_test(TestGenerate, "PRNG" + "THREEFRY2_32_20",   klass=PRNG, rngtype=PRNG.THREEFRY2_32_20)
+make_test(TestGenerate, "PRNG" + "THREEFRY2_64_20",   klass=PRNG, rngtype=PRNG.THREEFRY2_64_20)
+make_test(TestGenerate, "PRNG" + "THREEFRY4_32_20",   klass=PRNG, rngtype=PRNG.THREEFRY4_32_20)
+make_test(TestGenerate, "PRNG" + "THREEFRY4_64_20",   klass=PRNG, rngtype=PRNG.THREEFRY4_64_20)
 
 
 if __name__ == "__main__":
