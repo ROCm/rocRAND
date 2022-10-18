@@ -90,18 +90,22 @@ typedef enum rocrand_status {
  */
 typedef enum rocrand_rng_type
 {
-    ROCRAND_RNG_PSEUDO_DEFAULT          = 400, ///< Default pseudorandom generator
-    ROCRAND_RNG_PSEUDO_XORWOW           = 401, ///< XORWOW pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG32K3A         = 402, ///< MRG32k3a pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MTGP32           = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10    = 404, ///< PHILOX-4x32-10 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG31K3P         = 405, ///< MRG31k3p pseudorandom generator
-    ROCRAND_RNG_PSEUDO_LFSR113          = 406, ///< LFSR113 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MT19937          = 407, ///< Mersenne Twister MT19937 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_THREEFRY2_32_20  = 408, ///< ThreeFry 32 bit state size 2 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_THREEFRY2_64_20  = 409, ///< ThreeFry 64 bit state size 2 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_THREEFRY4_32_20  = 410, ///< ThreeFry 32 bit state size 4 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_THREEFRY4_64_20  = 411, ///< ThreeFry 64 bit state size 4 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_DEFAULT       = 400, ///< Default pseudorandom generator
+    ROCRAND_RNG_PSEUDO_XORWOW        = 401, ///< XORWOW pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG32K3A      = 402, ///< MRG32k3a pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG31K3P      = 405, ///< MRG31k3p pseudorandom generator
+    ROCRAND_RNG_PSEUDO_LFSR113       = 406, ///< LFSR113 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MT19937       = 407, ///< Mersenne Twister MT19937 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
+    = 408, ///< ThreeFry 32 bit state size 2 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+    = 409, ///< ThreeFry 64 bit state size 2 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
+    = 410, ///< ThreeFry 32 bit state size 4 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
+    = 411, ///< ThreeFry 64 bit state size 4 pseudorandom generator
     ROCRAND_RNG_QUASI_DEFAULT           = 500, ///< Default quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL32           = 501, ///< Sobol32 quasirandom generator
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502, ///< Scrambled Sobol32 quasirandom generator

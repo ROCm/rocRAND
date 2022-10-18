@@ -1693,6 +1693,7 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream)
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MT19937)
     {
         static_cast<rocrand_mt19937*>(generator)->set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY2_32_20)
     {
@@ -1767,6 +1768,7 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed)
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_MT19937)
     {
         static_cast<rocrand_mt19937*>(generator)->set_seed(seed);
+        return ROCRAND_STATUS_SUCCESS;
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY2_32_20)
     {

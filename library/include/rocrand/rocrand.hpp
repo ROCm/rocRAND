@@ -2569,14 +2569,6 @@ public:
             throw rocrand_cpp::error(status);
     }
 
-    /// \copydoc philox4x32_10_engine::order()
-    void order(order_type value)
-    {
-        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
-        if(status != ROCRAND_STATUS_SUCCESS)
-            throw rocrand_cpp::error(status);
-    }
-
     /// \copydoc philox4x32_10_engine::offset()
     void offset(offset_type value)
     {
