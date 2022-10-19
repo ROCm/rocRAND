@@ -52,9 +52,7 @@ TEST_P(rocrand_basic_tests, rocrand_create_destroy_generator_test)
     ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
 
-// Skip test due to known bug on gfx1030, see:
-// https://github.com/ROCm-Developer-Tools/hipamd/issues/52
-TEST_P(rocrand_basic_tests, DISABLED_rocrand_set_stream_test)
+TEST_P(rocrand_basic_tests, rocrand_set_stream_test)
 {
     const rocrand_rng_type rng_type = GetParam();
 
