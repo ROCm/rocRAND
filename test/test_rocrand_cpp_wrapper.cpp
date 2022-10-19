@@ -213,9 +213,7 @@ void rocrand_rng_stream_template()
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
-// Skip test due to known bug on gfx1030, see:
-// https://github.com/ROCm-Developer-Tools/hipamd/issues/52
-TEST(rocrand_cpp_wrapper, DISABLED_rocrand_rng_stream)
+TEST(rocrand_cpp_wrapper, rocrand_rng_stream)
 {
     ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::philox4x32_10>());
     ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::xorwow>());
