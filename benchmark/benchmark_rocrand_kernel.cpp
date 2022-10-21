@@ -1010,7 +1010,7 @@ int main(int argc, char *argv[])
             }
             else if(engine == "scrambled_sobol32")
             {
-                run_benchmarks<rocrand_state_sobol32>(parser, distribution, engine, stream);
+                run_benchmarks<rocrand_state_scrambled_sobol32>(parser, distribution, engine, stream);
             }
             else if (engine == "sobol64")
             {
@@ -1018,7 +1018,7 @@ int main(int argc, char *argv[])
             }
             else if(engine == "scrambled_sobol64")
             {
-                run_benchmarks<rocrand_state_sobol64>(parser, distribution, engine, stream);
+                run_benchmarks<rocrand_state_scrambled_sobol64>(parser, distribution, engine, stream);
             }
             else if (engine == "mtgp32")
             {
