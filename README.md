@@ -149,12 +149,23 @@ cd rocRAND; cd build
 ./benchmark/benchmark_rocrand_host_api --benchmark_format=<console|json|csv>
 
 # To run benchmark for device kernel functions:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
+# The benchmarks are registered with Google Benchmark as `device_kernel<engine,distribution>`, where
+# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
-# distribution -> all, uniform-uint, uniform-float, uniform-double, normal-float, normal-double,
+# distribution -> uniform-uint or uniform-ullong, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson, discrete-poisson, discrete-custom
-# further option can be found using --help
-./benchmark/benchmark_rocrand_kernel --engine <engine> --dis <distribution>
+# Further option can be found using --help
+./benchmark/benchmark_rocrand_device_api
+# To run specific benchmarks:
+./benchmark/benchmark_rocrand_device_api --benchmark_filter=<regex>
+# For example to run benchmarks with engine sobol64:
+./benchmark/benchmark_rocrand_device_api --benchmark_filter="device_kernel<sobol64*"
+# To view all registered benchmarks:
+./benchmark/benchmark_rocrand_device_api --benchmark_list_tests=true
+# The benchmark also supports user input:
+./benchmark/benchmark_rocrand_device_api --size <number> --trials <number> --dimensions <number> --lambda <float float float ...>
+# And can print output in different formats:
+./benchmark/benchmark_rocrand_device_api --benchmark_format=<console|json|csv>
 
 # To compare against cuRAND (cuRAND must be supported):
 ./benchmark/benchmark_curand_generate --engine <engine> --dis <distribution>

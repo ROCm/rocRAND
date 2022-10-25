@@ -44,6 +44,7 @@ function(add_rocrand_benchmark benchmark_src legacy)
 endfunction()
 
 add_rocrand_benchmark("benchmark_rocrand_host_api.cpp" OFF)
+add_rocrand_benchmark("benchmark_rocrand_device_api.cpp" OFF)
 if(HIP_COMPILER STREQUAL "nvcc")
   add_rocrand_benchmark("benchmark_curand_host_api.cpp" OFF)
 endif()
