@@ -57,7 +57,7 @@ template<typename EngineState>
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
     EngineState* states, const unsigned long long seed, const unsigned long long offset)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
     EngineState        state;
     rocrand_init(seed, state_id, offset, &state);
     states[state_id] = state;
@@ -67,8 +67,8 @@ template<typename T, typename EngineState, typename Generator>
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
     EngineState* states, T* data, const size_t size, Generator generator)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride   = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride   = hipGridDim_x * blockDim.x;
 
     EngineState  state = states[state_id];
     unsigned int index = state_id;
@@ -136,16 +136,16 @@ template<typename T, typename Generator>
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
     rocrand_state_mtgp32* states, T* data, const size_t size, Generator generator)
 {
-    const unsigned int state_id = hipBlockIdx_x;
-    unsigned int       index    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    unsigned int       stride   = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id = blockIdx.x;
+    unsigned int       index    = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int       stride   = hipGridDim_x * blockDim.x;
 
     __shared__ rocrand_state_mtgp32 state;
     rocrand_mtgp32_block_copy(&states[state_id], &state);
 
-    const size_t r                 = size % hipBlockDim_x;
+    const size_t r                 = size % blockDim.x;
     const size_t size_rounded_down = size - r;
-    const size_t size_rounded_up   = r == 0 ? size : size_rounded_down + hipBlockDim_x;
+    const size_t size_rounded_up   = r == 0 ? size : size_rounded_down + blockDim.x;
     while(index < size_rounded_down)
     {
         data[index] = generator(&state);
@@ -208,7 +208,7 @@ struct runner<rocrand_state_mtgp32>
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
     rocrand_state_lfsr113* states, const uint4 seed)
 {
-    const unsigned int    state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int    state_id = blockIdx.x * blockDim.x + threadIdx.x;
     rocrand_state_lfsr113 state;
     rocrand_init(seed, state_id, &state);
     states[state_id] = state;
@@ -273,10 +273,10 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_ker
     EngineState* states, SobolType* directions, SobolType offset)
 {
     const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
     EngineState        state;
     rocrand_init(&directions[dimension * sizeof(SobolType) * 8], offset + state_id, &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
+    states[hipGridDim_x * blockDim.x * dimension + state_id] = state;
 }
 
 template<typename EngineState, typename SobolType>
@@ -284,13 +284,13 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled
     EngineState* states, SobolType* directions, SobolType* scramble_constants, SobolType offset)
 {
     const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
     EngineState        state;
     rocrand_init(&directions[dimension * sizeof(SobolType) * 8],
                  scramble_constants[dimension],
                  offset + state_id,
                  &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
+    states[hipGridDim_x * blockDim.x * dimension + state_id] = state;
 }
 
 // generate_kernel for the normal and scrambled sobol generators
@@ -299,10 +299,10 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol
     EngineState* states, T* data, const size_t size, Generator generator)
 {
     const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride    = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride    = hipGridDim_x * blockDim.x;
 
-    EngineState  state  = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
+    EngineState  state  = states[hipGridDim_x * blockDim.x * dimension + state_id];
     const size_t offset = dimension * size;
     unsigned int index  = state_id;
     while(index < size)
@@ -311,9 +311,9 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol
         skipahead(stride - 1, &state);
         index += stride;
     }
-    state = states[hipGridDim_x * hipBlockDim_x * dimension + state_id];
+    state = states[hipGridDim_x * blockDim.x * dimension + state_id];
     skipahead(static_cast<unsigned int>(size), &state);
-    states[hipGridDim_x * hipBlockDim_x * dimension + state_id] = state;
+    states[hipGridDim_x * blockDim.x * dimension + state_id] = state;
 }
 
 template<>
