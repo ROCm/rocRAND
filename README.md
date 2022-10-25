@@ -152,7 +152,7 @@ cd rocRAND; cd build
 # The benchmarks are registered with Google Benchmark as `device_kernel<engine,distribution>`, where
 # engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
-# distribution -> uniform-uint, uniform-float, uniform-double, normal-float, normal-double,
+# distribution -> uniform-uint or uniform-ullong, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson, discrete-poisson, discrete-custom
 # Further option can be found using --help
 ./benchmark/benchmark_rocrand_device_api

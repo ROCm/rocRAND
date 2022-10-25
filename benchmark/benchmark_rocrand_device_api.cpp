@@ -609,13 +609,29 @@ struct generator_type
 };
 
 template<typename Engine>
-struct generator : public generator_type
+struct generator_uint : public generator_type
 {
     typedef unsigned int data_type;
 
     std::string name()
     {
         return "uniform-uint";
+    }
+
+    __device__ data_type operator()(Engine* state)
+    {
+        return rocrand(state);
+    }
+};
+
+template<typename Engine>
+struct generator_ullong : public generator_type
+{
+    typedef unsigned long long int data_type;
+
+    std::string name()
+    {
+        return "uniform-ullong";
     }
 
     __device__ data_type operator()(Engine* state)
@@ -908,7 +924,18 @@ void add_benchmarks(const benchmark_context&                      ctx,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     const std::string&                            name)
 {
-    add_benchmark<Engine>(ctx, stream, benchmarks, name, generator<Engine>());
+    constexpr bool is_64_bits = std::is_same<Engine, rocrand_state_sobol64>::value
+                                || std::is_same<Engine, rocrand_state_scrambled_sobol64>::value;
+
+    if(is_64_bits)
+    {
+        add_benchmark<Engine>(ctx, stream, benchmarks, name, generator_ullong<Engine>());
+    }
+    else
+    {
+        add_benchmark<Engine>(ctx, stream, benchmarks, name, generator_uint<Engine>());
+    }
+
     add_benchmark<Engine>(ctx, stream, benchmarks, name, generator_uniform<Engine>());
     add_benchmark<Engine>(ctx, stream, benchmarks, name, generator_uniform_double<Engine>());
     add_benchmark<Engine>(ctx, stream, benchmarks, name, generator_normal<Engine>());
@@ -976,16 +1003,16 @@ int main(int argc, char* argv[])
     std::vector<benchmark::internal::Benchmark*> benchmarks = {};
 
     // MT19937 has no kernel implementation
-    add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, "xorwow");
+    add_benchmarks<rocrand_state_lfsr113>(ctx, stream, benchmarks, "lfsr113");
+    add_benchmarks<rocrand_state_mrg31k3p>(ctx, stream, benchmarks, "mrg31k3p");
     add_benchmarks<rocrand_state_mrg32k3a>(ctx, stream, benchmarks, "mrg32k3a");
     add_benchmarks<rocrand_state_mtgp32>(ctx, stream, benchmarks, "mtgp32");
     add_benchmarks<rocrand_state_philox4x32_10>(ctx, stream, benchmarks, "philox4x32_10");
-    add_benchmarks<rocrand_state_mrg31k3p>(ctx, stream, benchmarks, "mrg31k3p");
-    add_benchmarks<rocrand_state_lfsr113>(ctx, stream, benchmarks, "lfsr113");
-    add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, "sobol32");
-    add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, "sobol64");
     add_benchmarks<rocrand_state_scrambled_sobol32>(ctx, stream, benchmarks, "scrambled_sobol32");
     add_benchmarks<rocrand_state_scrambled_sobol64>(ctx, stream, benchmarks, "scrambled_sobol64");
+    add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, "sobol32");
+    add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, "sobol64");
+    add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, "xorwow");
 
     // Use manual timing
     for(auto& b : benchmarks)
