@@ -40,7 +40,7 @@
 #include <vector>
 
 #ifndef DEFAULT_RAND_N
-const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
+    #define DEFAULT_RAND_N (1024 * 1024 * 128)
 #endif
 
 size_t next_power2(size_t x)
