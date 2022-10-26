@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -434,8 +434,8 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
     hipMalloc(&data0, sizeof(unsigned int) * size0);
     hipMalloc(&data1, sizeof(unsigned int) * size1);
 
-    rocrand_sobol32 g0;
-    rocrand_sobol32 g1;
+    rocrand_sobol64 g0;
+    rocrand_sobol64 g1;
     g0.set_dimensions(dimensions);
     g1.set_dimensions(dimensions);
 
