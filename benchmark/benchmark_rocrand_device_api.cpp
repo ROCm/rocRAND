@@ -865,8 +865,6 @@ void run_benchmark(benchmark::State&        state,
         HIP_CHECK(hipDeviceSynchronize());
     }
 
-    HIP_CHECK(hipDeviceSynchronize());
-
     // Measurement
     hipEvent_t start, stop;
     HIP_CHECK(hipEventCreate(&start));
