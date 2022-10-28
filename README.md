@@ -45,7 +45,7 @@ Optional:
   * Note: If GTest is not already installed, it will be automatically downloaded and built
 * Fortran compiler (required only for Fortran wrapper)
   * `gfortran` is recommended.
-* Python 2.7+ or 3.5+ (required only for Python wrapper)
+* Python 3.5+ (required only for Python wrapper)
 
 If some dependencies are missing, cmake script automatically downloads, builds and
 installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
