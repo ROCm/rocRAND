@@ -18,16 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "benchmark_utils.hpp"
-
-#include <rocrand/rocrand.h>
-
-// Google Benchmark
-#include <benchmark/benchmark.h>
-
+#include "benchmark_rocrand_utils.hpp"
 #include "cmdparser.hpp"
 
+#include <benchmark/benchmark.h>
+
 #include <hip/hip_runtime.h>
+#include <rocrand/rocrand.h>
 
 #include <map>
 #include <string>
@@ -133,7 +130,7 @@ int main(int argc, char* argv[])
     HIP_CHECK(hipStreamCreate(&stream));
 
     // Benchmark info
-    add_common_benchmark_info();
+    add_common_benchmark_rocrand_info();
 
     const size_t              size            = parser.get<size_t>("size");
     const size_t              trials          = parser.get<size_t>("trials");

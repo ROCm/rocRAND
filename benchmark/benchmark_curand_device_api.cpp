@@ -18,45 +18,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "benchmark_rocrand_utils.hpp"
+#include "benchmark_curand_utils.hpp"
 #include "cmdparser.hpp"
 
 #include <benchmark/benchmark.h>
 
-#include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
-#include <rocrand/rocrand_kernel.h>
-#include <rocrand/rocrand_mtgp32_11213.h>
-#include <rocrand/rocrand_scrambled_sobol32_constants.h>
-#include <rocrand/rocrand_scrambled_sobol32_precomputed.h>
-#include <rocrand/rocrand_scrambled_sobol64_constants.h>
-#include <rocrand/rocrand_scrambled_sobol64_precomputed.h>
-#include <rocrand/rocrand_sobol32_precomputed.h>
-#include <rocrand/rocrand_sobol64_precomputed.h>
+#include <cuda_runtime.h>
+#include <curand.h>
+#include <curand_kernel.h>
+#include <curand_mtgp32_host.h>
+#include <curand_mtgp32dc_p_11213.h>
 
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
+
+#define CUDA_CALL(condition)                                                               \
+    do                                                                                     \
+    {                                                                                      \
+        cudaError_t error_ = condition;                                                    \
+        if(error_ != cudaSuccess)                                                          \
+        {                                                                                  \
+            std::cout << "CUDA error: " << error_ << " at " << __FILE__ << ":" << __LINE__ \
+                      << std::endl;                                                        \
+            exit(error_);                                                                  \
+        }                                                                                  \
+    }                                                                                      \
+    while(0)
+
+#define CURAND_DEFAULT_MAX_BLOCK_SIZE 256
 
 #ifndef DEFAULT_RAND_N
     #define DEFAULT_RAND_N (1024 * 1024 * 128)
 #endif
 
 template<typename EngineState>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
+__global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
     EngineState* states, const unsigned long long seed, const unsigned long long offset)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
     EngineState        state;
-    rocrand_init(seed, state_id, offset, &state);
+    curand_init(seed, state_id, offset, &state);
     states[state_id] = state;
 }
 
 template<typename EngineState, typename T, typename Generator>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
+__global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
     EngineState* states, T* data, const size_t size, Generator generator)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -84,65 +96,48 @@ struct runner
            const unsigned long long offset)
     {
         const size_t states_size = blocks * threads;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states), states_size * sizeof(EngineState)));
+        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(EngineState)));
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
-                           dim3(blocks),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           seed,
-                           offset);
+        init_kernel<<<blocks, threads>>>(states, seed, offset);
 
-        HIP_CHECK(hipGetLastError());
-        HIP_CHECK(hipDeviceSynchronize());
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
     }
 
     ~runner()
     {
-        HIP_CHECK(hipFree(states));
+        CUDA_CALL(cudaFree(states));
     }
 
     template<typename T, typename Generator>
     void generate(const size_t     blocks,
                   const size_t     threads,
-                  hipStream_t      stream,
+                  cudaStream_t     stream,
                   T*               data,
                   const size_t     size,
                   const Generator& generator)
     {
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
-                           dim3(blocks),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size,
-                           generator);
+        generate_kernel<<<blocks, threads, 0, stream>>>(states, data, size, generator);
     }
 };
 
 template<typename T, typename Generator>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    rocrand_state_mtgp32* states, T* data, const size_t size, Generator generator)
+__global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
+    curandStateMtgp32_t* states, T* data, const size_t size, Generator generator)
 {
-    const unsigned int state_id = blockIdx.x;
-    unsigned int       index    = blockIdx.x * blockDim.x + threadIdx.x;
-    unsigned int       stride   = gridDim.x * blockDim.x;
+    const unsigned int state_id  = blockIdx.x;
+    const unsigned int thread_id = threadIdx.x;
+    unsigned int       index     = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int       stride    = gridDim.x * blockDim.x;
 
-    __shared__ rocrand_state_mtgp32 state;
-    rocrand_mtgp32_block_copy(&states[state_id], &state);
+    __shared__ curandStateMtgp32_t state;
 
-    const size_t r                 = size % blockDim.x;
-    const size_t size_rounded_down = size - r;
-    const size_t size_rounded_up   = r == 0 ? size : size_rounded_down + blockDim.x;
-    while(index < size_rounded_down)
-    {
-        data[index] = generator(&state);
-        index += stride;
-    }
+    if(thread_id == 0)
+        state = states[state_id];
+    __syncthreads();
+
+    const size_t r               = size % blockDim.x;
+    const size_t size_rounded_up = r == 0 ? size : size + (blockDim.x - r);
     while(index < size_rounded_up)
     {
         auto value = generator(&state);
@@ -150,14 +145,17 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
             data[index] = value;
         index += stride;
     }
+    __syncthreads();
 
-    rocrand_mtgp32_block_copy(&state, &states[state_id]);
+    if(thread_id == 0)
+        states[state_id] = state;
 }
 
 template<>
-struct runner<rocrand_state_mtgp32>
+struct runner<curandStateMtgp32_t>
 {
-    rocrand_state_mtgp32* states;
+    curandStateMtgp32_t*    states;
+    mtgp32_kernel_params_t* d_param;
 
     runner(const size_t /* dimensions */,
            const size_t blocks,
@@ -166,130 +164,66 @@ struct runner<rocrand_state_mtgp32>
            const unsigned long long /* offset */)
     {
         const size_t states_size = std::min((size_t)200, blocks);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_mtgp32)));
+        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateMtgp32_t)));
 
-        ROCRAND_CHECK(
-            rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, states_size, seed));
+        CUDA_CALL(cudaMalloc((void**)&d_param, sizeof(mtgp32_kernel_params)));
+        CURAND_CALL(curandMakeMTGP32Constants(mtgp32dc_params_fast_11213, d_param));
+        CURAND_CALL(curandMakeMTGP32KernelState(states,
+                                                mtgp32dc_params_fast_11213,
+                                                d_param,
+                                                states_size,
+                                                seed));
     }
 
     ~runner()
     {
-        HIP_CHECK(hipFree(states));
+        CUDA_CALL(cudaFree(states));
+        CUDA_CALL(cudaFree(d_param));
     }
 
     template<typename T, typename Generator>
     void generate(const size_t blocks,
                   const size_t /* threads */,
-                  hipStream_t      stream,
+                  cudaStream_t     stream,
                   T*               data,
                   const size_t     size,
                   const Generator& generator)
     {
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
-                           dim3(std::min((size_t)200, blocks)),
-                           dim3(256),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size,
-                           generator);
-    }
-};
-
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
-    rocrand_state_lfsr113* states, const uint4 seed)
-{
-    const unsigned int    state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    rocrand_state_lfsr113 state;
-    rocrand_init(seed, state_id, &state);
-    states[state_id] = state;
-}
-
-template<>
-struct runner<rocrand_state_lfsr113>
-{
-    rocrand_state_lfsr113* states;
-
-    runner(const size_t /* dimensions */,
-           const size_t blocks,
-           const size_t threads,
-           const unsigned long long /* seed */,
-           const unsigned long long /* offset */)
-    {
-        const size_t states_size = blocks * threads;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_lfsr113)));
-
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
-                           dim3(blocks),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           uint4{ROCRAND_LFSR113_DEFAULT_SEED_X,
-                                 ROCRAND_LFSR113_DEFAULT_SEED_Y,
-                                 ROCRAND_LFSR113_DEFAULT_SEED_Z,
-                                 ROCRAND_LFSR113_DEFAULT_SEED_W});
-
-        HIP_CHECK(hipGetLastError());
-        HIP_CHECK(hipDeviceSynchronize());
-    }
-
-    ~runner()
-    {
-        HIP_CHECK(hipFree(states));
-    }
-
-    template<typename T, typename Generator>
-    void generate(const size_t     blocks,
-                  const size_t     threads,
-                  hipStream_t      stream,
-                  T*               data,
-                  const size_t     size,
-                  const Generator& generator)
-    {
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
-                           dim3(blocks),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size,
-                           generator);
+        generate_kernel<<<std::min((size_t)200, blocks), 256, 0, stream>>>(states,
+                                                                           data,
+                                                                           size,
+                                                                           generator);
     }
 };
 
 template<typename EngineState, typename SobolType>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_kernel(
+__global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_kernel(
     EngineState* states, SobolType* directions, SobolType offset)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
     EngineState        state;
-    rocrand_init(&directions[dimension * sizeof(SobolType) * 8], offset + state_id, &state);
+    curand_init(&directions[dimension * sizeof(SobolType) * 8], offset + state_id, &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
 template<typename EngineState, typename SobolType>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled_sobol_kernel(
+__global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled_sobol_kernel(
     EngineState* states, SobolType* directions, SobolType* scramble_constants, SobolType offset)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
     EngineState        state;
-    rocrand_init(&directions[dimension * sizeof(SobolType) * 8],
-                 scramble_constants[dimension],
-                 offset + state_id,
-                 &state);
+    curand_init(&directions[dimension * sizeof(SobolType) * 8],
+                scramble_constants[dimension],
+                offset + state_id,
+                &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
-// generate_kernel for the normal and scrambled sobol generators
+// generate_kernel for the sobol generators
 template<typename EngineState, typename T, typename Generator>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
+__global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
     EngineState* states, T* data, const size_t size, Generator generator)
 {
     const unsigned int dimension = blockIdx.y;
@@ -306,15 +240,15 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol
         index += stride;
     }
     state = states[gridDim.x * blockDim.x * dimension + state_id];
-    skipahead(static_cast<unsigned int>(size), &state);
+    skipahead(size, &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
 template<>
-struct runner<rocrand_state_sobol32>
+struct runner<curandStateSobol32_t>
 {
-    rocrand_state_sobol32* states;
-    size_t                 dimensions;
+    curandStateSobol32_t* states;
+    size_t                dimensions;
 
     runner(const size_t dimensions,
            const size_t blocks,
@@ -325,61 +259,54 @@ struct runner<rocrand_state_sobol32>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_sobol32)));
+        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateSobol32_t)));
 
+        curandDirectionVectors32_t* h_directions;
+        CURAND_CALL(
+            curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
-        const size_t  size = dimensions * 32 * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
-        HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
+        const size_t  size = dimensions * sizeof(unsigned int) * 32;
+        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           static_cast<unsigned int>(offset));
+        init_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(
+            states,
+            directions,
+            static_cast<unsigned int>(offset));
 
-        HIP_CHECK(hipGetLastError());
-        HIP_CHECK(hipDeviceSynchronize());
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
 
-        HIP_CHECK(hipFree(directions));
+        CUDA_CALL(cudaFree(directions));
     }
 
     ~runner()
     {
-        HIP_CHECK(hipFree(states));
+        CUDA_CALL(cudaFree(states));
     }
 
     template<typename T, typename Generator>
     void generate(const size_t     blocks,
                   const size_t     threads,
-                  hipStream_t      stream,
+                  cudaStream_t     stream,
                   T*               data,
                   const size_t     size,
                   const Generator& generator)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generator);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads, 0, stream>>>(states,
+                                                                                  data,
+                                                                                  size / dimensions,
+                                                                                  generator);
     }
 };
 
 template<>
-struct runner<rocrand_state_scrambled_sobol32>
+struct runner<curandStateScrambledSobol32_t>
 {
-    rocrand_state_scrambled_sobol32* states;
-    size_t                           dimensions;
+    curandStateScrambledSobol32_t* states;
+    size_t                         dimensions;
 
     runner(const size_t dimensions,
            const size_t blocks,
@@ -390,74 +317,66 @@ struct runner<rocrand_state_scrambled_sobol32>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_scrambled_sobol32)));
+        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateScrambledSobol32_t)));
 
+        curandDirectionVectors32_t* h_directions;
+        CURAND_CALL(
+            curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
-        const size_t  directions_size = dimensions * 32 * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
-        HIP_CHECK(hipMemcpy(directions,
-                            h_scrambled_sobol32_direction_vectors,
-                            directions_size,
-                            hipMemcpyHostToDevice));
+        const size_t  size = dimensions * sizeof(unsigned int) * 32;
+        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
+        unsigned int* h_scramble_constants;
+        CURAND_CALL(curandGetScrambleConstants32(&h_scramble_constants));
         unsigned int* scramble_constants;
         const size_t  constants_size = dimensions * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
-        HIP_CHECK(hipMemcpy(scramble_constants,
-                            h_scrambled_sobol32_constants,
-                            constants_size,
-                            hipMemcpyHostToDevice));
+        CUDA_CALL(cudaMalloc((void**)&scramble_constants, constants_size));
+        CUDA_CALL(cudaMemcpy(scramble_constants,
+                             h_scramble_constants,
+                             constants_size,
+                             cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           scramble_constants,
-                           static_cast<unsigned int>(offset));
+        init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(
+            states,
+            directions,
+            scramble_constants,
+            static_cast<unsigned int>(offset));
 
-        HIP_CHECK(hipGetLastError());
-        HIP_CHECK(hipDeviceSynchronize());
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
 
-        HIP_CHECK(hipFree(directions));
-        HIP_CHECK(hipFree(scramble_constants));
+        CUDA_CALL(cudaFree(directions));
+        CUDA_CALL(cudaFree(scramble_constants));
     }
 
     ~runner()
     {
-        HIP_CHECK(hipFree(states));
+        CUDA_CALL(cudaFree(states));
     }
 
     template<typename T, typename Generator>
     void generate(const size_t     blocks,
                   const size_t     threads,
-                  hipStream_t      stream,
+                  cudaStream_t     stream,
                   T*               data,
                   const size_t     size,
                   const Generator& generator)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generator);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads, 0, stream>>>(states,
+                                                                                  data,
+                                                                                  size / dimensions,
+                                                                                  generator);
     }
 };
 
 template<>
-struct runner<rocrand_state_sobol64>
+struct runner<curandStateSobol64_t>
 {
-    rocrand_state_sobol64* states;
-    size_t                 dimensions;
+    curandStateSobol64_t* states;
+    size_t                dimensions;
 
     runner(const size_t dimensions,
            const size_t blocks,
@@ -468,61 +387,51 @@ struct runner<rocrand_state_sobol64>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_sobol64)));
+        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateSobol64_t)));
 
+        curandDirectionVectors64_t* h_directions;
+        CURAND_CALL(
+            curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
         unsigned long long int* directions;
-        const size_t            size = dimensions * 64 * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
-        HIP_CHECK(hipMemcpy(directions, h_sobol64_direction_vectors, size, hipMemcpyHostToDevice));
+        const size_t            size = dimensions * sizeof(unsigned long long) * 64;
+        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           offset);
+        init_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, directions, offset);
 
-        HIP_CHECK(hipGetLastError());
-        HIP_CHECK(hipDeviceSynchronize());
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
 
-        HIP_CHECK(hipFree(directions));
+        CUDA_CALL(cudaFree(directions));
     }
 
     ~runner()
     {
-        HIP_CHECK(hipFree(states));
+        CUDA_CALL(cudaFree(states));
     }
 
     template<typename T, typename Generator>
     void generate(const size_t     blocks,
                   const size_t     threads,
-                  hipStream_t      stream,
+                  cudaStream_t     stream,
                   T*               data,
                   const size_t     size,
                   const Generator& generator)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generator);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads, 0, stream>>>(states,
+                                                                                  data,
+                                                                                  size / dimensions,
+                                                                                  generator);
     }
 };
 
 template<>
-struct runner<rocrand_state_scrambled_sobol64>
+struct runner<curandStateScrambledSobol64_t>
 {
-    rocrand_state_scrambled_sobol64* states;
-    size_t                           dimensions;
+    curandStateScrambledSobol64_t* states;
+    size_t                         dimensions;
 
     runner(const size_t dimensions,
            const size_t blocks,
@@ -533,66 +442,57 @@ struct runner<rocrand_state_scrambled_sobol64>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_scrambled_sobol64)));
+        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateScrambledSobol64_t)));
 
-        unsigned long long int* directions;
-        const size_t            directions_size = dimensions * 64 * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
-        HIP_CHECK(hipMemcpy(directions,
-                            h_scrambled_sobol64_direction_vectors,
-                            directions_size,
-                            hipMemcpyHostToDevice));
+        curandDirectionVectors64_t* h_directions;
+        CURAND_CALL(
+            curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
+        unsigned long long* directions;
+        const size_t        size = dimensions * sizeof(unsigned long long) * 64;
+        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
-        unsigned long long int* scramble_constants;
-        const size_t            constants_size = dimensions * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
-        HIP_CHECK(hipMemcpy(scramble_constants,
-                            h_scrambled_sobol64_constants,
-                            constants_size,
-                            hipMemcpyHostToDevice));
+        unsigned long long* h_scramble_constants;
+        CURAND_CALL(curandGetScrambleConstants64(&h_scramble_constants));
+        unsigned long long* scramble_constants;
+        const size_t        constants_size = dimensions * sizeof(unsigned long long);
+        CUDA_CALL(cudaMalloc((void**)&scramble_constants, constants_size));
+        CUDA_CALL(cudaMemcpy(scramble_constants,
+                             h_scramble_constants,
+                             constants_size,
+                             cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           scramble_constants,
-                           offset);
+        init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                             directions,
+                                                                             scramble_constants,
+                                                                             offset);
 
-        HIP_CHECK(hipGetLastError());
-        HIP_CHECK(hipDeviceSynchronize());
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
 
-        HIP_CHECK(hipFree(directions));
-        HIP_CHECK(hipFree(scramble_constants));
+        CUDA_CALL(cudaFree(directions));
+        CUDA_CALL(cudaFree(scramble_constants));
     }
 
     ~runner()
     {
-        HIP_CHECK(hipFree(states));
+        CUDA_CALL(cudaFree(states));
     }
 
     template<typename T, typename Generator>
     void generate(const size_t     blocks,
                   const size_t     threads,
-                  hipStream_t      stream,
+                  cudaStream_t     stream,
                   T*               data,
                   const size_t     size,
                   const Generator& generator)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generator);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads, 0, stream>>>(states,
+                                                                                  data,
+                                                                                  size / dimensions,
+                                                                                  generator);
     }
 };
 
@@ -616,7 +516,7 @@ struct generator_uint : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand(state);
+        return curand(state);
     }
 };
 
@@ -632,7 +532,7 @@ struct generator_ullong : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand(state);
+        return curand(state);
     }
 };
 
@@ -648,7 +548,7 @@ struct generator_uniform : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_uniform(state);
+        return curand_uniform(state);
     }
 };
 
@@ -664,7 +564,7 @@ struct generator_uniform_double : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_uniform_double(state);
+        return curand_uniform_double(state);
     }
 };
 
@@ -680,7 +580,7 @@ struct generator_normal : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_normal(state);
+        return curand_normal(state);
     }
 };
 
@@ -696,7 +596,7 @@ struct generator_normal_double : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_normal_double(state);
+        return curand_normal_double(state);
     }
 };
 
@@ -712,7 +612,7 @@ struct generator_log_normal : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_log_normal(state, 0.f, 1.f);
+        return curand_log_normal(state, 0.f, 1.f);
     }
 };
 
@@ -728,7 +628,7 @@ struct generator_log_normal_double : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_log_normal_double(state, 0., 1.);
+        return curand_log_normal_double(state, 0., 1.);
     }
 };
 
@@ -746,7 +646,7 @@ struct generator_poisson : public generator_type
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_poisson(state, lambda);
+        return curand_poisson(state, lambda);
     }
 
     double lambda;
@@ -766,60 +666,21 @@ struct generator_discrete_poisson : public generator_type
 
     void create()
     {
-        ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
+        CURAND_CALL(curandCreatePoissonDistribution(lambda, &discrete_distribution));
     }
 
     void destroy()
     {
-        ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
+        CURAND_CALL(curandDestroyDistribution(discrete_distribution));
     }
 
     __device__ data_type operator()(Engine* state)
     {
-        return rocrand_discrete(state, discrete_distribution);
+        return curand_discrete(state, discrete_distribution);
     }
 
-    rocrand_discrete_distribution discrete_distribution;
-    double                        lambda;
-};
-
-template<typename Engine>
-struct generator_discrete_custom : public generator_type
-{
-    typedef unsigned int data_type;
-
-    std::string name()
-    {
-        return "discrete-custom";
-    }
-
-    void create()
-    {
-        const unsigned int  offset        = 1234;
-        std::vector<double> probabilities = {10, 10, 1, 120, 8, 6, 140, 2, 150, 150, 10, 80};
-
-        double sum = std::accumulate(probabilities.begin(), probabilities.end(), 0.);
-        std::transform(probabilities.begin(),
-                       probabilities.end(),
-                       probabilities.begin(),
-                       [=](double p) { return p / sum; });
-        ROCRAND_CHECK(rocrand_create_discrete_distribution(probabilities.data(),
-                                                           probabilities.size(),
-                                                           offset,
-                                                           &discrete_distribution));
-    }
-
-    void destroy()
-    {
-        ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
-    }
-
-    __device__ data_type operator()(Engine* state)
-    {
-        return rocrand_discrete(state, discrete_distribution);
-    }
-
-    rocrand_discrete_distribution discrete_distribution;
+    curandDiscreteDistribution_t discrete_distribution;
+    double                       lambda;
 };
 
 struct benchmark_context
@@ -834,7 +695,7 @@ struct benchmark_context
 
 template<typename Engine, typename Generator>
 void run_benchmark(benchmark::State&        state,
-                   const hipStream_t        stream,
+                   const cudaStream_t       stream,
                    const benchmark_context& context,
                    Generator                generator)
 {
@@ -850,7 +711,7 @@ void run_benchmark(benchmark::State&        state,
     generator.create();
 
     data_type* data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), size * sizeof(data_type)));
+    CUDA_CALL(cudaMalloc((void**)&data, size * sizeof(data_type)));
 
     constexpr unsigned long long int seed   = 12345ULL;
     constexpr unsigned long long int offset = 6789ULL;
@@ -861,26 +722,26 @@ void run_benchmark(benchmark::State&        state,
     for(size_t i = 0; i < 5; i++)
     {
         r.generate(blocks, threads, stream, data, size, generator);
-        HIP_CHECK(hipGetLastError());
-        HIP_CHECK(hipDeviceSynchronize());
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
     }
 
     // Measurement
-    hipEvent_t start, stop;
-    HIP_CHECK(hipEventCreate(&start));
-    HIP_CHECK(hipEventCreate(&stop));
+    cudaEvent_t start, stop;
+    CUDA_CALL(cudaEventCreate(&start));
+    CUDA_CALL(cudaEventCreate(&stop));
     for(auto _ : state)
     {
-        HIP_CHECK(hipEventRecord(start, stream));
+        CUDA_CALL(cudaEventRecord(start, stream));
         for(size_t i = 0; i < trials; i++)
         {
             r.generate(blocks, threads, stream, data, size, generator);
         }
-        HIP_CHECK(hipEventRecord(stop, stream));
-        HIP_CHECK(hipEventSynchronize(stop));
+        CUDA_CALL(cudaEventRecord(stop, stream));
+        CUDA_CALL(cudaEventSynchronize(stop));
 
         float elapsed;
-        HIP_CHECK(hipEventElapsedTime(&elapsed, start, stop));
+        CUDA_CALL(cudaEventElapsedTime(&elapsed, start, stop));
 
         state.SetIterationTime(elapsed / 1000.f);
     }
@@ -890,14 +751,14 @@ void run_benchmark(benchmark::State&        state,
     // Optional de-initialization of the generator
     generator.destroy();
 
-    HIP_CHECK(hipEventDestroy(start));
-    HIP_CHECK(hipEventDestroy(stop));
-    HIP_CHECK(hipFree(data));
+    CUDA_CALL(cudaEventDestroy(start));
+    CUDA_CALL(cudaEventDestroy(stop));
+    CUDA_CALL(cudaFree(data));
 }
 
 template<typename Engine, typename Generator>
 void add_benchmark(const benchmark_context&                      context,
-                   const hipStream_t                             stream,
+                   const cudaStream_t                            stream,
                    std::vector<benchmark::internal::Benchmark*>& benchmarks,
                    const std::string&                            engine_name,
                    Generator                                     generator)
@@ -916,12 +777,12 @@ void add_benchmark(const benchmark_context&                      context,
 
 template<typename Engine>
 void add_benchmarks(const benchmark_context&                      ctx,
-                    const hipStream_t                             stream,
+                    const cudaStream_t                            stream,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     const std::string&                            name)
 {
-    constexpr bool is_64_bits = std::is_same<Engine, rocrand_state_sobol64>::value
-                                || std::is_same<Engine, rocrand_state_scrambled_sobol64>::value;
+    constexpr bool is_64_bits = std::is_same<Engine, curandStateSobol64_t>::value
+                                || std::is_same<Engine, curandStateScrambledSobol64_t>::value;
 
     if(is_64_bits)
     {
@@ -952,8 +813,6 @@ void add_benchmarks(const benchmark_context&                      ctx,
         gen_discrete_poisson.lambda = ctx.lambdas[i];
         add_benchmark<Engine>(ctx, stream, benchmarks, name, gen_discrete_poisson);
     }
-
-    add_benchmark<Engine>(ctx, stream, benchmarks, name, generator_discrete_custom<Engine>());
 }
 
 int main(int argc, char* argv[])
@@ -976,10 +835,10 @@ int main(int argc, char* argv[])
         "space-separated list of lambdas of Poisson distribution");
     parser.run_and_exit_if_error();
 
-    hipStream_t stream;
-    HIP_CHECK(hipStreamCreate(&stream));
+    cudaStream_t stream;
+    CUDA_CALL(cudaStreamCreate(&stream));
 
-    add_common_benchmark_rocrand_info();
+    add_common_benchmark_curand_info();
 
     benchmark_context ctx{};
 
@@ -998,17 +857,14 @@ int main(int argc, char* argv[])
 
     std::vector<benchmark::internal::Benchmark*> benchmarks = {};
 
-    // MT19937 has no kernel implementation
-    add_benchmarks<rocrand_state_lfsr113>(ctx, stream, benchmarks, "lfsr113");
-    add_benchmarks<rocrand_state_mrg31k3p>(ctx, stream, benchmarks, "mrg31k3p");
-    add_benchmarks<rocrand_state_mrg32k3a>(ctx, stream, benchmarks, "mrg32k3a");
-    add_benchmarks<rocrand_state_mtgp32>(ctx, stream, benchmarks, "mtgp32");
-    add_benchmarks<rocrand_state_philox4x32_10>(ctx, stream, benchmarks, "philox4x32_10");
-    add_benchmarks<rocrand_state_scrambled_sobol32>(ctx, stream, benchmarks, "scrambled_sobol32");
-    add_benchmarks<rocrand_state_scrambled_sobol64>(ctx, stream, benchmarks, "scrambled_sobol64");
-    add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, "sobol32");
-    add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, "sobol64");
-    add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, "xorwow");
+    add_benchmarks<curandStateMRG32k3a_t>(ctx, stream, benchmarks, "mrg32k3a");
+    add_benchmarks<curandStateMtgp32_t>(ctx, stream, benchmarks, "mtgp32");
+    add_benchmarks<curandStatePhilox4_32_10_t>(ctx, stream, benchmarks, "philox4x32_10");
+    add_benchmarks<curandStateScrambledSobol32_t>(ctx, stream, benchmarks, "scrambled_sobol32");
+    add_benchmarks<curandStateScrambledSobol64_t>(ctx, stream, benchmarks, "scrambled_sobol64");
+    add_benchmarks<curandStateSobol32_t>(ctx, stream, benchmarks, "sobol32");
+    add_benchmarks<curandStateSobol64_t>(ctx, stream, benchmarks, "sobol64");
+    add_benchmarks<curandStateXORWOW_t>(ctx, stream, benchmarks, "xorwow");
 
     // Use manual timing
     for(auto& b : benchmarks)
@@ -1019,7 +875,7 @@ int main(int argc, char* argv[])
 
     // Run benchmarks
     benchmark::RunSpecifiedBenchmarks();
-    HIP_CHECK(hipStreamDestroy(stream));
+    CUDA_CALL(cudaStreamDestroy(stream));
 
     return 0;
 }

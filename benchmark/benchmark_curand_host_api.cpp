@@ -18,30 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "benchmark_utils.hpp"
+#include "benchmark_curand_utils.hpp"
 #include "cmdparser.hpp"
+
 #include <cuda_runtime.h>
 #include <curand.h>
 
-#define CUDA_CALL(x)                                        \
-    do                                                      \
-    {                                                       \
-        if((x) != cudaSuccess)                              \
-        {                                                   \
-            printf("Error at %s:%d\n", __FILE__, __LINE__); \
-            exit(EXIT_FAILURE);                             \
-        }                                                   \
-    }                                                       \
-    while(0)
-#define CURAND_CALL(x)                                      \
-    do                                                      \
-    {                                                       \
-        if((x) != CURAND_STATUS_SUCCESS)                    \
-        {                                                   \
-            printf("Error at %s:%d\n", __FILE__, __LINE__); \
-            exit(EXIT_FAILURE);                             \
-        }                                                   \
-    }                                                       \
+#define CUDA_CALL(condition)                                                               \
+    do                                                                                     \
+    {                                                                                      \
+        cudaError_t error_ = condition;                                                    \
+        if(error_ != cudaSuccess)                                                          \
+        {                                                                                  \
+            std::cout << "CUDA error: " << error_ << " at " << __FILE__ << ":" << __LINE__ \
+                      << std::endl;                                                        \
+            exit(error_);                                                                  \
+        }                                                                                  \
+    }                                                                                      \
     while(0)
 
 #ifndef DEFAULT_RAND_N
@@ -148,7 +141,7 @@ int main(int argc, char* argv[])
     cudaStream_t stream;
     CUDA_CALL(cudaStreamCreate(&stream));
 
-    add_common_benchmark_info();
+    add_common_benchmark_curand_info();
 
     const size_t              size            = parser.get<size_t>("size");
     const size_t              trials          = parser.get<size_t>("trials");

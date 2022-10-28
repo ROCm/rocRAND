@@ -21,32 +21,24 @@
 #ifndef ROCRAND_BENCHMARK_UTILS_HPP_
 #define ROCRAND_BENCHMARK_UTILS_HPP_
 
-#include <rocrand/rocrand.h>
-
 #include <benchmark/benchmark.h>
+
+#include <hip/hip_runtime.h>
 
 #include <iostream>
 #include <string>
 
-#define HIP_CHECK(condition)                                                           \
-    {                                                                                  \
-        hipError_t error = condition;                                                  \
-        if(error != hipSuccess)                                                        \
-        {                                                                              \
-            std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
-            exit(error);                                                               \
-        }                                                                              \
-    }
-
-#define ROCRAND_CHECK(condition)                                                             \
-    {                                                                                        \
-        rocrand_status _status = condition;                                                  \
-        if(_status != ROCRAND_STATUS_SUCCESS)                                                \
-        {                                                                                    \
-            std::cout << "ROCRAND error: " << _status << " line: " << __LINE__ << std::endl; \
-            exit(_status);                                                                   \
-        }                                                                                    \
-    }
+#define HIP_CHECK(condition)                                                            \
+    do                                                                                  \
+    {                                                                                   \
+        hipError_t error_ = condition;                                                  \
+        if(error_ != hipSuccess)                                                        \
+        {                                                                               \
+            std::cout << "HIP error: " << error_ << " line: " << __LINE__ << std::endl; \
+            exit(error_);                                                               \
+        }                                                                               \
+    }                                                                                   \
+    while(0)
 
 inline void add_common_benchmark_info()
 {
@@ -70,10 +62,6 @@ inline void add_common_benchmark_info()
 
     auto num_size_t = [](const std::string& name, const size_t& value)
     { benchmark::AddCustomContext(name, std::to_string(value)); };
-
-    int version;
-    ROCRAND_CHECK(rocrand_get_version(&version));
-    num("rocrand_version", version);
 
     int runtime_version;
     HIP_CHECK(hipRuntimeGetVersion(&runtime_version));
@@ -158,6 +146,16 @@ inline void add_common_benchmark_info()
     num("hdp_arch_has_surface_funcs", arch.hasSurfaceFuncs);
     num("hdp_arch_has_3d_grid", arch.has3dGrid);
     num("hdp_arch_has_dynamic_parallelism", arch.hasDynamicParallelism);
+}
+
+inline size_t next_power2(size_t x)
+{
+    size_t power = 1;
+    while(power < x)
+    {
+        power *= 2;
+    }
+    return power;
 }
 
 #endif // ROCRAND_BENCHMARK_UTILS_HPP_
