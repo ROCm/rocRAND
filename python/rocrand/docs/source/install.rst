@@ -5,7 +5,7 @@ Requirements
 ------------
 
 * rocRAND
-* Python 2.7 or 3.5
+* Python 3.5
 * NumPy (will be installed automatically as a dependency if necessary)
 
 Note: If rocRAND is built from sources but not installed or installed in
