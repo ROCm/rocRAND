@@ -172,45 +172,9 @@ TEST(rocrand_sobol64_qrng_tests, normal_double_test)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_sobol64_qrng_tests, poisson_test_32bit)
+TEST(rocrand_sobol64_qrng_tests, poisson_test)
 {
     using T = unsigned int;
-    constexpr size_t size = 1313;
-    T * data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));
-
-    rocrand_sobol64 g;
-    ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    T host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(T) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    double mean = 0.0;
-    for(size_t i = 0; i < size; i++)
-    {
-        mean += host_data[i];
-    }
-    mean = mean / size;
-
-    double var = 0.0;
-    for(size_t i = 0; i < size; i++)
-    {
-        double x = host_data[i] - mean;
-        var += x * x;
-    }
-    var = var / size;
-
-    EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
-    EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
-
-    HIP_CHECK(hipFree(data));
-}
-
-TEST(rocrand_sobol64_qrng_tests, poisson_test_64bit)
-{
-    using T = unsigned long long int;
     constexpr size_t size = 1313;
     T * data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));

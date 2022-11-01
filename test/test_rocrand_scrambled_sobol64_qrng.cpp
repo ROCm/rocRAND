@@ -148,31 +148,31 @@ TYPED_TEST(rocrand_scrambled_sobol64_float_tests, normal_test)
     EXPECT_NEAR(ExpectedStd, std, ExpectedStd * 0.1); // 10%
 }
 
-TYPED_TEST(rocrand_scrambled_sobol64_integer_tests, poisson_test)
+TEST(rocrand_scrambled_sobol64_qrng_tests, poisson_test)
 {
-    using ResultType      = typename TestFixture::type;
     constexpr size_t size = 1313;
-    ResultType*      data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
+    unsigned int*    data;
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
     HIP_CHECK(hipDeviceSynchronize());
 
-    std::vector<ResultType> host_data(size);
-    HIP_CHECK(hipMemcpy(host_data.data(), data, sizeof(ResultType) * size, hipMemcpyDeviceToHost));
+    std::vector<unsigned int> host_data(size);
+    HIP_CHECK(
+        hipMemcpy(host_data.data(), data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
 
     double mean = 0.0;
     double var  = 0.0;
-    for(ResultType v : host_data)
+    for(unsigned int v : host_data)
     {
         mean += v;
     }
     mean = mean / size;
-    for(ResultType v : host_data)
+    for(unsigned int v : host_data)
     {
         var += std::pow(v - mean, 2);
     }

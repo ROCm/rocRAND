@@ -332,35 +332,17 @@ int main(int argc, char* argv[])
         {
             const std::string poisson_dis_name
                 = std::string("poisson(lambda=") + std::to_string(lambda) + ")";
-            if(engine_type == ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
-               || engine_type == ROCRAND_RNG_PSEUDO_THREEFRY4_64_20)
-            {
-                benchmarks.emplace_back(benchmark::RegisterBenchmark(
-                    (name_engine_prefix + poisson_dis_name).c_str(),
-                    &run_benchmark<unsigned long long int>,
-                    [lambda](rocrand_generator gen, unsigned long long int* data, size_t size_gen)
-                    { return rocrand_generate_poisson_long_long(gen, data, size_gen, lambda); },
-                    size,
-                    trials,
-                    dimensions,
-                    offset,
-                    engine_type,
-                    stream));
-            }
-            else
-            {
-                benchmarks.emplace_back(benchmark::RegisterBenchmark(
-                    (name_engine_prefix + poisson_dis_name).c_str(),
-                    &run_benchmark<unsigned int>,
-                    [lambda](rocrand_generator gen, unsigned int* data, size_t size_gen)
-                    { return rocrand_generate_poisson(gen, data, size_gen, lambda); },
-                    size,
-                    trials,
-                    dimensions,
-                    offset,
-                    engine_type,
-                    stream));
-            }
+            benchmarks.emplace_back(benchmark::RegisterBenchmark(
+                (name_engine_prefix + poisson_dis_name).c_str(),
+                &run_benchmark<unsigned int>,
+                [lambda](rocrand_generator gen, unsigned int* data, size_t size_gen)
+                { return rocrand_generate_poisson(gen, data, size_gen, lambda); },
+                size,
+                trials,
+                dimensions,
+                offset,
+                engine_type,
+                stream));
         }
     }
     // Use manual timing

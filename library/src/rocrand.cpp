@@ -1509,45 +1509,16 @@ rocrand_generate_poisson(rocrand_generator generator,
             = static_cast<rocrand_threefry2x32_20*>(generator);
         return rocrand_threefry_generator->generate_poisson(output_data, n, lambda);
     }
-    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY4_32_20)
-    {
-        rocrand_threefry4x32_20* rocrand_threefry_generator
-            = static_cast<rocrand_threefry4x32_20*>(generator);
-        return rocrand_threefry_generator->generate_poisson(output_data, n, lambda);
-    }
-
-    return ROCRAND_STATUS_TYPE_ERROR;
-}
-
-rocrand_status ROCRANDAPI rocrand_generate_poisson_long_long(rocrand_generator       generator,
-                                                             unsigned long long int* output_data,
-                                                             size_t                  n,
-                                                             double                  lambda)
-{
-    if(generator == NULL)
-    {
-        return ROCRAND_STATUS_NOT_CREATED;
-    }
-    if(lambda <= 0.0)
-    {
-        return ROCRAND_STATUS_OUT_OF_RANGE;
-    }
-
-    if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL64)
-    {
-        rocrand_sobol64* rocrand_sobol64_generator = static_cast<rocrand_sobol64*>(generator);
-        return rocrand_sobol64_generator->generate_poisson(output_data, n, lambda);
-    }
-    else if(generator->rng_type == ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64)
-    {
-        rocrand_scrambled_sobol64* rocrand_scrambled_sobol64_generator
-            = static_cast<rocrand_scrambled_sobol64*>(generator);
-        return rocrand_scrambled_sobol64_generator->generate_poisson(output_data, n, lambda);
-    }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY2_64_20)
     {
         rocrand_threefry2x64_20* rocrand_threefry_generator
             = static_cast<rocrand_threefry2x64_20*>(generator);
+        return rocrand_threefry_generator->generate_poisson(output_data, n, lambda);
+    }
+    else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY4_32_20)
+    {
+        rocrand_threefry4x32_20* rocrand_threefry_generator
+            = static_cast<rocrand_threefry4x32_20*>(generator);
         return rocrand_threefry_generator->generate_poisson(output_data, n, lambda);
     }
     else if(generator->rng_type == ROCRAND_RNG_PSEUDO_THREEFRY4_64_20)

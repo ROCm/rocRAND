@@ -611,8 +611,8 @@ TEST(rocrand_threefry_prng_tests, continuity_log_normal_double_test)
 
 TEST(rocrand_threefry_prng_tests, continuity_poisson_test)
 {
-    typedef unsigned long long int output_type;
+    typedef unsigned int output_type;
     continuity_test<output_type>([](rocrand_threefry4x64_20& g, output_type* data, size_t s)
                                  { g.generate_poisson(data, s, 100.); },
-                                 1);
+                                 rocrand_poisson_distribution<>::output_width);
 }
