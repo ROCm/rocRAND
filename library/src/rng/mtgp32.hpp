@@ -84,9 +84,9 @@ namespace detail {
 
         using vec_type = aligned_vec_type<T, output_width>;
 
-        const unsigned int engine_id = hipBlockIdx_x;
-        const unsigned int stride = hipGridDim_x * BlockSize;
-        size_t index = hipBlockIdx_x * BlockSize + hipThreadIdx_x;
+        const unsigned int engine_id = blockIdx.x;
+        const unsigned int stride    = gridDim.x * BlockSize;
+        size_t             index     = blockIdx.x * BlockSize + threadIdx.x;
 
         // Load device engine
         __shared__ mtgp32_device_engine engine;
@@ -195,7 +195,8 @@ public:
         , m_engines_size(s_blocks)
     {
         // Allocate device random number engines
-        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
+        hipError_t error
+            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;

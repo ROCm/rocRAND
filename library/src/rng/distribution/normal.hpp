@@ -274,7 +274,7 @@ struct sobol_normal_distribution<__half>
         #if defined(ROCRAND_HALF_MATH_SUPPORTED)
         return __hfma(__float2half(v), stddev, mean);
         #else
-        return __half2float(mean) + v * __half2float(stddev);
+        return __float2half(__half2float(mean) + v * __half2float(stddev));
         #endif
     }
 };

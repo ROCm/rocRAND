@@ -34,6 +34,8 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm-Developer-Tools/HIP)
   * Latest CUDA SDK
+* For CPU runs (experimental):
+  * [HIP-CPU](https://github.com/ROCm-Developer-Tools/HIP-CPU)
 * Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
 * Strawberry Perl (HIP on Windows only)
@@ -75,6 +77,9 @@ cd rocRAND; mkdir build; cd build
 [CXX=nvcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 # or
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+
+# To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required and BUILD_HIPRAND should be turned off
+[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_HIPRAND=OFF -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
 make -j4

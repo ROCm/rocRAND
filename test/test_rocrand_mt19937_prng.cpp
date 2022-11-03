@@ -34,7 +34,7 @@ TEST(rocrand_mt19937_prng_tests, uniform_uint_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -59,7 +59,7 @@ TEST(rocrand_mt19937_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(&data, sizeof(float) * size);
+    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -86,7 +86,7 @@ TEST(rocrand_mt19937_prng_tests, normal_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(&data, sizeof(float) * size);
+    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
@@ -120,7 +120,7 @@ TEST(rocrand_mt19937_prng_tests, poisson_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -158,7 +158,7 @@ TEST(rocrand_mt19937_prng_tests, state_progress_test)
     // Device data
     const size_t  size = 1025;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
     rocrand_mt19937 g0;
@@ -201,7 +201,7 @@ TEST(rocrand_mt19937_prng_tests, same_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
     rocrand_mt19937 g0, g1;
@@ -245,7 +245,7 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
     rocrand_mt19937 g0, g1;
@@ -471,14 +471,15 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     h_engines[1].m_state = engine_type::discard_subsequence_impl(jump, h_engines[1].m_state);
 
     engine_type* d_engines{};
-    HIP_CHECK(hipMalloc(&d_engines, generator_count * sizeof(engine_type)));
+    HIP_CHECK(
+        hipMalloc(reinterpret_cast<void**>(&d_engines), generator_count * sizeof(engine_type)));
     HIP_CHECK(hipMemcpy(d_engines,
                         h_engines.data(),
                         generator_count * sizeof(engine_type),
                         hipMemcpyHostToDevice));
 
     octo_engine_type* d_octo_engines{};
-    HIP_CHECK(hipMalloc(&d_octo_engines,
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_octo_engines),
                         threads_per_generator * generator_count * sizeof(octo_engine_type)));
 
     // Initialize the octo engines from the two engines.
@@ -498,7 +499,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     constexpr unsigned int elements_per_generator = (12345789U / state_size) * state_size;
     constexpr size_t       bytes_per_generator    = elements_per_generator * sizeof(unsigned int);
     unsigned int*          d_data;
-    HIP_CHECK(hipMallocHelper(&d_data, 2 * bytes_per_generator));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&d_data), 2 * bytes_per_generator));
 
     // Generate the data
     hipLaunchKernelGGL(generate_kernel,

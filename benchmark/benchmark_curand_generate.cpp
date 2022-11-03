@@ -59,7 +59,7 @@ void run_benchmark(const cli::Parser&    parser,
     const size_t offset = parser.get<size_t>("offset");
 
     T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
 
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));

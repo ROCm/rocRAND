@@ -54,17 +54,17 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     constexpr unsigned int output_per_thread = OutputPerThread;
     using vec_type                           = aligned_vec_type<T, output_per_thread>;
 
-    const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride    = hipGridDim_x * hipBlockDim_x;
+    const unsigned int dimension = blockIdx.y;
+    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride    = gridDim.x * blockDim.x;
     size_t             index     = engine_id;
 
     // Each thread of the current block uses the same direction vectors and scrambling constant
-    // (the dimension is determined by hipBlockIdx_y)
+    // (the dimension is determined by blockIdx.y)
     __shared__ unsigned long long int vectors[64];
-    if(hipThreadIdx_x < 64)
+    if(threadIdx.x < 64)
     {
-        vectors[hipThreadIdx_x] = direction_vectors[dimension * 64 + hipThreadIdx_x];
+        vectors[threadIdx.x] = direction_vectors[dimension * 64 + threadIdx.x];
     }
     __syncthreads();
     const unsigned long long int scramble_constant = scramble_constants[dimension];
@@ -161,8 +161,8 @@ public:
     {
         // Allocate direction vectors
         hipError_t error;
-        error
-            = hipMalloc(&m_direction_vectors, sizeof(unsigned long long int) * SCRAMBLED_SOBOL64_N);
+        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors),
+                          sizeof(unsigned long long int) * SCRAMBLED_SOBOL64_N);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -176,7 +176,7 @@ public:
             throw ROCRAND_STATUS_INTERNAL_ERROR;
         }
         // Allocate scramble constants
-        error = hipMalloc(&m_scramble_constants,
+        error = hipMalloc(reinterpret_cast<void**>(&m_scramble_constants),
                           sizeof(unsigned long long int) * SCRAMBLED_SOBOL_DIM);
         if(error != hipSuccess)
         {

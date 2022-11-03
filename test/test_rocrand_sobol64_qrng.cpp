@@ -60,7 +60,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint64_test)
     //constexpr size_t size = 1313;
     constexpr size_t size = 1313;
     T * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -90,7 +90,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_double_test)
 {
     constexpr size_t size = 1313;
     double * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -117,7 +117,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -142,7 +142,7 @@ TEST(rocrand_sobol64_qrng_tests, normal_double_test)
 {
     const size_t size = 1313;
     double * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0, 5.0));
@@ -177,7 +177,7 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test_32bit)
     using T = unsigned int;
     constexpr size_t size = 1313;
     T * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -213,7 +213,7 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test_64bit)
     using T = unsigned long long int;
     constexpr size_t size = 1313;
     T * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -248,7 +248,7 @@ TEST(rocrand_sobol64_qrng_tests, dimesions_test)
 {
     const size_t size = 12345;
     double * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
 
@@ -271,7 +271,7 @@ TEST(rocrand_sobol64_qrng_tests, state_progress_test)
     // Device data
     const size_t size = 1025;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
     rocrand_sobol64 g0;
@@ -371,8 +371,8 @@ TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
     const size_t size1 = (size + offset) * dimensions;
     unsigned int * data0;
     unsigned int * data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
     rocrand_sobol64 g0;
     g0.set_offset(offset);
@@ -431,8 +431,8 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
 
     unsigned int * data0;
     unsigned int * data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
     rocrand_sobol64 g0;
     rocrand_sobol64 g1;

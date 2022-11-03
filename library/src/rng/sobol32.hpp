@@ -48,17 +48,17 @@ namespace detail {
         constexpr unsigned int output_per_thread = OutputPerThread;
         using vec_type = aligned_vec_type<T, output_per_thread>;
 
-        const unsigned int dimension = hipBlockIdx_y;
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        const unsigned int dimension = blockIdx.y;
+        const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int stride    = gridDim.x * blockDim.x;
         size_t index = engine_id;
 
         // Each thread of the current block use the same direction vectors
-        // (the dimension is determined by hipBlockIdx_y)
+        // (the dimension is determined by blockIdx.y)
         __shared__ unsigned int vectors[32];
-        if (hipThreadIdx_x < 32)
+        if(threadIdx.x < 32)
         {
-            vectors[hipThreadIdx_x] = direction_vectors[dimension * 32 + hipThreadIdx_x];
+            vectors[threadIdx.x] = direction_vectors[dimension * 32 + threadIdx.x];
         }
         __syncthreads();
 
@@ -156,7 +156,8 @@ public:
     {
         // Allocate direction vectors
         hipError_t error;
-        error = hipMalloc(&m_direction_vectors, sizeof(unsigned int) * SOBOL32_N);
+        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors),
+                          sizeof(unsigned int) * SOBOL32_N);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;

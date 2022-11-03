@@ -52,7 +52,7 @@ void run_benchmark(benchmark::State&     state,
     const size_t rounded_size = (size / dimensions) * dimensions;
 
     T* data;
-    HIP_CHECK(hipMalloc(&data, rounded_size * sizeof(T)));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), rounded_size * sizeof(T)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
@@ -145,7 +145,9 @@ int main(int argc, char* argv[])
 
     const std::map<rng_type_t, std::string> engine_type_map{
         {          ROCRAND_RNG_PSEUDO_MTGP32,            "mtgp32"},
+#ifndef USE_HIP_CPU
         {         ROCRAND_RNG_PSEUDO_MT19937,           "mt19937"},
+#endif
         {          ROCRAND_RNG_PSEUDO_XORWOW,            "xorwow"},
         {        ROCRAND_RNG_PSEUDO_MRG31K3P,          "mrg31k3p"},
         {        ROCRAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"},
@@ -242,7 +244,13 @@ int main(int argc, char* argv[])
             (name_engine_prefix + "normal-half>").c_str(),
             &run_benchmark<__half>,
             [](rocrand_generator gen, __half* data, size_t size_gen)
-            { return rocrand_generate_normal_half(gen, data, size_gen, 0.0f, 1.0f); },
+            {
+                return rocrand_generate_normal_half(gen,
+                                                    data,
+                                                    size_gen,
+                                                    __float2half(0.0f),
+                                                    __float2half(1.0f));
+            },
             size,
             trials,
             dimensions,
@@ -278,7 +286,13 @@ int main(int argc, char* argv[])
             (name_engine_prefix + "log-normal-half>").c_str(),
             &run_benchmark<__half>,
             [](rocrand_generator gen, __half* data, size_t size_gen)
-            { return rocrand_generate_log_normal_half(gen, data, size_gen, 0.0f, 1.0f); },
+            {
+                return rocrand_generate_log_normal_half(gen,
+                                                        data,
+                                                        size_gen,
+                                                        __float2half(0.0f),
+                                                        __float2half(1.0f));
+            },
             size,
             trials,
             dimensions,

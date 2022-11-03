@@ -113,11 +113,11 @@ __global__ __launch_bounds__(32) void rocrand_init_kernel(OutputType*         ou
                                                           const size_t        size_per_dimension,
                                                           Args... args)
 {
-    const unsigned int state_id  = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int dimension = hipBlockIdx_y;
+    const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int dimension = blockIdx.y;
 
     // `size_per_dimension` elements are generated for each dimension
-    const unsigned int threads_per_dim = hipGridDim_x * hipBlockDim_x;
+    const unsigned int threads_per_dim = gridDim.x * blockDim.x;
     const unsigned int items_per_thread
         = (size_per_dimension + threads_per_dim - 1) / threads_per_dim;
     // offset of results of thread inside block
@@ -142,13 +142,15 @@ void load_scrambled_sobol32_constants_to_gpu(const unsigned int dimensions,
                                              unsigned int**     direction_vectors,
                                              unsigned int**     scramble_constants)
 {
-    HIP_CHECK(hipMallocHelper(direction_vectors, sizeof(unsigned int) * dimensions * 32));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(direction_vectors),
+                              sizeof(unsigned int) * dimensions * 32));
     HIP_CHECK(hipMemcpy(*direction_vectors,
                         h_scrambled_sobol32_direction_vectors,
                         sizeof(unsigned int) * dimensions * 32,
                         hipMemcpyHostToDevice));
 
-    HIP_CHECK(hipMallocHelper(scramble_constants, sizeof(unsigned int) * dimensions));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(scramble_constants),
+                              sizeof(unsigned int) * dimensions));
     HIP_CHECK(hipMemcpy(*scramble_constants,
                         h_scrambled_sobol32_constants,
                         sizeof(unsigned int) * dimensions,
@@ -166,7 +168,7 @@ void call_rocrand_kernel(std::vector<ResultType>& output_host,
     output_host.resize(output_size);
 
     ResultType* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(ResultType)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(ResultType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int* m_vector;
@@ -421,7 +423,8 @@ TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_poisson)
     constexpr size_t output_size = dimensions * size_per_dimension;
 
     ResultType* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(
+        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int* m_vector;

@@ -41,7 +41,7 @@ ROCRAND_KERNEL
 __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
     lfsr113_device_engine* engines, uint4 seeds)
 {
-    const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
     engines[engine_id]           = lfsr113_device_engine(seeds, engine_id);
 }
 
@@ -58,8 +58,8 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+    const unsigned int id     = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride = gridDim.x * blockDim.x;
 
     const unsigned int    engine_id = (id + start_engine_id) & (stride - 1);
     lfsr113_device_engine engine    = engines[engine_id];
@@ -152,7 +152,8 @@ public:
         , m_engines_size(s_threads * s_blocks)
     {
         // Allocate device random number engines
-        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
+        hipError_t error
+            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
