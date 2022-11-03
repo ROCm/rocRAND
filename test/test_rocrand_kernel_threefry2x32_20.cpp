@@ -40,7 +40,7 @@ __global__ __launch_bounds__(32) void rocrand_init_kernel(GeneratorState*    sta
                                                           unsigned long long seed,
                                                           unsigned long long offset)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int subsequence = state_id;
     if(state_id < states_size)
     {
@@ -53,8 +53,8 @@ __global__ __launch_bounds__(32) void rocrand_init_kernel(GeneratorState*    sta
 template<class GeneratorState>
 __global__ __launch_bounds__(32) void rocrand_kernel(unsigned int* output, const size_t size)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
@@ -71,8 +71,8 @@ __global__ __launch_bounds__(32) void rocrand_kernel(unsigned int* output, const
 template<class GeneratorState>
 __global__ __launch_bounds__(32) void rocrand_uniform_kernel(float* output, const size_t size)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
@@ -90,8 +90,8 @@ template<class GeneratorState>
 __global__ __launch_bounds__(32) void rocrand_uniform_double_kernel(double*      output,
                                                                     const size_t size)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
@@ -108,8 +108,8 @@ __global__ __launch_bounds__(32) void rocrand_uniform_double_kernel(double*     
 template<class GeneratorState>
 __global__ __launch_bounds__(32) void rocrand_normal_kernel(float* output, const size_t size)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
@@ -129,8 +129,8 @@ __global__ __launch_bounds__(32) void rocrand_normal_kernel(float* output, const
 template<class GeneratorState>
 __global__ __launch_bounds__(32) void rocrand_log_normal_kernel(float* output, const size_t size)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
@@ -152,8 +152,8 @@ __global__ __launch_bounds__(64) void rocrand_poisson_kernel(unsigned int* outpu
                                                              const size_t  size,
                                                              double        lambda)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
@@ -171,8 +171,8 @@ template<class GeneratorState>
 __global__ __launch_bounds__(32) void rocrand_discrete_kernel(
     unsigned int* output, const size_t size, rocrand_discrete_distribution discrete_distribution)
 {
-    const unsigned int state_id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
@@ -189,7 +189,7 @@ __global__ __launch_bounds__(32) void rocrand_discrete_kernel(
 TEST(rocrand_kernel_threefry2x32_20, rocrand_state_threefry_type)
 {
     typedef rocrand_state_threefry2x32_20 state_type;
-    EXPECT_EQ(sizeof(state_type), 4 * sizeof(uint2));
+    EXPECT_EQ(alignof(state_type), alignof(uint2));
     EXPECT_EQ(sizeof(state_type[32]), 32 * sizeof(state_type));
     // TODO: Enable once uint2 trivially copyable.
     //EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);

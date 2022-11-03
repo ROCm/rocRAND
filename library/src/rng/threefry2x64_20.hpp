@@ -80,8 +80,8 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 
     using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
 
-    const unsigned int thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride    = hipGridDim_x * hipBlockDim_x;
+    const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride    = gridDim.x * blockDim.x;
 
     unsigned long long input[input_width];
     T                  output[output_per_thread][output_width];
