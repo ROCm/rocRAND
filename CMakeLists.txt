@@ -39,6 +39,14 @@ else()
       set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
   endif()
 endif()
+
+# Build options
+option(USE_HIP_CPU "Prefer HIP-CPU runtime instead of HW acceleration" OFF)
+option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
+option(BUILD_TEST "Build tests (requires googletest)" OFF)
+option(BUILD_BENCHMARK "Build benchmarks" OFF)
+option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
@@ -66,15 +74,16 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
 # Include cmake scripts
 include(CMakeDependentOption)
+
+# Get dependencies
 include(cmake/Dependencies.cmake)
 
 # Detect compiler support for target ID
-# This section is deprecated. Please use rocm_check_target_ids for future use.
 if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-        OUTPUT_VARIABLE CXX_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_STRIP_TRAILING_WHITESPACE)
+    OUTPUT_VARIABLE CXX_OUTPUT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE)
     string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
 endif()
 
@@ -96,11 +105,13 @@ endif()
 
 # Verify that hcc compiler is used on ROCM platform
 # TODO: Fix VerifyCompiler for Windows
-if (NOT WIN32)
-  include(cmake/VerifyCompiler.cmake)
-else()
-  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
-  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
+if(NOT USE_HIP_CPU)
+  if(NOT WIN32)
+    include(cmake/VerifyCompiler.cmake)
+  else()
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
+    find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
+  endif()
 endif()
 
 # Build option to disable -Werror
@@ -120,12 +131,6 @@ endif()
 if (WIN32)
   add_compile_options(-xhip)
 endif()
-
-# Build options
-option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
-option(BUILD_TEST "Build tests (requires googletest)" OFF)
-option(BUILD_BENCHMARK "Build benchmarks" OFF)
-option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 
 cmake_dependent_option(BUILD_LEGACY_BENCHMARK "Build the legacy benchmarks" ON "BUILD_BENCHMARK" OFF)
 if(BUILD_LEGACY_BENCHMARK)

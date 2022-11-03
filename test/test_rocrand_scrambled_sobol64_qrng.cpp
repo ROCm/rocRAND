@@ -48,7 +48,7 @@ TYPED_TEST(rocrand_scrambled_sobol64_float_tests, uniform_test)
 
     constexpr size_t size = 1313;
     ResultType*      data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(ResultType) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -88,7 +88,7 @@ TYPED_TEST(rocrand_scrambled_sobol64_integer_tests, uniform_test)
 
     const size_t size = 1313;
     ResultType*  data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(ResultType) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -119,7 +119,7 @@ TYPED_TEST(rocrand_scrambled_sobol64_float_tests, normal_test)
 
     constexpr size_t size = 1313;
     ResultType*      data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(ResultType) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate_normal(data, size, ExpectedMean, ExpectedStd));
@@ -153,7 +153,7 @@ TYPED_TEST(rocrand_scrambled_sobol64_integer_tests, poisson_test)
     using ResultType      = typename TestFixture::type;
     constexpr size_t size = 1313;
     ResultType*      data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(ResultType) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
 
     rocrand_scrambled_sobol64 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -186,7 +186,7 @@ TEST(rocrand_scrambled_sobol64_qrng_tests, dimensions_test)
 {
     const size_t size = 12345;
     double*      data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_scrambled_sobol64 g;
 
@@ -209,7 +209,8 @@ TEST(rocrand_scrambled_sobol64_qrng_tests, state_progress_test)
     // Device data
     constexpr size_t        size = 1025;
     unsigned long long int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long int) * size));
+    HIP_CHECK(
+        hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long int) * size));
 
     // Generator
     rocrand_scrambled_sobol64 g0;
@@ -320,8 +321,8 @@ TEST_P(rocrand_scrambled_sobol64_qrng_offset, offsets_test)
     const size_t            size1 = (size + offset) * dimensions;
     unsigned long long int* data0;
     unsigned long long int* data1;
-    hipMalloc(&data0, sizeof(unsigned long long int) * size0);
-    hipMalloc(&data1, sizeof(unsigned long long int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned long long int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned long long int) * size1);
 
     rocrand_scrambled_sobol64 g0;
     g0.set_offset(offset);
@@ -384,8 +385,8 @@ TEST_P(rocrand_scrambled_sobol64_qrng_continuity, continuity_test)
 
     unsigned long long int* data0;
     unsigned long long int* data1;
-    hipMalloc(&data0, sizeof(unsigned long long int) * size0);
-    hipMalloc(&data1, sizeof(unsigned long long int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned long long int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned long long int) * size1);
 
     rocrand_scrambled_sobol64 g0;
     rocrand_scrambled_sobol64 g1;

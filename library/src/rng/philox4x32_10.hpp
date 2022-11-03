@@ -120,8 +120,8 @@ namespace detail {
 
         using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
 
-        const unsigned int thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int stride    = gridDim.x * blockDim.x;
 
         unsigned int input[input_width];
         T output[output_per_thread][output_width];

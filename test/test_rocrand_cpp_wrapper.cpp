@@ -230,10 +230,7 @@ void rocrand_uniform_int_dist_template()
 
     const size_t output_size = 8192;
     IntType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(IntType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(IntType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -287,10 +284,7 @@ void rocrand_uniform_real_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(RealType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -363,10 +357,7 @@ void rocrand_normal_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(RealType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -461,10 +452,7 @@ void rocrand_lognormal_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(RealType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -568,10 +556,7 @@ void rocrand_poisson_dist_template(const double lambda)
 
     const size_t output_size = 8192;
     IntType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(IntType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(IntType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate

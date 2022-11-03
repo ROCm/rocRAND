@@ -34,7 +34,7 @@ TEST(rocrand_lfsr113_prng_tests, uniform_uint_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_lfsr113 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -59,7 +59,7 @@ TEST(rocrand_lfsr113_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(&data, sizeof(float) * size);
+    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
 
     rocrand_lfsr113 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -86,7 +86,7 @@ TEST(rocrand_lfsr113_prng_tests, normal_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(&data, sizeof(float) * size);
+    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
 
     rocrand_lfsr113 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
@@ -120,7 +120,7 @@ TEST(rocrand_lfsr113_prng_tests, poisson_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_lfsr113 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -158,7 +158,7 @@ TEST(rocrand_lfsr113_prng_tests, state_progress_test)
     // Device data
     const size_t  size = 1025;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
     rocrand_lfsr113 g0;
@@ -201,7 +201,7 @@ TEST(rocrand_lfsr113_prng_tests, same_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
     rocrand_lfsr113 g0, g1;
@@ -245,7 +245,7 @@ TEST(rocrand_lfsr113_prng_tests, different_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
     rocrand_lfsr113 g0, g1;
@@ -310,7 +310,7 @@ TEST(rocrand_lfsr113_prng_tests, different_seed_uint4_test)
         // Device side data
         const size_t  size = 1024;
         unsigned int* data;
-        HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+        HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
         // Generators
         rocrand_lfsr113 g0, g1;

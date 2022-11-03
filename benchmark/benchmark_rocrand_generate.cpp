@@ -75,7 +75,7 @@ void run_benchmark(const cli::Parser& parser,
     const std::string format = parser.get<std::string>("format");
 
     T * data;
-    HIP_CHECK(hipMalloc((void **)&data, size * sizeof(T)));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
@@ -224,12 +224,18 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "normal-half")
     {
-        run_benchmark<__half>(parser, rng_type, stream,
-            [](rocrand_generator gen, __half * data, size_t size) {
-                return rocrand_generate_normal_half(gen, data, size, 0.0f, 1.0f);
-            },
-            distribution, engine
-        );
+        run_benchmark<__half>(parser,
+                              rng_type,
+                              stream,
+                              [](rocrand_generator gen, __half* data, size_t size) {
+                                  return rocrand_generate_normal_half(gen,
+                                                                      data,
+                                                                      size,
+                                                                      __float2half(0.0f),
+                                                                      __float2half(1.0f));
+                              },
+                              distribution,
+                              engine);
     }
     if (distribution == "normal-float")
     {
@@ -251,12 +257,19 @@ void run_benchmarks(const cli::Parser& parser,
     }
     if (distribution == "log-normal-half")
     {
-        run_benchmark<__half>(parser, rng_type, stream,
-            [](rocrand_generator gen, __half * data, size_t size) {
-                return rocrand_generate_log_normal_half(gen, data, size, 0.0f, 1.0f);
-            },
-            distribution, engine
-        );
+        run_benchmark<__half>(parser,
+                              rng_type,
+                              stream,
+                              [](rocrand_generator gen, __half* data, size_t size)
+                              {
+                                  return rocrand_generate_log_normal_half(gen,
+                                                                          data,
+                                                                          size,
+                                                                          __float2half(0.0f),
+                                                                          __float2half(1.0f));
+                              },
+                              distribution,
+                              engine);
     }
     if (distribution == "log-normal-float")
     {
@@ -444,8 +457,10 @@ int main(int argc, char *argv[])
             rng_type = ROCRAND_RNG_PSEUDO_MTGP32;
         else if(engine == "lfsr113")
             rng_type = ROCRAND_RNG_PSEUDO_LFSR113;
+#ifndef USE_HIP_CPU
         else if(engine == "mt19937")
             rng_type = ROCRAND_RNG_PSEUDO_MT19937;
+#endif
         else
         {
             std::cout << "Wrong engine name" << std::endl;

@@ -769,7 +769,7 @@ public:
         : base_type(seed, 0, stream), m_engines_initialized(false), m_engines(NULL)
     {
         // Allocate device random number engines
-        auto error = hipMalloc(&m_engines,
+        auto error = hipMalloc(reinterpret_cast<void**>(&m_engines),
                                threads_per_generator * generator_count * sizeof(octo_engine_type));
         if(error != hipSuccess)
         {
@@ -825,7 +825,8 @@ public:
         }
 
         engine_type* d_engines{};
-        err = hipMalloc(&d_engines, generator_count * sizeof(engine_type));
+        err = hipMalloc(reinterpret_cast<void**>(&d_engines),
+                        generator_count * sizeof(engine_type));
         if(err != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
