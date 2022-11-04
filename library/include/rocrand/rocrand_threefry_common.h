@@ -59,6 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "rocrand/rocrand_common.h"
 
+// C240 constant for Skein Hash function Threefish
 #define SKEIN_MK_64(hi32, lo32) ((lo32) + (((unsigned long long)(hi32)) << 32))
 #define SKEIN_KS_PARITY64 SKEIN_MK_64(0x1BD11BDA, 0xA9FC1A22)
 #define SKEIN_KS_PARITY32 0x1BD11BDA
