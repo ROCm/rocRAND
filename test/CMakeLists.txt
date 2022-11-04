@@ -54,8 +54,12 @@ file(GLOB rocRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 # Build rocRAND tests
 foreach(test_src ${rocRAND_TEST_SRCS})
   get_filename_component(test_name ${test_src} NAME_WE)
-  # MT 19937 needs to be fixed on HIP-CPU
-  if(NOT USE_HIP_CPU OR NOT ${test_name} STREQUAL "test_rocrand_mt19937_prng")
+  # MT19937 and Threefry4x64 need to be fixed on HIP-CPU
+  set(DISABLED_TESTS)
+  list(APPEND DISABLED_TESTS "test_rocrand_mt19937_prng")
+  list(APPEND DISABLED_TESTS "test_rocrand_kernel_threefry4x64_20")
+  list(APPEND DISABLED_TESTS "test_rocrand_threefry4x64_20_prng")
+  if(NOT USE_HIP_CPU OR NOT ${test_name} IN_LIST DISABLED_TESTS)
     add_executable(${test_name} ${test_src})
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
