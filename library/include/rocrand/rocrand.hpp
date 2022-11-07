@@ -2664,6 +2664,594 @@ constexpr typename sobol32_engine<DefaultNumDimensions>::dimensions_num_type
 sobol32_engine<DefaultNumDimensions>::default_num_dimensions;
 /// \endcond
 
+/// \brief Pseudorandom number engine based on 2 state ThreeFry.
+///
+/// It generates random numbers of type \p unsigned \p int on the interval [0; 2^32 - 1].
+/// Random numbers are generated in sets of two.
+template<unsigned long long DefaultSeed = 0>
+class threefry2x32_20_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef unsigned long long seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed = DefaultSeed;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry2x32_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->order(order_value);
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    threefry2x32_20_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~threefry2x32_20_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_THREEFRY2_32_20;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned long long DefaultSeed>
+constexpr typename threefry2x32_20_engine<DefaultSeed>::seed_type
+    threefry2x32_20_engine<DefaultSeed>::default_seed;
+/// \endcond
+
+/// \brief Pseudorandom number engine based 2 state ThreeFry.
+///
+/// It generates random numbers of type \p unsigned \p int on the interval [0; 2^62 - 1].
+/// Random numbers are generated in sets of two.
+template<unsigned long long DefaultSeed = 0>
+class threefry2x64_20_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned long long result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef unsigned long long seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed = DefaultSeed;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry2x64_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->order(order_value);
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    threefry2x64_20_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~threefry2x64_20_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate_long_long(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_THREEFRY2_64_20;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned long long DefaultSeed>
+constexpr typename threefry2x64_20_engine<DefaultSeed>::seed_type
+    threefry2x64_20_engine<DefaultSeed>::default_seed;
+/// \endcond
+
+/// \brief Pseudorandom number engine based on 2 state ThreeFry.
+///
+/// It generates random numbers of type \p unsigned \p int on the interval [0; 2^32 - 1].
+/// Random numbers are generated in sets of two.
+template<unsigned long long DefaultSeed = 0>
+class threefry4x32_20_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef unsigned long long seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed = DefaultSeed;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry4x32_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->order(order_value);
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    threefry4x32_20_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~threefry4x32_20_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_THREEFRY4_32_20;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned long long DefaultSeed>
+constexpr typename threefry4x32_20_engine<DefaultSeed>::seed_type
+    threefry4x32_20_engine<DefaultSeed>::default_seed;
+/// \endcond
+
+/// \brief Pseudorandom number engine based 2 state ThreeFry.
+///
+/// It generates random numbers of type \p unsigned \p int on the interval [0; 2^62 - 1].
+/// Random numbers are generated in sets of two.
+template<unsigned long long DefaultSeed = 0>
+class threefry4x64_20_engine
+{
+public:
+    /// \copydoc philox4x32_10_engine::result_type
+    typedef unsigned long long result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
+    /// \copydoc philox4x32_10_engine::offset_type
+    typedef unsigned long long offset_type;
+    /// \copydoc philox4x32_10_engine::seed_type
+    typedef unsigned long long seed_type;
+    /// \copydoc philox4x32_10_engine::default_seed
+    static constexpr seed_type default_seed = DefaultSeed;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(seed_type, offset_type, order_type)
+    threefry4x64_20_engine(seed_type   seed_value   = DefaultSeed,
+                           offset_type offset_value = 0,
+                           order_type  order_value  = ROCRAND_ORDERING_PSEUDO_DEFAULT)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            if(offset_value > 0)
+            {
+                this->offset(offset_value);
+            }
+            this->order(order_value);
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
+    threefry4x64_20_engine(rocrand_generator& generator) : m_generator(generator)
+    {
+        if(generator == NULL)
+        {
+            throw rocrand_cpp::error(ROCRAND_STATUS_NOT_CREATED);
+        }
+        generator = NULL;
+    }
+
+    /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
+    ~threefry4x64_20_engine() noexcept(false)
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::stream()
+    void stream(hipStream_t value)
+    {
+        rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::offset()
+    void offset(offset_type value)
+    {
+        rocrand_status status = rocrand_set_offset(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::seed()
+    void seed(seed_type value)
+    {
+        rocrand_status status = rocrand_set_seed(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::operator()()
+    template<class Generator>
+    void operator()(result_type* output, size_t size)
+    {
+        rocrand_status status;
+        status = rocrand_generate_long_long(m_generator, output, size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::min()
+    result_type min() const
+    {
+        return 0;
+    }
+
+    /// \copydoc philox4x32_10_engine::max()
+    result_type max() const
+    {
+        return std::numeric_limits<unsigned int>::max();
+    }
+
+    /// \copydoc philox4x32_10_engine::type()
+    static constexpr rocrand_rng_type type()
+    {
+        return ROCRAND_RNG_PSEUDO_THREEFRY4_64_20;
+    }
+
+private:
+    rocrand_generator m_generator;
+
+    /// \cond
+    template<class T>
+    friend class ::rocrand_cpp::uniform_int_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::uniform_real_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::normal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::lognormal_distribution;
+
+    template<class T>
+    friend class ::rocrand_cpp::poisson_distribution;
+    /// \endcond
+};
+
+/// \cond
+template<unsigned long long DefaultSeed>
+constexpr typename threefry4x64_20_engine<DefaultSeed>::seed_type
+    threefry4x64_20_engine<DefaultSeed>::default_seed;
+/// \endcond
+
 /// \typedef philox4x32_10;
 /// \brief Typedef of rocrand_cpp::philox4x32_10_engine PRNG engine with default seed (#ROCRAND_PHILOX4x32_DEFAULT_SEED).
 typedef philox4x32_10_engine<> philox4x32_10;
@@ -2685,6 +3273,18 @@ typedef lfsr113_engine<> lfsr113;
 /// \typedef mt19937
 /// \brief Typedef of rocrand_cpp::mt19937_engine PRNG engine with default seed (0).
 typedef mt19937_engine<> mt19937;
+/// \typedef threefry
+/// \brief Typedef of rocrand_cpp::threefry2x32_20_engine PRNG engine with default seed (0).
+typedef threefry2x32_20_engine<> threefry2x32;
+/// \typedef threefry
+/// \brief Typedef of rocrand_cpp::threefry2x64_20_engine PRNG engine with default seed (0).
+typedef threefry2x64_20_engine<> threefry2x64;
+/// \typedef threefry
+/// \brief Typedef of rocrand_cpp::threefry4x32_20_engine PRNG engine with default seed (0).
+typedef threefry4x32_20_engine<> threefry4x32;
+/// \typedef threefry
+/// \brief Typedef of rocrand_cpp::threefry4x64_20_engine PRNG engine with default seed (0).
+typedef threefry4x64_20_engine<> threefry4x64;
 /// \typedef sobol32
 /// \brief Typedef of rocrand_cpp::sobol32_engine QRNG engine with default number of dimensions (1).
 typedef sobol32_engine<> sobol32;

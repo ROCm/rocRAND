@@ -920,8 +920,10 @@ void add_benchmarks(const benchmark_context&                      ctx,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     const std::string&                            name)
 {
-    constexpr bool is_64_bits = std::is_same<Engine, rocrand_state_sobol64>::value
-                                || std::is_same<Engine, rocrand_state_scrambled_sobol64>::value;
+    constexpr bool is_64_bits = std::is_same<Engine, rocrand_state_scrambled_sobol64>::value
+                                || std::is_same<Engine, rocrand_state_sobol64>::value
+                                || std::is_same<Engine, rocrand_state_threefry2x64_20>::value
+                                || std::is_same<Engine, rocrand_state_threefry4x64_20>::value;
 
     if(is_64_bits)
     {
@@ -1008,6 +1010,10 @@ int main(int argc, char* argv[])
     add_benchmarks<rocrand_state_scrambled_sobol64>(ctx, stream, benchmarks, "scrambled_sobol64");
     add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, "sobol32");
     add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, "sobol64");
+    add_benchmarks<rocrand_state_threefry2x32_20>(ctx, stream, benchmarks, "threefry2x32_20");
+    add_benchmarks<rocrand_state_threefry4x32_20>(ctx, stream, benchmarks, "threefry4x32_20");
+    add_benchmarks<rocrand_state_threefry2x64_20>(ctx, stream, benchmarks, "threefry2x64_20");
+    add_benchmarks<rocrand_state_threefry4x64_20>(ctx, stream, benchmarks, "threefry4x64_20");
     add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, "xorwow");
 
     // Use manual timing

@@ -35,6 +35,10 @@
 #include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_threefry2x32_20.h"
+#include "rocrand/rocrand_threefry2x64_20.h"
+#include "rocrand/rocrand_threefry4x32_20.h"
+#include "rocrand/rocrand_threefry4x64_20.h"
 #include "rocrand/rocrand_xorwow.h"
 
 #include "rocrand/rocrand_uniform.h"

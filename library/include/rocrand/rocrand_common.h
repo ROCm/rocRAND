@@ -25,6 +25,7 @@
 #define ROCRAND_2POW16_INV_2PI (1.5258789e-05f * 6.2831855f)
 #define ROCRAND_2POW32_INV (2.3283064e-10f)
 #define ROCRAND_2POW32_INV_DOUBLE (2.3283064365386963e-10)
+#define ROCRAND_2POW64_INV (5.4210109e-20f)
 #define ROCRAND_2POW64_INV_DOUBLE (5.4210108624275221700372640043497e-20)
 #define ROCRAND_2POW32_INV_2PI (2.3283064e-10f * 6.2831855f)
 #define ROCRAND_2POW53_INV_DOUBLE (1.1102230246251565e-16)
@@ -158,6 +159,24 @@ struct engine_boxmuller_helper
         engine->m_state.boxmuller_double = d;
     }
 };
+
+template<typename T>
+FQUALIFIERS void split_ull(T& lo, T& hi, unsigned long long int val);
+
+template<>
+FQUALIFIERS void split_ull(unsigned int& lo, unsigned int& hi, unsigned long long int val)
+{
+    lo = val & 0xFFFFFFFF;
+    hi = (val >> 32) & 0xFFFFFFFF;
+}
+
+template<>
+FQUALIFIERS void
+    split_ull(unsigned long long int& lo, unsigned long long int& hi, unsigned long long int val)
+{
+    lo = val;
+    hi = 0;
+}
 
 } // end namespace detail
 } // end namespace rocrand_device

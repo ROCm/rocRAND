@@ -72,6 +72,10 @@ ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
 ROCRAND_RNG_PSEUDO_MRG31K3P = 405
 ROCRAND_RNG_PSEUDO_LFSR113 = 406
 ROCRAND_RNG_PSEUDO_MT19937 = 407
+ROCRAND_RNG_PSEUDO_THREEFRY2_32_20 = 408
+ROCRAND_RNG_PSEUDO_THREEFRY2_64_20 = 409
+ROCRAND_RNG_PSEUDO_THREEFRY4_32_20 = 410
+ROCRAND_RNG_PSEUDO_THREEFRY4_64_20 = 411
 ROCRAND_RNG_QUASI_DEFAULT = 500
 ROCRAND_RNG_QUASI_SOBOL32 = 501
 ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502
@@ -342,22 +346,30 @@ class PRNG(RNG):
         print(a)
     """
 
-    DEFAULT       = ROCRAND_RNG_PSEUDO_DEFAULT
+    DEFAULT         = ROCRAND_RNG_PSEUDO_DEFAULT
     """Default pseudo-random generator type, :const:`XORWOW`"""
-    XORWOW        = ROCRAND_RNG_PSEUDO_XORWOW
+    XORWOW          = ROCRAND_RNG_PSEUDO_XORWOW
     """XORWOW pseudo-random generator type"""
-    MRG31K3P      = ROCRAND_RNG_PSEUDO_MRG31K3P
+    MRG31K3P        = ROCRAND_RNG_PSEUDO_MRG31K3P
     """MRG31k3p pseudo-random generator type"""
-    MRG32K3A      = ROCRAND_RNG_PSEUDO_MRG32K3A
+    MRG32K3A        = ROCRAND_RNG_PSEUDO_MRG32K3A
     """MRG32k3a pseudo-random generator type"""
-    MTGP32        = ROCRAND_RNG_PSEUDO_MTGP32
+    MTGP32          = ROCRAND_RNG_PSEUDO_MTGP32
     """Mersenne Twister MTGP32 pseudo-random generator type"""
-    MT19937       = ROCRAND_RNG_PSEUDO_MT19937
+    MT19937         = ROCRAND_RNG_PSEUDO_MT19937
     """Mersenne Twister pseudo-random generator type"""
-    PHILOX4_32_10 = ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+    PHILOX4_32_10   = ROCRAND_RNG_PSEUDO_PHILOX4_32_10
     """PHILOX_4x32 (10 rounds) pseudo-random generator type"""
-    LFSR113      = ROCRAND_RNG_PSEUDO_LFSR113
+    LFSR113         = ROCRAND_RNG_PSEUDO_LFSR113
     """LFSR113 pseudo-random generator type"""
+    THREEFRY2_32_20 = ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
+    """THREEFRY2_32_20 pseudo-random generator type"""
+    THREEFRY2_64_20 = ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+    """THREEFRY2_64_20 pseudo-random generator type"""
+    THREEFRY4_32_20 = ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
+    """THREEFRY4_32_20 pseudo-random generator type"""
+    THREEFRY4_64_20 = ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
+    """THREEFRY4_64_20 pseudo-random generator type"""
 
     def __init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None):
         """__init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None)
@@ -376,6 +388,10 @@ class PRNG(RNG):
         * :const:`MT19937`
         * :const:`PHILOX4_32_10`
         * :const:`LFSR113`
+        * :const:`THREEFRY2_32_20`
+        * :const:`THREEFRY2_64_20`
+        * :const:`THREEFRY4_32_20`
+        * :const:`THREEFRY4_64_20`
 
         :param rngtype: Type of pseudo-random number generator to create
         :param seed:    Initial seed value
