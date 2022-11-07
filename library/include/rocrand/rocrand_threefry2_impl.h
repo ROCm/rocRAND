@@ -188,9 +188,8 @@ protected:
         X.x += ks[0];
         X.y += ks[1];
 
-        for(unsigned int i = 1; i < Nrounds + 1; i++)
+        for(unsigned int round_idx = 0; round_idx < Nrounds; round_idx++)
         {
-            unsigned int round_idx = i - 1;
             X.x += X.y;
             X.y = rotl<value>(X.y, threefry_rotation_array<value>(round_idx & 7u));
             X.y ^= X.x;

@@ -195,11 +195,10 @@ protected:
         X.z += ks[2];
         X.w += ks[3];
 
-        for(unsigned int i = 1; i < Nrounds + 1; i++)
+        for(unsigned int round_idx = 0; round_idx < Nrounds; round_idx++)
         {
-            unsigned int round_idx = i - 1;
-            int          rot_0     = threefry_rotation_array<value>(round_idx & 7u, 0);
-            int          rot_1     = threefry_rotation_array<value>(round_idx & 7u, 1);
+            int rot_0 = threefry_rotation_array<value>(round_idx & 7u, 0);
+            int rot_1 = threefry_rotation_array<value>(round_idx & 7u, 1);
             if((round_idx & 2u) == 0)
             {
                 X.x += X.y;
