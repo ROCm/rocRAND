@@ -2133,6 +2133,12 @@ private:
     /// \endcond
 };
 
+/// \cond
+template<unsigned int DefaultNumDimensions>
+constexpr typename sobol32_engine<DefaultNumDimensions>::dimensions_num_type
+    sobol32_engine<DefaultNumDimensions>::default_num_dimensions;
+/// \endcond
+
 /// \brief Sobol's scrambled quasi-random sequence generator
 ///
 /// scrambled_sobol32_engine is a quasi-random number engine which produces scrambled Sobol sequences.
@@ -2309,6 +2315,12 @@ private:
     /// \endcond
 };
 
+/// \cond
+template<unsigned int DefaultNumDimensions>
+constexpr typename scrambled_sobol32_engine<DefaultNumDimensions>::dimensions_num_type
+    scrambled_sobol32_engine<DefaultNumDimensions>::default_num_dimensions;
+/// \endcond
+
 /// \brief Sobol's quasi-random sequence generator
 ///
 /// sobol64 is a quasi-random number engine which produces Sobol sequences.
@@ -2480,6 +2492,12 @@ private:
     friend class ::rocrand_cpp::poisson_distribution;
     /// \endcond
 };
+
+/// \cond
+template<unsigned int DefaultNumDimensions>
+constexpr typename sobol64_engine<DefaultNumDimensions>::dimensions_num_type
+    sobol64_engine<DefaultNumDimensions>::default_num_dimensions;
+/// \endcond
 
 /// \brief Sobol's scrambled quasi-random sequence generator
 ///
@@ -2660,8 +2678,8 @@ private:
 
 /// \cond
 template<unsigned int DefaultNumDimensions>
-constexpr typename sobol32_engine<DefaultNumDimensions>::dimensions_num_type
-sobol32_engine<DefaultNumDimensions>::default_num_dimensions;
+constexpr typename scrambled_sobol64_engine<DefaultNumDimensions>::dimensions_num_type
+    scrambled_sobol64_engine<DefaultNumDimensions>::default_num_dimensions;
 /// \endcond
 
 /// \brief Pseudorandom number engine based on 2 state ThreeFry.

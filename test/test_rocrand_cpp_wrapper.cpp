@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -119,6 +119,9 @@ TEST(rocrand_cpp_wrapper, rocrand_prng_default_seed)
 TEST(rocrand_cpp_wrapper, rocrand_qrng_default_num_dimensions)
 {
     EXPECT_EQ(rocrand_cpp::sobol32::default_num_dimensions, 1U);
+    EXPECT_EQ(rocrand_cpp::sobol64::default_num_dimensions, 1U);
+    EXPECT_EQ(rocrand_cpp::scrambled_sobol32::default_num_dimensions, 1U);
+    EXPECT_EQ(rocrand_cpp::scrambled_sobol64::default_num_dimensions, 1U);
 }
 
 template<class T>
