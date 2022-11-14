@@ -1039,19 +1039,19 @@ int main(int argc, char *argv[])
             }
             else if(engine == "threefry2x32")
             {
-                run_benchmarks<rocrand_state_threefry2x32_20>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_threefry2x32_20>(parser, distribution, engine, stream);
             }
             else if(engine == "threefry2x64")
             {
-                run_benchmarks<rocrand_state_threefry2x64_20>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_threefry2x64_20>(parser, distribution, engine, stream);
             }
             else if(engine == "threefry4x32")
             {
-                run_benchmarks<rocrand_state_threefry4x32_20>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_threefry4x32_20>(parser, distribution, engine, stream);
             }
             else if(engine == "threefry4x64")
             {
-                run_benchmarks<rocrand_state_threefry4x64_20>(parser, distribution, stream);
+                run_benchmarks<rocrand_state_threefry4x64_20>(parser, distribution, engine, stream);
             }
         }
         std::cout << std::endl;
