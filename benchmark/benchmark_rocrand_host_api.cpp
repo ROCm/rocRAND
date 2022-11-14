@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
         for(auto lambda : poisson_lambdas)
         {
             const std::string poisson_dis_name
-                = std::string("poisson(lambda=") + std::to_string(lambda) + ")";
+                = std::string("poisson(lambda=") + std::to_string(lambda) + ")>";
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
                 (name_engine_prefix + poisson_dis_name).c_str(),
                 &run_benchmark<unsigned int>,
