@@ -33,7 +33,7 @@ else()
     target_link_libraries(rocrand_fortran
         PRIVATE
             rocrand
-            "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
+            "-L${HIP_ROOT_DIR}/lib -lhip_hcc"
     )
 endif()
 

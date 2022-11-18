@@ -106,7 +106,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
         target_link_libraries(${test_name}
             PRIVATE
                 roc::rocrand
-                "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
+                "-L${HIP_ROOT_DIR}/lib"
         )
     endif()
     add_relative_test(${test_name} ${test_name})
