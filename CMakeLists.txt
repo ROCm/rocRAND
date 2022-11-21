@@ -46,6 +46,7 @@ option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+option(BUILD_PARITY_TEST "Build rocrand/curand parity test" OFF)
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
