@@ -47,22 +47,75 @@
         }                                                        \
     }
 
-
-void test_curand()
+static curandRngType rng_type_to_curand(const generator_type rng_type)
 {
-    constexpr size_t size = 1024;
+    switch(rng_type)
+    {
+    case generator_type::XORWOW:
+        return CURAND_RNG_PSEUDO_XORWOW;
+    case generator_type::MRG32K3A:
+        return CURAND_RNG_PSEUDO_MRG32K3A;
+    case generator_type::MTGP32:
+        return CURAND_RNG_PSEUDO_MTGP32;
+    case generator_type::PHILOX4_32_10:
+        return CURAND_RNG_PSEUDO_PHILOX4_32_10;
+    case generator_type::MT19937:
+        return CURAND_RNG_PSEUDO_MT19937;
+    case generator_type::SOBOL32:
+        return CURAND_RNG_QUASI_SOBOL32;
+    case generator_type::SCRAMBLED_SOBOL32:
+        return CURAND_RNG_QUASI_SCRAMBLED_SOBOL32;
+    case generator_type::SOBOL64:
+        return CURAND_RNG_QUASI_SOBOL64;
+    case generator_type::SCRAMBLED_SOBOL64:
+        return CURAND_RNG_QUASI_SCRAMBLED_SOBOL64;
+    }
+}
+
+template<typename T, typename F>
+static std::vector<T> generate(const test_case& test_case, F callback)
+{
+    T* data;
+    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&data), test_case.size * sizeof(T)));
 
     curandGenerator_t generator;
-    CURAND_CHECK(curandCreateGenerator(&generator, CURAND_RNG_PSEUDO_DEFAULT));
-    CURAND_CHECK(curandSetGeneratorOrdering(generator, CURAND_ORDERING_PSEUDO_LEGACY));
+    CURAND_CHECK(curandCreateGenerator(&generator, rng_type_to_curand(test_case.rng_type)));
+    if (generator_is_psuedo(test_case.rng_type))
+    {
+        CURAND_CHECK(curandSetGeneratorOrdering(generator, CURAND_ORDERING_PSEUDO_LEGACY));
+        if (test_case.prng_seed >= 0)
+        {
+            CURAND_CHECK(curandSetPseudoRandomGeneratorSeed(generator, test_case.prng_seed));
+        }
+    }
+    else if (test_case.qrng_dimensions >= 0)
+    {
+        CURAND_CHECK(curandSetQuasiRandomGeneratorDimensions(generator, test_case.qrng_dimensions));
+    }
 
-    unsigned int* data;
-    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(unsigned int)));
+    if (test_case.offset >= 0)
+    {
+        CURAND_CHECK(curandSetGeneratorOffset(generator, test_case.offset));
+    }
 
-    CURAND_CHECK(curandGenerate(generator, data, size));
-
-    CUDA_CHECK(cudaDeviceSynchronize());
-    CUDA_CHECK(cudaFree(data));
+    CURAND_CHECK(callback(generator, data, test_case.size));
 
     CURAND_CHECK(curandDestroyGenerator(generator));
+
+    std::vector<T> results(test_case.size);
+    CUDA_CHECK(cudaMemcpy(results.data(), data, test_case.size * sizeof(T), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaFree(data));
+
+    return results;
 }
+
+std::vector<unsigned int> test_curand_generate(const test_case& test_case)
+{
+    return generate<unsigned int>(test_case, curandGenerate);
+}
+
+std::vector<unsigned long long> test_curand_generate_long_long(const test_case& test_case)
+{
+    return generate<unsigned long long>(test_case, curandGenerateLongLong);
+}
+
