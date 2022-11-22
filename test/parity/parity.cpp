@@ -30,76 +30,69 @@
 #endif
 
 // FIND OUT:
-// - Shared generators to test -- done
 // - Shared distributions to test (defer)
-// - Skipping (?)
-// - Seeds (easy)
 // - generating a stream from a state and then generating another stream (continuity) (?)
 
-const char* generator_name(const generator_type rng_type)
+constexpr long long seeds[] = {-1ll, 12345ll};
+constexpr int dims[] = {1, 3};
+constexpr long long offsets[] = {-1ll, 112121116104111110ll};
+
+static const char* generator_name(const generator_type rng_type)
 {
     switch(rng_type)
     {
-    case generator_type::XORWOW:
-        return "xorwow";
-    case generator_type::MRG32K3A:
-        return "mrg32k3a";
-    case generator_type::MTGP32:
-        return "mtgp32";
-    case generator_type::PHILOX4_32_10:
-        return "philox";
-    case generator_type::MT19937:
-        return "mt19937";
-    case generator_type::SOBOL32:
-        return "sobol32";
-    case generator_type::SCRAMBLED_SOBOL32:
-        return "scrambled_sobol32";
-    case generator_type::SOBOL64:
-        return "sobol64";
-    case generator_type::SCRAMBLED_SOBOL64:
-        return "scrambled_sobol64";
+        case generator_type::XORWOW:
+            return "xorwow";
+        case generator_type::MRG32K3A:
+            return "mrg32k3a";
+        case generator_type::MTGP32:
+            return "mtgp32";
+        case generator_type::PHILOX4_32_10:
+            return "philox";
+        case generator_type::MT19937:
+            return "mt19937";
+        case generator_type::SOBOL32:
+            return "sobol32";
+        case generator_type::SCRAMBLED_SOBOL32:
+            return "scrambled_sobol32";
+        case generator_type::SOBOL64:
+            return "sobol64";
+        case generator_type::SCRAMBLED_SOBOL64:
+            return "scrambled_sobol64";
     }
 }
 
-bool generator_is_64bit(const generator_type rng_type)
+static bool generator_is_64bit(const generator_type rng_type)
 {
-    switch(rng_type)
-    {
-    case generator_type::SOBOL64:
-    case generator_type::SCRAMBLED_SOBOL64:
-        return true;
-    default:
-        return false;
-    }
+    return rng_type == generator_type::SOBOL64 || rng_type == generator_type::SCRAMBLED_SOBOL64;
+}
+
+static bool generator_supports_offset(const generator_type rng_type)
+{
+    return rng_type != generator_type::MTGP32 && rng_type != generator_type::MT19937;
 }
 
 template<typename T, typename F, typename G>
-void run_test(const test_case& test_case, F generate_rocrand, G generate_curand)
+static void run_test(const test_case& test_case, F generate_rocrand, G generate_curand)
 {
     constexpr size_t n = DEFAULT_RAND_N;
 
-    std::cout << generator_name(test_case.rng_type) << "(size=" << test_case.size;
+    std::cout << generator_name(test_case.rng_type) << "," << test_case.size;
 
-    if (generator_is_psuedo(test_case.rng_type))
-    {
-        if(test_case.prng_seed < 0)
-            std::cout << ", seed=default";
-        else
-            std::cout << ", seed=" << test_case.prng_seed;
-    }
+    if(test_case.prng_seed < 0)
+        std::cout << ",default";
     else
-    {
-        if(test_case.qrng_dimensions < 0)
-            std::cout << ", dims=default";
-        else
-            std::cout << ", dims=" << test_case.qrng_dimensions;
-    }
+        std::cout << "," << test_case.prng_seed;
+
+    if(test_case.qrng_dimensions < 0)
+        std::cout << ",default";
+    else
+        std::cout << "," << test_case.qrng_dimensions;
 
     if(test_case.offset < 0)
-        std::cout << ", offset=default";
+        std::cout << ",default";
     else
-        std::cout << ", offset=" << test_case.offset;
-    std::cout << "): ";
+        std::cout << "," << test_case.offset;
 
     const std::vector<T> rocrand_results = generate_rocrand(test_case);
     const std::vector<T> curand_results = generate_curand(test_case);
@@ -115,15 +108,15 @@ void run_test(const test_case& test_case, F generate_rocrand, G generate_curand)
 
     if(i < n)
     {
-        std::cout << "mismatch at index " << i << std::endl;
+        std::cout << ",mismatch at index " << i << std::endl;
     }
     else
     {
-        std::cout << "results are equal" << std::endl;
+        std::cout << ",results are equal" << std::endl;
     }
 }
 
-void run_case(const test_case& test_case)
+static void run_case(const test_case& test_case)
 {
     if (generator_is_64bit(test_case.rng_type))
     {
@@ -137,15 +130,13 @@ void run_case(const test_case& test_case)
                                test_rocrand_generate,
                                test_curand_generate);
     }
-
-    // TODO: Other distributions?
 }
 
-void test_offset(const generator_type rng_type, size_t size, long long offset)
+static void test_offset(const generator_type rng_type, size_t size, long long offset)
 {
     if (generator_is_psuedo(rng_type))
     {
-        for(const long long seed : {-1ll, 12345ll})
+        for(const long long seed : seeds)
         {
             test_case test_case;
             test_case.rng_type = rng_type;
@@ -157,29 +148,33 @@ void test_offset(const generator_type rng_type, size_t size, long long offset)
     }
     else
     {
-        for(const long long dims : {1ll, 3ll})
+        for(const long long dim : dims)
         {
             test_case test_case;
             test_case.rng_type = rng_type;
             // Round down to multiple of dimensions
-            test_case.size = size - size % dims;
-            test_case.qrng_dimensions = dims;
+            test_case.size = size - size % dim;
+            test_case.qrng_dimensions = dim;
             test_case.offset = offset;
-
-            test_case.qrng_dimensions = dims;
             run_case(test_case);
         }
     }
 }
 
-int main() {
+int main()
+{
+    // CSV header
+    std::cout << "generator,size,seed,dims,offset,result" << std::endl;
+
     constexpr generator_type generator_types[] =
     {
         generator_type::XORWOW,
         generator_type::MRG32K3A,
         generator_type::MTGP32,
         generator_type::PHILOX4_32_10,
-        // generator_type::MT19937, // not supported when USE_HIP_CPU
+#ifndef USE_HIP_CPU
+        generator_type::MT19937,
+#endif
         generator_type::SOBOL32,
         generator_type::SCRAMBLED_SOBOL32,
         generator_type::SOBOL64,
@@ -188,10 +183,10 @@ int main() {
 
     for(const generator_type rng_type : generator_types)
     {
-        for(const long long offset : {-1ll, 112121116104111110ll})
+        for(const long long offset : offsets)
         {
             test_offset(rng_type, DEFAULT_RAND_N, offset);
-            if (rng_type == generator_type::MTGP32 || rng_type == generator_type::MT19937)
+            if (!generator_supports_offset(rng_type))
                 break;
         }
     }

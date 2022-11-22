@@ -69,5 +69,5 @@ set_target_properties(test_rocrand_parity
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
 )
-
-# add_relative_test(test_rocrand_parity test_rocrand_parity)
+target_compile_definitions(test_rocrand_parity PRIVATE USE_HIP_CPU)
+add_relative_test(test_rocrand_parity test_rocrand_parity)

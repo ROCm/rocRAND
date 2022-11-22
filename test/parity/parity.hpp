@@ -54,15 +54,15 @@ inline bool generator_is_psuedo(const generator_type rng_type)
 {
     switch(rng_type)
     {
-    case generator_type::XORWOW:
-    case generator_type::MRG32K3A:
-    case generator_type::MTGP32:
-    case generator_type::PHILOX4_32_10:
-    case generator_type::MT19937:
-        return true;
-    default:
-        return false;
-    }
+        case generator_type::XORWOW:
+        case generator_type::MRG32K3A:
+        case generator_type::MTGP32:
+        case generator_type::PHILOX4_32_10:
+        case generator_type::MT19937:
+            return true;
+        default:
+            return false;
+        }
 }
 
 std::vector<unsigned int> test_rocrand_generate(const test_case& test_case);
