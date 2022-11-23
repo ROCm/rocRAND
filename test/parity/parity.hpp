@@ -23,8 +23,8 @@
 #ifndef TEST_PARITY_PARITY_HPP_
 #define TEST_PARITY_PARITY_HPP_
 
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 // The different generators that can be tested. These are the generators
 // which are rocrand and curand both implement.
@@ -44,10 +44,10 @@ enum class generator_type
 struct test_case
 {
     generator_type rng_type;
-    size_t size;
-    long long prng_seed = -1; // ignored if not prng
-    int qrng_dimensions = -1; // ignored if not qrng
-    long long offset = -1;
+    size_t         size;
+    long long      prng_seed       = -1; // ignored if not prng
+    int            qrng_dimensions = -1; // ignored if not qrng
+    long long      offset          = -1;
 };
 
 inline bool generator_is_psuedo(const generator_type rng_type)
@@ -58,17 +58,15 @@ inline bool generator_is_psuedo(const generator_type rng_type)
         case generator_type::MRG32K3A:
         case generator_type::MTGP32:
         case generator_type::PHILOX4_32_10:
-        case generator_type::MT19937:
-            return true;
-        default:
-            return false;
-        }
+        case generator_type::MT19937: return true;
+        default: return false;
+    }
 }
 
-std::vector<unsigned int> test_rocrand_generate(const test_case& test_case);
+std::vector<unsigned int>       test_rocrand_generate(const test_case& test_case);
 std::vector<unsigned long long> test_rocrand_generate_long_long(const test_case& test_case);
 
-std::vector<unsigned int> test_curand_generate(const test_case& test_case);
+std::vector<unsigned int>       test_curand_generate(const test_case& test_case);
 std::vector<unsigned long long> test_curand_generate_long_long(const test_case& test_case);
 
 #endif
