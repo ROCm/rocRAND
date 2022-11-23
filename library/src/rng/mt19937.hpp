@@ -802,6 +802,12 @@ public:
         m_engines_initialized = false;
     }
 
+    void set_order(rocrand_ordering order)
+    {
+        m_order               = order;
+        m_engines_initialized = false;
+    }
+
     rocrand_status init()
     {
         hipError_t err;

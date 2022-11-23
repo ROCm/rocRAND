@@ -1911,6 +1911,13 @@ rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocr
         static_cast<rocrand_xorwow*>(generator)->set_order(order);
         return ROCRAND_STATUS_SUCCESS;
     }
+    else if (generator->rng_type == ROCRAND_RNG_PSEUDO_MT19937)
+    {
+        if(!pseudo_type)
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        static_cast<rocrand_mt19937*>(generator)->set_order(order);
+        return ROCRAND_STATUS_SUCCESS;
+    }
     else if(generator->rng_type == ROCRAND_RNG_QUASI_SOBOL32)
     {
         if(pseudo_type)
