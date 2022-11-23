@@ -32,7 +32,8 @@
         cudaError_t error = condition;                         \
         if(error != cudaSuccess)                               \
         {                                                      \
-            std::cout << "cuda error: " << error << std::endl; \
+            std::cout << "cuda error at " __FILE__ << ":"      \
+                      << __LINE__ << error << std::endl;       \
             exit(EXIT_FAILURE);                                \
         }                                                      \
     }
@@ -42,7 +43,8 @@
         curandStatus_t error = condition;                        \
         if(error != CURAND_STATUS_SUCCESS)                       \
         {                                                        \
-            std::cout << "curand error: " << error << std::endl; \
+            std::cout << "curand error at " __FILE__ << ":"      \
+                      << __LINE__ << ": " << error << std::endl; \
             exit(EXIT_FAILURE);                                  \
         }                                                        \
     }

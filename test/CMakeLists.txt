@@ -133,9 +133,6 @@ endif()
 # Checks for simple linkage problems
 add_subdirectory(linkage)
 
-# Checks for equivalence between rocrand and curand
-add_subdirectory(parity)
-
 rocm_install(
     FILES "${INSTALL_TEST_FILE}"
     DESTINATION "${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME}"

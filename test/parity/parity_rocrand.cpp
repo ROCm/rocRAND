@@ -22,27 +22,29 @@
 
 #include "parity.hpp"
 
-#include <rocrand/rocrand.h>
 #include <hip/hip_runtime.h>
+#include <rocrand/rocrand.h>
 
 #include <iostream>
 
-#define HIP_CHECK(condition)                                  \
-    {                                                         \
-        hipError_t error = condition;                         \
-        if(error != hipSuccess){                              \
-            std::cout << "hip error: " << error << std::endl; \
-            exit(EXIT_FAILURE);                               \
-        }                                                     \
+#define HIP_CHECK(condition)                                     \
+    {                                                            \
+        hipError_t error = condition;                            \
+        if(error != hipSuccess){                                 \
+            std::cout << "hip error at " __FILE__ ":"            \
+                      << __LINE__ << ": " << error << std::endl; \
+            exit(EXIT_FAILURE);                                  \
+        }                                                        \
     }
 
-#define ROCRAND_CHECK(condition)                                   \
-    {                                                              \
-        rocrand_status status = condition;                         \
-        if(status != ROCRAND_STATUS_SUCCESS) {                     \
-            std::cout << "rocrand error: " << status << std::endl; \
-            exit(EXIT_FAILURE);                                    \
-        }                                                          \
+#define ROCRAND_CHECK(condition)                                  \
+    {                                                             \
+        rocrand_status status = condition;                        \
+        if(status != ROCRAND_STATUS_SUCCESS) {                    \
+            std::cout << "rocrand error at " __FILE__ ":"         \
+                      << __LINE__ << ": " << status << std::endl; \
+            exit(EXIT_FAILURE);                                   \
+        }                                                         \
     }
 
 static rocrand_rng_type rng_type_to_rocrand(const generator_type rng_type)
