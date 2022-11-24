@@ -27,10 +27,23 @@
 
 #include "rocrand/rocrand_common.h"
 
+/** \rocrand_internal \addtogroup rocranddevice
+ *
+ *  @{
+ */
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_X
+/// \brief Default X seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_X 2
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_Y
+/// \brief Default Y seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_Y 8
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_Z
+/// \brief Default Z seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_Z 16
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_W
+/// \brief Default W seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_W 128
+/** @} */ // end of group rocranddevice
 
 namespace rocrand_device
 {
@@ -206,6 +219,7 @@ protected:
 
 /// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::lfsr113_engine rocrand_state_lfsr113;
+/// \endcond
 
 /**
  * \brief Initializes LFSR113 state.
@@ -240,5 +254,7 @@ unsigned int rocrand(rocrand_state_lfsr113* state)
 {
     return state->next();
 }
+
+/** @} */ // end of group rocranddevice
 
 #endif // ROCRAND_LFSR113_H_
