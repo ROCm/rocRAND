@@ -57,6 +57,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
+    'sphinx_rtd_theme',
     'breathe',
     'exhale',
 ]
@@ -76,7 +77,7 @@ templates_path = ['_templates']
 source_suffix = ['.rst']
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'source/index'
 
 # General information about the project.
 project = u'rocRAND'
@@ -223,7 +224,6 @@ exhale_args = {
     # "treeViewIsBootstrap": True,
     "exhaleExecutesDoxygen": True,
     "exhaleUseDoxyfile": True,
-    "afterTitleDescription": "This chapter describes the rocRAND C and C++ API.",
 }
 
 # Tell sphinx what the primary language being documented is.

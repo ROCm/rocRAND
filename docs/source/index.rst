@@ -9,7 +9,7 @@ rocRAND User Guide
 
    introduction
    installing
-   api/library_root
+   cpp_api
    python_api
 
 Indices and tables
