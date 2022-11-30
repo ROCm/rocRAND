@@ -773,10 +773,10 @@ WARN_LOGFILE           =
 #mainpage.dox \
 
 INPUT = \
-    source/mainpage.dox \
-    source/rocranddevice.dox \
-    source/rocrandhost.dox \
-    source/rocrandhostcpp.dox \
+    mainpage.dox \
+    rocranddevice.dox \
+    rocrandhost.dox \
+    rocrandhostcpp.dox \
     ../library/include/rocrand
 
 # This tag can be used to specify the character encoding of the source files

@@ -4,6 +4,7 @@ Python API Reference
 
 This chapter describes the rocRAND Python module API.
 
+.. default-domain:: py
 .. py:currentmodule:: rocrand
 
 class PRNG

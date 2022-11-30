@@ -333,19 +333,6 @@ class RNG(object):
 
 
 class PRNG(RNG):
-    """Pseudo-random number generator.
-
-    Example::
-
-        import rocrand
-        import numpy as np
-
-        gen = rocrand.PRNG(rocrand.PRNG.PHILOX4_32_10, seed=123456)
-        a = np.empty(1000, np.int32)
-        gen.poisson(a, 10.0)
-        print(a)
-    """
-
     DEFAULT         = ROCRAND_RNG_PSEUDO_DEFAULT
     """Default pseudo-random generator type, :const:`XORWOW`"""
     XORWOW          = ROCRAND_RNG_PSEUDO_XORWOW
@@ -372,8 +359,7 @@ class PRNG(RNG):
     """THREEFRY4_64_20 pseudo-random generator type"""
 
     def __init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None):
-        """__init__(self, rngtype=DEFAULT, seed=None, offset=None, stream=None)
-        Creates a new pseudo-random number generator.
+        """Creates a new pseudo-random number generator.
 
         A new pseudo-random number generator of type **rngtype** is initialized
         with given **seed**, **offset** and **stream**.
@@ -397,6 +383,16 @@ class PRNG(RNG):
         :param seed:    Initial seed value
         :param offset:  Initial offset of random numbers sequence
         :param stream:  HIP stream for all kernel launches of the generator
+
+        Example::
+
+            import rocrand
+            import numpy as np
+
+            gen = rocrand.PRNG(rocrand.PRNG.PHILOX4_32_10, seed=123456)
+            a = np.empty(1000, np.int32)
+            gen.poisson(a, 10.0)
+            print(a)
         """
         super(PRNG, self).__init__(rngtype, offset=offset, stream=stream)
 
@@ -419,19 +415,6 @@ class PRNG(RNG):
 
 
 class QRNG(RNG):
-    """Quasi-random number generator.
-
-    Example::
-
-        import rocrand
-        import numpy as np
-
-        gen = rocrand.QRNG(rocrand.QRNG.SOBOL32, ndim=4)
-        a = np.empty(1000, np.float32)
-        gen.normal(a, 0.0, 1.0)
-        print(a)
-    """
-
     DEFAULT           = ROCRAND_RNG_QUASI_DEFAULT
     """Default quasi-random generator type, :const:`SOBOL32`"""
     SOBOL32           = ROCRAND_RNG_QUASI_SOBOL32
@@ -444,8 +427,7 @@ class QRNG(RNG):
     """Scrambled Sobol64 quasi-random generator type"""
 
     def __init__(self, rngtype=DEFAULT, ndim=None, offset=None, stream=None):
-        """__init__(self, rngtype=DEFAULT, ndim=None, offset=None, stream=None)
-        Creates a new quasi-random number generator.
+        """Creates a new quasi-random number generator.
 
         A new quasi-random number generator of type **rngtype** is initialized
         with given **ndim**, **offset** and **stream**.
@@ -458,12 +440,22 @@ class QRNG(RNG):
         * :const:`SOBOL64`
         * :const:`SCRAMBLED_SOBOL64`
 
-        Values if **ndim** are 1 to 20000.
+        Values of **ndim** are 1 to 20000.
 
         :param rngtype: Type of quasi-random number generator to create
         :param ndim:    Number of dimensions
         :param offset:  Initial offset of random numbers sequence
         :param stream:  HIP stream for all kernel launches of the generator
+
+        Example::
+
+            import rocrand
+            import numpy as np
+
+            gen = rocrand.QRNG(rocrand.QRNG.SOBOL32, ndim=4)
+            a = np.empty(1000, np.float32)
+            gen.normal(a, 0.0, 1.0)
+            print(a)
         """
 
         super(QRNG, self).__init__(rngtype, offset=offset, stream=stream)
