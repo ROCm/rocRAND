@@ -72,7 +72,7 @@ static std::vector<T> generate(const test_case& test_case, F callback)
 
     curandGenerator_t generator;
     CURAND_CHECK(curandCreateGenerator(&generator, rng_type_to_curand(test_case.rng_type)));
-    if(generator_is_psuedo(test_case.rng_type))
+    if(generator_is_pseudo(test_case.rng_type))
     {
         CURAND_CHECK(curandSetGeneratorOrdering(generator, CURAND_ORDERING_PSEUDO_LEGACY));
         if(test_case.prng_seed >= 0)

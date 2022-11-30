@@ -27,7 +27,7 @@
 #include <vector>
 
 // The different generators that can be tested. These are the generators
-// which are rocrand and curand both implement.
+// which rocrand and curand both implement.
 enum class generator_type
 {
     XORWOW,
@@ -50,7 +50,7 @@ struct test_case
     long long      offset          = -1;
 };
 
-inline bool generator_is_psuedo(const generator_type rng_type)
+inline bool generator_is_pseudo(const generator_type rng_type)
 {
     switch(rng_type)
     {

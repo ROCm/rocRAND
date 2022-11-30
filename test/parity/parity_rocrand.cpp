@@ -72,7 +72,7 @@ static std::vector<T> generate(const test_case& test_case, F callback)
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type_to_rocrand(test_case.rng_type)));
-    if(generator_is_psuedo(test_case.rng_type))
+    if(generator_is_pseudo(test_case.rng_type))
     {
         ROCRAND_CHECK(rocrand_set_ordering(generator, ROCRAND_ORDERING_PSEUDO_LEGACY));
         if(test_case.prng_seed >= 0)

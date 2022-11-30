@@ -119,7 +119,7 @@ static void run_case(const test_case& test_case)
 
 static void test_offset(const generator_type rng_type, size_t size, long long offset)
 {
-    if(generator_is_psuedo(rng_type))
+    if(generator_is_pseudo(rng_type))
     {
         for(const long long seed : seeds)
         {
