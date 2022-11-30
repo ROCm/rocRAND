@@ -29,10 +29,6 @@
     #define DEFAULT_RAND_N (1024 * 1024 * 128)
 #endif
 
-// FIND OUT:
-// - Shared distributions to test (defer)
-// - generating a stream from a state and then generating another stream (continuity) (?)
-
 constexpr long long seeds[]   = {-1ll, 12345ll};
 constexpr int       dims[]    = {1, 3};
 constexpr long long offsets[] = {-1ll, 112121116104111110ll};
