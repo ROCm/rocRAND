@@ -26,7 +26,7 @@ Additionally, the following quasi-random number generators are available:
 Ordering
 ========
 
-rocRAND generators can be configured to change how results are ordered in global memory. These parameters can be used to, for example, tune the performance versus the reproducability of rocRAND generators. The following ordering typs are available:
+rocRAND generators can be configured to change how results are ordered in global memory. These parameters can be used to, for example, tune the performance versus the reproducibility of rocRAND generators. The following ordering types are available:
 
 * `ROCRAND_ORDERING_PSEUDO_BEST`
 * `ROCRAND_ORDERING_PSEUDO_DEFAULT`
@@ -68,3 +68,24 @@ ThreeFry
 Sobol
     The (scrambled) 32- and 64-bit sobol quasi-random number generators generated the result from :math:`d` dimensions by flattening them into the output. The result at offset :math:`n` in memory is generated from offset :math:`n\;\mathrm{mod}\; d` in dimension :math:`\lfloor n / d \rfloor`, where :math:`d` is the generator's number of dimensions.
 
+cuRAND Compatibility
+--------------------
+
+The following table shows which rocRAND generators produce the exact same sequence as the equivalent cuRAND generator when using legacy ordering, given the same seed, number of dimensions, and offset.
+
+.. table:: cuRAND Compatibility
+    :widths: auto
+
+    =================  =====================
+    Generator          Compatibile
+    =================  =====================
+    XORWOW             No
+    MRG32K3A           No
+    MTGP32             No
+    Philox 32x4-10     No
+    MT19937            No
+    Sobol32            Yes
+    Scrambled Sobol32  No
+    Sobol64            Yes, with same offset
+    Scrambled Sobol64  No
+    =================  =====================
