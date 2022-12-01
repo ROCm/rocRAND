@@ -4,7 +4,6 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = rocRAND
 SOURCEDIR     = .
 BUILDDIR      = _build
 

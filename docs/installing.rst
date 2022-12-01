@@ -32,7 +32,7 @@ Building rocRAND From Source
 Obtaining Sources
 ^^^^^^^^^^^^^^^^^
 
-The rocRAND sources are available from the `rocRAND GitHub Repository <https://github.com/ROCmSoftwarePlatform/rocRAND>`_. Use the branch that matches the system installed version of ROCm. For example on a system that has ROCm 5.3 installed, use the following command to obtain rocRAND sources ::
+The rocRAND sources are available from the `rocRAND GitHub Repository <https://github.com/ROCmSoftwarePlatform/rocRAND>`_. Use the branch that matches the system-installed version of ROCm. For example on a system that has ROCm 5.3 installed, use the following command to obtain rocRAND sources::
 
     git checkout -b rocm-5.3 https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
