@@ -9,6 +9,7 @@ rocRAND User Guide
 
    introduction
    installing
+   programmers_guide
    cpp_api
    python_api
 
