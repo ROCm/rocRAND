@@ -1017,6 +1017,8 @@ public:
 
     /// \brief Sets the seed of the pseudo-random number engine.
     ///
+    /// The seed is used to construct the initial state of an engine.
+    ///
     /// - This operation resets the engine's internal state.
     /// - This operation does not change the engine's offset.
     ///
@@ -3274,46 +3276,47 @@ constexpr typename threefry4x64_20_engine<DefaultSeed>::seed_type
 /// \brief Typedef of rocrand_cpp::philox4x32_10_engine PRNG engine with default seed (#ROCRAND_PHILOX4x32_DEFAULT_SEED).
 typedef philox4x32_10_engine<> philox4x32_10;
 /// \typedef xorwow
-/// \brief Typedef of rocrand_cpp::xorwow_engine PRNG engine with default seed (#ROCRAND_XORWOW_DEFAULT_SEED).
+/// \brief Typedef of \p rocrand_cpp::xorwow_engine PRNG engine with default seed (#ROCRAND_XORWOW_DEFAULT_SEED).
 typedef xorwow_engine<> xorwow;
-/// \typedef mrg31k3p
-/// \brief Typedef of rocrand_cpp::mrg31k3p_engine PRNG engine with default seed (#ROCRAND_MRG31K3P_DEFAULT_SEED).
+/// \typedef mrg31k3a
+/// \brief Typedef of \p rocrand_cpp::mrg31k3p_engine PRNG engine with default seed (#ROCRAND_MRG31K3P_DEFAULT_SEED).
 typedef mrg31k3p_engine<> mrg31k3a;
 /// \typedef mrg32k3a
-/// \brief Typedef of rocrand_cpp::mrg32k3a_engine PRNG engine with default seed (#ROCRAND_MRG32K3A_DEFAULT_SEED).
+/// \brief Typedef of \p rocrand_cpp::mrg32k3a_engine PRNG engine with default seed (#ROCRAND_MRG32K3A_DEFAULT_SEED).
 typedef mrg32k3a_engine<> mrg32k3a;
 /// \typedef mtgp32
-/// \brief Typedef of rocrand_cpp::mtgp32_engine PRNG engine with default seed (0).
+/// \brief Typedef of \p rocrand_cpp::mtgp32_engine PRNG engine with default seed (0).
 typedef mtgp32_engine<> mtgp32;
 /// \typedef lfsr113
-/// \brief Typedef of rocrand_cpp::lfsr113_engine PRNG engine with default seed (#ROCRAND_LFSR113_DEFAULT_SEED).
+/// \brief Typedef of \p rocrand_cpp::lfsr113_engine PRNG engine with default seed (#ROCRAND_LFSR113_DEFAULT_SEED_X,
+/// #ROCRAND_LFSR113_DEFAULT_SEED_Y, #ROCRAND_LFSR113_DEFAULT_SEED_Z, #ROCRAND_LFSR113_DEFAULT_SEED_W).
 typedef lfsr113_engine<> lfsr113;
 /// \typedef mt19937
-/// \brief Typedef of rocrand_cpp::mt19937_engine PRNG engine with default seed (0).
+/// \brief Typedef of \p rocrand_cpp::mt19937_engine PRNG engine with default seed (0).
 typedef mt19937_engine<> mt19937;
-/// \typedef threefry
-/// \brief Typedef of rocrand_cpp::threefry2x32_20_engine PRNG engine with default seed (0).
+/// \typedef threefry2x32
+/// \brief Typedef of \p rocrand_cpp::threefry2x32_20_engine PRNG engine with default seed (0).
 typedef threefry2x32_20_engine<> threefry2x32;
-/// \typedef threefry
-/// \brief Typedef of rocrand_cpp::threefry2x64_20_engine PRNG engine with default seed (0).
+/// \typedef threefry2x64
+/// \brief Typedef of \p rocrand_cpp::threefry2x64_20_engine PRNG engine with default seed (0).
 typedef threefry2x64_20_engine<> threefry2x64;
-/// \typedef threefry
-/// \brief Typedef of rocrand_cpp::threefry4x32_20_engine PRNG engine with default seed (0).
+/// \typedef threefry4x32
+/// \brief Typedef of \p rocrand_cpp::threefry4x32_20_engine PRNG engine with default seed (0).
 typedef threefry4x32_20_engine<> threefry4x32;
-/// \typedef threefry
-/// \brief Typedef of rocrand_cpp::threefry4x64_20_engine PRNG engine with default seed (0).
+/// \typedef threefry4x64
+/// \brief Typedef of \p rocrand_cpp::threefry4x64_20_engine PRNG engine with default seed (0).
 typedef threefry4x64_20_engine<> threefry4x64;
 /// \typedef sobol32
-/// \brief Typedef of rocrand_cpp::sobol32_engine QRNG engine with default number of dimensions (1).
+/// \brief Typedef of \p rocrand_cpp::sobol32_engine QRNG engine with default number of dimensions (1).
 typedef sobol32_engine<> sobol32;
 /// \typedef scrambled_sobol32
-/// \brief Typedef of rocrand_cpp::scrambled_sobol32_engine QRNG engine with default number of dimensions (1).
+/// \brief Typedef of \p rocrand_cpp::scrambled_sobol32_engine QRNG engine with default number of dimensions (1).
 typedef scrambled_sobol32_engine<> scrambled_sobol32;
 /// \typedef sobol64
-/// \brief Typedef of rocrand_cpp::sobol64_engine QRNG engine with default number of dimensions (1).
+/// \brief Typedef of \p rocrand_cpp::sobol64_engine QRNG engine with default number of dimensions (1).
 typedef sobol64_engine<> sobol64;
 /// \typedef scrambled_sobol64
-/// \brief Typedef of rocrand_cpp::scrambled_sobol64_engine QRNG engine with default number of dimensions (1).
+/// \brief Typedef of \p rocrand_cpp::scrambled_sobol64_engine QRNG engine with default number of dimensions (1).
 typedef scrambled_sobol64_engine<> scrambled_sobol64;
 
 /// \typedef default_random_engine

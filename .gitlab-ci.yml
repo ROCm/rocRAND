@@ -580,10 +580,14 @@ test:doc:
   before_script:
     - apt-get update
     - apt-get install -y -qq doxygen
+    - pip3 install --user -r $CI_PROJECT_DIR/docs/requirements.txt
   script:
-    - cd $CI_PROJECT_DIR/doc
-    - doxygen Doxyfile
-    - make -C ../python/rocrand/docs html
+    - $CI_PROJECT_DIR/docs/run_doc.sh
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/docs/_build
+      - $CI_PROJECT_DIR/docs/docBin
+    expire_in: 1 week
 
 .test:parity:
   stage: test

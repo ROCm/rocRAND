@@ -24,6 +24,9 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 * Scrambled Sobol64
 * ThreeFry
 
+## Documentation
+
+Information about the library API and other user topics can be found in the [rocRAND documentation](https://rocrand.readthedocs.io/en/latest).
 
 ## Requirements
 
@@ -139,8 +142,8 @@ cd rocRAND; cd build
 # engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
 #           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
-# distribution -> uniform-uint, uniform-uchar, uniform-ushort, 
-#                 uniform-half, uniform-float, uniform-double, 
+# distribution -> uniform-uint, uniform-uchar, uniform-ushort,
+#                 uniform-half, uniform-float, uniform-double,
 #                 normal-half, normal-float, normal-double,
 #                 log-normal-half, log-normal-float, log-normal-double, poisson
 # Further option can be found using --help
@@ -159,7 +162,7 @@ cd rocRAND; cd build
 # To run benchmark for device kernel functions:
 # The benchmarks are registered with Google Benchmark as `device_kernel<engine,distribution>`, where
 # engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
-#           threefry2x32, threefry2x64, threefry4x32, threefry4x64, 
+#           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> uniform-uint or uniform-ullong, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson, discrete-poisson, discrete-custom
@@ -198,25 +201,23 @@ cd rocRAND; cd build
 # To run Pearson Chi-squared and Anderson-Darling tests, which verify
 # that distribution of random number agrees with the requested distribution:
 # engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
-#           threefry2x32, threefry2x64, threefry4x32, threefry4x64, 
+#           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> all, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson
 ./test/stat_test_rocrand_generate --engine <engine> --dis <distribution>
 ```
 
-## Documentation
-The latest rocRAND documentation and API description can be found [here](https://rocrand.readthedocs.io/en/latest/).
+## Building Documentation
 
-It can also be build using the following commands
 ```shell
-# go to rocRAND doc directory
-cd rocRAND; cd doc
+# go to rocRAND docs directory
+cd rocRAND; cd docs
 
-# run doxygen
-doxygen Doxyfile
+# run doxygen and sphinx
+./run_doc.sh
 
-# open html/index.html
+# open _build/html/index.html
 ```
 
 ## Wrappers

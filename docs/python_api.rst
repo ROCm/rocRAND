@@ -1,8 +1,10 @@
-rocrand module
-==============
+====================
+Python API Reference
+====================
 
-Provides `pseudo-random number generator` (PRNG) and `quasi-random number generator` (QRNG).
+This chapter describes the rocRAND Python module API.
 
+.. default-domain:: py
 .. py:currentmodule:: rocrand
 
 class PRNG
@@ -11,7 +13,6 @@ class PRNG
 .. autoclass:: rocrand.PRNG
    :inherited-members:
    :members:
-
 
 class QRNG
 ----------
