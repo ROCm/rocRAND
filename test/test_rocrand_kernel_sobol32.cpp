@@ -162,7 +162,10 @@ TEST(rocrand_kernel_sobol32, rocrand)
 
     unsigned int * m_vector;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&m_vector), sizeof(unsigned int) * 8 * 32));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol32_direction_vectors,
+                        sizeof(unsigned int) * 8 * 32,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -204,7 +207,10 @@ TEST(rocrand_kernel_sobol32, rocrand_uniform)
 
     unsigned int * m_vector;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&m_vector), sizeof(unsigned int) * 8 * 32));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol32_direction_vectors,
+                        sizeof(unsigned int) * 8 * 32,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -246,7 +252,10 @@ TEST(rocrand_kernel_sobol32, rocrand_normal)
 
     unsigned int * m_vector;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&m_vector), sizeof(unsigned int) * 8 * 32));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol32_direction_vectors,
+                        sizeof(unsigned int) * 8 * 32,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -296,7 +305,10 @@ TEST(rocrand_kernel_sobol32, rocrand_log_normal)
 
     unsigned int * m_vector;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&m_vector), sizeof(unsigned int) * 8 * 32));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol32_direction_vectors,
+                        sizeof(unsigned int) * 8 * 32,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -349,7 +361,10 @@ TEST_P(rocrand_kernel_sobol32_poisson, rocrand_poisson)
 
     unsigned int * m_vector;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&m_vector), sizeof(unsigned int) * 8 * 32));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol32_direction_vectors, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol32_direction_vectors,
+                        sizeof(unsigned int) * 8 * 32,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     const size_t output_size = 8192;

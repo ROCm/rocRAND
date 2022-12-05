@@ -270,8 +270,8 @@ TEST(rocrand_sobol64_qrng_tests, state_progress_test)
 
 TEST(rocrand_sobol64_qrng_tests, discard_test)
 {
-    rocrand_sobol64::engine_type engine1(&h_sobol64_direction_vectors[32], 678ll);
-    rocrand_sobol64::engine_type engine2(&h_sobol64_direction_vectors[32], 676ll);
+    rocrand_sobol64::engine_type engine1(&rocrand_h_sobol64_direction_vectors[32], 678ll);
+    rocrand_sobol64::engine_type engine2(&rocrand_h_sobol64_direction_vectors[32], 676ll);
 
     EXPECT_NE(engine1(), engine2());
 
@@ -303,8 +303,8 @@ TEST(rocrand_sobol64_qrng_tests, discard_test)
 
 TEST(rocrand_sobol64_qrng_tests, discard_stride_test)
 {
-    rocrand_sobol64::engine_type engine1(&h_sobol64_direction_vectors[64], 123);
-    rocrand_sobol64::engine_type engine2(&h_sobol64_direction_vectors[64], 123);
+    rocrand_sobol64::engine_type engine1(&rocrand_h_sobol64_direction_vectors[64], 123);
+    rocrand_sobol64::engine_type engine2(&rocrand_h_sobol64_direction_vectors[64], 123);
 
     EXPECT_EQ(engine1(), engine2());
 
@@ -453,5 +453,5 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
 const unsigned int continuity_test_dimensions[] = { 1, 2, 10, 21 };
 
 INSTANTIATE_TEST_SUITE_P(rocrand_sobol64_qrng_continuity,
-                        rocrand_sobol64_qrng_continuity,
-                        ::testing::ValuesIn(continuity_test_dimensions));
+                         rocrand_sobol64_qrng_continuity,
+                         ::testing::ValuesIn(continuity_test_dimensions));

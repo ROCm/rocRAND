@@ -248,12 +248,14 @@ TEST(rocrand_scrambled_sobol32_qrng_tests, state_progress_test)
 
 TEST(rocrand_scrambled_sobol32_qrng_tests, discard_test)
 {
-    rocrand_scrambled_sobol32::engine_type engine1(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   678);
-    rocrand_scrambled_sobol32::engine_type engine2(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   676);
+    rocrand_scrambled_sobol32::engine_type engine1(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        678);
+    rocrand_scrambled_sobol32::engine_type engine2(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        676);
 
     EXPECT_NE(engine1(), engine2());
 
@@ -282,12 +284,14 @@ TEST(rocrand_scrambled_sobol32_qrng_tests, discard_test)
 
 TEST(rocrand_scrambled_sobol32_qrng_tests, discard_stride_test)
 {
-    rocrand_scrambled_sobol32::engine_type engine1(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   123);
-    rocrand_scrambled_sobol32::engine_type engine2(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   123);
+    rocrand_scrambled_sobol32::engine_type engine1(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        123);
+    rocrand_scrambled_sobol32::engine_type engine2(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        123);
 
     EXPECT_EQ(engine1(), engine2());
 
