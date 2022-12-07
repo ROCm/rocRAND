@@ -162,7 +162,10 @@ TEST(rocrand_kernel_sobol64, rocrand)
 
     Type * m_vector;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(Type) * 8 * 64));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(Type) * 8 * 64, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol64_direction_vectors,
+                        sizeof(Type) * 8 * 64,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -206,7 +209,10 @@ TEST(rocrand_kernel_sobol64, rocrand_uniform)
     typedef unsigned long long int DirectionVectorType;
     DirectionVectorType * m_vector;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(DirectionVectorType) * 8 * 64, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol64_direction_vectors,
+                        sizeof(DirectionVectorType) * 8 * 64,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -250,7 +256,10 @@ TEST(rocrand_kernel_sobol64, rocrand_normal)
     typedef unsigned long long int DirectionVectorType;
     DirectionVectorType * m_vector;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(DirectionVectorType) * 8 * 64, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol64_direction_vectors,
+                        sizeof(DirectionVectorType) * 8 * 64,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -302,7 +311,10 @@ TEST(rocrand_kernel_sobol64, rocrand_log_normal)
     typedef unsigned long long int DirectionVectorType;
     DirectionVectorType * m_vector;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(DirectionVectorType) * 8 * 64, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol64_direction_vectors,
+                        sizeof(DirectionVectorType) * 8 * 64,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -357,7 +369,10 @@ TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
     typedef unsigned long long int DirectionVectorType;
     DirectionVectorType * m_vector;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
-    HIP_CHECK(hipMemcpy(m_vector, h_sobol64_direction_vectors, sizeof(DirectionVectorType) * 8 * 64, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(m_vector,
+                        rocrand_h_sobol64_direction_vectors,
+                        sizeof(DirectionVectorType) * 8 * 64,
+                        hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     const size_t output_size = 8192;

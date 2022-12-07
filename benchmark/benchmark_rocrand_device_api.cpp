@@ -331,7 +331,10 @@ struct runner<rocrand_state_sobol32>
         unsigned int* directions;
         const size_t  size = dimensions * 32 * sizeof(unsigned int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
-        HIP_CHECK(hipMemcpy(directions, h_sobol32_direction_vectors, size, hipMemcpyHostToDevice));
+        HIP_CHECK(hipMemcpy(directions,
+                            rocrand_h_sobol32_direction_vectors,
+                            size,
+                            hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
@@ -397,7 +400,7 @@ struct runner<rocrand_state_scrambled_sobol32>
         const size_t  directions_size = dimensions * 32 * sizeof(unsigned int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
         HIP_CHECK(hipMemcpy(directions,
-                            h_scrambled_sobol32_direction_vectors,
+                            rocrand_h_scrambled_sobol32_direction_vectors,
                             directions_size,
                             hipMemcpyHostToDevice));
 
@@ -474,7 +477,10 @@ struct runner<rocrand_state_sobol64>
         unsigned long long int* directions;
         const size_t            size = dimensions * 64 * sizeof(unsigned long long int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
-        HIP_CHECK(hipMemcpy(directions, h_sobol64_direction_vectors, size, hipMemcpyHostToDevice));
+        HIP_CHECK(hipMemcpy(directions,
+                            rocrand_h_sobol64_direction_vectors,
+                            size,
+                            hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
@@ -540,7 +546,7 @@ struct runner<rocrand_state_scrambled_sobol64>
         const size_t            directions_size = dimensions * 64 * sizeof(unsigned long long int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
         HIP_CHECK(hipMemcpy(directions,
-                            h_scrambled_sobol64_direction_vectors,
+                            rocrand_h_scrambled_sobol64_direction_vectors,
                             directions_size,
                             hipMemcpyHostToDevice));
 

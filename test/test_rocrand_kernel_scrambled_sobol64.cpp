@@ -147,7 +147,7 @@ void load_scrambled_sobol64_constants_to_gpu(const unsigned int       dimensions
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(direction_vectors),
                               sizeof(unsigned long long int) * dimensions * 64));
     HIP_CHECK(hipMemcpy(*direction_vectors,
-                        h_scrambled_sobol64_direction_vectors,
+                        rocrand_h_scrambled_sobol64_direction_vectors,
                         sizeof(unsigned long long int) * dimensions * 64,
                         hipMemcpyHostToDevice));
 
