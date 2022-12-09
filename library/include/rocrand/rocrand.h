@@ -33,21 +33,7 @@
 #include <hip/hip_runtime.h>
 #include <hip/hip_vector_types.h>
 
-/// \cond ROCRAND_DOCS_MACRO
-#ifndef ROCRANDAPI
-    #ifdef WIN32
-        #ifdef rocrand_EXPORTS
-            /* We are building this library */
-            #define ROCRANDAPI __declspec(dllexport)
-        #else
-            /* We are using this library */
-            #define ROCRANDAPI __declspec(dllimport)
-        #endif
-    #else
-        #define ROCRANDAPI
-    #endif
-#endif
-/// \endcond
+#include "rocrand/rocrandapi.h"
 
 #include "rocrand/rocrand_version.h"
 
@@ -641,9 +627,9 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  * The ordering choices for pseudorandom sequences are
  * ROCRAND_ORDERING_PSEUDO_DEFAULT and
  * ROCRAND_ORDERING_PSEUDO_LEGACY.
- * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT, which is equal to 
+ * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT, which is equal to
  * ROCRAND_ORDERING_PSEUDO_LEGACY for now.
- * 
+ *
  * For quasirandom sequences there is only one ordering, ROCRAND_ORDERING_QUASI_DEFAULT.
  *
  * \return

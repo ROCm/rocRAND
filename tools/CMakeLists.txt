@@ -29,12 +29,22 @@ add_executable(mrg31k3p_precomputed_generator mrg31k3p_precomputed_generator.cpp
 add_executable(mrg32k3a_precomputed_generator mrg32k3a_precomputed_generator.cpp)
 add_executable(mt19937_precomputed_generator mt19937_precomputed_generator.cpp)
 
+set(ROCRAND_LIBRARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../library")
+
 add_executable(scrambled_sobol32_direction_vector_generator
     scrambled_sobol32_direction_vector_generator.cpp
-    ../library/src/rocrand_sobol32_precomputed.cpp)
-target_include_directories(scrambled_sobol32_direction_vector_generator PRIVATE ../library/src)
+    "${ROCRAND_LIBRARY_DIR}/src/rocrand_sobol32_precomputed.cpp")
+target_include_directories(scrambled_sobol32_direction_vector_generator
+    PRIVATE
+        "${ROCRAND_LIBRARY_DIR}/src" "${ROCRAND_LIBRARY_DIR}/include"
+)
+target_compile_options(scrambled_sobol32_direction_vector_generator PRIVATE -DROCRANDAPI=)
 
 add_executable(scrambled_sobol64_direction_vector_generator
     scrambled_sobol64_direction_vector_generator.cpp
-    ../library/src/rocrand_sobol64_precomputed.cpp)
-target_include_directories(scrambled_sobol64_direction_vector_generator PRIVATE ../library/src)
+    "${ROCRAND_LIBRARY_DIR}/src/rocrand_sobol64_precomputed.cpp")
+target_include_directories(scrambled_sobol64_direction_vector_generator
+    PRIVATE
+        "${ROCRAND_LIBRARY_DIR}/src" "${ROCRAND_LIBRARY_DIR}/include"
+)
+target_compile_options(scrambled_sobol64_direction_vector_generator PRIVATE -DROCRANDAPI=)
