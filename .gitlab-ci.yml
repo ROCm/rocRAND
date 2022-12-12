@@ -102,16 +102,18 @@ clang-format:
 .deps:hip-cpu-extend:
   before_script:
     # C++20 standard library headers are required for HIP-CPU
+    # Clang-15 is required to build hip-cpu, as rocm clang 5.4 and gcc all crash.
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y -qq software-properties-common
-    - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-add-repository -y ppa:ubuntu-toolchain-r/test
+    - wget -q -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add -
+    - echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main' | $SUDO_CMD tee /etc/apt/sources.list.d/llvm.list
     - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y -qq g++-11
+    - $SUDO_CMD apt-get install -y -qq g++-11 clang-15
 
 .hip-cpu:cmake-minimum:
   variables:
-    COMPILER: amdclang++
+    COMPILER: clang++-15
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
@@ -123,7 +125,7 @@ clang-format:
 
 .hip-cpu:cmake-latest:
   variables:
-    COMPILER: amdclang++
+    COMPILER: clang++-15
   extends:
     - .deps:rocm
     - .deps:cmake-latest
