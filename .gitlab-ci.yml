@@ -210,6 +210,7 @@ clang-format:
       - $CI_PROJECT_DIR/build/library/
       - $CI_PROJECT_DIR/build/test/test_*
       - $CI_PROJECT_DIR/build/test/CTestTestfile.cmake
+      - $CI_PROJECT_DIR/build/test/linkage/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/benchmark/benchmark_*
       - $CI_PROJECT_DIR/build/deps/googlebenchmark/
       - $CI_PROJECT_DIR/build/deps/hip-cpu/
