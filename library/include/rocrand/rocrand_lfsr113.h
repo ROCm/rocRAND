@@ -27,10 +27,23 @@
 
 #include "rocrand/rocrand_common.h"
 
+/** \rocrand_internal \addtogroup rocranddevice
+ *
+ *  @{
+ */
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_X
+/// \brief Default X seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_X 2
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_Y
+/// \brief Default Y seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_Y 8
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_Z
+/// \brief Default Z seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_Z 16
+/// \def ROCRAND_LFSR113_DEFAULT_SEED_W
+/// \brief Default W seed for LFSR113 PRNG.
 #define ROCRAND_LFSR113_DEFAULT_SEED_W 128
+/** @} */ // end of group rocranddevice
 
 namespace rocrand_device
 {
@@ -140,7 +153,7 @@ protected:
     	after a call nextValue().*/
         int z, b;
 
-        z = m_state.subsequence.x & -2;
+        z = m_state.subsequence.x & 0xFFFFFFFE;
         b = (z << 6) ^ z;
 
         z = (z) ^ (z << 3) ^ (z << 4) ^ (z << 6) ^ (z << 7) ^ (z << 8) ^ (z << 10) ^ (z << 11)
@@ -156,7 +169,7 @@ protected:
              ^ ((b >> 30) & 0x00000003);
         m_state.subsequence.x = z;
 
-        z = m_state.subsequence.y & -8;
+        z = m_state.subsequence.y & 0xFFFFFFF8;
         b = z ^ (z << 1);
         b ^= (b << 2);
         b ^= (b << 4);
@@ -171,12 +184,12 @@ protected:
         z = b ^ ((z >> 7) & 0x01FFFFFF) ^ ((z >> 20) & 0x00000FFF) ^ ((z >> 21) & 0x000007FF);
         m_state.subsequence.y = z;
 
-        z = m_state.subsequence.z & -16;
+        z = m_state.subsequence.z & 0xFFFFFFF0;
         b = (z << 13) ^ z;
         z = ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 17) & 0x00007FFF) ^ (z << 10) ^ (z << 11) ^ (z << 25);
         m_state.subsequence.z = z;
 
-        z = m_state.subsequence.w & -128;
+        z = m_state.subsequence.w & 0xFFFFFF80;
         b = (z << 3) ^ z;
         z = (z << 14) ^ (z << 16) ^ (z << 20) ^ ((b >> 5) & 0x07FFFFFF) ^ ((b >> 9) & 0x007FFFFF)
             ^ ((b >> 11) & 0x001FFFFF);
@@ -206,6 +219,7 @@ protected:
 
 /// \cond ROCRAND_KERNEL_DOCS_TYPEDEFS
 typedef rocrand_device::lfsr113_engine rocrand_state_lfsr113;
+/// \endcond
 
 /**
  * \brief Initializes LFSR113 state.
@@ -240,5 +254,7 @@ unsigned int rocrand(rocrand_state_lfsr113* state)
 {
     return state->next();
 }
+
+/** @} */ // end of group rocranddevice
 
 #endif // ROCRAND_LFSR113_H_

@@ -47,7 +47,7 @@ TYPED_TEST(rocrand_scrambled_sobol32_float_tests, uniform_test)
 
     constexpr size_t size = 1313;
     ResultType*      data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(ResultType) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
 
     rocrand_scrambled_sobol32 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -87,7 +87,7 @@ TYPED_TEST(rocrand_scrambled_sobol32_integer_tests, uniform_test)
 
     constexpr size_t size = 1313;
     ResultType*      data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(ResultType) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
 
     rocrand_scrambled_sobol32 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -118,7 +118,7 @@ TYPED_TEST(rocrand_scrambled_sobol32_float_tests, normal_test)
 
     constexpr size_t size = 1313;
     ResultType*      data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(ResultType) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(ResultType) * size));
 
     rocrand_scrambled_sobol32 g;
     ROCRAND_CHECK(g.generate_normal(data, size, ExpectedMean, ExpectedStd));
@@ -151,7 +151,7 @@ TEST(rocrand_scrambled_sobol32_qrng_tests, poisson_test)
 {
     constexpr size_t size = 1313;
     unsigned int*    data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_scrambled_sobol32 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -187,7 +187,7 @@ TEST(rocrand_scrambled_sobol32_qrng_tests, dimensions_test)
 {
     const size_t size = 12345;
     float*       data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     rocrand_scrambled_sobol32 g;
 
@@ -210,7 +210,7 @@ TEST(rocrand_scrambled_sobol32_qrng_tests, state_progress_test)
     // Device data
     constexpr size_t size = 1025;
     unsigned int*    data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
     rocrand_scrambled_sobol32 g0;
@@ -248,12 +248,14 @@ TEST(rocrand_scrambled_sobol32_qrng_tests, state_progress_test)
 
 TEST(rocrand_scrambled_sobol32_qrng_tests, discard_test)
 {
-    rocrand_scrambled_sobol32::engine_type engine1(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   678);
-    rocrand_scrambled_sobol32::engine_type engine2(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   676);
+    rocrand_scrambled_sobol32::engine_type engine1(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        678);
+    rocrand_scrambled_sobol32::engine_type engine2(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        676);
 
     EXPECT_NE(engine1(), engine2());
 
@@ -282,12 +284,14 @@ TEST(rocrand_scrambled_sobol32_qrng_tests, discard_test)
 
 TEST(rocrand_scrambled_sobol32_qrng_tests, discard_stride_test)
 {
-    rocrand_scrambled_sobol32::engine_type engine1(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   123);
-    rocrand_scrambled_sobol32::engine_type engine2(&h_scrambled_sobol32_direction_vectors[32],
-                                                   h_scrambled_sobol32_constants[1],
-                                                   123);
+    rocrand_scrambled_sobol32::engine_type engine1(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        123);
+    rocrand_scrambled_sobol32::engine_type engine2(
+        &rocrand_h_scrambled_sobol32_direction_vectors[32],
+        h_scrambled_sobol32_constants[1],
+        123);
 
     EXPECT_EQ(engine1(), engine2());
 
@@ -317,8 +321,8 @@ TEST_P(rocrand_scrambled_sobol32_qrng_offset, offsets_test)
     const size_t  size1 = (size + offset) * dimensions;
     unsigned int* data0;
     unsigned int* data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
     rocrand_scrambled_sobol32 g0;
     g0.set_offset(offset);
@@ -375,8 +379,8 @@ TEST_P(rocrand_scrambled_sobol32_qrng_continuity, continuity_test)
 
     unsigned int* data0;
     unsigned int* data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
     rocrand_scrambled_sobol32 g0;
     rocrand_scrambled_sobol32 g1;

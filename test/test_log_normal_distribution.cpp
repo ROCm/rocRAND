@@ -115,7 +115,7 @@ TEST(log_normal_distribution_tests, half_test)
 
     const size_t size = 4000;
     half val[size];
-    log_normal_distribution<half> u(0.2f, 0.5f);
+    log_normal_distribution<half> u(__float2half(0.2f), __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
@@ -255,7 +255,8 @@ TYPED_TEST(mrg_log_normal_distribution_tests, half_test)
 
     const size_t size = 4000;
     half val[size];
-    mrg_engine_log_normal_distribution<half, typename TestFixture::mrg_type> u(0.2f, 0.5f);
+    mrg_engine_log_normal_distribution<half, typename TestFixture::mrg_type> u(__float2half(0.2f),
+                                                                               __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
@@ -377,7 +378,7 @@ TYPED_TEST(sobol_log_normal_distribution_tests, half_test)
 
     const size_t size = 4000;
     half val[size];
-    sobol_log_normal_distribution<half> u(0.2f, 0.5f);
+    sobol_log_normal_distribution<half> u(__float2half(0.2f), __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;

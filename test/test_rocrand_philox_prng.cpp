@@ -36,7 +36,7 @@ TEST(rocrand_philox_prng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * (size + 1)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * (size + 1)));
 
     rocrand_philox4x32_10 g;
     ROCRAND_CHECK(g.generate(data+1, size));
@@ -61,7 +61,7 @@ TEST(rocrand_philox_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float * data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     rocrand_philox4x32_10 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -91,7 +91,7 @@ TEST(rocrand_philox_prng_tests, state_progress_test)
     // Device data
     const size_t size = 1025;
     unsigned int * data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
     rocrand_philox4x32_10 g0;
@@ -132,7 +132,7 @@ TEST(rocrand_philox_prng_tests, same_seed_test)
     // Device side data
     const size_t size = 1024;
     unsigned int * data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
     rocrand_philox4x32_10 g0, g1;
@@ -175,7 +175,7 @@ TEST(rocrand_philox_prng_tests, different_seed_test)
     // Device side data
     const size_t size = 1024;
     unsigned int * data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
     rocrand_philox4x32_10 g0, g1;
@@ -399,8 +399,8 @@ TYPED_TEST(rocrand_philox_prng_offset, offsets_test)
         const size_t size1 = (size + offset);
         T* data0;
         T* data1;
-        hipMalloc(&data0, sizeof(T) * size0);
-        hipMalloc(&data1, sizeof(T) * size1);
+        hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
+        hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
 
         rocrand_philox4x32_10 g0;
         g0.set_offset(offset);
@@ -443,8 +443,8 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
 
     T * data0;
     T * data1;
-    hipMalloc(&data0, sizeof(T) * size0);
-    hipMalloc(&data1, sizeof(T) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
 
     rocrand_philox4x32_10 g0;
     rocrand_philox4x32_10 g1;

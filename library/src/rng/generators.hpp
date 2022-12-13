@@ -24,12 +24,17 @@
 #include "lfsr113.hpp"
 #include "mrg31k3p.hpp"
 #include "mrg32k3a.hpp"
+#include "mt19937.hpp"
 #include "mtgp32.hpp"
 #include "philox4x32_10.hpp"
 #include "scrambled_sobol32.hpp"
 #include "scrambled_sobol64.hpp"
 #include "sobol32.hpp"
 #include "sobol64.hpp"
+#include "threefry2x32_20.hpp"
+#include "threefry2x64_20.hpp"
+#include "threefry4x32_20.hpp"
+#include "threefry4x64_20.hpp"
 #include "xorwow.hpp"
 
 #endif // ROCRAND_RNG_GENERATORS_H_

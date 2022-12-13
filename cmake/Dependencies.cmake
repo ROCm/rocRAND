@@ -28,6 +28,80 @@
 # For downloading, building, and installing required dependencies
 include(cmake/DownloadProject.cmake)
 
+# GIT
+find_package(Git REQUIRED)
+if (NOT Git_FOUND)
+  message(FATAL_ERROR "Please ensure Git is installed on the system")
+endif()
+
+if(USE_HIP_CPU)
+  find_package(Threads REQUIRED)
+
+  set(CMAKE_REQUIRED_FLAGS "-std=c++17")
+  include(CheckCXXSymbolExists)
+  check_cxx_symbol_exists(__GLIBCXX__ "cstddef" STL_IS_GLIBCXX)
+  set(STL_DEPENDS_ON_TBB ${STL_IS_GLIBCXX})
+  if(STL_DEPENDS_ON_TBB)
+    if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+      # TBB (https://github.com/oneapi-src/oneTBB)
+      find_package(TBB QUIET)
+    endif()
+
+    if(NOT TBB_FOUND)
+      message(STATUS "TBB not found or force download TBB on. Downloading and building TBB.")
+      if(CMAKE_CONFIGURATION_TYPES)
+        message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
+      endif()
+      set(TBB_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/tbb CACHE PATH "")
+      download_project(
+        PROJ                tbb
+        GIT_REPOSITORY      https://github.com/oneapi-src/oneTBB.git
+        GIT_TAG             v2020.3
+        CONFIGURE_COMMAND "${CMAKE_COMMAND} -E true"
+        BUILD_COMMAND "${CMAKE_COMMAND} -E true"
+        INSTALL_COMMAND "${CMAKE_COMMAND} -E true"
+        UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
+      )
+      find_program(CLANG_EXE
+        clang
+        PATH_SUFFIXES bin llvm/bin
+        REQUIRED
+      )
+      get_filename_component(CLANG_DIR "${CLANG_EXE}" DIRECTORY)
+      set(TBB_SOURCE_DIR "${CMAKE_BINARY_DIR}/tbb-src")
+      list(APPEND CMAKE_MODULE_PATH "${TBB_SOURCE_DIR}/cmake")
+      include(TBBBuild)
+      set(ENV{PATH} "$ENV{PATH}:${CLANG_DIR}")
+      tbb_build(TBB_ROOT "${TBB_SOURCE_DIR}" CONFIG_DIR TBB_CONFIG_DIR MAKE_ARGS tbb_build_dir=${TBB_ROOT})
+    endif()
+    find_package(TBB REQUIRED CONFIG PATHS ${TBB_CONFIG_DIR} NO_DEFAULT_PATH)
+  endif(STL_DEPENDS_ON_TBB)
+
+  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+    # HIP CPU Runtime (https://github.com/ROCm-Developer-Tools/HIP-CPU)
+    find_package(hip_cpu_rt QUIET)
+  endif()
+
+  if(NOT hip_cpu_rt_FOUND)
+    message(STATUS "Downloading and building HIP CPU Runtime.")
+    set(HIP_CPU_ROOT "${CMAKE_CURRENT_BINARY_DIR}/deps/hip-cpu" CACHE PATH "")
+    download_project(
+      PROJ                hip-cpu
+      GIT_REPOSITORY      https://github.com/ROCm-Developer-Tools/HIP-CPU.git
+      GIT_TAG             master
+      INSTALL_DIR         "${HIP_CPU_ROOT}"
+      CMAKE_ARGS          -Dhip_cpu_rt_BUILD_EXAMPLES=OFF -Dhip_cpu_rt_BUILD_TESTING=OFF -DTBB_DIR=${TBB_CONFIG_DIR} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+      LOG_DOWNLOAD        TRUE
+      LOG_CONFIGURE       TRUE
+      LOG_BUILD           TRUE
+      LOG_INSTALL         TRUE
+      BUILD_PROJECT       TRUE
+      UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
+    )
+  endif()
+  find_package(hip_cpu_rt REQUIRED CONFIG PATHS ${HIP_CPU_ROOT})
+endif()
+
 # Fortran Wrapper
 if(BUILD_FORTRAN_WRAPPER)
     enable_language(Fortran)
@@ -84,20 +158,20 @@ if(BUILD_BENCHMARK)
     endif()
     set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/googlebenchmark CACHE PATH "")
     if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-      # hip-clang cannot compile googlebenchmark for some reason
+    # hip-clang cannot compile googlebenchmark for some reason
       if(WIN32)
         set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=cl")
       else()
         set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
       endif()
     endif()
-	
+
     download_project(
       PROJ           googlebenchmark
       GIT_REPOSITORY https://github.com/google/benchmark.git
       GIT_TAG        v1.6.1
       INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
-      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_CXX_STANDARD=14 ${COMPILER_OVERRIDE}
+      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>  -DCMAKE_CXX_STANDARD=14 ${COMPILER_OVERRIDE}
       LOG_DOWNLOAD   TRUE
       LOG_CONFIGURE  TRUE
       LOG_BUILD      TRUE
