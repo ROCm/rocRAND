@@ -1,3 +1,25 @@
+# MIT License
+#
+# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # Tests
 
 set(INSTALL_TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/install_CTestTestfile.cmake")
@@ -31,7 +53,13 @@ file(GLOB rocRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # Build rocRAND tests
 foreach(test_src ${rocRAND_TEST_SRCS})
-    get_filename_component(test_name ${test_src} NAME_WE)
+  get_filename_component(test_name ${test_src} NAME_WE)
+  # MT19937 and Threefry4x64 need to be fixed on HIP-CPU
+  set(DISABLED_TESTS)
+  list(APPEND DISABLED_TESTS "test_rocrand_mt19937_prng")
+  list(APPEND DISABLED_TESTS "test_rocrand_kernel_threefry4x64_20")
+  list(APPEND DISABLED_TESTS "test_rocrand_threefry4x64_20_prng")
+  if(NOT USE_HIP_CPU OR NOT ${test_name} IN_LIST DISABLED_TESTS)
     add_executable(${test_name} ${test_src})
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
@@ -60,8 +88,18 @@ foreach(test_src ${rocRAND_TEST_SRCS})
     target_link_libraries(${test_name}
         rocrand
     )
-    if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-        target_link_libraries(${test_name} hip::device)
+    if(USE_HIP_CPU)
+        target_link_libraries(${test_name}
+            Threads::Threads
+            hip_cpu_rt::hip_cpu_rt
+        )
+        if(STL_DEPENDS_ON_TBB)
+            target_link_libraries(${test_name} TBB::tbb)
+        endif()
+    else()
+        if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
+            target_link_libraries(${test_name} hip::device)
+        endif()
     endif()
     set_target_properties(
         ${test_name}
@@ -84,6 +122,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         add_custom_command( TARGET ${test_name} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/test )
       endforeach( file_i )
     endif()
+  endif()
 endforeach()
 
 # Fortran Wrapper Tests

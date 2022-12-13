@@ -58,15 +58,30 @@ class TestCtorPRNG(TestRNGBase):
         PRNG(self.rngtype, offset=987654)
         PRNG(self.rngtype, seed=2345678, offset=7654)
 
-make_test(TestCtorPRNG, "DEFAULT",       rngtype=PRNG.DEFAULT)
-make_test(TestCtorPRNG, "XORWOW",        rngtype=PRNG.XORWOW)
-make_test(TestCtorPRNG, "MRG31K3P",      rngtype=PRNG.MRG31K3P)
-make_test(TestCtorPRNG, "MRG32K3A",      rngtype=PRNG.MRG32K3A)
-make_test(TestCtorPRNG, "PHILOX4_32_10", rngtype=PRNG.PHILOX4_32_10)
-make_test(TestCtorPRNG, "LFSR113",       rngtype=PRNG.LFSR113)
+make_test(TestCtorPRNG, "DEFAULT",         rngtype=PRNG.DEFAULT)
+make_test(TestCtorPRNG, "XORWOW",          rngtype=PRNG.XORWOW)
+make_test(TestCtorPRNG, "MRG31K3P",        rngtype=PRNG.MRG31K3P)
+make_test(TestCtorPRNG, "MRG32K3A",        rngtype=PRNG.MRG32K3A)
+make_test(TestCtorPRNG, "PHILOX4_32_10",   rngtype=PRNG.PHILOX4_32_10)
+make_test(TestCtorPRNG, "THREEFRY2_32_20", rngtype=PRNG.THREEFRY2_32_20)
+make_test(TestCtorPRNG, "THREEFRY2_64_20", rngtype=PRNG.THREEFRY2_64_20)
+make_test(TestCtorPRNG, "THREEFRY4_32_20", rngtype=PRNG.THREEFRY4_32_20)
+make_test(TestCtorPRNG, "THREEFRY4_64_20", rngtype=PRNG.THREEFRY4_64_20)
 
-class TestCtorPRNGMTGP32(TestRNGBase):
-    rngtype = PRNG.MTGP32
+class TestCtorPRNGMT(TestRNGBase):
+    def test_ctor(self):
+        PRNG(self.rngtype)
+        PRNG(self.rngtype, seed=123456)
+        with self.assertRaises(RocRandError):
+            PRNG(self.rngtype, offset=987654)
+        with self.assertRaises(RocRandError):
+            PRNG(self.rngtype, seed=2345678, offset=7654)
+
+make_test(TestCtorPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
+make_test(TestCtorPRNGMT, "MT19937", rngtype=PRNG.MT19937)
+
+class TestCtorPRNGLFSR113(TestRNGBase):
+    rngtype = PRNG.LFSR113
 
     def test_ctor(self):
         PRNG(self.rngtype)
@@ -111,18 +126,44 @@ class TestParamsPRNG(TestRNGBase):
         self.rng.offset = 2323423
         self.assertEqual(self.rng.offset, 2323423)
 
-make_test(TestParamsPRNG, "DEFAULT",       rngtype=PRNG.DEFAULT)
-make_test(TestParamsPRNG, "XORWOW",        rngtype=PRNG.XORWOW)
-make_test(TestParamsPRNG, "MRG31K3P",      rngtype=PRNG.MRG31K3P)
-make_test(TestParamsPRNG, "MRG32K3A",      rngtype=PRNG.MRG32K3A)
-make_test(TestParamsPRNG, "PHILOX4_32_10", rngtype=PRNG.PHILOX4_32_10)
-make_test(TestParamsPRNG, "LFSR113",       rngtype=PRNG.LFSR113)
+make_test(TestParamsPRNG, "DEFAULT",         rngtype=PRNG.DEFAULT)
+make_test(TestParamsPRNG, "XORWOW",          rngtype=PRNG.XORWOW)
+make_test(TestParamsPRNG, "MRG31K3P",        rngtype=PRNG.MRG31K3P)
+make_test(TestParamsPRNG, "MRG32K3A",        rngtype=PRNG.MRG32K3A)
+make_test(TestParamsPRNG, "PHILOX4_32_10",   rngtype=PRNG.PHILOX4_32_10)
+make_test(TestParamsPRNG, "THREEFRY2_32_20", rngtype=PRNG.THREEFRY2_32_20)
+make_test(TestParamsPRNG, "THREEFRY2_64_20", rngtype=PRNG.THREEFRY2_64_20)
+make_test(TestParamsPRNG, "THREEFRY4_32_20", rngtype=PRNG.THREEFRY4_32_20)
+make_test(TestParamsPRNG, "THREEFRY4_64_20", rngtype=PRNG.THREEFRY4_64_20)
 
-class TestParamsPRNGMTGP32(TestRNGBase):
-    rngtype = PRNG.MTGP32
+class TestParamsPRNGMT(TestRNGBase):
+    def setUp(self):
+        super(TestParamsPRNGMT, self).setUp()
+        self.rng = PRNG(self.rngtype)
+
+    def tearDown(self):
+        del self.rng
+
+    def test_seed(self):
+        self.assertIsNone(self.rng.seed)
+        self.rng.seed = 0
+        self.assertEqual(self.rng.seed, 0)
+        self.rng.seed = 54654634456365
+        self.assertEqual(self.rng.seed, 54654634456365)
+
+    def test_offset(self):
+        self.assertEqual(self.rng.offset, 0)
+        with self.assertRaises(RocRandError):
+            self.rng.offset = 2323423
+
+make_test(TestParamsPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
+make_test(TestParamsPRNGMT, "MT19937", rngtype=PRNG.MT19937)
+
+class TestParamsPRNGLFSR113(TestRNGBase):
+    rngtype = PRNG.LFSR113
 
     def setUp(self):
-        super(TestParamsPRNGMTGP32, self).setUp()
+        super(TestParamsPRNGLFSR113, self).setUp()
         self.rng = PRNG(self.rngtype)
 
     def tearDown(self):
@@ -265,6 +306,8 @@ class TestGenerate(TestRNGBase):
         self._test_lognormal_real(np.float64)
 
     def test_poisson(self):
+        if self.rngtype == PRNG.THREEFRY2_64_20 or self.rngtype == PRNG.THREEFRY4_64_20:
+            self.skipTest("64-bits Threefry cannot generate 32-bits Poisson numbers")
         for lambda_value in [1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0]:
             output = np.empty(OUTPUT_SIZE, np.uint32)
             self.rng.poisson(output, lambda_value)
@@ -284,6 +327,7 @@ make_test(TestGenerate, "PRNG" + "XORWOW",            klass=PRNG, rngtype=PRNG.X
 make_test(TestGenerate, "PRNG" + "MRG31K3P",          klass=PRNG, rngtype=PRNG.MRG31K3P)
 make_test(TestGenerate, "PRNG" + "MRG32K3A",          klass=PRNG, rngtype=PRNG.MRG32K3A)
 make_test(TestGenerate, "PRNG" + "MTGP32",            klass=PRNG, rngtype=PRNG.MTGP32)
+make_test(TestGenerate, "PRNG" + "MT19937",           klass=PRNG, rngtype=PRNG.MT19937)
 make_test(TestGenerate, "PRNG" + "PHILOX4_32_10",     klass=PRNG, rngtype=PRNG.PHILOX4_32_10)
 make_test(TestGenerate, "QRNG" + "DEFAULT",           klass=QRNG, rngtype=QRNG.DEFAULT)
 make_test(TestGenerate, "QRNG" + "SOBOL32",           klass=QRNG, rngtype=QRNG.SOBOL32)
@@ -291,6 +335,10 @@ make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL32", klass=QRNG, rngtype=QRNG.S
 make_test(TestGenerate, "QRNG" + "SOBOL64",           klass=QRNG, rngtype=QRNG.SOBOL64)
 make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64)
 make_test(TestGenerate, "PRNG" + "LFSR113",           klass=PRNG, rngtype=PRNG.LFSR113)
+make_test(TestGenerate, "PRNG" + "THREEFRY2_32_20",   klass=PRNG, rngtype=PRNG.THREEFRY2_32_20)
+make_test(TestGenerate, "PRNG" + "THREEFRY2_64_20",   klass=PRNG, rngtype=PRNG.THREEFRY2_64_20)
+make_test(TestGenerate, "PRNG" + "THREEFRY4_32_20",   klass=PRNG, rngtype=PRNG.THREEFRY4_32_20)
+make_test(TestGenerate, "PRNG" + "THREEFRY4_64_20",   klass=PRNG, rngtype=PRNG.THREEFRY4_64_20)
 
 
 if __name__ == "__main__":

@@ -141,7 +141,7 @@ else
     cmake_common_options="${cmake_common_options} -DCMAKE_BUILD_TYPE=Debug"
 fi
 
-# Configure hipCUB, setup options for your system.
+# Configure rocRAND setup options for your system.
 # Build options:
 #   BUILD_TEST - on by default,
 #   BUILD_BENCHMARK - off by default.

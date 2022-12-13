@@ -27,18 +27,35 @@
 
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
 
-const rocrand_rng_type rng_types[] = {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
-                                      ROCRAND_RNG_PSEUDO_MRG31K3P,
-                                      ROCRAND_RNG_PSEUDO_MRG32K3A,
-                                      ROCRAND_RNG_PSEUDO_XORWOW,
-                                      ROCRAND_RNG_PSEUDO_MTGP32,
-                                      ROCRAND_RNG_PSEUDO_LFSR113,
-                                      ROCRAND_RNG_QUASI_SOBOL32,
-                                      ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
-                                      ROCRAND_RNG_QUASI_SOBOL64,
-                                      ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64};
+constexpr rocrand_rng_type rng_types[] = {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+                                          ROCRAND_RNG_PSEUDO_MRG31K3P,
+                                          ROCRAND_RNG_PSEUDO_MRG32K3A,
+                                          ROCRAND_RNG_PSEUDO_XORWOW,
+                                          ROCRAND_RNG_PSEUDO_MTGP32,
+                                          ROCRAND_RNG_PSEUDO_LFSR113,
+                                          ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
+                                          ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
+                                          ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,
+                                          ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,
+                                          ROCRAND_RNG_QUASI_SOBOL32,
+                                          ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
+                                          ROCRAND_RNG_QUASI_SOBOL64,
+                                          ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64};
 
-const rocrand_rng_type long_long_rng_types[]
-    = {ROCRAND_RNG_QUASI_SOBOL64, ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64};
+constexpr rocrand_rng_type int_rng_types[] = {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+                                              ROCRAND_RNG_PSEUDO_MRG31K3P,
+                                              ROCRAND_RNG_PSEUDO_MRG32K3A,
+                                              ROCRAND_RNG_PSEUDO_XORWOW,
+                                              ROCRAND_RNG_PSEUDO_MTGP32,
+                                              ROCRAND_RNG_PSEUDO_LFSR113,
+                                              ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
+                                              ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,
+                                              ROCRAND_RNG_QUASI_SOBOL32,
+                                              ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32};
+
+constexpr rocrand_rng_type long_long_rng_types[] = {ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
+                                                    ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,
+                                                    ROCRAND_RNG_QUASI_SOBOL64,
+                                                    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64};
 
 #endif // TEST_ROCRAND_COMMON_HPP_

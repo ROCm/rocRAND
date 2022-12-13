@@ -41,6 +41,10 @@
 #include "rocrand/rocrand_scrambled_sobol64.h"
 #include "rocrand/rocrand_sobol32.h"
 #include "rocrand/rocrand_sobol64.h"
+#include "rocrand/rocrand_threefry2x32_20.h"
+#include "rocrand/rocrand_threefry2x64_20.h"
+#include "rocrand/rocrand_threefry4x32_20.h"
+#include "rocrand/rocrand_threefry4x64_20.h"
 #include "rocrand/rocrand_xorwow.h"
 
 #include "rocrand/rocrand_uniform.h"
@@ -66,6 +70,14 @@ float2 box_muller(unsigned int x, unsigned int y)
     return result;
 }
 
+FQUALIFIERS float2 box_muller(unsigned long long v)
+{
+    unsigned int x = static_cast<unsigned int>(v);
+    unsigned int y = static_cast<unsigned int>(v >> 32);
+
+    return box_muller(x, y);
+}
+
 FQUALIFIERS
 double2 box_muller_double(uint4 v)
 {
@@ -87,6 +99,16 @@ double2 box_muller_double(uint4 v)
         result.y = cos(w * ROCRAND_PI_DOUBLE) * s;
     #endif
     return result;
+}
+
+FQUALIFIERS double2 box_muller_double(ulonglong2 v)
+{
+    unsigned int x = static_cast<unsigned int>(v.x);
+    unsigned int y = static_cast<unsigned int>(v.x >> 32);
+    unsigned int z = static_cast<unsigned int>(v.y);
+    unsigned int w = static_cast<unsigned int>(v.y >> 32);
+
+    return box_muller_double(make_uint4(x, y, z, w));
 }
 
 FQUALIFIERS
@@ -234,6 +256,16 @@ float2 normal_distribution2(unsigned int v1, unsigned int v2)
     return ::rocrand_device::detail::box_muller(v1, v2);
 }
 
+FQUALIFIERS float2 normal_distribution2(uint2 v)
+{
+    return ::rocrand_device::detail::box_muller(v.x, v.y);
+}
+
+FQUALIFIERS float2 normal_distribution2(unsigned long long v)
+{
+    return ::rocrand_device::detail::box_muller(v);
+}
+
 FQUALIFIERS
 float4 normal_distribution4(uint4 v)
 {
@@ -245,6 +277,20 @@ float4 normal_distribution4(uint4 v)
         r2.x,
         r2.y
     };
+}
+
+FQUALIFIERS float4 normal_distribution4(longlong2 v)
+{
+    float2 r1 = ::rocrand_device::detail::box_muller(v.x);
+    float2 r2 = ::rocrand_device::detail::box_muller(v.y);
+    return float4{r1.x, r1.y, r2.x, r2.y};
+}
+
+FQUALIFIERS float4 normal_distribution4(unsigned long long v1, unsigned long long v2)
+{
+    float2 r1 = ::rocrand_device::detail::box_muller(v1);
+    float2 r2 = ::rocrand_device::detail::box_muller(v2);
+    return float4{r1.x, r1.y, r2.x, r2.y};
 }
 
 FQUALIFIERS
@@ -269,6 +315,11 @@ double2 normal_distribution_double2(uint4 v)
     return ::rocrand_device::detail::box_muller_double(v);
 }
 
+FQUALIFIERS double2 normal_distribution_double2(ulonglong2 v)
+{
+    return ::rocrand_device::detail::box_muller_double(v);
+}
+
 FQUALIFIERS
 __half2 normal_distribution_half2(unsigned int v)
 {
@@ -276,6 +327,12 @@ __half2 normal_distribution_half2(unsigned int v)
         static_cast<unsigned short>(v),
         static_cast<unsigned short>(v >> 16)
     );
+}
+
+FQUALIFIERS __half2 normal_distribution_half2(unsigned long long v)
+{
+    return ::rocrand_device::detail::box_muller_half(static_cast<unsigned short>(v),
+                                                     static_cast<unsigned short>(v >> 32));
 }
 
 template<typename state_type>
@@ -1069,6 +1126,307 @@ double2 rocrand_normal_double2(rocrand_state_lfsr113* state)
 
     return rocrand_device::detail::normal_distribution_double2(
         uint4{state1, state2, state3, state4});
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p float value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry2x32_20* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p float values.
+ *
+ * Generates and returns two normally distributed \p float values using ThreeFry
+ * generator in \p state, and increments position of the generator by two.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p float value as \p float2
+ */
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry2x32_20* state)
+{
+    return rocrand_device::detail::normal_distribution2(rocrand2(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p double value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p double value
+ */
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry2x32_20* state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p double values.
+ *
+ * Generates and returns two normally distributed \p double values using ThreeFry
+ * generator in \p state, and increments position of the generator by four.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p double value as \p double2
+ */
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry2x32_20* state)
+{
+    auto state1 = rocrand2(state);
+    auto state2 = rocrand2(state);
+
+    return rocrand_device::detail::normal_distribution_double2(
+        uint4{state1.x, state1.y, state2.x, state2.y});
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p float value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry2x64_20* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p float values.
+ *
+ * Generates and returns two normally distributed \p float values using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p float value as \p float2
+ */
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry2x64_20* state)
+{
+    return rocrand_device::detail::normal_distribution2(rocrand(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p double value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p double value
+ */
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry2x64_20* state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p double values.
+ *
+ * Generates and returns two normally distributed \p double values using ThreeFry
+ * generator in \p state, and increments position of the generator by two.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p double value as \p double2
+ */
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry2x64_20* state)
+{
+    return rocrand_device::detail::normal_distribution_double2(rocrand2(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p float value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry4x32_20* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p float values.
+ *
+ * Generates and returns two normally distributed \p float values using ThreeFry
+ * generator in \p state, and increments position of the generator by two.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p float value as \p float2
+ */
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry4x32_20* state)
+{
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::normal_distribution2(state1, state2);
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p double value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p double value
+ */
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry4x32_20* state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p double values.
+ *
+ * Generates and returns two normally distributed \p double values using ThreeFry
+ * generator in \p state, and increments position of the generator by four.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p double value as \p double2
+ */
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry4x32_20* state)
+{
+    return rocrand_device::detail::normal_distribution_double2(rocrand4(state));
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p float value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p float value
+ */
+FQUALIFIERS float rocrand_normal(rocrand_state_threefry4x64_20* state)
+{
+    return rocrand_device::detail::normal_distribution(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p float values.
+ *
+ * Generates and returns two normally distributed \p float values using ThreeFry
+ * generator in \p state, and increments position of the generator by two.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p float value as \p float2
+ */
+FQUALIFIERS float2 rocrand_normal2(rocrand_state_threefry4x64_20* state)
+{
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::normal_distribution2(state1, state2);
+}
+
+/**
+ * \brief Returns a normally distributed \p double value.
+ *
+ * Generates and returns a normally distributed \p double value using ThreeFry
+ * generator in \p state, and increments position of the generator by one.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Normally distributed \p double value
+ */
+FQUALIFIERS double rocrand_normal_double(rocrand_state_threefry4x64_20* state)
+{
+    return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p double values.
+ *
+ * Generates and returns two normally distributed \p double values using ThreeFry
+ * generator in \p state, and increments position of the generator by two.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p double value as \p double2
+ */
+FQUALIFIERS double2 rocrand_normal_double2(rocrand_state_threefry4x64_20* state)
+{
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+
+    return rocrand_device::detail::normal_distribution_double2(ulonglong2{state1, state2});
 }
 
 /** @} */ // end of group rocranddevice

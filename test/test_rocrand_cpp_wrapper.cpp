@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -119,6 +119,9 @@ TEST(rocrand_cpp_wrapper, rocrand_prng_default_seed)
 TEST(rocrand_cpp_wrapper, rocrand_qrng_default_num_dimensions)
 {
     EXPECT_EQ(rocrand_cpp::sobol32::default_num_dimensions, 1U);
+    EXPECT_EQ(rocrand_cpp::sobol64::default_num_dimensions, 1U);
+    EXPECT_EQ(rocrand_cpp::scrambled_sobol32::default_num_dimensions, 1U);
+    EXPECT_EQ(rocrand_cpp::scrambled_sobol64::default_num_dimensions, 1U);
 }
 
 template<class T>
@@ -230,10 +233,7 @@ void rocrand_uniform_int_dist_template()
 
     const size_t output_size = 8192;
     IntType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(IntType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(IntType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -287,10 +287,7 @@ void rocrand_uniform_real_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(RealType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -363,10 +360,7 @@ void rocrand_normal_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(RealType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -461,10 +455,7 @@ void rocrand_lognormal_dist_template()
 
     const size_t output_size = 8192;
     RealType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(RealType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate
@@ -568,10 +559,7 @@ void rocrand_poisson_dist_template(const double lambda)
 
     const size_t output_size = 8192;
     IntType * output;
-    HIP_CHECK(
-        hipMallocHelper((void **)&output,
-        output_size * sizeof(IntType))
-    );
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(IntType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // generate

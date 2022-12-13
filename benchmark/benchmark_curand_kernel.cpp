@@ -108,7 +108,8 @@ struct runner
            const unsigned long long offset)
     {
         const size_t states_size = blocks * threads;
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(GeneratorState)));
+        CUDA_CALL(
+            cudaMalloc(reinterpret_cast<void**>(&states), states_size * sizeof(GeneratorState)));
 
         init_kernel<<<blocks, threads>>>(states, seed, offset);
 
@@ -181,9 +182,10 @@ struct runner<curandStateMtgp32_t>
            const unsigned long long /* offset */)
     {
         const size_t states_size = std::min((size_t)200, blocks);
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(curandStateMtgp32_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateMtgp32_t)));
 
-        CUDA_CALL(cudaMalloc((void **)&d_param, sizeof(mtgp32_kernel_params)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_param), sizeof(mtgp32_kernel_params)));
         CURAND_CALL(curandMakeMTGP32Constants(mtgp32dc_params_fast_11213, d_param));
         CURAND_CALL(curandMakeMTGP32KernelState(states, mtgp32dc_params_fast_11213, d_param, states_size, seed));
     }
@@ -273,13 +275,14 @@ struct runner<curandStateSobol32_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(curandStateSobol32_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateSobol32_t)));
 
         curandDirectionVectors32_t * h_directions;
         CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
         const size_t  size = dimensions * sizeof(unsigned int) * 32;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -331,21 +334,22 @@ struct runner<curandStateScrambledSobol32_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateScrambledSobol32_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateScrambledSobol32_t)));
 
         curandDirectionVectors32_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
         const size_t  size = dimensions * sizeof(unsigned int) * 32;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         unsigned int* h_scramble_constants;
         CURAND_CALL(curandGetScrambleConstants32(&h_scramble_constants));
         unsigned int* scramble_constants;
         const size_t  constants_size = dimensions * sizeof(unsigned int);
-        CUDA_CALL(cudaMalloc((void**)&scramble_constants, constants_size));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
         CUDA_CALL(cudaMemcpy(scramble_constants,
                              h_scramble_constants,
                              constants_size,
@@ -402,13 +406,14 @@ struct runner<curandStateSobol64_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(curandStateSobol64_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateSobol64_t)));
 
         curandDirectionVectors64_t * h_directions;
         CURAND_CALL(curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
         unsigned long long int* directions;
         const size_t            size = dimensions * sizeof(unsigned long long) * 64;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -457,21 +462,22 @@ struct runner<curandStateScrambledSobol64_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateScrambledSobol64_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateScrambledSobol64_t)));
 
         curandDirectionVectors64_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
         unsigned long long* directions;
         const size_t        size = dimensions * sizeof(unsigned long long) * 64;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         unsigned long long* h_scramble_constants;
         CURAND_CALL(curandGetScrambleConstants64(&h_scramble_constants));
         unsigned long long* scramble_constants;
         const size_t        constants_size = dimensions * sizeof(unsigned long long);
-        CUDA_CALL(cudaMalloc((void**)&scramble_constants, constants_size));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
         CUDA_CALL(cudaMemcpy(scramble_constants,
                              h_scramble_constants,
                              constants_size,
@@ -525,7 +531,7 @@ void run_benchmark(const cli::Parser& parser,
     const size_t threads = parser.get<size_t>("threads");
 
     T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
 
     runner<GeneratorState> r(dimensions, blocks, threads, 12345ULL, 6789ULL);
 

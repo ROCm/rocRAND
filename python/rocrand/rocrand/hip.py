@@ -105,16 +105,11 @@ def device_pointer(dary):
     return dary.data.ptr
 
 class DeviceNDArray(object):
-    """Device-side array.
-
-    This class is a limited version of :class:`numpy.ndarray` for device-side
-    arrays.
-
-    See :func:`empty`
-    """
-
     def __init__(self, shape, dtype, data=None):
         """Create an empty device-side array.
+
+        This class is a limited version of :class:`numpy.ndarray` for device-side
+        arrays.
 
         :param shape: Shape of the array (see :attr:`numpy.ndarray.shape`)
         :param dtype: Type of the array (see :attr:`numpy.ndarray.dtype`)

@@ -123,7 +123,7 @@ public:
     /// seed value \p seed, goes to \p subsequence -th subsequence,
     /// and skips \p offset random numbers.
     ///
-    /// A subsequence is 4 * 2^64 numbers long.
+    /// A subsequence consists of 2 ^ 66 random numbers.
     FQUALIFIERS
     philox4x32_10_engine(const unsigned long long seed,
                          const unsigned long long subsequence,
@@ -136,7 +136,7 @@ public:
     /// seed value \p seed_value, skips \p subsequence subsequences
     /// and \p offset random numbers.
     ///
-    /// A subsequence is 4 * 2^64 numbers long.
+    /// A subsequence consists of 2 ^ 66 random numbers.
     FQUALIFIERS
     void seed(unsigned long long seed_value,
               const unsigned long long subsequence,
@@ -155,8 +155,10 @@ public:
         this->m_state.result = this->ten_rounds(m_state.counter, m_state.key);
     }
 
-    /// Advances the internal state to skip \p subsequence subsequences.
-    /// A subsequence is 4 * 2^64 numbers long.
+    /// Advances the internal state to skip \p subsequence subsequences,
+    /// a subsequence consisting of 2 ^ 66 random numbers.
+    /// In other words, this function is equivalent to calling \p discard
+    /// 2 ^ 66 times without using the return value, but is much faster.
     FQUALIFIERS
     void discard_subsequence(unsigned long long subsequence)
     {
@@ -221,10 +223,11 @@ protected:
     {
         // Adjust offset for subset
         m_state.substate += offset & 3;
-        offset += m_state.substate < 4 ? 0 : 4;
+        unsigned long long counter_offset = offset / 4;
+        counter_offset += m_state.substate < 4 ? 0 : 1;
         m_state.substate += m_state.substate < 4 ? 0 : -4;
         // Discard states
-        this->discard_state(offset / 4);
+        this->discard_state(counter_offset);
     }
 
     // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
