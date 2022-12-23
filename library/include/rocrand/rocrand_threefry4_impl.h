@@ -70,9 +70,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* These are the R_256 constants from the Threefish reference sources
    with names changed to R_64x4... */
-static constexpr __device__ int THREEFRY_ROTATION_64_4[][8] = {
-    {14, 52, 23,  5, 25, 46, 58, 32},
-    {16, 57, 40, 37, 33, 12, 22, 32}
+static constexpr __device__ int THREEFRY_ROTATION_64_4[8][2] = {
+    {14, 16},
+    {52, 57},
+    {23, 40},
+    { 5, 37},
+    {25, 33},
+    {46, 12},
+    {58, 22},
+    {32, 32}
 };
 
 /* Output from skein_rot_search: (srs-B128-X5000.out)
@@ -80,9 +86,15 @@ static constexpr __device__ int THREEFRY_ROTATION_64_4[][8] = {
 // Start: Mon Aug 24 22:41:36 2009
 // ...
 // rMin = 0.472. #0A4B[*33] [CRC=DD1ECE0F. hw_OR=31. cnt=16384. blkSize= 128].format    */
-static constexpr __device__ int THREEFRY_ROTATION_32_4[][8] = {
-    {10, 11, 13, 23,  6, 17, 25, 18},
-    {26, 21, 27,  5, 20, 11, 10, 20}
+static constexpr __device__ int THREEFRY_ROTATION_32_4[8][2] = {
+    {10, 26},
+    {11, 21},
+    {13, 27},
+    {23,  5},
+    { 6, 20},
+    {17, 11},
+    {25, 10},
+    {18, 20}
 };
 
 namespace rocrand_device
