@@ -72,7 +72,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Random seed = 1. BlockSize = 64 bits. sampleCnt =  1024. rounds =  8, minHW_or=28
 // Start: Tue Jul 12 11:11:33 2011
 // rMin = 0.334. #0206[*07] [CRC=1D9765C0. hw_OR=32. cnt=16384. blkSize=  64].format   */
-static constexpr __device__ int THREEFRY_ROTATION_32_2[] = {13, 15, 26, 6, 17, 29, 16, 24};
+static constexpr __device__ int THREEFRY_ROTATION_32_2[8] = {13, 15, 26, 6, 17, 29, 16, 24};
 
 /*
 // Output from skein_rot_search: (srs64_B64-X1000)
@@ -80,7 +80,7 @@ static constexpr __device__ int THREEFRY_ROTATION_32_2[] = {13, 15, 26, 6, 17, 2
 // Start: Tue Mar  1 10:07:48 2011
 // rMin = 0.136. #0325[*15] [CRC=455A682F. hw_OR=64. cnt=16384. blkSize= 128].format
 */
-static constexpr __device__ int THREEFRY_ROTATION_64_2[] = {16, 42, 12, 31, 16, 32, 24, 21};
+static constexpr __device__ int THREEFRY_ROTATION_64_2[8] = {16, 42, 12, 31, 16, 32, 24, 21};
 
 namespace rocrand_device
 {
