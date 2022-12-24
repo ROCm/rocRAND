@@ -1,10 +1,6 @@
 # Change Log for rocRAND
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
-## (Unreleased) rocRAND-2.10.18 for ROCm 5.6.0
-### Fixed
-- ThreeFry4x32 and ThreeFry4x64 now return the correct sequence of random numbers.
-
 ## (Unreleased) rocRAND-2.10.17 for ROCm 5.5.0
 ### Added
 - MT19937 pseudo random number generator based on M. Matsumoto and T. Nishimura, 1998, Mersenne Twister: A 623-dimensionally equidistributed uniform pseudorandom number generator.
