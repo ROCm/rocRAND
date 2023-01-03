@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint64_test)
     //constexpr size_t size = 1313;
     constexpr size_t size = 1313;
     T * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -90,7 +90,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_double_test)
 {
     constexpr size_t size = 1313;
     double * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -117,7 +117,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint_test)
 {
     const size_t size = 1313;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -142,7 +142,7 @@ TEST(rocrand_sobol64_qrng_tests, normal_double_test)
 {
     const size_t size = 1313;
     double * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0, 5.0));
@@ -172,48 +172,12 @@ TEST(rocrand_sobol64_qrng_tests, normal_double_test)
     HIP_CHECK(hipFree(data));
 }
 
-TEST(rocrand_sobol64_qrng_tests, poisson_test_32bit)
+TEST(rocrand_sobol64_qrng_tests, poisson_test)
 {
     using T = unsigned int;
     constexpr size_t size = 1313;
     T * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
-
-    rocrand_sobol64 g;
-    ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    T host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(T) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    double mean = 0.0;
-    for(size_t i = 0; i < size; i++)
-    {
-        mean += host_data[i];
-    }
-    mean = mean / size;
-
-    double var = 0.0;
-    for(size_t i = 0; i < size; i++)
-    {
-        double x = host_data[i] - mean;
-        var += x * x;
-    }
-    var = var / size;
-
-    EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
-    EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
-
-    HIP_CHECK(hipFree(data));
-}
-
-TEST(rocrand_sobol64_qrng_tests, poisson_test_64bit)
-{
-    using T = unsigned long long int;
-    constexpr size_t size = 1313;
-    T * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(T) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));
 
     rocrand_sobol64 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -248,7 +212,7 @@ TEST(rocrand_sobol64_qrng_tests, dimesions_test)
 {
     const size_t size = 12345;
     double * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(double) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
 
@@ -271,7 +235,7 @@ TEST(rocrand_sobol64_qrng_tests, state_progress_test)
     // Device data
     const size_t size = 1025;
     unsigned int * data;
-    HIP_CHECK(hipMalloc(&data, sizeof(unsigned int) * size));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
     rocrand_sobol64 g0;
@@ -306,8 +270,8 @@ TEST(rocrand_sobol64_qrng_tests, state_progress_test)
 
 TEST(rocrand_sobol64_qrng_tests, discard_test)
 {
-    rocrand_sobol64::engine_type engine1(&h_sobol64_direction_vectors[32], 678ll);
-    rocrand_sobol64::engine_type engine2(&h_sobol64_direction_vectors[32], 676ll);
+    rocrand_sobol64::engine_type engine1(&rocrand_h_sobol64_direction_vectors[32], 678ll);
+    rocrand_sobol64::engine_type engine2(&rocrand_h_sobol64_direction_vectors[32], 676ll);
 
     EXPECT_NE(engine1(), engine2());
 
@@ -339,8 +303,8 @@ TEST(rocrand_sobol64_qrng_tests, discard_test)
 
 TEST(rocrand_sobol64_qrng_tests, discard_stride_test)
 {
-    rocrand_sobol64::engine_type engine1(&h_sobol64_direction_vectors[64], 123);
-    rocrand_sobol64::engine_type engine2(&h_sobol64_direction_vectors[64], 123);
+    rocrand_sobol64::engine_type engine1(&rocrand_h_sobol64_direction_vectors[64], 123);
+    rocrand_sobol64::engine_type engine2(&rocrand_h_sobol64_direction_vectors[64], 123);
 
     EXPECT_EQ(engine1(), engine2());
 
@@ -371,8 +335,8 @@ TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
     const size_t size1 = (size + offset) * dimensions;
     unsigned int * data0;
     unsigned int * data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
     rocrand_sobol64 g0;
     g0.set_offset(offset);
@@ -431,11 +395,11 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
 
     unsigned int * data0;
     unsigned int * data1;
-    hipMalloc(&data0, sizeof(unsigned int) * size0);
-    hipMalloc(&data1, sizeof(unsigned int) * size1);
+    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
+    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
-    rocrand_sobol32 g0;
-    rocrand_sobol32 g1;
+    rocrand_sobol64 g0;
+    rocrand_sobol64 g1;
     g0.set_dimensions(dimensions);
     g1.set_dimensions(dimensions);
 
@@ -489,5 +453,5 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
 const unsigned int continuity_test_dimensions[] = { 1, 2, 10, 21 };
 
 INSTANTIATE_TEST_SUITE_P(rocrand_sobol64_qrng_continuity,
-                        rocrand_sobol64_qrng_continuity,
-                        ::testing::ValuesIn(continuity_test_dimensions));
+                         rocrand_sobol64_qrng_continuity,
+                         ::testing::ValuesIn(continuity_test_dimensions));

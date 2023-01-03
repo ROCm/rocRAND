@@ -14,6 +14,7 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 * XORWOW
 * MRG31k3p
 * MRG32k3a
+* Mersenne Twister (MT19937)
 * Mersenne Twister for Graphic Processors (MTGP32)
 * Philox (4x32, 10 rounds)
 * LFSR113
@@ -21,6 +22,11 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 * Scrambled Sobol32
 * Sobol64
 * Scrambled Sobol64
+* ThreeFry
+
+## Documentation
+
+Information about the library API and other user topics can be found in the [rocRAND documentation](https://rocrand.readthedocs.io/en/latest).
 
 ## Requirements
 
@@ -33,6 +39,8 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm-Developer-Tools/HIP)
   * Latest CUDA SDK
+* For CPU runs (experimental):
+  * [HIP-CPU](https://github.com/ROCm-Developer-Tools/HIP-CPU)
 * Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
 * Strawberry Perl (HIP on Windows only)
@@ -44,7 +52,7 @@ Optional:
   * Note: If GTest is not already installed, it will be automatically downloaded and built
 * Fortran compiler (required only for Fortran wrapper)
   * `gfortran` is recommended.
-* Python 2.7+ or 3.5+ (required only for Python wrapper)
+* Python 3.5+ (required only for Python wrapper)
 
 If some dependencies are missing, cmake script automatically downloads, builds and
 installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
@@ -52,7 +60,7 @@ not to use system-installed libraries, and to download all dependencies.
 
 ## Build and Install
 
-```
+```shell
 git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
 # Go to rocRAND directory, create and go to build directory
@@ -74,6 +82,9 @@ cd rocRAND; mkdir build; cd build
 [CXX=nvcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 # or
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+
+# To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required and BUILD_HIPRAND should be turned off
+[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_HIPRAND=OFF -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
 make -j4
@@ -109,7 +120,7 @@ to `OFF`.
 
 ## Running Unit Tests
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
@@ -122,16 +133,17 @@ ctest
 
 ## Running Benchmarks
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
 # To run benchmark for the host generate functions:
 # The benchmarks are registered with Google Benchmark as `device_generate<engine,distribution>`, where
-# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
+#           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
-# distribution -> uniform-uint, uniform-uchar, uniform-ushort, 
-#                 uniform-half, uniform-float, uniform-double, 
+# distribution -> uniform-uint, uniform-uchar, uniform-ushort,
+#                 uniform-half, uniform-float, uniform-double,
 #                 normal-half, normal-float, normal-double,
 #                 log-normal-half, log-normal-float, log-normal-double, poisson
 # Further option can be found using --help
@@ -139,23 +151,37 @@ cd rocRAND; cd build
 # To run specific benchmarks:
 ./benchmark/benchmark_rocrand_host_api --benchmark_filter=<regex>
 # For example to run benchmarks with engine sobol64:
-./benchmark_rocrand_host_api --benchmark_filter="device_generate<sobol64*"
+./benchmark/benchmark_rocrand_host_api --benchmark_filter="device_generate<sobol64*"
 # To view all registered benchmarks:
-./benchmark_rocrand_host_api --benchmark_list_tests=true
+./benchmark/benchmark_rocrand_host_api --benchmark_list_tests=true
 # The benchmark also supports user input:
-./benchmark_rocrand_host_api --size <number> --trials <number> --offset <number> --dimensions <number> --lambda <float float float ...>
+./benchmark/benchmark_rocrand_host_api --size <number> --trials <number> --offset <number> --dimensions <number> --lambda <float float float ...>
+# And can print output in different formats:
+./benchmark/benchmark_rocrand_host_api --benchmark_format=<console|json|csv>
 
 # To run benchmark for device kernel functions:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+# The benchmarks are registered with Google Benchmark as `device_kernel<engine,distribution>`, where
+# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
+#           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
-# distribution -> all, uniform-uint, uniform-float, uniform-double, normal-float, normal-double,
+# distribution -> uniform-uint or uniform-ullong, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson, discrete-poisson, discrete-custom
-# further option can be found using --help
-./benchmark/benchmark_rocrand_kernel --engine <engine> --dis <distribution>
+# Further option can be found using --help
+./benchmark/benchmark_rocrand_device_api
+# To run specific benchmarks:
+./benchmark/benchmark_rocrand_device_api --benchmark_filter=<regex>
+# For example to run benchmarks with engine sobol64:
+./benchmark/benchmark_rocrand_device_api --benchmark_filter="device_kernel<sobol64*"
+# To view all registered benchmarks:
+./benchmark/benchmark_rocrand_device_api --benchmark_list_tests=true
+# The benchmark also supports user input:
+./benchmark/benchmark_rocrand_device_api --size <number> --trials <number> --dimensions <number> --lambda <float float float ...>
+# And can print output in different formats:
+./benchmark/benchmark_rocrand_device_api --benchmark_format=<console|json|csv>
 
 # To compare against cuRAND (cuRAND must be supported):
-./benchmark/benchmark_curand_generate --engine <engine> --dis <distribution>
-./benchmark/benchmark_curand_kernel --engine <engine> --dis <distribution>
+./benchmark/benchmark_curand_host_api [google benchmark options]
+./benchmark/benchmark_curand_device_api [google benchmark options]
 ```
 
 ### Legacy benchmarks
@@ -168,32 +194,30 @@ migrated to the new framework.
 
 ## Running Statistical Tests
 
-```
+```shell
 # Go to rocRAND build directory
 cd rocRAND; cd build
 
 # To run Pearson Chi-squared and Anderson-Darling tests, which verify
 # that distribution of random number agrees with the requested distribution:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, 
+# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
+#           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> all, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson
 ./test/stat_test_rocrand_generate --engine <engine> --dis <distribution>
 ```
 
-## Documentation
-The latest rocRAND documentation and API description can be found [here](https://rocrand.readthedocs.io/en/latest/).
+## Building Documentation
 
-It can also be build using the following commands
-```
-# go to rocRAND doc directory
-cd rocRAND; cd doc
+```shell
+# go to rocRAND docs directory
+cd rocRAND; cd docs
 
-# run doxygen
-doxygen Doxyfile
+# run doxygen and sphinx
+./run_doc.sh
 
-# open html/index.html
-
+# open _build/html/index.html
 ```
 
 ## Wrappers

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -113,10 +113,8 @@ public:
         cdf = NULL;
     }
 
-    // Template for switching between 32-bit and 64-bit unsigned int types
     template<class T>
-    __forceinline__ __host__ __device__
-    T operator()(T x) const
+    __forceinline__ __host__ __device__ unsigned int operator()(T x) const
     {
         if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
         {
@@ -128,10 +126,8 @@ public:
         }
     }
 
-    // Template for switching between 32-bit and 64-bit unsigned int types
     template<class T>
-    __host__ __device__
-    void operator()(const T (&input)[1], T output[1]) const
+    __host__ __device__ void operator()(const T (&input)[1], unsigned int output[1]) const
     {
         output[0] = (*this)(input[0]);
     }
@@ -177,12 +173,12 @@ protected:
             hipError_t error;
             if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
             {
-                error = hipMalloc(&probability, sizeof(double) * size);
+                error = hipMalloc(reinterpret_cast<void**>(&probability), sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
-                error = hipMalloc(&alias, sizeof(unsigned int) * size);
+                error = hipMalloc(reinterpret_cast<void**>(&alias), sizeof(unsigned int) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -190,7 +186,7 @@ protected:
             }
             if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
             {
-                error = hipMalloc(&cdf, sizeof(double) * size);
+                error = hipMalloc(reinterpret_cast<void**>(&cdf), sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;

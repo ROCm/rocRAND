@@ -43,7 +43,7 @@ TEST_P(rocrand_generate_tests, int_test)
 
     const size_t size = 12563;
     unsigned int * data;
-    HIP_CHECK(hipMallocHelper((void **)&data, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -81,7 +81,7 @@ TEST_P(rocrand_generate_tests, char_test)
 
     const size_t size = 12563;
     unsigned char * data;
-    HIP_CHECK(hipMallocHelper((void **)&data, size * sizeof(unsigned char)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned char)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -119,7 +119,7 @@ TEST_P(rocrand_generate_tests, short_test)
 
     const size_t size = 12563;
     unsigned short * data;
-    HIP_CHECK(hipMallocHelper((void **)&data, size * sizeof(unsigned short)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned short)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -171,7 +171,8 @@ TEST_P(rocrand_generate_long_long_tests, long_long_test)
 
     const size_t            size = 12563;
     unsigned long long int* data;
-    HIP_CHECK(hipMallocHelper((void**)&data, size * sizeof(unsigned long long int)));
+    HIP_CHECK(
+        hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned long long int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes

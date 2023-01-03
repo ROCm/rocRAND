@@ -1,7 +1,16 @@
 # Change Log for rocRAND
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
-## (Unreleased) rocRAND-2.10.16 for ROCm 5.4.0
+## (Unreleased) rocRAND-2.10.17 for ROCm 5.5.0
+### Added
+- MT19937 pseudo random number generator based on M. Matsumoto and T. Nishimura, 1998, Mersenne Twister: A 623-dimensionally equidistributed uniform pseudorandom number generator.
+- New benchmark for the device API using Google Benchmark, `benchmark_rocrand_device_api`, replacing `benchmark_rocrand_kernel`. `benchmark_rocrand_kernel` is deprecated and will be removed in a future version. Likewise, `benchmark_curand_host_api` is added to replace `benchmark_curand_generate` and `benchmark_curand_device_api` is added to replace `benchmark_curand_kernel`.
+- experimental HIP-CPU feature
+- ThreeFry pseudorandom number generator based on Salmon et al., 2011, "Parallel random numbers: as easy as 1, 2, 3".
+### Changed
+- Python 2.7 is no longer officially supported.
+
+## rocRAND-2.10.16 for ROCm 5.4.0
 ### Added
 - MRG31K3P pseudorandom number generator based on L'Ecuyer and Touzin, 2000, "Fast combined multiple recursive generators with multipliers of the form a = ±2q ±2r".
 - LFSR113 pseudorandom number generator based on L'Ecuyer, 1999, "Tables of maximally equidistributed combined LFSR generators".
@@ -12,7 +21,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - Sobol64 now returns 64 bits random numbers, instead of 32 bits random numbers. As a result, the performance of this generator has regressed.
 - Fixed a bug that prevented compiling code in C++ mode (with a host compiler) when it included the rocRAND headers on Windows.
 
-## (Unreleased) rocRAND-2.10.15 for ROCm 5.3.0
+## rocRAND-2.10.15 for ROCm 5.3.0
 ### Added
 - New benchmark for the host api using googlebenchmark replacing `benchmark_rocrand_generate`,
   `benchmark_rocrand_generate` is deprecated and will be removed in a future version.

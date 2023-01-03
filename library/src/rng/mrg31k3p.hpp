@@ -42,7 +42,7 @@ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
     unsigned long long      seed,
     unsigned long long      offset)
 {
-    const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
     engines[engine_id]
         = mrg31k3p_device_engine(seed, engine_id, offset + (engine_id < start_engine_id ? 1 : 0));
 }
@@ -60,8 +60,8 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+    const unsigned int id     = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride = gridDim.x * blockDim.x;
 
     // Stride must be a power of two
     const unsigned int     engine_id = (id + start_engine_id) & (stride - 1);
@@ -147,14 +147,16 @@ public:
 
     rocrand_mrg31k3p(unsigned long long seed   = 0,
                      unsigned long long offset = 0,
+                     rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                      hipStream_t        stream = 0)
-        : base_type(seed, offset, stream)
+        : base_type(order, seed, offset, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_threads * s_blocks)
     {
         // Allocate device random number engines
-        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
+        hipError_t error
+            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -192,6 +194,12 @@ public:
     void set_offset(unsigned long long offset)
     {
         m_offset              = offset;
+        m_engines_initialized = false;
+    }
+
+    void set_order(rocrand_ordering order)
+    {
+        m_order               = order;
         m_engines_initialized = false;
     }
 

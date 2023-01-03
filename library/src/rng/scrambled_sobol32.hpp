@@ -54,17 +54,17 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     constexpr unsigned int output_per_thread = OutputPerThread;
     using vec_type                           = aligned_vec_type<T, output_per_thread>;
 
-    const unsigned int dimension = hipBlockIdx_y;
-    const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int stride    = hipGridDim_x * hipBlockDim_x;
+    const unsigned int dimension = blockIdx.y;
+    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int stride    = gridDim.x * blockDim.x;
     size_t             index     = engine_id;
 
     // Each thread of the current block uses the same direction vectors and scrambling constant
-    // (the dimension is determined by hipBlockIdx_y)
+    // (the dimension is determined by blockIdx.y)
     __shared__ unsigned int vectors[32];
-    if(hipThreadIdx_x < 32)
+    if(threadIdx.x < 32)
     {
-        vectors[hipThreadIdx_x] = direction_vectors[dimension * 32 + hipThreadIdx_x];
+        vectors[threadIdx.x] = direction_vectors[dimension * 32 + threadIdx.x];
     }
     __syncthreads();
     const unsigned int scramble_constant = scramble_constants[dimension];
@@ -154,18 +154,21 @@ public:
     using base_type   = rocrand_generator_type<ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32>;
     using engine_type = ::rocrand_host::detail::scrambled_sobol32_device_engine;
 
-    rocrand_scrambled_sobol32(unsigned long long offset = 0, hipStream_t stream = 0)
-        : base_type(0, offset, stream), m_initialized(false), m_dimensions(1)
+    rocrand_scrambled_sobol32(unsigned long long offset = 0,
+                              rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
+                              hipStream_t        stream = 0)
+        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1)
     {
         // Allocate direction vectors
         hipError_t error;
-        error = hipMalloc(&m_direction_vectors, sizeof(unsigned int) * SCRAMBLED_SOBOL32_N);
+        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors),
+                          sizeof(unsigned int) * SCRAMBLED_SOBOL32_N);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
         error = hipMemcpy(m_direction_vectors,
-                          h_scrambled_sobol32_direction_vectors,
+                          rocrand_h_scrambled_sobol32_direction_vectors,
                           sizeof(unsigned int) * SCRAMBLED_SOBOL32_N,
                           hipMemcpyHostToDevice);
         if(error != hipSuccess)
@@ -173,7 +176,8 @@ public:
             throw ROCRAND_STATUS_INTERNAL_ERROR;
         }
         // Allocate scramble constants
-        error = hipMalloc(&m_scramble_constants, sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM);
+        error = hipMalloc(reinterpret_cast<void**>(&m_scramble_constants),
+                          sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -202,6 +206,12 @@ public:
     void set_offset(unsigned long long offset)
     {
         m_offset      = offset;
+        m_initialized = false;
+    }
+
+    void set_order(rocrand_ordering order)
+    {
+        m_order       = order;
         m_initialized = false;
     }
 

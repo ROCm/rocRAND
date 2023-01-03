@@ -18,35 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef ROCRAND_H_
+#define ROCRAND_H_
+
 /** \rocrand_internal \addtogroup rocrandhost
  *
  *  @{
  */
 
-#ifndef ROCRAND_H_
-#define ROCRAND_H_
-
 #include "rocrand/rocrand_discrete_types.h"
+#include "rocrand/rocrand_hip_cpu.h"
 
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_vector_types.h>
 
-/// \cond ROCRAND_DOCS_MACRO
-#ifndef ROCRANDAPI
-    #ifdef WIN32
-        #ifdef rocrand_EXPORTS
-            /* We are building this library */
-            #define ROCRANDAPI __declspec(dllexport)
-        #else
-            /* We are using this library */
-            #define ROCRANDAPI __declspec(dllimport)
-        #endif
-    #else
-        #define ROCRANDAPI
-    #endif
-#endif
-/// \endcond
+#include "rocrand/rocrandapi.h"
 
 #include "rocrand/rocrand_version.h"
 
@@ -89,19 +76,42 @@ typedef enum rocrand_status {
  */
 typedef enum rocrand_rng_type
 {
-    ROCRAND_RNG_PSEUDO_DEFAULT          = 400, ///< Default pseudorandom generator
-    ROCRAND_RNG_PSEUDO_XORWOW           = 401, ///< XORWOW pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG32K3A         = 402, ///< MRG32k3a pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MTGP32           = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10    = 404, ///< PHILOX-4x32-10 pseudorandom generator
-    ROCRAND_RNG_PSEUDO_MRG31K3P         = 405, ///< MRG31k3p pseudorandom generator
-    ROCRAND_RNG_PSEUDO_LFSR113          = 406, ///< LFSR113 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_DEFAULT       = 400, ///< Default pseudorandom generator
+    ROCRAND_RNG_PSEUDO_XORWOW        = 401, ///< XORWOW pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG32K3A      = 402, ///< MRG32k3a pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MTGP32        = 403, ///< Mersenne Twister MTGP32 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404, ///< PHILOX-4x32-10 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MRG31K3P      = 405, ///< MRG31k3p pseudorandom generator
+    ROCRAND_RNG_PSEUDO_LFSR113       = 406, ///< LFSR113 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_MT19937       = 407, ///< Mersenne Twister MT19937 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
+    = 408, ///< ThreeFry 32 bit state size 2 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+    = 409, ///< ThreeFry 64 bit state size 2 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
+    = 410, ///< ThreeFry 32 bit state size 4 pseudorandom generator
+    ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
+    = 411, ///< ThreeFry 64 bit state size 4 pseudorandom generator
     ROCRAND_RNG_QUASI_DEFAULT           = 500, ///< Default quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL32           = 501, ///< Sobol32 quasirandom generator
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502, ///< Scrambled Sobol32 quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL64           = 504, ///< Sobol64 quasirandom generator
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505 ///< Scrambled Sobol64 quasirandom generator
+
 } rocrand_rng_type;
+
+/**
+ * \brief rocRAND generator ordering
+ */
+typedef enum rocrand_ordering
+{
+    ROCRAND_ORDERING_PSEUDO_BEST    = 100, ///< Best ordering for pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_DEFAULT = 101, ///< Default ordering for pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_SEEDED  = 102, ///< Fast lower quality pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_LEGACY  = 103, ///< Legacy ordering for pseudorandom results
+    ROCRAND_ORDERING_PSEUDO_DYNAMIC = 104, ///< Adjust to the device executing the generator
+    ROCRAND_ORDERING_QUASI_DEFAULT  = 201 ///< n-dimensional ordering for quasirandom results
+} rocrand_ordering;
 
 // Host API function
 
@@ -118,6 +128,10 @@ typedef enum rocrand_rng_type
  * - ROCRAND_RNG_PSEUDO_MTGP32
  * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
  * - ROCRAND_RNG_PSEUDO_LFSR113
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
  * - ROCRAND_RNG_QUASI_SOBOL32
  * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
  * - ROCRAND_RNG_QUASI_SOBOL64
@@ -598,6 +612,33 @@ rocrand_status ROCRANDAPI rocrand_set_seed_uint4(rocrand_generator generator, ui
  */
 rocrand_status ROCRANDAPI
 rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
+
+/**
+ * \brief Sets the ordering of a random number generator.
+ *
+ * Sets the ordering of the results of a random number generator.
+ *
+ * - This operation resets the generator's internal state.
+ * - This operation does not change the generator's seed.
+ *
+ * \param generator - Random number generator
+ * \param order - New ordering of results
+ *
+ * The ordering choices for pseudorandom sequences are
+ * ROCRAND_ORDERING_PSEUDO_DEFAULT and
+ * ROCRAND_ORDERING_PSEUDO_LEGACY.
+ * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT, which is equal to
+ * ROCRAND_ORDERING_PSEUDO_LEGACY for now.
+ *
+ * For quasirandom sequences there is only one ordering, ROCRAND_ORDERING_QUASI_DEFAULT.
+ *
+ * \return
+ * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
+ * - ROCRAND_STATUS_OUT_OF_RANGE if the ordering is not valid \n
+ * - ROCRAND_STATUS_SUCCESS if the ordering was successfully set \n
+ * - ROCRAND_STATUS_TYPE_ERROR if generator's type is not valid
+ */
+rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocrand_ordering order);
 
 /**
  * \brief Set the number of dimensions of a quasi-random number generator.
