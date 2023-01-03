@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Copyright 2020-2022 Advanced Micro Devices, Inc.  All rights reserved.
+"""Copyright 2020-2023 Advanced Micro Devices, Inc.  All rights reserved.
 Manage build and installation"""
 
 import re
@@ -76,7 +76,7 @@ def delete_dir(dir_path) :
         run_cmd( "rm" , f"-rf {linux_path}")
 
 def cmake_path(os_path):
-    if os.name == "nt":
+    if OS_info == "nt":
         return os_path.replace("\\", "/")
     else:
         return os.path.realpath(os_path)  
