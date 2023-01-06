@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Copyright 2020-2021 Advanced Micro Devices, Inc.
+"""Copyright 2020-2022 Advanced Micro Devices, Inc.  All rights reserved.
 Manage build and installation"""
 
 import re
@@ -37,8 +37,8 @@ def parse_args():
                         help='Install after build (default: False)')
     parser.add_argument(      '--cmake-darg', required=False, dest='cmake_dargs', action='append', default=[],
                         help='List of additional cmake defines for builds (e.g. CMAKE_CXX_COMPILER_LAUNCHER=ccache)')
-    parser.add_argument('-a', '--architecture', dest='gpu_architecture', required=False, default="gfx906;gfx1030", #:sramecc+:xnack-" ) #gfx1030" ) #gfx906" ) # gfx1030" )
-                        help='Set GPU architectures, e.g. all, gfx000, gfx803, gfx906:xnack-;gfx1030 (optional, default: all)')
+    parser.add_argument('-a', '--architecture', dest='gpu_architecture', required=False, default="gfx906;gfx1030;gfx1100;gfx1101;gfx1102", #:sramecc+:xnack-" ) #gfx1030" ) #gfx906" ) # gfx1030" )
+                        help='Set GPU architectures, e.g. all, gfx000, gfx803, gfx906:xnack-;gfx1030;gfx1100 (optional, default: all)')
     parser.add_argument('-v', '--verbose', required=False, default=False, action='store_true',
                         help='Verbose build (default: False)')
     return parser.parse_args()
@@ -88,7 +88,7 @@ def config_cmd():
     
     if (OS_info["ID"] == 'windows'):
         # we don't have ROCM on windows but have hip, ROCM can be downloaded if required
-        rocm_path = os.getenv( 'ROCM_PATH', "C:/github/rocm-cmake-master") #C:/hip") # rocm/Utils/cmake-rocm4.2.0"
+        rocm_path = os.getenv( 'ROCM_CMAKE_PATH', "C:/github/rocm-cmake-master") #C:/hip") # rocm/Utils/cmake-rocm4.2.0"
         cmake_executable = "cmake.exe"
         toolchain = os.path.join( src_path, "toolchain-windows.cmake" )
         #set CPACK_PACKAGING_INSTALL_PREFIX= defined as blank as it is appended to end of path for archive creation
@@ -146,7 +146,7 @@ def config_cmd():
         cmake_options.append( f"-DROCM_DISABLE_LDCONFIG=ON" )
 
     if args.build_clients:
-        cmake_options.append( f"-DBUILD_TEST=ON -DBUILD_DIR={build_dir}" )
+        cmake_options.append( f"-DBUILD_TEST=ON -DBUILD_BENCHMARK=ON -DBUILD_DIR={build_dir}" )
 
     cmake_options.append( f"-DAMDGPU_TARGETS={args.gpu_architecture}" )
 

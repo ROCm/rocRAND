@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -143,14 +143,17 @@ private:
     double lambda;
 };
 
-struct mrg_poisson_distribution
+// Mrg32k3a and Mrg31k3p
+
+template<typename state_type>
+struct mrg_engine_poisson_distribution
 {
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
     rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis;
 
-    mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+    mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
         : dis(dis)
     { }
 
@@ -158,13 +161,23 @@ struct mrg_poisson_distribution
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
         // Alias method requires x in [0, 1), uint must be in [0, UINT_MAX],
-        // but Mrg32k3a's "raw" output is in [1, ROCRAND_MRG32K3A_M1],
+        // but MRG-based engine's "raw" output is in [1, MRG_M1],
         // so probabilities are slightly different than expected,
         // some values can not be generated at all.
         // Hence the "raw" value is remapped to [0, UINT_MAX]:
-        unsigned int v = rocrand_device::detail::mrg_uniform_distribution_uint(input[0]);
+        unsigned int v
+            = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
         output[0] = dis(v);
     }
+};
+
+// Mrg32ka (compatibility API)
+
+struct mrg_poisson_distribution : mrg_engine_poisson_distribution<rocrand_state_mrg32k3a>
+{
+    mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+        : mrg_engine_poisson_distribution(dis)
+    {}
 };
 
 #endif // ROCRAND_RNG_DISTRIBUTION_POISSON_H_

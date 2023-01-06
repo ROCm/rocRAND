@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,11 @@
 #ifndef TEST_COMMON_HPP_
 #define TEST_COMMON_HPP_
 
+#include <hip/hip_runtime.h>
+
 #include <cstdlib>
+#include <hip/hip_runtime.h>
+#include <iostream>
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 
@@ -32,17 +36,6 @@
         std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
         exit(error); \
     } \
-}
-
-bool supports_hmm()
-{
-    hipDeviceProp_t device_prop;
-    int device_id;
-    HIP_CHECK_NON_VOID(hipGetDevice(&device_id));
-    HIP_CHECK_NON_VOID(hipGetDeviceProperties(&device_prop, device_id));
-    if (device_prop.managedMemory == 1) return true;
-
-    return false;
 }
 
 bool use_hmm()
@@ -66,11 +59,11 @@ hipError_t hipMallocHelper(T** devPtr, size_t size)
 {
     if (use_hmm())
     {
-        return hipMallocManaged((void**)devPtr, size);
+        return hipMallocManaged(reinterpret_cast<void**>(devPtr), size);
     }
     else
     {
-        return hipMalloc((void**)devPtr, size);
+        return hipMalloc(reinterpret_cast<void**>(devPtr), size);
     }
     return hipSuccess;
 }

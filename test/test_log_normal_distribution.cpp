@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -115,7 +115,7 @@ TEST(log_normal_distribution_tests, half_test)
 
     const size_t size = 4000;
     half val[size];
-    log_normal_distribution<half> u(0.2f, 0.5f);
+    log_normal_distribution<half> u(__float2half(0.2f), __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
@@ -146,15 +146,36 @@ TEST(log_normal_distribution_tests, half_test)
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
 }
 
-TEST(mrg_log_normal_distribution_tests, float_test)
+template<typename mrg, unsigned int m1>
+struct mrg_log_normal_distribution_test_type
+{
+    typedef mrg                   mrg_type;
+    static constexpr unsigned int mrg_m1 = m1;
+};
+
+template<typename test_type>
+struct mrg_log_normal_distribution_tests : public ::testing::Test
+{
+    typedef typename test_type::mrg_type mrg_type;
+    static constexpr unsigned int        mrg_m1 = test_type::mrg_m1;
+};
+
+typedef ::testing::Types<
+    mrg_log_normal_distribution_test_type<rocrand_state_mrg31k3p, ROCRAND_MRG31K3P_M1>,
+    mrg_log_normal_distribution_test_type<rocrand_state_mrg32k3a, ROCRAND_MRG32K3A_M1>>
+    mrg_log_normal_distribution_test_types;
+
+TYPED_TEST_SUITE(mrg_log_normal_distribution_tests, mrg_log_normal_distribution_test_types);
+
+TYPED_TEST(mrg_log_normal_distribution_tests, float_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+    std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
     const size_t size = 4000;
     float val[size];
-    mrg_log_normal_distribution<float> u(0.2f, 0.5f);
+    mrg_engine_log_normal_distribution<float, typename TestFixture::mrg_type> u(0.2f, 0.5f);
 
     // Calculate mean
     float mean = 0.0f;
@@ -186,15 +207,15 @@ TEST(mrg_log_normal_distribution_tests, float_test)
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
 }
 
-TEST(mrg_log_normal_distribution_tests, double_test)
+TYPED_TEST(mrg_log_normal_distribution_tests, double_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+    std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
     const size_t size = 4000;
     double val[size];
-    mrg_log_normal_distribution<double> u(0.2, 0.5);
+    mrg_engine_log_normal_distribution<double, typename TestFixture::mrg_type> u(0.2, 0.5);
 
     // Calculate mean
     double mean = 0.0;
@@ -226,15 +247,16 @@ TEST(mrg_log_normal_distribution_tests, double_test)
     EXPECT_NEAR(expected_std, std, expected_std * 0.1);
 }
 
-TEST(mrg_log_normal_distribution_tests, half_test)
+TYPED_TEST(mrg_log_normal_distribution_tests, half_test)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(1, ROCRAND_MRG32K3A_M1);
+    std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
     const size_t size = 4000;
     half val[size];
-    mrg_log_normal_distribution<half> u(0.2f, 0.5f);
+    mrg_engine_log_normal_distribution<half, typename TestFixture::mrg_type> u(__float2half(0.2f),
+                                                                               __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
@@ -265,11 +287,23 @@ TEST(mrg_log_normal_distribution_tests, half_test)
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
 }
 
-TEST(sobol_log_normal_distribution_tests, float_test)
+template<typename T>
+struct sobol_log_normal_distribution_tests : public ::testing::Test
 {
+    using sobol_type = T;
+};
+
+using SobolReturnTypes = ::testing::Types<unsigned int, unsigned long long int>;
+
+TYPED_TEST_SUITE(sobol_log_normal_distribution_tests, SobolReturnTypes);
+
+TYPED_TEST(sobol_log_normal_distribution_tests, float_test)
+{
+    using T = typename TestFixture::sobol_type;
+
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
+    std::uniform_int_distribution<T> dis;
 
     const size_t size = 4000;
     float val[size];
@@ -279,12 +313,8 @@ TEST(sobol_log_normal_distribution_tests, float_test)
     float mean = 0.0f;
     for(size_t i = 0; i < size; i+=1)
     {
-        unsigned int input[1];
-        float output[1];
-        input[0] = dis(gen);
-        output[0] = u(input[0]);
-        val[i] = output[0];
-        mean += output[0];
+        val[i] = u(dis(gen));
+        mean += val[i];
     }
     mean = mean / size;
 
@@ -302,12 +332,13 @@ TEST(sobol_log_normal_distribution_tests, float_test)
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
 }
-
-TEST(sobol_log_normal_distribution_tests, double_test)
+TYPED_TEST(sobol_log_normal_distribution_tests, double_test)
 {
+    using T = typename TestFixture::sobol_type;
+
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
+    std::uniform_int_distribution<T> dis;
 
     const size_t size = 4000;
     double val[size];
@@ -317,12 +348,8 @@ TEST(sobol_log_normal_distribution_tests, double_test)
     double mean = 0.0;
     for(size_t i = 0; i < size; i+=1)
     {
-        unsigned int input[1];
-        double output[1];
-        input[0] = dis(gen);
-        output[0] = u(input[0]);
-        val[i] = output[0];
-        mean += output[0];
+        val[i] = u(dis(gen));
+        mean += val[i];
     }
     mean = mean / size;
 
@@ -341,26 +368,24 @@ TEST(sobol_log_normal_distribution_tests, double_test)
     EXPECT_NEAR(expected_std, std, expected_std * 0.1);
 }
 
-TEST(sobol_log_normal_distribution_tests, half_test)
+TYPED_TEST(sobol_log_normal_distribution_tests, half_test)
 {
+    using T = typename TestFixture::sobol_type;
+
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis;
+    std::uniform_int_distribution<T> dis;
 
     const size_t size = 4000;
     half val[size];
-    sobol_log_normal_distribution<half> u(0.2f, 0.5f);
+    sobol_log_normal_distribution<half> u(__float2half(0.2f), __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
     for(size_t i = 0; i < size; i+=1)
     {
-        unsigned int input[1];
-        half output[1];
-        input[0] = dis(gen);
-        output[0] = u(input[0]);
-        val[i] = output[0];
-        mean += __half2float(output[0]);
+        val[i] = u(dis(gen));
+        mean += __half2float(val[i]);
     }
     mean = mean / size;
 

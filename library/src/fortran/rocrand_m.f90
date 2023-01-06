@@ -1,4 +1,4 @@
-!! Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+!! Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 !!
 !! Permission is hereby granted, free of charge, to any person obtaining a copy
 !! of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,18 @@ module rocrand_m
     integer, public :: ROCRAND_RNG_PSEUDO_MRG32K3A = 402
     integer, public :: ROCRAND_RNG_PSEUDO_MTGP32 = 403
     integer, public :: ROCRAND_RNG_PSEUDO_PHILOX4_32_10 = 404
+    integer, public :: ROCRAND_RNG_PSEUDO_MRG31K3P = 405
+    integer, public :: ROCRAND_RNG_PSEUDO_LFSR113 = 406
+    integer, public :: ROCRAND_RNG_PSEUDO_MT19937 = 407
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY2_32_20 = 408
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY2_64_20 = 409
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY4_32_20 = 410
+    integer, public :: ROCRAND_RNG_PSEUDO_THREEFRY4_64_20 = 411
     integer, public :: ROCRAND_RNG_QUASI_DEFAULT = 500
     integer, public :: ROCRAND_RNG_QUASI_SOBOL32 = 501
-    integer, public :: HIPRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 504
+    integer, public :: ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502
+    integer, public :: ROCRAND_RNG_QUASI_SOBOL64 = 504
+    integer, public :: ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505
 
     integer, public :: ROCRAND_STATUS_SUCCESS = 0
     integer, public :: ROCRAND_STATUS_VERSION_MISMATCH  = 100

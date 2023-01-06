@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 #define ROCRAND_RNG_GENERATOR_TYPE_H_
 
 #include <hip/hip_runtime.h>
+#include <hip/hip_vector_types.h>
 #include <rocrand/rocrand.h>
 
 struct rocrand_generator_base_type
@@ -33,19 +34,26 @@ struct rocrand_generator_base_type
 };
 
 // rocRAND random number generator base class
-template<rocrand_rng_type GeneratorType = ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
+template<rocrand_rng_type GeneratorType = ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+         class SeedType                 = unsigned long long>
 struct rocrand_generator_type : public rocrand_generator_base_type
 {
     using base_type = rocrand_generator_base_type;
 
-    rocrand_generator_type(unsigned long long seed = 0,
+    rocrand_generator_type(rocrand_ordering   order,
+                           SeedType           seed   = SeedType{0},
                            unsigned long long offset = 0,
-                           hipStream_t stream = 0)
-        : base_type(GeneratorType),
-          m_seed(seed), m_offset(offset), m_stream(stream)
+                           hipStream_t        stream = 0)
+        : base_type(GeneratorType), m_order(order), m_seed(seed), m_offset(offset), m_stream(stream)
     {
 
     }
+
+    rocrand_generator_type(SeedType           seed   = SeedType{0},
+                           unsigned long long offset = 0,
+                           hipStream_t        stream = 0)
+        : rocrand_generator_type(ROCRAND_ORDERING_PSEUDO_DEFAULT, seed, offset, stream)
+    {}
 
     /// Return generator's type
     constexpr rocrand_rng_type type() const
@@ -53,7 +61,7 @@ struct rocrand_generator_type : public rocrand_generator_base_type
         return rng_type;
     }
 
-    unsigned long long get_seed() const
+    SeedType get_seed() const
     {
         return m_seed;
     }
@@ -61,6 +69,11 @@ struct rocrand_generator_type : public rocrand_generator_base_type
     unsigned long long get_offset() const
     {
         return m_offset;
+    }
+
+    rocrand_ordering get_order() const
+    {
+        return m_order;
     }
 
     hipStream_t get_stream() const
@@ -74,10 +87,10 @@ struct rocrand_generator_type : public rocrand_generator_base_type
     }
 
 protected:
-    // ordering type
-    unsigned long long m_seed;
+    rocrand_ordering   m_order;
+    SeedType           m_seed;
     unsigned long long m_offset;
-    hipStream_t m_stream;
+    hipStream_t        m_stream;
 };
 
 #endif // ROCRAND_RNG_GENERATOR_TYPE_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -108,7 +108,8 @@ struct runner
            const unsigned long long offset)
     {
         const size_t states_size = blocks * threads;
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(GeneratorState)));
+        CUDA_CALL(
+            cudaMalloc(reinterpret_cast<void**>(&states), states_size * sizeof(GeneratorState)));
 
         init_kernel<<<blocks, threads>>>(states, seed, offset);
 
@@ -181,9 +182,10 @@ struct runner<curandStateMtgp32_t>
            const unsigned long long /* offset */)
     {
         const size_t states_size = std::min((size_t)200, blocks);
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(curandStateMtgp32_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateMtgp32_t)));
 
-        CUDA_CALL(cudaMalloc((void **)&d_param, sizeof(mtgp32_kernel_params)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&d_param), sizeof(mtgp32_kernel_params)));
         CURAND_CALL(curandMakeMTGP32Constants(mtgp32dc_params_fast_11213, d_param));
         CURAND_CALL(curandMakeMTGP32KernelState(states, mtgp32dc_params_fast_11213, d_param, states_size, seed));
     }
@@ -206,35 +208,46 @@ struct runner<curandStateMtgp32_t>
     }
 };
 
-template<typename Directions>
-__global__
-__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE)
-void init_kernel(curandStateSobol32_t * states,
-                 const Directions directions,
-                 const unsigned long long offset)
+template<typename GeneratorState, typename SobolType>
+__global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_kernel(
+    GeneratorState* states, SobolType* directions, SobolType offset)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    curandStateSobol32_t state;
-    curand_init(directions[dimension], offset + state_id, &state);
+    GeneratorState     state;
+    curand_init(&directions[dimension * sizeof(SobolType) * 8], offset + state_id, &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
-template<typename T, typename GenerateFunc, typename Extra>
-__global__
-__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE)
-void generate_kernel(curandStateSobol32_t * states,
-                     T * data,
-                     const size_t size,
-                     GenerateFunc generate_func,
-                     const Extra extra)
+template<typename GeneratorState, typename SobolType>
+__global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled_sobol_kernel(
+    GeneratorState* states, SobolType* directions, SobolType* scramble_constants, SobolType offset)
+{
+    const unsigned int dimension = blockIdx.y;
+    const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
+    GeneratorState     state;
+    curand_init(&directions[dimension * sizeof(SobolType) * 8],
+                scramble_constants[dimension],
+                offset + state_id,
+                &state);
+    states[gridDim.x * blockDim.x * dimension + state_id] = state;
+}
+
+// generate_kernel for the sobol generators
+template<typename GeneratorState, typename T, typename GenerateFunc, typename Extra>
+__global__ __launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
+    GeneratorState* states,
+    T*              data,
+    const size_t    size,
+    GenerateFunc    generate_func,
+    const Extra     extra)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int stride = gridDim.x * blockDim.x;
 
-    curandStateSobol32_t state = states[gridDim.x * blockDim.x * dimension + state_id];
-    const unsigned int offset = dimension * size;
+    GeneratorState state  = states[gridDim.x * blockDim.x * dimension + state_id];
+    const size_t   offset = dimension * size;
     unsigned int index = state_id;
     while(index < size)
     {
@@ -243,7 +256,7 @@ void generate_kernel(curandStateSobol32_t * states,
         index += stride;
     }
     state = states[gridDim.x * blockDim.x * dimension + state_id];
-    skipahead(static_cast<unsigned int>(size), &state);
+    skipahead(size, &state);
     states[gridDim.x * blockDim.x * dimension + state_id] = state;
 }
 
@@ -262,17 +275,21 @@ struct runner<curandStateSobol32_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(curandStateSobol32_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateSobol32_t)));
 
-        curandDirectionVectors32_t * directions;
-        const size_t size = dimensions * sizeof(curandDirectionVectors32_t);
-        CUDA_CALL(cudaMalloc((void **)&directions, size));
         curandDirectionVectors32_t * h_directions;
         CURAND_CALL(curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
+        unsigned int* directions;
+        const size_t  size = dimensions * sizeof(unsigned int) * 32;
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        init_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, directions, offset);
+        init_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(
+            states,
+            directions,
+            static_cast<unsigned int>(offset));
 
         CUDA_CALL(cudaPeekAtLastError());
         CUDA_CALL(cudaDeviceSynchronize());
@@ -294,50 +311,85 @@ struct runner<curandStateSobol32_t>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        generate_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, data, size / dimensions, generate_func, extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
     }
 };
 
-template<typename Directions>
-__global__
-__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE)
-void init_kernel(curandStateSobol64_t * states,
-                 const Directions directions,
-                 const unsigned long long offset)
+template<>
+struct runner<curandStateScrambledSobol32_t>
 {
-    const unsigned int dimension = blockIdx.y;
-    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    curandStateSobol64_t state;
-    curand_init(directions[dimension], offset + state_id, &state);
-    states[gridDim.x * blockDim.x * dimension + state_id] = state;
-}
+    curandStateScrambledSobol32_t* states;
+    size_t                         dimensions;
 
-template<typename T, typename GenerateFunc, typename Extra>
-__global__
-__launch_bounds__(CUPRAND_DEFAULT_MAX_BLOCK_SIZE)
-void generate_kernel(curandStateSobol64_t * states,
-                     T * data,
-                     const size_t size,
-                     GenerateFunc generate_func,
-                     const Extra extra)
-{
-    const unsigned int dimension = blockIdx.y;
-    const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride = gridDim.x * blockDim.x;
-
-    curandStateSobol64_t state = states[gridDim.x * blockDim.x * dimension + state_id];
-    const unsigned int offset = dimension * size;
-    unsigned int index = state_id;
-    while(index < size)
+    runner(const size_t dimensions,
+           const size_t blocks,
+           const size_t threads,
+           const unsigned long long /* seed */,
+           const unsigned long long offset)
     {
-        data[offset + index] = generate_func(&state, extra);
-        skipahead(stride - 1, &state);
-        index += stride;
+        this->dimensions = dimensions;
+
+        const size_t states_size = blocks * threads * dimensions;
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateScrambledSobol32_t)));
+
+        curandDirectionVectors32_t* h_directions;
+        CURAND_CALL(
+            curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
+        unsigned int* directions;
+        const size_t  size = dimensions * sizeof(unsigned int) * 32;
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
+
+        unsigned int* h_scramble_constants;
+        CURAND_CALL(curandGetScrambleConstants32(&h_scramble_constants));
+        unsigned int* scramble_constants;
+        const size_t  constants_size = dimensions * sizeof(unsigned int);
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
+        CUDA_CALL(cudaMemcpy(scramble_constants,
+                             h_scramble_constants,
+                             constants_size,
+                             cudaMemcpyHostToDevice));
+
+        const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+        init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(
+            states,
+            directions,
+            scramble_constants,
+            static_cast<unsigned int>(offset));
+
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
+
+        CUDA_CALL(cudaFree(directions));
+        CUDA_CALL(cudaFree(scramble_constants));
     }
-    state = states[gridDim.x * blockDim.x * dimension + state_id];
-    skipahead(static_cast<unsigned int>(size), &state);
-    states[gridDim.x * blockDim.x * dimension + state_id] = state;
-}
+
+    ~runner()
+    {
+        CUDA_CALL(cudaFree(states));
+    }
+
+    template<typename T, typename GenerateFunc, typename Extra>
+    void generate(const size_t        blocks,
+                  const size_t        threads,
+                  T*                  data,
+                  const size_t        size,
+                  const GenerateFunc& generate_func,
+                  const Extra         extra)
+    {
+        const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
+    }
+};
 
 template<>
 struct runner<curandStateSobol64_t>
@@ -354,22 +406,94 @@ struct runner<curandStateSobol64_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void **)&states, states_size * sizeof(curandStateSobol64_t)));
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateSobol64_t)));
 
-        curandDirectionVectors64_t * directions;
-        const size_t size = dimensions * sizeof(curandDirectionVectors64_t);
-        CUDA_CALL(cudaMalloc((void **)&directions, size));
         curandDirectionVectors64_t * h_directions;
         CURAND_CALL(curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
+        unsigned long long int* directions;
+        const size_t            size = dimensions * sizeof(unsigned long long) * 64;
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        init_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, directions, offset);
+        init_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, directions, offset);
 
         CUDA_CALL(cudaPeekAtLastError());
         CUDA_CALL(cudaDeviceSynchronize());
 
         CUDA_CALL(cudaFree(directions));
+    }
+
+    ~runner()
+    {
+        CUDA_CALL(cudaFree(states));
+    }
+
+    template<typename T, typename GenerateFunc, typename Extra>
+    void generate(const size_t        blocks,
+                  const size_t        threads,
+                  T*                  data,
+                  const size_t        size,
+                  const GenerateFunc& generate_func,
+                  const Extra         extra)
+    {
+        const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
+    }
+};
+
+template<>
+struct runner<curandStateScrambledSobol64_t>
+{
+    curandStateScrambledSobol64_t* states;
+    size_t                         dimensions;
+
+    runner(const size_t dimensions,
+           const size_t blocks,
+           const size_t threads,
+           const unsigned long long /* seed */,
+           const unsigned long long offset)
+    {
+        this->dimensions = dimensions;
+
+        const size_t states_size = blocks * threads * dimensions;
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&states),
+                             states_size * sizeof(curandStateScrambledSobol64_t)));
+
+        curandDirectionVectors64_t* h_directions;
+        CURAND_CALL(
+            curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
+        unsigned long long* directions;
+        const size_t        size = dimensions * sizeof(unsigned long long) * 64;
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&directions), size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
+
+        unsigned long long* h_scramble_constants;
+        CURAND_CALL(curandGetScrambleConstants64(&h_scramble_constants));
+        unsigned long long* scramble_constants;
+        const size_t        constants_size = dimensions * sizeof(unsigned long long);
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
+        CUDA_CALL(cudaMemcpy(scramble_constants,
+                             h_scramble_constants,
+                             constants_size,
+                             cudaMemcpyHostToDevice));
+
+        const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
+        init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                             directions,
+                                                                             scramble_constants,
+                                                                             offset);
+
+        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaDeviceSynchronize());
+
+        CUDA_CALL(cudaFree(directions));
+        CUDA_CALL(cudaFree(scramble_constants));
     }
 
     ~runner()
@@ -386,7 +510,11 @@ struct runner<curandStateSobol64_t>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        generate_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, data, size / dimensions, generate_func, extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
+                                                                       data,
+                                                                       size / dimensions,
+                                                                       generate_func,
+                                                                       extra);
     }
 };
 
@@ -403,7 +531,7 @@ void run_benchmark(const cli::Parser& parser,
     const size_t threads = parser.get<size_t>("threads");
 
     T * data;
-    CUDA_CALL(cudaMalloc((void **)&data, size * sizeof(T)));
+    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
 
     runner<GeneratorState> r(dimensions, blocks, threads, 12345ULL, 6789ULL);
 
@@ -554,17 +682,15 @@ void run_benchmarks(const cli::Parser& parser,
     }
 }
 
-const std::vector<std::string> all_engines = {
-    "xorwow",
-    "mrg32k3a",
-    "mtgp32",
-    // "mt19937",
-    "philox",
-    "sobol32",
-    // "scrambled_sobol32",
-    "sobol64",
-    // "scrambled_sobol64",
-};
+const std::vector<std::string> all_engines = {"xorwow",
+                                              "mrg32k3a",
+                                              "mtgp32",
+                                              // "mt19937",
+                                              "philox",
+                                              "sobol32",
+                                              "scrambled_sobol32",
+                                              "sobol64",
+                                              "scrambled_sobol64"};
 
 const std::vector<std::string> all_distributions = {
     "uniform-uint",
@@ -681,9 +807,17 @@ int main(int argc, char *argv[])
             {
                 run_benchmarks<curandStateSobol32_t>(parser, distribution);
             }
+            else if(engine == "scrambled_sobol32")
+            {
+                run_benchmarks<curandStateScrambledSobol32_t>(parser, distribution);
+            }
             else if (engine == "sobol64")
             {
                 run_benchmarks<curandStateSobol64_t>(parser, distribution);
+            }
+            else if(engine == "scrambled_sobol64")
+            {
+                run_benchmarks<curandStateScrambledSobol64_t>(parser, distribution);
             }
             else if (engine == "mtgp32")
             {

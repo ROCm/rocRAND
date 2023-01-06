@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,7 @@ namespace detail {
                              unsigned long long seed,
                              unsigned long long offset)
     {
-        const unsigned int engine_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
         engines[engine_id] = xorwow_device_engine(seed, engine_id, offset + (engine_id < start_engine_id ? 1 : 0));
     }
 
@@ -60,8 +60,8 @@ namespace detail {
 
         using vec_type = aligned_vec_type<T, output_width>;
 
-        const unsigned int id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+        const unsigned int id     = blockIdx.x * blockDim.x + threadIdx.x;
+        const unsigned int stride = gridDim.x * blockDim.x;
 
         // Stride MUST be a power of two
         const unsigned int engine_id = (id + start_engine_id) & (stride - 1);
@@ -148,14 +148,18 @@ public:
     using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW>;
     using engine_type = ::rocrand_host::detail::xorwow_device_engine;
 
-    rocrand_xorwow(unsigned long long seed = 0,
+    rocrand_xorwow(unsigned long long seed   = 0,
                    unsigned long long offset = 0,
-                   hipStream_t stream = 0)
-        : base_type(seed, offset, stream),
-          m_engines_initialized(false), m_engines(NULL), m_engines_size(s_threads * s_blocks)
+                   rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                   hipStream_t        stream = 0)
+        : base_type(order, seed, offset, stream)
+        , m_engines_initialized(false)
+        , m_engines(NULL)
+        , m_engines_size(s_threads * s_blocks)
     {
         // Allocate device random number engines
-        auto error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
+        auto error
+            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -177,6 +181,12 @@ public:
     void set_offset(unsigned long long offset)
     {
         m_offset = offset;
+        m_engines_initialized = false;
+    }
+
+    void set_order(rocrand_ordering order)
+    {
+        m_order               = order;
         m_engines_initialized = false;
     }
 

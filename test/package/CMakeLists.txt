@@ -1,46 +1,49 @@
 # Package test
-cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 project(rocrand_package_test CXX)
 
-# CMake modules
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
-list(APPEND CMAKE_MODULE_PATH
-    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
-)
-
-# Find HIP
-if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
-    if(NOT hip_FOUND)
-        find_package(HIP REQUIRED)
-        if((HIP_COMPILER STREQUAL "hcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
-           # TODO: The HIP package on NVIDIA platform is incorrect at few versions
-           set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
+if(NOT USE_HIP_CPU)
+    # CMake modules
+    list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
+    list(APPEND CMAKE_MODULE_PATH
+        $ENV{ROCM_PATH}/lib/cmake/hip
+        ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+    )
+    # Find HIP
+    if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
+        if(NOT hip_FOUND)
+            find_package(HIP REQUIRED)
+            if((HIP_COMPILER STREQUAL "hcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
+            # TODO: The HIP package on NVIDIA platform is incorrect at few versions
+            set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
+            endif()
         endif()
+    else()
+    find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
     endif()
-else()
-  find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
+
+    # Get HIP options
+    execute_process(
+        COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
+        OUTPUT_VARIABLE HIP_CPP_CONFIG
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_STRIP_TRAILING_WHITESPACE
+    )
 endif()
 
-# Get HIP options
-execute_process(
-    COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
-    OUTPUT_VARIABLE HIP_CPP_CONFIG
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE
-)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CPP_CONFIG}")
-
-# CUDA
 if(HIP_COMPILER STREQUAL "nvcc")
-    set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
-    find_package(CUDA REQUIRED)
+    enable_language(CUDA)
+    set(LANG CUDA)
+else()
+    set(LANG CXX)
 endif()
+
+set(CMAKE_${LANG}_STANDARD 11)
+set(CMAKE_${LANG}_STANDARD_REQUIRED ON)
+set(CMAKE_${LANG}_EXTENSIONS OFF)
+set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} ${HIP_CPP_CONFIG}")
 
 # Find rocRAND
 find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")
@@ -87,12 +90,24 @@ endfunction()
 foreach(test_src ${rocrand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    if(HIP_COMPILER STREQUAL "nvcc")
+    if(USE_HIP_CPU)
         target_link_libraries(${test_name}
             PRIVATE
                 roc::rocrand
-                ${CUDA_LIBRARIES}
+                hip_cpu_rt::hip_cpu_rt
         )
+    elseif(HIP_COMPILER STREQUAL "nvcc")
+        target_link_libraries(${test_name} 
+            PRIVATE
+                roc::rocrand
+        )
+
+        # Set the source as a cuda file, to work around a bug in nvidia hip headers including
+        # device code to the host compiler
+        # Can be removed once the fix in hipamd
+        # https://github.com/ROCm-Developer-Tools/hipamd/commit/60357b1e9512328a9b54d449df6f3e725734ec3d
+        # is included in the release
+        set_source_files_properties(${test_src} PROPERTIES LANGUAGE CUDA)
     else()
         target_link_libraries(${test_name}
             PRIVATE
@@ -101,7 +116,6 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
         )
     endif()
     add_relative_test(${test_name} ${test_name})
-    rocm_install(TARGETS ${test_name} COMPONENT tests)
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
       set(DLLS_COPIED "YES")
       set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)

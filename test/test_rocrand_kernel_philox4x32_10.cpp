@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ void rocrand_init_kernel(GeneratorState * states,
                          unsigned long long seed,
                          unsigned long long offset)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int subsequence = state_id;
     if(state_id < states_size)
     {
@@ -57,8 +57,8 @@ __global__
 __launch_bounds__(32)
 void rocrand_kernel(unsigned int * output, const size_t size)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState state;
     const unsigned int subsequence = state_id;
@@ -77,8 +77,8 @@ __global__
 __launch_bounds__(32)
 void rocrand_uniform_kernel(float * output, const size_t size)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState state;
     const unsigned int subsequence = state_id;
@@ -102,8 +102,8 @@ __global__
 __launch_bounds__(32)
 void rocrand_normal_kernel(float * output, const size_t size)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState state;
     const unsigned int subsequence = state_id;
@@ -127,8 +127,8 @@ __global__
 __launch_bounds__(32)
 void rocrand_log_normal_kernel(float * output, const size_t size)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState state;
     const unsigned int subsequence = state_id;
@@ -152,8 +152,8 @@ __global__
 __launch_bounds__(64)
 void rocrand_poisson_kernel(unsigned int * output, const size_t size, double lambda)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState state;
     const unsigned int subsequence = state_id;
@@ -172,8 +172,8 @@ __global__
 __launch_bounds__(64)
 void rocrand_discrete_kernel(unsigned int * output, const size_t size, rocrand_discrete_distribution discrete_distribution)
 {
-    const unsigned int state_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const unsigned int global_size = hipGridDim_x * hipBlockDim_x;
+    const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int global_size = gridDim.x * blockDim.x;
 
     GeneratorState state;
     const unsigned int subsequence = state_id;
@@ -230,7 +230,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
 
     const size_t states_size = 256;
     state_type * states;
-    HIP_CHECK(hipMallocHelper((void **)&states, states_size * sizeof(state_type)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&states), states_size * sizeof(state_type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -283,7 +283,8 @@ TEST(rocrand_kernel_philox4x32_10, rocrand)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(
+        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -319,7 +320,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_uniform)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -355,7 +356,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -399,7 +400,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_log_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -451,7 +452,8 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_poisson)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(
+        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -498,7 +500,8 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_discrete)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(hipMallocHelper((void **)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(
+        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     rocrand_discrete_distribution discrete_distribution;
