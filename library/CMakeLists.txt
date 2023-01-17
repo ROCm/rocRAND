@@ -27,7 +27,7 @@ set(rocRAND_SRCS ${tmp})
 
 # When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
 # turns on inline asm in rocRAND (for both compiled library and device functions).
-option(ENABLE_INLINE_ASM "Enable inline asm optimisations in rocRAND" ON)
+option(ENABLE_INLINE_ASM "Enable inline asm optimisations in rocRAND" OFF)
 if(ENABLE_INLINE_ASM)
     set(
         rocrand_ENABLE_INLINE_ASM

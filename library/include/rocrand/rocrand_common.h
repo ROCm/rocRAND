@@ -54,28 +54,6 @@
 namespace rocrand_device {
 namespace detail {
 
-#if ( defined(__HIP_PLATFORM_NVCC__) || \
-      defined(__gfx801__) || \
-      defined(__gfx802__) || \
-      defined(__gfx803__) || \
-      defined(__gfx810__) || \
-      defined(__gfx900__) || \
-      defined(__gfx902__) || \
-      defined(__gfx904__) || \
-      defined(__gfx906__) || \
-      defined(__gfx908__) || \
-      defined(__gfx909__) || \
-      defined(__gfx1030__) )
-  #if !defined(ROCRAND_ENABLE_INLINE_ASM)
-    #define ROCRAND_ENABLE_INLINE_ASM
-  #endif
-#else
-  #if defined(__HIP_DEVICE_COMPILE__) && defined(ROCRAND_ENABLE_INLINE_ASM)
-    #undef ROCRAND_ENABLE_INLINE_ASM
-    #warning "Disabled inline asm, because the build target does not support it."
-  #endif
-#endif
-
 FQUALIFIERS
 unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
 {
