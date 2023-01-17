@@ -54,6 +54,31 @@
 namespace rocrand_device {
 namespace detail {
 
+#if ( defined(__HIP_PLATFORM_NVCC__) || \
+      defined(__gfx801__) || \
+      defined(__gfx802__) || \
+      defined(__gfx803__) || \
+      defined(__gfx810__) || \
+      defined(__gfx900__) || \
+      defined(__gfx902__) || \
+      defined(__gfx904__) || \
+      defined(__gfx906__) || \
+      defined(__gfx908__) || \
+      defined(__gfx909__) || \
+      defined(__gfx1030__) )
+  // No longer enable inline assembly by default - as of ROCm 5.4 the compiler should generate optimal code.
+  // The inline assembly code will be fully deprecated in a future release.
+  // User can still opt-in to use inline assembly if they are still using an older ROCM build via cmake option -DENABLE_INLINE_ASM.
+  //#if !defined(ROCRAND_ENABLE_INLINE_ASM)
+    //#define ROCRAND_ENABLE_INLINE_ASM
+  //#endif
+#else
+  #if defined(__HIP_DEVICE_COMPILE__) && defined(ROCRAND_ENABLE_INLINE_ASM)
+    #undef ROCRAND_ENABLE_INLINE_ASM
+    #warning "Disabled inline asm, because the build target does not support it."
+  #endif
+#endif
+
 FQUALIFIERS
 unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
 {
