@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -94,7 +94,16 @@ void generate_kernel(GeneratorState * states,
                      const Extra extra)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride   = gridDim.x * blockDim.x;
+
+    // Using gridDim.x * blockDim.x should actually a performance improvement, however, this kernel
+    // just so happen to use an unfortunate amount of registers that the changes introduced in
+    // https://github.com/llvm/llvm-project/commit/ba0d079c7aa52bc0ae860d16dd4a33b0dc5cfff7,
+    // cause adverse code generation that degrades performance.
+#ifdef USE_HIP_CPU
+    const unsigned int stride = gridDim.x * blockDim.x;
+#else
+    const unsigned int stride = hipGridDim_x * hipBlockDim_x;
+#endif
 
     GeneratorState state = states[state_id];
     unsigned int index = state_id;
