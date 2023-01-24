@@ -55,32 +55,34 @@ def runPackageCommand(platform, project)
 
 def runCodeCovTestCommand(platform, project)
 {
-    String prflag = env.CHANGE_ID ? '--pr "${env.CHANGE_ID}"' : ''
-    def command = """#!/usr/bin/env bash
-                set -x
-                cd ${project.paths.project_build_prefix}/build/release
-                #Remove any extra prof files.
-                rm -rf ./*.profraw
-                #The `%m` creates a different prof file for each object file. So one for the rocroller.so and one for rocRollerTests.
-                #Also had to switch to using ctest so seg faults can be handled gracefully.
-                LLVM_PROFILE_FILE=./rocRand_%m.profraw ctest --output-on-failure
-                #this combines them back together.
-                llvm-profdata merge -sparse ./*.profraw -o ./rocRand.profdata
-                #For some reason, with the -object flag, we can't just specify the source directory, so we have to filter out the files we don't want.
-                llvm-cov report -object ./rocRollerTests -object ./librocroller.so -instr-profile=./rocRollerTests.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.report
-                cat ./code_cov.report
-                #llvm-cov show -format=html -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" --output-dir=./code_cov_rocRand_html
-                llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.txt
-                #mv ./code_cov_text/coverage/*/*/*/*/*/*/lib ./code_cov_text/lib
-                #rm -rf ./code_cov_text/coverage
-                #zip the text report for archiving.
-                #zip -r code_cov.zip ./code_cov_text
-                curl -Os https://uploader.codecov.io/latest/linux/codecov
-                chmod +x codecov
-                ./codecov -t ${CODECOV_TOKEN} ${prflag} --flags "${platform.gpu}" --file ./ccode_cov_rocRand.txt -v
-            """
-
-    platform.runCommand(this, command)
+    withCredentials([string(credentialsId: 'mathlibs-codecov-token-rocrand', variable: 'CODECOV_TOKEN')])
+    {
+        String prflag = env.CHANGE_ID ? '--pr "${env.CHANGE_ID}"' : ''
+        def command = """#!/usr/bin/env bash
+                    set -x
+                    cd ${project.paths.project_build_prefix}/build/release
+                    #Remove any extra prof files.
+                    rm -rf ./*.profraw
+                    #The `%m` creates a different prof file for each object file. So one for the rocroller.so and one for rocRollerTests.
+                    #Also had to switch to using ctest so seg faults can be handled gracefully.
+                    LLVM_PROFILE_FILE=./rocRand_%m.profraw ctest --output-on-failure
+                    #this combines them back together.
+                    llvm-profdata merge -sparse ./*.profraw -o ./rocRand.profdata
+                    #For some reason, with the -object flag, we can't just specify the source directory, so we have to filter out the files we don't want.
+                    llvm-cov report -object ./rocRollerTests -object ./librocroller.so -instr-profile=./rocRollerTests.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.report
+                    cat ./code_cov.report
+                    #llvm-cov show -format=html -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" --output-dir=./code_cov_rocRand_html
+                    llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.txt
+                    #mv ./code_cov_text/coverage/*/*/*/*/*/*/lib ./code_cov_text/lib
+                    #rm -rf ./code_cov_text/coverage
+                    #zip the text report for archiving.
+                    #zip -r code_cov.zip ./code_cov_text
+                    curl -Os https://uploader.codecov.io/latest/linux/codecov
+                    chmod +x codecov
+                    ./codecov -t ${CODECOV_TOKEN} ${prflag} --flags "${platform.gpu}" --file ./ccode_cov_rocRand.txt -v
+                """
+        platform.runCommand(this, command)
+    }
 }
 
 return this
