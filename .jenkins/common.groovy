@@ -57,9 +57,9 @@ def runCodeCovTestCommand(platform, project)
 {
     withCredentials([string(credentialsId: 'mathlibs-codecov-token-rocrand', variable: 'CODECOV_TOKEN')])
     {
-        String prflag = env.CHANGE_ID ? '--pr "${env.CHANGE_ID}"' : ''
+        String prflag = env.CHANGE_ID ? "--pr \"${env.CHANGE_ID}\"" : ''
         def command = """#!/usr/bin/env bash
-                    set -x
+                    set -ex
                     cd ${project.paths.project_build_prefix}/build/release
                     #Remove any extra prof files.
                     rm -rf ./*.profraw
