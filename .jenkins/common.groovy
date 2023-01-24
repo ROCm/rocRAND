@@ -67,7 +67,7 @@ def runCodeCovTestCommand(platform, project)
                     #Also had to switch to using ctest so seg faults can be handled gracefully.
                     LLVM_PROFILE_FILE=./rocRand_%m.profraw ctest --output-on-failure
                     #this combines them back together.
-                    llvm-profdata merge -sparse ./*.profraw -o ./rocRand.profdata
+                    llvm-profdata merge -sparse ./test/*.profraw -o ./rocRand.profdata
                     #For some reason, with the -object flag, we can't just specify the source directory, so we have to filter out the files we don't want.
                     llvm-cov report -object ./rocRollerTests -object ./librocroller.so -instr-profile=./rocRollerTests.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.report
                     cat ./code_cov.report
