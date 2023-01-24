@@ -46,6 +46,7 @@ option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+option(CODE_COVERAGE "Build with code coverage flags (clang only)" OFF)
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -126,6 +127,9 @@ if(DISABLE_WERROR)
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 endif()
+if(CODE_COVERAGE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+endif()
 
 # HIP on Windows: xhip is required with clang++ to get __half defined
 if (WIN32)
@@ -140,6 +144,11 @@ if(BUILD_ADDRESS_SANITIZER AND BUILD_SHARED_LIBS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
   add_link_options(-fuse-ld=lld)
+endif()
+
+
+if(CODE_COVERAGE)
+    add_link_options(-fprofile-instr-generate -fcoverage-mapping)
 endif()
 
 # FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG

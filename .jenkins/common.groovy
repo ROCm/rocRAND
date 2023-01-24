@@ -1,7 +1,7 @@
 // This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
 
-def runCompileCommand(platform, project, jobName, boolean debug=false, boolean staticLibrary=false)
+def runCompileCommand(platform, project, jobName, boolean debug=false, boolean staticLibrary=false, boolean codeCoverage=false)
 {
     project.paths.construct_build_prefix()
 
@@ -9,6 +9,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String buildTypeArg = debug ? '-DCMAKE_BUILD_TYPE=Debug' : '-DCMAKE_BUILD_TYPE=Release'
     String buildTypeDir = debug ? 'debug' : 'release'
     String buildStatic = staticLibrary ? '-DBUILD_STATIC_LIBS=ON' : '-DBUILD_SHARED=OFF'
+    String codeCovFlag = codeCoverage ? '-DCODE_COVERAGE=ON' : ''
     String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
     //Set CI node's gfx arch as target if PR, otherwise use default targets of the library
     String amdgpuTargets = env.BRANCH_NAME.startsWith('PR-') ? '-DAMDGPU_TARGETS=\$gfx_arch' : ''
@@ -19,7 +20,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
-                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} ${amdgpuTargets} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
+                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${buildStatic} ${amdgpuTargets} ${codeCovFlag} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
                 make -j\$(nproc)
                 """
 
@@ -50,6 +51,36 @@ def runPackageCommand(platform, project)
 
     platform.runCommand(this, packageHelper[0])
     platform.archiveArtifacts(this, packageHelper[1])
+}
+
+def runCodeCovTestCommand(platform, project)
+{
+    String prflag = env.CHANGE_ID ? '--pr "${env.CHANGE_ID}"' : ''
+    def command = """#!/usr/bin/env bash
+                set -x
+                cd ${project.paths.project_build_prefix}/build/release
+                #Remove any extra prof files.
+                rm -rf ./*.profraw
+                #The `%m` creates a different prof file for each object file. So one for the rocroller.so and one for rocRollerTests.
+                #Also had to switch to using ctest so seg faults can be handled gracefully.
+                LLVM_PROFILE_FILE=./rocRand_%m.profraw ctest --output-on-failure
+                #this combines them back together.
+                llvm-profdata merge -sparse ./*.profraw -o ./rocRand.profdata
+                #For some reason, with the -object flag, we can't just specify the source directory, so we have to filter out the files we don't want.
+                llvm-cov report -object ./rocRollerTests -object ./librocroller.so -instr-profile=./rocRollerTests.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.report
+                cat ./code_cov.report
+                #llvm-cov show -format=html -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" --output-dir=./code_cov_rocRand_html
+                llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.txt
+                #mv ./code_cov_text/coverage/*/*/*/*/*/*/lib ./code_cov_text/lib
+                #rm -rf ./code_cov_text/coverage
+                #zip the text report for archiving.
+                #zip -r code_cov.zip ./code_cov_text
+                curl -Os https://uploader.codecov.io/latest/linux/codecov
+                chmod +x codecov
+                ./codecov -t ${CODECOV_TOKEN} ${prflag} --flags "${platform.gpu}" --file ./ccode_cov_rocRand.txt -v
+            """
+
+    platform.runCommand(this, command)
 }
 
 return this
