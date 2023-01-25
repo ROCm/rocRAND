@@ -1,0 +1,21 @@
+ignore:
+  - "benchmark/"
+  - "build/" 
+  - "cmake/"
+  - "docs/"
+  - "hipRAND/" 
+  - "python/" 
+  - "scripts/" 
+  - "test/" 
+  - "tools/" 
+
+coverage:
+    precision: 2
+    round: nearest
+    range: "50...75"
+
+comment:
+    behavior: new           # if a new commit is made, delete old comment and make a new one.
+    require_changes: false  # Always post a comment, even if coverage stayed the same.
+    require_base: no        # Always post, even without a base to compare.
+    require_head: no        # Always post, even without a head to compare.
