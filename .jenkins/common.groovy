@@ -78,7 +78,7 @@ def runCodeCovTestCommand(platform, project)
                     /opt/rocm/llvm/bin/llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=${profdataFile} -ignore-filename-regex="${coverageFilter}" > ${coverageFile}
                     curl -Os https://uploader.codecov.io/latest/linux/codecov
                     chmod +x codecov
-                    ./codecov -t ${CODECOV_TOKEN} ${prflag} --flags "${platform.gpu}" --file ${coverageFile} -v
+                    ./codecov -t ${CODECOV_TOKEN} ${prflag} --flags "${platform.gpu}" --sha \$(git rev-parse HEAD) --name "CodeCovPRJob" --file ${coverageFile} -v
                 """
         platform.runCommand(this, command)
     }
