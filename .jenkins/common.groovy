@@ -70,7 +70,7 @@ def runCodeCovTestCommand(platform, project)
                     /opt/rocm/llvm/bin/llvm-profdata merge -sparse ./test/*.profraw -o ./rocRand.profdata
                     #For some reason, with the -object flag, we can't just specify the source directory, so we have to filter out the files we don't want.
                     /opt/rocm/llvm/bin/llvm-cov report -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.report
-                    cat ./code_cov.report
+                    cat ./code_cov_rocRand.report
                     /opt/rocm/llvm/bin/llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.txt
                     curl -Os https://uploader.codecov.io/latest/linux/codecov
                     chmod +x codecov
