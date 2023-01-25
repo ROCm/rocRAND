@@ -58,6 +58,10 @@ def runCodeCovTestCommand(platform, project)
     withCredentials([string(credentialsId: 'mathlibs-codecov-token-rocrand', variable: 'CODECOV_TOKEN')])
     {
         String prflag = env.CHANGE_ID ? "--pr \"${env.CHANGE_ID}\"" : ''
+        String profdataFile = "./rocRand.profdata"
+        String reportFile = "./code_cov_rocRand.report"
+        String coverageFile = "./code_cov_rocRand.txt"
+        String coverageFilter = "(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)"
         def command = """#!/usr/bin/env bash
                     set -ex
                     cd ${project.paths.project_build_prefix}/build/release
@@ -67,14 +71,14 @@ def runCodeCovTestCommand(platform, project)
                     #Also had to switch to using ctest so seg faults can be handled gracefully.
                     LLVM_PROFILE_FILE=./rocRand_%m.profraw ctest --output-on-failure
                     #this combines them back together.
-                    /opt/rocm/llvm/bin/llvm-profdata merge -sparse ./test/*.profraw -o ./rocRand.profdata
+                    /opt/rocm/llvm/bin/llvm-profdata merge -sparse ./test/*.profraw -o ${profdataFile}
                     #For some reason, with the -object flag, we can't just specify the source directory, so we have to filter out the files we don't want.
-                    /opt/rocm/llvm/bin/llvm-cov report -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.report
-                    cat ./code_cov_rocRand.report
-                    /opt/rocm/llvm/bin/llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=./rocRand.profdata -ignore-filename-regex="(.*googletest-src.*)|(.*/yaml-cpp-src/.*)|(.*hip/include.*)|(.*/include/llvm/.*)|(.*test/unit.*)|(.*/spdlog/.*)|(.*/msgpack-src/.*)" > ./code_cov_rocRand.txt
+                    /opt/rocm/llvm/bin/llvm-cov report -object ./library/librocrand.so -instr-profile=${profdataFile} -ignore-filename-regex="${coverageFilter}" > ${reportFile}
+                    cat ${reportFile}
+                    /opt/rocm/llvm/bin/llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt -object ./library/librocrand.so -instr-profile=${profdataFile} -ignore-filename-regex="${coverageFilter}" > ${coverageFile}
                     curl -Os https://uploader.codecov.io/latest/linux/codecov
                     chmod +x codecov
-                    ./codecov -t ${CODECOV_TOKEN} ${prflag} --flags "${platform.gpu}" --file ./ccode_cov_rocRand.txt -v
+                    ./codecov -t ${CODECOV_TOKEN} ${prflag} --flags "${platform.gpu}" --file ${coverageFile} -v
                 """
         platform.runCommand(this, command)
     }
