@@ -28,7 +28,7 @@ def runCI =
     {
         platform, project->
 
-        commonGroovy.runCodeCovTestCommand(platform, project)
+        commonGroovy.runCodeCovTestCommand(platform, project, jobName)
     }
 
     buildProject(prj, formatCheck, nodes.dockerArray, compileCommand, testCommand, null)
