@@ -6,14 +6,14 @@ codecov:
 
 ignore:
   - "benchmark/"
-  - "build/" 
+  - "build/"
   - "cmake/"
   - "docs/"
-  - "hipRAND/" 
-  - "python/" 
-  - "scripts/" 
-  - "test/" 
-  - "tools/" 
+  - "hipRAND/"
+  - "python/"
+  - "scripts/"
+  - "test/"
+  - "tools/"
 
 coverage:
     precision: 2

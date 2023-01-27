@@ -82,7 +82,7 @@ def runCodeCovTestCommand(platform, project, jobName)
                     /opt/rocm/llvm/bin/llvm-cov report ${objectFlags} -instr-profile=${profdataFile} -ignore-filename-regex="${coverageFilter}" > ${reportFile}
                     cat ${reportFile}
                     /opt/rocm/llvm/bin/llvm-cov show -Xdemangler=/opt/rocm/llvm/bin/llvm-cxxfilt ${objectFlags} -instr-profile=${profdataFile} -ignore-filename-regex="${coverageFilter}" > ${coverageFile}
-                    
+
                     #Upload report to codecov
                     curl -Os https://uploader.codecov.io/latest/linux/codecov
                     chmod +x codecov
