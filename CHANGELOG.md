@@ -7,6 +7,16 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - New benchmark for the device API using Google Benchmark, `benchmark_rocrand_device_api`, replacing `benchmark_rocrand_kernel`. `benchmark_rocrand_kernel` is deprecated and will be removed in a future version. Likewise, `benchmark_curand_host_api` is added to replace `benchmark_curand_generate` and `benchmark_curand_device_api` is added to replace `benchmark_curand_kernel`.
 - experimental HIP-CPU feature
 - ThreeFry pseudorandom number generator based on Salmon et al., 2011, "Parallel random numbers: as easy as 1, 2, 3".
+- Accessor methods for sobol 32 and 64 direction vectors and constants:
+  - Enum `rocrand_direction_vector_set` to select the direction vector set.
+  - `rocrand_get_direction_vectors32(...)` supersedes:
+    - `rocrand_h_sobol32_direction_vectors` 
+    - `rocrand_h_scrambled_sobol32_direction_vectors`
+  - `rocrand_get_direction_vectors64(...)` supersedes:
+    - `rocrand_h_sobol64_direction_vectors` 
+    - `rocrand_h_scrambled_sobol64_direction_vectors`
+  - `rocrand_get_scramble_constants32(...)` supersedes `h_scrambled_sobol32_constants`
+  - `rocrand_get_scramble_constants64(...)` supersedes `h_scrambled_sobol64_constants`
 ### Changed
 - Python 2.7 is no longer officially supported.
 
