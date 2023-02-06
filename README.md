@@ -1,5 +1,7 @@
 # rocRAND
 
+[![codecov](https://codecov.io/gh/ROCmSoftwarePlatform/rocRAND/branch/develop/graph/badge.svg?token=FdKnEdGxA1)](https://codecov.io/gh/ROCmSoftwarePlatform/rocRAND)
+
 The rocRAND project provides functions that generate pseudo-random and quasi-random numbers.
 
 The rocRAND library is implemented in the [HIP](https://github.com/ROCm-Developer-Tools/HIP)
