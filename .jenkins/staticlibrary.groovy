@@ -1,5 +1,6 @@
 #!/usr/bin/env groovy
 @Library('rocJenkins@pong') _
+
 import com.amd.project.*
 import com.amd.docker.*
 import java.nio.file.Path;
@@ -24,7 +25,6 @@ def runCI =
         commonGroovy.runCompileCommand(platform, project, jobName, false, true)
     }
 
-    
     def testCommand =
     {
         platform, project->
