@@ -135,7 +135,7 @@ def config_cmd():
         deps_dir = os.path.abspath(os.path.join(build_dir, 'deps')).replace('\\','/')
     else:
         deps_dir = args.deps_dir
-    cmake_base_options = f"-DROCM_PATH={rocm_path} -DCMAKE_PREFIX_PATH:PATH={rocm_path} -Drocrand_EXPORTS=1 -Dhiprand_EXPORTS=1"
+    cmake_base_options = f"-DROCM_PATH={rocm_path} -DCMAKE_PREFIX_PATH:PATH={rocm_path} -Drocrand_EXPORTS=1"
     cmake_options.append( cmake_base_options )
 
     print( cmake_options )

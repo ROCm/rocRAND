@@ -1,4 +1,0 @@
-[submodule "hipRAND"]
-	path = hipRAND
-	url = ../hipRAND.git
-	branch = develop

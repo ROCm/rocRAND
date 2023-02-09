@@ -198,7 +198,6 @@ clang-format:
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
       -D USE_HIP_CPU=ON
-      -D BUILD_HIPRAND=OFF
       -D CMAKE_INSTALL_PREFIX=${ROCRAND_DIR}
     - cmake --build $CI_PROJECT_DIR/build
     - cmake --build $CI_PROJECT_DIR/build --target package
@@ -463,7 +462,6 @@ test:nvcc-python:
       -B $CI_PROJECT_DIR/build_package_test
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D USE_HIP_CPU=ON
-      -D BUILD_HIPRAND=OFF
       -D TBB_DIR=$CI_PROJECT_DIR/build/tbb-src/cmake
       -D hip_cpu_rt_DIR=$CI_PROJECT_DIR/build/deps/hip-cpu/share/hip_cpu_rt/cmake
       -D rocrand_DIR=${ROCRAND_DIR}
@@ -533,7 +531,6 @@ test:hip-cpu-package:
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D USE_HIP_CPU=ON
-      -D BUILD_HIPRAND=OFF
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D CMAKE_INSTALL_PREFIX=${ROCRAND_DIR}
     - $SUDO_CMD cmake --build $CI_PROJECT_DIR/build_only_install --target install

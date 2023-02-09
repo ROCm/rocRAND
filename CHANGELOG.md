@@ -1,6 +1,11 @@
 # Change Log for rocRAND
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
+
+## (Unreleased) rocRAND-x.x.x for ROCm 6.0.0
+### Changed
+- Removed hipRAND submodule from rocRAND. hipRAND is now only available as a separate package.
+
 ## (Unreleased) rocRAND-2.10.17 for ROCm 5.5.0
 ### Added
 - MT19937 pseudo random number generator based on M. Matsumoto and T. Nishimura, 1998, Mersenne Twister: A 623-dimensionally equidistributed uniform pseudorandom number generator.

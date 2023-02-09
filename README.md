@@ -9,7 +9,7 @@ programming language and optimised for AMD's latest discrete GPUs. It is designe
 of AMD's Radeon Open Compute [ROCm](https://rocm.github.io/) runtime, but it also works on
 CUDA enabled GPUs.
 
-Prior to ROCm version 5.0, this project included the [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) wrapper. As of version 5.0, this has been split into a separate library.
+Prior to ROCm version 5.0, this project included the [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) wrapper. As of version 5.0, this has been split into a separate library. As of version 6.0, hipRAND can no longer be built from rocRAND.
 
 ## Supported Random Number Generators
 
@@ -104,8 +104,8 @@ cd rocRAND; mkdir build; cd build
 # or
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
-# To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required and BUILD_HIPRAND should be turned off
-[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_HIPRAND=OFF -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+# To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required
+[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
 # Build
 make -j4
@@ -231,10 +231,9 @@ cd rocRAND; cd build
 
 ## Wrappers
 
-* C++ wrappers for host API of rocRAND and hipRAND are in files [`rocrand.hpp`](./library/include/rocrand/rocrand.hpp)
-and [`hiprand.hpp`](./library/include/rocrand/hiprand.hpp).
+* C++ wrappers for host API of rocRAND are in [`rocrand.hpp`](./library/include/rocrand/rocrand.hpp).
 * [Fortran wrappers](./library/src/fortran/).
-* [Python wrappers](./python/): [rocRAND](./python/rocrand) and [hipRAND](./python/hiprand).
+* [Python wrappers](./python/): [rocRAND](./python/rocrand).
 
 ## Support
 
