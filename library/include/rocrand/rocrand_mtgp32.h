@@ -512,7 +512,7 @@ unsigned int rocrand(rocrand_state_mtgp32 * state)
  *
  * \code
  * __global__
- * void generate_kernel(rocrandStateMtgp32_t * states, unsigned int * output, const size_t size)
+ * void generate_kernel(rocrand_state_mtgp32 * states, unsigned int * output, const size_t size)
  * {
  *      const unsigned int state_id = blockIdx.x;
  *      unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
