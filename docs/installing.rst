@@ -61,7 +61,9 @@ For a more elaborate installation process, rocRAND can be built manually using C
     # Install
     [sudo] make install
 
-Where ``<compiler>`` can be set to ``hipcc`` to build for the ROCm platform, or to ``nvcc`` to build for CUDA. The following configuration options are available, in addition to the built-in CMake options:
+To build for the ROCm platform,``<compiler>`` should be set to ``hipcc``. When building for CUDA or HIP-CPU, ``<compiler>`` should be set to the host compiler. If building for CUDA, then the location of ``nvcc`` may need to be passed explicitly using ``-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`` if it is not on the path.
+
+The following configuration options are available, in addition to the built-in CMake options:
 
 * ``BUILD_FORTRAN_WRAPPER`` controls whether to build the Fortran wrapper. Defaults to ``OFF``.
 * ``BUILD_TEST`` controls whether to build the rocRAND tests. Defaults to ``OFF``.

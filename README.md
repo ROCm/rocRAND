@@ -98,11 +98,11 @@ cd rocRAND; mkdir build; cd build
 #
 [CXX=hipcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
 
-# To configure rocRAND for Nvidia platforms, 'CXX=<path-to-nvcc>', `CXX=nvcc` or omitting the flag
-# entirely before 'cmake' is sufficient
-[CXX=nvcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
-# or
+# To configure rocRAND for NVIDIA platforms, the CXX compiler must be set to a host compiler. The CUDA compiler can
+# be set explicitly using `-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`
 cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+# or
+[CXX=g++] cmake -DBUILD_BENCHMARK=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc ../. # or cmake-gui ../.
 
 # To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required
 [CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
