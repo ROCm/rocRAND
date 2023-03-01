@@ -71,6 +71,8 @@ The following configuration options are available, in addition to the built-in C
 * ``BUILD_ADDRESS_SANITIZER`` controls whether to build with address sanitization enabled. Defaults to ``OFF``.
 * ``USE_HIP_CPU`` is an experimental option that controls whether to build for HIP-CPU. Defaults to ``OFF``.
 
+To install rocRAND with a non-standard installation location of ROCm, pass ``-DCMAKE_PREFIX_PATH=</path/to/opt/rocm/>`` or set the environment variable ``ROCM_PATH`` to ``path/to/opt/rocm``.
+
 Building the Python API Wrapper
 -------------------------------
 

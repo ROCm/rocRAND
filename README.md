@@ -89,6 +89,7 @@ cd rocRAND; mkdir build; cd build
 
 # Configure rocRAND, setup options for your system
 # Build options: BUILD_TEST (off by default), BUILD_BENCHMARK (off by default), BUILD_SHARED_LIBS (on by default)
+# Additionally, the ROCm installation prefix should be passed using CMAKE_PREFIX_PATH or by setting the ROCM_PATH environment variable.
 #
 # ! IMPORTANT !
 # Set C++ compiler to HIP-clang. You can do it by adding 'CXX=<path-to-compiler>'
@@ -96,16 +97,16 @@ cd rocRAND; mkdir build; cd build
 #
 # The python interface do not work with static library.
 #
-[CXX=hipcc] cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+[CXX=hipcc] cmake -DBUILD_BENCHMARK=ON ../. -DCMAKE_PREFIX_PATH=/opt/rocm # or cmake-gui ../.
 
 # To configure rocRAND for NVIDIA platforms, the CXX compiler must be set to a host compiler. The CUDA compiler can
 # be set explicitly using `-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`
-cmake -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+cmake -DBUILD_BENCHMARK=ON ../. -DCMAKE_PREFIX_PATH=/opt/rocm # or cmake-gui ../.
 # or
-[CXX=g++] cmake -DBUILD_BENCHMARK=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc ../. # or cmake-gui ../.
+[CXX=g++] cmake -DBUILD_BENCHMARK=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_PREFIX_PATH=/opt/rocm ../. # or cmake-gui ../.
 
 # To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required
-[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_BENCHMARK=ON ../. # or cmake-gui ../.
+[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_BENCHMARK=ON -DCMAKE_PREFIX_PATH=/opt/rocm ../. # or cmake-gui ../.
 
 # Build
 make -j4
