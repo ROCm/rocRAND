@@ -100,10 +100,12 @@ cd rocRAND; mkdir build; cd build
 [CXX=hipcc] cmake -DBUILD_BENCHMARK=ON ../. -DCMAKE_PREFIX_PATH=/opt/rocm # or cmake-gui ../.
 
 # To configure rocRAND for NVIDIA platforms, the CXX compiler must be set to a host compiler. The CUDA compiler can
-# be set explicitly using `-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`
-cmake -DBUILD_BENCHMARK=ON ../. -DCMAKE_PREFIX_PATH=/opt/rocm # or cmake-gui ../.
+# be set explicitly using `-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`.
+# Additionally, the path to FindHIP.cmake should be passed via CMAKE_MODULE_PATH. By default, this is module is
+# installed in /opt/rocm/hip/cmake.
+cmake -DBUILD_BENCHMARK=ON ../. -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_MODULE_PATH=/opt/rocm/hip/cmake # or cmake-gui ../.
 # or
-[CXX=g++] cmake -DBUILD_BENCHMARK=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_PREFIX_PATH=/opt/rocm ../. # or cmake-gui ../.
+[CXX=g++] cmake -DBUILD_BENCHMARK=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_MODULE_PATH=/opt/rocm/hip/cmake ../. # or cmake-gui ../.
 
 # To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required
 [CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_BENCHMARK=ON -DCMAKE_PREFIX_PATH=/opt/rocm ../. # or cmake-gui ../.

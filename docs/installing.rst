@@ -61,7 +61,7 @@ For a more elaborate installation process, rocRAND can be built manually using C
     # Install
     [sudo] make install
 
-To build for the ROCm platform,``<compiler>`` should be set to ``hipcc``. When building for CUDA or HIP-CPU, ``<compiler>`` should be set to the host compiler. If building for CUDA, then the location of ``nvcc`` may need to be passed explicitly using ``-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`` if it is not on the path.
+To build for the ROCm platform,``<compiler>`` should be set to ``hipcc``. When building for CUDA or HIP-CPU, ``<compiler>`` should be set to the host compiler. If building for CUDA, then the location of ``nvcc`` may need to be passed explicitly using ``-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`` if it is not on the path. Additionally, the directory where FindHIP.cmake is installed needs to be passed explicitly using ``-DCMAKE_MODULE_PATH``. By default, this file is installed in ``/opt/rocm/hip/cmake``.
 
 The following configuration options are available, in addition to the built-in CMake options:
 
