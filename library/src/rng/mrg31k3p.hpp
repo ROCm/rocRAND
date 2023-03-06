@@ -167,6 +167,14 @@ public:
         }
     }
 
+    rocrand_mrg31k3p(const rocrand_mrg31k3p&) = delete;
+
+    rocrand_mrg31k3p(rocrand_mrg31k3p&&) = delete;
+
+    rocrand_mrg31k3p& operator=(const rocrand_mrg31k3p&&) = delete;
+
+    rocrand_mrg31k3p& operator=(rocrand_mrg31k3p&&) = delete;
+
     ~rocrand_mrg31k3p()
     {
         hipFree(m_engines);
