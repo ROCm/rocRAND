@@ -134,6 +134,11 @@ struct runner
         HIP_CHECK(hipDeviceSynchronize());
     }
 
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
+
     ~runner()
     {
         HIP_CHECK(hipFree(states));
@@ -209,6 +214,11 @@ struct runner<rocrand_state_mtgp32>
         ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, states_size, seed));
     }
 
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
+
     ~runner()
     {
         HIP_CHECK(hipFree(states));
@@ -270,6 +280,11 @@ struct runner<rocrand_state_lfsr113>
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
     }
+
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
 
     ~runner()
     {
@@ -393,6 +408,11 @@ struct runner<rocrand_state_sobol32>
         HIP_CHECK(hipFree(directions));
     }
 
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
+
     ~runner()
     {
         HIP_CHECK(hipFree(states));
@@ -476,6 +496,11 @@ struct runner<rocrand_state_scrambled_sobol32>
         HIP_CHECK(hipFree(scramble_constants));
     }
 
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
+
     ~runner()
     {
         HIP_CHECK(hipFree(states));
@@ -545,6 +570,11 @@ struct runner<rocrand_state_sobol64>
 
         HIP_CHECK(hipFree(directions));
     }
+
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
 
     ~runner()
     {
@@ -627,6 +657,11 @@ struct runner<rocrand_state_scrambled_sobol64>
         HIP_CHECK(hipFree(directions));
         HIP_CHECK(hipFree(scramble_constants));
     }
+
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
 
     ~runner()
     {
