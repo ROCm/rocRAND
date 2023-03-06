@@ -9,6 +9,8 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 - ThreeFry pseudorandom number generator based on Salmon et al., 2011, "Parallel random numbers: as easy as 1, 2, 3".
 ### Changed
 - Python 2.7 is no longer officially supported.
+### Fixed
+- Windows HIP SDK support
 
 ## rocRAND-2.10.16 for ROCm 5.4.0
 ### Added
