@@ -177,7 +177,7 @@ public:
 
     ~rocrand_mrg31k3p()
     {
-        hipFree(m_engines);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
     void reset()

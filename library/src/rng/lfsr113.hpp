@@ -170,7 +170,7 @@ public:
 
     ~rocrand_lfsr113()
     {
-        hipFree(m_engines);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
     void set_seed(unsigned long long seed)

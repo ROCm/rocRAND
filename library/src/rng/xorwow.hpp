@@ -176,7 +176,7 @@ public:
 
     ~rocrand_xorwow()
     {
-        hipFree(m_engines);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
     /// Changes seed to \p seed and resets generator state.

@@ -213,7 +213,7 @@ public:
 
     ~rocrand_mtgp32()
     {
-        hipFree(m_engines);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
     void reset()

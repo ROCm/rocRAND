@@ -183,7 +183,7 @@ public:
 
     ~rocrand_sobol64()
     {
-        hipFree(m_direction_vectors);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
     }
 
     void reset()
