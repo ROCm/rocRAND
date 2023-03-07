@@ -1826,7 +1826,7 @@ public:
     ///
     /// See also: rocrand_create_generator()
     lfsr113_engine(seed_type  seed_value = {DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW},
-                   order_type order_value = ROCRAND_ORDERING_QUASI_DEFAULT)
+                   order_type order_value = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -3537,6 +3537,14 @@ public:
             throw rocrand_cpp::error(status);
     }
 
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
     /// \copydoc philox4x32_10_engine::offset()
     void offset(offset_type value)
     {
@@ -3614,9 +3622,9 @@ typedef philox4x32_10_engine<> philox4x32_10;
 /// \typedef xorwow
 /// \brief Typedef of \p rocrand_cpp::xorwow_engine PRNG engine with default seed (#ROCRAND_XORWOW_DEFAULT_SEED).
 typedef xorwow_engine<> xorwow;
-/// \typedef mrg31k3a
+/// \typedef mrg31k3p
 /// \brief Typedef of \p rocrand_cpp::mrg31k3p_engine PRNG engine with default seed (#ROCRAND_MRG31K3P_DEFAULT_SEED).
-typedef mrg31k3p_engine<> mrg31k3a;
+typedef mrg31k3p_engine<> mrg31k3p;
 /// \typedef mrg32k3a
 /// \brief Typedef of \p rocrand_cpp::mrg32k3a_engine PRNG engine with default seed (#ROCRAND_MRG32K3A_DEFAULT_SEED).
 typedef mrg32k3a_engine<> mrg32k3a;
