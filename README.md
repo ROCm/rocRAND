@@ -30,6 +30,18 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 
 Information about the library API and other user topics can be found in the [rocRAND documentation](https://rocrand.readthedocs.io/en/latest).
 
+### How to build documentation
+
+Run the steps below to build documentation locally.
+
+```
+cd docs
+
+pip3 install -r .sphinx/requirements.txt
+
+python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+```
+
 ## Requirements
 
 * CMake (3.16 or later)
