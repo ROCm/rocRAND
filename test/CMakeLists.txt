@@ -106,6 +106,12 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
+    string(FIND ${test_name} "kernel" IS_KERNEL_TEST)
+    string(FIND ${test_name} "generate" IS_GENERATE_TEST)
+    if((${IS_KERNEL_TEST} EQUAL -1) AND (${IS_GENERATE_TEST} EQUAL -1))
+        # Tests covering internal APIs are C++17
+        set_target_properties(${test_name} PROPERTIES CXX_STANDARD 17)
+    endif()
     add_relative_test(${test_name} ${test_name})
     rocm_install(TARGETS ${test_name} COMPONENT tests)
     if (WIN32 AND NOT DEFINED DLLS_COPIED_TESTS)
