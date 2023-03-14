@@ -340,8 +340,8 @@ TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
     const size_t size1 = (size + offset) * dimensions;
     unsigned int * data0;
     unsigned int * data1;
-    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
-    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1));
 
     rocrand_sobol64 g0;
     g0.set_offset(offset);
@@ -354,9 +354,11 @@ TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
 
     std::vector<unsigned int> host_data0(size0);
     std::vector<unsigned int> host_data1(size1);
-    hipMemcpy(host_data0.data(), data0, sizeof(unsigned int) * size0, hipMemcpyDeviceToHost);
-    hipMemcpy(host_data1.data(), data1, sizeof(unsigned int) * size1, hipMemcpyDeviceToHost);
-    hipDeviceSynchronize();
+    HIP_CHECK(
+        hipMemcpy(host_data0.data(), data0, sizeof(unsigned int) * size0, hipMemcpyDeviceToHost));
+    HIP_CHECK(
+        hipMemcpy(host_data1.data(), data1, sizeof(unsigned int) * size1, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
 
     for(unsigned int d = 0; d < dimensions; d++)
     {
@@ -369,8 +371,8 @@ TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
         }
     }
 
-    hipFree(data0);
-    hipFree(data1);
+    HIP_CHECK(hipFree(data0));
+    HIP_CHECK(hipFree(data1));
 }
 
 const unsigned int dimensions[] = { 1, 2, 10, 321 };
@@ -400,8 +402,8 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
 
     unsigned int * data0;
     unsigned int * data1;
-    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
-    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1));
 
     rocrand_sobol64 g0;
     rocrand_sobol64 g1;
@@ -419,10 +421,10 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
         g0.generate(data0, s * dimensions);
         for(unsigned int d = 0; d < dimensions; d++)
         {
-            hipMemcpy(
-                host_data0.data() + s0 * d + current0,
-                data0 + d * s,
-                sizeof(unsigned int) * s, hipMemcpyDefault);
+            HIP_CHECK(hipMemcpy(host_data0.data() + s0 * d + current0,
+                                data0 + d * s,
+                                sizeof(unsigned int) * s,
+                                hipMemcpyDefault));
         }
         current0 += s;
     }
@@ -432,10 +434,10 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
         g1.generate(data1, s * dimensions);
         for(unsigned int d = 0; d < dimensions; d++)
         {
-            hipMemcpy(
-                host_data1.data() + s1 * d + current1,
-                data1 + d * s,
-                sizeof(unsigned int) * s, hipMemcpyDefault);
+            HIP_CHECK(hipMemcpy(host_data1.data() + s1 * d + current1,
+                                data1 + d * s,
+                                sizeof(unsigned int) * s,
+                                hipMemcpyDefault));
         }
         current1 += s;
     }
@@ -451,8 +453,8 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
         }
     }
 
-    hipFree(data0);
-    hipFree(data1);
+    HIP_CHECK(hipFree(data0));
+    HIP_CHECK(hipFree(data1));
 }
 
 const unsigned int continuity_test_dimensions[] = { 1, 2, 10, 21 };

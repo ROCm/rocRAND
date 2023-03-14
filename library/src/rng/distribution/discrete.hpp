@@ -98,15 +98,15 @@ public:
         {
             if (probability != NULL)
             {
-                hipFree(probability);
+                (void)hipFree(probability);
             }
             if (alias != NULL)
             {
-                hipFree(alias);
+                (void)hipFree(alias);
             }
             if (cdf != NULL)
             {
-                hipFree(cdf);
+                (void)hipFree(cdf);
             }
         }
         probability = NULL;

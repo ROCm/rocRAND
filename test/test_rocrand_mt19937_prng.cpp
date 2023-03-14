@@ -61,7 +61,7 @@ TEST(rocrand_mt19937_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -88,7 +88,7 @@ TEST(rocrand_mt19937_prng_tests, normal_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));

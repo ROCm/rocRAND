@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ TEST(rocrand_lfsr113_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     rocrand_lfsr113 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -86,7 +86,7 @@ TEST(rocrand_lfsr113_prng_tests, normal_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     rocrand_lfsr113 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));

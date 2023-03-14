@@ -394,10 +394,11 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
         }
     }
 
-    hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
+    const hipError_t error
+        = hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
     free(h_state);
 
-    if (hipGetLastError() != hipSuccess)
+    if(error != hipSuccess || hipGetLastError() != hipSuccess)
         return ROCRAND_STATUS_ALLOCATION_FAILED;
 
     return ROCRAND_STATUS_SUCCESS;
