@@ -12,6 +12,7 @@ Documentation for rocRAND is available at
   errors)
   * These types should be moved instead of copied; move constructors and operators are now
     defined
+* Switched to the C++17 standard internally.
 
 ### Optimizations
 
