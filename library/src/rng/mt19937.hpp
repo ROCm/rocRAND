@@ -895,7 +895,7 @@ public:
         err = hipFree(d_mt19937_jump);
         if(err != hipSuccess)
         {
-            hipFree(d_engines);
+            (void)hipFree(d_engines);
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
@@ -910,7 +910,7 @@ public:
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
         {
-            hipFree(d_engines);
+            (void)hipFree(d_engines);
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -363,8 +363,8 @@ TYPED_TEST(rocrand_threefry_prng_offset, offsets_test)
         const size_t size1 = (size + offset);
         T*           data0;
         T*           data1;
-        hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
-        hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
 
         rocrand_threefry2x64_20 g0;
         g0.set_offset(offset);
@@ -375,17 +375,17 @@ TYPED_TEST(rocrand_threefry_prng_offset, offsets_test)
 
         std::vector<T> host_data0(size0);
         std::vector<T> host_data1(size1);
-        hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost);
-        hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost);
-        hipDeviceSynchronize();
+        HIP_CHECK(hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
 
         for(size_t i = 0; i < size; ++i)
         {
             ASSERT_EQ(host_data0[i], host_data1[i + offset]);
         }
 
-        hipFree(data0);
-        hipFree(data1);
+        HIP_CHECK(hipFree(data0));
+        HIP_CHECK(hipFree(data1));
     }
 }
 
@@ -409,8 +409,8 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
 
     T* data0;
     T* data1;
-    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
-    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
 
     rocrand_threefry2x64_20 g0;
     rocrand_threefry2x64_20 g1;
@@ -422,14 +422,14 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
     for(size_t s : sizes0)
     {
         generate_func(g0, data0, s);
-        hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault);
+        HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
         current0 += s;
     }
     size_t current1 = 0;
     for(size_t s : sizes1)
     {
         generate_func(g1, data1, s);
-        hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault);
+        HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
         current1 += s;
     }
 
@@ -438,8 +438,8 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
         ASSERT_EQ(host_data0[i], host_data1[i]);
     }
 
-    hipFree(data0);
-    hipFree(data1);
+    HIP_CHECK(hipFree(data0));
+    HIP_CHECK(hipFree(data1));
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_char_test)
