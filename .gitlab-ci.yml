@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,20 @@ clang-format:
     - cd $CI_PROJECT_DIR
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - scripts/code-format/check-format.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA --binary "$CLANG_FORMAT"
+
+copyright-date:
+  extends:
+    - .deps:rocm
+  stage: lint
+  needs: []
+  tags:
+    - rocm-build
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - cd $CI_PROJECT_DIR
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - scripts/copyright-date/check-copyright.sh -v -d $CI_MERGE_REQUEST_DIFF_BASE_SHA
 
 .rocm:cmake-minimum:
   variables:
