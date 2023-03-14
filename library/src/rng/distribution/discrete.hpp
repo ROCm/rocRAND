@@ -98,15 +98,15 @@ public:
         {
             if (probability != NULL)
             {
-                (void)hipFree(probability);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(probability));
             }
             if (alias != NULL)
             {
-                (void)hipFree(alias);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(alias));
             }
             if (cdf != NULL)
             {
-                (void)hipFree(cdf);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(cdf));
             }
         }
         probability = NULL;
