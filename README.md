@@ -49,7 +49,8 @@ python3 -m http.server
 ## Requirements
 
 * CMake (3.16 or later)
-* C++ compiler with C++11 support
+* C++ compiler with C++17 support to build the library.
+* C++ compiler with C++11 support to consume the library.
 * For AMD platforms:
   * [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) (1.7 or later)
   * [HIP-clang](https://github.com/ROCm/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
