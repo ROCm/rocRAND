@@ -10,14 +10,6 @@
 build/
 build_package_test/
 
-### docs dir ###
-docs/html/
-docs/xml/
-docs/*.tag
-docs/api/
-docs/_build/
-docs/docBin/
-
 ### C++ ###
 # Compiled Object files
 *.slo
