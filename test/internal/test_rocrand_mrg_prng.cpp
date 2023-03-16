@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -145,7 +145,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -170,7 +170,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_double_test)
 {
     const size_t size = 1313;
     double*      data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(double) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -195,7 +195,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_float_range_test)
 {
     const size_t size = 1 << 26;
     float*       data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -219,7 +219,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_double_range_test)
 {
     const size_t size = 1 << 26;
     double*      data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(double) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -243,7 +243,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, normal_float_test)
 {
     const size_t size = 1314;
     float*       data;
-    hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
+    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
     typename TestFixture::mrg_type g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
@@ -566,8 +566,8 @@ TYPED_TEST(rocrand_mrg_prng_offset, offsets_test)
         const size_t size1 = (size + offset);
         T*           data0;
         T*           data1;
-        hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
-        hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
 
         mrg_type g0;
         g0.set_offset(offset);
@@ -578,17 +578,17 @@ TYPED_TEST(rocrand_mrg_prng_offset, offsets_test)
 
         std::vector<T> host_data0(size0);
         std::vector<T> host_data1(size1);
-        hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost);
-        hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost);
-        hipDeviceSynchronize();
+        HIP_CHECK(hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
 
         for(size_t i = 0; i < size; ++i)
         {
             ASSERT_EQ(host_data0[i], host_data1[i + offset]);
         }
 
-        hipFree(data0);
-        hipFree(data1);
+        HIP_CHECK(hipFree(data0));
+        HIP_CHECK(hipFree(data1));
     }
 }
 
@@ -612,8 +612,8 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
 
     T* data0;
     T* data1;
-    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
-    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
 
     GeneratorType g0;
     GeneratorType g1;
@@ -625,14 +625,14 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
     for(size_t s : sizes0)
     {
         generate_func(g0, data0, s);
-        hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault);
+        HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
         current0 += s;
     }
     size_t current1 = 0;
     for(size_t s : sizes1)
     {
         generate_func(g1, data1, s);
-        hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault);
+        HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
         current1 += s;
     }
 
@@ -641,8 +641,8 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
         ASSERT_EQ(host_data0[i], host_data1[i]);
     }
 
-    hipFree(data0);
-    hipFree(data1);
+    HIP_CHECK(hipFree(data0));
+    HIP_CHECK(hipFree(data1));
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_uint_test)

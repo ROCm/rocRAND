@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,20 +35,20 @@
 // Assert that the kernel arguments are trivially copyable and destructible.
 TEST(rocrand_threefry_prng_tests, type)
 {
-    typedef ::rocrand_host::detail::threefry4x64_20_device_engine engine_type;
-    // TODO: Enable once ulonglong4 is trivially copyable.
+    typedef ::rocrand_host::detail::threefry2x64_20_device_engine engine_type;
+    // TODO: Enable once ulonglong2 is trivially copyable.
     // EXPECT_TRUE(std::is_trivially_copyable<engine_type>::value);
     EXPECT_TRUE(std::is_trivially_destructible<engine_type>::value);
 }
 
-TEST(rocrand_threefry_prng_tests, uniform_uint_test)
+TEST(rocrand_threefry_prng_tests, uniform_ulonglong_test)
 {
     const size_t        size = 1313;
     unsigned long long* data;
     HIP_CHECK(
         hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * (size + 1)));
 
-    rocrand_threefry4x64_20 g;
+    rocrand_threefry2x64_20 g;
     ROCRAND_CHECK(g.generate(data + 1, size));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -73,7 +73,7 @@ TEST(rocrand_threefry_prng_tests, uniform_float_test)
     float*       data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
-    rocrand_threefry4x64_20 g;
+    rocrand_threefry2x64_20 g;
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -104,7 +104,7 @@ TEST(rocrand_threefry_prng_tests, state_progress_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * size));
 
     // Generator
-    rocrand_threefry4x64_20 g0;
+    rocrand_threefry2x64_20 g0;
 
     // Generate using g0 and copy to host
     ROCRAND_CHECK(g0.generate(data, size));
@@ -148,7 +148,7 @@ TEST(rocrand_threefry_prng_tests, same_seed_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * size));
 
     // Generators
-    rocrand_threefry4x64_20 g0, g1;
+    rocrand_threefry2x64_20 g0, g1;
     // Set same seeds
     g0.set_seed(seed);
     g1.set_seed(seed);
@@ -193,7 +193,7 @@ TEST(rocrand_threefry_prng_tests, different_seed_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * size));
 
     // Generators
-    rocrand_threefry4x64_20 g0, g1;
+    rocrand_threefry2x64_20 g0, g1;
     // Set different seeds
     g0.set_seed(seed0);
     g1.set_seed(seed1);
@@ -234,10 +234,10 @@ TEST(rocrand_threefry_prng_tests, different_seed_test)
 ///
 
 // Just get access to internal state
-class rocrand_threefry4x64_engine_type_test : public rocrand_threefry4x64_20::engine_type
+class rocrand_threefry2x64_engine_type_test : public rocrand_threefry2x64_20::engine_type
 {
 public:
-    __host__ rocrand_threefry4x64_engine_type_test() : rocrand_threefry4x64_20::engine_type(0, 0, 0)
+    __host__ rocrand_threefry2x64_engine_type_test() : rocrand_threefry2x64_20::engine_type(0, 0, 0)
     {}
 
     __host__ state_type& internal_state_ref()
@@ -248,185 +248,93 @@ public:
 
 TEST(rocrand_threefry_prng_state_tests, seed_test)
 {
-    rocrand_threefry4x64_engine_type_test              engine;
-    rocrand_threefry4x64_engine_type_test::state_type& state = engine.internal_state_ref();
+    rocrand_threefry2x64_engine_type_test              engine;
+    rocrand_threefry2x64_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
-    EXPECT_EQ(state.substate, 0U);
 
-    engine.discard(1 * 4ULL);
+    engine.discard(1 * 2ULL);
     EXPECT_EQ(state.counter.x, 1ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
-    EXPECT_EQ(state.substate, 0U);
 
-    engine.seed(3331, 0, 5 * 4ULL);
+    engine.seed(3331, 0, 5 * 2ULL);
     EXPECT_EQ(state.counter.x, 5ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
-    EXPECT_EQ(state.substate, 0U);
 }
 
 // Check if the threefry state counter is calculated correctly during
 // random number generation.
 TEST(rocrand_threefry_prng_state_tests, discard_test)
 {
-    rocrand_threefry4x64_engine_type_test              engine;
-    rocrand_threefry4x64_engine_type_test::state_type& state = engine.internal_state_ref();
+    rocrand_threefry2x64_engine_type_test              engine;
+    rocrand_threefry2x64_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
     EXPECT_EQ(state.substate, 0ULL);
 
-    engine.discard(ULLONG_MAX);
-    engine.discard(ULLONG_MAX);
     engine.discard(ULLONG_MAX);
     engine.discard(ULLONG_MAX);
     EXPECT_EQ(state.counter.x, ULLONG_MAX);
     EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
     EXPECT_EQ(state.substate, 0ULL);
 
-    engine.discard(ULLONG_MAX);
-    engine.discard(ULLONG_MAX);
-    engine.discard(ULLONG_MAX);
-    engine.discard(ULLONG_MAX);
-    EXPECT_EQ(state.counter.x, ULLONG_MAX - 1ULL);
+    engine.discard(ULLONG_MAX - 1ULL);
+    engine.discard(ULLONG_MAX - 1ULL);
+    EXPECT_EQ(state.counter.x, ULLONG_MAX - 2ULL);
     EXPECT_EQ(state.counter.y, 1ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
     EXPECT_EQ(state.substate, 0ULL);
 
-    engine.discard(2 * 4ULL);
+    engine.discard(3 * 2ULL);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 2ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
     EXPECT_EQ(state.substate, 0ULL);
 
-    state.counter.x = ULLONG_MAX;
-    state.counter.y = ULLONG_MAX;
-    state.counter.z = ULLONG_MAX;
-    state.counter.w = 0ULL;
-    state.substate  = 0ULL;
-    engine.discard(1 * 4ULL);
-    EXPECT_EQ(state.counter.x, 0ULL);
-    EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 1ULL);
-    EXPECT_EQ(state.substate, 0ULL);
-
-    state.counter.x = ULLONG_MAX;
-    state.counter.y = ULLONG_MAX;
-    state.counter.z = ULLONG_MAX;
-    state.counter.w = 0ULL;
-    state.substate  = 0ULL;
-    engine.discard(1 * 4ULL);
-    EXPECT_EQ(state.counter.x, 0ULL);
-    EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 1ULL);
-    EXPECT_EQ(state.substate, 0ULL);
-
-    state.counter.x = 123ULL;
-    state.counter.y = 456ULL;
-    state.counter.z = 789ULL;
-    state.counter.w = 999ULL;
-    state.substate  = 0ULL;
-    engine.discard(1 * 4ULL);
+    state.counter.x = 123;
+    state.counter.y = 456;
+    state.substate  = 0;
+    engine.discard(1 * 2ULL);
     EXPECT_EQ(state.counter.x, 124ULL);
     EXPECT_EQ(state.counter.y, 456ULL);
-    EXPECT_EQ(state.counter.z, 789ULL);
-    EXPECT_EQ(state.counter.w, 999ULL);
     EXPECT_EQ(state.substate, 0ULL);
 
-    state.counter.x = 123ULL;
-    state.counter.y = 0ULL;
-    state.counter.z = 0ULL;
-    state.counter.w = 0ULL;
-    state.substate  = 0ULL;
-    engine.discard(1 * 4ULL);
+    state.counter.x = 123;
+    state.counter.y = 0;
+    state.substate  = 0;
+    engine.discard(1 * 2ULL);
     EXPECT_EQ(state.counter.x, 124ULL);
     EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 0ULL);
     EXPECT_EQ(state.substate, 0ULL);
 
     state.counter.x = ULLONG_MAX - 1;
-    state.counter.y = 2ULL;
-    state.counter.z = 3ULL;
-    state.counter.w = 4ULL;
-    state.substate  = 0ULL;
+    state.counter.y = 2;
+    state.substate  = 0;
+    engine.discard(2ULL);
     engine.discard(ULLONG_MAX);
     engine.discard(ULLONG_MAX);
-    engine.discard(ULLONG_MAX);
-    engine.discard(ULLONG_MAX);
-    engine.discard(12ULL);
+    engine.discard(4ULL);
     EXPECT_EQ(state.counter.x, 0ULL);
     EXPECT_EQ(state.counter.y, 4ULL);
-    EXPECT_EQ(state.counter.z, 3ULL);
-    EXPECT_EQ(state.counter.w, 4ULL);
     EXPECT_EQ(state.substate, 0ULL);
 }
 
 TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
 {
-    rocrand_threefry4x64_engine_type_test              engine;
-    rocrand_threefry4x64_engine_type_test::state_type& state = engine.internal_state_ref();
+    rocrand_threefry2x64_engine_type_test              engine;
+    rocrand_threefry2x64_engine_type_test::state_type& state = engine.internal_state_ref();
 
     engine.discard_subsequence(ULLONG_MAX);
     EXPECT_EQ(state.counter.x, 0ULL);
-    EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, ULLONG_MAX);
-    EXPECT_EQ(state.counter.w, 0ULL);
+    EXPECT_EQ(state.counter.y, ULLONG_MAX);
     EXPECT_EQ(state.substate, 0U);
 
-    engine.discard_subsequence(ULLONG_MAX);
-    EXPECT_EQ(state.counter.x, 0ULL);
-    EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, ULLONG_MAX - 1);
-    EXPECT_EQ(state.counter.w, 1ULL);
-    EXPECT_EQ(state.substate, 0U);
-
-    engine.discard_subsequence(2);
-    EXPECT_EQ(state.counter.x, 0ULL);
-    EXPECT_EQ(state.counter.y, 0ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 2ULL);
-    EXPECT_EQ(state.substate, 0U);
-
-    state.counter.x = 123ULL;
-    state.counter.y = 456ULL;
-    state.counter.z = 789ULL;
-    state.counter.w = 999ULL;
-    state.substate  = 0U;
+    state.counter.x = 123;
+    state.counter.y = 456;
+    state.substate  = 0;
     engine.discard_subsequence(1);
     EXPECT_EQ(state.counter.x, 123ULL);
-    EXPECT_EQ(state.counter.y, 456ULL);
-    EXPECT_EQ(state.counter.z, 790ULL);
-    EXPECT_EQ(state.counter.w, 999ULL);
-    EXPECT_EQ(state.substate, 0U);
-
-    state.counter.x = 1ULL;
-    state.counter.y = 2ULL;
-    state.counter.z = ULLONG_MAX - 1;
-    state.counter.w = 4ULL;
-    state.substate  = 0U;
-    engine.discard_subsequence(2);
-    engine.discard_subsequence(ULLONG_MAX);
-    engine.discard_subsequence(1);
-    EXPECT_EQ(state.counter.x, 1ULL);
-    EXPECT_EQ(state.counter.y, 2ULL);
-    EXPECT_EQ(state.counter.z, 0ULL);
-    EXPECT_EQ(state.counter.w, 6ULL);
+    EXPECT_EQ(state.counter.y, 457ULL);
     EXPECT_EQ(state.substate, 0U);
 }
 
@@ -455,29 +363,29 @@ TYPED_TEST(rocrand_threefry_prng_offset, offsets_test)
         const size_t size1 = (size + offset);
         T*           data0;
         T*           data1;
-        hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
-        hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
 
-        rocrand_threefry4x64_20 g0;
+        rocrand_threefry2x64_20 g0;
         g0.set_offset(offset);
         g0.generate(data0, size0);
 
-        rocrand_threefry4x64_20 g1;
+        rocrand_threefry2x64_20 g1;
         g1.generate(data1, size1);
 
         std::vector<T> host_data0(size0);
         std::vector<T> host_data1(size1);
-        hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost);
-        hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost);
-        hipDeviceSynchronize();
+        HIP_CHECK(hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
 
         for(size_t i = 0; i < size; ++i)
         {
             ASSERT_EQ(host_data0[i], host_data1[i + offset]);
         }
 
-        hipFree(data0);
-        hipFree(data1);
+        HIP_CHECK(hipFree(data0));
+        HIP_CHECK(hipFree(data1));
     }
 }
 
@@ -501,11 +409,11 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
 
     T* data0;
     T* data1;
-    hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0);
-    hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1);
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
 
-    rocrand_threefry4x64_20 g0;
-    rocrand_threefry4x64_20 g1;
+    rocrand_threefry2x64_20 g0;
+    rocrand_threefry2x64_20 g1;
 
     std::vector<T> host_data0(size0);
     std::vector<T> host_data1(size1);
@@ -514,14 +422,14 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
     for(size_t s : sizes0)
     {
         generate_func(g0, data0, s);
-        hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault);
+        HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
         current0 += s;
     }
     size_t current1 = 0;
     for(size_t s : sizes1)
     {
         generate_func(g1, data1, s);
-        hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault);
+        HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
         current1 += s;
     }
 
@@ -530,15 +438,15 @@ void continuity_test(GenerateFunc generate_func, unsigned long long divisor = 1)
         ASSERT_EQ(host_data0[i], host_data1[i]);
     }
 
-    hipFree(data0);
-    hipFree(data1);
+    HIP_CHECK(hipFree(data0));
+    HIP_CHECK(hipFree(data1));
 }
 
 TEST(rocrand_threefry_prng_tests, continuity_uniform_char_test)
 {
     typedef unsigned char output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
         uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
@@ -546,7 +454,7 @@ TEST(rocrand_threefry_prng_tests, continuity_uniform_uint_test)
 {
     typedef unsigned int output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
         uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
@@ -554,7 +462,7 @@ TEST(rocrand_threefry_prng_tests, continuity_uniform_ullong_test)
 {
     typedef unsigned long long int output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
         uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
@@ -562,7 +470,7 @@ TEST(rocrand_threefry_prng_tests, continuity_uniform_float_test)
 {
     typedef float output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
         uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
@@ -570,7 +478,7 @@ TEST(rocrand_threefry_prng_tests, continuity_uniform_double_test)
 {
     typedef double output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s) { g.generate(data, s); },
         uniform_distribution<output_type, unsigned long long int>::output_width);
 }
 
@@ -578,7 +486,7 @@ TEST(rocrand_threefry_prng_tests, continuity_normal_float_test)
 {
     typedef float output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s)
         { g.generate_normal(data, s, 0.f, 1.f); },
         normal_distribution<output_type, unsigned long long int>::output_width);
 }
@@ -587,7 +495,7 @@ TEST(rocrand_threefry_prng_tests, continuity_normal_double_test)
 {
     typedef double output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s)
         { g.generate_normal(data, s, 0., 1.); },
         normal_distribution<output_type, unsigned long long int>::output_width);
 }
@@ -596,7 +504,7 @@ TEST(rocrand_threefry_prng_tests, continuity_log_normal_float_test)
 {
     typedef float output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s)
         { g.generate_log_normal(data, s, 0.f, 1.f); },
         normal_distribution<output_type, unsigned long long int>::output_width);
 }
@@ -605,7 +513,7 @@ TEST(rocrand_threefry_prng_tests, continuity_log_normal_double_test)
 {
     typedef double output_type;
     continuity_test<output_type>(
-        [](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+        [](rocrand_threefry2x64_20& g, output_type* data, size_t s)
         { g.generate_log_normal(data, s, 0., 1.); },
         normal_distribution<output_type, unsigned long long int>::output_width);
 }
@@ -613,7 +521,7 @@ TEST(rocrand_threefry_prng_tests, continuity_log_normal_double_test)
 TEST(rocrand_threefry_prng_tests, continuity_poisson_test)
 {
     typedef unsigned int output_type;
-    continuity_test<output_type>([](rocrand_threefry4x64_20& g, output_type* data, size_t s)
+    continuity_test<output_type>([](rocrand_threefry2x64_20& g, output_type* data, size_t s)
                                  { g.generate_poisson(data, s, 100.); },
                                  rocrand_poisson_distribution<>::output_width);
 }

@@ -169,6 +169,7 @@ copyright-date:
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
       -D GPU_TARGETS=${GPU_TARGETS}
+      -D DISABLE_WERROR=OFF
     - cmake --build $CI_PROJECT_DIR/build
     - cmake --build $CI_PROJECT_DIR/build --target package
 
