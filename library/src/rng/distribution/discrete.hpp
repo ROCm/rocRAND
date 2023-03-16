@@ -27,6 +27,7 @@
 
 #include <rocrand/rocrand.h>
 
+#include "../common.hpp"
 #include "device_distributions.hpp"
 
 // Alias method

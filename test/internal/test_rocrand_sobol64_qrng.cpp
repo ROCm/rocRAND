@@ -88,7 +88,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint64_test)
 TEST(rocrand_sobol64_qrng_tests, uniform_double_test)
 {
     constexpr size_t size = 1313;
-    double * data;
+    double*          data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
@@ -114,8 +114,8 @@ TEST(rocrand_sobol64_qrng_tests, uniform_double_test)
 
 TEST(rocrand_sobol64_qrng_tests, uniform_uint_test)
 {
-    const size_t size = 1313;
-    unsigned int * data;
+    const size_t  size = 1313;
+    unsigned int* data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     rocrand_sobol64 g;
@@ -140,7 +140,7 @@ TEST(rocrand_sobol64_qrng_tests, uniform_uint_test)
 TEST(rocrand_sobol64_qrng_tests, normal_double_test)
 {
     const size_t size = 1313;
-    double * data;
+    double*      data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
@@ -173,9 +173,9 @@ TEST(rocrand_sobol64_qrng_tests, normal_double_test)
 
 TEST(rocrand_sobol64_qrng_tests, poisson_test)
 {
-    using T = unsigned int;
+    using T               = unsigned int;
     constexpr size_t size = 1313;
-    T * data;
+    T*               data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * size));
 
     rocrand_sobol64 g;
@@ -210,7 +210,7 @@ TEST(rocrand_sobol64_qrng_tests, poisson_test)
 TEST(rocrand_sobol64_qrng_tests, dimesions_test)
 {
     const size_t size = 12345;
-    double * data;
+    double*      data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(double) * size));
 
     rocrand_sobol64 g;
@@ -232,8 +232,8 @@ TEST(rocrand_sobol64_qrng_tests, dimesions_test)
 TEST(rocrand_sobol64_qrng_tests, state_progress_test)
 {
     // Device data
-    const size_t size = 1025;
-    unsigned int * data;
+    const size_t  size = 1025;
+    unsigned int* data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
@@ -258,7 +258,8 @@ TEST(rocrand_sobol64_qrng_tests, state_progress_test)
     size_t same = 0;
     for(size_t i = 0; i < size; i++)
     {
-        if(host_data1[i] == host_data2[i]) same++;
+        if(host_data1[i] == host_data2[i])
+            same++;
     }
     // It may happen that numbers are the same, so we
     // just make sure that most of them are different.
@@ -286,14 +287,11 @@ TEST(rocrand_sobol64_qrng_tests, discard_test)
     EXPECT_EQ(engine1(), engine2());
     EXPECT_EQ(engine1(), engine2());
 
-    const unsigned int ds[] = {
-        0, 1, 4, 37, 583, 7452,
-        21032, 35678, 66778, 10313475, 82120230
-    };
+    const unsigned int ds[] = {0, 1, 4, 37, 583, 7452, 21032, 35678, 66778, 10313475, 82120230};
 
-    for (auto d : ds)
+    for(auto d : ds)
     {
-        for (unsigned int i = 0; i < d; i++)
+        for(unsigned int i = 0; i < d; i++)
         {
             engine1.discard();
         }
@@ -313,11 +311,9 @@ TEST(rocrand_sobol64_qrng_tests, discard_stride_test)
 
     EXPECT_EQ(engine1(), engine2());
 
-    const unsigned int ds[] = {
-        1, 10, 12, 20, 4, 5, 30
-    };
+    const unsigned int ds[] = {1, 10, 12, 20, 4, 5, 30};
 
-    for (auto d : ds)
+    for(auto d : ds)
     {
         engine1.discard(1 << d);
         engine2.discard_stride(1 << d);
@@ -327,19 +323,20 @@ TEST(rocrand_sobol64_qrng_tests, discard_stride_test)
 }
 
 class rocrand_sobol64_qrng_offset
-    : public ::testing::TestWithParam<std::tuple<unsigned int, unsigned long long>> { };
+    : public ::testing::TestWithParam<std::tuple<unsigned int, unsigned long long>>
+{};
 
 TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
 {
-    const unsigned int dimensions = std::get<0>(GetParam());
-    const unsigned long long offset = std::get<1>(GetParam());
+    const unsigned int       dimensions = std::get<0>(GetParam());
+    const unsigned long long offset     = std::get<1>(GetParam());
 
     const size_t size = 1313;
 
-    const size_t size0 = size * dimensions;
-    const size_t size1 = (size + offset) * dimensions;
-    unsigned int * data0;
-    unsigned int * data1;
+    const size_t  size0 = size * dimensions;
+    const size_t  size1 = (size + offset) * dimensions;
+    unsigned int* data0;
+    unsigned int* data1;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0));
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1));
 
@@ -364,10 +361,7 @@ TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
     {
         for(size_t i = 0; i < size; i++)
         {
-            ASSERT_EQ(
-                host_data0[d * size + i],
-                host_data1[d * (size + offset) + i + offset]
-            );
+            ASSERT_EQ(host_data0[d * size + i], host_data1[d * (size + offset) + i + offset]);
         }
     }
 
@@ -375,15 +369,16 @@ TEST_P(rocrand_sobol64_qrng_offset, offsets_test)
     HIP_CHECK(hipFree(data1));
 }
 
-const unsigned int dimensions[] = { 1, 2, 10, 321 };
-const unsigned long long offsets[] = { 0, 1, 11, 112233 };
+const unsigned int       dimensions[] = {1, 2, 10, 321};
+const unsigned long long offsets[]    = {0, 1, 11, 112233};
 
 INSTANTIATE_TEST_SUITE_P(rocrand_sobol64_qrng_offset,
-                        rocrand_sobol64_qrng_offset,
-                        ::testing::Combine(::testing::ValuesIn(dimensions), ::testing::ValuesIn(offsets)));
+                         rocrand_sobol64_qrng_offset,
+                         ::testing::Combine(::testing::ValuesIn(dimensions),
+                                            ::testing::ValuesIn(offsets)));
 
-class rocrand_sobol64_qrng_continuity
-    : public ::testing::TestWithParam<unsigned int> { };
+class rocrand_sobol64_qrng_continuity : public ::testing::TestWithParam<unsigned int>
+{};
 
 // Check that subsequent generations of different sizes produce one Sobol
 // sequence without gaps, no matter how many values are generated per call.
@@ -391,8 +386,8 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
 {
     const unsigned int dimensions = GetParam();
 
-    const std::vector<size_t> sizes0({ 100, 1, 24783, 3, 2, 776543 });
-    const std::vector<size_t> sizes1({ 1024, 56, 65536, 623456, 30, 111330 });
+    const std::vector<size_t> sizes0({100, 1, 24783, 3, 2, 776543});
+    const std::vector<size_t> sizes1({1024, 56, 65536, 623456, 30, 111330});
 
     const size_t s0 = std::accumulate(sizes0.cbegin(), sizes0.cend(), std::size_t{0});
     const size_t s1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
@@ -400,8 +395,8 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
     const size_t size0 = s0 * dimensions;
     const size_t size1 = s1 * dimensions;
 
-    unsigned int * data0;
-    unsigned int * data1;
+    unsigned int* data0;
+    unsigned int* data1;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0));
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1));
 
@@ -416,7 +411,7 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
     // host_data0 contains all s0 values of dim0, then all s0 values of dim1...
     // host_data1 contains all s1 values of dim0, then all s1 values of dim1...
     size_t current0 = 0;
-    for (size_t s : sizes0)
+    for(size_t s : sizes0)
     {
         g0.generate(data0, s * dimensions);
         for(unsigned int d = 0; d < dimensions; d++)
@@ -429,7 +424,7 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
         current0 += s;
     }
     size_t current1 = 0;
-    for (size_t s : sizes1)
+    for(size_t s : sizes1)
     {
         g1.generate(data1, s * dimensions);
         for(unsigned int d = 0; d < dimensions; d++)
@@ -446,10 +441,7 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
     {
         for(size_t i = 0; i < std::min(s0, s1); i++)
         {
-            ASSERT_EQ(
-                host_data0[d * s0 + i],
-                host_data1[d * s1 + i]
-            );
+            ASSERT_EQ(host_data0[d * s0 + i], host_data1[d * s1 + i]);
         }
     }
 
@@ -457,7 +449,7 @@ TEST_P(rocrand_sobol64_qrng_continuity, continuity_test)
     HIP_CHECK(hipFree(data1));
 }
 
-const unsigned int continuity_test_dimensions[] = { 1, 2, 10, 21 };
+const unsigned int continuity_test_dimensions[] = {1, 2, 10, 21};
 
 INSTANTIATE_TEST_SUITE_P(rocrand_sobol64_qrng_continuity,
                          rocrand_sobol64_qrng_continuity,
