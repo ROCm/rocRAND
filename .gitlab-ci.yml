@@ -33,7 +33,18 @@ variables:
   LOCAL_CMAKE_OPTIONS: ""
   ROCM_LATEST_PATH: "/opt/rocm-4.5.0"
 
-# ROCm
+include:
+  - project: amd/ci-templates
+    ref: main
+    file:
+      - /defaults.yaml
+      - /deps-cmake.yaml
+      - /deps-docs.yaml
+      - /deps-rocm.yaml
+      - /deps-nvcc.yaml
+      - /gpus-rocm.yaml
+      - /gpus-nvcc.yaml
+      - /rules.yaml
 
 .rocm:
   variables:
@@ -184,32 +195,102 @@ test:rocm_install:
 .nvcc:
   tags:
     - nvcc
-  image: nvidia/cuda:11.4.1-devel-ubuntu18.04
-  before_script:
-    - nvidia-smi
-    # HIP-nvcc
-    - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y -qq ca-certificates git wget tar xz-utils bzip2 build-essential pkg-config g++ gfortran findutils
-    - wget -qO - https://repo.radeon.com/rocm/rocm.gpg.key | $SUDO_CMD apt-key add -
-    - echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ ubuntu main' | $SUDO_CMD tee /etc/apt/sources.list.d/rocm.list
-    - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y hip-dev rocm-cmake
-    # Install hip-nvcc ignoring dependencies because it depends on cuda metapackage
-    # (with heavy libraries, tools etc. that also require GUI and other packages)
-    - apt-get download hip-runtime-nvidia
-    - $SUDO_CMD dpkg -i --ignore-depends=cuda hip*.deb
-    - $SUDO_CMD ls -d /opt/*
-    - $SUDO_CMD ln -s $ROCM_LATEST_PATH /opt/rocm
-    - export PATH=$PATH:/opt/rocm/bin
-    - hipconfig
-    # cmake
-    - mkdir -p $DEPS_DIR/cmake
-    - wget --no-check-certificate --quiet -O - $CMAKE_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
-    - export PATH=$DEPS_DIR/cmake/bin:$PATH
-    # Combine global build options with local options
-    - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
-    - export CMAKE_OPTIONS=$CXXFLAGS" "$LOCAL_CMAKE_OPTIONS
-    - export ROCM_PATH=/opt/rocm
+  extends:
+    - .nvcc:cmake-minimum
+    - .test:package
+  needs:
+    - build:nvcc-cmake-minimum
+
+test:hip-cpu-package:
+  tags:
+    - rocm
+  extends:
+    - .hip-cpu:cmake-minimum
+    - .test-cpu:package
+  needs:
+    - build-cpu:cmake-minimum
+
+.test:install:
+  stage: test
+  extends:
+    - .rules:test
+  script:
+    - cmake
+      -S $CI_PROJECT_DIR
+      -B $CI_PROJECT_DIR/build_only_install
+      -D BUILD_TEST=OFF
+      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+    - $SUDO_CMD cmake --build $CI_PROJECT_DIR/build_only_install --target install
+    - cmake
+      -S $CI_PROJECT_DIR/test/package/
+      -B $CI_PROJECT_DIR/install_test
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+    - cmake --build $CI_PROJECT_DIR/install_test
+    - cd $CI_PROJECT_DIR/install_test
+    - ctest --output-on-failure
+
+.test-cpu:install:
+  stage: test
+  extends:
+    - .rules:test
+  script:
+    - cmake
+      -S $CI_PROJECT_DIR
+      -B $CI_PROJECT_DIR/build_only_install
+      -D BUILD_TEST=OFF
+      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+      -D USE_HIP_CPU=ON
+      -D BUILD_HIPRAND=OFF
+      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
+      -D CMAKE_INSTALL_PREFIX=${ROCRAND_DIR}
+    - $SUDO_CMD cmake --build $CI_PROJECT_DIR/build_only_install --target install
+    - cmake
+      -S $CI_PROJECT_DIR/test/package/
+      -B $CI_PROJECT_DIR/install_test
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+      -D USE_HIP_CPU=ON
+      -D TBB_DIR=$CI_PROJECT_DIR/build_only_install/tbb-src/cmake
+      -D hip_cpu_rt_DIR=$CI_PROJECT_DIR/build_only_install/deps/hip-cpu/share/hip_cpu_rt/cmake
+      -D rocrand_DIR=${ROCRAND_DIR}
+    - cmake --build $CI_PROJECT_DIR/install_test
+    - cd $CI_PROJECT_DIR/install_test
+    - ctest --output-on-failure
+
+test:rocm-install:
+  tags:
+    - rocm
+  extends:
+    - .rocm:cmake-minimum
+    - .test:install
+  needs: []
+
+test:nvcc-install:
+  tags:
+    - nvcc
+  extends:
+    - .nvcc:cmake-minimum
+    - .test:install
+  needs: []
+
+test:hip-cpu-install:
+  variables:
+    ROCRAND_DIR: $CI_PROJECT_DIR/rocRAND
+  tags:
+    - rocm
+  extends:
+    - .hip-cpu:cmake-minimum
+    - .test-cpu:install
+  needs: []
+
+test:doc:
+  stage: test
+  extends:
+    - .rules:test
+    - .build:docs
 
 build:nvcc:
   extends: .nvcc
