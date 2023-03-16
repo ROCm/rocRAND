@@ -30,6 +30,7 @@ include:
     file:
       - /defaults.yaml
       - /deps-cmake.yaml
+      - /deps-docs.yaml
       - /deps-rocm.yaml
       - /deps-nvcc.yaml
       - /gpus-rocm.yaml
@@ -412,12 +413,35 @@ test:doc:
   stage: test
   extends:
     - .rules:test
-  image: sphinxdoc/sphinx-latexpdf:latest
-  needs: []
-  before_script:
-    - apt-get update
-    - apt-get install -y -qq doxygen
+    - .build:docs
+
+.test:parity:
+  stage: test
+  extends:
+    - .rules:test
   script:
-    - cd $CI_PROJECT_DIR/doc
-    - doxygen Doxyfile
-    - make -C ../python/rocrand/docs html
+    - cd $CI_PROJECT_DIR/build
+    - $SUDO_CMD dpkg -i rocrand*.deb
+    - cmake
+      -S $CI_PROJECT_DIR/test/parity
+      -B $CI_PROJECT_DIR/build_parity_test
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+    - cmake --build $CI_PROJECT_DIR/build_parity_test
+    - $CI_PROJECT_DIR/build_parity_test/test_rocrand_parity | tee $CI_PROJECT_DIR/build_parity_test/parity-test-results.csv
+    - $SUDO_CMD dpkg -r rocrand-benchmarks rocrand-clients rocrand-dev rocrand-tests rocrand
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/build_parity_test/parity-test-results.csv
+    expire_in: 2 weeks
+
+test:nvcc-parity:
+  tags:
+    - nvcc
+  extends:
+    - .nvcc:cmake-minimum
+    - .test:parity
+    - .gpus:nvcc
+  needs:
+    - build:nvcc-cmake-minimum
+  before_script:
+    - !reference [".nvcc:cmake-minimum", before_script]
