@@ -79,6 +79,25 @@ cd _build/html
 python3 -m http.server
 ```
 
+### Building the documentation
+
+Run the steps below to build documentation locally.
+
+```sh
+# Go to the docs directory
+cd docs
+
+# Install Python dependencies
+python3 -m pip install -r .sphinx/requirements.txt
+
+# Build the documentation
+python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+
+# E.g. serve the HTML docs locally
+cd _build/html
+python3 -m http.server
+```
+
 ## Requirements
 
 * CMake (3.16 or later)
