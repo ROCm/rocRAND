@@ -125,8 +125,8 @@ TEST(rocrand_config_dispatch_tests, get_config_on_host_and_device)
     HIP_CHECK(hipMemcpy(&block_size, d_block_size, sizeof(block_size), hipMemcpyDeviceToHost));
     HIP_CHECK(hipMemcpy(&grid_size, d_grid_size, sizeof(grid_size), hipMemcpyDeviceToHost));
 
-    hipFree(d_block_size);
-    hipFree(d_grid_size);
+    HIP_CHECK(hipFree(d_block_size));
+    HIP_CHECK(hipFree(d_grid_size));
 
     ASSERT_EQ(block_size, config.threads);
     ASSERT_EQ(grid_size, config.blocks);

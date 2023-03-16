@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 # rocRAND library
+# C++17 is used internally
+set(CMAKE_CXX_STANDARD 17)
 # Get sources
 file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 set(rocRAND_SRCS ${tmp})

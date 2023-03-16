@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
 #include <random>
 
@@ -27,24 +27,24 @@
 
 TEST(log_normal_distribution_tests, float_test)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device                          rd;
+    std::mt19937                                gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    const size_t size = 4000;
-    float val[size];
+    const size_t                   size = 4000;
+    float                          val[size];
     log_normal_distribution<float> u(0.2f, 0.5f);
 
     // Calculate mean
     float mean = 0.0f;
-    for(size_t i = 0; i < size; i+=2)
+    for(size_t i = 0; i < size; i += 2)
     {
         unsigned int input[2];
-        float output[2];
+        float        output[2];
         input[0] = dis(gen);
         input[1] = dis(gen);
         u(input, output);
-        val[i] = output[0];
+        val[i]     = output[0];
         val[i + 1] = output[1];
         mean += output[0] + output[1];
     }
@@ -59,7 +59,8 @@ TEST(log_normal_distribution_tests, float_test)
     std = std::sqrt(std / size);
 
     float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
-    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+    float expected_std
+        = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
@@ -67,26 +68,26 @@ TEST(log_normal_distribution_tests, float_test)
 
 TEST(log_normal_distribution_tests, double_test)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device                          rd;
+    std::mt19937                                gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    const size_t size = 4000;
-    double val[size];
+    const size_t                    size = 4000;
+    double                          val[size];
     log_normal_distribution<double> u(0.2, 0.5);
 
     // Calculate mean
     double mean = 0.0;
-    for(size_t i = 0; i < size; i+=2)
+    for(size_t i = 0; i < size; i += 2)
     {
         unsigned int input[4];
-        double output[2];
+        double       output[2];
         input[0] = dis(gen);
         input[1] = dis(gen);
         input[2] = dis(gen);
         input[3] = dis(gen);
         u(input, output);
-        val[i] = output[0];
+        val[i]     = output[0];
         val[i + 1] = output[1];
         mean += output[0] + output[1];
     }
@@ -101,7 +102,7 @@ TEST(log_normal_distribution_tests, double_test)
     std = std::sqrt(std / size);
 
     double expected_mean = std::exp(0.2 + 0.5 * 0.5 / 2);
-    double expected_std = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
+    double expected_std  = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1);
@@ -109,23 +110,23 @@ TEST(log_normal_distribution_tests, double_test)
 
 TEST(log_normal_distribution_tests, half_test)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device                          rd;
+    std::mt19937                                gen(rd());
     std::uniform_int_distribution<unsigned int> dis;
 
-    const size_t size = 4000;
-    half val[size];
+    const size_t                  size = 4000;
+    half                          val[size];
     log_normal_distribution<half> u(__float2half(0.2f), __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
-    for(size_t i = 0; i < size; i+=2)
+    for(size_t i = 0; i < size; i += 2)
     {
         unsigned int input[1];
-        half output[2];
+        half         output[2];
         input[0] = dis(gen);
         u(input, output);
-        val[i] = output[0];
+        val[i]     = output[0];
         val[i + 1] = output[1];
         mean += __half2float(output[0]) + __half2float(output[1]);
     }
@@ -140,7 +141,8 @@ TEST(log_normal_distribution_tests, half_test)
     std = std::sqrt(std / size);
 
     float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
-    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+    float expected_std
+        = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
@@ -169,24 +171,24 @@ TYPED_TEST_SUITE(mrg_log_normal_distribution_tests, mrg_log_normal_distribution_
 
 TYPED_TEST(mrg_log_normal_distribution_tests, float_test)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device                          rd;
+    std::mt19937                                gen(rd());
     std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
-    const size_t size = 4000;
-    float val[size];
+    const size_t                                                              size = 4000;
+    float                                                                     val[size];
     mrg_engine_log_normal_distribution<float, typename TestFixture::mrg_type> u(0.2f, 0.5f);
 
     // Calculate mean
     float mean = 0.0f;
-    for(size_t i = 0; i < size; i+=2)
+    for(size_t i = 0; i < size; i += 2)
     {
         unsigned int input[2];
-        float output[2];
+        float        output[2];
         input[0] = dis(gen);
         input[1] = dis(gen);
         u(input, output);
-        val[i] = output[0];
+        val[i]     = output[0];
         val[i + 1] = output[1];
         mean += output[0] + output[1];
     }
@@ -201,7 +203,8 @@ TYPED_TEST(mrg_log_normal_distribution_tests, float_test)
     std = std::sqrt(std / size);
 
     float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
-    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+    float expected_std
+        = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
@@ -209,24 +212,24 @@ TYPED_TEST(mrg_log_normal_distribution_tests, float_test)
 
 TYPED_TEST(mrg_log_normal_distribution_tests, double_test)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device                          rd;
+    std::mt19937                                gen(rd());
     std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
-    const size_t size = 4000;
-    double val[size];
+    const size_t                                                               size = 4000;
+    double                                                                     val[size];
     mrg_engine_log_normal_distribution<double, typename TestFixture::mrg_type> u(0.2, 0.5);
 
     // Calculate mean
     double mean = 0.0;
-    for(size_t i = 0; i < size; i+=2)
+    for(size_t i = 0; i < size; i += 2)
     {
         unsigned int input[2];
-        double output[2];
+        double       output[2];
         input[0] = dis(gen);
         input[1] = dis(gen);
         u(input, output);
-        val[i] = output[0];
+        val[i]     = output[0];
         val[i + 1] = output[1];
         mean += output[0] + output[1];
     }
@@ -241,7 +244,7 @@ TYPED_TEST(mrg_log_normal_distribution_tests, double_test)
     std = std::sqrt(std / size);
 
     double expected_mean = std::exp(0.2 + 0.5 * 0.5 / 2);
-    double expected_std = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
+    double expected_std  = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1);
@@ -249,24 +252,24 @@ TYPED_TEST(mrg_log_normal_distribution_tests, double_test)
 
 TYPED_TEST(mrg_log_normal_distribution_tests, half_test)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device                          rd;
+    std::mt19937                                gen(rd());
     std::uniform_int_distribution<unsigned int> dis(1, TestFixture::mrg_m1);
 
-    const size_t size = 4000;
-    half val[size];
+    const size_t                                                             size = 4000;
+    half                                                                     val[size];
     mrg_engine_log_normal_distribution<half, typename TestFixture::mrg_type> u(__float2half(0.2f),
                                                                                __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
-    for(size_t i = 0; i < size; i+=2)
+    for(size_t i = 0; i < size; i += 2)
     {
         unsigned int input[1];
-        half output[2];
+        half         output[2];
         input[0] = dis(gen);
         u(input, output);
-        val[i] = output[0];
+        val[i]     = output[0];
         val[i + 1] = output[1];
         mean += __half2float(output[0]) + __half2float(output[1]);
     }
@@ -281,7 +284,8 @@ TYPED_TEST(mrg_log_normal_distribution_tests, half_test)
     std = std::sqrt(std / size);
 
     float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
-    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+    float expected_std
+        = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
@@ -301,17 +305,17 @@ TYPED_TEST(sobol_log_normal_distribution_tests, float_test)
 {
     using T = typename TestFixture::sobol_type;
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device               rd;
+    std::mt19937                     gen(rd());
     std::uniform_int_distribution<T> dis;
 
-    const size_t size = 4000;
-    float val[size];
+    const size_t                         size = 4000;
+    float                                val[size];
     sobol_log_normal_distribution<float> u(0.2f, 0.5f);
 
     // Calculate mean
     float mean = 0.0f;
-    for(size_t i = 0; i < size; i+=1)
+    for(size_t i = 0; i < size; i += 1)
     {
         val[i] = u(dis(gen));
         mean += val[i];
@@ -327,7 +331,8 @@ TYPED_TEST(sobol_log_normal_distribution_tests, float_test)
     std = std::sqrt(std / size);
 
     float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
-    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+    float expected_std
+        = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);
@@ -336,17 +341,17 @@ TYPED_TEST(sobol_log_normal_distribution_tests, double_test)
 {
     using T = typename TestFixture::sobol_type;
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device               rd;
+    std::mt19937                     gen(rd());
     std::uniform_int_distribution<T> dis;
 
-    const size_t size = 4000;
-    double val[size];
+    const size_t                          size = 4000;
+    double                                val[size];
     sobol_log_normal_distribution<double> u(0.2, 0.5);
 
     // Calculate mean
     double mean = 0.0;
-    for(size_t i = 0; i < size; i+=1)
+    for(size_t i = 0; i < size; i += 1)
     {
         val[i] = u(dis(gen));
         mean += val[i];
@@ -362,7 +367,7 @@ TYPED_TEST(sobol_log_normal_distribution_tests, double_test)
     std = std::sqrt(std / size);
 
     double expected_mean = std::exp(0.2 + 0.5 * 0.5 / 2);
-    double expected_std = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
+    double expected_std  = std::sqrt((std::exp(0.5 * 0.5) - 1.0) * std::exp(2 * 0.2 + 0.5 * 0.5));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1);
@@ -372,17 +377,17 @@ TYPED_TEST(sobol_log_normal_distribution_tests, half_test)
 {
     using T = typename TestFixture::sobol_type;
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::random_device               rd;
+    std::mt19937                     gen(rd());
     std::uniform_int_distribution<T> dis;
 
-    const size_t size = 4000;
-    half val[size];
+    const size_t                        size = 4000;
+    half                                val[size];
     sobol_log_normal_distribution<half> u(__float2half(0.2f), __float2half(0.5f));
 
     // Calculate mean
     float mean = 0.0f;
-    for(size_t i = 0; i < size; i+=1)
+    for(size_t i = 0; i < size; i += 1)
     {
         val[i] = u(dis(gen));
         mean += __half2float(val[i]);
@@ -398,7 +403,8 @@ TYPED_TEST(sobol_log_normal_distribution_tests, half_test)
     std = std::sqrt(std / size);
 
     float expected_mean = std::exp(0.2f + 0.5f * 0.5f / 2);
-    float expected_std = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
+    float expected_std
+        = std::sqrt((std::exp(0.5f * 0.5f) - 1.0) * std::exp(2 * 0.2f + 0.5f * 0.5f));
 
     EXPECT_NEAR(expected_mean, mean, expected_mean * 0.1f);
     EXPECT_NEAR(expected_std, std, expected_std * 0.1f);

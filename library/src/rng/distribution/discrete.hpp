@@ -27,6 +27,7 @@
 
 #include <rocrand/rocrand.h>
 
+#include "../common.hpp"
 #include "device_distributions.hpp"
 
 // Alias method
@@ -98,15 +99,15 @@ public:
         {
             if (probability != NULL)
             {
-                hipFree(probability);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(probability));
             }
             if (alias != NULL)
             {
-                hipFree(alias);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(alias));
             }
             if (cdf != NULL)
             {
-                hipFree(cdf);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(cdf));
             }
         }
         probability = NULL;

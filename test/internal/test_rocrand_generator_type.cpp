@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand.h>
@@ -33,8 +33,8 @@ TEST(rocrand_generator_type_tests, rocrand_generator)
     rocrand_generator g = NULL;
     EXPECT_EQ(g, static_cast<rocrand_generator>(0));
 
-    g = new rocrand_generator_type<>;
-    rocrand_generator_type<> * gg = static_cast<rocrand_generator_type<>* >(g);
+    g                            = new rocrand_generator_type<>;
+    rocrand_generator_type<>* gg = static_cast<rocrand_generator_type<>*>(g);
     EXPECT_NE(gg, static_cast<rocrand_generator>(0));
     EXPECT_EQ(gg->type(), ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
     EXPECT_EQ(gg->get_offset(), 0ULL);
