@@ -150,7 +150,7 @@ if(BUILD_ADDRESS_SANITIZER AND BUILD_SHARED_LIBS)
 endif()
 
 # Set version variables
-rocm_setup_version( VERSION "2.10.9" )
+rocm_setup_version( VERSION "2.10.17" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
 set ( hiprand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
