@@ -52,7 +52,7 @@ endfunction()
 file(GLOB rocRAND_TEST_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # Build rocRAND tests
-foreach(test_src ${rocRAND_TEST_SRCS})
+function(add_test_target test_src is_internal)
   get_filename_component(test_name ${test_src} NAME_WE)
   # MT19937 and Threefry4x64 need to be fixed on HIP-CPU
   set(DISABLED_TESTS)
@@ -70,10 +70,14 @@ foreach(test_src ${rocRAND_TEST_SRCS})
       )
       set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     endif()
-    target_include_directories(${test_name}
-        PUBLIC
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/src>
-    )
+    if(is_internal)
+      target_include_directories(${test_name}
+          PUBLIC
+              $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/library/src>
+              $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/test>
+      )
+      set_target_properties(${test_name} PROPERTIES CXX_STANDARD 17)
+    endif()
     if(TARGET GTest::GTest)
         target_link_libraries(${test_name}
             GTest::GTest
@@ -106,12 +110,6 @@ foreach(test_src ${rocRAND_TEST_SRCS})
         PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
     )
-    string(FIND ${test_name} "kernel" IS_KERNEL_TEST)
-    string(FIND ${test_name} "generate" IS_GENERATE_TEST)
-    if((${IS_KERNEL_TEST} EQUAL -1) AND (${IS_GENERATE_TEST} EQUAL -1))
-        # Tests covering internal APIs are C++17
-        set_target_properties(${test_name} PROPERTIES CXX_STANDARD 17)
-    endif()
     add_relative_test(${test_name} ${test_name})
     rocm_install(TARGETS ${test_name} COMPONENT tests)
     if (WIN32 AND NOT DEFINED DLLS_COPIED_TESTS)
@@ -129,6 +127,10 @@ foreach(test_src ${rocRAND_TEST_SRCS})
       endforeach( file_i )
     endif()
   endif()
+endfunction()
+
+foreach(test_src ${rocRAND_TEST_SRCS})
+  add_test_target(${test_src} OFF)
 endforeach()
 
 # Fortran Wrapper Tests
@@ -138,6 +140,9 @@ endif()
 
 # Checks for simple linkage problems
 add_subdirectory(linkage)
+
+# Add tests for the internal APIs
+add_subdirectory(internal)
 
 rocm_install(
     FILES "${INSTALL_TEST_FILE}"
