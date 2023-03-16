@@ -10,14 +10,6 @@
 build/
 build_package_test/
 
-### docs dir ###
-docs/html/
-docs/xml/
-docs/*.tag
-docs/api/
-docs/_build/
-docs/docBin/
-
 ### C++ ###
 # Compiled Object files
 *.slo
@@ -93,3 +85,15 @@ CMakeLists.txt.user
 
 # Visual Studio / VSCode config folders
 .vs*/**/*
+
+### docs dir ###
+docs/*.tag
+docs/api/
+
+# documentation artifacts
+_build/
+_images/
+_static/
+_templates/
+_toc.yml
+docBin/
