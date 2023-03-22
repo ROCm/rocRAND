@@ -21,7 +21,10 @@
 #include "rng/cpp_utils.hpp"
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
+#include <set>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -51,4 +54,25 @@ TEST(rocrand_cpp_utils_tests, tuple_type_index)
                   == tuple_type_index_v<double, std::tuple<float, int, int>>);
     static_assert(std::numeric_limits<std::size_t>::max()
                   == tuple_type_index_v<double, std::tuple<>>);
+}
+
+TEST(rocrand_cpp_utils_tests, numeric_combinations)
+{
+    constexpr std::array A{1, 2, 3, 4};
+    constexpr std::array B{10, 20, 30};
+    constexpr std::array C{100, 200};
+
+    constexpr auto combinations = cpp_utils::numeric_combinations(A, B, C);
+
+    ASSERT_EQ(combinations.size(), A.size() * B.size() * C.size());
+
+    const std::set combination_set(combinations.begin(), combinations.end());
+    ASSERT_EQ(combinations.size(), combination_set.size()) << "Not all items are unique";
+
+    for(auto [a, b, c] : combinations)
+    {
+        ASSERT_NE(std::find(A.begin(), A.end(), a), A.end()) << "Element not found in A";
+        ASSERT_NE(std::find(B.begin(), B.end(), b), B.end()) << "Element not found in B";
+        ASSERT_NE(std::find(C.begin(), C.end(), c), C.end()) << "Element not found in C";
+    }
 }
