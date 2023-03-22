@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@
 #include <rocrand/rocrand.h>
 
 #include <iostream>
+#include <string>
 
 #define ROCRAND_CHECK(condition)                                                               \
     do                                                                                         \
@@ -50,5 +51,34 @@ inline void add_common_benchmark_rocrand_info()
 
     add_common_benchmark_info();
 }
+
+inline std::string engine_name(const rocrand_rng_type rng_type)
+{
+    switch(rng_type)
+    {
+        case ROCRAND_RNG_PSEUDO_MTGP32: return "mtgp32";
+        case ROCRAND_RNG_PSEUDO_MT19937: return "mt19937";
+        case ROCRAND_RNG_PSEUDO_XORWOW: return "xorwow";
+        case ROCRAND_RNG_PSEUDO_MRG31K3P: return "mrg31k3p";
+        case ROCRAND_RNG_PSEUDO_MRG32K3A: return "mrg32k3a";
+        case ROCRAND_RNG_PSEUDO_PHILOX4_32_10: return "philox";
+        case ROCRAND_RNG_PSEUDO_LFSR113: return "lfsr113";
+        case ROCRAND_RNG_PSEUDO_THREEFRY2_32_20: return "threefry2x32";
+        case ROCRAND_RNG_PSEUDO_THREEFRY2_64_20: return "threefry2x64";
+        case ROCRAND_RNG_PSEUDO_THREEFRY4_32_20: return "threefry4x32";
+        case ROCRAND_RNG_PSEUDO_THREEFRY4_64_20: return "threefry4x64";
+        case ROCRAND_RNG_QUASI_SOBOL32: return "sobol32";
+        case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32: return "scrambled_sobol32";
+        case ROCRAND_RNG_QUASI_SOBOL64: return "sobol64";
+        case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64: return "scrambled_sobol64";
+        default: return "unknown_rng_type";
+    }
+}
+
+struct benchmark_config
+{
+    std::size_t size{};
+    double      lambda{};
+};
 
 #endif // ROCRAND_BENCHMARK_ROCRAND_UTILS_HPP_

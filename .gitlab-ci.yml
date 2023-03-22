@@ -340,6 +340,45 @@ build-cpu:cmake-latest:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
+build:benchmark_tuning:
+  stage: build
+  variables:
+    BENCHMARK_TUNING_MIN_GRID_SIZE: 32768
+    BENCHMARK_TUNING_THREAD_OPTIONS: "128, 256"
+    BENCHMARK_TUNING_BLOCK_OPTIONS: "128, 256"
+  tags:
+    - rocm-build
+  needs: []
+  extends:
+    - .rocm:cmake-latest
+    - .rules:build
+  script:
+    - cmake
+      -S $CI_PROJECT_DIR
+      -B $CI_PROJECT_DIR/build
+      -G Ninja
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+      -D BUILD_TEST=OFF
+      -D BUILD_BENCHMARK=ON
+      -D BUILD_BENCHMARK_TUNING=ON
+      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
+      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
+      -D BUILD_SHARED_LIBS=ON
+      -D GPU_TARGETS=${GPU_TARGETS}
+      -D DISABLE_WERROR=OFF
+      -D BENCHMARK_TUNING_MIN_GRID_SIZE=${BENCHMARK_TUNING_MIN_GRID_SIZE}
+      -D BENCHMARK_TUNING_THREAD_OPTIONS="${BENCHMARK_TUNING_THREAD_OPTIONS}"
+      -D BENCHMARK_TUNING_BLOCK_OPTIONS="${BENCHMARK_TUNING_BLOCK_OPTIONS}"
+    - cmake --build $CI_PROJECT_DIR/build --target benchmark_rocrand_tuning
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/build/library/
+      - $CI_PROJECT_DIR/build/benchmark/
+      - $CI_PROJECT_DIR/build/deps/googlebenchmark/
+      - $CI_PROJECT_DIR/build/CMakeCache.txt
+    expire_in: 2 weeks
+
 .test:ctest:
   extends:
     - .rules:test
