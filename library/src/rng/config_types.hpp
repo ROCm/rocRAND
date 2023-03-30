@@ -30,6 +30,7 @@
 #include <cassert>
 #include <limits>
 #include <string>
+#include <tuple>
 
 namespace rocrand_host
 {
@@ -314,6 +315,77 @@ __device__ constexpr generator_config get_generator_config_device(bool dynamic_c
                             generator_config_selector<GeneratorType, T>{}.get_blocks(
                                 dynamic_config ? get_device_arch() : target_arch::unknown)};
 }
+
+template<rocrand_rng_type GeneratorType, class T>
+struct default_config_provider
+{
+    struct dynamic_device_config
+    {
+        static constexpr generator_config config
+            = get_generator_config_device<GeneratorType, T>(true);
+    };
+    struct static_device_config
+    {
+        static constexpr generator_config config
+            = get_generator_config_device<GeneratorType, T>(false);
+    };
+
+    static hipError_t host_config(const hipStream_t      stream,
+                                  const rocrand_ordering ordering,
+                                  generator_config&      config)
+    {
+        return get_generator_config<GeneratorType, T>(stream, ordering, config);
+    }
+};
+
+// template<template<class T> class ConfigProvider, class Function>
+// hipError_t iterate_configs_over_types(const hipStream_t      stream,
+//                                       const rocrand_ordering ordering,
+//                                       Function&&             fun)
+// {
+//     std::tuple<unsigned int, unsigned char, unsigned short, unsigned long long, float, half, double>
+//                all_generated_types{};
+//     hipError_t error = HIP_SUCCESS;
+//     std::visit(
+//         [&](auto&& val)
+//         {
+//             if(error != HIP_SUCCESS)
+//                 return;
+
+//             using T = std::decay_t<decltype(val)>;
+//             generator_config config_for_T{};
+//             error = ConfigProvider<T>::host_config(stream, ordering, config);
+//             if(error != HIP_SUCCESS)
+//                 return;
+
+//             fun(val, config);
+//         },
+//         all_generated_types);
+// }
+
+template<template<class T> class ConfigProvider, class Engine>
+class engine_state
+{
+public:
+    rocrand_status init(const hipStream_t /*stream*/,
+                        const rocrand_ordering /*ordering*/,
+                        unsigned long long /*offset*/)
+    {
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    template<class T>
+    std::pair<Engine*, unsigned int> get_state() const
+    {
+        return {};
+    }
+
+    template<class T>
+    void update_state(const size_t /*touched_engines*/)
+    {}
+
+private:
+};
 
 } // end namespace detail
 } // end namespace rocrand_host
