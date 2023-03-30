@@ -229,19 +229,19 @@ public:
         if (m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
-        rocrand_status status = m_engines.init(
+        rocrand_status status = m_state_dispatcher.init(
             m_stream,
             m_order,
             [&](auto&&                                        val,
                 const rocrand_host::detail::generator_config& config,
-                engine_type**                                 engines,
-                unsigned int&                                 start_engine_id)
+                engine_state&                                 state)
             {
                 using T                         = std::decay_t<decltype(val)>;
                 const unsigned int engines_size = config.threads * config.blocks;
-                start_engine_id                 = m_offset % engines_size;
+                state.m_start_engine_id         = m_offset % engines_size;
 
-                const hipError_t error = hipMalloc(engines, sizeof(engine_type) * engines_size);
+                const hipError_t error
+                    = hipMalloc(&state.m_engines, sizeof(engine_type) * engines_size);
                 if(error != hipSuccess)
                     return ROCRAND_STATUS_ALLOCATION_FAILED;
 
@@ -251,8 +251,8 @@ public:
                                                    dim3(config.threads),
                                                    0,
                                                    m_stream,
-                                                   *engines,
-                                                   start_engine_id,
+                                                   state.m_engines,
+                                                   state.m_start_engine_id,
                                                    m_seed,
                                                    m_offset / engines_size);
                 if(hipGetLastError() != hipSuccess)
@@ -282,7 +282,7 @@ public:
         if(error != hipSuccess)
             return ROCRAND_STATUS_INTERNAL_ERROR;
 
-        auto [engines, start_engine_id] = m_engines.template get_state<T>();
+        const auto& state = m_state_dispatcher.template get_state<T>();
 
         ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(m_order,
                                            rocrand_host::detail::generate_kernel,
@@ -290,8 +290,8 @@ public:
                                            dim3(config.threads),
                                            0,
                                            m_stream,
-                                           engines,
-                                           start_engine_id,
+                                           state.m_engines,
+                                           state.m_start_engine_id,
                                            data,
                                            data_size,
                                            distribution);
@@ -305,11 +305,12 @@ public:
             (data_size + Distribution::output_width - 1) /
             Distribution::output_width;
 
-        m_engines.template update_state<T>(
-            [&](const rocrand_host::detail::generator_config& config, unsigned int& start_engine_id)
+        m_state_dispatcher.template update_state<T>(
+            [&](const rocrand_host::detail::generator_config& config, engine_state& state)
             {
                 const unsigned int engines_size = config.threads * config.blocks;
-                start_engine_id = (start_engine_id + touched_engines) % engines_size;
+                state.m_start_engine_id
+                    = (state.m_start_engine_id + touched_engines) % engines_size;
             });
 
         return ROCRAND_STATUS_SUCCESS;
@@ -351,7 +352,13 @@ public:
 
 private:
     bool m_engines_initialized;
-    rocrand_host::detail::engine_state<ConfigProvider, engine_type> m_engines;
+    struct engine_state
+    {
+        engine_type* m_engines;
+        unsigned int m_start_engine_id;
+    };
+
+    rocrand_host::detail::state_dispatcher<ConfigProvider, engine_state> m_state_dispatcher;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> m_poisson;
