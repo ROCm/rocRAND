@@ -26,11 +26,14 @@
 
 #include <hip/hip_runtime.h>
 
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <limits>
+#include <map>
 #include <string>
 #include <tuple>
+#include <utility>
 
 namespace rocrand_host
 {
@@ -338,53 +341,115 @@ struct default_config_provider
     }
 };
 
-// template<template<class T> class ConfigProvider, class Function>
-// hipError_t iterate_configs_over_types(const hipStream_t      stream,
-//                                       const rocrand_ordering ordering,
-//                                       Function&&             fun)
-// {
-//     std::tuple<unsigned int, unsigned char, unsigned short, unsigned long long, float, half, double>
-//                all_generated_types{};
-//     hipError_t error = HIP_SUCCESS;
-//     std::visit(
-//         [&](auto&& val)
-//         {
-//             if(error != HIP_SUCCESS)
-//                 return;
-
-//             using T = std::decay_t<decltype(val)>;
-//             generator_config config_for_T{};
-//             error = ConfigProvider<T>::host_config(stream, ordering, config);
-//             if(error != HIP_SUCCESS)
-//                 return;
-
-//             fun(val, config);
-//         },
-//         all_generated_types);
-// }
-
 template<template<class T> class ConfigProvider, class Engine>
 class engine_state
 {
 public:
-    rocrand_status init(const hipStream_t /*stream*/,
-                        const rocrand_ordering /*ordering*/,
-                        unsigned long long /*offset*/)
+    engine_state() = default;
+
+    engine_state(const engine_state&) = delete;
+    engine_state(engine_state&&)      = default;
+
+    engine_state& operator=(const engine_state&) = delete;
+    engine_state& operator=(engine_state&&)      = default;
+
+    template<class EngineInitializer>
+    rocrand_status init(const hipStream_t      stream,
+                        const rocrand_ordering ordering,
+                        EngineInitializer&&    engine_initializer)
     {
-        return ROCRAND_STATUS_SUCCESS;
+        rocrand_status status = ROCRAND_STATUS_SUCCESS;
+        std::apply(
+            [&](auto&&... vals)
+            {
+                ((
+                     [&]
+                     {
+                         if(status == ROCRAND_STATUS_SUCCESS)
+                             status = initialize_for_type<std::decay_t<decltype(vals)>>(
+                                 stream,
+                                 ordering,
+                                 std::forward<EngineInitializer>(engine_initializer));
+                     }()),
+                 ...);
+            },
+            all_generated_types{});
+
+        return status;
     }
 
     template<class T>
     std::pair<Engine*, unsigned int> get_state() const
     {
-        return {};
+        return m_config_to_state_map.at(m_type_to_config_map[get_type_index<T>()]);
+    }
+
+    template<class T, class UpdateFunctor>
+    void update_state(UpdateFunctor&& update_functor)
+    {
+        const auto& config = m_type_to_config_map[get_type_index<T>()];
+        auto&       state  = m_config_to_state_map[config];
+        update_functor(config, state.second);
+    }
+
+private:
+    struct config_comparator
+    {
+        constexpr bool operator()(const generator_config& lhs, const generator_config& rhs) const
+        {
+            return lhs.blocks * lhs.threads < rhs.blocks * rhs.threads;
+        }
+    };
+
+    using all_generated_types = std::
+        tuple<unsigned int, unsigned char, unsigned short, unsigned long long, float, half, double>;
+
+    template<class T, size_t... Indices>
+    static constexpr size_t get_type_index(std::index_sequence<Indices...>)
+    {
+        size_t ret{};
+        ((
+             [&]
+             {
+                 if constexpr(std::is_same_v<T, std::tuple_element_t<Indices, all_generated_types>>)
+                 {
+                     ret = Indices;
+                 }
+             }()),
+         ...);
+        return ret;
     }
 
     template<class T>
-    void update_state(const size_t /*touched_engines*/)
-    {}
+    static constexpr size_t get_type_index()
+    {
+        return get_type_index<T>(
+            std::make_index_sequence<std::tuple_size_v<all_generated_types>>{});
+    }
 
-private:
+    template<class T, class EngineInitializer>
+    rocrand_status initialize_for_type(const hipStream_t      stream,
+                                       const rocrand_ordering ordering,
+                                       EngineInitializer&&    engine_initializer)
+    {
+        generator_config config{};
+        const hipError_t error = ConfigProvider<T>::host_config(stream, ordering, config);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        m_type_to_config_map[get_type_index<T>()] = config;
+        if(m_config_to_state_map.find(config) == m_config_to_state_map.end())
+        {
+            auto& state = m_config_to_state_map[config];
+            return engine_initializer(T{}, config, &state.first, state.second);
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    std::array<generator_config, std::tuple_size_v<all_generated_types>> m_type_to_config_map{};
+    std::map<generator_config, std::pair<Engine*, unsigned int>, config_comparator>
+        m_config_to_state_map{};
 };
 
 } // end namespace detail

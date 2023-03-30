@@ -229,7 +229,38 @@ public:
         if (m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
 
-        rocrand_status status = m_engines.init(m_stream, m_order, m_offset);
+        rocrand_status status = m_engines.init(
+            m_stream,
+            m_order,
+            [&](auto&&                                        val,
+                const rocrand_host::detail::generator_config& config,
+                engine_type**                                 engines,
+                unsigned int&                                 start_engine_id)
+            {
+                using T                         = std::decay_t<decltype(val)>;
+                const unsigned int engines_size = config.threads * config.blocks;
+                start_engine_id                 = m_offset % engines_size;
+
+                const hipError_t error = hipMalloc(engines, sizeof(engine_type) * engines_size);
+                if(error != hipSuccess)
+                    return ROCRAND_STATUS_ALLOCATION_FAILED;
+
+                ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(m_order,
+                                                   rocrand_host::detail::init_engines_kernel,
+                                                   dim3(config.blocks),
+                                                   dim3(config.threads),
+                                                   0,
+                                                   m_stream,
+                                                   *engines,
+                                                   start_engine_id,
+                                                   m_seed,
+                                                   m_offset / engines_size);
+                if(hipGetLastError() != hipSuccess)
+                    return ROCRAND_STATUS_LAUNCH_FAILURE;
+
+                return ROCRAND_STATUS_SUCCESS;
+            });
+
         if(status != ROCRAND_STATUS_SUCCESS)
             return status;
 
@@ -274,7 +305,12 @@ public:
             (data_size + Distribution::output_width - 1) /
             Distribution::output_width;
 
-        m_engines.template update_state<T>(touched_engines);
+        m_engines.template update_state<T>(
+            [&](const rocrand_host::detail::generator_config& config, unsigned int& start_engine_id)
+            {
+                const unsigned int engines_size = config.threads * config.blocks;
+                start_engine_id = (start_engine_id + touched_engines) % engines_size;
+            });
 
         return ROCRAND_STATUS_SUCCESS;
     }
