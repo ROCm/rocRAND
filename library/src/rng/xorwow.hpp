@@ -351,13 +351,8 @@ public:
     }
 
 private:
-    bool m_engines_initialized;
-    struct engine_state
-    {
-        engine_type* m_engines;
-        unsigned int m_start_engine_id;
-    };
-
+    using engine_state = rocrand_host::detail::common_engine_state<engine_type>;
+    bool                                                                 m_engines_initialized;
     rocrand_host::detail::state_dispatcher<ConfigProvider, engine_state> m_state_dispatcher;
 
     // For caching of Poisson for consecutive generations with the same lambda

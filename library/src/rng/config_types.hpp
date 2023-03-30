@@ -443,6 +443,28 @@ private:
     std::map<generator_config, State, config_comparator>                 m_config_to_state_map{};
 };
 
+template<class Engine>
+struct common_engine_state
+{
+    Engine*      m_engines{};
+    unsigned int m_start_engine_id{};
+
+    common_engine_state()                           = default;
+    common_engine_state(const common_engine_state&) = delete;
+    common_engine_state(common_engine_state&&)      = default;
+
+    common_engine_state& operator=(const common_engine_state&) = delete;
+    common_engine_state& operator=(common_engine_state&&)      = default;
+
+    ~common_engine_state()
+    {
+        if(m_engines != nullptr)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        }
+    }
+};
+
 } // end namespace detail
 } // end namespace rocrand_host
 
