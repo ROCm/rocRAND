@@ -341,23 +341,16 @@ struct default_config_provider
     }
 };
 
-template<template<class T> class ConfigProvider, class Engine>
-class engine_state
+template<template<class T> class ConfigProvider, class State>
+class state_dispatcher
 {
 public:
-    engine_state() = default;
-
-    engine_state(const engine_state&) = delete;
-    engine_state(engine_state&&)      = default;
-
-    engine_state& operator=(const engine_state&) = delete;
-    engine_state& operator=(engine_state&&)      = default;
-
     template<class EngineInitializer>
     rocrand_status init(const hipStream_t      stream,
                         const rocrand_ordering ordering,
                         EngineInitializer&&    engine_initializer)
     {
+        m_config_to_state_map.clear();
         rocrand_status status = ROCRAND_STATUS_SUCCESS;
         std::apply(
             [&](auto&&... vals)
@@ -379,7 +372,7 @@ public:
     }
 
     template<class T>
-    std::pair<Engine*, unsigned int> get_state() const
+    const State& get_state() const
     {
         return m_config_to_state_map.at(m_type_to_config_map[get_type_index<T>()]);
     }
@@ -388,8 +381,7 @@ public:
     void update_state(UpdateFunctor&& update_functor)
     {
         const auto& config = m_type_to_config_map[get_type_index<T>()];
-        auto&       state  = m_config_to_state_map[config];
-        update_functor(config, state.second);
+        update_functor(config, m_config_to_state_map[config]);
     }
 
 private:
@@ -397,7 +389,8 @@ private:
     {
         constexpr bool operator()(const generator_config& lhs, const generator_config& rhs) const
         {
-            return lhs.blocks * lhs.threads < rhs.blocks * rhs.threads;
+            return (lhs.blocks != rhs.blocks) ? (lhs.blocks < rhs.blocks)
+                                              : (lhs.threads < rhs.threads);
         }
     };
 
@@ -441,15 +434,13 @@ private:
         m_type_to_config_map[get_type_index<T>()] = config;
         if(m_config_to_state_map.find(config) == m_config_to_state_map.end())
         {
-            auto& state = m_config_to_state_map[config];
-            return engine_initializer(T{}, config, &state.first, state.second);
+            return engine_initializer(T{}, config, m_config_to_state_map[config]);
         }
         return ROCRAND_STATUS_SUCCESS;
     }
 
     std::array<generator_config, std::tuple_size_v<all_generated_types>> m_type_to_config_map{};
-    std::map<generator_config, std::pair<Engine*, unsigned int>, config_comparator>
-        m_config_to_state_map{};
+    std::map<generator_config, State, config_comparator>                 m_config_to_state_map{};
 };
 
 } // end namespace detail
