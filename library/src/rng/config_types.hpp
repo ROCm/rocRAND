@@ -313,20 +313,18 @@ __device__ constexpr generator_config get_generator_config_device(bool dynamic_c
                                 dynamic_config ? get_device_arch() : target_arch::unknown)};
 }
 
-template<rocrand_rng_type GeneratorType, class T>
+template<rocrand_rng_type GeneratorType>
 struct default_config_provider
 {
-    struct dynamic_device_config
-    {
-        static constexpr generator_config config
-            = get_generator_config_device<GeneratorType, T>(true);
-    };
-    struct static_device_config
-    {
-        static constexpr generator_config config
-            = get_generator_config_device<GeneratorType, T>(false);
-    };
+    template<class T>
+    static constexpr generator_config dynamic_device_config
+        = get_generator_config_device<GeneratorType, T>(true);
 
+    template<class T>
+    static constexpr generator_config static_device_config
+        = get_generator_config_device<GeneratorType, T>(false);
+
+    template<class T>
     static hipError_t host_config(const hipStream_t      stream,
                                   const rocrand_ordering ordering,
                                   generator_config&      config)

@@ -36,7 +36,7 @@
 namespace rocrand_host::detail
 {
 
-template<template<class T> class ConfigProvider, class State>
+template<class ConfigProvider, class State>
 class state_dispatcher
 {
 public:
@@ -96,7 +96,7 @@ private:
                                        EngineInitializer&&    engine_initializer)
     {
         generator_config config{};
-        const hipError_t error = ConfigProvider<T>::host_config(stream, ordering, config);
+        const hipError_t error = ConfigProvider::template host_config<T>(stream, ordering, config);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;

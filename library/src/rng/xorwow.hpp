@@ -156,9 +156,6 @@ namespace detail {
         engines[engine_id] = engine;
     }
 
-    template<class T>
-    using default_config_provider_xorwow = default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW, T>;
-
 } // end namespace detail
 } // end namespace rocrand_host
 
@@ -167,18 +164,16 @@ namespace detail {
 #define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(ordering, kernel_name, ...)                 \
     if(rocrand_host::detail::is_ordering_dynamic(ordering))                            \
     {                                                                                  \
-        using DeviceConfig = typename ConfigProvider<T>::dynamic_device_config;        \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<DeviceConfig::config.threads>), \
-                           __VA_ARGS__);                                               \
+        constexpr auto config = ConfigProvider::template dynamic_device_config<T>;     \
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
     }                                                                                  \
     else                                                                               \
     {                                                                                  \
-        using DeviceConfig = typename ConfigProvider<T>::static_device_config;         \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<DeviceConfig::config.threads>), \
-                           __VA_ARGS__);                                               \
+        constexpr auto config = ConfigProvider::template static_device_config<T>;      \
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
     }
 
-template<template<class T> class ConfigProvider>
+template<class ConfigProvider>
 class rocrand_xorwow_template : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW>
 {
 public:
@@ -279,7 +274,7 @@ public:
             return status;
 
         rocrand_host::detail::generator_config config;
-        hipError_t error = ConfigProvider<T>::host_config(m_stream, m_order, config);
+        hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
             return ROCRAND_STATUS_INTERNAL_ERROR;
 
@@ -363,7 +358,7 @@ private:
     // m_offset from base_type
 };
 
-using rocrand_xorwow
-    = rocrand_xorwow_template<rocrand_host::detail::default_config_provider_xorwow>;
+using rocrand_xorwow = rocrand_xorwow_template<
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
 
 #endif // ROCRAND_RNG_XORWOW_H_
