@@ -31,6 +31,7 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
+#include "state_dispatcher.hpp"
 
 namespace rocrand_host {
 namespace detail {

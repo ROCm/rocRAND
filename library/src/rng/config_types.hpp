@@ -26,18 +26,12 @@
 
 #include <hip/hip_runtime.h>
 
-#include <array>
 #include <atomic>
 #include <cassert>
 #include <limits>
-#include <map>
 #include <string>
-#include <tuple>
-#include <utility>
 
-namespace rocrand_host
-{
-namespace detail
+namespace rocrand_host::detail
 {
 
 /// \brief Represents a device target's processor architecture.
@@ -341,131 +335,6 @@ struct default_config_provider
     }
 };
 
-template<template<class T> class ConfigProvider, class State>
-class state_dispatcher
-{
-public:
-    template<class EngineInitializer>
-    rocrand_status init(const hipStream_t      stream,
-                        const rocrand_ordering ordering,
-                        EngineInitializer&&    engine_initializer)
-    {
-        m_config_to_state_map.clear();
-        rocrand_status status = ROCRAND_STATUS_SUCCESS;
-        std::apply(
-            [&](auto&&... vals)
-            {
-                ((
-                     [&]
-                     {
-                         if(status == ROCRAND_STATUS_SUCCESS)
-                             status = initialize_for_type<std::decay_t<decltype(vals)>>(
-                                 stream,
-                                 ordering,
-                                 std::forward<EngineInitializer>(engine_initializer));
-                     }()),
-                 ...);
-            },
-            all_generated_types{});
-
-        return status;
-    }
-
-    template<class T>
-    const State& get_state() const
-    {
-        return m_config_to_state_map.at(m_type_to_config_map[get_type_index<T>()]);
-    }
-
-    template<class T, class UpdateFunctor>
-    void update_state(UpdateFunctor&& update_functor)
-    {
-        const auto& config = m_type_to_config_map[get_type_index<T>()];
-        update_functor(config, m_config_to_state_map[config]);
-    }
-
-private:
-    struct config_comparator
-    {
-        constexpr bool operator()(const generator_config& lhs, const generator_config& rhs) const
-        {
-            return (lhs.blocks != rhs.blocks) ? (lhs.blocks < rhs.blocks)
-                                              : (lhs.threads < rhs.threads);
-        }
-    };
-
-    using all_generated_types = std::
-        tuple<unsigned int, unsigned char, unsigned short, unsigned long long, float, half, double>;
-
-    template<class T, size_t... Indices>
-    static constexpr size_t get_type_index(std::index_sequence<Indices...>)
-    {
-        size_t ret{};
-        ((
-             [&]
-             {
-                 if constexpr(std::is_same_v<T, std::tuple_element_t<Indices, all_generated_types>>)
-                 {
-                     ret = Indices;
-                 }
-             }()),
-         ...);
-        return ret;
-    }
-
-    template<class T>
-    static constexpr size_t get_type_index()
-    {
-        return get_type_index<T>(
-            std::make_index_sequence<std::tuple_size_v<all_generated_types>>{});
-    }
-
-    template<class T, class EngineInitializer>
-    rocrand_status initialize_for_type(const hipStream_t      stream,
-                                       const rocrand_ordering ordering,
-                                       EngineInitializer&&    engine_initializer)
-    {
-        generator_config config{};
-        const hipError_t error = ConfigProvider<T>::host_config(stream, ordering, config);
-        if(error != hipSuccess)
-        {
-            return ROCRAND_STATUS_INTERNAL_ERROR;
-        }
-        m_type_to_config_map[get_type_index<T>()] = config;
-        if(m_config_to_state_map.find(config) == m_config_to_state_map.end())
-        {
-            return engine_initializer(T{}, config, m_config_to_state_map[config]);
-        }
-        return ROCRAND_STATUS_SUCCESS;
-    }
-
-    std::array<generator_config, std::tuple_size_v<all_generated_types>> m_type_to_config_map{};
-    std::map<generator_config, State, config_comparator>                 m_config_to_state_map{};
-};
-
-template<class Engine>
-struct common_engine_state
-{
-    Engine*      m_engines{};
-    unsigned int m_start_engine_id{};
-
-    common_engine_state()                           = default;
-    common_engine_state(const common_engine_state&) = delete;
-    common_engine_state(common_engine_state&&)      = default;
-
-    common_engine_state& operator=(const common_engine_state&) = delete;
-    common_engine_state& operator=(common_engine_state&&)      = default;
-
-    ~common_engine_state()
-    {
-        if(m_engines != nullptr)
-        {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
-        }
-    }
-};
-
-} // end namespace detail
-} // end namespace rocrand_host
+} // end namespace rocrand_host::detail
 
 #endif // ROCRAND_RNG_CONFIG_TYPES_H_
