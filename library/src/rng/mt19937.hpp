@@ -74,6 +74,8 @@ static constexpr unsigned int threads_per_generator = 8;
 static constexpr unsigned int thread_count = 256;
 static_assert(thread_count % threads_per_generator == 0,
               "All eight threads of the generator must be in the same block");
+static_assert(generator_count == (1 << mt19937_jump_powers),
+              "Not enough mt19937_jump values to initialize all generators");
 } // namespace
 
 namespace rocrand_host
@@ -660,6 +662,88 @@ private:
 };
 
 ROCRAND_KERNEL
+__launch_bounds__(thread_count) void jump_ahead_kernel(mt19937_engine*     engines,
+                                                       unsigned long long  seed,
+                                                       const unsigned int* jump)
+{
+    __shared__ unsigned int state[n];
+    __shared__ unsigned int temp[n];
+
+    // Initialize state 0 (engine_id = 0) used as a base for all engines
+    if(threadIdx.x == 0)
+    {
+        const unsigned int seedu = (seed >> 32) ^ seed;
+        state[0]                 = seedu;
+        for(unsigned int i = 1; i < n; i++)
+        {
+            state[i] = 1812433253 * (state[i - 1] ^ (state[i - 1] >> 30)) + i;
+        }
+    }
+    __syncthreads();
+
+    const unsigned int engine_id = blockIdx.x;
+
+    for(unsigned int p = 0; p < mt19937_jump_powers; p++)
+    {
+        if((engine_id & (1 << p)) == 0)
+        {
+            continue;
+        }
+
+        // Compute jumping ahead with standard Horner method
+
+        unsigned int ptr = 0;
+        for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+        {
+            temp[i] = 0;
+        }
+        __syncthreads();
+
+        const unsigned int* pf = jump + p * mt19937_p_size;
+        for(int pfi = mt19937_mexp - 1; pfi >= 0; pfi--)
+        {
+            // Generate next state
+            if(threadIdx.x == 0)
+            {
+                unsigned int y = (temp[ptr] & upper_mask) | (temp[(ptr + 1) % n] & lower_mask);
+                temp[ptr]      = temp[(ptr + m) % n] ^ (y >> 1) ^ ((y & 0x1U) ? matrix_a : 0);
+            }
+            __syncthreads();
+            ptr = (ptr + 1) % n;
+
+            if((pf[pfi / 32] >> (pfi % 32)) & 1)
+            {
+                // Add state to temp
+                for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+                {
+                    temp[(i + ptr) % n] ^= state[i];
+                }
+                __syncthreads();
+            }
+        }
+
+        // Jump of the next power of 2 will be applied to the current state
+        for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+        {
+            // Rotate the array to align ptr with the array boundary
+            state[i] = temp[(i + ptr) % n];
+        }
+        __syncthreads();
+    }
+
+    // Save state
+    for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+    {
+        engines[engine_id].m_state.mt[i] = state[i];
+    }
+    // Set to 0, which is the index of the next number to be calculated
+    if(threadIdx.x == 0)
+    {
+        engines[engine_id].m_state.ptr = 0;
+    }
+}
+
+ROCRAND_KERNEL
 __launch_bounds__(thread_count) void init_engines_kernel(mt19937_octo_engine* octo_engines,
                                                          mt19937_engine*      engines)
 {
@@ -817,19 +901,6 @@ public:
             return ROCRAND_STATUS_SUCCESS;
         }
 
-        // initialize the engines on the host due to high memory requirement
-        // for jumping subsequences
-        std::vector<engine_type> h_engines;
-        h_engines.reserve(generator_count);
-        // initialize the first engine with the seed and no skips
-        h_engines.emplace_back(m_seed);
-        for(size_t i = 1; i < generator_count; i++)
-        {
-            // every consecutive engine is one subsequence away from the previous
-            h_engines.push_back(h_engines.back());
-            h_engines[i].discard_subsequence();
-        }
-
         engine_type* d_engines{};
         err = hipMalloc(reinterpret_cast<void**>(&d_engines),
                         generator_count * sizeof(engine_type));
@@ -838,11 +909,40 @@ public:
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
-        err = hipMemcpy(d_engines,
-                        h_engines.data(),
-                        generator_count * sizeof(engine_type),
-                        hipMemcpyHostToDevice);
+        unsigned int* d_mt19937_jump{};
+        err = hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(mt19937_jump));
+        if(err != hipSuccess)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
 
+        err = hipMemcpy(d_mt19937_jump, mt19937_jump, sizeof(mt19937_jump), hipMemcpyHostToDevice);
+        if(err != hipSuccess)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_mt19937_jump));
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+
+        hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
+                           dim3(generator_count),
+                           dim3(thread_count),
+                           0,
+                           m_stream,
+                           d_engines,
+                           m_seed,
+                           d_mt19937_jump);
+
+        err = hipStreamSynchronize(m_stream);
+        if(err != hipSuccess)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_mt19937_jump));
+            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        }
+
+        err = hipFree(d_mt19937_jump);
         if(err != hipSuccess)
         {
             hipFree(d_engines);

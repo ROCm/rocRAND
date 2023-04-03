@@ -9,6 +9,7 @@ Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/e
 would copy internal references to the generators and would lead to double free or memory leak errors.
   These types should be moved instead of copied, and move constructors and operators are now defined
   for them. 
+- Improved MT19937 initialization performance.
 ### Fixed
 - `mt19937_engine` from `rocrand.hpp` is now move-constructible and move-assignable. Previously the
 move constructor and move assignment operator was deleted for this class.
