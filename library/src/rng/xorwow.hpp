@@ -222,8 +222,8 @@ public:
                 const unsigned int engines_size = config.threads * config.blocks;
                 state.m_start_engine_id         = m_offset % engines_size;
 
-                const hipError_t error
-                    = hipMalloc(&state.m_engines, sizeof(engine_type) * engines_size);
+                const hipError_t error = hipMalloc(reinterpret_cast<void**>(&state.m_engines),
+                                                   sizeof(engine_type) * engines_size);
                 if(error != hipSuccess)
                     return ROCRAND_STATUS_ALLOCATION_FAILED;
 
