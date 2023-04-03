@@ -673,25 +673,38 @@ ROCRAND_KERNEL
 __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
     mt19937_engine* engines, unsigned long long seed, const unsigned int* __restrict__ jump)
 {
-    constexpr unsigned int block_size = jump_ahead_thread_count;
+    constexpr unsigned int block_size       = jump_ahead_thread_count;
+    constexpr unsigned int items_per_thread = (n + block_size - 1) / block_size;
+    constexpr unsigned int tail_n           = n - (items_per_thread - 1) * block_size;
 
-    __shared__ unsigned int state[n];
     __shared__ unsigned int temp[n];
+    unsigned int            state[items_per_thread];
 
-    // Initialize state 0 (engine_id = 0) used as a base for all engines
+    // Initialize state 0 (engine_id = 0) used as a base for all engines.
+    // It uses a recurrence relation so one thread calculates all n values.
     if(threadIdx.x == 0)
     {
         const unsigned int seedu = (seed >> 32) ^ seed;
-        state[0]                 = seedu;
+        temp[0]                  = seedu;
         for(unsigned int i = 1; i < n; i++)
         {
-            state[i] = 1812433253 * (state[i - 1] ^ (state[i - 1] >> 30)) + i;
+            temp[i] = 1812433253 * (temp[i - 1] ^ (temp[i - 1] >> 30)) + i;
+        }
+    }
+    __syncthreads();
+
+    for(unsigned int i = 0; i < items_per_thread; i++)
+    {
+        if(i < items_per_thread - 1 || threadIdx.x < tail_n) // Check only for the last iteration
+        {
+            state[i] = temp[i * block_size + threadIdx.x];
         }
     }
     __syncthreads();
 
     const unsigned int engine_id = blockIdx.x;
 
+    // Jump ahead by engine_id * 2 ^ 1000 using precomputed polynomials for 2 ^ p * 2 ^ 1000
     for(unsigned int p = 0; p < mt19937_jump_powers; p++)
     {
         if((engine_id & (1 << p)) == 0)
@@ -726,34 +739,35 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
             if((pf[pfi / 32] >> (pfi % 32)) & 1)
             {
                 // Add state to temp
-                const unsigned int ni = n / block_size * block_size;
-                for(unsigned int i0 = 0; i0 < ni; i0 += block_size)
+                for(unsigned int i = 0; i < items_per_thread; i++)
                 {
-                    unsigned int i = i0 + threadIdx.x;
-                    temp[wrap_n(ptr + i)] ^= state[i];
-                }
-                unsigned int i = ni + threadIdx.x;
-                if(i < n)
-                {
-                    temp[wrap_n(ptr + i)] ^= state[i];
+                    if(i < items_per_thread - 1 || threadIdx.x < tail_n)
+                    {
+                        temp[wrap_n(ptr + i * block_size + threadIdx.x)] ^= state[i];
+                    }
                 }
                 __syncthreads();
             }
         }
 
         // Jump of the next power of 2 will be applied to the current state
-        for(unsigned int i = threadIdx.x; i < n; i += block_size)
+        for(unsigned int i = 0; i < items_per_thread; i++)
         {
-            // Rotate the array to align ptr with the array boundary
-            state[i] = temp[wrap_n(ptr + i)];
+            if(i < items_per_thread - 1 || threadIdx.x < tail_n)
+            {
+                state[i] = temp[wrap_n(ptr + i * block_size + threadIdx.x)];
+            }
         }
         __syncthreads();
     }
 
     // Save state
-    for(unsigned int i = threadIdx.x; i < n; i += block_size)
+    for(unsigned int i = 0; i < items_per_thread; i++)
     {
-        engines[engine_id].m_state.mt[i] = state[i];
+        if(i < items_per_thread - 1 || threadIdx.x < tail_n)
+        {
+            engines[engine_id].m_state.mt[i * block_size + threadIdx.x] = state[i];
+        }
     }
     // Set to 0, which is the index of the next number to be calculated
     if(threadIdx.x == 0)
