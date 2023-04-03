@@ -72,6 +72,9 @@ static constexpr unsigned int generator_count = 8192;
 static constexpr unsigned int threads_per_generator = 8;
 /// Number of threads per block. Can be tweaked for performance.
 static constexpr unsigned int thread_count = 256;
+/// Number of threads per block for jump-ahead kernel. Can be tweaked for performance.
+static constexpr unsigned int jump_ahead_thread_count = 128;
+
 static_assert(thread_count % threads_per_generator == 0,
               "All eight threads of the generator must be in the same block");
 static_assert(generator_count == (1 << mt19937_jump_powers),
@@ -661,11 +664,17 @@ private:
     mt19937_octo_state m_state;
 };
 
-ROCRAND_KERNEL
-__launch_bounds__(thread_count) void jump_ahead_kernel(mt19937_engine*     engines,
-                                                       unsigned long long  seed,
-                                                       const unsigned int* jump)
+MT_FQUALIFIERS unsigned int wrap_n(unsigned int i)
 {
+    return i - (i < n ? 0 : n);
+}
+
+ROCRAND_KERNEL
+__launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
+    mt19937_engine* engines, unsigned long long seed, const unsigned int* __restrict__ jump)
+{
+    constexpr unsigned int block_size = jump_ahead_thread_count;
+
     __shared__ unsigned int state[n];
     __shared__ unsigned int temp[n];
 
@@ -693,7 +702,7 @@ __launch_bounds__(thread_count) void jump_ahead_kernel(mt19937_engine*     engin
         // Compute jumping ahead with standard Horner method
 
         unsigned int ptr = 0;
-        for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+        for(unsigned int i = threadIdx.x; i < n; i += block_size)
         {
             temp[i] = 0;
         }
@@ -705,34 +714,44 @@ __launch_bounds__(thread_count) void jump_ahead_kernel(mt19937_engine*     engin
             // Generate next state
             if(threadIdx.x == 0)
             {
-                unsigned int y = (temp[ptr] & upper_mask) | (temp[(ptr + 1) % n] & lower_mask);
-                temp[ptr]      = temp[(ptr + m) % n] ^ (y >> 1) ^ ((y & 0x1U) ? matrix_a : 0);
+                unsigned int t0 = temp[ptr];
+                unsigned int t1 = temp[wrap_n(ptr + 1)];
+                unsigned int tm = temp[wrap_n(ptr + m)];
+                unsigned int y  = (t0 & upper_mask) | (t1 & lower_mask);
+                temp[ptr]       = tm ^ (y >> 1) ^ ((y & 0x1U) ? matrix_a : 0);
             }
             __syncthreads();
-            ptr = (ptr + 1) % n;
+            ptr = wrap_n(ptr + 1);
 
             if((pf[pfi / 32] >> (pfi % 32)) & 1)
             {
                 // Add state to temp
-                for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+                const unsigned int ni = n / block_size * block_size;
+                for(unsigned int i0 = 0; i0 < ni; i0 += block_size)
                 {
-                    temp[(i + ptr) % n] ^= state[i];
+                    unsigned int i = i0 + threadIdx.x;
+                    temp[wrap_n(ptr + i)] ^= state[i];
+                }
+                unsigned int i = ni + threadIdx.x;
+                if(i < n)
+                {
+                    temp[wrap_n(ptr + i)] ^= state[i];
                 }
                 __syncthreads();
             }
         }
 
         // Jump of the next power of 2 will be applied to the current state
-        for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+        for(unsigned int i = threadIdx.x; i < n; i += block_size)
         {
             // Rotate the array to align ptr with the array boundary
-            state[i] = temp[(i + ptr) % n];
+            state[i] = temp[wrap_n(ptr + i)];
         }
         __syncthreads();
     }
 
     // Save state
-    for(unsigned int i = threadIdx.x; i < n; i += blockDim.x)
+    for(unsigned int i = threadIdx.x; i < n; i += block_size)
     {
         engines[engine_id].m_state.mt[i] = state[i];
     }
@@ -927,7 +946,7 @@ public:
 
         hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
                            dim3(generator_count),
-                           dim3(thread_count),
+                           dim3(jump_ahead_thread_count),
                            0,
                            m_stream,
                            d_engines,
