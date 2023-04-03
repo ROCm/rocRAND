@@ -159,20 +159,6 @@ namespace detail {
 } // end namespace detail
 } // end namespace rocrand_host
 
-// Unfortunately cannot be substituted by a variadic template lambda, because
-// hipLaunchKernelGGL is a macro itself
-#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(ordering, kernel_name, ...)                 \
-    if(rocrand_host::detail::is_ordering_dynamic(ordering))                            \
-    {                                                                                  \
-        constexpr auto config = ConfigProvider::template dynamic_device_config<T>;     \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
-    }                                                                                  \
-    else                                                                               \
-    {                                                                                  \
-        constexpr auto config = ConfigProvider::template static_device_config<T>;      \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
-    }
-
 template<class ConfigProvider>
 class rocrand_xorwow_template : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_XORWOW>
 {
@@ -241,7 +227,8 @@ public:
                 if(error != hipSuccess)
                     return ROCRAND_STATUS_ALLOCATION_FAILED;
 
-                ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(m_order,
+                ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
+                                                   m_order,
                                                    rocrand_host::detail::init_engines_kernel,
                                                    dim3(config.blocks),
                                                    dim3(config.threads),
@@ -280,7 +267,8 @@ public:
 
         const auto& state = m_state_dispatcher.template get_state<T>();
 
-        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(m_order,
+        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
+                                           m_order,
                                            rocrand_host::detail::generate_kernel,
                                            dim3(config.blocks),
                                            dim3(config.threads),
