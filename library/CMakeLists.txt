@@ -74,8 +74,10 @@ target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFI
 if(NOT USE_HIP_CPU)
     if(HIP_COMPILER STREQUAL "nvcc")
         set_source_files_properties(${rocRAND_SRCS}
-            PROPERTIES LANGUAGE CUDA
-        )
+            PROPERTIES LANGUAGE CUDA CUDA_STANDARD 17)
+        if(${CMAKE_VERSION} VERSION_LESS "3.18")
+            set_source_files_properties(${rocRAND_SRCS} PROPERTIES COMPILE_OPTIONS "-std=c++17")
+        endif()
         set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     else()
         target_link_libraries(rocrand PRIVATE hip::device)
