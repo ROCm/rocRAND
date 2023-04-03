@@ -143,14 +143,14 @@ TEST_F(rocrand_state_dispatcher_test, init)
         EXPECT_CALL(initializer, op(_, (generator_config{128, 256}), _)).Times(1);
         EXPECT_CALL(initializer, op(_, (generator_config{512, 128}), _)).Times(1);
         EXPECT_CALL(initializer, op(_, (generator_config{128, 512}), _)).Times(1);
-        dispatcher.init(hipStreamDefault, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
+        dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
     }
     {
         testing::StrictMock<mock_state_initializer> initializer;
         // When the ordering is dynamic, there are 2 distinct configs.
         EXPECT_CALL(initializer, op(_, (generator_config{128, 256}), _)).Times(1);
         EXPECT_CALL(initializer, op(_, (generator_config{128, 512}), _)).Times(1);
-        dispatcher.init(hipStreamDefault, ROCRAND_ORDERING_PSEUDO_DYNAMIC, initializer);
+        dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_DYNAMIC, initializer);
     }
 
     ASSERT_EQ(5, mock_state::num_instantiations);
@@ -160,7 +160,7 @@ TEST_F(rocrand_state_dispatcher_test, retrieve_state)
 {
     tested_state_dispatcher                   dispatcher;
     testing::NiceMock<mock_state_initializer> initializer;
-    dispatcher.init(hipStreamDefault, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
+    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
 
     const auto& uint_state  = dispatcher.get_state<unsigned int>();
     const auto& ulong_state = dispatcher.get_state<unsigned long long>();
@@ -185,11 +185,11 @@ TEST_F(rocrand_state_dispatcher_test, initialization_destructs_all_state)
     tested_state_dispatcher                   dispatcher;
     testing::NiceMock<mock_state_initializer> initializer;
 
-    dispatcher.init(hipStreamDefault, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
+    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
     ASSERT_EQ(3, mock_state::num_instantiations);
     ASSERT_EQ(0, mock_state::num_destructions);
 
-    dispatcher.init(hipStreamDefault, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
+    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
     ASSERT_EQ(6, mock_state::num_instantiations);
     ASSERT_EQ(3, mock_state::num_destructions);
 }
