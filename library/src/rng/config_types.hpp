@@ -313,21 +313,44 @@ __device__ constexpr generator_config get_generator_config_device(bool dynamic_c
                                 dynamic_config ? get_device_arch() : target_arch::unknown)};
 }
 
+/// @brief Loads the appropriate kernel launch config for both host and kernel code.
+/// The purpose of this class is to aggregate all configs (host, device dynamic, device static)
+/// in a single type, which can be passed to the generators as the \c ConfigProvider template
+/// parameter. This class gets the config based on the architecture and generated type \c T,
+/// but other \c ConfigProviders (e.g. used in benchmarking) can just return the same value
+/// regardless of type/architecture.
+/// @tparam GeneratorType The type of the generator (e.g. XORWOW, MT19937) to provide config for.
 template<rocrand_rng_type GeneratorType>
 struct default_config_provider
 {
+    /// @brief The config to be used when dynamic ordering is set.
+    /// This can be different per device architecture.
+    /// Note: this function returns the config for the \c unknown architecture, when invoked
+    /// on the host.
+    /// @tparam T The type of the generated random values.
     template<class T>
     static constexpr generator_config dynamic_device_config
         = get_generator_config_device<GeneratorType, T>(true);
 
+    /// @brief The config to be used when static (non-dynamic) ordering is set.
+    /// This is the same for each device architecture.
+    /// Note: this function returns the config for the \c unknown architecture, when invoked
+    /// on the host.
+    /// @tparam T The type of the generated random values.
     template<class T>
     static constexpr generator_config static_device_config
         = get_generator_config_device<GeneratorType, T>(false);
 
+    /// @brief Load the config on the host for a specific architecture and ordering.
+    /// @param stream The HIP stream to detect the device architecture from.
+    /// @param ordering The currently used ordering.
+    /// @param config The result of the config query is returned here.
+    /// @return \c hipSuccess if the query was successful, otherwise the error code from the
+    /// first failing HIP runtime function invocation.
     template<class T>
-    static hipError_t host_config(const hipStream_t      stream,
-                                  const rocrand_ordering ordering,
-                                  generator_config&      config)
+    hipError_t host_config(const hipStream_t      stream,
+                           const rocrand_ordering ordering,
+                           generator_config&      config) const
     {
         return get_generator_config<GeneratorType, T>(stream, ordering, config);
     }
