@@ -266,6 +266,20 @@ inline bool is_ordering_dynamic(const rocrand_ordering ordering)
            || ordering == ROCRAND_ORDERING_QUASI_DEFAULT;
 }
 
+// Unfortunately cannot be substituted by a variadic template lambda, because
+// hipLaunchKernelGGL is a macro itself
+#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T, ordering, kernel_name, ...)              \
+    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                          \
+    {                                                                                  \
+        constexpr auto config = ConfigProvider::template dynamic_device_config<T>;     \
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
+    }                                                                                  \
+    else                                                                               \
+    {                                                                                  \
+        constexpr auto config = ConfigProvider::template static_device_config<T>;      \
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
+    }
+
 /// @brief Selects the preset kernel launch config for the given random engine and
 /// generated value type.
 /// @tparam T The type of the generated random values.
