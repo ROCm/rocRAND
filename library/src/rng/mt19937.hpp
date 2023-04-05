@@ -52,7 +52,6 @@
 #define ROCRAND_RNG_MT19937_H_
 
 #define MT_FQUALIFIERS __forceinline__ __device__
-#define MT_FQUALIFIERS_HOST __host__
 
 #include <hip/hip_runtime.h>
 
@@ -103,250 +102,6 @@ static constexpr unsigned int upper_mask = 0x80000000U;
 /// \p w is the number of bits per generated word (32) and \p r is an algorithm constant.
 static constexpr unsigned int lower_mask = 0x7FFFFFFFU;
 } // namespace
-
-struct mt19937_engine
-{
-    // Jumping constants.
-    static constexpr unsigned int qq = 7;
-    static constexpr unsigned int ll = 1U << qq;
-
-    struct mt19937_state
-    {
-        unsigned int mt[n];
-        // index of the next value to be calculated
-        unsigned int ptr;
-    };
-
-    mt19937_state m_state;
-
-    MT_FQUALIFIERS_HOST mt19937_engine(unsigned long long seed)
-    {
-        const unsigned int seedu = (seed >> 32) ^ seed;
-        m_state.mt[0]            = seedu;
-        for(unsigned int i = 1; i < n; i++)
-        {
-            m_state.mt[i] = 1812433253 * (m_state.mt[i - 1] ^ (m_state.mt[i - 1] >> 30)) + i;
-        }
-        m_state.ptr = 0;
-    }
-
-    /// Advances the internal state to skip a single subsequence, which is <tt>2 ^ 1000</tt> states long.
-    MT_FQUALIFIERS_HOST void discard_subsequence()
-    {
-        m_state = discard_subsequence_impl(mt19937_jump, m_state);
-    }
-
-    // Generates the next state.
-    static MT_FQUALIFIERS_HOST void gen_next(mt19937_state& state)
-    {
-        /// mag01[x] = x * matrix_a for x in [0, 1]
-        constexpr unsigned int mag01[2] = {0x0U, matrix_a};
-
-        if(state.ptr + m < n)
-        {
-            unsigned int y
-                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
-            state.mt[state.ptr] = state.mt[state.ptr + m] ^ (y >> 1) ^ mag01[y & 0x1U];
-            state.ptr++;
-        }
-        else if(state.ptr < n - 1)
-        {
-            unsigned int y
-                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
-            state.mt[state.ptr] = state.mt[state.ptr - (n - m)] ^ (y >> 1) ^ mag01[y & 0x1U];
-            state.ptr++;
-        }
-        else // state.ptr == n - 1
-        {
-            unsigned int y  = (state.mt[n - 1] & upper_mask) | (state.mt[0] & lower_mask);
-            state.mt[n - 1] = state.mt[m - 1] ^ (y >> 1) ^ mag01[y & 0x1U];
-            state.ptr       = 0;
-        }
-    }
-
-    /// Return coefficient \p deg of the polynomial <tt>pf</tt>.
-    static MT_FQUALIFIERS_HOST unsigned int get_coef(const unsigned int pf[mt19937_p_size],
-                                                     unsigned int       deg)
-    {
-        constexpr unsigned int log_w_size  = 5;
-        constexpr unsigned int w_size_mask = (1U << log_w_size) - 1;
-        return (pf[deg >> log_w_size] & (1U << (deg & w_size_mask))) != 0;
-    }
-
-    /// Copy state \p ss into state <tt>ts</tt>.
-    static MT_FQUALIFIERS_HOST void copy_state(mt19937_state& ts, const mt19937_state& ss)
-    {
-        for(unsigned int i = 0; i < n; i++)
-        {
-            ts.mt[i] = ss.mt[i];
-        }
-
-        ts.ptr = ss.ptr;
-    }
-
-    /// Add state \p s2 to state <tt>s1</tt>.
-    static MT_FQUALIFIERS_HOST void add_state(mt19937_state& s1, const mt19937_state& s2)
-    {
-        if(s2.ptr >= s1.ptr)
-        {
-            unsigned int i = 0;
-            for(; i < n - s2.ptr; i++)
-            {
-                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
-            }
-            for(; i < n - s1.ptr; i++)
-            {
-                s1.mt[i + s1.ptr] ^= s2.mt[i - (n - s2.ptr)];
-            }
-            for(; i < n; i++)
-            {
-                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
-            }
-        }
-        else
-        {
-            unsigned int i = 0;
-            for(; i < n - s1.ptr; i++)
-            {
-                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
-            }
-            for(; i < n - s2.ptr; i++)
-            {
-                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i + s2.ptr];
-            }
-            for(; i < n; i++)
-            {
-                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
-            }
-        }
-    }
-
-    /// Generate Gray code.
-    static MT_FQUALIFIERS_HOST void gray_code(unsigned int h[ll])
-    {
-        h[0U] = 0U;
-
-        unsigned int l    = 1;
-        unsigned int term = ll;
-        unsigned int j    = 1;
-        for(unsigned int i = 1; i <= qq; i++)
-        {
-            l    = (l << 1);
-            term = (term >> 1);
-            for(; j < l; j++)
-            {
-                h[j] = h[l - j - 1] ^ term;
-            }
-        }
-    }
-
-    /// Compute \p h(f)ss where \p h(t) are exact <tt>q</tt>-degree polynomials,
-    /// \p f is the transition function, and \p ss is the initial state
-    /// the results are stored in <tt>vec_h[0] , ... , vec_h[ll - 1]</tt>.
-    static MT_FQUALIFIERS_HOST void gen_vec_h(const mt19937_state& ss, mt19937_state vec_h[ll])
-    {
-        mt19937_state v{};
-        unsigned int  h[ll];
-
-        gray_code(h);
-
-        copy_state(vec_h[0], ss);
-
-        for(unsigned int i = 0; i < qq; i++)
-        {
-            gen_next(vec_h[0]);
-        }
-
-        for(unsigned int i = 1; i < ll; i++)
-        {
-            copy_state(v, ss);
-            unsigned int g = h[i] ^ h[i - 1];
-            for(unsigned int k = 1; k < g; k = (k << 1))
-            {
-                gen_next(v);
-            }
-            copy_state(vec_h[h[i]], vec_h[h[i - 1]]);
-            add_state(vec_h[h[i]], v);
-        }
-    }
-
-    /// Compute pf(ss) using Sliding window algorithm.
-    static MT_FQUALIFIERS_HOST mt19937_state calc_state(const unsigned int   pf[mt19937_p_size],
-                                                        const mt19937_state& ss,
-                                                        const mt19937_state  vec_h[ll])
-    {
-        mt19937_state tmp{};
-        int           i = mt19937_mexp - 1;
-
-        while(get_coef(pf, i) == 0)
-        {
-            i--;
-        }
-
-        for(; i >= static_cast<int>(qq); i--)
-        {
-            if(get_coef(pf, i) != 0)
-            {
-                for(unsigned int j = 0; j < qq + 1; j++)
-                {
-                    gen_next(tmp);
-                }
-                unsigned int digit = 0;
-                for(int j = 0; j < static_cast<int>(qq); j++)
-                {
-                    digit = (digit << 1) ^ get_coef(pf, i - j - 1);
-                }
-                add_state(tmp, vec_h[digit]);
-                i -= qq;
-            }
-            else
-            {
-                gen_next(tmp);
-            }
-        }
-
-        for(; i > -1; i--)
-        {
-            gen_next(tmp);
-            if(get_coef(pf, i) == 1)
-            {
-                add_state(tmp, ss);
-            }
-        }
-
-        return tmp;
-    }
-
-    /// Computes jumping ahead with Sliding window algorithm.
-    static MT_FQUALIFIERS_HOST mt19937_state
-        discard_subsequence_impl(const unsigned int pf[mt19937_p_size], const mt19937_state& ss)
-    {
-        // skip state
-        mt19937_state vec_h[ll];
-        gen_vec_h(ss, vec_h);
-        mt19937_state new_state = calc_state(pf, ss, vec_h);
-
-        // rotate the array to align ptr with the array boundary
-        if(new_state.ptr != 0)
-        {
-            unsigned int tmp[n];
-            for(unsigned int i = 0; i < n; i++)
-            {
-                tmp[i] = new_state.mt[(i + new_state.ptr) % n];
-            }
-
-            for(unsigned int i = 0; i < n; i++)
-            {
-                new_state.mt[i] = tmp[i];
-            }
-        }
-
-        // set to 0, which is the index of the next number to be calculated
-        new_state.ptr = 0;
-
-        return new_state;
-    }
-};
 
 struct mt19937_octo_engine
 {
@@ -400,7 +155,7 @@ struct mt19937_octo_engine
     static constexpr unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
-    MT_FQUALIFIERS void gather(const mt19937_engine* engine)
+    MT_FQUALIFIERS void gather(const unsigned int engine[n])
     {
         constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
@@ -416,7 +171,7 @@ struct mt19937_octo_engine
             {
                 const unsigned int index = offsets[i] + items_per_thread * tid + j;
                 // + 1 for the special value
-                m_state.mt[1U + items_per_thread * i + j] = engine->m_state.mt[index];
+                m_state.mt[1U + items_per_thread * i + j] = engine[index];
             }
         }
 
@@ -425,7 +180,7 @@ struct mt19937_octo_engine
             = {i000_0, i113_1, i170_2, i283_3, i340_4, i397_5, i510_6, i567_7};
         constexpr unsigned int src_idx[threads_per_generator]
             = {0, 113, 170, 283, 340, 397, 510, 567};
-        m_state.mt[dest_idx[tid]] = engine->m_state.mt[src_idx[tid]];
+        m_state.mt[dest_idx[tid]] = engine[src_idx[tid]];
 
         // set to n, to indicate that a batch of n values can be calculated at a time
         m_state.mti = n;
@@ -664,6 +419,7 @@ private:
     mt19937_octo_state m_state;
 };
 
+/// Computes i % n, i must be in range [0, 2 * n)
 MT_FQUALIFIERS unsigned int wrap_n(unsigned int i)
 {
     return i - (i < n ? 0 : n);
@@ -671,7 +427,9 @@ MT_FQUALIFIERS unsigned int wrap_n(unsigned int i)
 
 ROCRAND_KERNEL
 __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
-    mt19937_engine* engines, unsigned long long seed, const unsigned int* __restrict__ jump)
+    unsigned int* __restrict__ engines,
+    unsigned long long seed,
+    const unsigned int* __restrict__ jump)
 {
     constexpr unsigned int block_size       = jump_ahead_thread_count;
     constexpr unsigned int items_per_thread = (n + block_size - 1) / block_size;
@@ -766,30 +524,26 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
     {
         if(i < items_per_thread - 1 || threadIdx.x < tail_n)
         {
-            engines[engine_id].m_state.mt[i * block_size + threadIdx.x] = state[i];
+            engines[engine_id * n + i * block_size + threadIdx.x] = state[i];
         }
-    }
-    // Set to 0, which is the index of the next number to be calculated
-    if(threadIdx.x == 0)
-    {
-        engines[engine_id].m_state.ptr = 0;
     }
 }
 
 ROCRAND_KERNEL
-__launch_bounds__(thread_count) void init_engines_kernel(mt19937_octo_engine* octo_engines,
-                                                         mt19937_engine*      engines)
+__launch_bounds__(thread_count) void init_engines_kernel(
+    mt19937_octo_engine* __restrict__ octo_engines, const unsigned int* __restrict__ engines)
 {
     const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     // every eight octo engines gather from the same engine
-    octo_engines[thread_id].gather(&engines[thread_id / threads_per_generator]);
+    octo_engines[thread_id].gather(&engines[thread_id / threads_per_generator * n]);
 }
 
 template<class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_kernel(mt19937_octo_engine* engines,
-                                                                    T*                   data,
-                                                                    const size_t         size,
-                                                                    Distribution distribution)
+ROCRAND_KERNEL
+    __launch_bounds__(thread_count) void generate_kernel(mt19937_octo_engine* __restrict__ engines,
+                                                         T* __restrict__ data,
+                                                         const size_t size,
+                                                         Distribution distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
@@ -880,7 +634,6 @@ class rocrand_mt19937 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_MT19937
 public:
     using base_type        = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MT19937>;
     using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
-    using engine_type      = ::rocrand_host::detail::mt19937_engine;
 
     rocrand_mt19937(unsigned long long seed = 0, hipStream_t stream = 0)
         : base_type(seed, 0, stream), m_engines_initialized(false), m_engines(NULL)
@@ -934,9 +687,9 @@ public:
             return ROCRAND_STATUS_SUCCESS;
         }
 
-        engine_type* d_engines{};
+        unsigned int* d_engines{};
         err = hipMalloc(reinterpret_cast<void**>(&d_engines),
-                        generator_count * sizeof(engine_type));
+                        generator_count * rocrand_host::detail::n * sizeof(unsigned int));
         if(err != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;

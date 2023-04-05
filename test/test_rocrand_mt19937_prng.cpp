@@ -283,17 +283,19 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
+static constexpr unsigned int n = 624;
+
 /// Initialize the octo engines for both generators. Skip \p subsequence_size for the first generator.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
     ::rocrand_host::detail::mt19937_octo_engine* octo_engines,
-    ::rocrand_host::detail::mt19937_engine*      engines,
+    const unsigned int*                          engines,
     unsigned int                                 subsequence_size)
 {
     const unsigned int                          thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     constexpr unsigned int                      threads_per_generator = 8U;
     unsigned int                                engine_id = thread_id / threads_per_generator;
     ::rocrand_host::detail::mt19937_octo_engine engine    = octo_engines[thread_id];
-    engine.gather(&engines[engine_id]);
+    engine.gather(&engines[engine_id * n]);
 
     if(engine_id == 0)
     {
@@ -328,7 +330,6 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
 
 TEST(rocrand_mt19937_prng_tests, subsequence_test)
 {
-    using engine_type      = ::rocrand_host::detail::mt19937_engine;
     using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
     constexpr unsigned int           threads_per_generator = 8U;
     constexpr unsigned long long int seed                  = 1ULL;
@@ -339,7 +340,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     static_assert(subsequence_size % threads_per_generator == 0,
                   "size of subsequence must be multiple of eight");
     constexpr unsigned int generator_count = 2U;
-    constexpr unsigned int state_size      = 624U;
+    constexpr unsigned int state_size      = n;
 
     // Constants to skip subsequence_size states.
     // Generated with tools/mt19937_precomputed_generator.cpp
@@ -464,19 +465,22 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
         // clang-format on
     };
 
-    std::vector<engine_type> h_engines;
-    h_engines.reserve(generator_count);
-    h_engines.emplace_back(seed);
-    h_engines.push_back(h_engines.back());
-    h_engines[1].m_state = engine_type::discard_subsequence_impl(jump, h_engines[1].m_state);
+    unsigned int* d_mt19937_jump{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(jump)));
+    HIP_CHECK(hipMemcpy(d_mt19937_jump, jump, sizeof(jump), hipMemcpyHostToDevice));
 
-    engine_type* d_engines{};
-    HIP_CHECK(
-        hipMalloc(reinterpret_cast<void**>(&d_engines), generator_count * sizeof(engine_type)));
-    HIP_CHECK(hipMemcpy(d_engines,
-                        h_engines.data(),
-                        generator_count * sizeof(engine_type),
-                        hipMemcpyHostToDevice));
+    unsigned int* d_engines{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines),
+                        generator_count * n * sizeof(unsigned int)));
+
+    hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
+                       dim3(generator_count),
+                       dim3(jump_ahead_thread_count),
+                       0,
+                       0,
+                       d_engines,
+                       seed,
+                       d_mt19937_jump);
 
     octo_engine_type* d_octo_engines{};
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_octo_engines),
@@ -493,6 +497,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
                        d_engines,
                        subsequence_size);
     HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(d_mt19937_jump));
     HIP_CHECK(hipFree(d_engines));
 
     // Device side data
@@ -574,4 +579,321 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     ASSERT_TRUE(checks1to0 > 0);
 
     free(h_data);
+}
+
+struct mt19937_engine
+{
+    static constexpr unsigned int m          = 397;
+    static constexpr unsigned int matrix_a   = 0x9908B0DFU;
+    static constexpr unsigned int upper_mask = 0x80000000U;
+    static constexpr unsigned int lower_mask = 0x7FFFFFFFU;
+
+    // Jumping constants.
+    static constexpr unsigned int qq = 7;
+    static constexpr unsigned int ll = 1U << qq;
+
+    struct mt19937_state
+    {
+        unsigned int mt[n];
+        // index of the next value to be calculated
+        unsigned int ptr;
+    };
+
+    mt19937_state m_state;
+
+    mt19937_engine(unsigned long long seed)
+    {
+        const unsigned int seedu = (seed >> 32) ^ seed;
+        m_state.mt[0]            = seedu;
+        for(unsigned int i = 1; i < n; i++)
+        {
+            m_state.mt[i] = 1812433253 * (m_state.mt[i - 1] ^ (m_state.mt[i - 1] >> 30)) + i;
+        }
+        m_state.ptr = 0;
+    }
+
+    /// Advances the internal state to skip a single subsequence, which is <tt>2 ^ 1000</tt> states long.
+    void discard_subsequence()
+    {
+        // First n values of mt19937_jump contain poynomial for a jump by 2 ^ 1000
+        m_state = discard_subsequence_impl(mt19937_jump, m_state);
+    }
+
+    // Generates the next state.
+    static void gen_next(mt19937_state& state)
+    {
+        /// mag01[x] = x * matrix_a for x in [0, 1]
+        constexpr unsigned int mag01[2] = {0x0U, matrix_a};
+
+        if(state.ptr + m < n)
+        {
+            unsigned int y
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr + m] ^ (y >> 1) ^ mag01[y & 0x1U];
+            state.ptr++;
+        }
+        else if(state.ptr < n - 1)
+        {
+            unsigned int y
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr - (n - m)] ^ (y >> 1) ^ mag01[y & 0x1U];
+            state.ptr++;
+        }
+        else // state.ptr == n - 1
+        {
+            unsigned int y  = (state.mt[n - 1] & upper_mask) | (state.mt[0] & lower_mask);
+            state.mt[n - 1] = state.mt[m - 1] ^ (y >> 1) ^ mag01[y & 0x1U];
+            state.ptr       = 0;
+        }
+    }
+
+    /// Return coefficient \p deg of the polynomial <tt>pf</tt>.
+    static unsigned int get_coef(const unsigned int pf[mt19937_p_size], unsigned int deg)
+    {
+        constexpr unsigned int log_w_size  = 5;
+        constexpr unsigned int w_size_mask = (1U << log_w_size) - 1;
+        return (pf[deg >> log_w_size] & (1U << (deg & w_size_mask))) != 0;
+    }
+
+    /// Copy state \p ss into state <tt>ts</tt>.
+    static void copy_state(mt19937_state& ts, const mt19937_state& ss)
+    {
+        for(unsigned int i = 0; i < n; i++)
+        {
+            ts.mt[i] = ss.mt[i];
+        }
+
+        ts.ptr = ss.ptr;
+    }
+
+    /// Add state \p s2 to state <tt>s1</tt>.
+    static void add_state(mt19937_state& s1, const mt19937_state& s2)
+    {
+        if(s2.ptr >= s1.ptr)
+        {
+            unsigned int i = 0;
+            for(; i < n - s2.ptr; i++)
+            {
+                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
+            }
+            for(; i < n - s1.ptr; i++)
+            {
+                s1.mt[i + s1.ptr] ^= s2.mt[i - (n - s2.ptr)];
+            }
+            for(; i < n; i++)
+            {
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
+            }
+        }
+        else
+        {
+            unsigned int i = 0;
+            for(; i < n - s1.ptr; i++)
+            {
+                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
+            }
+            for(; i < n - s2.ptr; i++)
+            {
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i + s2.ptr];
+            }
+            for(; i < n; i++)
+            {
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
+            }
+        }
+    }
+
+    /// Generate Gray code.
+    static void gray_code(unsigned int h[ll])
+    {
+        h[0U] = 0U;
+
+        unsigned int l    = 1;
+        unsigned int term = ll;
+        unsigned int j    = 1;
+        for(unsigned int i = 1; i <= qq; i++)
+        {
+            l    = (l << 1);
+            term = (term >> 1);
+            for(; j < l; j++)
+            {
+                h[j] = h[l - j - 1] ^ term;
+            }
+        }
+    }
+
+    /// Compute \p h(f)ss where \p h(t) are exact <tt>q</tt>-degree polynomials,
+    /// \p f is the transition function, and \p ss is the initial state
+    /// the results are stored in <tt>vec_h[0] , ... , vec_h[ll - 1]</tt>.
+    static void gen_vec_h(const mt19937_state& ss, mt19937_state vec_h[ll])
+    {
+        mt19937_state v{};
+        unsigned int  h[ll];
+
+        gray_code(h);
+
+        copy_state(vec_h[0], ss);
+
+        for(unsigned int i = 0; i < qq; i++)
+        {
+            gen_next(vec_h[0]);
+        }
+
+        for(unsigned int i = 1; i < ll; i++)
+        {
+            copy_state(v, ss);
+            unsigned int g = h[i] ^ h[i - 1];
+            for(unsigned int k = 1; k < g; k = (k << 1))
+            {
+                gen_next(v);
+            }
+            copy_state(vec_h[h[i]], vec_h[h[i - 1]]);
+            add_state(vec_h[h[i]], v);
+        }
+    }
+
+    /// Compute pf(ss) using Sliding window algorithm.
+    static mt19937_state calc_state(const unsigned int   pf[mt19937_p_size],
+                                    const mt19937_state& ss,
+                                    const mt19937_state  vec_h[ll])
+    {
+        mt19937_state tmp{};
+        int           i = mt19937_mexp - 1;
+
+        while(get_coef(pf, i) == 0)
+        {
+            i--;
+        }
+
+        for(; i >= static_cast<int>(qq); i--)
+        {
+            if(get_coef(pf, i) != 0)
+            {
+                for(unsigned int j = 0; j < qq + 1; j++)
+                {
+                    gen_next(tmp);
+                }
+                unsigned int digit = 0;
+                for(int j = 0; j < static_cast<int>(qq); j++)
+                {
+                    digit = (digit << 1) ^ get_coef(pf, i - j - 1);
+                }
+                add_state(tmp, vec_h[digit]);
+                i -= qq;
+            }
+            else
+            {
+                gen_next(tmp);
+            }
+        }
+
+        for(; i > -1; i--)
+        {
+            gen_next(tmp);
+            if(get_coef(pf, i) == 1)
+            {
+                add_state(tmp, ss);
+            }
+        }
+
+        return tmp;
+    }
+
+    /// Computes jumping ahead with Sliding window algorithm.
+    static mt19937_state discard_subsequence_impl(const unsigned int   pf[mt19937_p_size],
+                                                  const mt19937_state& ss)
+    {
+        // skip state
+        mt19937_state vec_h[ll];
+        gen_vec_h(ss, vec_h);
+        mt19937_state new_state = calc_state(pf, ss, vec_h);
+
+        // rotate the array to align ptr with the array boundary
+        if(new_state.ptr != 0)
+        {
+            unsigned int tmp[n];
+            for(unsigned int i = 0; i < n; i++)
+            {
+                tmp[i] = new_state.mt[(i + new_state.ptr) % n];
+            }
+
+            for(unsigned int i = 0; i < n; i++)
+            {
+                new_state.mt[i] = tmp[i];
+            }
+        }
+
+        // set to 0, which is the index of the next number to be calculated
+        new_state.ptr = 0;
+
+        return new_state;
+    }
+};
+
+TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
+{
+    // Compare states of all engines
+    // * computed consecutively on host using Sliding window algorithm
+    //   (each engine jumps 2 ^ 1000 ahead from the previous one);
+    // * computed in parallel on device using standard Horner algorithm
+    //   (with precomputed 2 ^ p * 2 ^ 1000 jumps).
+
+    const unsigned long long seed = 12345678;
+
+    // Initialize the engines on host using Sliding window algorithm
+    std::vector<mt19937_engine> h_engines0;
+    h_engines0.reserve(generator_count);
+    // initialize the first engine with the seed and no skips
+    h_engines0.emplace_back(seed);
+    for(size_t i = 1; i < generator_count; i++)
+    {
+        // every consecutive engine is one subsequence away from the previous
+        h_engines0.push_back(h_engines0.back());
+        h_engines0[i].discard_subsequence();
+    }
+
+    // Initialize the engines on device using Horner algorithm
+
+    unsigned int* d_mt19937_jump{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(mt19937_jump)));
+    HIP_CHECK(hipMemcpy(d_mt19937_jump, mt19937_jump, sizeof(mt19937_jump), hipMemcpyHostToDevice));
+
+    unsigned int* d_engines1{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines1),
+                        generator_count * n * sizeof(unsigned int)));
+
+    hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
+                       dim3(generator_count),
+                       dim3(jump_ahead_thread_count),
+                       0,
+                       0,
+                       d_engines1,
+                       seed,
+                       d_mt19937_jump);
+
+    std::vector<unsigned int> h_engines1(generator_count * n);
+    HIP_CHECK(hipMemcpy(h_engines1.data(),
+                        d_engines1,
+                        generator_count * n * sizeof(unsigned int),
+                        hipMemcpyDeviceToHost));
+
+    for(unsigned int gi = 0; gi < generator_count; gi++)
+    {
+        for(unsigned int i = 0; i < n; i++)
+        {
+            unsigned int a = h_engines0[gi].m_state.mt[i];
+            unsigned int b = h_engines1[gi * n + i];
+            if(i == 0)
+            {
+                // 31 bits of the first value contain garbage, only the last bit (19937 % 32 == 1)
+                // matters
+                a &= 0x80000000U;
+                b &= 0x80000000U;
+            }
+            ASSERT_EQ(a, b);
+        }
+    }
+
+    HIP_CHECK(hipFree(d_mt19937_jump));
+    HIP_CHECK(hipFree(d_engines1));
 }
