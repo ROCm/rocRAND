@@ -41,8 +41,8 @@ namespace detail {
     template<class T>
     struct generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>
     {
-        const unsigned int threads = 256;
-        const unsigned int blocks  = 512;
+        static constexpr inline unsigned int threads = 256;
+        static constexpr inline unsigned int blocks  = 512;
     };
 
     template<unsigned int BlockSize>

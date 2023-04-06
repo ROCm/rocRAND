@@ -109,16 +109,6 @@ public:
     }
 
 private:
-    struct config_comparator
-    {
-        constexpr bool operator()(const generator_config& lhs, const generator_config& rhs) const
-        {
-            // In order to store the configs in a \ref std::map, we must define an ordering.
-            return (lhs.blocks != rhs.blocks) ? (lhs.blocks < rhs.blocks)
-                                              : (lhs.threads < rhs.threads);
-        }
-    };
-
     using all_generated_types = std::
         tuple<unsigned int, unsigned char, unsigned short, unsigned long long, float, half, double>;
 
@@ -160,13 +150,15 @@ private:
     std::array<generator_config, std::tuple_size_v<all_generated_types>> m_type_to_config_map{};
 
     /// @brief config->State map.
-    std::map<generator_config, State, config_comparator> m_config_to_state_map{};
+    std::map<generator_config, State> m_config_to_state_map{};
 };
 
-/// @brief A number of the generators require a state that consists of a pointer to the
-/// device engine array, and the ID of the start engine. An instantiation class template can
-/// be used as the \c State template argument for \ref state_dispatcher in those generators.
+/// @brief Some of the generators require a state that consists of a pointer to the
+/// device engine array, and the ID of the start engine. An instantiation of this class template
+/// can be used as the \c State template argument for \ref state_dispatcher in those generators.
 /// Additionally, it manages (frees) the device memory when destructed.
+/// The generators that have different state requirements (i.e. not a pointer and start_engine_id)
+/// should use a different state object altogether.
 /// @tparam Engine The type of the device engine to manage.
 template<class Engine>
 struct common_engine_state
@@ -176,10 +168,20 @@ struct common_engine_state
 
     common_engine_state()                           = default;
     common_engine_state(const common_engine_state&) = delete;
-    common_engine_state(common_engine_state&&)      = default;
+    common_engine_state(common_engine_state&& other)
+    {
+        m_engines         = other.m_engines;
+        m_start_engine_id = other.m_start_engine_id;
+        other.m_engines   = nullptr;
+    }
 
     common_engine_state& operator=(const common_engine_state&) = delete;
-    common_engine_state& operator=(common_engine_state&&)      = default;
+    common_engine_state& operator=(common_engine_state&& other)
+    {
+        m_engines         = other.m_engines;
+        m_start_engine_id = other.m_start_engine_id;
+        other.m_engines   = nullptr;
+    }
 
     ~common_engine_state()
     {
