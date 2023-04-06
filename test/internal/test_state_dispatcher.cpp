@@ -79,17 +79,6 @@ struct mock_config_provider
         {
             if constexpr(std::is_integral_v<T>)
             {
-                config = {128, 256};
-            }
-            else
-            {
-                config = {128, 512};
-            }
-        }
-        else
-        {
-            if constexpr(std::is_integral_v<T>)
-            {
                 if constexpr(sizeof(T) < 4)
                 {
                     config = {128, 256};
@@ -104,6 +93,10 @@ struct mock_config_provider
                 // Deliberately the same total thread count as in previous.
                 config = {128, 512};
             }
+        }
+        else
+        {
+            config = {128, 256};
         }
 
         return hipSuccess;
@@ -139,28 +132,28 @@ TEST_F(rocrand_state_dispatcher_test, init)
     tested_state_dispatcher dispatcher;
     {
         testing::StrictMock<mock_state_initializer> initializer;
-        // When the ordering is not dynamic, there are 3 distinct configs.
+        // When the ordering is not dynamic, there is a single config.
         EXPECT_CALL(initializer, op(_, (generator_config{128, 256}), _)).Times(1);
-        EXPECT_CALL(initializer, op(_, (generator_config{512, 128}), _)).Times(1);
-        EXPECT_CALL(initializer, op(_, (generator_config{128, 512}), _)).Times(1);
         dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
     }
     {
         testing::StrictMock<mock_state_initializer> initializer;
-        // When the ordering is dynamic, there are 2 distinct configs.
+        // When the ordering is dynamic, there are 3 distinct configs.
         EXPECT_CALL(initializer, op(_, (generator_config{128, 256}), _)).Times(1);
+        EXPECT_CALL(initializer, op(_, (generator_config{512, 128}), _)).Times(1);
         EXPECT_CALL(initializer, op(_, (generator_config{128, 512}), _)).Times(1);
         dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_DYNAMIC, initializer);
     }
 
-    ASSERT_EQ(5, mock_state::num_instantiations);
+    ASSERT_EQ(4, mock_state::num_instantiations);
+    ASSERT_EQ(1, mock_state::num_destructions);
 }
 
 TEST_F(rocrand_state_dispatcher_test, retrieve_state)
 {
     tested_state_dispatcher                   dispatcher;
     testing::NiceMock<mock_state_initializer> initializer;
-    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
+    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_DYNAMIC, initializer);
 
     const auto& uint_state  = dispatcher.get_state<unsigned int>();
     const auto& ulong_state = dispatcher.get_state<unsigned long long>();
@@ -185,11 +178,11 @@ TEST_F(rocrand_state_dispatcher_test, initialization_destructs_all_state)
     tested_state_dispatcher                   dispatcher;
     testing::NiceMock<mock_state_initializer> initializer;
 
-    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
+    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_DYNAMIC, initializer);
     ASSERT_EQ(3, mock_state::num_instantiations);
     ASSERT_EQ(0, mock_state::num_destructions);
 
-    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_LEGACY, initializer);
+    dispatcher.init(0, ROCRAND_ORDERING_PSEUDO_DYNAMIC, initializer);
     ASSERT_EQ(6, mock_state::num_instantiations);
     ASSERT_EQ(3, mock_state::num_destructions);
 }

@@ -39,8 +39,8 @@ namespace detail
 template<class T>
 struct generator_config_defaults<dummy_rng_type, T>
 {
-    static constexpr unsigned int threads = 256;
-    static constexpr unsigned int blocks  = 1;
+    static constexpr inline unsigned int threads = 256;
+    static constexpr inline unsigned int blocks  = 1;
 };
 
 } // end namespace detail

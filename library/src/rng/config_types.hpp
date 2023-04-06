@@ -256,6 +256,13 @@ struct generator_config
 {
     unsigned int threads;
     unsigned int blocks;
+    // When adding a new member variable, consider updating the operator< with that.
+
+    constexpr bool operator<(const generator_config& other) const
+    {
+        // In order to store the configs in a \ref std::map, we must define an ordering.
+        return (blocks != other.blocks) ? (blocks < other.blocks) : (threads < other.threads);
+    }
 };
 
 /// @brief Returns whether the provided ordering allows the architecture-dependent
@@ -268,16 +275,20 @@ inline bool is_ordering_dynamic(const rocrand_ordering ordering)
 
 // Unfortunately cannot be substituted by a variadic template lambda, because
 // hipLaunchKernelGGL is a macro itself
-#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T, ordering, kernel_name, ...)              \
-    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                          \
-    {                                                                                  \
-        constexpr auto config = ConfigProvider::template dynamic_device_config<T>;     \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
-    }                                                                                  \
-    else                                                                               \
-    {                                                                                  \
-        constexpr auto config = ConfigProvider::template static_device_config<T>;      \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<config.threads>), __VA_ARGS__); \
+#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T, ordering, kernel_name, ...)                \
+    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                            \
+    {                                                                                    \
+        hipLaunchKernelGGL(                                                              \
+            HIP_KERNEL_NAME(                                                             \
+                kernel_name<ConfigProvider::template dynamic_device_config<T>.threads>), \
+            __VA_ARGS__);                                                                \
+    }                                                                                    \
+    else                                                                                 \
+    {                                                                                    \
+        hipLaunchKernelGGL(                                                              \
+            HIP_KERNEL_NAME(                                                             \
+                kernel_name<ConfigProvider::template static_device_config<T>.threads>),  \
+            __VA_ARGS__);                                                                \
     }
 
 /// @brief Selects the preset kernel launch config for the given random engine and

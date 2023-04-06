@@ -32,7 +32,7 @@
 namespace cpp_utils
 {
 
-/// @brief Invoke a function with all elements of a \c std::tuple.
+/// @brief Invoke a function on each element of a \c std::tuple separately.
 /// @tparam Functor Type of the function.
 /// @tparam Tuple Type of the \c std::tuple.
 /// @param fun Functor to invoke.
@@ -69,7 +69,7 @@ public:
         = get_type_index(std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 };
 
-/// @brief Gets the index of type \c T first occuring in the type list of a \c std::tuple.
+/// @brief Gets the index of type \c T first occurring in the type list of a \c std::tuple.
 /// If not present, returns \c std::numeric_limits<std::size_t>::max()
 /// @tparam T Type whose index is searched.
 /// @tparam Tuple Type of the \c std::tuple.
