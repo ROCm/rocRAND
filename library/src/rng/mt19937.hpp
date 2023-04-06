@@ -56,12 +56,12 @@
 #include <hip/hip_runtime.h>
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_mt19937_precomputed.h>
 
 #include "common.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
-#include "mt19937_precomputed.hpp"
 
 namespace
 {
@@ -91,6 +91,8 @@ namespace
 
 /// Number of elements in the state vector.
 static constexpr unsigned int n = 624;
+/// Exponent of Mersenne prime.
+static constexpr unsigned int mexp = 19937;
 /// The next value of element \p i depends on <tt>(i + 1) % n</tt> and <tt>(i + m) % n</tt>.
 static constexpr unsigned int m = 397;
 /// Vector constant used in masking operation to represent multiplication by matrix A.
@@ -480,7 +482,7 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
         __syncthreads();
 
         const unsigned int* pf = jump + p * mt19937_p_size;
-        for(int pfi = mt19937_mexp - 1; pfi >= 0; pfi--)
+        for(int pfi = mexp - 1; pfi >= 0; pfi--)
         {
             // Generate next state
             if(threadIdx.x == 0)
@@ -696,14 +698,17 @@ public:
         }
 
         unsigned int* d_mt19937_jump{};
-        err = hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(mt19937_jump));
+        err = hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(rocrand_h_mt19937_jump));
         if(err != hipSuccess)
         {
             ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
-        err = hipMemcpy(d_mt19937_jump, mt19937_jump, sizeof(mt19937_jump), hipMemcpyHostToDevice);
+        err = hipMemcpy(d_mt19937_jump,
+                        rocrand_h_mt19937_jump,
+                        sizeof(rocrand_h_mt19937_jump),
+                        hipMemcpyHostToDevice);
         if(err != hipSuccess)
         {
             ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));

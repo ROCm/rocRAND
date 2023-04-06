@@ -584,6 +584,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
 struct mt19937_engine
 {
     static constexpr unsigned int m          = 397;
+    static constexpr unsigned int mexp       = 19937;
     static constexpr unsigned int matrix_a   = 0x9908B0DFU;
     static constexpr unsigned int upper_mask = 0x80000000U;
     static constexpr unsigned int lower_mask = 0x7FFFFFFFU;
@@ -615,8 +616,8 @@ struct mt19937_engine
     /// Advances the internal state to skip a single subsequence, which is <tt>2 ^ 1000</tt> states long.
     void discard_subsequence()
     {
-        // First n values of mt19937_jump contain poynomial for a jump by 2 ^ 1000
-        m_state = discard_subsequence_impl(mt19937_jump, m_state);
+        // First n values of rocrand_h_mt19937_jump contain polynomial for a jump by 2 ^ 1000
+        m_state = discard_subsequence_impl(rocrand_h_mt19937_jump, m_state);
     }
 
     // Generates the next state.
@@ -758,7 +759,7 @@ struct mt19937_engine
                                     const mt19937_state  vec_h[ll])
     {
         mt19937_state tmp{};
-        int           i = mt19937_mexp - 1;
+        int           i = mexp - 1;
 
         while(get_coef(pf, i) == 0)
         {
@@ -855,8 +856,11 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
     // Initialize the engines on device using Horner algorithm
 
     unsigned int* d_mt19937_jump{};
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(mt19937_jump)));
-    HIP_CHECK(hipMemcpy(d_mt19937_jump, mt19937_jump, sizeof(mt19937_jump), hipMemcpyHostToDevice));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(rocrand_h_mt19937_jump)));
+    HIP_CHECK(hipMemcpy(d_mt19937_jump,
+                        rocrand_h_mt19937_jump,
+                        sizeof(rocrand_h_mt19937_jump),
+                        hipMemcpyHostToDevice));
 
     unsigned int* d_engines1{};
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines1),
