@@ -837,7 +837,8 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
     // * computed consecutively on host using Sliding window algorithm
     //   (each engine jumps 2 ^ 1000 ahead from the previous one);
     // * computed in parallel on device using standard Horner algorithm
-    //   (with precomputed 2 ^ p * 2 ^ 1000 jumps).
+    //   with precomputed jumps of i * 2 ^ 1000 and mt19937_jumps_radix * i * 2 ^ 1000 values
+    //   where i is in range [1; mt19937_jumps_radix).
 
     const unsigned long long seed = 12345678;
 

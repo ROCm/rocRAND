@@ -76,8 +76,9 @@ static constexpr unsigned int jump_ahead_thread_count = 128;
 
 static_assert(thread_count % threads_per_generator == 0,
               "All eight threads of the generator must be in the same block");
-static_assert(generator_count == (1 << mt19937_jump_powers),
-              "Not enough mt19937_jump values to initialize all generators");
+static_assert(generator_count <= mt19937_jumps_radix * mt19937_jumps_radix
+                  && mt19937_jumps_radixes == 2,
+              "Not enough rocrand_h_mt19937_jump values to initialize all generators");
 } // namespace
 
 namespace rocrand_host
@@ -464,10 +465,15 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
 
     const unsigned int engine_id = blockIdx.x;
 
-    // Jump ahead by engine_id * 2 ^ 1000 using precomputed polynomials for 2 ^ p * 2 ^ 1000
-    for(unsigned int p = 0; p < mt19937_jump_powers; p++)
+    // Jump ahead by engine_id * 2 ^ 1000 using precomputed polynomials for jumps of
+    // i * 2 ^ 1000 and mt19937_jumps_radix * i * 2 ^ 1000 values
+    // where i is in range [1; mt19937_jumps_radix).
+    unsigned int e = engine_id;
+    for(unsigned int r = 0; r < mt19937_jumps_radixes; r++)
     {
-        if((engine_id & (1 << p)) == 0)
+        const unsigned int radix = e % mt19937_jumps_radix;
+        e /= mt19937_jumps_radix;
+        if(radix == 0)
         {
             continue;
         }
@@ -481,7 +487,8 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
         }
         __syncthreads();
 
-        const unsigned int* pf = jump + p * mt19937_p_size;
+        const unsigned int* pf
+            = jump + (r * (mt19937_jumps_radix - 1) + radix - 1) * mt19937_p_size;
         for(int pfi = mexp - 1; pfi >= 0; pfi--)
         {
             // Generate next state
