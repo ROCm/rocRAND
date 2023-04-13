@@ -10,5 +10,3 @@ updates:
     open-pull-requests-limit: 10
     schedule:
       interval: "daily"
-    allow:
-      - dependency-name: "rocm-docs-core"
