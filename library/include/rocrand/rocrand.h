@@ -110,8 +110,9 @@ typedef enum rocrand_ordering
     ROCRAND_ORDERING_PSEUDO_DEFAULT = 101, ///< Default ordering for pseudorandom results
     ROCRAND_ORDERING_PSEUDO_SEEDED  = 102, ///< Fast lower quality pseudorandom results
     ROCRAND_ORDERING_PSEUDO_LEGACY  = 103, ///< Legacy ordering for pseudorandom results
-    ROCRAND_ORDERING_PSEUDO_DYNAMIC = 104, ///< Adjust to the device executing the generator
-    ROCRAND_ORDERING_QUASI_DEFAULT  = 201 ///< n-dimensional ordering for quasirandom results
+    ROCRAND_ORDERING_PSEUDO_DYNAMIC
+    = 104, ///< Adjust to the device executing the generator. The global memory usage may be higher than with the other orderings.
+    ROCRAND_ORDERING_QUASI_DEFAULT = 201 ///< n-dimensional ordering for quasirandom results
 } rocrand_ordering;
 
 /**
