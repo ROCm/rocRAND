@@ -63,11 +63,15 @@ function(add_test_target test_src is_internal)
     add_executable(${test_name} ${test_src})
     # nvcc/CUDA
     if(HIP_COMPILER STREQUAL "nvcc")
-      set_source_files_properties(${test_name}
-        PROPERTIES
-          LANGUAGE CUDA
-          CUDA_STANDARD 14
-      )
+      set_source_files_properties(${test_name} PROPERTIES LANGUAGE CUDA)
+      if(is_internal)
+        set_source_files_properties(${test_name} PROPERTIES CUDA_STANDARD 17)
+        if(${CMAKE_VERSION} VERSION_LESS "3.18")
+          set_source_files_properties(${test_name} PROPERTIES COMPILE_OPTIONS "-std=c++17")
+        endif()
+      else()
+        set_source_files_properties(${test_name} PROPERTIES CUDA_STANDARD 14)
+      endif()
       set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     endif()
     if(is_internal)
@@ -82,11 +86,13 @@ function(add_test_target test_src is_internal)
         target_link_libraries(${test_name}
             GTest::GTest
             GTest::Main
+            GTest::gmock
         )
     else()
         target_link_libraries(${test_name}
             GTest::gtest
             GTest::gtest_main
+            GTest::gmock
         )
     endif()
     target_link_libraries(${test_name}
