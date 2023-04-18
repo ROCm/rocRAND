@@ -345,7 +345,10 @@ build-cpu:cmake-latest:
   stage: test
   script:
     - cd $CI_PROJECT_DIR/build
-    - ctest --output-on-failure
+    # Parallel execution (with other AMDGPU processes) can oversubscribe the SDMA queue.
+    # This causes the hipMemcpy to fail, which is not reported as an error by HIP.
+    # As a temporary workaround, disable the SDMA for test stability.
+    - HSA_ENABLE_SDMA=0 ctest --output-on-failure
 
 test:rocm:
   needs:
