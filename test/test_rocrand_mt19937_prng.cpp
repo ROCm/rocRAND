@@ -19,7 +19,9 @@
 // THE SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <numeric>
 #include <stdio.h>
+#include <vector>
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand.h>
@@ -901,4 +903,180 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
 
     HIP_CHECK(hipFree(d_mt19937_jump));
     HIP_CHECK(hipFree(d_engines1));
+}
+
+// Check that subsequent generations of different sizes produce one
+// sequence without gaps, no matter how many values are generated per call.
+template<typename T, typename GenerateFunc>
+void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
+{
+    const size_t stride = n * generator_count * divisor;
+    // Large sizes are used for triggering all code paths in the kernels (generating of middle,
+    // start and end sequences).
+    std::vector<size_t> sizes0{stride,
+                               2,
+                               stride,
+                               100,
+                               1,
+                               24783,
+                               stride / 2,
+                               3 * stride + 704400,
+                               2,
+                               stride + 776543,
+                               44176};
+    std::vector<size_t> sizes1{2 * stride,
+                               1024,
+                               55,
+                               65536,
+                               stride / 2,
+                               stride + 623456,
+                               3 * stride - 300000,
+                               1048576,
+                               111331};
+
+    // Round by the distribution's granularity (2 for normals, 2 for short and half, 4 for uchar).
+    // Sizes not divisible by the granularity or pointers not aligned by it work but without strict
+    // continuity.
+    if(divisor > 1)
+    {
+        for(size_t& s : sizes0)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+        for(size_t& s : sizes1)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+    }
+
+    const size_t size0 = std::accumulate(sizes0.cbegin(), sizes0.cend(), std::size_t{0});
+    const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
+    const size_t size2 = std::min(size0, size1);
+
+    rocrand_mt19937 g0;
+    rocrand_mt19937 g1;
+    rocrand_mt19937 g2;
+
+    std::vector<T> host_data0(size0);
+    std::vector<T> host_data1(size1);
+    std::vector<T> host_data2(size2);
+
+    size_t current0 = 0;
+    for(size_t s : sizes0)
+    {
+        T* data0;
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * s));
+        HIP_CHECK(hipMemset(data0, -1, sizeof(T) * s));
+        generate_func(g0, data0, s);
+        HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
+        current0 += s;
+        HIP_CHECK(hipFree(data0));
+    }
+    size_t current1 = 0;
+    for(size_t s : sizes1)
+    {
+        T* data1;
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * s));
+        HIP_CHECK(hipMemset(data1, -1, sizeof(T) * s));
+        generate_func(g1, data1, s);
+        HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
+        current1 += s;
+        HIP_CHECK(hipFree(data1));
+    }
+    T* data2;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data2), sizeof(T) * size2));
+    HIP_CHECK(hipMemset(data2, -1, sizeof(T) * size2));
+    generate_func(g2, data2, size2);
+    HIP_CHECK(hipMemcpy(host_data2.data(), data2, sizeof(T) * size2, hipMemcpyDefault));
+    HIP_CHECK(hipFree(data2));
+
+    size_t incorrect = 0;
+    for(size_t i = 0; i < size2; i++)
+    {
+        if constexpr(std::is_same<T, __half>::value)
+        {
+            if(__half2float(host_data0[i]) != __half2float(host_data1[i])
+               || __half2float(host_data0[i]) != __half2float(host_data2[i]))
+            {
+                incorrect++;
+            }
+        }
+        else
+        {
+            if(host_data0[i] != host_data1[i] || host_data0[i] != host_data2[i])
+            {
+                incorrect++;
+            }
+        }
+    }
+    ASSERT_EQ(incorrect, 0);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_uint_test)
+{
+    continuity_test<unsigned int>([](rocrand_mt19937& g, unsigned int* data, size_t s)
+                                  { g.generate(data, s); });
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_char_test)
+{
+    continuity_test<unsigned char>([](rocrand_mt19937& g, unsigned char* data, size_t s)
+                                   { g.generate(data, s); },
+                                   4);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_short_test)
+{
+    continuity_test<unsigned short>([](rocrand_mt19937& g, unsigned short* data, size_t s)
+                                    { g.generate(data, s); },
+                                    2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_float_test)
+{
+    continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                           { g.generate_uniform(data, s); });
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_half_test)
+{
+    continuity_test<__half>([](rocrand_mt19937& g, __half* data, size_t s)
+                            { g.generate_uniform(data, s); },
+                            2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_double_test)
+{
+    continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                            { g.generate_uniform(data, s); });
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_normal_float_test)
+{
+    continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                           { g.generate_normal(data, s, 0.0f, 1.0f); },
+                           2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_normal_double_test)
+{
+    continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                            { g.generate_normal(data, s, 0.0, 1.0); },
+                            2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_log_normal_float_test)
+{
+    continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                           { g.generate_log_normal(data, s, 0.0f, 1.0f); },
+                           2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_log_normal_double_test)
+{
+    continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                            { g.generate_log_normal(data, s, 0.0, 1.0); },
+                            2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_poisson_test)
+{
+    continuity_test<unsigned int>([](rocrand_mt19937& g, unsigned int* data, size_t s)
+                                  { g.generate_poisson(data, s, 100.0); });
 }
