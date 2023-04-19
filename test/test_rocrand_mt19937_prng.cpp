@@ -1080,3 +1080,91 @@ TEST(rocrand_mt19937_prng_tests, continuity_poisson_test)
     continuity_test<unsigned int>([](rocrand_mt19937& g, unsigned int* data, size_t s)
                                   { g.generate_poisson(data, s, 100.0); });
 }
+
+// Check that that heads and tails are generated correctly for misaligned pointers or sizes.
+template<typename T, typename GenerateFunc>
+void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
+{
+    const size_t stride = n * generator_count * divisor;
+    // Large sizes are used for triggering all code paths in the kernels.
+    std::vector<size_t>
+        sizes{stride, 1, stride * 2 + 45651, 5, stride * 3 + 123, 6, 45, stride - 12};
+
+    const size_t max_size             = *std::max_element(sizes.cbegin(), sizes.cend());
+    const size_t canary_size          = 16;
+    const size_t max_size_with_canary = max_size + canary_size * 2;
+
+    const T canary = std::numeric_limits<T>::max();
+
+    rocrand_mt19937 g;
+
+    std::vector<T> host_data(max_size_with_canary);
+    T*             data;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * max_size_with_canary));
+
+    for(size_t offset : {0, 1, 2, 3})
+    {
+        for(size_t s : sizes)
+        {
+            const size_t s_with_canary = s + canary_size * 2;
+            for(size_t i = 0; i < s_with_canary; i++)
+            {
+                host_data[i] = canary;
+            }
+            HIP_CHECK(
+                hipMemcpy(data, host_data.data(), sizeof(T) * s_with_canary, hipMemcpyDefault));
+
+            generate_func(g, data + canary_size + offset, s);
+
+            HIP_CHECK(
+                hipMemcpy(host_data.data(), data, sizeof(T) * s_with_canary, hipMemcpyDefault));
+
+            for(size_t i = 0; i < canary_size + offset; i++)
+            {
+                ASSERT_EQ(host_data[i], canary);
+            }
+            for(size_t i = s_with_canary - (canary_size - offset); i < s_with_canary; i++)
+            {
+                ASSERT_EQ(host_data[i], canary);
+            }
+            size_t incorrect = 0;
+            for(size_t i = canary_size + offset; i < s_with_canary - (canary_size - offset); i++)
+            {
+                if(host_data[i] == canary)
+                {
+                    incorrect++;
+                }
+            }
+            ASSERT_EQ(incorrect, 0);
+        }
+    }
+    HIP_CHECK(hipFree(data));
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_normal_float_test)
+{
+    head_and_tail_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                              { g.generate_normal(data, s, 0.0f, 1.0f); },
+                              2);
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_normal_double_test)
+{
+    head_and_tail_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                               { g.generate_normal(data, s, 0.0, 1.0); },
+                               2);
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_log_normal_float_test)
+{
+    head_and_tail_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                              { g.generate_log_normal(data, s, 0.0f, 1.0f); },
+                              2);
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_log_normal_double_test)
+{
+    head_and_tail_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                               { g.generate_log_normal(data, s, 0.0, 1.0); },
+                               2);
+}
