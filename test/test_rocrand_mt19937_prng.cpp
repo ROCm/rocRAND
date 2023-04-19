@@ -299,11 +299,12 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
     ::rocrand_host::detail::mt19937_octo_engine engine    = octo_engines[thread_id];
     engine.gather(&engines[engine_id * n]);
 
+    engine.gen_next_n();
     if(engine_id == 0)
     {
-        for(unsigned int i = 0; i < subsequence_size / threads_per_generator; i++)
+        for(unsigned int i = 0; i < subsequence_size / n; i++)
         {
-            engine();
+            engine.gen_next_n();
         }
     }
 
@@ -312,19 +313,31 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
 
 /// Each generator produces \p n elements in its own \p data section.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    ::rocrand_host::detail::mt19937_octo_engine* engines, unsigned int* data, unsigned int n)
+    ::rocrand_host::detail::mt19937_octo_engine* engines,
+    unsigned int*                                data,
+    unsigned int                                 elements_per_generator,
+    unsigned int                                 subsequence_size)
 {
     const unsigned int     local_thread_id       = threadIdx.x & 7U;
     constexpr unsigned int threads_per_generator = 8U;
     const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int           engine_id             = thread_id / threads_per_generator;
-    unsigned int*          ptr                   = data + engine_id * n;
+    unsigned int*          ptr                   = data + engine_id * elements_per_generator;
 
     ::rocrand_host::detail::mt19937_octo_engine engine = engines[thread_id];
 
-    for(size_t index = local_thread_id; index < n; index += threads_per_generator)
+    unsigned int mti = engine_id == 0 ? subsequence_size % n : 0;
+
+    for(size_t index = local_thread_id; index < elements_per_generator;
+        index += threads_per_generator)
     {
-        ptr[index] = engine();
+        if(mti == n)
+        {
+            engine.gen_next_n();
+            mti = 0;
+        }
+        ptr[index] = engine(mti / threads_per_generator);
+        mti += threads_per_generator;
     }
 
     engines[thread_id] = engine;
@@ -516,7 +529,8 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
                        0,
                        d_octo_engines,
                        d_data,
-                       elements_per_generator);
+                       elements_per_generator,
+                       subsequence_size);
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(d_octo_engines));
 
