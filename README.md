@@ -30,20 +30,23 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 
 Information about the library API and other user topics can be found in the [rocRAND documentation](https://rocrand.readthedocs.io/en/latest).
 
-### How to build documentation
+### Building the documentation
 
 Run the steps below to build documentation locally.
 
-```
-cd docs
+```sh
+# Go to rocRAND docs directory
+cd rocRAND; cd docs
 
-pip3 install -r .sphinx/requirements.txt
+# Install Python dependencies
+python3 -m pip install -r .sphinx/requirements.txt
 
+# Build the documentation
 python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 
-cd ../python/rocrand
-
-python setup.py build_sphinx
+# E.g. serve the HTML docs locally
+cd _build/html
+python3 -m http.server
 ```
 
 ## Requirements
@@ -224,18 +227,6 @@ cd rocRAND; cd build
 # distribution -> all, uniform-float, uniform-double, normal-float, normal-double,
 #                 log-normal-float, log-normal-double, poisson
 ./test/stat_test_rocrand_generate --engine <engine> --dis <distribution>
-```
-
-## Building Documentation
-
-```shell
-# go to rocRAND docs directory
-cd rocRAND; cd docs
-
-# run doxygen and sphinx
-./run_doc.sh
-
-# open _build/html/index.html
 ```
 
 ## Wrappers
