@@ -415,15 +415,15 @@ struct mt19937_octo_engine
         comp_vector(tid, i568, i341, v000);
     }
 
-    MT_FQUALIFIERS unsigned int operator()(unsigned int mti) const
+    /// Return \p i state value without tempering
+    MT_FQUALIFIERS unsigned int operator()(unsigned int i) const
     {
-        return temper(m_state.mt[mti]);
+        return m_state.mt[i];
     }
 
+    /// Perform tempering on y
     static MT_FQUALIFIERS unsigned int temper(unsigned int y)
     {
-        // perform tempering on y
-
         constexpr unsigned int TEMPERING_MASK_B = 0x9D2C5680U;
         constexpr unsigned int TEMPERING_MASK_C = 0xEFC60000U;
 
@@ -689,7 +689,7 @@ ROCRAND_KERNEL
 #pragma unroll
                 for(unsigned int i = 0; i < input_width; i++)
                 {
-                    input[i] = engine(j * input_width + i);
+                    input[i] = mt19937_octo_engine::temper(engine(j * input_width + i));
                 }
 
                 distribution(input, output);
@@ -712,7 +712,7 @@ ROCRAND_KERNEL
 #pragma unroll
             for(unsigned int i = 0; i < input_width; i++)
             {
-                input[i] = engine(j * input_width + i);
+                input[i] = mt19937_octo_engine::temper(engine(j * input_width + i));
             }
 
             distribution(input, output);
@@ -737,7 +737,7 @@ ROCRAND_KERNEL
 #pragma unroll
             for(unsigned int i = 0; i < input_width; i++)
             {
-                input[i] = engine(j * input_width + i);
+                input[i] = mt19937_octo_engine::temper(engine(j * input_width + i));
             }
 
             distribution(input, output);
@@ -944,8 +944,12 @@ public:
         const unsigned int head_size = min(size, misalignment);
         const unsigned int tail_size = (size - head_size) % output_width;
         const size_t       vec_size  = (size - head_size) / output_width;
+
         // Generate one extra vec_type if data is not aligned by sizeof(vec_type) or
-        // size % output_width != 0
+        // size % output_width != 0.
+        // One extra output is enough for all types and distributions (output_width <= 2), except
+        // uchar (output_width = 4): in very rare situations when both data and size are
+        // misaligned, head and tail may be 2-3 and they may write 1-2 common values.
         const unsigned int extra = (head_size > 0 || tail_size > 0) ? 1 : 0;
 
         // Each iteration saves output_width values T as one vec_type.
@@ -954,10 +958,12 @@ public:
         if(m_prev_input_width != input_width && m_start_input > 0)
         {
             // Move to the next stride of inputs if input_width has changed so it will not use
-            // twice values used by the previous call.
-            const unsigned int used_inputs = (m_start_input - 1) / stride + 1;
-            const unsigned int used_values = used_inputs * m_prev_input_width;
-            m_start_input                  = used_values / input_width * stride;
+            // twice values used by the previous call. Some values may be discarded.
+            // First we find the max number of values used by engines:
+            const unsigned int max_used_engine_values
+                = (m_start_input + stride - 1) / stride * m_prev_input_width;
+            // and convert it to the number of inputs across all engines:
+            m_start_input = (max_used_engine_values + input_width - 1) / input_width * stride;
             if(m_start_input >= full_stride)
             {
                 m_start_input = 0;
@@ -1052,8 +1058,11 @@ public:
 private:
     bool          m_engines_initialized;
     unsigned int* m_engines;
-    unsigned int  m_start_input;
-    unsigned int  m_prev_input_width;
+    // The index of the next unused input across all engines (where "input" is `input_width`
+    // unsigned int state values), it equals to the number of inputs used by previous generate
+    // calls. 0 means that a new generation (gen_next_n) is required.
+    unsigned int m_start_input;
+    unsigned int m_prev_input_width;
 
     static constexpr unsigned int generators_per_block = thread_count / threads_per_generator;
     static constexpr unsigned int block_count          = generator_count / generators_per_block;

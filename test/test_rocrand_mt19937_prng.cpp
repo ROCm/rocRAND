@@ -1133,6 +1133,8 @@ void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
             HIP_CHECK(
                 hipMemcpy(host_data.data(), data, sizeof(T) * s_with_canary, hipMemcpyDefault));
 
+            // Check that the generator does not write more values than needed for head and tail
+            // (so canary areas, or memory before and after data passed to generate(), are intact)
             for(size_t i = 0; i < canary_size + offset; i++)
             {
                 ASSERT_EQ(host_data[i], canary);
@@ -1141,6 +1143,9 @@ void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
             {
                 ASSERT_EQ(host_data[i], canary);
             }
+
+            // Check if head and tail are generated (canary value, used as an initial value,
+            // can not be generated because it is not in the range of the distribution)
             size_t incorrect = 0;
             for(size_t i = canary_size + offset; i < s_with_canary - (canary_size - offset); i++)
             {
