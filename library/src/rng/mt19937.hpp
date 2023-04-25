@@ -126,6 +126,45 @@ struct mt19937_octo_engine
         unsigned int mt[1U + items_per_thread * 11U];
     };
 
+    struct accessor
+    {
+        accessor(unsigned int* _engines) : engines(_engines) {}
+
+        /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
+        /// access
+        MT_FQUALIFIERS unsigned int load_value(unsigned int engine_id, unsigned int i) const
+        {
+            return engines[i * stride + engine_id];
+        }
+
+        /// Load the octo engine from global memory with coalesced access
+        MT_FQUALIFIERS mt19937_octo_engine load(unsigned int engine_id) const
+        {
+            mt19937_octo_engine engine;
+#pragma unroll
+            for(unsigned int i = 0; i < n / threads_per_generator; i++)
+            {
+                engine.m_state.mt[i] = engines[i * stride + engine_id];
+            }
+            return engine;
+        }
+
+        /// Save the octo engine to global memory with coalesced access
+        MT_FQUALIFIERS void save(unsigned int engine_id, const mt19937_octo_engine& engine) const
+        {
+#pragma unroll
+            for(unsigned int i = 0; i < n / threads_per_generator; i++)
+            {
+                engines[i * stride + engine_id] = engine.m_state.mt[i];
+            }
+        }
+
+    private:
+        static constexpr unsigned int stride = threads_per_generator * generator_count;
+
+        unsigned int* engines;
+    };
+
     /// Constants to map the indices to \p mt19937_octo_state.mt_extra indices.
     /// For example, \p i000_0 is the index of \p 0 owned by thread 0.
 
@@ -180,37 +219,6 @@ struct mt19937_octo_engine
         constexpr unsigned int src_idx[threads_per_generator]
             = {0, 113, 170, 283, 340, 397, 510, 567};
         m_state.mt[dest_idx[tid]] = engine[src_idx[tid]];
-    }
-
-    /// Save the octo engine to global memory with coalesced access
-    MT_FQUALIFIERS void save(unsigned int* engines, unsigned int engine_id, unsigned int stride)
-    {
-#pragma unroll
-        for(unsigned int i = 0; i < n / threads_per_generator; i++)
-        {
-            engines[i * stride + engine_id] = m_state.mt[i];
-        }
-    }
-
-    /// Load the octo engine from global memory with coalesced access
-    MT_FQUALIFIERS void
-        load(const unsigned int* engines, unsigned int engine_id, unsigned int stride)
-    {
-#pragma unroll
-        for(unsigned int i = 0; i < n / threads_per_generator; i++)
-        {
-            m_state.mt[i] = engines[i * stride + engine_id];
-        }
-    }
-
-    /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
-    /// access
-    static MT_FQUALIFIERS unsigned int load(const unsigned int* engines,
-                                            unsigned int        i,
-                                            unsigned int        engine_id,
-                                            unsigned int        stride)
-    {
-        return engines[i * stride + engine_id];
     }
 
     /// Returns \p val from thread <tt>tid mod 8</tt>.
@@ -416,7 +424,7 @@ struct mt19937_octo_engine
     }
 
     /// Return \p i state value without tempering
-    MT_FQUALIFIERS unsigned int operator()(unsigned int i) const
+    MT_FQUALIFIERS unsigned int get(unsigned int i) const
     {
         return m_state.mt[i];
     }
@@ -556,21 +564,20 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
 }
 
 ROCRAND_KERNEL
-__launch_bounds__(thread_count) void init_engines_kernel(unsigned int* __restrict__ octo_engines,
+__launch_bounds__(thread_count) void init_engines_kernel(mt19937_octo_engine::accessor octo_engines,
                                                          const unsigned int* __restrict__ engines)
 {
     const unsigned int thread_id = blockIdx.x * thread_count + threadIdx.x;
     // every eight octo engines gather from the same engine
     mt19937_octo_engine engine;
     engine.gather(&engines[thread_id / threads_per_generator * n]);
-    constexpr unsigned int stride = threads_per_generator * generator_count;
-    engine.save(octo_engines, thread_id, stride);
+    octo_engines.save(thread_id, engine);
 }
 
 template<class T, class VecT, class Distribution>
 ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_short_kernel(
-    const unsigned int* __restrict__ engines,
-    const unsigned int start_input,
+    mt19937_octo_engine::accessor engines,
+    const unsigned int            start_input,
     T* __restrict__ data,
     const size_t size,
     VecT* __restrict__ vec_data,
@@ -608,7 +615,7 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_short_kernel(
             for(unsigned int i = 0; i < input_width; i++)
             {
                 input[i] = mt19937_octo_engine::temper(
-                    mt19937_octo_engine::load(engines, j * input_width + i, thread_id, stride));
+                    engines.load_value(thread_id, j * input_width + i));
             }
 
             distribution(input, output);
@@ -647,7 +654,7 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_short_kernel(
 
 template<class T, class VecT, class Distribution>
 ROCRAND_KERNEL
-    __launch_bounds__(thread_count) void generate_long_kernel(unsigned int* __restrict__ engines,
+    __launch_bounds__(thread_count) void generate_long_kernel(mt19937_octo_engine::accessor engines,
                                                               const unsigned int start_input,
                                                               T* __restrict__ data,
                                                               const size_t size,
@@ -668,11 +675,10 @@ ROCRAND_KERNEL
     unsigned int input[input_width];
     T            output[output_width];
 
-    mt19937_octo_engine engine;
     // Workaround: since load() and store() use the same indices, the compiler decides to keep
     // computed addresses alive wasting 78 * 2 VGPRs. blockDim.x equals to thread_count but it is
     // a runtime value so save() will compute new addresses.
-    engine.load(engines, blockIdx.x * blockDim.x + threadIdx.x, stride);
+    mt19937_octo_engine engine = engines.load(blockIdx.x * blockDim.x + threadIdx.x);
 
     size_t base_index = 0;
 
@@ -689,7 +695,7 @@ ROCRAND_KERNEL
 #pragma unroll
                 for(unsigned int i = 0; i < input_width; i++)
                 {
-                    input[i] = mt19937_octo_engine::temper(engine(j * input_width + i));
+                    input[i] = mt19937_octo_engine::temper(engine.get(j * input_width + i));
                 }
 
                 distribution(input, output);
@@ -712,7 +718,7 @@ ROCRAND_KERNEL
 #pragma unroll
             for(unsigned int i = 0; i < input_width; i++)
             {
-                input[i] = mt19937_octo_engine::temper(engine(j * input_width + i));
+                input[i] = mt19937_octo_engine::temper(engine.get(j * input_width + i));
             }
 
             distribution(input, output);
@@ -737,7 +743,7 @@ ROCRAND_KERNEL
 #pragma unroll
             for(unsigned int i = 0; i < input_width; i++)
             {
-                input[i] = mt19937_octo_engine::temper(engine(j * input_width + i));
+                input[i] = mt19937_octo_engine::temper(engine.get(j * input_width + i));
             }
 
             distribution(input, output);
@@ -778,7 +784,7 @@ ROCRAND_KERNEL
     }
 
     // save state
-    engine.save(engines, thread_id, stride);
+    engines.save(thread_id, engine);
 }
 
 } // end namespace detail
@@ -787,7 +793,8 @@ ROCRAND_KERNEL
 class rocrand_mt19937 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_MT19937>
 {
 public:
-    using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MT19937>;
+    using base_type        = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MT19937>;
+    using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
 
     rocrand_mt19937(unsigned long long seed = 0, hipStream_t stream = 0)
         : base_type(seed, 0, stream), m_engines_initialized(false), m_engines(NULL)
@@ -897,7 +904,7 @@ public:
                            dim3(thread_count),
                            0,
                            m_stream,
-                           m_engines,
+                           octo_engine_type::accessor(m_engines),
                            d_engines);
 
         err = hipStreamSynchronize(m_stream);
@@ -981,7 +988,7 @@ public:
                                dim3(thread_count),
                                0,
                                m_stream,
-                               m_engines,
+                               octo_engine_type::accessor(m_engines),
                                m_start_input,
                                data,
                                size,
@@ -999,7 +1006,7 @@ public:
                                dim3(thread_count),
                                0,
                                m_stream,
-                               m_engines,
+                               octo_engine_type::accessor(m_engines),
                                m_start_input,
                                data,
                                size,

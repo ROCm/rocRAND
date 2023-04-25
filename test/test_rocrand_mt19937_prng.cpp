@@ -336,7 +336,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
             engine.gen_next_n();
             mti = 0;
         }
-        ptr[index] = engine(mti / threads_per_generator);
+        ptr[index] = engine.get(mti / threads_per_generator);
         mti += threads_per_generator;
     }
 
