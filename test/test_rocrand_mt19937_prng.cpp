@@ -1187,3 +1187,131 @@ TEST(rocrand_mt19937_prng_tests, head_and_tail_log_normal_double_test)
                                { g.generate_log_normal(data, s, 0.0, 1.0); },
                                2);
 }
+
+// Check if changing distribution sets m_start_input correctly
+template<typename T0, typename T1, typename GenerateFunc0, typename GenerateFunc1>
+void change_distribution_test(GenerateFunc0 generate_func0,
+                              GenerateFunc1 generate_func1,
+                              size_t        size0,
+                              size_t        start1)
+{
+    SCOPED_TRACE(testing::Message() << "size0 = " << size0 << " start1 = " << start1);
+
+    const size_t size1 = threads_per_generator * generator_count * 3;
+
+    T0* data0;
+    T1* data10;
+    T1* data11;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T0) * size0));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data10), sizeof(T1) * size1));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data11), sizeof(T1) * (start1 + size1)));
+
+    rocrand_mt19937 g0;
+    // Generate the first distribution
+    generate_func0(g0, data0, size0);
+    // Change distribution to the second
+    generate_func1(g0, data10, size1);
+
+    rocrand_mt19937 g1;
+    // Generate the second distribution considering that first `start1` values correspond to
+    // `size0` values of the first distribution and some discarded values
+    generate_func1(g1, data11, start1 + size1);
+
+    std::vector<T1> host_data10(size1);
+    std::vector<T1> host_data11(size1);
+    HIP_CHECK(hipMemcpy(host_data10.data(), data10, sizeof(T1) * size1, hipMemcpyDefault));
+    // Ignore `start1` values
+    HIP_CHECK(hipMemcpy(host_data11.data(), data11 + start1, sizeof(T1) * size1, hipMemcpyDefault));
+
+    for(size_t i = 0; i < size1; i++)
+    {
+        ASSERT_EQ(host_data10[i], host_data11[i]);
+    }
+
+    HIP_CHECK(hipFree(data0));
+    HIP_CHECK(hipFree(data10));
+    HIP_CHECK(hipFree(data11));
+}
+
+const size_t s = threads_per_generator * generator_count;
+
+TEST(rocrand_mt19937_prng_tests, change_distribution0_test)
+{
+    // Larger type (normal float) to smaller type (uniform uint)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {         (s + 4) * 2, s * 4},
+        {(s * 2 + s - 10) * 2, s * 6},
+        {         (s * 3) * 2, s * 6},
+        {         (s * 4) * 2, s * 8},
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<float, unsigned int>(
+            [](rocrand_mt19937& g, float* data, size_t s)
+            { g.generate_normal(data, s, 0.0f, 1.0f); },
+            [](rocrand_mt19937& g, unsigned int* data, size_t s) { g.generate(data, s); },
+            test_case.first,
+            test_case.second);
+    }
+}
+
+TEST(rocrand_mt19937_prng_tests, change_distribution1_test)
+{
+    // Smaller type (uniform float) to larger type (normal double)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {s * 2 + 100,  (s * 1) * 2},
+        { s * 4 + 10,  (s * 2) * 2},
+        {      s * 2,  (s * 1) * 2},
+        {      s * 8,  (s * 2) * 2},
+        {     s * 77, (s * 19) * 2}
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<float, double>([](rocrand_mt19937& g, float* data, size_t s)
+                                                { g.generate_uniform(data, s); },
+                                                [](rocrand_mt19937& g, double* data, size_t s)
+                                                { g.generate_normal(data, s, 0.0, 1.0); },
+                                                test_case.first,
+                                                test_case.second);
+    }
+}
+
+TEST(rocrand_mt19937_prng_tests, change_distribution2_test)
+{
+    // Smaller type (uniform double) to larger type (normal double)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {s * 2 + 400, (s * 2) * 2},
+        { s * 5 + 10, (s * 3) * 2},
+        {      s * 3, (s * 2) * 2},
+        {      s * 4, (s * 2) * 2},
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<double, double>([](rocrand_mt19937& g, double* data, size_t s)
+                                                 { g.generate_uniform(data, s); },
+                                                 [](rocrand_mt19937& g, double* data, size_t s)
+                                                 { g.generate_normal(data, s, 0.0, 1.0); },
+                                                 test_case.first,
+                                                 test_case.second);
+    }
+}
+
+TEST(rocrand_mt19937_prng_tests, change_distribution3_test)
+{
+    // Larger type (normal double) to smaller type (uniform ushort)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {     100 * 2,  s * 8},
+        {(s + 10) * 2, s * 16},
+        { (s * 2) * 2, s * 16},
+        { (s * 3) * 2, s * 24},
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<double, unsigned short>(
+            [](rocrand_mt19937& g, double* data, size_t s)
+            { g.generate_normal(data, s, 0.0, 1.0); },
+            [](rocrand_mt19937& g, unsigned short* data, size_t s) { g.generate(data, s); },
+            test_case.first,
+            test_case.second);
+    }
+}

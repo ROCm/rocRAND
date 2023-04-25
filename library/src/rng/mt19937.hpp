@@ -957,8 +957,9 @@ public:
 
         if(m_prev_input_width != input_width && m_start_input > 0)
         {
-            // Move to the next stride of inputs if input_width has changed so it will not use
-            // twice values used by the previous call. Some values may be discarded.
+            // Move to the next stride of inputs if input_width has changed so generators
+            // will not use twice values used by the previous call. Some values may be discarded.
+
             // First we find the max number of values used by engines:
             const unsigned int max_used_engine_values
                 = (m_start_input + stride - 1) / stride * m_prev_input_width;
