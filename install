@@ -142,7 +142,7 @@ fi
 #   BUILD_BENCHMARK - off by default.
 #
 # ! IMPORTANT !
-# On ROCm platform set C++ compiler to HIPCC. You can do it by adding 'CXX=<path-to-hcc>'
+# On ROCm platform set C++ compiler to HIPCC. You can do it by adding 'CXX=<path-to-hipcc>'
 # before 'cmake' or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HIPCC compiler.
 #
 
@@ -171,7 +171,7 @@ fi
 if [[ "${build_relocatable}" == true ]]; then
     CXX=${rocm_path}/bin/$compiler ${cmake_executable}  -DCMAKE_INSTALL_PREFIX="${rocm_path}" \
     -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ${cmake_common_options} \
-    -DCMAKE_PREFIX_PATH="${rocm_path};${rocm_path}/hcc;${rocm_path}/hip" \
+    -DCMAKE_PREFIX_PATH="${rocm_path};${rocm_path}/hip" \
     -DCMAKE_SHARED_LINKER_FLAGS="${rocm_rpath}" \
     -DROCM_DISABLE_LDCONFIG=ON \
     -DCMAKE_MODULE_PATH="${rocm_path}/lib/cmake/hip;${rocm_path}/hip/cmake" \

@@ -104,7 +104,7 @@ if (AMDGPU_TARGETS)
     set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
 endif()
 
-# Verify that hcc compiler is used on ROCM platform
+# Verify that hipcc compiler is used on ROCM platform
 # TODO: Fix VerifyCompiler for Windows
 if(NOT USE_HIP_CPU)
   if(NOT WIN32)

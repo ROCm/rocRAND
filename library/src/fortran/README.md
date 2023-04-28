@@ -50,7 +50,7 @@ For rocRAND Fortran interface:
 ```
 gfortran <input-file>.f90 hip_m.f90 rocrand_m.f90  -lrocrand_fortran -lrocrand
 # If compiling on a NVCC platform, link CUDA libraries (-lcuda -lcudart)
-# If compiling on an AMD platform, link HIP library (-L${HIP_ROOT_DIR}/lib -lhip_hcc)
+# If compiling on an AMD platform, link HIP library (-L${HIP_ROOT_DIR}/lib)
 ```
 
 Note: `${HIP_ROOT_DIR}` points to the directory where HIP was installed.

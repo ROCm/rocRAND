@@ -75,7 +75,7 @@ public:
 
     void deallocate()
     {
-        // Explicit deallocation is used because on HCC the object is copied
+        // Explicit deallocation is used because the object is copied
         // multiple times inside hipLaunchKernelGGL, and destructor is called
         // for all copies (we can't use c++ smart pointers for device pointers)
         if (IsHostSide)

@@ -37,7 +37,7 @@ if(NOT USE_HIP_CPU)
         find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
         if(NOT hip_FOUND)
             find_package(HIP REQUIRED)
-            if((HIP_COMPILER STREQUAL "hcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
+            if((HIP_COMPILER STREQUAL "hipcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
             # TODO: The HIP package on NVIDIA platform is incorrect at few versions
             set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
             endif()
