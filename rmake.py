@@ -168,7 +168,7 @@ def config_cmd():
 #     cmake_options="${cmake_options} -DCMAKE_FIND_ROOT_PATH=/usr/lib64/llvm7.0/lib/cmake/"
 #     ;;
 #     windows)
-#     cmake_options="${cmake_options} -DWIN32=ON -DROCM_PATH=${rocm_path} -DROCM_DIR:PATH=${rocm_path} -DCMAKE_PREFIX_PATH:PATH=${rocm_path}"
+#     cmake_options="${cmake_options} -DROCM_PATH=${rocm_path} -DROCM_DIR:PATH=${rocm_path} -DCMAKE_PREFIX_PATH:PATH=${rocm_path}"
 #     cmake_options="${cmake_options} --debug-trycompile -DCMAKE_MAKE_PROGRAM=nmake.exe -DCMAKE_TOOLCHAIN_FILE=toolchain-windows.cmake"
 #     # -G '"NMake Makefiles JOM"'"
 #     ;;
