@@ -85,15 +85,3 @@ CMakeLists.txt.user
 
 # Visual Studio / VSCode config folders
 .vs*/**/*
-
-### docs dir ###
-docs/*.tag
-docs/api/
-
-# documentation artifacts
-_build/
-_images/
-_static/
-_templates/
-_toc.yml
-docBin/
