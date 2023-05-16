@@ -2,8 +2,7 @@
 # These comments will also be removed.
 root: index
 subtrees:
-  - numbered: False
-    entries:
+  - entries:
     - file: installing
     - file: programmers_guide
     - file: cpp_api
