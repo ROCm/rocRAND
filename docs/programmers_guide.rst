@@ -51,7 +51,7 @@ MTGP32
     There are :math:`512` generators in total, each of which generates :math:`256` values per iteration. Blocks of :math:`256` elements from generators are concatenated to form the output. The result at offset :math:`n` in memory is generated from generator :math:`\lfloor n / 256\rfloor\;\mathrm{mod}\; 512`.
 
 Philox 4x32-10
-    There is only one Philox generator, and the result at offset :math:`n` is simply the :math:`n`th value from this generator.
+    There is only one Philox generator, and the result at offset :math:`n` is simply the :math:`n`-th value from this generator.
 
 MT19937
     The Mersenne Twister sequence is generated from :math:`8192` generators in total, and each of these are separated by :math:`2^{1000}` values. Each generator generates :math:`8` elements per iteration. The result at offset :math:`n` is generated from generator :math:`(\lfloor n / 8\rfloor\;\mathrm{mod}\; 8192) \cdot 2^{1000} + \lfloor n / (8 \cdot 8192) \rfloor + \lfloor n / 8 \rfloor`.
@@ -63,7 +63,7 @@ LFSR113
     There are :math:`131072` generators in total, each of which are separated by :math:`2^{55}` values. The results are generated in an interleaved fashion. The result at offset :math:`n` in memory is generated from offset :math:`(n\;\mathrm{mod}\; 131072) \cdot 2^{55} + \lfloor n / 131072 \rfloor` in the LFSR113 sequence for a particular seed.
 
 ThreeFry
-    There is only one ThreeFry generator, and the results at offset :math:`n` is simply the :math:`n`th value from this generator.
+    There is only one ThreeFry generator, and the results at offset :math:`n` is simply the :math:`n`-th value from this generator.
 
 Sobol
     The (scrambled) 32- and 64-bit sobol quasi-random number generators generated the result from :math:`d` dimensions by flattening them into the output. The result at offset :math:`n` in memory is generated from offset :math:`n\;\mathrm{mod}\; d` in dimension :math:`\lfloor n / d \rfloor`, where :math:`d` is the generator's number of dimensions.
