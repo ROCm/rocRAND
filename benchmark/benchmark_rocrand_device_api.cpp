@@ -620,7 +620,7 @@ struct generator_uint : public generator_type
         return "uniform-uint";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand(state);
     }
@@ -636,7 +636,7 @@ struct generator_ullong : public generator_type
         return "uniform-ullong";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand(state);
     }
@@ -652,7 +652,7 @@ struct generator_uniform : public generator_type
         return "uniform-float";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_uniform(state);
     }
@@ -668,7 +668,7 @@ struct generator_uniform_double : public generator_type
         return "uniform-double";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_uniform_double(state);
     }
@@ -684,7 +684,7 @@ struct generator_normal : public generator_type
         return "normal-float";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_normal(state);
     }
@@ -700,7 +700,7 @@ struct generator_normal_double : public generator_type
         return "normal-double";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_normal_double(state);
     }
@@ -716,7 +716,7 @@ struct generator_log_normal : public generator_type
         return "log-normal-float";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_log_normal(state, 0.f, 1.f);
     }
@@ -732,7 +732,7 @@ struct generator_log_normal_double : public generator_type
         return "log-normal-double";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_log_normal_double(state, 0., 1.);
     }
