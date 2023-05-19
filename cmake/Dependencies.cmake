@@ -28,12 +28,6 @@
 # For downloading, building, and installing required dependencies
 include(cmake/DownloadProject.cmake)
 
-# GIT
-find_package(Git REQUIRED)
-if (NOT Git_FOUND)
-  message(FATAL_ERROR "Please ensure Git is installed on the system")
-endif()
-
 if(USE_HIP_CPU)
   find_package(Threads REQUIRED)
 
