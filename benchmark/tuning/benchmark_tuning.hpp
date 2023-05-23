@@ -66,11 +66,19 @@ struct static_config_provider
     static constexpr inline generator_config static_device_config = static_config;
 
     template<class>
-    static hipError_t host_config(const hipStream_t /*stream*/,
-                                  const rocrand_ordering /*ordering*/,
-                                  generator_config& config)
+    hipError_t host_config(const hipStream_t /*stream*/,
+                           const rocrand_ordering /*ordering*/,
+                           generator_config& config)
     {
         config = static_config;
+        return hipSuccess;
+    }
+
+    hipError_t get_least_common_grid_size(const hipStream_t /*stream*/,
+                                          const rocrand_ordering /*ordering*/,
+                                          unsigned int& least_common_grid_size)
+    {
+        least_common_grid_size = static_config.blocks * static_config.threads;
         return hipSuccess;
     }
 };

@@ -22,6 +22,7 @@
 #define ROCRAND_RNG_CONFIG_TYPES_H_
 
 #include "common.hpp"
+#include "cpp_utils.hpp"
 #include "rocrand/rocrand.h"
 
 #include <hip/hip_runtime.h>
@@ -29,6 +30,7 @@
 #include <atomic>
 #include <cassert>
 #include <limits>
+#include <numeric>
 #include <string>
 
 namespace rocrand_host::detail
@@ -378,6 +380,55 @@ struct default_config_provider
                            generator_config&      config) const
     {
         return get_generator_config<GeneratorType, T>(stream, ordering, config);
+    }
+
+    /// @brief Returns the maximum grid size (blocks * threads) of all kernel configurations
+    /// that are possibly selected on the device corresponding to the provided stream.
+    /// @param stream Stream object to select the corresponding device (GPU).
+    /// @param ordering Ordering that determines the potential configurations selected.
+    /// @param least_common_grid_size Returns the least common multiple of all grid sizes across configurations.
+    /// The reference may be modified, even if the function doesn't return \c hipSuccess.
+    /// @return \c hipSuccess if the operation completed successfully, otherwise the error code
+    /// from the first failing HIP runtime function invocation.
+    hipError_t get_least_common_grid_size(const hipStream_t      stream,
+                                          const rocrand_ordering ordering,
+                                          unsigned int&          least_common_grid_size)
+    {
+        least_common_grid_size = 1;
+
+        const auto get_grid_lcm = [&](const auto tag) -> hipError_t
+        {
+            generator_config config{};
+            const hipError_t error
+                = host_config<std::decay_t<decltype(tag)>>(stream, ordering, config);
+            if(error != hipSuccess)
+                return error;
+            least_common_grid_size
+                = std::lcm(least_common_grid_size, config.blocks * config.threads);
+            return hipSuccess;
+        };
+
+        constexpr std::tuple<unsigned int,
+                             unsigned short,
+                             unsigned char,
+                             unsigned long long,
+                             float,
+                             double,
+                             half>
+            all_generated_types{};
+
+        hipError_t error = hipSuccess;
+        cpp_utils::visit_tuple(
+            [&](const auto tag)
+            {
+                if(error == hipSuccess)
+                {
+                    error = get_grid_lcm(tag);
+                }
+            },
+            all_generated_types);
+
+        return error;
     }
 };
 
