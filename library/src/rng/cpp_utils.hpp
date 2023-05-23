@@ -44,39 +44,6 @@ constexpr void visit_tuple(Functor&& fun, Tuple&& tuple)
     std::apply([&fun](auto&&... args) { ((fun(args)), ...); }, tuple);
 }
 
-template<class T, class Tuple>
-class tuple_type_index
-{
-    template<std::size_t... Indices>
-    static constexpr std::size_t get_type_index(std::index_sequence<Indices...>)
-    {
-        constexpr auto not_found_value = std::numeric_limits<std::size_t>::max();
-        std::size_t    idx             = not_found_value;
-        ((
-             [&idx]
-             {
-                 if(std::is_same_v<T, std::tuple_element_t<Indices, Tuple>>
-                    && idx == not_found_value)
-                 {
-                     idx = Indices;
-                 }
-             }()),
-         ...);
-        return idx;
-    }
-
-public:
-    static constexpr inline std::size_t value
-        = get_type_index(std::make_index_sequence<std::tuple_size_v<Tuple>>{});
-};
-
-/// @brief Gets the index of type \c T first occurring in the type list of a \c std::tuple.
-/// If not present, returns \c std::numeric_limits<std::size_t>::max()
-/// @tparam T Type whose index is searched.
-/// @tparam Tuple Type of the \c std::tuple.
-template<class T, class Tuple>
-constexpr std::size_t tuple_type_index_v = tuple_type_index<T, Tuple>::value;
-
 template<class T>
 struct array_size
 {

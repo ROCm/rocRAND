@@ -42,20 +42,6 @@ TEST(rocrand_cpp_utils_tests, visit_tuple)
     ASSERT_EQ("3", results.at(2));
 }
 
-TEST(rocrand_cpp_utils_tests, tuple_type_index)
-{
-    using cpp_utils::tuple_type_index_v;
-
-    static_assert(0 == tuple_type_index_v<int, std::tuple<int>>);
-    static_assert(0 == tuple_type_index_v<int, std::tuple<int, int>>);
-    static_assert(1 == tuple_type_index_v<int, std::tuple<float, int>>);
-    static_assert(1 == tuple_type_index_v<int, std::tuple<float, int, int>>);
-    static_assert(std::numeric_limits<std::size_t>::max()
-                  == tuple_type_index_v<double, std::tuple<float, int, int>>);
-    static_assert(std::numeric_limits<std::size_t>::max()
-                  == tuple_type_index_v<double, std::tuple<>>);
-}
-
 TEST(rocrand_cpp_utils_tests, numeric_combinations)
 {
     constexpr std::array A{1, 2, 3, 4};
