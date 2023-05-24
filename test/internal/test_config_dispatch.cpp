@@ -31,9 +31,7 @@ __global__ void write_target_arch(rocrand_host::detail::target_arch* dest_arch)
 
 static constexpr rocrand_rng_type dummy_rng_type = rocrand_rng_type(0);
 
-namespace rocrand_host
-{
-namespace detail
+namespace rocrand_host::detail
 {
 
 template<class T>
@@ -43,8 +41,21 @@ struct generator_config_defaults<dummy_rng_type, T>
     static constexpr inline unsigned int blocks  = 1;
 };
 
-} // end namespace detail
-} // end namespace rocrand_host
+template<>
+struct generator_config_defaults<dummy_rng_type, double>
+{
+    static constexpr inline unsigned int threads = 512;
+    static constexpr inline unsigned int blocks  = 2;
+};
+
+template<>
+struct generator_config_defaults<dummy_rng_type, half>
+{
+    static constexpr inline unsigned int threads = 512;
+    static constexpr inline unsigned int blocks  = 7;
+};
+
+} // end namespace rocrand_host::detail
 
 template<class T,
          unsigned int BlockSize
@@ -158,4 +169,29 @@ TEST(rocrand_config_dispatch_tests, device_id_from_stream)
     HIP_CHECK(hipStreamDestroy(stream));
     ASSERT_EQ(result, device_id);
 }
-#endif
+
+TEST(rocrand_config_dispatch_tests, default_config_provider)
+{
+    using config_provider = rocrand_host::detail::default_config_provider<dummy_rng_type>;
+    static constexpr hipStream_t      default_stream = 0;
+    static constexpr rocrand_ordering ordering       = ROCRAND_ORDERING_PSEUDO_DEFAULT;
+
+    rocrand_host::detail::generator_config config{};
+    ASSERT_EQ(config_provider{}.host_config<unsigned int>(default_stream, ordering, config),
+              hipSuccess);
+    ASSERT_EQ(config.blocks, 1);
+    ASSERT_EQ(config.threads, 256);
+
+    config = {};
+    ASSERT_EQ(config_provider{}.host_config<double>(default_stream, ordering, config), hipSuccess);
+    ASSERT_EQ(config.blocks, 2);
+    ASSERT_EQ(config.threads, 512);
+
+    unsigned int least_common_grid_size{};
+    ASSERT_EQ(config_provider{}.get_least_common_grid_size(default_stream,
+                                                           ordering,
+                                                           least_common_grid_size),
+              hipSuccess);
+    ASSERT_EQ(least_common_grid_size, 512 * 2 * 7);
+}
+#endif // USE_DEVICE_DISPATCH
