@@ -5,8 +5,16 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 from rocm_docs import ROCmDocs
+import pathlib
+import sys
 
-docs_core = ROCmDocs("hipBLAS Documentation")
+# We need to add the location of the rocrand Python module to the PATH
+# in order to build the documentation of that module
+docs_dir_path = pathlib.Path(__file__).parent
+python_dir_path = docs_dir_path.parent / 'python' / 'rocrand'
+sys.path.append(str(python_dir_path))
+
+docs_core = ROCmDocs("rocRAND Documentation")
 docs_core.run_doxygen()
 docs_core.setup()
 
