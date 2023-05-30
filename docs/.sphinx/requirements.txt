@@ -64,7 +64,7 @@ mdurl==0.1.2
     # via markdown-it-py
 myst-parser[linkify]==1.0.0
     # via rocm-docs-core
-numpy==1.24.2
+numpy==1.24.3
     # via -r requirements.in
 packaging==23.1
     # via
