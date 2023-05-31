@@ -65,11 +65,6 @@ namespace detail {
   #if !defined(ROCRAND_ENABLE_INLINE_ASM)
     #define ROCRAND_ENABLE_INLINE_ASM
   #endif
-#else
-  #if defined(__HIP_DEVICE_COMPILE__) && defined(ROCRAND_ENABLE_INLINE_ASM)
-    #undef ROCRAND_ENABLE_INLINE_ASM
-    #warning "Disabled inline asm, because the build target does not support it."
-  #endif
 #endif
 
 FQUALIFIERS
