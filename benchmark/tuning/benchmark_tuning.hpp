@@ -60,10 +60,10 @@ struct static_config_provider
     static constexpr inline generator_config static_config = {Threads, Blocks};
 
     template<class>
-    static constexpr inline generator_config dynamic_device_config = static_config;
-
-    template<class>
-    static constexpr inline generator_config static_device_config = static_config;
+    constexpr generator_config device_config(const bool /*is_dynamic*/)
+    {
+        return static_config;
+    }
 
     template<class>
     hipError_t host_config(const hipStream_t /*stream*/,
@@ -73,15 +73,19 @@ struct static_config_provider
         config = static_config;
         return hipSuccess;
     }
-
-    hipError_t get_least_common_grid_size(const hipStream_t /*stream*/,
-                                          const rocrand_ordering /*ordering*/,
-                                          unsigned int& least_common_grid_size)
-    {
-        least_common_grid_size = static_config.blocks * static_config.threads;
-        return hipSuccess;
-    }
 };
+
+} // namespace benchmark_tuning
+
+template<unsigned int Threads, unsigned int Blocks>
+struct rocrand_host::detail::config_provider_traits<
+    benchmark_tuning::static_config_provider<Threads, Blocks>>
+{
+    static inline constexpr bool has_dynamic_config = false;
+};
+
+namespace benchmark_tuning
+{
 
 /// @brief Runs the googlebenchmark for the specified generator, output type and distribution.
 /// @tparam T The generated value type.

@@ -188,10 +188,73 @@ TEST(rocrand_config_dispatch_tests, default_config_provider)
     ASSERT_EQ(config.threads, 512);
 
     unsigned int least_common_grid_size{};
-    ASSERT_EQ(config_provider{}.get_least_common_grid_size(default_stream,
-                                                           ordering,
-                                                           least_common_grid_size),
-              hipSuccess);
+    ASSERT_EQ(
+        rocrand_host::detail::get_least_common_grid_size<config_provider>(default_stream,
+                                                                          ordering,
+                                                                          least_common_grid_size),
+        hipSuccess);
     ASSERT_EQ(least_common_grid_size, 512 * 2 * 7);
+}
+
+template<class ConfigProvider>
+__global__ void config_selector_kernel(unsigned int* output)
+{
+    if(threadIdx.x == 0 && blockIdx.x == 0)
+    {
+        output[0] = ConfigProvider{}.template device_config<unsigned short>(true).blocks;
+        output[1] = ConfigProvider{}.template device_config<unsigned short>(true).threads;
+    }
+}
+
+namespace rocrand_host::detail
+{
+
+template<>
+struct generator_config_selector<dummy_rng_type, unsigned short>
+{
+    __host__ __device__ constexpr unsigned int get_threads(const target_arch arch) const
+    {
+        if(arch == target_arch::gfx906)
+            return 64;
+        return generator_config_defaults<dummy_rng_type, unsigned short>{}.threads;
+    }
+
+    __host__ __device__ constexpr unsigned int get_blocks(const target_arch /*arch*/) const
+    {
+        return generator_config_defaults<dummy_rng_type, unsigned short>{}.blocks;
+    }
+};
+
+} // namespace rocrand_host::detail
+
+TEST(rocrand_config_dispatch_tests, config_selection)
+{
+    unsigned int*         d_output{};
+    constexpr std::size_t size = 2;
+    HIP_CHECK(hipMallocHelper(&d_output, size * sizeof(*d_output)));
+
+    using config_provider_t = rocrand_host::detail::default_config_provider<dummy_rng_type>;
+    config_provider_t                      config_provider{};
+    rocrand_host::detail::generator_config config{};
+
+    static constexpr hipStream_t      default_stream = 0;
+    static constexpr rocrand_ordering ordering       = ROCRAND_ORDERING_PSEUDO_DYNAMIC;
+    HIP_CHECK(config_provider.host_config<unsigned short>(default_stream, ordering, config));
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(config_selector_kernel<config_provider_t>),
+                       config.blocks,
+                       config.threads,
+                       0,
+                       default_stream,
+                       d_output);
+    HIP_CHECK(hipGetLastError());
+
+    std::array<unsigned int, 2> h_output{};
+    HIP_CHECK(
+        hipMemcpy(h_output.data(), d_output, size * sizeof(*d_output), hipMemcpyDeviceToHost));
+    HIP_CHECK(hipFree(d_output));
+
+    ASSERT_EQ(config.blocks, h_output[0]);
+    ASSERT_EQ(config.threads, h_output[1]);
 }
 #endif // USE_DEVICE_DISPATCH
