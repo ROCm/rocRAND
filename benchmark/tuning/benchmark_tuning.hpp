@@ -60,20 +60,32 @@ struct static_config_provider
     static constexpr inline generator_config static_config = {Threads, Blocks};
 
     template<class>
-    static constexpr inline generator_config dynamic_device_config = static_config;
+    constexpr generator_config device_config(const bool /*is_dynamic*/)
+    {
+        return static_config;
+    }
 
     template<class>
-    static constexpr inline generator_config static_device_config = static_config;
-
-    template<class>
-    static hipError_t host_config(const hipStream_t /*stream*/,
-                                  const rocrand_ordering /*ordering*/,
-                                  generator_config& config)
+    hipError_t host_config(const hipStream_t /*stream*/,
+                           const rocrand_ordering /*ordering*/,
+                           generator_config& config)
     {
         config = static_config;
         return hipSuccess;
     }
 };
+
+} // namespace benchmark_tuning
+
+template<unsigned int Threads, unsigned int Blocks>
+struct rocrand_host::detail::config_provider_traits<
+    benchmark_tuning::static_config_provider<Threads, Blocks>>
+{
+    static inline constexpr bool has_dynamic_config = false;
+};
+
+namespace benchmark_tuning
+{
 
 /// @brief Runs the googlebenchmark for the specified generator, output type and distribution.
 /// @tparam T The generated value type.

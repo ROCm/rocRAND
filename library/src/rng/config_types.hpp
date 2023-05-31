@@ -22,6 +22,7 @@
 #define ROCRAND_RNG_CONFIG_TYPES_H_
 
 #include "common.hpp"
+#include "cpp_utils.hpp"
 #include "rocrand/rocrand.h"
 
 #include <hip/hip_runtime.h>
@@ -29,6 +30,7 @@
 #include <atomic>
 #include <cassert>
 #include <limits>
+#include <numeric>
 #include <string>
 
 namespace rocrand_host::detail
@@ -275,20 +277,19 @@ inline bool is_ordering_dynamic(const rocrand_ordering ordering)
 
 // Unfortunately cannot be substituted by a variadic template lambda, because
 // hipLaunchKernelGGL is a macro itself
-#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T, ordering, kernel_name, ...)                \
-    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                            \
-    {                                                                                    \
-        hipLaunchKernelGGL(                                                              \
-            HIP_KERNEL_NAME(                                                             \
-                kernel_name<ConfigProvider::template dynamic_device_config<T>.threads>), \
-            __VA_ARGS__);                                                                \
-    }                                                                                    \
-    else                                                                                 \
-    {                                                                                    \
-        hipLaunchKernelGGL(                                                              \
-            HIP_KERNEL_NAME(                                                             \
-                kernel_name<ConfigProvider::template static_device_config<T>.threads>),  \
-            __VA_ARGS__);                                                                \
+#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T, ordering, kernel_name, ...)                      \
+    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                                  \
+    {                                                                                          \
+        hipLaunchKernelGGL(                                                                    \
+            HIP_KERNEL_NAME(kernel_name<ConfigProvider,                                        \
+                                        true                                                   \
+                                            && ::rocrand_host::detail::config_provider_traits< \
+                                                ConfigProvider>::has_dynamic_config>),         \
+            __VA_ARGS__);                                                                      \
+    }                                                                                          \
+    else                                                                                       \
+    {                                                                                          \
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<ConfigProvider, false>), __VA_ARGS__);  \
     }
 
 /// @brief Selects the preset kernel launch config for the given random engine and
@@ -348,23 +349,15 @@ __device__ constexpr generator_config get_generator_config_device(bool dynamic_c
 template<rocrand_rng_type GeneratorType>
 struct default_config_provider
 {
-    /// @brief The config to be used when dynamic ordering is set.
-    /// This can be different per device architecture.
-    /// Note: this function returns the config for the \c unknown architecture, when invoked
-    /// on the host.
+    /// @brief Returns the appropriate kernel config for the provided generated type in device code.
     /// @tparam T The type of the generated random values.
+    /// @param is_dynamic Controls if the returned config belongs to the static or the dynamic ordering.
+    /// @return The kernel config struct.
     template<class T>
-    static constexpr generator_config dynamic_device_config
-        = get_generator_config_device<GeneratorType, T>(true);
-
-    /// @brief The config to be used when static (non-dynamic) ordering is set.
-    /// This is the same for each device architecture.
-    /// Note: this function returns the config for the \c unknown architecture, when invoked
-    /// on the host.
-    /// @tparam T The type of the generated random values.
-    template<class T>
-    static constexpr generator_config static_device_config
-        = get_generator_config_device<GeneratorType, T>(false);
+    __device__ constexpr generator_config device_config(const bool is_dynamic)
+    {
+        return get_generator_config_device<GeneratorType, T>(is_dynamic);
+    }
 
     /// @brief Load the config on the host for a specific architecture and ordering.
     /// @param stream The HIP stream to detect the device architecture from.
@@ -380,6 +373,72 @@ struct default_config_provider
         return get_generator_config<GeneratorType, T>(stream, ordering, config);
     }
 };
+
+/// @brief Provides type traits for the \c ConfigProviders.
+template<class ConfigProvider>
+struct config_provider_traits
+{
+    // Always error
+    static_assert(sizeof(ConfigProvider) == 0,
+                  "Traits object is not specialized for this ConfigProvider");
+};
+
+template<rocrand_rng_type GeneratorType>
+struct config_provider_traits<default_config_provider<GeneratorType>>
+{
+    /// @brief Controls if the \c ConfigProvider provides different configs
+    /// between static and dynamic orderings. The purpose of this flag is to prevent
+    /// the duplication of kernel functions, in cases where the static and the dynamic
+    /// configs are identical.
+    static inline constexpr bool has_dynamic_config = true;
+};
+
+/// @brief Returns the maximum grid size (blocks * threads) of all kernel configurations
+/// that are possibly selected on the device corresponding to the provided stream.
+/// @param stream Stream object to select the corresponding device (GPU).
+/// @param ordering Ordering that determines the potential configurations selected.
+/// @param least_common_grid_size Returns the least common multiple of all grid sizes across configurations.
+/// The reference may be modified, even if the function doesn't return \c hipSuccess.
+/// @return \c hipSuccess if the operation completed successfully, otherwise the error code
+/// from the first failing HIP runtime function invocation.
+/// @tparam ConfigProvider Provider of the kernel launch configs.
+template<class ConfigProvider>
+hipError_t get_least_common_grid_size(const hipStream_t      stream,
+                                      const rocrand_ordering ordering,
+                                      unsigned int&          least_common_grid_size)
+{
+    least_common_grid_size = 1;
+
+    const auto get_grid_lcm = [&](const auto tag) -> hipError_t
+    {
+        generator_config config{};
+        const hipError_t error
+            = ConfigProvider{}.template host_config<std::decay_t<decltype(tag)>>(stream,
+                                                                                 ordering,
+                                                                                 config);
+        if(error != hipSuccess)
+            return error;
+        least_common_grid_size = std::lcm(least_common_grid_size, config.blocks * config.threads);
+        return hipSuccess;
+    };
+
+    constexpr std::
+        tuple<unsigned int, unsigned short, unsigned char, unsigned long long, float, double, half>
+            all_generated_types{};
+
+    hipError_t error = hipSuccess;
+    cpp_utils::visit_tuple(
+        [&](const auto tag)
+        {
+            if(error == hipSuccess)
+            {
+                error = get_grid_lcm(tag);
+            }
+        },
+        all_generated_types);
+
+    return error;
+}
 
 } // end namespace rocrand_host::detail
 
