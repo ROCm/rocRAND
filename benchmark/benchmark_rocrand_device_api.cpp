@@ -605,9 +605,9 @@ struct runner<rocrand_state_scrambled_sobol64>
 // Provide optional create and destroy functions for the generators.
 struct generator_type
 {
-    void create() {}
+    static void create() {}
 
-    void destroy() {}
+    static void destroy() {}
 };
 
 template<typename Engine>
