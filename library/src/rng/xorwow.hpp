@@ -27,6 +27,7 @@
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
+#include "config/xorwow_config.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
