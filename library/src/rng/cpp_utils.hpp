@@ -24,6 +24,8 @@
 #ifndef ROCRAND_RNG_CPP_UTILS_HPP_
 #define ROCRAND_RNG_CPP_UTILS_HPP_
 
+#include <hip/hip_runtime.h>
+
 #include <array>
 #include <cstddef>
 #include <limits>
