@@ -75,9 +75,9 @@ def generate_config_files(out_dir: str, best_data: DataFrame):
 
     algorithm_template = env.get_template(f"config_template")
     for (key, entries) in best_data.groupby('generator'):
-        print(entries)
+        default = entries[(entries.value_type == 'unsigned_int') & (entries.arch == 'gfx908')].iloc[0]
         with open(f"{out_dir}/{key}_config.hpp", "w") as text_file:
-            text_file.write(algorithm_template.render(generator=key, generator_type=generator_type(key), configs=entries))
+            text_file.write(algorithm_template.render(generator=key, generator_type=generator_type(key), configs=entries, config_default=default))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
