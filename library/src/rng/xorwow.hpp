@@ -38,13 +38,6 @@ namespace rocrand_host::detail
 
 typedef ::rocrand_device::xorwow_engine xorwow_device_engine;
 
-template<class T>
-struct generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>
-{
-    static constexpr inline unsigned int threads = 256;
-    static constexpr inline unsigned int blocks  = 512;
-};
-
 template<unsigned int BlockSize>
 ROCRAND_KERNEL
     __launch_bounds__(BlockSize) void init_engines_kernel(xorwow_device_engine* engines,
