@@ -236,7 +236,7 @@ struct generator_config_defaults
 /// configuration to the random engines.
 /// Partial or full template specializations are implemented for the engines
 /// to select different parameterizations.
-/// @tparam T The type of the generated random values.
+/// @tparam T The datatype of the generated random values.
 /// @tparam GeneratorType The kind of the random engine.
 template<rocrand_rng_type GeneratorType, class T>
 struct generator_config_selector
@@ -294,7 +294,7 @@ inline bool is_ordering_dynamic(const rocrand_ordering ordering)
 
 /// @brief Selects the preset kernel launch config for the given random engine and
 /// generated value type.
-/// @tparam T The type of the generated random values.
+/// @tparam T The datatype of the generated random values.
 /// @tparam GeneratorType The kind of the random engine.
 /// @param stream The HIP stream on which the random generation is executed.
 /// @param ordering The ordering of the random engine.
@@ -326,7 +326,7 @@ hipError_t get_generator_config(const hipStream_t      stream,
 
 /// @brief Selects the preset kernel launch config for the given random engine and
 /// generated value type.
-/// @tparam T The type of the generated random values.
+/// @tparam T The datatype of the generated random values.
 /// @tparam GeneratorType The kind of the random engine.
 /// @param dynamic_config Whether architecture-specific launch config can be selected or not.
 /// @return The selected launch config.
