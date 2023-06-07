@@ -164,11 +164,15 @@ copyright-date:
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
+      -D BUILD_BENCHMARK_TUNING=ON
+      -D BENCHMARK_TUNING_MIN_GRID_SIZE=32768
+      -D BENCHMARK_TUNING_THREAD_OPTIONS="128, 256"
+      -D BENCHMARK_TUNING_BLOCK_OPTIONS="128, 256"
       -D BUILD_FORTRAN_WRAPPER=OFF
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-      -D GPU_TARGETS=${GPU_TARGETS}
+      -D AMDGPU_TARGETS=${GPU_TARGETS}
       -D DISABLE_WERROR=OFF
     - cmake --build $CI_PROJECT_DIR/build
     - cmake --build $CI_PROJECT_DIR/build --target package
@@ -340,19 +344,18 @@ build-cpu:cmake-latest:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
-build:benchmark_tuning:
-  stage: build
+benchmark:benchmark-tuning:
+  extends:
+    - .rules:benchmark
+    - .rocm:cmake-latest
+    - .gpus:rocm
+  stage: benchmark
   variables:
     BENCHMARK_TUNING_MIN_GRID_SIZE: 32768
-    BENCHMARK_TUNING_THREAD_OPTIONS: "128, 256"
-    BENCHMARK_TUNING_BLOCK_OPTIONS: "128, 256"
-  tags:
-    - rocm-build
-  needs: []
-  extends:
-    - .rocm:cmake-latest
-    - .rules:build
+    BENCHMARK_TUNING_THREAD_OPTIONS: "128, 256, 512"
   script:
+    # Build the appropriate benchmarks
+    - export BENCHMARK_TUNING_BLOCK_OPTIONS=`$CI_PROJECT_DIR/scripts/config-tuning/get_tuned_grid_sizes.py`
     - cmake
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
@@ -365,18 +368,36 @@ build:benchmark_tuning:
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=ON
-      -D GPU_TARGETS=${GPU_TARGETS}
+      -D AMDGPU_TARGETS=${GPU_TARGET}
       -D DISABLE_WERROR=OFF
       -D BENCHMARK_TUNING_MIN_GRID_SIZE=${BENCHMARK_TUNING_MIN_GRID_SIZE}
       -D BENCHMARK_TUNING_THREAD_OPTIONS="${BENCHMARK_TUNING_THREAD_OPTIONS}"
       -D BENCHMARK_TUNING_BLOCK_OPTIONS="${BENCHMARK_TUNING_BLOCK_OPTIONS}"
     - cmake --build $CI_PROJECT_DIR/build --target benchmark_rocrand_tuning
+    - $CI_PROJECT_DIR/build/benchmark/tuning/benchmark_rocrand_tuning --benchmark_out_format=json --benchmark_out=$CI_PROJECT_DIR/build/rocrand_config_tuning_${GPU_TARGET}_${CI_JOB_ID}.json
   artifacts:
     paths:
       - $CI_PROJECT_DIR/build/library/
       - $CI_PROJECT_DIR/build/benchmark/
       - $CI_PROJECT_DIR/build/deps/googlebenchmark/
       - $CI_PROJECT_DIR/build/CMakeCache.txt
+      - $CI_PROJECT_DIR/build/*.json
+    expire_in: 2 weeks
+
+benchmark:benchmark-tuning-generate-results:
+  image: python:3.11
+  stage: benchmark
+  extends:
+    - .rules:benchmark
+  needs:
+    - benchmark:benchmark-tuning
+  script:
+    - mkdir $CI_PROJECT_DIR/config-tuning-out
+    - python -m pip install -r $CI_PROJECT_DIR/scripts/config-tuning/requirements.txt
+    - python $CI_PROJECT_DIR/scripts/config-tuning/select_best_config.py --out-dir $CI_PROJECT_DIR/config-tuning-out --plot-out $CI_PROJECT_DIR/config-tuning-out/rocrand-config-tuning.svg $CI_PROJECT_DIR/build/rocrand_config_tuning_*.json
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/config-tuning-out
     expire_in: 2 weeks
 
 .test:ctest:
@@ -420,13 +441,15 @@ test:hip-cpu:
 
 .benchmark:
   extends:
-    # rocRAND benchmarks are short, we can afford to run them automatically
-    - .rules:test
+    - .rules:benchmark
   stage: benchmark
   script:
     - cd $CI_PROJECT_DIR/build
-    - ./benchmark/benchmark_rocrand_host_api --trials 5
+    - ./benchmark/benchmark_rocrand_host_api --trials 5 --benchmark_out_format=json --benchmark_out=rocrand_benchmarks_${GPU_TARGET}_${CI_JOB_ID}.json
     - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/build/rocrand_benchmarks_*.json
 
 benchmark:rocm:
   needs:
