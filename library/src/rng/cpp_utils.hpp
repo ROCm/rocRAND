@@ -102,6 +102,24 @@ constexpr auto numeric_combinations(const std::array<T, Ns>... inputs)
     return ret;
 }
 
+/// @brief Calculates greatest common divisor.
+__host__ __device__ constexpr unsigned int gcd(const unsigned int a, const unsigned int b)
+{
+    if(a == 0)
+        return b;
+    if(b == 0)
+        return a;
+    return gcd(b, a % b);
+}
+
+/// @brief Calculates least common multiple
+__host__ __device__ constexpr unsigned int lcm(const unsigned int a, const unsigned int b)
+{
+    if(a == 0 || b == 0)
+        return 0;
+    return a / gcd(a, b) * b;
+}
+
 } // end namespace cpp_utils
 
 #endif // ROCRAND_RNG_CPP_UTILS_HPP_

@@ -77,13 +77,6 @@ struct static_config_provider
 
 } // namespace benchmark_tuning
 
-template<unsigned int Threads, unsigned int Blocks>
-struct rocrand_host::detail::config_provider_traits<
-    benchmark_tuning::static_config_provider<Threads, Blocks>>
-{
-    static inline constexpr bool has_dynamic_config = false;
-};
-
 namespace benchmark_tuning
 {
 

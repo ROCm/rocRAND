@@ -55,18 +55,17 @@ ROCRAND_KERNEL
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
-ROCRAND_KERNEL
-    __launch_bounds__(ConfigProvider{}
-                          .template device_config<T>(IsDynamic)
-                          .threads) void generate_kernel(xorwow_device_engine* engines,
-                                                         const unsigned int    start_engine_id,
-                                                         const unsigned int    num_engines,
-                                                         T*                    data,
-                                                         const size_t          n,
-                                                         Distribution          distribution)
+ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
+    IsDynamic))) void generate_kernel(xorwow_device_engine* engines,
+                                      const unsigned int    start_engine_id,
+                                      const unsigned int    num_engines,
+                                      T*                    data,
+                                      const size_t          n,
+                                      Distribution          distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
+    constexpr bool         single_tile  = is_single_tile_config<ConfigProvider, T>(IsDynamic);
 
     using vec_type = aligned_vec_type<T, output_width>;
 
@@ -157,10 +156,7 @@ ROCRAND_KERNEL
         // Save engine with its state
         engines[engine_id] = engine;
 
-        // In the non-dynamic case we always have a single tile.
-        // Adding this exit condition that is known at compile time saves us a few
-        // VGPRs and increases occupancy and performance on gfx906.
-        if(!IsDynamic)
+        if(single_tile)
             break;
     }
 }

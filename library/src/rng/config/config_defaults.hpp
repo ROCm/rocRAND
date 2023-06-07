@@ -18,9 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_CONFIG_XORWOW_CONFIG_HPP_
-#define ROCRAND_RNG_CONFIG_XORWOW_CONFIG_HPP_
+#ifndef ROCRAND_RNG_CONFIG_CONFIG_DEFAULTS_HPP_
+#define ROCRAND_RNG_CONFIG_CONFIG_DEFAULTS_HPP_
 
-#include "config_defaults.hpp"
+#include "../config_types.hpp"
 
-#endif // ROCRAND_RNG_CONFIG_XORWOW_HPP_
+namespace rocrand_host::detail
+{
+
+template<class T>
+struct generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>
+{
+    static constexpr inline unsigned int threads = 256;
+    static constexpr inline unsigned int blocks  = 512;
+};
+
+} // namespace rocrand_host::detail
+
+#endif // ROCRAND_RNG_CONFIG_CONFIG_DEFAULTS_HPP_
