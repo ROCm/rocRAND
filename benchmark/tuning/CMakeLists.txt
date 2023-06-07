@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 if(USE_HIP_CPU OR(HIP_COMPILER STREQUAL "nvcc"))
-  message(WARNING "Configuration tuning is currently supported for AMD GPUs only")
+  message(FATAL_ERROR "Configuration tuning is currently supported for AMD GPUs only")
 endif()
 
 set(BENCHMARK_TUNING_MIN_GRID_SIZE 32768 CACHE STRING
@@ -43,3 +43,9 @@ target_include_directories(benchmark_rocrand_tuning PRIVATE
   "${CMAKE_BINARY_DIR}/benchmark"
   "${PROJECT_SOURCE_DIR}/benchmark"
   "${PROJECT_SOURCE_DIR}/library/src")
+
+if(NOT WIN32)
+  foreach(amdgpu_target ${AMDGPU_TARGETS})
+      target_compile_options(rocrand PRIVATE --offload-arch=${amdgpu_target})
+  endforeach()
+endif()
