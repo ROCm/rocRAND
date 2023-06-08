@@ -152,7 +152,8 @@ struct runner
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
-                  const Extra extra)
+                  const Extra extra,
+                  const bool /* limit_occupancy */)
     {
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(generate_kernel),
@@ -227,7 +228,8 @@ struct runner<rocrand_state_mtgp32>
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
-                  const Extra extra)
+                  const Extra extra,
+                  const bool /* limit_occupancy */)
     {
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(generate_kernel),
@@ -289,7 +291,8 @@ struct runner<rocrand_state_lfsr113>
                   T*                  data,
                   const size_t        size,
                   const GenerateFunc& generate_func,
-                  const Extra         extra)
+                  const Extra         extra,
+                  const bool /* limit_occupancy */)
     {
         hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
                            dim3(blocks),
@@ -330,13 +333,19 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled
 }
 
 // generate_kernel for the normal and scrambled sobol generators
-template<typename GeneratorState, typename T, typename GenerateFunc, typename Extra>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
-    GeneratorState* states,
-    T*              data,
-    const size_t    size,
-    GenerateFunc    generate_func,
-    const Extra     extra)
+template<bool limit_occupancy, typename GeneratorState, typename T, typename GenerateFunc, typename Extra>
+__global__
+// On certein architectures (gfx908), the higher occupancy with sobol kernel is undesired.
+// To fix this, an attributing limiting the is directly set.
+#ifndef NO_OCCUPANCY_LIMIT
+    __attribute__((amdgpu_waves_per_eu(1, limit_occupancy ? 4 : 0)))
+#endif
+    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
+        GeneratorState* states,
+        T*              data,
+        const size_t    size,
+        GenerateFunc    generate_func,
+        const Extra     extra)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
@@ -410,19 +419,26 @@ struct runner<rocrand_state_sobol32>
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
-                  const Extra extra)
+                  const Extra extra,
+                  const bool limit_occupancy)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        if(limit_occupancy)
+        {
+            generate_sobol_kernel<true>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        } else {
+            generate_sobol_kernel<false>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        }
     }
 };
 
@@ -490,19 +506,26 @@ struct runner<rocrand_state_scrambled_sobol32>
                   T*                  data,
                   const size_t        size,
                   const GenerateFunc& generate_func,
-                  const Extra         extra)
+                  const Extra         extra,
+                  const bool limit_occupancy)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        if(limit_occupancy)
+        {
+            generate_sobol_kernel<true>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        } else {
+            generate_sobol_kernel<false>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        }
     }
 };
 
@@ -560,19 +583,26 @@ struct runner<rocrand_state_sobol64>
                   T * data,
                   const size_t size,
                   const GenerateFunc& generate_func,
-                  const Extra extra)
+                  const Extra extra,
+                  const bool limit_occupancy)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        if(limit_occupancy)
+        {
+            generate_sobol_kernel<true>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        } else {
+            generate_sobol_kernel<false>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        }
     }
 };
 
@@ -640,19 +670,26 @@ struct runner<rocrand_state_scrambled_sobol64>
                   T*                  data,
                   const size_t        size,
                   const GenerateFunc& generate_func,
-                  const Extra         extra)
+                  const Extra         extra,
+                  const bool limit_occupancy)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        if(limit_occupancy)
+        {
+            generate_sobol_kernel<true>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        } else {
+            generate_sobol_kernel<false>
+                <<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(states,
+                                                                           data,
+                                                                           size / dimensions,
+                                                                           generate_func,
+                                                                           extra);
+        }
     }
 };
 
@@ -679,10 +716,12 @@ void run_benchmark(const cli::Parser& parser,
 
     runner<GeneratorState> r(dimensions, blocks, threads, 12345ULL, 6789ULL);
 
+    bool limit_occupancy = distribution.rfind("discrete") == 0;
+
     // Warm-up
     for (size_t i = 0; i < 5; i++)
     {
-        r.generate(blocks, threads, stream, data, size, generate_func, extra);
+        r.generate(blocks, threads, stream, data, size, generate_func, extra, limit_occupancy);
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
     }
@@ -695,7 +734,7 @@ void run_benchmark(const cli::Parser& parser,
     HIP_CHECK(hipEventRecord(start, stream));
     for (size_t i = 0; i < trials; i++)
     {
-        r.generate(blocks, threads, stream, data, size, generate_func, extra);
+        r.generate(blocks, threads, stream, data, size, generate_func, extra, limit_occupancy);
     }
     HIP_CHECK(hipEventRecord(stop, stream));
     HIP_CHECK(hipEventSynchronize(stop));
