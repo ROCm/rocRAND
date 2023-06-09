@@ -122,7 +122,7 @@ public:
     }
 
     FQUALIFIERS
-    unsigned int current()
+    unsigned int current() const
     {
         return m_state.d;
     }
@@ -137,7 +137,7 @@ protected:
         m_state.d = 0;
         for(int i = 0; i < 32; i++)
         {
-            m_state.d ^= (g & (1 << i) ? m_state.vectors[i] : 0);
+            m_state.d ^= (g & (1U << i) ? m_state.vectors[i] : 0);
         }
     }
 
