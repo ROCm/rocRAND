@@ -121,7 +121,7 @@ public:
     }
 
     FQUALIFIERS
-    unsigned long long int current()
+    unsigned long long int current() const
     {
         return m_state.d;
     }
