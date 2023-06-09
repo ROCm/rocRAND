@@ -293,7 +293,7 @@ private:
         return mod_m1(i * j);
     }
 
-    FQUALIFIERS unsigned long long mod_m1(unsigned long long p)
+    FQUALIFIERS static unsigned long long mod_m1(unsigned long long p)
     {
         return p % ROCRAND_MRG31K3P_M1;
     }
@@ -303,7 +303,7 @@ private:
         return mod_m2(i * j);
     }
 
-    FQUALIFIERS unsigned long long mod_m2(unsigned long long p)
+    FQUALIFIERS static unsigned long long mod_m2(unsigned long long p)
     {
         return p % ROCRAND_MRG31K3P_M2;
     }
