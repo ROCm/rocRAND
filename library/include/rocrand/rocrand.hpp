@@ -53,7 +53,7 @@ public:
     /// Constructs new error object from error code \p error.
     ///
     /// \param error - error code
-    error(error_type error) noexcept
+    explicit error(error_type error) noexcept
         : m_error(error),
           m_error_string(to_string(error))
     {
@@ -162,11 +162,12 @@ public:
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
     /// Returns the smallest possible value that can be generated.
+    // cppcheck-suppress functionStatic
     IntType min() const
     {
         return 0;
@@ -204,39 +205,39 @@ public:
     }
 
     /// Returns \c true if the distribution is the same as \p other.
-    bool operator==(const uniform_int_distribution<IntType>& other)
+    bool operator==(const uniform_int_distribution<IntType>& other) const
     {
         (void) other;
         return true;
     }
 
     /// Returns \c true if the distribution is different from \p other.
-    bool operator!=(const uniform_int_distribution<IntType>& other)
+    bool operator!=(const uniform_int_distribution<IntType>& other) const
     {
         return !(*this == other);
     }
 
 private:
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned char * output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned char * output, size_t size)
     {
         return rocrand_generate_char(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned short * output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned short * output, size_t size)
     {
         return rocrand_generate_short(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned int * output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned int * output, size_t size)
     {
         return rocrand_generate(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned long long int* output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned long long int* output, size_t size)
     {
         return rocrand_generate_long_long(g.m_generator, output, size);
     }
@@ -266,11 +267,12 @@ public:
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
     /// Returns the smallest possible value that can be generated.
+    // cppcheck-suppress functionStatic
     RealType min() const
     {
         if(std::is_same<float, RealType>::value)
@@ -281,6 +283,7 @@ public:
     }
 
     /// Returns the largest possible value that can be generated.
+    // cppcheck-suppress functionStatic
     RealType max() const
     {
         return 1.0;
@@ -312,33 +315,33 @@ public:
     }
 
     /// Returns \c true if the distribution is the same as \p other.
-    bool operator==(const uniform_real_distribution<RealType>& other)
+    bool operator==(const uniform_real_distribution<RealType>& other) const
     {
         (void) other;
         return true;
     }
 
     /// Returns \c true if the distribution is different from \p other.
-    bool operator!=(const uniform_real_distribution<RealType>& other)
+    bool operator!=(const uniform_real_distribution<RealType>& other) const
     {
         return !(*this == other);
     }
 
 private:
     template<class Generator>
-    rocrand_status generate(Generator& g, float * output, size_t size)
+    static rocrand_status generate(Generator& g, float * output, size_t size)
     {
         return rocrand_generate_uniform(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, double * output, size_t size)
+    static rocrand_status generate(Generator& g, double * output, size_t size)
     {
         return rocrand_generate_uniform_double(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, half * output, size_t size)
+    static rocrand_status generate(Generator& g, half * output, size_t size)
     {
         return rocrand_generate_uniform_half(g.m_generator, output, size);
     }
@@ -392,13 +395,13 @@ public:
         }
 
         /// Returns \c true if the param_type is the same as \p other.
-        bool operator==(const param_type& other)
+        bool operator==(const param_type& other) const
         {
             return m_mean == other.m_mean && m_stddev == other.m_stddev;
         }
 
         /// Returns \c true if the param_type is different from \p other.
-        bool operator!=(const param_type& other)
+        bool operator!=(const param_type& other) const
         {
             return !(*this == other);
         }
@@ -417,13 +420,13 @@ public:
 
     /// \brief Constructs a new distribution object.
     /// \param params - Distribution parameters
-    normal_distribution(const param_type& params)
+    explicit normal_distribution(const param_type& params)
         : m_params(params)
     {
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
@@ -444,6 +447,7 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated.
+    // cppcheck-suppress functionStatic
     RealType min() const
     {
         return std::numeric_limits<RealType>::lowest();
@@ -496,7 +500,7 @@ public:
     /// \brief Returns \c true if the distribution is the same as \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator==(const normal_distribution<RealType>& other)
+    bool operator==(const normal_distribution<RealType>& other) const 
     {
         return this->m_params == other.m_params;
     }
@@ -504,7 +508,7 @@ public:
     /// \brief Returns \c true if the distribution is different from \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator!=(const normal_distribution<RealType>& other)
+    bool operator!=(const normal_distribution<RealType>& other) const
     {
         return !(*this == other);
     }
@@ -585,13 +589,13 @@ public:
         }
 
         /// Returns \c true if the param_type is the same as \p other.
-        bool operator==(const param_type& other)
+        bool operator==(const param_type& other) const
         {
             return m_mean == other.m_mean && m_stddev == other.m_stddev;
         }
 
         /// Returns \c true if the param_type is different from \p other.
-        bool operator!=(const param_type& other)
+        bool operator!=(const param_type& other) const
         {
             return !(*this == other);
         }
@@ -610,13 +614,13 @@ public:
 
     /// \brief Constructs a new distribution object.
     /// \param params - Distribution parameters
-    lognormal_distribution(const param_type& params)
+    explicit lognormal_distribution(const param_type& params)
         : m_params(params)
     {
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
@@ -649,6 +653,7 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated.
+    // cppcheck-suppress functionStatic
     RealType min() const
     {
         return 0;
@@ -690,7 +695,7 @@ public:
     /// \brief Returns \c true if the distribution is the same as \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator==(const lognormal_distribution<RealType>& other)
+    bool operator==(const lognormal_distribution<RealType>& other) const
     {
         return this->m_params == other.m_params;
     }
@@ -698,7 +703,7 @@ public:
     /// \brief Returns \c true if the distribution is different from \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator!=(const lognormal_distribution<RealType>& other)
+    bool operator!=(const lognormal_distribution<RealType>& other) const
     {
         return !(*this == other);
     }
@@ -770,13 +775,13 @@ public:
         }
 
         /// Returns \c true if the param_type is the same as \p other.
-        bool operator==(const param_type& other)
+        bool operator==(const param_type& other) const
         {
             return m_mean == other.m_mean;
         }
 
         /// Returns \c true if the param_type is different from \p other.
-        bool operator!=(const param_type& other)
+        bool operator!=(const param_type& other) const
         {
             return !(*this == other);
         }
@@ -794,13 +799,13 @@ public:
 
     /// \brief Constructs a new distribution object.
     /// \param params - Distribution parameters
-    poisson_distribution(const param_type& params)
+    explicit poisson_distribution(const param_type& params)
         : m_params(params)
     {
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
@@ -814,6 +819,7 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated.
+    // cppcheck-suppress functionStatic
     IntType min() const
     {
         return 0;
@@ -866,7 +872,7 @@ public:
     /// \brief Returns \c true if the distribution is the same as \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator==(const poisson_distribution<IntType>& other)
+    bool operator==(const poisson_distribution<IntType>& other) const
     {
         return this->m_params == other.m_params;
     }
@@ -874,7 +880,7 @@ public:
     /// \brief Returns \c true if the distribution is different from \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator!=(const poisson_distribution<IntType>& other)
+    bool operator!=(const poisson_distribution<IntType>& other) const
     {
         return !(*this == other);
     }
@@ -953,7 +959,7 @@ public:
     /// bound to the lifetime of the engine.
     ///
     /// \param generator - rocRAND generator
-    philox4x32_10_engine(rocrand_generator& generator)
+    explicit philox4x32_10_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -1053,6 +1059,7 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated by the engine.
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -1141,7 +1148,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    xorwow_engine(rocrand_generator& generator)
+    explicit xorwow_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -1197,6 +1204,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -1286,7 +1294,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mrg31k3p_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit mrg31k3p_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -1346,6 +1354,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 1;
@@ -1435,7 +1444,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mrg32k3a_engine(rocrand_generator& generator)
+    explicit mrg32k3a_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -1491,6 +1500,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 1;
@@ -1581,7 +1591,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mtgp32_engine(rocrand_generator& generator)
+    explicit mtgp32_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -1630,6 +1640,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -1723,7 +1734,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    lfsr113_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit lfsr113_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -1783,6 +1794,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -1868,7 +1880,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mt19937_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit mt19937_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -1920,6 +1932,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -2017,7 +2030,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    sobol32_engine(rocrand_generator& generator)
+    explicit sobol32_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -2097,6 +2110,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -2195,7 +2209,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    scrambled_sobol32_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit scrambled_sobol32_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2279,6 +2293,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -2377,7 +2392,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    sobol64_engine(rocrand_generator& generator)
+    explicit sobol64_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -2457,6 +2472,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -2556,7 +2572,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    scrambled_sobol64_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit scrambled_sobol64_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2640,6 +2656,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -2729,7 +2746,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry2x32_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry2x32_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2789,6 +2806,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -2878,7 +2896,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry2x64_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry2x64_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2938,6 +2956,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -3027,7 +3046,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry4x32_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry4x32_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -3087,6 +3106,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
@@ -3176,7 +3196,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry4x64_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry4x64_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -3228,6 +3248,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
+    // cppcheck-suppress functionStatic
     result_type min() const
     {
         return 0;
