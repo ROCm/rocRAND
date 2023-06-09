@@ -351,7 +351,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_m1(unsigned long long p)
+    static unsigned long long mod_m1(unsigned long long p)
     {
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M1C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         if (p >= ROCRAND_MRG32K3A_M1)
@@ -378,7 +378,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_m2(unsigned long long p)
+    static unsigned long long mod_m2(unsigned long long p)
     {
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
