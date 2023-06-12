@@ -445,7 +445,12 @@ test:hip-cpu:
   stage: benchmark
   script:
     - cd $CI_PROJECT_DIR/build
-    - ./benchmark/benchmark_rocrand_host_api --trials 5 --benchmark_out_format=json --benchmark_out=rocrand_benchmarks_${GPU_TARGET}_${CI_JOB_ID}.json
+    - ./benchmark/benchmark_rocrand_host_api
+      --size $[ 512*1024*1024 ]
+      --binary-size
+      --trials 5
+      --benchmark_out_format=json
+      --benchmark_out=rocrand_benchmarks_${GPU_TARGET}_${CI_JOB_ID}.json
     - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
   artifacts:
     paths:
