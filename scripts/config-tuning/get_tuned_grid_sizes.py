@@ -10,7 +10,7 @@ def get_grid_sizes(rocminfo_output: str) -> str:
     if not match:
         raise Exception('Could not find Compute Unit info in rocminfo output')
     num_compute_units = int(match.group(1))
-    compute_unit_multipliers = [4, 8, 16, 32]
+    compute_unit_multipliers = [4, 5, 8, 10, 16, 32]
     min_grid_size = 128
     max_grid_size = 4096
 
