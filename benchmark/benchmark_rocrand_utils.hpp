@@ -77,7 +77,7 @@ inline std::string engine_name(const rocrand_rng_type rng_type)
 
 struct benchmark_config
 {
-    std::size_t size{};
+    std::size_t bytes{};
     double      lambda{};
 };
 
