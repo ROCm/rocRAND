@@ -52,7 +52,7 @@ def load_benchmark_result_json(path: str) -> DataFrame:
 
 def get_best_config_for_arch(benchmark_data: DataFrame):
     """
-    Calculates the best config for each architecture, that is on average provides the highest
+    Calculates the best config for each architecture, that on average provides the highest
     performance across generated types and distributions.
     """
     def config_goodness(subf: DataFrame):
