@@ -418,7 +418,6 @@ hipError_t get_least_common_grid_size(const hipStream_t      stream,
 /// that are possibly selected on the device currently compiled to.
 /// @param is_dynamic Whether the current kernel uses dynamic ordering or not.
 /// @return The least common multiple of all grid sizes across configurations.
-/// The reference may be modified, even if the function doesn't return \c hipSuccess.
 /// @tparam ConfigProvider Provider of the kernel launch configs.
 template<class ConfigProvider>
 __device__ constexpr unsigned int get_least_common_grid_size(const bool is_dynamic)
