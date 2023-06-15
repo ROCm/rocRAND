@@ -25,8 +25,8 @@
 
 __global__ void write_target_arch(rocrand_host::detail::target_arch* dest_arch)
 {
-    static constexpr auto arch = rocrand_host::detail::get_device_arch();
-    *dest_arch                 = arch;
+    constexpr auto arch = rocrand_host::detail::get_device_arch();
+    *dest_arch          = arch;
 }
 
 static constexpr rocrand_rng_type dummy_rng_type = rocrand_rng_type(0);
@@ -58,8 +58,9 @@ struct generator_config_defaults<dummy_rng_type, half>
 } // end namespace rocrand_host::detail
 
 template<class T,
-         unsigned int BlockSize
-         = rocrand_host::detail::get_generator_config_device<dummy_rng_type, T>(true).threads>
+         unsigned int BlockSize = rocrand_host::detail::default_config_provider<dummy_rng_type>{}
+                                      .template device_config<T>(true)
+                                      .threads>
 __global__ __launch_bounds__(BlockSize) void write_config(unsigned int* block_size,
                                                           unsigned int* grid_size)
 {
@@ -170,6 +171,14 @@ TEST(rocrand_config_dispatch_tests, device_id_from_stream)
     ASSERT_EQ(result, device_id);
 }
 
+template<class ConfigProvider>
+__global__ void least_common_grid_size_kernel(unsigned int*    least_common_grid_size,
+                                              rocrand_ordering order)
+{
+    *least_common_grid_size = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(
+        rocrand_host::detail::is_ordering_dynamic(order));
+}
+
 TEST(rocrand_config_dispatch_tests, default_config_provider)
 {
     using config_provider = rocrand_host::detail::default_config_provider<dummy_rng_type>;
@@ -194,6 +203,24 @@ TEST(rocrand_config_dispatch_tests, default_config_provider)
                                                                           least_common_grid_size),
         hipSuccess);
     ASSERT_EQ(least_common_grid_size, 512 * 2 * 7);
+
+    unsigned int* d_least_common_grid_size{};
+    HIP_CHECK(hipMalloc(&d_least_common_grid_size, sizeof(*d_least_common_grid_size)));
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(least_common_grid_size_kernel<config_provider>),
+                       1,
+                       1,
+                       0,
+                       default_stream,
+                       d_least_common_grid_size,
+                       ordering);
+    unsigned int h_least_common_grid_size{};
+    HIP_CHECK(hipMemcpy(&h_least_common_grid_size,
+                        d_least_common_grid_size,
+                        sizeof(h_least_common_grid_size),
+                        hipMemcpyDeviceToHost));
+    HIP_CHECK(hipFree(d_least_common_grid_size));
+
+    ASSERT_EQ(least_common_grid_size, h_least_common_grid_size);
 }
 
 template<class ConfigProvider>

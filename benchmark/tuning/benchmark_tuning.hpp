@@ -77,13 +77,6 @@ struct static_config_provider
 
 } // namespace benchmark_tuning
 
-template<unsigned int Threads, unsigned int Blocks>
-struct rocrand_host::detail::config_provider_traits<
-    benchmark_tuning::static_config_provider<Threads, Blocks>>
-{
-    static inline constexpr bool has_dynamic_config = false;
-};
-
 namespace benchmark_tuning
 {
 
@@ -97,15 +90,16 @@ template<class T, class Generator, class Distribution>
 void run_benchmark(benchmark::State& state, const benchmark_config& config)
 {
     const hipStream_t stream = 0;
+    const std::size_t size   = config.bytes / sizeof(T);
 
     T* data;
-    HIP_CHECK(hipMalloc(&data, config.size * sizeof(T)));
+    HIP_CHECK(hipMalloc(&data, size * sizeof(T)));
 
     Generator generator;
     generator.set_stream(stream);
 
     const auto generate_func = [&]
-    { return generator.generate(data, config.size, default_distribution<Distribution>{}(config)); };
+    { return generator.generate(data, size, default_distribution<Distribution>{}(config)); };
 
     // Warm-up
     ROCRAND_CHECK(generate_func());
@@ -126,8 +120,8 @@ void run_benchmark(benchmark::State& state, const benchmark_config& config)
 
         state.SetIterationTime(elapsed / 1000.f);
     }
-    state.SetBytesProcessed(state.iterations() * config.size * sizeof(T));
-    state.SetItemsProcessed(state.iterations() * config.size);
+    state.SetBytesProcessed(state.iterations() * size * sizeof(T));
+    state.SetItemsProcessed(state.iterations() * size);
 
     HIP_CHECK(hipEventDestroy(stop));
     HIP_CHECK(hipEventDestroy(start));

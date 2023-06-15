@@ -62,3 +62,24 @@ TEST(rocrand_cpp_utils_tests, numeric_combinations)
         ASSERT_NE(std::find(C.begin(), C.end(), c), C.end()) << "Element not found in C";
     }
 }
+
+TEST(rocrand_cpp_utils_tests, gcd)
+{
+    using namespace cpp_utils;
+
+    ASSERT_EQ(gcd(127, 3), 1);
+    ASSERT_EQ(gcd(2048, 512), 512);
+    ASSERT_EQ(gcd(12, 18), 6);
+}
+
+TEST(rocrand_cpp_utils_tests, lcm)
+{
+    using namespace cpp_utils;
+    ASSERT_EQ(lcm(0, 0), 0);
+    ASSERT_EQ(lcm(1, 0), 0);
+    ASSERT_EQ(lcm(0, 1), 0);
+
+    ASSERT_EQ(lcm(127, 3), 127 * 3);
+    ASSERT_EQ(lcm(2048, 512), 2048);
+    ASSERT_EQ(lcm(12, 18), 36);
+}

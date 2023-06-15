@@ -25,12 +25,15 @@
 
 int main(int argc, char** argv)
 {
-    constexpr std::size_t default_size   = 1024 * 1024 * 128;
+    constexpr std::size_t default_bytes  = 1024 * 1024 * 512;
     constexpr double      default_lambda = 10;
 
     benchmark::Initialize(&argc, argv);
     cli::Parser parser(argc, argv);
-    parser.set_optional<std::size_t>("size", "size", default_size, "number of values to generate");
+    parser.set_optional<std::size_t>("bytes",
+                                     "bytes",
+                                     default_bytes,
+                                     "number of bytes to generate");
     parser.set_optional<double>("lambda",
                                 "lambda",
                                 default_lambda,
@@ -38,11 +41,11 @@ int main(int argc, char** argv)
     parser.run_and_exit_if_error();
 
     const benchmark_config config{
-        parser.get<std::size_t>("size"),
+        parser.get<std::size_t>("bytes"),
         parser.get<double>("lambda"),
     };
 
-    benchmark::AddCustomContext("size", std::to_string(config.size));
+    benchmark::AddCustomContext("bytes", std::to_string(config.bytes));
     benchmark::AddCustomContext("lambda", std::to_string(config.lambda));
 
     add_common_benchmark_rocrand_info();
