@@ -41,7 +41,7 @@ Building The Library
 
 After obtaining the sources, rocRAND can be built using the installation script::
 
-    cd rocrand
+    cd rocRAND
     ./install --install
 
 This automatically builds all required dependencies, excluding HIP and Git, and installs the project to ``/opt/rocm`` if everything went well. See ``./install --help`` for further information.
