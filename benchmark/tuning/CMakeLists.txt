@@ -38,7 +38,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_executable(benchmark_rocrand_tuning
   benchmark_tuning.cpp
   benchmark_tuning_xorwow.cpp)
-target_link_libraries(benchmark_rocrand_tuning PRIVATE roc::rocrand benchmark::benchmark)
+target_link_libraries(benchmark_rocrand_tuning PRIVATE roc::rocrand benchmark::benchmark hip::device)
 target_include_directories(benchmark_rocrand_tuning PRIVATE
   "${CMAKE_BINARY_DIR}/benchmark"
   "${PROJECT_SOURCE_DIR}/benchmark"

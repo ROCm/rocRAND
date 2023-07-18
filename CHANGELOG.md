@@ -34,6 +34,7 @@ Documentation for rocRAND is available at
   * Added the missing `order` setter method for `threefry4x64`
   * Fixed the default ordering parameter for `lfsr113`
 * Build error when using Clang++ directly resulting from unsupported `amdgpu-target` references
+* Added hip::device as dependency to benchmark_rocrand_tuning to make it compile with amdclang++.
 
 ## rocRAND-2.10.17 for ROCm 5.5.0
 
