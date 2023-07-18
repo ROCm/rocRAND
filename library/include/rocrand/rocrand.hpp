@@ -588,6 +588,7 @@ public:
 
         /// Copy constructor
         param_type(const param_type& params) = default;
+        param_type& operator=(const param_type& params) = default;
 
         /// \brief Returns the deviation distribution parameter.
         ///
@@ -788,6 +789,7 @@ public:
 
         /// Copy constructor
         param_type(const param_type& params) = default;
+        param_type& operator=(const param_type& params) = default;
 
         /// \brief Returns the mean distribution parameter.
         ///
