@@ -94,6 +94,26 @@ copyright-date:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-latest", before_script]
 
+.rocm-clang:cmake-minimum:
+  variables:
+    COMPILER: amdclang++
+  extends:
+    - .deps:rocm
+    - .deps:cmake-minimum
+  before_script:
+    - !reference [".deps:rocm", before_script]
+    - !reference [".deps:cmake-minimum", before_script]
+
+.rocm-clang:cmake-latest:
+  variables:
+    COMPILER: amdclang++
+  extends:
+    - .deps:rocm
+    - .deps:cmake-latest
+  before_script:
+    - !reference [".deps:rocm", before_script]
+    - !reference [".deps:cmake-latest", before_script]
+
 .nvcc:cmake-minimum:
   variables:
     COMPILER: c++
