@@ -271,6 +271,17 @@ build:rocm-cmake-minimum:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
+build:rocm-clang-cmake-minimum:
+  tags:
+    - rocm-build
+  needs: []
+  extends:
+    - .rocm-clang:cmake-minimum
+    - .rocm:build
+    - .save-artifacts
+  variables:
+    BUILD_SHARED_LIBS: "ON"
+
 build:rocm-static-cmake-minimum:
   tags:
     - rocm-build
