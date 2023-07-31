@@ -94,6 +94,26 @@ copyright-date:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-latest", before_script]
 
+.rocm-clang:cmake-minimum:
+  variables:
+    COMPILER: amdclang++
+  extends:
+    - .deps:rocm
+    - .deps:cmake-minimum
+  before_script:
+    - !reference [".deps:rocm", before_script]
+    - !reference [".deps:cmake-minimum", before_script]
+
+.rocm-clang:cmake-latest:
+  variables:
+    COMPILER: amdclang++
+  extends:
+    - .deps:rocm
+    - .deps:cmake-latest
+  before_script:
+    - !reference [".deps:rocm", before_script]
+    - !reference [".deps:cmake-latest", before_script]
+
 .nvcc:cmake-minimum:
   variables:
     COMPILER: c++
@@ -248,6 +268,27 @@ build:rocm-cmake-minimum:
     - .rocm:cmake-minimum
     - .rocm:build
     - .save-artifacts
+  variables:
+    BUILD_SHARED_LIBS: "ON"
+
+build:rocm-clang-cmake-minimum:
+  tags:
+    - rocm-build
+  needs: []
+  extends:
+    - .rocm-clang:cmake-minimum
+    - .rocm:build
+    - .save-artifacts
+  variables:
+    BUILD_SHARED_LIBS: "ON"
+
+build:rocm-clang-cmake-latest:
+  tags:
+    - rocm-build
+  needs: []
+  extends:
+    - .rocm-clang:cmake-latest
+    - .rocm:build
   variables:
     BUILD_SHARED_LIBS: "ON"
 
