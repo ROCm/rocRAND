@@ -12,7 +12,7 @@
             #define ROCRANDAPI __declspec(dllimport)
         #endif
     #else
-        #define ROCRANDAPI
+        #define ROCRANDAPI __attribute__((visibility("default")))
     #endif
 #endif
 /// \endcond

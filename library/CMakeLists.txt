@@ -59,6 +59,11 @@ endif()
 add_library(rocrand ${rocRAND_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
 
+set_target_properties(rocrand PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
+
 # Add interface include directory so that other CMake applications can maintain previous behaviour.
 # This will be removed with upcoming packaging changes.
 target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
