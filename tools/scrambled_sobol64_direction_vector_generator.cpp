@@ -21,6 +21,7 @@
 #include "../library/include/rocrand/rocrand_sobol64_precomputed.h"
 #include <fstream>
 #include <iomanip>
+#include <cstdint>
 #include <iostream>
 #include <string>
 
