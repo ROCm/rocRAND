@@ -35,7 +35,7 @@ build_relocatable=false
 install_dependencies=false
 build_address_sanitizer=false
 no_hiprand=false
-build_freorg_bkwdcomp=true
+build_freorg_bkwdcomp=false
 
 # #################################################
 # Parameter parsing
