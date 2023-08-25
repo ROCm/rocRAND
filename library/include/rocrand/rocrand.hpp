@@ -1560,6 +1560,7 @@ public:
     /// MTGP32 engine does not accept offset.
     ///
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
+    /// \param order_value - ordering value from the rocrand_ordering enum
     ///
     /// See also: hiprandCreateGenerator()
     mtgp32_engine(seed_type  seed_value  = DefaultSeed,
@@ -2168,6 +2169,7 @@ public:
     ///
     /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
+    /// \param order_value - ordering value from the rocrand_ordering enum
     ///
     /// See also: rocrand_create_generator()
     scrambled_sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
