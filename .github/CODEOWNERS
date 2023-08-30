@@ -1,5 +1,5 @@
 # documentation files
-docs/* @ROCmSoftwarePlatform/technical-writers
-*.md @ROCmSoftwarePlatform/technical-writers
-*.rst @ROCmSoftwarePlatform/technical-writers
-library/include/* @ROCmSoftwarePlatform/technical-writers
+docs/* @saadrahim @LisaDelaney
+*.md  @saadrahim @LisaDelaney
+*.rst  @saadrahim @LisaDelaney
+library/include/*  @saadrahim @LisaDelaney
