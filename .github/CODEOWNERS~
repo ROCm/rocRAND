@@ -1,0 +1,5 @@
+# documentation files
+docs/* @ROCmSoftwarePlatform/technical-writers
+*.md @ROCmSoftwarePlatform/technical-writers
+*.rst @ROCmSoftwarePlatform/technical-writers
+library/include/* @ROCmSoftwarePlatform/technical-writers
