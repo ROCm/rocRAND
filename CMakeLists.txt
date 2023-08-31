@@ -91,7 +91,7 @@ endif()
 set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
 # Set the AMDGPU_TARGETS
 rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030;gfx1100;gfx1101;gfx1102"
+    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx940;gfx941;gfx942;gfx1030;gfx1100;gfx1101;gfx1102"
 )
 if (AMDGPU_TARGETS)
     if( AMDGPU_TARGETS STREQUAL "all" )
@@ -147,7 +147,7 @@ if(BUILD_ADDRESS_SANITIZER AND BUILD_SHARED_LIBS)
 endif()
 
 # FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
-option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" OFF)
 if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
   rocm_wrap_header_dir(
     "${PROJECT_SOURCE_DIR}/library/include/rocrand"
