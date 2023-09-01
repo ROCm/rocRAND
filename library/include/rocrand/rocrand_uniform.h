@@ -26,6 +26,7 @@
 #ifndef ROCRAND_UNIFORM_H_
 #define ROCRAND_UNIFORM_H_
 
+/// Shorthand for commonly used function qualifiers
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS

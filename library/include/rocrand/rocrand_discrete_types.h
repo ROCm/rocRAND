@@ -21,16 +21,20 @@
 #ifndef ROCRAND_DISCRETE_TYPES_H_
 #define ROCRAND_DISCRETE_TYPES_H_
 
+/// \brief Represents a discrete probability distribution
 struct rocrand_discrete_distribution_st
 {
+    /// Number of entries in the probability table
     unsigned int size;
+    /// The distribution can be offset
     unsigned int offset;
 
-    // Alias table
+    /// Alias table
     unsigned int * alias;
+    ///Probability data for the alias table
     double * probability;
 
-    // Cumulative distribution function
+    /// Cumulative distribution function
     double * cdf;
 };
 
