@@ -47,6 +47,7 @@ typedef struct rocrand_generator_base_type * rocrand_generator;
 typedef __half half;
 /// \endcond
 
+/// The default maximum number of threads per block
 #define ROCRAND_DEFAULT_MAX_BLOCK_SIZE 256
 
 #if defined(__cplusplus)

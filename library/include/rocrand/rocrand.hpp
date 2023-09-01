@@ -154,6 +154,7 @@ class uniform_int_distribution
                   "types are supported in uniform_int_distribution");
 
 public:
+    /// See description for IntType template parameter.
     typedef IntType result_type;
 
     /// Default constructor
@@ -258,6 +259,7 @@ class uniform_real_distribution
     );
 
 public:
+    /// See description for RealType template parameter.
     typedef RealType result_type;
 
     /// Default constructor
@@ -360,6 +362,7 @@ class normal_distribution
     );
 
 public:
+    /// See description for RealType template parameter.
     typedef RealType result_type;
 
     /// \class param_type
@@ -367,12 +370,19 @@ public:
     class param_type
     {
     public:
+        /// Alias for convenience
         using distribution_type = normal_distribution<RealType>;
+
+        /// \brief Constructs a \p param_type object with the
+        /// given distribution parameters.
+        /// \param mean - mean
+        /// \param stddev - standard deviation
         param_type(RealType mean = 0.0, RealType stddev = 1.0)
             : m_mean(mean), m_stddev(stddev)
         {
         }
 
+        /// Copy constructor
         param_type(const param_type& params) = default;
 
         /// \brief Returns the deviation distribution parameter.
@@ -553,6 +563,7 @@ class lognormal_distribution
     );
 
 public:
+    /// See description for RealType template parameter.
     typedef RealType result_type;
 
     /// \class param_type
@@ -560,12 +571,19 @@ public:
     class param_type
     {
     public:
+        /// Alias for convenience
         using distribution_type = lognormal_distribution<RealType>;
+
+        /// \brief Constructs a \p param_type object with the
+        /// given distribution parameters.
+        /// \param m - mean
+        /// \param s - standard deviation
         param_type(RealType m = 0.0, RealType s = 1.0)
             : m_mean(m), m_stddev(s)
         {
         }
 
+        /// Copy constructor
         param_type(const param_type& params) = default;
 
         /// \brief Returns the deviation distribution parameter.
@@ -745,6 +763,7 @@ class poisson_distribution
     );
 
 public:
+    /// See description for IntType template parameter.
     typedef IntType result_type;
 
     /// \class param_type
@@ -752,12 +771,18 @@ public:
     class param_type
     {
     public:
+        /// Alias for convenience.
         using distribution_type = poisson_distribution<IntType>;
+
+        /// \brief Constructs a \p param_type object with the
+        /// given mean.
+        /// \param mean - mean to use for the distribution
         param_type(double mean = 1.0)
             : m_mean(mean)
         {
         }
 
+        /// Copy constructor
         param_type(const param_type& params) = default;
 
         /// \brief Returns the mean distribution parameter.
@@ -1560,6 +1585,7 @@ public:
     /// MTGP32 engine does not accept offset.
     ///
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
+    /// \param order_value - ordering value from the rocrand_ordering enum
     ///
     /// See also: hiprandCreateGenerator()
     mtgp32_engine(seed_type  seed_value  = DefaultSeed,
@@ -2168,6 +2194,7 @@ public:
     ///
     /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
+    /// \param order_value - ordering value from the rocrand_ordering enum
     ///
     /// See also: rocrand_create_generator()
     scrambled_sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
