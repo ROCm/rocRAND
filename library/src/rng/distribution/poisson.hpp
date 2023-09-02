@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,9 +44,6 @@ public:
     {
         set_lambda(lambda);
     }
-
-    __host__ __device__
-    ~rocrand_poisson_distribution() { }
 
     void set_lambda(double lambda)
     {
@@ -122,6 +119,14 @@ public:
     poisson_distribution_manager()
         : lambda(0.0)
     { }
+
+    poisson_distribution_manager(const poisson_distribution_manager&) = delete;
+
+    poisson_distribution_manager(poisson_distribution_manager&&) = delete;
+
+    poisson_distribution_manager& operator=(const poisson_distribution_manager&) = delete;
+
+    poisson_distribution_manager& operator=(poisson_distribution_manager&&) = delete;
 
     ~poisson_distribution_manager()
     {

@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ function(add_rocrand_link_test TEST_SOURCES)
         )
         endif()
     endif()
-    if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
+    if(HIP_COMPILER STREQUAL "clang")
         target_link_libraries(${TEST_TARGET} hip::device)
     endif()
     set_target_properties(
