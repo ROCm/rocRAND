@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -117,6 +117,11 @@ struct runner
         CUDA_CALL(cudaDeviceSynchronize());
     }
 
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
+
     ~runner()
     {
         CUDA_CALL(cudaFree(states));
@@ -189,6 +194,11 @@ struct runner<curandStateMtgp32_t>
         CURAND_CALL(curandMakeMTGP32Constants(mtgp32dc_params_fast_11213, d_param));
         CURAND_CALL(curandMakeMTGP32KernelState(states, mtgp32dc_params_fast_11213, d_param, states_size, seed));
     }
+
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
 
     ~runner()
     {
@@ -297,6 +307,11 @@ struct runner<curandStateSobol32_t>
         CUDA_CALL(cudaFree(directions));
     }
 
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
+
     ~runner()
     {
         CUDA_CALL(cudaFree(states));
@@ -369,6 +384,11 @@ struct runner<curandStateScrambledSobol32_t>
         CUDA_CALL(cudaFree(scramble_constants));
     }
 
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
+
     ~runner()
     {
         CUDA_CALL(cudaFree(states));
@@ -424,6 +444,11 @@ struct runner<curandStateSobol64_t>
 
         CUDA_CALL(cudaFree(directions));
     }
+
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
 
     ~runner()
     {
@@ -495,6 +520,11 @@ struct runner<curandStateScrambledSobol64_t>
         CUDA_CALL(cudaFree(directions));
         CUDA_CALL(cudaFree(scramble_constants));
     }
+
+    runner(const runner&)            = delete;
+    runner(runner&&)                 = delete;
+    runner& operator=(const runner&) = delete;
+    runner& operator=(runner&&)      = delete;
 
     ~runner()
     {

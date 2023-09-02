@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,9 @@
 // THE SOFTWARE.
 
 #include <gtest/gtest.h>
+#include <numeric>
 #include <stdio.h>
+#include <vector>
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand.h>
@@ -283,23 +285,26 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
+static constexpr unsigned int n = 624;
+
 /// Initialize the octo engines for both generators. Skip \p subsequence_size for the first generator.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
     ::rocrand_host::detail::mt19937_octo_engine* octo_engines,
-    ::rocrand_host::detail::mt19937_engine*      engines,
+    const unsigned int*                          engines,
     unsigned int                                 subsequence_size)
 {
     const unsigned int                          thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     constexpr unsigned int                      threads_per_generator = 8U;
     unsigned int                                engine_id = thread_id / threads_per_generator;
     ::rocrand_host::detail::mt19937_octo_engine engine    = octo_engines[thread_id];
-    engine.gather(&engines[engine_id]);
+    engine.gather(&engines[engine_id * n]);
 
+    engine.gen_next_n();
     if(engine_id == 0)
     {
-        for(unsigned int i = 0; i < subsequence_size / threads_per_generator; i++)
+        for(unsigned int i = 0; i < subsequence_size / n; i++)
         {
-            engine();
+            engine.gen_next_n();
         }
     }
 
@@ -308,19 +313,31 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
 
 /// Each generator produces \p n elements in its own \p data section.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    ::rocrand_host::detail::mt19937_octo_engine* engines, unsigned int* data, unsigned int n)
+    ::rocrand_host::detail::mt19937_octo_engine* engines,
+    unsigned int*                                data,
+    unsigned int                                 elements_per_generator,
+    unsigned int                                 subsequence_size)
 {
     const unsigned int     local_thread_id       = threadIdx.x & 7U;
     constexpr unsigned int threads_per_generator = 8U;
     const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int           engine_id             = thread_id / threads_per_generator;
-    unsigned int*          ptr                   = data + engine_id * n;
+    unsigned int*          ptr                   = data + engine_id * elements_per_generator;
 
     ::rocrand_host::detail::mt19937_octo_engine engine = engines[thread_id];
 
-    for(size_t index = local_thread_id; index < n; index += threads_per_generator)
+    unsigned int mti = engine_id == 0 ? subsequence_size % n : 0;
+
+    for(size_t index = local_thread_id; index < elements_per_generator;
+        index += threads_per_generator)
     {
-        ptr[index] = engine();
+        if(mti == n)
+        {
+            engine.gen_next_n();
+            mti = 0;
+        }
+        ptr[index] = engine.get(mti / threads_per_generator);
+        mti += threads_per_generator;
     }
 
     engines[thread_id] = engine;
@@ -328,7 +345,6 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
 
 TEST(rocrand_mt19937_prng_tests, subsequence_test)
 {
-    using engine_type      = ::rocrand_host::detail::mt19937_engine;
     using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
     constexpr unsigned int           threads_per_generator = 8U;
     constexpr unsigned long long int seed                  = 1ULL;
@@ -339,7 +355,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     static_assert(subsequence_size % threads_per_generator == 0,
                   "size of subsequence must be multiple of eight");
     constexpr unsigned int generator_count = 2U;
-    constexpr unsigned int state_size      = 624U;
+    constexpr unsigned int state_size      = n;
 
     // Constants to skip subsequence_size states.
     // Generated with tools/mt19937_precomputed_generator.cpp
@@ -464,19 +480,22 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
         // clang-format on
     };
 
-    std::vector<engine_type> h_engines;
-    h_engines.reserve(generator_count);
-    h_engines.emplace_back(seed);
-    h_engines.push_back(h_engines.back());
-    h_engines[1].m_state = engine_type::discard_subsequence_impl(jump, h_engines[1].m_state);
+    unsigned int* d_mt19937_jump{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(jump)));
+    HIP_CHECK(hipMemcpy(d_mt19937_jump, jump, sizeof(jump), hipMemcpyHostToDevice));
 
-    engine_type* d_engines{};
-    HIP_CHECK(
-        hipMalloc(reinterpret_cast<void**>(&d_engines), generator_count * sizeof(engine_type)));
-    HIP_CHECK(hipMemcpy(d_engines,
-                        h_engines.data(),
-                        generator_count * sizeof(engine_type),
-                        hipMemcpyHostToDevice));
+    unsigned int* d_engines{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines),
+                        generator_count * n * sizeof(unsigned int)));
+
+    hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
+                       dim3(generator_count),
+                       dim3(jump_ahead_thread_count),
+                       0,
+                       0,
+                       d_engines,
+                       seed,
+                       d_mt19937_jump);
 
     octo_engine_type* d_octo_engines{};
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_octo_engines),
@@ -493,6 +512,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
                        d_engines,
                        subsequence_size);
     HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(d_mt19937_jump));
     HIP_CHECK(hipFree(d_engines));
 
     // Device side data
@@ -509,7 +529,8 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
                        0,
                        d_octo_engines,
                        d_data,
-                       elements_per_generator);
+                       elements_per_generator,
+                       subsequence_size);
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(d_octo_engines));
 
@@ -574,4 +595,723 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     ASSERT_TRUE(checks1to0 > 0);
 
     free(h_data);
+}
+
+struct mt19937_engine
+{
+    static constexpr unsigned int m          = 397;
+    static constexpr unsigned int mexp       = 19937;
+    static constexpr unsigned int matrix_a   = 0x9908B0DFU;
+    static constexpr unsigned int upper_mask = 0x80000000U;
+    static constexpr unsigned int lower_mask = 0x7FFFFFFFU;
+
+    // Jumping constants.
+    static constexpr unsigned int qq = 7;
+    static constexpr unsigned int ll = 1U << qq;
+
+    struct mt19937_state
+    {
+        unsigned int mt[n];
+        // index of the next value to be calculated
+        unsigned int ptr;
+    };
+
+    mt19937_state m_state;
+
+    mt19937_engine(unsigned long long seed)
+    {
+        const unsigned int seedu = (seed >> 32) ^ seed;
+        m_state.mt[0]            = seedu;
+        for(unsigned int i = 1; i < n; i++)
+        {
+            m_state.mt[i] = 1812433253 * (m_state.mt[i - 1] ^ (m_state.mt[i - 1] >> 30)) + i;
+        }
+        m_state.ptr = 0;
+    }
+
+    /// Advances the internal state to skip a single subsequence, which is <tt>2 ^ 1000</tt> states long.
+    void discard_subsequence()
+    {
+        // First n values of rocrand_h_mt19937_jump contain polynomial for a jump by 2 ^ 1000
+        m_state = discard_subsequence_impl(rocrand_h_mt19937_jump, m_state);
+    }
+
+    // Generates the next state.
+    static void gen_next(mt19937_state& state)
+    {
+        /// mag01[x] = x * matrix_a for x in [0, 1]
+        constexpr unsigned int mag01[2] = {0x0U, matrix_a};
+
+        if(state.ptr + m < n)
+        {
+            unsigned int y
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr + m] ^ (y >> 1) ^ mag01[y & 0x1U];
+            state.ptr++;
+        }
+        else if(state.ptr < n - 1)
+        {
+            unsigned int y
+                = (state.mt[state.ptr] & upper_mask) | (state.mt[state.ptr + 1] & lower_mask);
+            state.mt[state.ptr] = state.mt[state.ptr - (n - m)] ^ (y >> 1) ^ mag01[y & 0x1U];
+            state.ptr++;
+        }
+        else // state.ptr == n - 1
+        {
+            unsigned int y  = (state.mt[n - 1] & upper_mask) | (state.mt[0] & lower_mask);
+            state.mt[n - 1] = state.mt[m - 1] ^ (y >> 1) ^ mag01[y & 0x1U];
+            state.ptr       = 0;
+        }
+    }
+
+    /// Return coefficient \p deg of the polynomial <tt>pf</tt>.
+    static unsigned int get_coef(const unsigned int pf[mt19937_p_size], unsigned int deg)
+    {
+        constexpr unsigned int log_w_size  = 5;
+        constexpr unsigned int w_size_mask = (1U << log_w_size) - 1;
+        return (pf[deg >> log_w_size] & (1U << (deg & w_size_mask))) != 0;
+    }
+
+    /// Copy state \p ss into state <tt>ts</tt>.
+    static void copy_state(mt19937_state& ts, const mt19937_state& ss)
+    {
+        for(unsigned int i = 0; i < n; i++)
+        {
+            ts.mt[i] = ss.mt[i];
+        }
+
+        ts.ptr = ss.ptr;
+    }
+
+    /// Add state \p s2 to state <tt>s1</tt>.
+    static void add_state(mt19937_state& s1, const mt19937_state& s2)
+    {
+        if(s2.ptr >= s1.ptr)
+        {
+            unsigned int i = 0;
+            for(; i < n - s2.ptr; i++)
+            {
+                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
+            }
+            for(; i < n - s1.ptr; i++)
+            {
+                s1.mt[i + s1.ptr] ^= s2.mt[i - (n - s2.ptr)];
+            }
+            for(; i < n; i++)
+            {
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
+            }
+        }
+        else
+        {
+            unsigned int i = 0;
+            for(; i < n - s1.ptr; i++)
+            {
+                s1.mt[i + s1.ptr] ^= s2.mt[i + s2.ptr];
+            }
+            for(; i < n - s2.ptr; i++)
+            {
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i + s2.ptr];
+            }
+            for(; i < n; i++)
+            {
+                s1.mt[i - (n - s1.ptr)] ^= s2.mt[i - (n - s2.ptr)];
+            }
+        }
+    }
+
+    /// Generate Gray code.
+    static void gray_code(unsigned int h[ll])
+    {
+        h[0U] = 0U;
+
+        unsigned int l    = 1;
+        unsigned int term = ll;
+        unsigned int j    = 1;
+        for(unsigned int i = 1; i <= qq; i++)
+        {
+            l    = (l << 1);
+            term = (term >> 1);
+            for(; j < l; j++)
+            {
+                h[j] = h[l - j - 1] ^ term;
+            }
+        }
+    }
+
+    /// Compute \p h(f)ss where \p h(t) are exact <tt>q</tt>-degree polynomials,
+    /// \p f is the transition function, and \p ss is the initial state
+    /// the results are stored in <tt>vec_h[0] , ... , vec_h[ll - 1]</tt>.
+    static void gen_vec_h(const mt19937_state& ss, mt19937_state vec_h[ll])
+    {
+        mt19937_state v{};
+        unsigned int  h[ll];
+
+        gray_code(h);
+
+        copy_state(vec_h[0], ss);
+
+        for(unsigned int i = 0; i < qq; i++)
+        {
+            gen_next(vec_h[0]);
+        }
+
+        for(unsigned int i = 1; i < ll; i++)
+        {
+            copy_state(v, ss);
+            unsigned int g = h[i] ^ h[i - 1];
+            for(unsigned int k = 1; k < g; k = (k << 1))
+            {
+                gen_next(v);
+            }
+            copy_state(vec_h[h[i]], vec_h[h[i - 1]]);
+            add_state(vec_h[h[i]], v);
+        }
+    }
+
+    /// Compute pf(ss) using Sliding window algorithm.
+    static mt19937_state calc_state(const unsigned int   pf[mt19937_p_size],
+                                    const mt19937_state& ss,
+                                    const mt19937_state  vec_h[ll])
+    {
+        mt19937_state tmp{};
+        int           i = mexp - 1;
+
+        while(get_coef(pf, i) == 0)
+        {
+            i--;
+        }
+
+        for(; i >= static_cast<int>(qq); i--)
+        {
+            if(get_coef(pf, i) != 0)
+            {
+                for(unsigned int j = 0; j < qq + 1; j++)
+                {
+                    gen_next(tmp);
+                }
+                unsigned int digit = 0;
+                for(int j = 0; j < static_cast<int>(qq); j++)
+                {
+                    digit = (digit << 1) ^ get_coef(pf, i - j - 1);
+                }
+                add_state(tmp, vec_h[digit]);
+                i -= qq;
+            }
+            else
+            {
+                gen_next(tmp);
+            }
+        }
+
+        for(; i > -1; i--)
+        {
+            gen_next(tmp);
+            if(get_coef(pf, i) == 1)
+            {
+                add_state(tmp, ss);
+            }
+        }
+
+        return tmp;
+    }
+
+    /// Computes jumping ahead with Sliding window algorithm.
+    static mt19937_state discard_subsequence_impl(const unsigned int   pf[mt19937_p_size],
+                                                  const mt19937_state& ss)
+    {
+        // skip state
+        mt19937_state vec_h[ll];
+        gen_vec_h(ss, vec_h);
+        mt19937_state new_state = calc_state(pf, ss, vec_h);
+
+        // rotate the array to align ptr with the array boundary
+        if(new_state.ptr != 0)
+        {
+            unsigned int tmp[n];
+            for(unsigned int i = 0; i < n; i++)
+            {
+                tmp[i] = new_state.mt[(i + new_state.ptr) % n];
+            }
+
+            for(unsigned int i = 0; i < n; i++)
+            {
+                new_state.mt[i] = tmp[i];
+            }
+        }
+
+        // set to 0, which is the index of the next number to be calculated
+        new_state.ptr = 0;
+
+        return new_state;
+    }
+};
+
+TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
+{
+    // Compare states of all engines
+    // * computed consecutively on host using Sliding window algorithm
+    //   (each engine jumps 2 ^ 1000 ahead from the previous one);
+    // * computed in parallel on device using standard Horner algorithm
+    //   with precomputed jumps of i * 2 ^ 1000 and mt19937_jumps_radix * i * 2 ^ 1000 values
+    //   where i is in range [1; mt19937_jumps_radix).
+
+    const unsigned long long seed = 12345678;
+
+    // Initialize the engines on host using Sliding window algorithm
+    std::vector<mt19937_engine> h_engines0;
+    h_engines0.reserve(generator_count);
+    // initialize the first engine with the seed and no skips
+    h_engines0.emplace_back(seed);
+    for(size_t i = 1; i < generator_count; i++)
+    {
+        // every consecutive engine is one subsequence away from the previous
+        h_engines0.push_back(h_engines0.back());
+        h_engines0[i].discard_subsequence();
+    }
+
+    // Initialize the engines on device using Horner algorithm
+
+    unsigned int* d_mt19937_jump{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(rocrand_h_mt19937_jump)));
+    HIP_CHECK(hipMemcpy(d_mt19937_jump,
+                        rocrand_h_mt19937_jump,
+                        sizeof(rocrand_h_mt19937_jump),
+                        hipMemcpyHostToDevice));
+
+    unsigned int* d_engines1{};
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines1),
+                        generator_count * n * sizeof(unsigned int)));
+
+    hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
+                       dim3(generator_count),
+                       dim3(jump_ahead_thread_count),
+                       0,
+                       0,
+                       d_engines1,
+                       seed,
+                       d_mt19937_jump);
+
+    std::vector<unsigned int> h_engines1(generator_count * n);
+    HIP_CHECK(hipMemcpy(h_engines1.data(),
+                        d_engines1,
+                        generator_count * n * sizeof(unsigned int),
+                        hipMemcpyDeviceToHost));
+
+    for(unsigned int gi = 0; gi < generator_count; gi++)
+    {
+        for(unsigned int i = 0; i < n; i++)
+        {
+            unsigned int a = h_engines0[gi].m_state.mt[i];
+            unsigned int b = h_engines1[gi * n + i];
+            if(i == 0)
+            {
+                // 31 bits of the first value contain garbage, only the last bit (19937 % 32 == 1)
+                // matters
+                a &= 0x80000000U;
+                b &= 0x80000000U;
+            }
+            ASSERT_EQ(a, b);
+        }
+    }
+
+    HIP_CHECK(hipFree(d_mt19937_jump));
+    HIP_CHECK(hipFree(d_engines1));
+}
+
+// Check that subsequent generations of different sizes produce one
+// sequence without gaps, no matter how many values are generated per call.
+template<typename T, typename GenerateFunc>
+void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
+{
+    const size_t stride = n * generator_count * divisor;
+    // Large sizes are used for triggering all code paths in the kernels (generating of middle,
+    // start and end sequences).
+    std::vector<size_t> sizes0{stride,
+                               2,
+                               stride,
+                               100,
+                               1,
+                               24783,
+                               stride / 2,
+                               3 * stride + 704400,
+                               2,
+                               stride + 776543,
+                               44176};
+    std::vector<size_t> sizes1{2 * stride,
+                               1024,
+                               55,
+                               65536,
+                               stride / 2,
+                               stride + 623456,
+                               3 * stride - 300000,
+                               1048576,
+                               111331};
+
+    // Round by the distribution's granularity (2 for normals, 2 for short and half, 4 for uchar).
+    // Sizes not divisible by the granularity or pointers not aligned by it work but without strict
+    // continuity.
+    if(divisor > 1)
+    {
+        for(size_t& s : sizes0)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+        for(size_t& s : sizes1)
+            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
+    }
+
+    const size_t size0 = std::accumulate(sizes0.cbegin(), sizes0.cend(), std::size_t{0});
+    const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
+    const size_t size2 = std::min(size0, size1);
+
+    rocrand_mt19937 g0;
+    rocrand_mt19937 g1;
+    rocrand_mt19937 g2;
+
+    std::vector<T> host_data0(size0);
+    std::vector<T> host_data1(size1);
+    std::vector<T> host_data2(size2);
+
+    size_t current0 = 0;
+    for(size_t s : sizes0)
+    {
+        T* data0;
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * s));
+        HIP_CHECK(hipMemset(data0, -1, sizeof(T) * s));
+        generate_func(g0, data0, s);
+        HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
+        current0 += s;
+        HIP_CHECK(hipFree(data0));
+    }
+    size_t current1 = 0;
+    for(size_t s : sizes1)
+    {
+        T* data1;
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * s));
+        HIP_CHECK(hipMemset(data1, -1, sizeof(T) * s));
+        generate_func(g1, data1, s);
+        HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
+        current1 += s;
+        HIP_CHECK(hipFree(data1));
+    }
+    T* data2;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data2), sizeof(T) * size2));
+    HIP_CHECK(hipMemset(data2, -1, sizeof(T) * size2));
+    generate_func(g2, data2, size2);
+    HIP_CHECK(hipMemcpy(host_data2.data(), data2, sizeof(T) * size2, hipMemcpyDefault));
+    HIP_CHECK(hipFree(data2));
+
+    size_t incorrect = 0;
+    for(size_t i = 0; i < size2; i++)
+    {
+        if constexpr(std::is_same<T, __half>::value)
+        {
+            if(__half2float(host_data0[i]) != __half2float(host_data1[i])
+               || __half2float(host_data0[i]) != __half2float(host_data2[i]))
+            {
+                incorrect++;
+            }
+        }
+        else
+        {
+            if(host_data0[i] != host_data1[i] || host_data0[i] != host_data2[i])
+            {
+                incorrect++;
+            }
+        }
+    }
+    ASSERT_EQ(incorrect, 0);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_uint_test)
+{
+    continuity_test<unsigned int>([](rocrand_mt19937& g, unsigned int* data, size_t s)
+                                  { g.generate(data, s); });
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_char_test)
+{
+    continuity_test<unsigned char>([](rocrand_mt19937& g, unsigned char* data, size_t s)
+                                   { g.generate(data, s); },
+                                   4);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_short_test)
+{
+    continuity_test<unsigned short>([](rocrand_mt19937& g, unsigned short* data, size_t s)
+                                    { g.generate(data, s); },
+                                    2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_float_test)
+{
+    continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                           { g.generate_uniform(data, s); });
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_half_test)
+{
+    continuity_test<__half>([](rocrand_mt19937& g, __half* data, size_t s)
+                            { g.generate_uniform(data, s); },
+                            2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_uniform_double_test)
+{
+    continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                            { g.generate_uniform(data, s); });
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_normal_float_test)
+{
+    continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                           { g.generate_normal(data, s, 0.0f, 1.0f); },
+                           2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_normal_double_test)
+{
+    continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                            { g.generate_normal(data, s, 0.0, 1.0); },
+                            2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_log_normal_float_test)
+{
+    continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                           { g.generate_log_normal(data, s, 0.0f, 1.0f); },
+                           2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_log_normal_double_test)
+{
+    continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                            { g.generate_log_normal(data, s, 0.0, 1.0); },
+                            2);
+}
+
+TEST(rocrand_mt19937_prng_tests, continuity_poisson_test)
+{
+    continuity_test<unsigned int>([](rocrand_mt19937& g, unsigned int* data, size_t s)
+                                  { g.generate_poisson(data, s, 100.0); });
+}
+
+// Check that that heads and tails are generated correctly for misaligned pointers or sizes.
+template<typename T, typename GenerateFunc>
+void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
+{
+    const size_t stride = n * generator_count * divisor;
+    // Large sizes are used for triggering all code paths in the kernels.
+    std::vector<size_t>
+        sizes{stride, 1, stride * 2 + 45651, 5, stride * 3 + 123, 6, 45, stride - 12};
+
+    const size_t max_size             = *std::max_element(sizes.cbegin(), sizes.cend());
+    const size_t canary_size          = 16;
+    const size_t max_size_with_canary = max_size + canary_size * 2;
+
+    const T canary = std::numeric_limits<T>::max();
+
+    rocrand_mt19937 g;
+
+    std::vector<T> host_data(max_size_with_canary);
+    T*             data;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * max_size_with_canary));
+
+    for(size_t offset : {0, 1, 2, 3})
+    {
+        for(size_t s : sizes)
+        {
+            const size_t s_with_canary = s + canary_size * 2;
+            for(size_t i = 0; i < s_with_canary; i++)
+            {
+                host_data[i] = canary;
+            }
+            HIP_CHECK(
+                hipMemcpy(data, host_data.data(), sizeof(T) * s_with_canary, hipMemcpyDefault));
+
+            generate_func(g, data + canary_size + offset, s);
+
+            HIP_CHECK(
+                hipMemcpy(host_data.data(), data, sizeof(T) * s_with_canary, hipMemcpyDefault));
+
+            // Check that the generator does not write more values than needed for head and tail
+            // (so canary areas, or memory before and after data passed to generate(), are intact)
+            for(size_t i = 0; i < canary_size + offset; i++)
+            {
+                ASSERT_EQ(host_data[i], canary);
+            }
+            for(size_t i = s_with_canary - (canary_size - offset); i < s_with_canary; i++)
+            {
+                ASSERT_EQ(host_data[i], canary);
+            }
+
+            // Check if head and tail are generated (canary value, used as an initial value,
+            // can not be generated because it is not in the range of the distribution)
+            size_t incorrect = 0;
+            for(size_t i = canary_size + offset; i < s_with_canary - (canary_size - offset); i++)
+            {
+                if(host_data[i] == canary)
+                {
+                    incorrect++;
+                }
+            }
+            ASSERT_EQ(incorrect, 0);
+        }
+    }
+    HIP_CHECK(hipFree(data));
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_normal_float_test)
+{
+    head_and_tail_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                              { g.generate_normal(data, s, 0.0f, 1.0f); },
+                              2);
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_normal_double_test)
+{
+    head_and_tail_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                               { g.generate_normal(data, s, 0.0, 1.0); },
+                               2);
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_log_normal_float_test)
+{
+    head_and_tail_test<float>([](rocrand_mt19937& g, float* data, size_t s)
+                              { g.generate_log_normal(data, s, 0.0f, 1.0f); },
+                              2);
+}
+
+TEST(rocrand_mt19937_prng_tests, head_and_tail_log_normal_double_test)
+{
+    head_and_tail_test<double>([](rocrand_mt19937& g, double* data, size_t s)
+                               { g.generate_log_normal(data, s, 0.0, 1.0); },
+                               2);
+}
+
+// Check if changing distribution sets m_start_input correctly
+template<typename T0, typename T1, typename GenerateFunc0, typename GenerateFunc1>
+void change_distribution_test(GenerateFunc0 generate_func0,
+                              GenerateFunc1 generate_func1,
+                              size_t        size0,
+                              size_t        start1)
+{
+    SCOPED_TRACE(testing::Message() << "size0 = " << size0 << " start1 = " << start1);
+
+    const size_t size1 = threads_per_generator * generator_count * 3;
+
+    T0* data0;
+    T1* data10;
+    T1* data11;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T0) * size0));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data10), sizeof(T1) * size1));
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data11), sizeof(T1) * (start1 + size1)));
+
+    rocrand_mt19937 g0;
+    // Generate the first distribution
+    generate_func0(g0, data0, size0);
+    // Change distribution to the second
+    generate_func1(g0, data10, size1);
+
+    rocrand_mt19937 g1;
+    // Generate the second distribution considering that first `start1` values correspond to
+    // `size0` values of the first distribution and some discarded values
+    generate_func1(g1, data11, start1 + size1);
+
+    std::vector<T1> host_data10(size1);
+    std::vector<T1> host_data11(size1);
+    HIP_CHECK(hipMemcpy(host_data10.data(), data10, sizeof(T1) * size1, hipMemcpyDefault));
+    // Ignore `start1` values
+    HIP_CHECK(hipMemcpy(host_data11.data(), data11 + start1, sizeof(T1) * size1, hipMemcpyDefault));
+
+    for(size_t i = 0; i < size1; i++)
+    {
+        ASSERT_EQ(host_data10[i], host_data11[i]);
+    }
+
+    HIP_CHECK(hipFree(data0));
+    HIP_CHECK(hipFree(data10));
+    HIP_CHECK(hipFree(data11));
+}
+
+const size_t s = threads_per_generator * generator_count;
+
+TEST(rocrand_mt19937_prng_tests, change_distribution0_test)
+{
+    // Larger type (normal float) to smaller type (uniform uint)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {         (s + 4) * 2, s * 4},
+        {(s * 2 + s - 10) * 2, s * 6},
+        {         (s * 3) * 2, s * 6},
+        {         (s * 4) * 2, s * 8},
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<float, unsigned int>(
+            [](rocrand_mt19937& g, float* data, size_t s)
+            { g.generate_normal(data, s, 0.0f, 1.0f); },
+            [](rocrand_mt19937& g, unsigned int* data, size_t s) { g.generate(data, s); },
+            test_case.first,
+            test_case.second);
+    }
+}
+
+TEST(rocrand_mt19937_prng_tests, change_distribution1_test)
+{
+    // Smaller type (uniform float) to larger type (normal double)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {s * 2 + 100,  (s * 1) * 2},
+        { s * 4 + 10,  (s * 2) * 2},
+        {      s * 2,  (s * 1) * 2},
+        {      s * 8,  (s * 2) * 2},
+        {     s * 77, (s * 19) * 2}
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<float, double>([](rocrand_mt19937& g, float* data, size_t s)
+                                                { g.generate_uniform(data, s); },
+                                                [](rocrand_mt19937& g, double* data, size_t s)
+                                                { g.generate_normal(data, s, 0.0, 1.0); },
+                                                test_case.first,
+                                                test_case.second);
+    }
+}
+
+TEST(rocrand_mt19937_prng_tests, change_distribution2_test)
+{
+    // Smaller type (uniform double) to larger type (normal double)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {s * 2 + 400, (s * 2) * 2},
+        { s * 5 + 10, (s * 3) * 2},
+        {      s * 3, (s * 2) * 2},
+        {      s * 4, (s * 2) * 2},
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<double, double>([](rocrand_mt19937& g, double* data, size_t s)
+                                                 { g.generate_uniform(data, s); },
+                                                 [](rocrand_mt19937& g, double* data, size_t s)
+                                                 { g.generate_normal(data, s, 0.0, 1.0); },
+                                                 test_case.first,
+                                                 test_case.second);
+    }
+}
+
+TEST(rocrand_mt19937_prng_tests, change_distribution3_test)
+{
+    // Larger type (normal double) to smaller type (uniform ushort)
+    std::vector<std::pair<size_t, size_t>> test_cases{
+        {     100 * 2,  s * 8},
+        {(s + 10) * 2, s * 16},
+        { (s * 2) * 2, s * 16},
+        { (s * 3) * 2, s * 24},
+    };
+    for(auto test_case : test_cases)
+    {
+        change_distribution_test<double, unsigned short>(
+            [](rocrand_mt19937& g, double* data, size_t s)
+            { g.generate_normal(data, s, 0.0, 1.0); },
+            [](rocrand_mt19937& g, unsigned short* data, size_t s) { g.generate(data, s); },
+            test_case.first,
+            test_case.second);
+    }
 }

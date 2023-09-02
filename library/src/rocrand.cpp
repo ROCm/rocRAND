@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -2035,6 +2035,48 @@ rocrand_status ROCRANDAPI
         return ROCRAND_STATUS_INTERNAL_ERROR;
     }
 
+    return ROCRAND_STATUS_SUCCESS;
+}
+
+rocrand_status ROCRANDAPI rocrand_get_direction_vectors32(const unsigned int**         vectors,
+                                                          rocrand_direction_vector_set set)
+{
+    switch(set)
+    {
+        case ROCRAND_DIRECTION_VECTORS_32_JOEKUO6:
+            *vectors = rocrand_h_sobol32_direction_vectors;
+            return ROCRAND_STATUS_SUCCESS;
+        case ROCRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6:
+            *vectors = rocrand_h_scrambled_sobol32_direction_vectors;
+            return ROCRAND_STATUS_SUCCESS;
+        default: return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+}
+
+rocrand_status ROCRANDAPI rocrand_get_direction_vectors64(const unsigned long long**   vectors,
+                                                          rocrand_direction_vector_set set)
+{
+    switch(set)
+    {
+        case ROCRAND_DIRECTION_VECTORS_64_JOEKUO6:
+            *vectors = rocrand_h_sobol64_direction_vectors;
+            return ROCRAND_STATUS_SUCCESS;
+        case ROCRAND_SCRAMBLED_DIRECTION_VECTORS_64_JOEKUO6:
+            *vectors = rocrand_h_scrambled_sobol64_direction_vectors;
+            return ROCRAND_STATUS_SUCCESS;
+        default: return ROCRAND_STATUS_OUT_OF_RANGE;
+    }
+}
+
+rocrand_status ROCRANDAPI rocrand_get_scramble_constants32(const unsigned int** constants)
+{
+    *constants = h_scrambled_sobol32_constants;
+    return ROCRAND_STATUS_SUCCESS;
+}
+
+rocrand_status ROCRANDAPI rocrand_get_scramble_constants64(const unsigned long long** constants)
+{
+    *constants = h_scrambled_sobol64_constants;
     return ROCRAND_STATUS_SUCCESS;
 }
 

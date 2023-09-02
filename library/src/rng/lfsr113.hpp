@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -160,9 +160,17 @@ public:
         }
     }
 
+    rocrand_lfsr113(const rocrand_lfsr113&) = delete;
+
+    rocrand_lfsr113(rocrand_lfsr113&&) = delete;
+
+    rocrand_lfsr113& operator=(const rocrand_lfsr113&&) = delete;
+
+    rocrand_lfsr113& operator=(rocrand_lfsr113&&) = delete;
+
     ~rocrand_lfsr113()
     {
-        hipFree(m_engines);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
     void set_seed(unsigned long long seed)

@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,6 @@
 #include "test_rocrand_common.hpp"
 
 #include <rng/scrambled_sobol64.hpp>
-#include <rocrand/rocrand_scrambled_sobol64_constants.h>
-#include <rocrand/rocrand_scrambled_sobol64_precomputed.h>
 
 #include <hip/hip_runtime.h>
 
@@ -252,14 +250,15 @@ TEST(rocrand_scrambled_sobol64_qrng_tests, state_progress_test)
 
 TEST(rocrand_scrambled_sobol64_qrng_tests, discard_test)
 {
-    rocrand_scrambled_sobol64::engine_type engine1(
-        &rocrand_h_scrambled_sobol64_direction_vectors[64],
-        h_scrambled_sobol64_constants[1],
-        678ll);
-    rocrand_scrambled_sobol64::engine_type engine2(
-        &rocrand_h_scrambled_sobol64_direction_vectors[64],
-        h_scrambled_sobol64_constants[1],
-        676ll);
+    const unsigned long long* h_directions;
+    const unsigned long long* h_constants;
+
+    ROCRAND_CHECK(rocrand_get_direction_vectors64(&h_directions,
+                                                  ROCRAND_SCRAMBLED_DIRECTION_VECTORS_64_JOEKUO6));
+    ROCRAND_CHECK(rocrand_get_scramble_constants64(&h_constants));
+
+    rocrand_scrambled_sobol64::engine_type engine1(&h_directions[64], h_constants[1], 678ll);
+    rocrand_scrambled_sobol64::engine_type engine2(&h_directions[64], h_constants[1], 676ll);
 
     EXPECT_NE(engine1(), engine2());
 
@@ -288,14 +287,14 @@ TEST(rocrand_scrambled_sobol64_qrng_tests, discard_test)
 
 TEST(rocrand_scrambled_sobol64_qrng_tests, discard_stride_test)
 {
-    rocrand_scrambled_sobol64::engine_type engine1(
-        &rocrand_h_scrambled_sobol64_direction_vectors[64],
-        h_scrambled_sobol64_constants[1],
-        123);
-    rocrand_scrambled_sobol64::engine_type engine2(
-        &rocrand_h_scrambled_sobol64_direction_vectors[64],
-        h_scrambled_sobol64_constants[1],
-        123);
+    const unsigned long long* h_directions;
+    const unsigned long long* h_constants;
+
+    rocrand_get_direction_vectors64(&h_directions, ROCRAND_SCRAMBLED_DIRECTION_VECTORS_64_JOEKUO6);
+    rocrand_get_scramble_constants64(&h_constants);
+
+    rocrand_scrambled_sobol64::engine_type engine1(&h_directions[64], h_constants[1], 123);
+    rocrand_scrambled_sobol64::engine_type engine2(&h_directions[64], h_constants[1], 123);
 
     EXPECT_EQ(engine1(), engine2());
 

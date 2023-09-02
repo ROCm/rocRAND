@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -104,7 +104,7 @@ if (AMDGPU_TARGETS)
     set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
 endif()
 
-# Verify that hcc compiler is used on ROCM platform
+# Verify that hipcc compiler is used on ROCM platform
 # TODO: Fix VerifyCompiler for Windows
 if(NOT USE_HIP_CPU)
   if(NOT WIN32)
@@ -173,9 +173,7 @@ print_configuration_summary()
 # Tools
 add_subdirectory(tools)
 
-# rocRAND and hipRAND libraries
-# This adds library targets: rocrand, hiprand,
-# also includes Fortran wrapper
+# rocRAND library, adds library target "rocrand" and includes Fortran wrapper
 add_subdirectory(library)
 
 if(BUILD_TEST OR BUILD_BENCHMARK)
@@ -228,23 +226,6 @@ else()
 endif()
 
 set(ROCRAND_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
-
-if(WIN32)
-    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" OFF)
-else()
-    option(BUILD_HIPRAND "Build hipRAND as part of rocRAND" ON)
-endif()
-if(BUILD_HIPRAND)
-    if(HIP_COMPILER STREQUAL "nvcc")
-        set(BUILD_WITH_LIB "CUDA")
-    endif()
-    if(EXISTS ${CMAKE_SOURCE_DIR}/hipRAND/CMakeLists.txt)
-        set(HIPRAND_SUBMODULE ON CACHE BOOL "Build hipRAND as a submodule of rocRAND." FORCE)
-        add_subdirectory(${CMAKE_SOURCE_DIR}/hipRAND ${CMAKE_BINARY_DIR}/hipRAND)
-    else()
-        message(FATAL_ERROR "BUILD_HIPRAND was set, but the hipRAND submodule could not be found. Use git submodule update --init to clone the hipRAND submodule, or set BUILD_HIPRAND to OFF (--no-hiprand flag for ./install)")
-    endif()
-endif()
 
 rocm_create_package(
     NAME ${package_name}

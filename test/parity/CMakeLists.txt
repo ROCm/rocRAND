@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ if(NOT USE_HIP_CPU)
         find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
         if(NOT hip_FOUND)
             find_package(HIP REQUIRED)
-            if((HIP_COMPILER STREQUAL "hcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
+            if((HIP_COMPILER STREQUAL "hipcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
             # TODO: The HIP package on NVIDIA platform is incorrect at few versions
             set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
             endif()

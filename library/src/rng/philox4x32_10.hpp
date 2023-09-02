@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -70,8 +70,7 @@ namespace detail {
         typedef ::rocrand_device::philox4x32_10_engine base_type;
         typedef base_type::philox4x32_10_state state_type;
 
-        __forceinline__ __device__ __host__
-        philox4x32_10_device_engine() { }
+        __forceinline__ __device__ __host__ philox4x32_10_device_engine() = default;
 
         __forceinline__ __device__ __host__
         philox4x32_10_device_engine(const unsigned long long seed,
@@ -82,11 +81,7 @@ namespace detail {
 
         }
 
-        __forceinline__ __device__ __host__
-        ~philox4x32_10_device_engine () {}
-
-        __forceinline__ __device__ __host__
-        uint4 next4_leap(unsigned int leap)
+        __forceinline__ __device__ __host__ uint4 next4_leap(unsigned int leap)
         {
             uint4 ret = m_state.result;
             if(m_state.substate > 0) {

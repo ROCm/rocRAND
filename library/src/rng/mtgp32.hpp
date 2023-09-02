@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -203,9 +203,17 @@ public:
         }
     }
 
+    rocrand_mtgp32(const rocrand_mtgp32&) = delete;
+
+    rocrand_mtgp32(rocrand_mtgp32&&) = delete;
+
+    rocrand_mtgp32& operator=(const rocrand_mtgp32&&) = delete;
+
+    rocrand_mtgp32& operator=(rocrand_mtgp32&&) = delete;
+
     ~rocrand_mtgp32()
     {
-        hipFree(m_engines);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
     void reset()

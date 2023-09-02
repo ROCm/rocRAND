@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -192,10 +192,18 @@ public:
         }
     }
 
+    rocrand_scrambled_sobol64(const rocrand_scrambled_sobol64&) = delete;
+
+    rocrand_scrambled_sobol64(rocrand_scrambled_sobol64&&) = delete;
+
+    rocrand_scrambled_sobol64& operator=(const rocrand_scrambled_sobol64&&) = delete;
+
+    rocrand_scrambled_sobol64& operator=(rocrand_scrambled_sobol64&&) = delete;
+
     ~rocrand_scrambled_sobol64()
     {
-        hipFree(m_direction_vectors);
-        hipFree(m_scramble_constants);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_scramble_constants));
     }
 
     void reset()

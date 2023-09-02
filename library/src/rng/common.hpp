@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,38 @@
 
 #include <rocrand/rocrand_common.h>
 
+#include <hip/hip_runtime_api.h>
+
+#include <cstdio>
+#include <cstdlib>
+
 template<class T, unsigned int N>
 struct alignas(sizeof(T) * N) aligned_vec_type
 {
     T data[N];
 };
+
+/**
+ * \brief Check for a HIP error and exit the program if encountered.
+ *
+ * This should only be used where other error reporting mechanism cannot be used, e.g. in
+ * destructors, where throwing is not an option.
+ */
+#define ROCRAND_HIP_FATAL_ASSERT(expression)                                     \
+    do                                                                           \
+    {                                                                            \
+        hipError_t _error = (expression);                                        \
+        if(_error != hipSuccess)                                                 \
+        {                                                                        \
+            std::fprintf(stderr,                                                 \
+                         "rocRAND internal error: %s in function %s at %s:%d\n", \
+                         hipGetErrorName(_error),                                \
+                         __func__,                                               \
+                         __FILE__,                                               \
+                         __LINE__);                                              \
+            std::abort();                                                        \
+        }                                                                        \
+    }                                                                            \
+    while(false)
 
 #endif // ROCRAND_RNG_COMMON_H_

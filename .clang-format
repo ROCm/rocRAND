@@ -41,7 +41,7 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
-AttributeMacros: ['HIPRANDAPI', 'QUALIFIERS', 'FQUALIFIERS']
+AttributeMacros: ['QUALIFIERS', 'FQUALIFIERS']
 BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: Both

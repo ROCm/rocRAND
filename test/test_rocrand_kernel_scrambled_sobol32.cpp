@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,6 @@
 
 #include <rocrand/rocrand_common.h>
 #include <rocrand/rocrand_scrambled_sobol32.h>
-#include <rocrand/rocrand_scrambled_sobol32_constants.h>
-#include <rocrand/rocrand_scrambled_sobol32_precomputed.h>
 
 #include <hip/hip_runtime.h>
 
@@ -142,17 +140,24 @@ void load_scrambled_sobol32_constants_to_gpu(const unsigned int dimensions,
                                              unsigned int**     direction_vectors,
                                              unsigned int**     scramble_constants)
 {
+    const unsigned int* h_directions;
+    const unsigned int* h_constants;
+
+    ROCRAND_CHECK(rocrand_get_direction_vectors32(&h_directions,
+                                                  ROCRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6));
+    ROCRAND_CHECK(rocrand_get_scramble_constants32(&h_constants));
+
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(direction_vectors),
                               sizeof(unsigned int) * dimensions * 32));
     HIP_CHECK(hipMemcpy(*direction_vectors,
-                        rocrand_h_scrambled_sobol32_direction_vectors,
+                        h_directions,
                         sizeof(unsigned int) * dimensions * 32,
                         hipMemcpyHostToDevice));
 
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(scramble_constants),
                               sizeof(unsigned int) * dimensions));
     HIP_CHECK(hipMemcpy(*scramble_constants,
-                        h_scrambled_sobol32_constants,
+                        h_constants,
                         sizeof(unsigned int) * dimensions,
                         hipMemcpyHostToDevice));
 }

@@ -135,7 +135,7 @@ def config_cmd():
         deps_dir = os.path.abspath(os.path.join(build_dir, 'deps')).replace('\\','/')
     else:
         deps_dir = args.deps_dir
-    cmake_base_options = f"-DROCM_PATH={rocm_path} -DCMAKE_PREFIX_PATH:PATH={rocm_path} -Drocrand_EXPORTS=1 -Dhiprand_EXPORTS=1"
+    cmake_base_options = f"-DROCM_PATH={rocm_path} -DCMAKE_PREFIX_PATH:PATH={rocm_path} -Drocrand_EXPORTS=1"
     cmake_options.append( cmake_base_options )
 
     print( cmake_options )
@@ -168,7 +168,7 @@ def config_cmd():
 #     cmake_options="${cmake_options} -DCMAKE_FIND_ROOT_PATH=/usr/lib64/llvm7.0/lib/cmake/"
 #     ;;
 #     windows)
-#     cmake_options="${cmake_options} -DWIN32=ON -DROCM_PATH=${rocm_path} -DROCM_DIR:PATH=${rocm_path} -DCMAKE_PREFIX_PATH:PATH=${rocm_path}"
+#     cmake_options="${cmake_options} -DROCM_PATH=${rocm_path} -DROCM_DIR:PATH=${rocm_path} -DCMAKE_PREFIX_PATH:PATH=${rocm_path}"
 #     cmake_options="${cmake_options} --debug-trycompile -DCMAKE_MAKE_PROGRAM=nmake.exe -DCMAKE_TOOLCHAIN_FILE=toolchain-windows.cmake"
 #     # -G '"NMake Makefiles JOM"'"
 #     ;;
