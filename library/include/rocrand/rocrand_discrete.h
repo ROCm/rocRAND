@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -57,16 +57,25 @@
 namespace rocrand_device {
 namespace detail {
 
-FQUALIFIERS unsigned int discrete_alias(const double x, const rocrand_discrete_distribution_st& dis)
+FQUALIFIERS unsigned int discrete_alias(const double       x,
+                                        const unsigned int size,
+                                        const unsigned int offset,
+                                        const unsigned int* __restrict__ alias,
+                                        const double* __restrict__ probability)
 {
     // Calculate value using Alias table
 
     // x is [0, 1)
-    const double nx = dis.size * x;
-    const double fnx = floor(nx);
-    const double y = nx - fnx;
+    const double       nx  = size * x;
+    const double       fnx = floor(nx);
+    const double       y   = nx - fnx;
     const unsigned int i   = static_cast<unsigned int>(fnx);
-    return dis.offset + (y < dis.probability[i] ? i : dis.alias[i]);
+    return offset + (y < probability[i] ? i : alias[i]);
+}
+
+FQUALIFIERS unsigned int discrete_alias(const double x, const rocrand_discrete_distribution_st& dis)
+{
+    return discrete_alias(x, dis.size, dis.offset, dis.alias, dis.probability);
 }
 
 FQUALIFIERS
@@ -94,17 +103,20 @@ FQUALIFIERS unsigned int discrete_alias(const unsigned long long int            
     return discrete_alias(x, dis);
 }
 
-FQUALIFIERS unsigned int discrete_cdf(const double x, const rocrand_discrete_distribution_st& dis)
+FQUALIFIERS unsigned int discrete_cdf(const double       x,
+                                      const unsigned int size,
+                                      const unsigned int offset,
+                                      const double* __restrict__ cdf)
 {
     // Calculate value using binary search in CDF
 
     unsigned int min = 0;
-    unsigned int max = dis.size - 1;
+    unsigned int max = size - 1;
     do
     {
         const unsigned int center = (min + max) / 2;
-        const double p = dis.cdf[center];
-        if (x > p)
+        const double       p      = cdf[center];
+        if(x > p)
         {
             min = center + 1;
         }
@@ -113,9 +125,14 @@ FQUALIFIERS unsigned int discrete_cdf(const double x, const rocrand_discrete_dis
             max = center;
         }
     }
-    while (min != max);
+    while(min != max);
 
-    return dis.offset + min;
+    return offset + min;
+}
+
+FQUALIFIERS unsigned int discrete_cdf(const double x, const rocrand_discrete_distribution_st& dis)
+{
+    return discrete_cdf(x, dis.size, dis.offset, dis.cdf);
 }
 
 FQUALIFIERS
