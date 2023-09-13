@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -125,10 +125,10 @@ FQUALIFIERS void rocrand_init(const unsigned long long       seed,
 }
 
 /**
- * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * \brief Returns uniformly distributed random <tt>unsigned long long</tt> value
  * from [0; 2^64 - 1] range.
  *
- * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * Generates and returns uniformly distributed random <tt>unsigned long long</tt>
  * value from [0; 2^64 - 1] range using Threefry generator in \p state.
  * State is incremented by one position.
  *
@@ -136,7 +136,7 @@ FQUALIFIERS void rocrand_init(const unsigned long long       seed,
  *
  * \param state - Pointer to a state to use
  *
- * \return Pseudorandom value (64-bit) as an <tt>unsigned int</tt>
+ * \return Pseudorandom value (64-bit) as an <tt>unsigned long long</tt>
  */
 FQUALIFIERS unsigned long long rocrand(rocrand_state_threefry2x64_20* state)
 {
@@ -144,10 +144,10 @@ FQUALIFIERS unsigned long long rocrand(rocrand_state_threefry2x64_20* state)
 }
 
 /**
- * \brief Returns two uniformly distributed random <tt>unsigned int</tt> values
+ * \brief Returns two uniformly distributed random <tt>unsigned long long</tt> values
  * from [0; 2^64 - 1] range.
  *
- * Generates and returns two uniformly distributed random <tt>unsigned int</tt>
+ * Generates and returns two uniformly distributed random <tt>unsigned long long</tt>
  * values from [0; 2^64 - 1] range using Threefry generator in \p state.
  * State is incremented by two positions.
  *
