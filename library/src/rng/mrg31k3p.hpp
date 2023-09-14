@@ -153,6 +153,7 @@ public:
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_threads * s_blocks)
+        , m_start_engine_id()
     {
         // Allocate device random number engines
         hipError_t error
