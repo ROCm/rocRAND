@@ -35,6 +35,7 @@ Documentation for rocRAND is available at
   * Fixed the default ordering parameter for `lfsr113`
 * Build error when using Clang++ directly resulting from unsupported `amdgpu-target` references
 * Added hip::device as dependency to benchmark_rocrand_tuning to make it compile with amdclang++.
+* Minor entropy waste in 64-bits Threefry function producing two log-normally-distributed doubles.
 
 ## rocRAND-2.10.17 for ROCm 5.5.0
 
