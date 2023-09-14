@@ -153,7 +153,8 @@ class mtgp32_engine
 {
 public:
     FQUALIFIERS
-    mtgp32_engine()
+    // Initialization is not supported for __shared__ variables
+    mtgp32_engine() // cppcheck-suppress uninitMemberVar
     {
 
     }

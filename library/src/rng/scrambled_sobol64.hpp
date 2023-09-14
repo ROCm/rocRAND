@@ -157,7 +157,7 @@ public:
     rocrand_scrambled_sobol64(unsigned long long offset = 0,
                               rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                               hipStream_t        stream = 0)
-        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1)
+        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1), m_current_offset()
     {
         // Allocate direction vectors
         hipError_t error;
@@ -341,7 +341,7 @@ private:
 
     // m_offset from base_type
 
-    size_t next_power2(size_t x)
+    static size_t next_power2(size_t x)
     {
         size_t power = 1;
         while(power < x)

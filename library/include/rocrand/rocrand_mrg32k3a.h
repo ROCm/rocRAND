@@ -288,7 +288,7 @@ protected:
 
 private:
     FQUALIFIERS
-    void mod_mat_vec_m1(const unsigned long long * A,
+    static void mod_mat_vec_m1(const unsigned long long * A,
                         unsigned int * s)
     {
         unsigned long long x[3];
@@ -311,7 +311,7 @@ private:
     }
 
     FQUALIFIERS
-    void mod_mat_vec_m2(const unsigned long long * A,
+    static void mod_mat_vec_m2(const unsigned long long * A,
                         unsigned int * s)
     {
         unsigned long long x[3];
@@ -334,7 +334,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_mul_m1(unsigned int i,
+    static unsigned long long mod_mul_m1(unsigned int i,
                                   unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
@@ -361,7 +361,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_mul_m2(unsigned int i,
+    static unsigned long long mod_mul_m2(unsigned int i,
                                   unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
