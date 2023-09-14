@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,7 @@ public:
 
     void deallocate()
     {
-        // Explicit deallocation is used because on HCC the object is copied
+        // Explicit deallocation is used because the object is copied
         // multiple times inside hipLaunchKernelGGL, and destructor is called
         // for all copies (we can't use c++ smart pointers for device pointers)
         if (IsHostSide)

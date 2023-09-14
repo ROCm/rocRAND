@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
-#include <vector>
-#include <numeric>
-#include <gtest/gtest.h>
-
-#include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
-#include <rocrand/rocrand_sobol32_precomputed.h>
-
-#include <rng/generator_type.hpp>
-#include <rng/generators.hpp>
-
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+
+#include <rng/sobol32.hpp>
+
+#include <hip/hip_runtime.h>
+
+#include <gtest/gtest.h>
+#include <numeric>
+#include <vector>
 
 TEST(rocrand_sobol32_qrng_tests, uniform_uint_test)
 {
@@ -216,8 +212,12 @@ TEST(rocrand_sobol32_qrng_tests, state_progress_test)
 
 TEST(rocrand_sobol32_qrng_tests, discard_test)
 {
-    rocrand_sobol32::engine_type engine1(&rocrand_h_sobol32_direction_vectors[32], 678);
-    rocrand_sobol32::engine_type engine2(&rocrand_h_sobol32_direction_vectors[32], 676);
+    const unsigned int* h_directions;
+    ROCRAND_CHECK(
+        rocrand_get_direction_vectors32(&h_directions, ROCRAND_DIRECTION_VECTORS_32_JOEKUO6));
+
+    rocrand_sobol32::engine_type engine1(&h_directions[32], 678);
+    rocrand_sobol32::engine_type engine2(&h_directions[32], 676);
 
     EXPECT_NE(engine1(), engine2());
 
@@ -249,8 +249,12 @@ TEST(rocrand_sobol32_qrng_tests, discard_test)
 
 TEST(rocrand_sobol32_qrng_tests, discard_stride_test)
 {
-    rocrand_sobol32::engine_type engine1(&rocrand_h_sobol32_direction_vectors[64], 123);
-    rocrand_sobol32::engine_type engine2(&rocrand_h_sobol32_direction_vectors[64], 123);
+    const unsigned int* h_directions;
+    ROCRAND_CHECK(
+        rocrand_get_direction_vectors32(&h_directions, ROCRAND_DIRECTION_VECTORS_32_JOEKUO6));
+
+    rocrand_sobol32::engine_type engine1(&h_directions[64], 123);
+    rocrand_sobol32::engine_type engine2(&h_directions[64], 123);
 
     EXPECT_EQ(engine1(), engine2());
 

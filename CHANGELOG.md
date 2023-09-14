@@ -1,12 +1,42 @@
 # Change Log for rocRAND
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
+
+## (Unreleased) rocRAND-x.x.x for ROCm 6.0.0
+### Changed
+- Removed hipRAND submodule from rocRAND. hipRAND is now only available as a separate package.
+- Generator classes from `rocrand.hpp` are no longer copyable, in previous versions these copies
+would copy internal references to the generators and would lead to double free or memory leak errors.
+  These types should be moved instead of copied, and move constructors and operators are now defined
+  for them. 
+- Improved MT19937 initialization and generation performance.
+- Removed references to and workarounds for deprecated hcc
+
+### Fixed
+- `mt19937_engine` from `rocrand.hpp` is now move-constructible and move-assignable. Previously the
+move constructor and move assignment operator was deleted for this class.
+- Various fixes for the C++ wrapper header rocrand.hpp
+  - fixed the name of `mrg31k3p` it is now correctly spelled (was incorrectly named`mrg31k3a` in
+    previous versions).
+  - added missing `order` setter method for `threefry4x64`
+  - fixed the default ordering parameter for `lfsr113`
+
 ## (Unreleased) rocRAND-2.10.17 for ROCm 5.5.0
 ### Added
 - MT19937 pseudo random number generator based on M. Matsumoto and T. Nishimura, 1998, Mersenne Twister: A 623-dimensionally equidistributed uniform pseudorandom number generator.
 - New benchmark for the device API using Google Benchmark, `benchmark_rocrand_device_api`, replacing `benchmark_rocrand_kernel`. `benchmark_rocrand_kernel` is deprecated and will be removed in a future version. Likewise, `benchmark_curand_host_api` is added to replace `benchmark_curand_generate` and `benchmark_curand_device_api` is added to replace `benchmark_curand_kernel`.
 - experimental HIP-CPU feature
 - ThreeFry pseudorandom number generator based on Salmon et al., 2011, "Parallel random numbers: as easy as 1, 2, 3".
+- Accessor methods for sobol 32 and 64 direction vectors and constants:
+  - Enum `rocrand_direction_vector_set` to select the direction vector set.
+  - `rocrand_get_direction_vectors32(...)` supersedes:
+    - `rocrand_h_sobol32_direction_vectors` 
+    - `rocrand_h_scrambled_sobol32_direction_vectors`
+  - `rocrand_get_direction_vectors64(...)` supersedes:
+    - `rocrand_h_sobol64_direction_vectors` 
+    - `rocrand_h_scrambled_sobol64_direction_vectors`
+  - `rocrand_get_scramble_constants32(...)` supersedes `h_scrambled_sobol32_constants`
+  - `rocrand_get_scramble_constants64(...)` supersedes `h_scrambled_sobol64_constants`
 ### Changed
 - Python 2.7 is no longer officially supported.
 

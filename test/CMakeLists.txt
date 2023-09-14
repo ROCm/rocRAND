@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -97,7 +97,7 @@ foreach(test_src ${rocRAND_TEST_SRCS})
             target_link_libraries(${test_name} TBB::tbb)
         endif()
     else()
-        if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
+        if(HIP_COMPILER STREQUAL "clang")
             target_link_libraries(${test_name} hip::device)
         endif()
     endif()

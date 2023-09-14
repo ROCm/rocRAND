@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ include:
     file:
       - /defaults.yaml
       - /deps-cmake.yaml
+      - /deps-docs.yaml
       - /deps-rocm.yaml
       - /deps-nvcc.yaml
       - /gpus-rocm.yaml
@@ -58,6 +59,20 @@ clang-format:
     - cd $CI_PROJECT_DIR
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - scripts/code-format/check-format.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA --binary "$CLANG_FORMAT"
+
+copyright-date:
+  extends:
+    - .deps:rocm
+  stage: lint
+  needs: []
+  tags:
+    - rocm-build
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - cd $CI_PROJECT_DIR
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - scripts/copyright-date/check-copyright.sh -v -d $CI_MERGE_REQUEST_DIFF_BASE_SHA
 
 .rocm:cmake-minimum:
   variables:
@@ -197,7 +212,6 @@ clang-format:
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
       -D USE_HIP_CPU=ON
-      -D BUILD_HIPRAND=OFF
       -D CMAKE_INSTALL_PREFIX=${ROCRAND_DIR}
     - cmake --build $CI_PROJECT_DIR/build
     - cmake --build $CI_PROJECT_DIR/build --target package
@@ -209,6 +223,7 @@ clang-format:
       - $CI_PROJECT_DIR/build/library/
       - $CI_PROJECT_DIR/build/test/test_*
       - $CI_PROJECT_DIR/build/test/CTestTestfile.cmake
+      - $CI_PROJECT_DIR/build/test/linkage/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/benchmark/benchmark_*
       - $CI_PROJECT_DIR/build/deps/googlebenchmark/
       - $CI_PROJECT_DIR/build/deps/hip-cpu/
@@ -330,7 +345,10 @@ build-cpu:cmake-latest:
   stage: test
   script:
     - cd $CI_PROJECT_DIR/build
-    - ctest --output-on-failure
+    # Parallel execution (with other AMDGPU processes) can oversubscribe the SDMA queue.
+    # This causes the hipMemcpy to fail, which is not reported as an error by HIP.
+    # As a temporary workaround, disable the SDMA for test stability.
+    - HSA_ENABLE_SDMA=0 ctest --output-on-failure
 
 test:rocm:
   needs:
@@ -461,7 +479,6 @@ test:nvcc-python:
       -B $CI_PROJECT_DIR/build_package_test
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D USE_HIP_CPU=ON
-      -D BUILD_HIPRAND=OFF
       -D TBB_DIR=$CI_PROJECT_DIR/build/tbb-src/cmake
       -D hip_cpu_rt_DIR=$CI_PROJECT_DIR/build/deps/hip-cpu/share/hip_cpu_rt/cmake
       -D rocrand_DIR=${ROCRAND_DIR}
@@ -531,7 +548,6 @@ test:hip-cpu-package:
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D USE_HIP_CPU=ON
-      -D BUILD_HIPRAND=OFF
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D CMAKE_INSTALL_PREFIX=${ROCRAND_DIR}
     - $SUDO_CMD cmake --build $CI_PROJECT_DIR/build_only_install --target install
@@ -577,19 +593,7 @@ test:doc:
   stage: test
   extends:
     - .rules:test
-  image: sphinxdoc/sphinx-latexpdf:latest
-  needs: []
-  before_script:
-    - apt-get update
-    - apt-get install -y -qq doxygen
-    - pip3 install --user -r $CI_PROJECT_DIR/docs/requirements.txt
-  script:
-    - $CI_PROJECT_DIR/docs/run_doc.sh
-  artifacts:
-    paths:
-      - $CI_PROJECT_DIR/docs/_build
-      - $CI_PROJECT_DIR/docs/docBin
-    expire_in: 1 week
+    - .build:docs
 
 .test:parity:
   stage: test

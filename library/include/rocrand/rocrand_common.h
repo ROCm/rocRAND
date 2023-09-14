@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,8 +43,10 @@
 #define FQUALIFIERS __forceinline__ __device__
 #endif // FQUALIFIERS
 
-#if __HIP_DEVICE_COMPILE__ && (defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__) || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
-#define ROCRAND_HALF_MATH_SUPPORTED
+#if __HIP_DEVICE_COMPILE__            \
+    && (defined(__HIP_PLATFORM_AMD__) \
+        || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
+    #define ROCRAND_HALF_MATH_SUPPORTED
 #endif
 
 namespace rocrand_device {
@@ -65,15 +67,19 @@ namespace detail {
   #if !defined(ROCRAND_ENABLE_INLINE_ASM)
     #define ROCRAND_ENABLE_INLINE_ASM
   #endif
+#else
+  #if defined(__HIP_DEVICE_COMPILE__) && defined(ROCRAND_ENABLE_INLINE_ASM)
+    #undef ROCRAND_ENABLE_INLINE_ASM
+  #endif
 #endif
 
 FQUALIFIERS
 unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
 {
-  #if defined(__HIP_PLATFORM_HCC__) && defined(__HIP_DEVICE_COMPILE__) \
+#if defined(__HIP_PLATFORM_AMD__) && defined(__HIP_DEVICE_COMPILE__) \
     && defined(ROCRAND_ENABLE_INLINE_ASM)
 
-  #if __AMDGCN_WAVEFRONT_SIZE == 64u
+    #if __AMDGCN_WAVEFRONT_SIZE == 64u
     using sgpr_t = unsigned long long;
   #elif __AMDGCN_WAVEFRONT_SIZE == 32u
     using sgpr_t = unsigned int;
