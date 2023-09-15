@@ -63,6 +63,7 @@ namespace detail {
       defined(__gfx906__) || \
       defined(__gfx908__) || \
       defined(__gfx909__) || \
+      defined(__gfx90a__) || \
       defined(__gfx1030__) )
   #if !defined(ROCRAND_ENABLE_INLINE_ASM)
     #define ROCRAND_ENABLE_INLINE_ASM
