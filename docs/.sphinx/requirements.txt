@@ -62,7 +62,7 @@ mdurl==0.1.2
     # via markdown-it-py
 myst-parser==1.0.0
     # via rocm-docs-core
-numpy==1.24.3
+numpy==1.26.0
     # via -r requirements.in
 packaging==23.1
     # via
@@ -94,7 +94,7 @@ requests==2.31.0
     # via
     #   pygithub
     #   sphinx
-rocm-docs-core>=0.20.0
+rocm-docs-core==0.24.1
     # via -r requirements.in
 smmap==5.0.0
     # via gitdb
