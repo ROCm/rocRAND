@@ -166,7 +166,7 @@ public:
     }
 
 protected:
-    FQUALIFIERS state_value threefry_rounds(state_value counter, state_value key)
+    FQUALIFIERS static state_value threefry_rounds(state_value counter, state_value key)
     {
         state_value X;
         value       ks[2 + 1];

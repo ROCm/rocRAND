@@ -148,7 +148,7 @@ int main(int argc, char const *argv[])
     uint32_t SOBOL_DIM = 20000;
     uint32_t SOBOL32_N = SOBOL_DIM * 32;
     struct sobol_set * inputs = new struct sobol_set[SOBOL_DIM];
-    uint32_t * directions_32 = new uint32_t[SOBOL32_N];
+    uint32_t * directions_32 = new uint32_t[SOBOL32_N]();
     bool read = read_sobol_set(inputs, SOBOL_DIM, vector_file);
 
     if (read)
