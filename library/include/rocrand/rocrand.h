@@ -777,7 +777,7 @@ rocrand_status ROCRANDAPI rocrand_get_direction_vectors64(const unsigned long lo
 /**
  * \brief Get the scramble constants for 32-bit scrambled sobol generation.
  *
- * \param vectors - location where to write the constants pointer to
+ * \param constants - location where to write the constants pointer to
  *
  * \return
  * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n
@@ -787,7 +787,7 @@ rocrand_status ROCRANDAPI rocrand_get_scramble_constants32(const unsigned int** 
 /**
  * \brief Get the scramble constants for 64-bit scrambled sobol generation.
  *
- * \param vectors - location where to write the constants pointer to
+ * \param constants - location where to write the constants pointer to
  *
  * \return
  * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n
