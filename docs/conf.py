@@ -14,6 +14,8 @@ docs_dir_path = pathlib.Path(__file__).parent
 python_dir_path = docs_dir_path.parent / 'python' / 'rocrand'
 sys.path.append(str(python_dir_path))
 
+external_projects_current_project = "rocrand"
+
 docs_core = ROCmDocs("rocRAND Documentation")
 docs_core.run_doxygen()
 docs_core.setup()
