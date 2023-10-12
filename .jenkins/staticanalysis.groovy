@@ -16,6 +16,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false)
 
 def runCI =
 {
+    def settings = [:]
+
     nodeDetails, jobName->
 
     def prj  = new rocProject('rocRAND', 'StaticAnalysis')
@@ -30,7 +32,7 @@ def runCI =
     {
         platform, project->
 
-        runCompileCommand(platform, project, jobName, false)
+        runCompileCommand(platform, project, jobName, settings)
     }
 
     buildProject(prj , formatCheck, nodes.dockerArray, compileCommand, null, null, staticAnalysis)

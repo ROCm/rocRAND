@@ -7,17 +7,17 @@ import java.nio.file.Path;
 def runCI =
 {
     nodeDetails, jobName->
-
-    def prj = new rocProject('rocRAND', 'CodeCoverage')
+    
+    def prj = new rocProject('rocRAND', 'address-sanitizer')
 
     def nodes = new dockerNodes(nodeDetails, jobName, prj)
 
     def commonGroovy
 
-    def settings = [codeCoverage: true]
+    def settings = [addressSanitizer: true]
 
     boolean formatCheck = false
-
+     
     def compileCommand =
     {
         platform, project->
@@ -26,17 +26,25 @@ def runCI =
         commonGroovy.runCompileCommand(platform, project, jobName, settings)
     }
 
+    
     def testCommand =
     {
         platform, project->
 
-        commonGroovy.runCodeCovTestCommand(platform, project, jobName)
+        commonGroovy.runTestCommand(platform, project)
     }
 
-    buildProject(prj, formatCheck, nodes.dockerArray, compileCommand, testCommand, null)
+    def packageCommand =
+    {
+        platform, project->
+
+        commonGroovy.runPackageCommand(platform, project)
+    }
+
+    buildProject(prj, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
 }
 
-ci: {
+ci: { 
     String urlJobName = auxiliary.getTopJobName(env.BUILD_URL)
 
     def propertyList = ["compute-rocm-dkms-no-npi-hipclang":[pipelineTriggers([cron('0 1 * * 0')])]]
@@ -45,7 +53,7 @@ ci: {
     def jobNameList = ["compute-rocm-dkms-no-npi-hipclang":([ubuntu18:['gfx900'],centos7:['gfx906'],centos8:['gfx906'],sles15sp1:['gfx908']])]
     jobNameList = auxiliary.appendJobNameList(jobNameList)
 
-    propertyList.each
+    propertyList.each 
     {
         jobName, property->
         if (urlJobName == jobName)
