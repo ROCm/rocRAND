@@ -28,44 +28,24 @@ def runCompileCommand(platform, project, jobName, settings)
     platform.runCommand(this, command)
 }
 
-def runTestCommand (platform, project)
+def runTestCommand (platform, project, settings)
 {
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
     // String centos = platform.jenkinsLabel.contains('centos') ? '3' : ''
     // Disable xorwow test for now as it is a known failure with gfx90a.
     // def testCommand = "ctest${centos} --output-on-failure"
     def testCommand = "ctest --output-on-failure"
+
+    String LD_PATH = settings.addressSanitizer ? 'export ASAN_LIB_PATH=\$(/opt/rocm/llvm/bin/clang -print-file-name=libclang_rt.asan-x86_64.so) \
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$(dirname "\${ASAN_LIB_PATH}")' : 'export LD_LIBRARY_PATH=/opt/rocm/lib/'
 
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
                 make -j4
-                ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ${testCommand}
+                ${LD_PATH}
+                ${sudo} ${testCommand}
             """
-
-    platform.runCommand(this, command)
-}
-
-def runASANTestCommand (platform, project)
-{
-    //Temporary workaround due to bug in container
-    String centos7Workaround = platform.jenkinsLabel.contains('centos7') ? 'export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/lib64/' : ''
-
-    String sudo = auxiliary.sudo(platform.jenkinsLabel)
-    // String centos = platform.jenkinsLabel.contains('centos') ? '3' : ''
-    // Disable xorwow test for now as it is a known failure with gfx90a.
-    // def testCommand = "ctest${centos} --output-on-failure"
-    def testCommand = "ctest --output-on-failure"
-    
-    def command = """#!/usr/bin/env bash
-            set -x
-            cd ${project.paths.project_build_prefix}/build/release
-            make -j4
-            export ASAN_LIB_PATH=\$(/opt/rocm/llvm/bin/clang -print-file-name=libclang_rt.asan-x86_64.so)
-            export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$(dirname "\${ASAN_LIB_PATH}")
-            ${centos7Workaround}
-            ${sudo} ${testCommand}
-        """
 
     platform.runCommand(this, command)
 }
