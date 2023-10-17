@@ -59,6 +59,7 @@
 #include <rocrand/rocrand_mt19937_precomputed.h>
 
 #include "common.hpp"
+#include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
@@ -790,14 +791,17 @@ ROCRAND_KERNEL
 } // end namespace detail
 } // end namespace rocrand_host
 
-class rocrand_mt19937 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_MT19937>
+class rocrand_mt19937 : public rocrand_generator_impl_base
 {
 public:
-    using base_type        = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MT19937>;
+    using base_type        = rocrand_generator_impl_base;
     using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
 
     rocrand_mt19937(unsigned long long seed = 0, hipStream_t stream = 0)
-        : base_type(seed, 0, stream), m_engines_initialized(false), m_engines(NULL)
+        : base_type(ROCRAND_ORDERING_PSEUDO_DEFAULT, 0, stream)
+        , m_engines_initialized(false)
+        , m_engines(NULL)
+        , m_seed(seed)
     {
         // Allocate device random number engines
         auto error = hipMalloc(reinterpret_cast<void**>(&m_engines),
@@ -821,7 +825,12 @@ public:
         ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
-    void reset()
+    rocrand_rng_type type() const
+    {
+        return ROCRAND_RNG_PSEUDO_MT19937;
+    }
+
+    void reset() override final
     {
         m_engines_initialized = false;
     }
@@ -829,14 +838,31 @@ public:
     /// Changes seed to \p seed and resets generator state.
     void set_seed(unsigned long long seed)
     {
-        m_seed                = seed;
-        m_engines_initialized = false;
+        m_seed = seed;
+        reset();
     }
 
-    void set_order(rocrand_ordering order)
+    unsigned long long get_seed() const
     {
-        m_order               = order;
-        m_engines_initialized = false;
+        return m_seed;
+    }
+
+    rocrand_status set_offset(unsigned long long offset)
+    {
+        (void)offset;
+        // Can't set offset for MT19937
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    rocrand_status set_order(rocrand_ordering order)
+    {
+        if(!rocrand_host::detail::is_ordering_pseudo(order))
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
@@ -1029,6 +1055,24 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status generate(unsigned long long* data, size_t data_size)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    template<typename Distribution>
+    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        (void)distribution;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
     template<class T>
     rocrand_status generate_uniform(T* data, size_t data_size)
     {
@@ -1071,6 +1115,8 @@ private:
     // calls. 0 means that a new generation (gen_next_n) is required.
     unsigned int m_start_input;
     unsigned int m_prev_input_width;
+
+    unsigned long long m_seed;
 
     static constexpr unsigned int generators_per_block = thread_count / threads_per_generator;
     static constexpr unsigned int block_count          = generator_count / generators_per_block;

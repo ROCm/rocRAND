@@ -206,8 +206,8 @@ TEST(rocrand_lfsr113_prng_tests, same_seed_test)
     // Generators
     rocrand_lfsr113 g0, g1;
     // Set same seeds
-    g0.set_seed(seeds);
-    g1.set_seed(seeds);
+    g0.set_seed_uint4(seeds);
+    g1.set_seed_uint4(seeds);
 
     // Generate using g0 and copy to host
     ROCRAND_CHECK(g0.generate(data, size));
@@ -253,8 +253,8 @@ TEST(rocrand_lfsr113_prng_tests, different_seed_test)
     g0.set_seed(seed0);
     g1.set_seed(seed1);
 
-    const uint4 get_seed0 = g0.get_seed();
-    const uint4 get_seed1 = g1.get_seed();
+    const uint4 get_seed0 = g0.get_seed_uint4();
+    const uint4 get_seed1 = g1.get_seed_uint4();
 
     ASSERT_NE(get_seed0.x, get_seed1.x);
 
@@ -315,11 +315,11 @@ TEST(rocrand_lfsr113_prng_tests, different_seed_uint4_test)
         // Generators
         rocrand_lfsr113 g0, g1;
         // Set different seeds
-        g0.set_seed(seed0);
-        g1.set_seed(seed1);
+        g0.set_seed_uint4(seed0);
+        g1.set_seed_uint4(seed1);
 
-        const uint4 get_seed0 = g0.get_seed();
-        const uint4 get_seed1 = g1.get_seed();
+        const uint4 get_seed0 = g0.get_seed_uint4();
+        const uint4 get_seed1 = g1.get_seed_uint4();
 
         ASSERT_NE(get_seed0.x, get_seed1.x);
         ASSERT_NE(get_seed0.y, get_seed1.y);

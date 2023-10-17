@@ -273,6 +273,18 @@ __host__ __device__ constexpr bool is_ordering_dynamic(const rocrand_ordering or
            || ordering == ROCRAND_ORDERING_QUASI_DEFAULT;
 }
 
+/// @brief Returns whether this ordering is applicable to pseudo-random number generators.
+__host__ __device__ constexpr bool is_ordering_pseudo(const rocrand_ordering ordering)
+{
+    return ordering != ROCRAND_ORDERING_QUASI_DEFAULT;
+}
+
+/// @brief Returns whether this ordering is applicable to quasi-random number generators.
+__host__ __device__ constexpr bool is_ordering_quasi(const rocrand_ordering ordering)
+{
+    return ordering == ROCRAND_ORDERING_QUASI_DEFAULT;
+}
+
 // Unfortunately cannot be substituted by a variadic template lambda, because
 // hipLaunchKernelGGL is a macro itself
 #define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T, ordering, kernel_name, ...)                     \

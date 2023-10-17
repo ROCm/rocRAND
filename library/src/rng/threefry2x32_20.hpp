@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
+#include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
@@ -187,20 +188,25 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 } // end namespace detail
 } // end namespace rocrand_host
 
-class rocrand_threefry2x32_20 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>
+class rocrand_threefry2x32_20 : public rocrand_generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_type<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>;
+    using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::threefry2x32_20_device_engine;
 
     rocrand_threefry2x32_20(unsigned long long seed   = 0,
                             unsigned long long offset = 0,
                             rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                             hipStream_t        stream = 0)
-        : base_type(order, seed, offset, stream), m_engines_initialized(false)
+        : base_type(order, offset, stream), m_engines_initialized(false), m_seed(seed)
     {}
 
-    void reset()
+    rocrand_rng_type type() const
+    {
+        return ROCRAND_RNG_PSEUDO_THREEFRY2_32_20;
+    }
+
+    void reset() override final
     {
         m_engines_initialized = false;
     }
@@ -208,20 +214,24 @@ public:
     /// Changes seed to \p seed and resets generator state.
     void set_seed(unsigned long long seed)
     {
-        m_seed                = seed;
-        m_engines_initialized = false;
+        m_seed = seed;
+        reset();
     }
 
-    void set_offset(unsigned long long offset)
+    unsigned long long get_seed() const
     {
-        m_offset              = offset;
-        m_engines_initialized = false;
+        return m_seed;
     }
 
-    void set_order(rocrand_ordering order)
+    rocrand_status set_order(rocrand_ordering order)
     {
-        m_order               = order;
-        m_engines_initialized = false;
+        if(!rocrand_host::detail::is_ordering_pseudo(order))
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
@@ -265,6 +275,24 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status generate(unsigned long long* data, size_t data_size)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    template<typename Distribution>
+    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        (void)distribution;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
     template<class T>
     rocrand_status generate_uniform(T* data, size_t data_size)
     {
@@ -304,6 +332,8 @@ public:
 private:
     bool        m_engines_initialized;
     engine_type m_engine;
+
+    unsigned long long m_seed;
 
     const static uint32_t s_threads = 256;
     const static uint32_t s_blocks  = 1024;

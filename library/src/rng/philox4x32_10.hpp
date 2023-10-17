@@ -59,9 +59,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
-#include "generator_type.hpp"
+#include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
+#include "generator_type.hpp"
 
 namespace rocrand_host {
 namespace detail {
@@ -200,21 +201,25 @@ namespace detail {
 } // end namespace detail
 } // end namespace rocrand_host
 
-class rocrand_philox4x32_10 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>
+class rocrand_philox4x32_10 : public rocrand_generator_impl_base
 {
 public:
-    using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>;
+    using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::philox4x32_10_device_engine;
 
     rocrand_philox4x32_10(unsigned long long seed   = 0,
                           unsigned long long offset = 0,
                           rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                           hipStream_t        stream = 0)
-        : base_type(order, seed, offset, stream), m_engines_initialized(false)
+        : base_type(order, offset, stream), m_engines_initialized(false), m_seed(seed)
+    {}
+
+    rocrand_rng_type type() const
     {
+            return ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
     }
 
-    void reset()
+    void reset() override final
     {
         m_engines_initialized = false;
     }
@@ -223,19 +228,23 @@ public:
     void set_seed(unsigned long long seed)
     {
         m_seed = seed;
-        m_engines_initialized = false;
+        reset();
     }
 
-    void set_offset(unsigned long long offset)
+    unsigned long long get_seed() const
     {
-        m_offset = offset;
-        m_engines_initialized = false;
+        return m_seed;
     }
 
-    void set_order(rocrand_ordering order)
+    rocrand_status set_order(rocrand_ordering order)
     {
-        m_order               = order;
-        m_engines_initialized = false;
+        if(!rocrand_host::detail::is_ordering_pseudo(order))
+        {
+                return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
@@ -276,6 +285,24 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status generate(unsigned long long* data, size_t data_size)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    template<typename Distribution>
+    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        (void)distribution;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
     template<class T>
     rocrand_status generate_uniform(T * data, size_t data_size)
     {
@@ -313,6 +340,8 @@ public:
 private:
     bool m_engines_initialized;
     engine_type  m_engine;
+
+    unsigned long long m_seed;
 
     const static uint32_t s_threads = 256;
     const static uint32_t s_blocks = 1024;
