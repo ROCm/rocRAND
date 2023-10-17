@@ -36,8 +36,8 @@ def runTestCommand (platform, project, settings)
     // def testCommand = "ctest${centos} --output-on-failure"
     def testCommand = "ctest --output-on-failure"
 
-    String LD_PATH = settings.addressSanitizer ? 'export ASAN_LIB_PATH=\$(/opt/rocm/llvm/bin/clang -print-file-name=libclang_rt.asan-x86_64.so) \
-    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$(dirname "\${ASAN_LIB_PATH}")' : 'export LD_LIBRARY_PATH=/opt/rocm/lib/'
+    String LD_PATH = settings.addressSanitizer ? """export ASAN_LIB_PATH=\$(/opt/rocm/llvm/bin/clang -print-file-name=libclang_rt.asan-x86_64.so)
+    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$(dirname "\${ASAN_LIB_PATH}")""" : 'export LD_LIBRARY_PATH=/opt/rocm/lib/'
 
     def command = """#!/usr/bin/env bash
                 set -x
