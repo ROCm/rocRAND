@@ -75,7 +75,7 @@ struct rocrand_scrambled_sobol32_integer_tests : public ::testing::Test
     using type = T;
 };
 
-using UniformIntegerReturnTypes = ::testing::Types<unsigned int, unsigned long long int>;
+using UniformIntegerReturnTypes = ::testing::Types<unsigned int, unsigned char>;
 
 TYPED_TEST_SUITE(rocrand_scrambled_sobol32_integer_tests, UniformIntegerReturnTypes);
 
@@ -97,14 +97,15 @@ TYPED_TEST(rocrand_scrambled_sobol32_integer_tests, uniform_test)
 
     HIP_CHECK(hipFree(data));
 
-    unsigned long long mean = 0;
+    double mean = 0.0;
     for(ResultType v : host_data)
     {
         mean += v;
     }
+    mean = mean / static_cast<double>(std::numeric_limits<ResultType>::max());
     mean = mean / size;
 
-    ASSERT_NEAR(mean, UINT_MAX / 2, UINT_MAX / 20);
+    ASSERT_NEAR(mean, 0.5, 0.05);
 }
 
 TYPED_TEST(rocrand_scrambled_sobol32_float_tests, normal_test)
