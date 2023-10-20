@@ -28,6 +28,7 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
+#include "system.hpp"
 
 namespace rocrand_host
 {
@@ -36,33 +37,39 @@ namespace detail
 
 typedef ::rocrand_device::mrg31k3p_engine mrg31k3p_device_engine;
 
-ROCRAND_KERNEL
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
-    mrg31k3p_device_engine* engines,
-    const unsigned int      start_engine_id,
-    unsigned long long      seed,
-    unsigned long long      offset)
+__host__ __device__ void init_engines(dim3                    block_idx,
+                                      dim3                    thread_idx,
+                                      dim3                    grid_dim,
+                                      dim3                    block_dim,
+                                      mrg31k3p_device_engine* engines,
+                                      const unsigned int      start_engine_id,
+                                      unsigned long long      seed,
+                                      unsigned long long      offset)
 {
-    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+    (void)grid_dim;
+    const unsigned int engine_id = block_idx.x * block_dim.x + thread_idx.x;
     engines[engine_id]
         = mrg31k3p_device_engine(seed, engine_id, offset + (engine_id < start_engine_id ? 1 : 0));
 }
 
 template<class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    mrg31k3p_device_engine* engines,
-    const unsigned int      start_engine_id,
-    T*                      data,
-    const size_t            n,
-    Distribution            distribution)
+__host__ __device__ void generate(dim3                    block_idx,
+                                  dim3                    thread_idx,
+                                  dim3                    grid_dim,
+                                  dim3                    block_dim,
+                                  mrg31k3p_device_engine* engines,
+                                  const unsigned int      start_engine_id,
+                                  T*                      data,
+                                  const size_t            n,
+                                  Distribution            distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride = gridDim.x * blockDim.x;
+    const unsigned int id     = block_idx.x * block_dim.x + thread_idx.x;
+    const unsigned int stride = grid_dim.x * block_dim.x;
 
     // Stride must be a power of two
     const unsigned int     engine_id = (id + start_engine_id) & (stride - 1);
@@ -140,16 +147,18 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 } // end namespace detail
 } // end namespace rocrand_host
 
-class rocrand_mrg31k3p : public rocrand_generator_impl_base
+template<typename System>
+class rocrand_mrg31k3p_template : public rocrand_generator_impl_base
 {
 public:
     using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::mrg31k3p_device_engine;
+    using system_type = System;
 
-    rocrand_mrg31k3p(unsigned long long seed   = 0,
-                     unsigned long long offset = 0,
-                     rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                     hipStream_t        stream = 0)
+    rocrand_mrg31k3p_template(unsigned long long seed   = 0,
+                              unsigned long long offset = 0,
+                              rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                              hipStream_t        stream = 0)
         : base_type(order, offset, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
@@ -158,9 +167,8 @@ public:
         , m_start_engine_id()
     {
         // Allocate device random number engines
-        hipError_t error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
+        rocrand_status status = system_type::alloc(&m_engines, m_engines_size);
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
@@ -170,17 +178,17 @@ public:
         }
     }
 
-    rocrand_mrg31k3p(const rocrand_mrg31k3p&) = delete;
+    rocrand_mrg31k3p_template(const rocrand_mrg31k3p_template&) = delete;
 
-    rocrand_mrg31k3p(rocrand_mrg31k3p&&) = delete;
+    rocrand_mrg31k3p_template(rocrand_mrg31k3p_template&&) = delete;
 
-    rocrand_mrg31k3p& operator=(const rocrand_mrg31k3p&&) = delete;
+    rocrand_mrg31k3p_template& operator=(const rocrand_mrg31k3p_template&&) = delete;
 
-    rocrand_mrg31k3p& operator=(rocrand_mrg31k3p&&) = delete;
+    rocrand_mrg31k3p_template& operator=(rocrand_mrg31k3p_template&&) = delete;
 
-    ~rocrand_mrg31k3p()
+    ~rocrand_mrg31k3p_template()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        system_type::free(m_engines);
     }
 
     rocrand_rng_type type() const
@@ -226,18 +234,16 @@ public:
 
         m_start_engine_id = m_offset % m_engines_size;
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
-                           dim3(s_blocks),
-                           dim3(s_threads),
-                           0,
-                           m_stream,
-                           m_engines,
-                           m_start_engine_id,
-                           m_seed,
-                           m_offset / m_engines_size);
-        // Check kernel status
-        if(hipGetLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        rocrand_status status = system_type::template launch<rocrand_host::detail::init_engines>(
+            dim3(s_blocks),
+            dim3(s_threads),
+            m_stream,
+            m_engines,
+            m_start_engine_id,
+            m_seed,
+            m_offset / m_engines_size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            return status;
 
         m_engines_initialized = true;
 
@@ -253,19 +259,19 @@ public:
         if(status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-                           dim3(s_blocks),
-                           dim3(s_threads),
-                           0,
-                           m_stream,
-                           m_engines,
-                           m_start_engine_id,
-                           data,
-                           data_size,
-                           distribution);
-        // Check kernel status
-        if(hipGetLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        status = system_type::template launch<rocrand_host::detail::generate<T, Distribution>>(
+            dim3(s_blocks),
+            dim3(s_threads),
+            m_stream,
+            m_engines,
+            m_start_engine_id,
+            data,
+            data_size,
+            distribution);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
 
         // Generating data_size values will use this many distributions
         const auto touched_engines
@@ -350,5 +356,8 @@ private:
 
     unsigned int m_start_engine_id;
 };
+
+using rocrand_mrg31k3p      = rocrand_mrg31k3p_template<rocrand_system_device>;
+using rocrand_mrg31k3p_host = rocrand_mrg31k3p_template<rocrand_system_host>;
 
 #endif // ROCRAND_RNG_MRG31K3P_H_
