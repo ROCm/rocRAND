@@ -165,6 +165,31 @@ rocrand_status ROCRANDAPI
 rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_type);
 
 /**
+ * \brief Creates a new random number generator.
+ *
+ * Creates a new pseudo random number generator of type \p rng_type
+ * and returns it in \p generator. This generator is executed on the host rather than
+ * on a device.
+ *
+ * Values for \p rng_type are:
+ * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_PSEUDO_MRG31K3P
+ *
+ * \param generator - Pointer to generator
+ * \param rng_type - Type of generator to create
+ *
+ * \return
+ * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
+ * - ROCRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
+ *   dynamically linked library version \n
+ * - ROCRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
+ * - ROCRAND_STATUS_SUCCESS if generator was created successfully \n
+ *
+ */
+rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* generator,
+                                                        rocrand_rng_type   rng_type);
+
+/**
  * \brief Destroys random number generator.
  *
  * Destroys random number generator and frees related memory.
