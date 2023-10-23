@@ -37,14 +37,14 @@ namespace detail
 
 typedef ::rocrand_device::mrg31k3p_engine mrg31k3p_device_engine;
 
-__host__ __device__ void init_engines(dim3                    block_idx,
-                                      dim3                    thread_idx,
-                                      dim3                    grid_dim,
-                                      dim3                    block_dim,
-                                      mrg31k3p_device_engine* engines,
-                                      const unsigned int      start_engine_id,
-                                      unsigned long long      seed,
-                                      unsigned long long      offset)
+__host__ __device__ void init_engines_mrg31k3p(dim3                    block_idx,
+                                               dim3                    thread_idx,
+                                               dim3                    grid_dim,
+                                               dim3                    block_dim,
+                                               mrg31k3p_device_engine* engines,
+                                               const unsigned int      start_engine_id,
+                                               unsigned long long      seed,
+                                               unsigned long long      offset)
 {
     (void)grid_dim;
     const unsigned int engine_id = block_idx.x * block_dim.x + thread_idx.x;
@@ -53,15 +53,15 @@ __host__ __device__ void init_engines(dim3                    block_idx,
 }
 
 template<class T, class Distribution>
-__host__ __device__ void generate(dim3                    block_idx,
-                                  dim3                    thread_idx,
-                                  dim3                    grid_dim,
-                                  dim3                    block_dim,
-                                  mrg31k3p_device_engine* engines,
-                                  const unsigned int      start_engine_id,
-                                  T*                      data,
-                                  const size_t            n,
-                                  Distribution            distribution)
+__host__ __device__ void generate_mrg31k3p(dim3                    block_idx,
+                                           dim3                    thread_idx,
+                                           dim3                    grid_dim,
+                                           dim3                    block_dim,
+                                           mrg31k3p_device_engine* engines,
+                                           const unsigned int      start_engine_id,
+                                           T*                      data,
+                                           const size_t            n,
+                                           Distribution            distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
@@ -234,14 +234,15 @@ public:
 
         m_start_engine_id = m_offset % m_engines_size;
 
-        rocrand_status status = system_type::template launch<rocrand_host::detail::init_engines>(
-            dim3(s_blocks),
-            dim3(s_threads),
-            m_stream,
-            m_engines,
-            m_start_engine_id,
-            m_seed,
-            m_offset / m_engines_size);
+        rocrand_status status
+            = system_type::template launch<rocrand_host::detail::init_engines_mrg31k3p>(
+                dim3(s_blocks),
+                dim3(s_threads),
+                m_stream,
+                m_engines,
+                m_start_engine_id,
+                m_seed,
+                m_offset / m_engines_size);
         if(status != ROCRAND_STATUS_SUCCESS)
             return status;
 
@@ -259,15 +260,15 @@ public:
         if(status != ROCRAND_STATUS_SUCCESS)
             return status;
 
-        status = system_type::template launch<rocrand_host::detail::generate<T, Distribution>>(
-            dim3(s_blocks),
-            dim3(s_threads),
-            m_stream,
-            m_engines,
-            m_start_engine_id,
-            data,
-            data_size,
-            distribution);
+        status = system_type::template launch<
+            rocrand_host::detail::generate_mrg31k3p<T, Distribution>>(dim3(s_blocks),
+                                                                      dim3(s_threads),
+                                                                      m_stream,
+                                                                      m_engines,
+                                                                      m_start_engine_id,
+                                                                      data,
+                                                                      data_size,
+                                                                      distribution);
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
