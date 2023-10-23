@@ -34,6 +34,7 @@ constexpr const size_t             seeds_count        = sizeof(seeds) / sizeof(s
 constexpr const size_t             random_seeds_count = 2;
 
 constexpr rocrand_rng_type host_rng_types[] = {
+    ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
     ROCRAND_RNG_PSEUDO_MRG31K3P,
 };
 

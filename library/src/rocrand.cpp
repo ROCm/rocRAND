@@ -108,10 +108,12 @@ rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* gener
         // clang-format off
         switch(rng_type)
         {
+            case ROCRAND_RNG_PSEUDO_PHILOX4_32_10:
+                *generator = new rocrand_generator_type<rocrand_philox4x32_10_host>();
+                break;
             case ROCRAND_RNG_PSEUDO_MRG31K3P:
                 *generator = new rocrand_generator_type<rocrand_mrg31k3p_host>();
                 break;
-            case ROCRAND_RNG_PSEUDO_PHILOX4_32_10:
             case ROCRAND_RNG_PSEUDO_MRG32K3A:
             case ROCRAND_RNG_PSEUDO_DEFAULT:
             case ROCRAND_RNG_PSEUDO_XORWOW:
