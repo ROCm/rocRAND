@@ -24,6 +24,7 @@
 #include <hip/hip_runtime.h>
 
 #include "common.hpp"
+#include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
@@ -139,20 +140,21 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 } // end namespace detail
 } // end namespace rocrand_host
 
-class rocrand_mrg31k3p : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_MRG31K3P>
+class rocrand_mrg31k3p : public rocrand_generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MRG31K3P>;
+    using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::mrg31k3p_device_engine;
 
     rocrand_mrg31k3p(unsigned long long seed   = 0,
                      unsigned long long offset = 0,
                      rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                      hipStream_t        stream = 0)
-        : base_type(order, seed, offset, stream)
+        : base_type(order, offset, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_threads * s_blocks)
+        , m_seed(seed)
         , m_start_engine_id()
     {
         // Allocate device random number engines
@@ -181,7 +183,12 @@ public:
         ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
-    void reset()
+    rocrand_rng_type type() const
+    {
+        return ROCRAND_RNG_PSEUDO_MRG31K3P;
+    }
+
+    void reset() override final
     {
         m_engines_initialized = false;
     }
@@ -192,24 +199,24 @@ public:
     /// zero, value \p ROCRAND_MRG31K3P_DEFAULT_SEED is used instead.
     void set_seed(unsigned long long seed)
     {
-        if(seed == 0)
+        m_seed = seed == 0 ? ROCRAND_MRG31K3P_DEFAULT_SEED : seed;
+        reset();
+    }
+
+    unsigned long long get_seed() const
+    {
+        return m_seed;
+    }
+
+    rocrand_status set_order(rocrand_ordering order)
+    {
+        if(!rocrand_host::detail::is_ordering_pseudo(order))
         {
-            seed = ROCRAND_MRG31K3P_DEFAULT_SEED;
+            return ROCRAND_STATUS_OUT_OF_RANGE;
         }
-        m_seed                = seed;
-        m_engines_initialized = false;
-    }
-
-    void set_offset(unsigned long long offset)
-    {
-        m_offset              = offset;
-        m_engines_initialized = false;
-    }
-
-    void set_order(rocrand_ordering order)
-    {
-        m_order               = order;
-        m_engines_initialized = false;
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
@@ -269,6 +276,24 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status generate(unsigned long long* data, size_t data_size)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    template<typename Distribution>
+    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        (void)distribution;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
     template<class T>
     rocrand_status generate_uniform(T* data, size_t data_size)
     {
@@ -311,6 +336,8 @@ private:
     bool         m_engines_initialized;
     engine_type* m_engines;
     size_t       m_engines_size;
+
+    unsigned long long m_seed;
 
     static const unsigned int s_threads = 256;
     static const unsigned int s_blocks  = 512;
