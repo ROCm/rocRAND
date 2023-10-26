@@ -29,9 +29,10 @@
 #include <rocrand/rocrand_sobol64_precomputed.h>
 
 #include "common.hpp"
-#include "generator_type.hpp"
+#include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
+#include "generator_type.hpp"
 
 namespace rocrand_host {
 namespace detail {
@@ -144,16 +145,16 @@ namespace detail {
 } // end namespace detail
 } // end namespace rocrand_host
 
-class rocrand_sobol64 : public rocrand_generator_type<ROCRAND_RNG_QUASI_SOBOL64>
+class rocrand_sobol64 : public rocrand_generator_impl_base
 {
 public:
-    using base_type = rocrand_generator_type<ROCRAND_RNG_QUASI_SOBOL64>;
+    using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::sobol64_device_engine;
 
     rocrand_sobol64(unsigned long long int offset = 0,
                     rocrand_ordering       order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                     hipStream_t            stream = 0)
-        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1), m_current_offset()
+        : base_type(order, offset, stream), m_initialized(false), m_dimensions(1), m_current_offset()
     {
         // Allocate direction vectors
         hipError_t error;
@@ -186,24 +187,38 @@ public:
         ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
     }
 
-    void reset()
+    rocrand_rng_type type() const
+    {
+        return ROCRAND_RNG_QUASI_SOBOL64;
+    }
+
+    void reset() override final
     {
         m_initialized = false;
     }
 
-    void set_offset(unsigned long long int offset)
+    void set_seed(unsigned long long seed)
     {
-        m_offset = offset;
-        m_initialized = false;
+        (void)seed;
     }
 
-    void set_order(rocrand_ordering order)
+    unsigned long long get_seed() const
     {
-        m_order       = order;
-        m_initialized = false;
+        return 0;
     }
 
-    rocrand_status set_dimensions(unsigned int dimensions)
+    rocrand_status set_order(rocrand_ordering order)
+    {
+        if(!rocrand_host::detail::is_ordering_quasi(order))
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    rocrand_status set_dimensions(unsigned int dimensions) override final
     {
         if(dimensions < 1 || dimensions > SOBOL_DIM)
         {

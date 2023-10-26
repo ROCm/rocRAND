@@ -27,6 +27,7 @@
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
+#include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
@@ -140,10 +141,10 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 } // end namespace detail
 } // namespace rocrand_host
 
-class rocrand_lfsr113 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113, uint4>
+class rocrand_lfsr113 : public rocrand_generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113, uint4>;
+    using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::lfsr113_device_engine;
 
     rocrand_lfsr113(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
@@ -153,10 +154,11 @@ public:
                     unsigned long long offset = 0,
                     rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                     hipStream_t        stream = 0)
-        : base_type(order, seeds, offset, stream)
+        : base_type(order, offset, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_threads * s_blocks)
+        , m_seed(seeds)
         , m_start_engine_id()
     {
         // Allocate device random number engines
@@ -181,6 +183,16 @@ public:
         ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
+    rocrand_rng_type type() const
+    {
+        return ROCRAND_RNG_PSEUDO_LFSR113;
+    }
+
+    void reset() override final
+    {
+        m_engines_initialized = false;
+    }
+
     void set_seed(unsigned long long seed)
     {
         uint4 seeds = uint4{static_cast<unsigned int>(seed),
@@ -195,10 +207,10 @@ public:
             seeds.y += ROCRAND_LFSR113_DEFAULT_SEED_Y;
 
         m_seed                = seeds;
-        m_engines_initialized = false;
+        reset();
     }
 
-    void set_seed(uint4 seed)
+    rocrand_status set_seed_uint4(uint4 seed) override final
     {
         if(seed.x < ROCRAND_LFSR113_DEFAULT_SEED_X)
             seed.x += ROCRAND_LFSR113_DEFAULT_SEED_X;
@@ -213,19 +225,36 @@ public:
             seed.w += ROCRAND_LFSR113_DEFAULT_SEED_W;
 
         m_seed                = seed;
-        m_engines_initialized = false;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
-    void set_offset(unsigned long long offset)
+    unsigned long long get_seed() const
     {
-        m_offset              = offset;
-        m_engines_initialized = false;
+        return 0; // Not supported for this generator
     }
 
-    void set_order(rocrand_ordering order)
+    uint4 get_seed_uint4() const
     {
-        m_order               = order;
-        m_engines_initialized = false;
+        return m_seed;
+    }
+
+    rocrand_status set_offset(unsigned long long offset)
+    {
+        (void)offset;
+        // Can't set offset for LFSR113
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    rocrand_status set_order(rocrand_ordering order)
+    {
+        if(!rocrand_host::detail::is_ordering_pseudo(order))
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
@@ -280,6 +309,24 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status generate(unsigned long long* data, size_t data_size)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    template<typename Distribution>
+    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        (void)distribution;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
     template<class T>
     rocrand_status generate_uniform(T* data, size_t data_size)
     {
@@ -318,6 +365,7 @@ private:
     bool         m_engines_initialized;
     engine_type* m_engines;
     size_t       m_engines_size;
+    uint4        m_seed;
 
     static const uint32_t s_threads = 256;
     static const uint32_t s_blocks  = 512;
