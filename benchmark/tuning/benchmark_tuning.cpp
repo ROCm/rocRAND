@@ -21,6 +21,7 @@
 #include "benchmark_utils.hpp"
 #include "benchmarked_generators.hpp"
 #include "cmdparser.hpp"
+#include "rng/philox4x32_10.hpp"
 #include "rng/xorwow.hpp"
 
 int main(int argc, char** argv)
@@ -51,6 +52,8 @@ int main(int argc, char** argv)
     add_common_benchmark_rocrand_info();
 
     std::vector<benchmark::internal::Benchmark*> benchmarks;
+    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(benchmarks,
+                                                                                       config);
     benchmark_tuning::add_all_benchmarks_for_generator<rocrand_xorwow_template>(benchmarks, config);
 
     // Use manual timing

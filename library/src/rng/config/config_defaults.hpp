@@ -31,6 +31,13 @@ namespace rocrand_host::detail
 {
 
 template<class T>
+struct generator_config_defaults<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>
+{
+    static constexpr inline unsigned int threads = 256;
+    static constexpr inline unsigned int blocks  = 1024;
+};
+
+template<class T>
 struct generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>
 {
     static constexpr inline unsigned int threads = 256;
