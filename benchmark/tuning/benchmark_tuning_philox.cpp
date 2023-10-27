@@ -18,42 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/// \file benchmarked_generators.hpp
-/// This header should contain the benchmarking setup for specific rocRAND generators.
-/// E.g. specialization of the \c output_type_supported class template.
-/// Additionally, an \c extern \c template declaration could be present for each
-/// benchmarked generator, to offload compilation of the benchmarks to multiple translation
-/// units.
-
-#ifndef ROCRAND_BENCHMARK_TUNING_BENCHMARKED_GENERATORS_HPP_
-#define ROCRAND_BENCHMARK_TUNING_BENCHMARKED_GENERATORS_HPP_
-
-#include "benchmark_tuning.hpp"
-
-template<class ConfigProvider>
-class rocrand_philox4x32_10_template;
-
-template<class ConfigProvider>
-class rocrand_xorwow_template;
+#include "benchmarked_generators.hpp"
+#include "rng/philox4x32_10.hpp"
 
 namespace benchmark_tuning
 {
 
-template<>
-struct output_type_supported<unsigned long long, rocrand_philox4x32_10_template>
-    : public std::false_type
-{};
-
-template<>
-struct output_type_supported<unsigned long long, rocrand_xorwow_template> : public std::false_type
-{};
-
-extern template void add_all_benchmarks_for_generator<rocrand_xorwow_template>(
-    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
-
-extern template void add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(
+template void add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 } // namespace benchmark_tuning
-
-#endif

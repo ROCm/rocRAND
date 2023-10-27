@@ -297,6 +297,19 @@ __host__ __device__ constexpr bool is_ordering_quasi(const rocrand_ordering orde
         hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<ConfigProvider, false>), __VA_ARGS__); \
     }
 
+#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING_SYSTEM(ordering, kernel_name, ...)                      \
+    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                                      \
+    {                                                                                              \
+        status                                                                                     \
+            = system_type::template launch<kernel_name<T, Distribution>, T, ConfigProvider, true>( \
+                __VA_ARGS__);                                                                      \
+    }                                                                                              \
+    else                                                                                           \
+    {                                                                                              \
+        status = system_type::                                                                     \
+            template launch<kernel_name<T, Distribution>, T, ConfigProvider, false>(__VA_ARGS__);  \
+    }
+
 /// @brief Selects the preset kernel launch config for the given random engine and
 /// generated value type.
 /// @tparam T The datatype of the generated random values.
