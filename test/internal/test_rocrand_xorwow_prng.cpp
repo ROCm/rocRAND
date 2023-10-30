@@ -32,8 +32,18 @@
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
-class xorwow_prng_tests : public testing::TestWithParam<rocrand_ordering>
-{};
+struct xorwow_prng_tests : public testing::TestWithParam<rocrand_ordering>
+{
+    rocrand_xorwow get_generator() const
+    {
+        rocrand_xorwow g;
+        if(g.set_order(GetParam()) != ROCRAND_STATUS_SUCCESS)
+        {
+            throw std::runtime_error("Could not set ordering for generator");
+        }
+        return g;
+    }
+};
 
 INSTANTIATE_TEST_SUITE_P(rocrand,
                          xorwow_prng_tests,
@@ -42,8 +52,7 @@ INSTANTIATE_TEST_SUITE_P(rocrand,
 
 TEST_P(xorwow_prng_tests, init_test)
 {
-    rocrand_xorwow generator; // offset = 0
-    generator.set_order(GetParam());
+    rocrand_xorwow generator = get_generator(); // offset = 0
     ROCRAND_CHECK(generator.init());
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -78,8 +87,7 @@ TEST_P(xorwow_prng_tests, uniform_uint_test)
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    rocrand_xorwow g;
-    g.set_order(GetParam());
+    rocrand_xorwow g = get_generator();
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -104,8 +112,7 @@ TEST_P(xorwow_prng_tests, uniform_float_test)
     float*       data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
-    rocrand_xorwow g;
-    g.set_order(GetParam());
+    rocrand_xorwow g = get_generator();
     ROCRAND_CHECK(g.generate(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -136,8 +143,7 @@ TEST_P(xorwow_prng_tests, state_progress_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generator
-    rocrand_xorwow g0;
-    g0.set_order(GetParam());
+    rocrand_xorwow g0 = get_generator();
 
     // Generate using g0 and copy to host
     ROCRAND_CHECK(g0.generate(data, size));
@@ -180,9 +186,7 @@ TEST_P(xorwow_prng_tests, same_seed_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
-    rocrand_xorwow g0, g1;
-    g0.set_order(GetParam());
-    g1.set_order(GetParam());
+    rocrand_xorwow g0 = get_generator(), g1 = get_generator();
     // Set same seeds
     g0.set_seed(seed);
     g1.set_seed(seed);
@@ -226,9 +230,7 @@ TEST_P(xorwow_prng_tests, different_seed_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
     // Generators
-    rocrand_xorwow g0, g1;
-    g0.set_order(GetParam());
-    g1.set_order(GetParam());
+    rocrand_xorwow g0 = get_generator(), g1 = get_generator();
     // Set different seeds
     g0.set_seed(seed0);
     g1.set_seed(seed1);
@@ -325,10 +327,18 @@ TEST_P(xorwow_prng_tests, discard_sequence_test)
 }
 
 template<typename T>
-class rocrand_xorwow_prng_offset : public ::testing::Test
+struct rocrand_xorwow_prng_offset : public ::testing::Test
 {
-public:
     using type = T;
+    rocrand_xorwow get_generator() const
+    {
+        rocrand_xorwow g;
+        if(g.set_order(T::ordering) != ROCRAND_STATUS_SUCCESS)
+        {
+            throw std::runtime_error("Could not set ordering for generator");
+        }
+        return g;
+    }
 };
 
 template<class T, rocrand_ordering Ordering>
@@ -349,7 +359,6 @@ TYPED_TEST(rocrand_xorwow_prng_offset, offsets_test)
 {
     using params                               = typename TestFixture::type;
     using T                                    = typename params::output_type;
-    static constexpr rocrand_ordering ordering = params::ordering;
 
     const size_t size = 131313;
 
@@ -364,13 +373,11 @@ TYPED_TEST(rocrand_xorwow_prng_offset, offsets_test)
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
 
-        rocrand_xorwow g0;
-        g0.set_order(ordering);
+        rocrand_xorwow g0 = TestFixture::get_generator();
         g0.set_offset(offset);
         g0.generate(data0, size0);
 
-        rocrand_xorwow g1;
-        g1.set_order(ordering);
+        rocrand_xorwow g1 = TestFixture::get_generator();
         g1.generate(data1, size1);
 
         std::vector<T> host_data0(size0);

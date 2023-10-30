@@ -172,13 +172,47 @@ public:
 
     rocrand_xorwow_template(const rocrand_xorwow_template&) = delete;
 
-    rocrand_xorwow_template(rocrand_xorwow_template&&) = delete;
+    rocrand_xorwow_template(rocrand_xorwow_template&& other)
+        : base_type(other)
+        , m_engines_initialized(other.m_engines_initialized)
+        , m_engines(other.m_engines)
+        , m_start_engine_id(other.m_start_engine_id)
+        , m_engines_size(other.m_engines_size)
+        , m_seed(other.m_seed)
+        , m_poisson(std::move(other.m_poisson))
+    {
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+    }
 
-    rocrand_xorwow_template& operator=(const rocrand_xorwow_template&&) = delete;
+    rocrand_xorwow_template& operator=(const rocrand_xorwow_template&) = delete;
 
-    rocrand_xorwow_template& operator=(rocrand_xorwow_template&&) = delete;
+    rocrand_xorwow_template& operator=(rocrand_xorwow_template&& other)
+    {
+        *static_cast<base_type*>(this) = other;
+        m_engines_initialized          = other.m_engines_initialized;
+        m_engines                      = other.m_engines;
+        m_start_engine_id              = other.m_start_engine_id;
+        m_engines_size                 = other.m_engine_size;
+        m_seed                         = other.m_seed;
+        m_poisson                      = std::move(other.m_poisson);
 
-    rocrand_rng_type type() const
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+
+        return *this;
+    }
+
+    ~rocrand_xorwow_template()
+    {
+        if(m_engines != nullptr)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+            m_engines = nullptr;
+        }
+    }
+
+    constexpr rocrand_rng_type type() const
     {
         return ROCRAND_RNG_PSEUDO_XORWOW;
     }
@@ -214,21 +248,31 @@ public:
     rocrand_status init()
     {
         if (m_engines_initialized)
+        {
             return ROCRAND_STATUS_SUCCESS;
+        }
 
         hipError_t error
             = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(m_stream,
                                                                                m_order,
                                                                                m_engines_size);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
         m_start_engine_id = m_offset % m_engines_size;
 
+        if(m_engines != nullptr)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        }
         error
             = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
 
         constexpr unsigned int init_threads = ROCRAND_DEFAULT_MAX_BLOCK_SIZE;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
@@ -244,7 +288,9 @@ public:
                            m_seed,
                            m_offset / m_engines_size);
         if(hipGetLastError() != hipSuccess)
+        {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+        }
 
         m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
@@ -256,13 +302,17 @@ public:
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
+        {
             return status;
+        }
 
         rocrand_host::detail::generator_config config;
         const hipError_t                       error
             = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
         ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
                                            m_order,
@@ -279,7 +329,9 @@ public:
 
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
+        {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+        }
 
         // Generating data_size values will use this many distributions
         const auto touched_engines =
