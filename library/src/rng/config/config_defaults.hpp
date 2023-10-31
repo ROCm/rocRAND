@@ -46,6 +46,34 @@ struct generator_config_defaults<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>
 };
 
 template<class T>
+struct generator_config_defaults<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20, T>
+{
+    static constexpr inline unsigned int threads = 256;
+    static constexpr inline unsigned int blocks  = 1024;
+};
+
+template<class T>
+struct generator_config_defaults<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20, T>
+{
+    static constexpr inline unsigned int threads = 256;
+    static constexpr inline unsigned int blocks  = 1024;
+};
+
+template<class T>
+struct generator_config_defaults<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20, T>
+{
+    static constexpr inline unsigned int threads = 256;
+    static constexpr inline unsigned int blocks  = 1024;
+};
+
+template<class T>
+struct generator_config_defaults<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20, T>
+{
+    static constexpr inline unsigned int threads = 256;
+    static constexpr inline unsigned int blocks  = 1024;
+};
+
+template<class T>
 struct generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>
 {
     static constexpr inline unsigned int threads = 256;

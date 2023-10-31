@@ -37,6 +37,18 @@ template<class ConfigProvider>
 class rocrand_philox4x32_10_template;
 
 template<class ConfigProvider>
+class rocrand_threefry2x32_20_template;
+
+template<class ConfigProvider>
+class rocrand_threefry2x64_20_template;
+
+template<class ConfigProvider>
+class rocrand_threefry4x32_20_template;
+
+template<class ConfigProvider>
+class rocrand_threefry4x64_20_template;
+
+template<class ConfigProvider>
 class rocrand_xorwow_template;
 
 namespace benchmark_tuning
@@ -52,16 +64,38 @@ struct output_type_supported<unsigned long long, rocrand_philox4x32_10_template>
 {};
 
 template<>
+struct output_type_supported<unsigned long long, rocrand_threefry2x32_20_template>
+    : public std::false_type
+{};
+
+template<>
+struct output_type_supported<unsigned long long, rocrand_threefry4x32_20_template>
+    : public std::false_type
+{};
+
+template<>
 struct output_type_supported<unsigned long long, rocrand_xorwow_template> : public std::false_type
 {};
 
 extern template void add_all_benchmarks_for_generator<rocrand_lfsr113_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_xorwow_template>(
+extern template void add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(
+extern template void add_all_benchmarks_for_generator<rocrand_threefry2x32_20_template>(
+    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
+
+extern template void add_all_benchmarks_for_generator<rocrand_threefry2x64_20_template>(
+    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
+
+extern template void add_all_benchmarks_for_generator<rocrand_threefry4x32_20_template>(
+    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
+
+extern template void add_all_benchmarks_for_generator<rocrand_threefry4x64_20_template>(
+    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
+
+extern template void add_all_benchmarks_for_generator<rocrand_xorwow_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 } // namespace benchmark_tuning

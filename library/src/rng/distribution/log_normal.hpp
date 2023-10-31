@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,17 @@
 
 #include "device_distributions.hpp"
 
+inline constexpr unsigned int log_normal_distribution_max_input_width_default = 4;
+
+template<template<class> class GeneratorTemplate, class T>
+inline constexpr unsigned int log_normal_distribution_max_input_width
+    = log_normal_distribution_max_input_width_default;
 
 // Universal
 
-template<class Output, class Input = unsigned int, unsigned int MaxInputWidth = 4>
+template<class Output,
+         class Input                = unsigned int,
+         unsigned int MaxInputWidth = log_normal_distribution_max_input_width_default>
 struct log_normal_distribution;
 
 template<>
