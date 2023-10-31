@@ -38,6 +38,8 @@ set(CMAKE_CXX_STANDARD 17)
 add_executable(benchmark_rocrand_tuning
   benchmark_tuning.cpp
   benchmark_tuning_lfsr113.cpp
+  benchmark_tuning_mrg31k3p.cpp
+  benchmark_tuning_mrg32k3a.cpp
   benchmark_tuning_philox.cpp
   benchmark_tuning_threefry2x32_20.cpp
   benchmark_tuning_threefry2x64_20.cpp
