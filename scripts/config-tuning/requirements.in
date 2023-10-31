@@ -2,3 +2,4 @@ pandas
 seaborn
 matplotlib
 jinja2
+json5
