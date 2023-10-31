@@ -150,14 +150,8 @@ public:
         }
         else if constexpr(std::is_integral_v<T>)
         {
-            // The template signature of the usable uniform distribution is slightly different
-            // in the unsigned long long case.
-            using UniformDistribution
-                = std::conditional_t<std::is_same_v<T, unsigned long long>,
-                                     uniform_distribution<unsigned long long, unsigned long long>,
-                                     uniform_distribution<T>>;
-
-            add_benchmarks_impl<T, UniformDistribution>();
+            add_benchmarks_impl<T,
+                                uniform_distribution<T, distribution_input_t<GeneratorTemplate>>>();
 
             if constexpr(std::is_same_v<T, unsigned int>)
             {
@@ -169,9 +163,19 @@ public:
         else if constexpr(std::is_floating_point_v<T> || std::is_same_v<T, half>)
         {
             // float, double and half support these distributions only.
-            add_benchmarks_impl<T, uniform_distribution<T>>();
-            add_benchmarks_impl<T, normal_distribution<T>>();
-            add_benchmarks_impl<T, log_normal_distribution<T>>();
+            add_benchmarks_impl<T,
+                                uniform_distribution<T, distribution_input_t<GeneratorTemplate>>>();
+            add_benchmarks_impl<
+                T,
+                normal_distribution<T,
+                                    distribution_input_t<GeneratorTemplate>,
+                                    normal_distribution_max_input_width<GeneratorTemplate, T>>>();
+            add_benchmarks_impl<
+                T,
+                log_normal_distribution<
+                    T,
+                    distribution_input_t<GeneratorTemplate>,
+                    log_normal_distribution_max_input_width<GeneratorTemplate, T>>>();
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,22 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_DISTRIBUTIONS_H_
-#define ROCRAND_RNG_DISTRIBUTIONS_H_
+#include "benchmarked_generators.hpp"
+#include "rng/threefry4x32_20.hpp"
 
-#include "distribution/uniform.hpp"
-#include "distribution/normal.hpp"
-#include "distribution/log_normal.hpp"
-#include "distribution/discrete.hpp"
-#include "distribution/poisson.hpp"
-
-template<template<class> class GeneratorTemplate>
-struct distribution_input
+namespace benchmark_tuning
 {
-    using type = unsigned int;
-};
 
-template<template<class> class GeneratorTemplate>
-using distribution_input_t = typename distribution_input<GeneratorTemplate>::type;
+template void add_all_benchmarks_for_generator<rocrand_threefry4x32_20_template>(
+    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-#endif // ROCRAND_RNG_DISTRIBUTION_S_H_
+} // namespace benchmark_tuning

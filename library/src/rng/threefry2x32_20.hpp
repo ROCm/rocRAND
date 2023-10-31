@@ -32,22 +32,8 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 
-namespace rocrand_host
+namespace rocrand_host::detail
 {
-namespace detail
-{
-
-template<class T>
-constexpr int max_input_width()
-{
-    return 4;
-};
-
-template<>
-constexpr int max_input_width<double>()
-{
-    return 2;
-};
 
 struct threefry2x32_20_device_engine : public ::rocrand_device::threefry2x32_20_engine
 {
@@ -81,9 +67,10 @@ struct threefry2x32_20_device_engine : public ::rocrand_device::threefry2x32_20_
     // m_state from base class
 };
 
-template<class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    threefry2x32_20_device_engine engine, T* data, const size_t n, Distribution distribution)
+template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
+ROCRAND_KERNEL
+    __launch_bounds__((get_block_size<ConfigProvider, T>(IsDynamic))) void generate_kernel(
+        threefry2x32_20_device_engine engine, T* data, const size_t n, Distribution distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
@@ -185,20 +172,20 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     }
 }
 
-} // end namespace detail
-} // end namespace rocrand_host
+} // end namespace rocrand_host::detail
 
-class rocrand_threefry2x32_20 : public rocrand_generator_impl_base
+template<class ConfigProvider>
+class rocrand_threefry2x32_20_template : public rocrand_generator_impl_base
 {
 public:
     using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::threefry2x32_20_device_engine;
 
-    rocrand_threefry2x32_20(unsigned long long seed   = 0,
-                            unsigned long long offset = 0,
-                            rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                            hipStream_t        stream = 0)
-        : base_type(order, offset, stream), m_engines_initialized(false), m_seed(seed)
+    rocrand_threefry2x32_20_template(unsigned long long seed   = 0,
+                                     unsigned long long offset = 0,
+                                     rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                                     hipStream_t        stream = 0)
+        : base_type(order, offset, stream), m_seed(seed)
     {}
 
     rocrand_rng_type type() const
@@ -250,20 +237,34 @@ public:
     {
         rocrand_status status = init();
         if(status != ROCRAND_STATUS_SUCCESS)
+        {
             return status;
+        }
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-                           dim3(s_blocks),
-                           dim3(s_threads),
-                           0,
-                           m_stream,
-                           m_engine,
-                           data,
-                           data_size,
-                           distribution);
+        rocrand_host::detail::generator_config config;
+        const hipError_t                       error
+            = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+
+        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
+                                           m_order,
+                                           rocrand_host::detail::generate_kernel,
+                                           dim3(config.blocks),
+                                           dim3(config.threads),
+                                           0,
+                                           m_stream,
+                                           m_engine,
+                                           data,
+                                           data_size,
+                                           distribution);
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
+        {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+        }
 
         // Generating data_size values will use this many distributions
         const auto num_applied_generators = (data_size + Distribution::output_width - 1)
@@ -303,16 +304,18 @@ public:
     template<class T>
     rocrand_status generate_normal(T* data, size_t data_size, T mean, T stddev)
     {
-        normal_distribution<T, unsigned int, rocrand_host::detail::max_input_width<T>()>
-            distribution(mean, stddev);
+        constexpr unsigned int input_width
+            = normal_distribution_max_input_width<rocrand_threefry2x32_20_template, T>;
+        normal_distribution<T, unsigned int, input_width> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_log_normal(T* data, size_t data_size, T mean, T stddev)
     {
-        log_normal_distribution<T, unsigned int, rocrand_host::detail::max_input_width<T>()>
-            distribution(mean, stddev);
+        constexpr unsigned int input_width
+            = log_normal_distribution_max_input_width<rocrand_threefry2x32_20_template, T>;
+        log_normal_distribution<T, unsigned int, input_width> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
@@ -330,13 +333,10 @@ public:
     }
 
 private:
-    bool        m_engines_initialized;
+    bool        m_engines_initialized = false;
     engine_type m_engine;
 
     unsigned long long m_seed;
-
-    const static uint32_t s_threads = 256;
-    const static uint32_t s_blocks  = 1024;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> m_poisson;
@@ -344,5 +344,17 @@ private:
     // m_seed from base_type
     // m_offset from base_type
 };
+
+template<>
+constexpr unsigned int normal_distribution_max_input_width<rocrand_threefry2x32_20_template, double>
+    = 2;
+
+template<>
+constexpr unsigned int
+    log_normal_distribution_max_input_width<rocrand_threefry2x32_20_template, double>
+    = 2;
+
+using rocrand_threefry2x32_20 = rocrand_threefry2x32_20_template<
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
 
 #endif // ROCRAND_RNG_THREEFRY2X32_20_H_
