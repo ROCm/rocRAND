@@ -53,6 +53,10 @@ int main(int argc, char** argv)
     std::vector<benchmark::internal::Benchmark*> benchmarks;
     benchmark_tuning::add_all_benchmarks_for_generator<rocrand_lfsr113_template>(benchmarks,
                                                                                  config);
+    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_mrg31k3p_template>(benchmarks,
+                                                                                  config);
+    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_mrg32k3a_template>(benchmarks,
+                                                                                  config);
     benchmark_tuning::add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(benchmarks,
                                                                                        config);
     benchmark_tuning::add_all_benchmarks_for_generator<rocrand_threefry2x32_20_template>(benchmarks,
