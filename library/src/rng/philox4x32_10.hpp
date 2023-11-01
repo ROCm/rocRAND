@@ -366,7 +366,8 @@ private:
     const static uint32_t s_blocks  = 1024;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<> m_poisson;
+    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
+        m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type

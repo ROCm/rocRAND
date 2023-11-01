@@ -334,8 +334,8 @@ public:
         {
             return status;
         }
-        mrg_engine_poisson_distribution<rocrand_device::mrg31k3p_engine> distribution(
-            m_poisson.dis);
+        mrg_engine_poisson_distribution<rocrand_device::mrg31k3p_engine, !system_type::is_device()>
+            distribution(m_poisson.dis);
         return generate(data, data_size, distribution);
     }
 
@@ -350,7 +350,8 @@ private:
     static const unsigned int s_blocks  = 512;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<> m_poisson;
+    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
+        m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
