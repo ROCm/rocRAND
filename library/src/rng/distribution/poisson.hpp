@@ -150,17 +150,17 @@ private:
 
 // Mrg32k3a and Mrg31k3p
 
-template<typename state_type>
+template<typename state_type, bool IsHostSide = false>
 struct mrg_engine_poisson_distribution
 {
+    using distribution_type
+        = rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, IsHostSide>;
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis;
+    distribution_type dis;
 
-    explicit mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
-        : dis(dis)
-    { }
+    mrg_engine_poisson_distribution(distribution_type dis) : dis(dis) {}
 
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
