@@ -5,6 +5,10 @@ Documentation for rocRAND is available at
 
 ## rocRAND-3.0.0 for ROCm 6.0.0
 
+### Additions
+
+* Added `rocrand_create_generator_host` with initial support for `ROCRAND_RNG_PSEUDO_PHILOX4_32_10` and `ROCRAND_RNG_PSEUDO_MRG31K3P`.
+
 ### Changes
 
 * Generator classes from `rocrand.hpp` are no longer copyable (in previous versions these copies
