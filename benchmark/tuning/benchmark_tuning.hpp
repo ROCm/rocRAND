@@ -49,6 +49,17 @@ struct output_type_supported : public std::true_type
 
 using rocrand_host::detail::generator_config;
 
+/// @brief Provides a way to opt out from benchmarking certain configs for certain generators and types
+/// @note See benchmarked_generators.hpp for specializations
+template<template<class> class GeneratorTemplate, class T>
+struct config_filter
+{
+    static constexpr bool is_enabled(generator_config /*config*/)
+    {
+        return true;
+    }
+};
+
 /// @brief ConfigProvider that always returns a config with the specified \ref Blocks and \ref Threads.
 /// This can be used in place of \ref rocrand_host::detail::default_config_provider, which bases the
 /// returned configuration on the current architecture.
@@ -226,18 +237,22 @@ private:
 
                  using ConfigProvider = static_config_provider<threads, blocks>;
 
-                 const auto benchmark_name = get_benchmark_name<Distribution, ConfigProvider>();
+                 if constexpr(config_filter<GeneratorTemplate, T>::is_enabled(
+                                  ConfigProvider::static_config))
+                 {
+                     const auto benchmark_name = get_benchmark_name<Distribution, ConfigProvider>();
 
-                 // Append the benchmark to the list using the appropriate ConfigProvider.
-                 // Note that captures must be by-value. This class instance won't live to see
-                 // the execution of the benchmarks.
-                 m_benchmarks.push_back(benchmark::RegisterBenchmark(
-                     benchmark_name.c_str(),
-                     [*this](auto& state) {
-                         run_benchmark<T, GeneratorTemplate<ConfigProvider>, Distribution>(
-                             state,
-                             m_config);
-                     }));
+                     // Append the benchmark to the list using the appropriate ConfigProvider.
+                     // Note that captures must be by-value. This class instance won't live to see
+                     // the execution of the benchmarks.
+                     m_benchmarks.push_back(benchmark::RegisterBenchmark(
+                         benchmark_name.c_str(),
+                         [*this](auto& state) {
+                             run_benchmark<T, GeneratorTemplate<ConfigProvider>, Distribution>(
+                                 state,
+                                 m_config);
+                         }));
+                 }
              }()),
          ...);
     }

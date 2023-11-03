@@ -217,7 +217,8 @@ int main(int argc, char* argv[])
 
     const std::map<rng_type_t, std::vector<rocrand_ordering>> benchmarked_orderings{
   // clang-format off
-        {          ROCRAND_RNG_PSEUDO_MTGP32, {ROCRAND_ORDERING_PSEUDO_DEFAULT}},
+        {          ROCRAND_RNG_PSEUDO_MTGP32,
+            {ROCRAND_ORDERING_PSEUDO_DEFAULT, ROCRAND_ORDERING_PSEUDO_DYNAMIC}},
         {         ROCRAND_RNG_PSEUDO_MT19937, {ROCRAND_ORDERING_PSEUDO_DEFAULT}},
         {          ROCRAND_RNG_PSEUDO_XORWOW,
             {ROCRAND_ORDERING_PSEUDO_DEFAULT, ROCRAND_ORDERING_PSEUDO_DYNAMIC} },
