@@ -40,6 +40,9 @@ template<class ConfigProvider>
 class rocrand_mrg32k3a_template;
 
 template<class ConfigProvider>
+class rocrand_mtgp32_template;
+
+template<class ConfigProvider>
 class rocrand_philox4x32_10_template;
 
 template<class ConfigProvider>
@@ -73,6 +76,10 @@ struct output_type_supported<unsigned long long, rocrand_mrg32k3a_template> : pu
 {};
 
 template<>
+struct output_type_supported<unsigned long long, rocrand_mtgp32_template> : public std::false_type
+{};
+
+template<>
 struct output_type_supported<unsigned long long, rocrand_philox4x32_10_template>
     : public std::false_type
 {};
@@ -91,6 +98,15 @@ template<>
 struct output_type_supported<unsigned long long, rocrand_xorwow_template> : public std::false_type
 {};
 
+template<class T>
+struct config_filter<rocrand_mtgp32_template, T>
+{
+    static constexpr bool is_enabled(rocrand_host::detail::generator_config config)
+    {
+        return config.blocks <= 512;
+    }
+};
+
 extern template void add_all_benchmarks_for_generator<rocrand_lfsr113_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
@@ -98,6 +114,9 @@ extern template void add_all_benchmarks_for_generator<rocrand_mrg31k3p_template>
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 extern template void add_all_benchmarks_for_generator<rocrand_mrg32k3a_template>(
+    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
+
+extern template void add_all_benchmarks_for_generator<rocrand_mtgp32_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 extern template void add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(
