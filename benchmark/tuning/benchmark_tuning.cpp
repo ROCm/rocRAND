@@ -51,24 +51,31 @@ int main(int argc, char** argv)
     add_common_benchmark_rocrand_info();
 
     std::vector<benchmark::internal::Benchmark*> benchmarks;
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_lfsr113_template>(benchmarks,
-                                                                                 config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_mrg31k3p_template>(benchmarks,
-                                                                                  config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_mrg32k3a_template>(benchmarks,
-                                                                                  config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_mtgp32_template>(benchmarks, config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(benchmarks,
-                                                                                       config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_threefry2x32_20_template>(benchmarks,
-                                                                                         config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_threefry2x64_20_template>(benchmarks,
-                                                                                         config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_threefry4x32_20_template>(benchmarks,
-                                                                                         config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_threefry4x64_20_template>(benchmarks,
-                                                                                         config);
-    benchmark_tuning::add_all_benchmarks_for_generator<rocrand_xorwow_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_lfsr113_template>(
+        benchmarks,
+        config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mrg31k3p_template>(
+        benchmarks,
+        config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mrg32k3a_template>(
+        benchmarks,
+        config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mtgp32_template>(
+        benchmarks,
+        config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::rocrand_philox4x32_10_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::rocrand_threefry2x32_20_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::rocrand_threefry2x64_20_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::rocrand_threefry4x32_20_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::rocrand_threefry4x64_20_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_xorwow_template>(
+        benchmarks,
+        config);
 
     // Use manual timing
     for(auto& b : benchmarks)

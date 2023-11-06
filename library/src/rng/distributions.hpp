@@ -27,13 +27,4 @@
 #include "distribution/discrete.hpp"
 #include "distribution/poisson.hpp"
 
-template<template<class> class GeneratorTemplate>
-struct distribution_input
-{
-    using type = unsigned int;
-};
-
-template<template<class> class GeneratorTemplate>
-using distribution_input_t = typename distribution_input<GeneratorTemplate>::type;
-
 #endif // ROCRAND_RNG_DISTRIBUTION_S_H_

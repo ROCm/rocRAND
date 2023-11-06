@@ -47,6 +47,15 @@ template<class T, template<class> class GeneratorTemplate>
 struct output_type_supported : public std::true_type
 {};
 
+template<template<class> class GeneratorTemplate>
+struct distribution_input
+{
+    using type = unsigned int;
+};
+
+template<template<class> class GeneratorTemplate>
+using distribution_input_t = typename distribution_input<GeneratorTemplate>::type;
+
 using rocrand_host::detail::generator_config;
 
 /// @brief Provides a way to opt out from benchmarking certain configs for certain generators and types
@@ -59,37 +68,6 @@ struct config_filter
         return true;
     }
 };
-
-/// @brief ConfigProvider that always returns a config with the specified \ref Blocks and \ref Threads.
-/// This can be used in place of \ref rocrand_host::detail::default_config_provider, which bases the
-/// returned configuration on the current architecture.
-/// @tparam Threads The number of threads in the kernel block.
-/// @tparam Blocks The number of blocks in the kernel grid.
-template<unsigned int Threads, unsigned int Blocks>
-struct static_config_provider
-{
-    static constexpr inline generator_config static_config = {Threads, Blocks};
-
-    template<class>
-    constexpr generator_config device_config(const bool /*is_dynamic*/)
-    {
-        return static_config;
-    }
-
-    template<class>
-    hipError_t host_config(const hipStream_t /*stream*/,
-                           const rocrand_ordering /*ordering*/,
-                           generator_config& config)
-    {
-        config = static_config;
-        return hipSuccess;
-    }
-};
-
-} // namespace benchmark_tuning
-
-namespace benchmark_tuning
-{
 
 /// @brief Runs the googlebenchmark for the specified generator, output type and distribution.
 /// @tparam T The generated value type.
@@ -161,32 +139,39 @@ public:
         }
         else if constexpr(std::is_integral_v<T>)
         {
-            add_benchmarks_impl<T,
-                                uniform_distribution<T, distribution_input_t<GeneratorTemplate>>>();
+            using uniform_distribution_t
+                = uniform_distribution<T, distribution_input_t<GeneratorTemplate>>;
+            add_benchmarks_impl<T, uniform_distribution_t>();
 
             if constexpr(std::is_same_v<T, unsigned int>)
             {
                 // The poisson distribution is only supported for unsigned int.
-                add_benchmarks_impl<T,
-                                    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS>>();
+                using poisson_distribution_t
+                    = rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS>;
+                add_benchmarks_impl<T, poisson_distribution_t>();
             }
         }
         else if constexpr(std::is_floating_point_v<T> || std::is_same_v<T, half>)
         {
             // float, double and half support these distributions only.
-            add_benchmarks_impl<T,
-                                uniform_distribution<T, distribution_input_t<GeneratorTemplate>>>();
-            add_benchmarks_impl<
-                T,
-                normal_distribution<T,
-                                    distribution_input_t<GeneratorTemplate>,
-                                    normal_distribution_max_input_width<GeneratorTemplate, T>>>();
-            add_benchmarks_impl<
-                T,
-                log_normal_distribution<
-                    T,
-                    distribution_input_t<GeneratorTemplate>,
-                    log_normal_distribution_max_input_width<GeneratorTemplate, T>>>();
+            using uniform_distribution_t
+                = uniform_distribution<T, distribution_input_t<GeneratorTemplate>>;
+            add_benchmarks_impl<T, uniform_distribution_t>();
+
+            constexpr rocrand_rng_type rng_type
+                = rocrand_host::detail::gen_template_type_v<GeneratorTemplate>;
+
+            using normal_distribution_t
+                = normal_distribution<T,
+                                      distribution_input_t<GeneratorTemplate>,
+                                      normal_distribution_max_input_width<rng_type, T>>;
+            add_benchmarks_impl<T, normal_distribution_t>();
+
+            using log_normal_distribution_t
+                = log_normal_distribution<T,
+                                          distribution_input_t<GeneratorTemplate>,
+                                          log_normal_distribution_max_input_width<rng_type, T>>;
+            add_benchmarks_impl<T, log_normal_distribution_t>();
         }
     }
 
@@ -204,7 +189,7 @@ private:
     static std::string get_benchmark_name()
     {
         using Generator                 = GeneratorTemplate<StaticConfigProvider>;
-        const rocrand_rng_type rng_type = Generator{}.type();
+        const rocrand_rng_type rng_type = Generator::type();
         return engine_name(rng_type) + "_" + distribution_name<Distribution>{}() + "_t"
                + std::to_string(StaticConfigProvider::static_config.threads) + "_b"
                + std::to_string(StaticConfigProvider::static_config.blocks);
@@ -235,7 +220,8 @@ private:
                  if constexpr(grid_size < min_benchmarked_grid_size)
                      return;
 
-                 using ConfigProvider = static_config_provider<threads, blocks>;
+                 using ConfigProvider
+                     = rocrand_host::detail::static_config_provider<threads, blocks>;
 
                  if constexpr(config_filter<GeneratorTemplate, T>::is_enabled(
                                   ConfigProvider::static_config))

@@ -188,7 +188,7 @@ public:
         : base_type(order, offset, stream), m_seed(seed)
     {}
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_THREEFRY2_32_20;
     }
@@ -304,8 +304,7 @@ public:
     template<class T>
     rocrand_status generate_normal(T* data, size_t data_size, T mean, T stddev)
     {
-        constexpr unsigned int input_width
-            = normal_distribution_max_input_width<rocrand_threefry2x32_20_template, T>;
+        constexpr unsigned int input_width = normal_distribution_max_input_width<type(), T>;
         normal_distribution<T, unsigned int, input_width> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
@@ -313,8 +312,7 @@ public:
     template<class T>
     rocrand_status generate_log_normal(T* data, size_t data_size, T mean, T stddev)
     {
-        constexpr unsigned int input_width
-            = log_normal_distribution_max_input_width<rocrand_threefry2x32_20_template, T>;
+        constexpr unsigned int input_width = log_normal_distribution_max_input_width<type(), T>;
         log_normal_distribution<T, unsigned int, input_width> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
@@ -346,12 +344,13 @@ private:
 };
 
 template<>
-constexpr unsigned int normal_distribution_max_input_width<rocrand_threefry2x32_20_template, double>
+constexpr inline unsigned int
+    normal_distribution_max_input_width<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20, double>
     = 2;
 
 template<>
-constexpr unsigned int
-    log_normal_distribution_max_input_width<rocrand_threefry2x32_20_template, double>
+constexpr inline unsigned int
+    log_normal_distribution_max_input_width<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20, double>
     = 2;
 
 using rocrand_threefry2x32_20 = rocrand_threefry2x32_20_template<

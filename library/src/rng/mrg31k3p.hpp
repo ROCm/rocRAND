@@ -36,22 +36,23 @@ namespace rocrand_host::detail
 
 typedef ::rocrand_device::mrg31k3p_engine mrg31k3p_device_engine;
 
-__host__ __device__ void init_engines_mrg31k3p(dim3                    block_idx,
-                                               dim3                    thread_idx,
-                                               dim3                    grid_dim,
-                                               dim3                    block_dim,
-                                               mrg31k3p_device_engine* engines,
-                                               const unsigned int      start_engine_id,
-                                               const unsigned int engines_size,
-                                               unsigned long long      seed,
-                                               unsigned long long      offset)
+__host__ __device__ inline void init_engines_mrg31k3p(dim3                    block_idx,
+                                                      dim3                    thread_idx,
+                                                      dim3                    grid_dim,
+                                                      dim3                    block_dim,
+                                                      mrg31k3p_device_engine* engines,
+                                                      const unsigned int      start_engine_id,
+                                                      const unsigned int      engines_size,
+                                                      unsigned long long      seed,
+                                                      unsigned long long      offset)
 {
     (void)grid_dim;
     const unsigned int engine_id = block_idx.x * block_dim.x + thread_idx.x;
-    if (engine_id < engines_size)
+    if(engine_id < engines_size)
     {
-    engines[engine_id]
-        = mrg31k3p_device_engine(seed, engine_id, offset + (engine_id < start_engine_id ? 1 : 0));
+        engines[engine_id] = mrg31k3p_device_engine(seed,
+                                                    engine_id,
+                                                    offset + (engine_id < start_engine_id ? 1 : 0));
     }
 }
 
@@ -208,10 +209,13 @@ public:
 
     ~rocrand_mrg31k3p_template()
     {
-        system_type::free(m_engines);
+        if(m_engines != nullptr)
+        {
+            system_type::free(m_engines);
+        }
     }
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_MRG31K3P;
     }
@@ -267,20 +271,20 @@ public:
 
         if(m_engines != nullptr)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+            system_type::free(m_engines);
         }
-        error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
+        rocrand_status status = system_type::alloc(&m_engines, m_engines_size);
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            return status;
         }
 
         constexpr unsigned int init_threads = ROCRAND_DEFAULT_MAX_BLOCK_SIZE;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
 
-        rocrand_status status
-            = system_type::template launch<rocrand_host::detail::init_engines_mrg31k3p, unsigned int, ConfigProvider, false>(
+        status
+            = system_type::template launch<rocrand_host::detail::init_engines_mrg31k3p,
+                                           rocrand_host::detail::static_block_size_t<init_threads>>(
                 dim3(init_blocks),
                 dim3(init_threads),
                 m_stream,
@@ -318,20 +322,20 @@ public:
         }
 
         ROCRAND_LAUNCH_KERNEL_FOR_ORDERING_SYSTEM(m_order,
-                                           rocrand_host::detail::generate_mrg31k3p,
-                                           dim3(config.blocks),
-                                           dim3(config.threads),
-                                           m_stream,
-                                           m_engines,
-                                           m_start_engine_id,
-                                           data,
-                                           data_size,
-                                           distribution);
+                                                  rocrand_host::detail::generate_mrg31k3p,
+                                                  dim3(config.blocks),
+                                                  dim3(config.threads),
+                                                  m_stream,
+                                                  m_engines,
+                                                  m_start_engine_id,
+                                                  data,
+                                                  data_size,
+                                                  distribution);
 
         // Check kernel status
-        if(hipGetLastError() != hipSuccess)
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            return status;
         }
 
         // Generating data_size values will use this many distributions
@@ -415,7 +419,11 @@ private:
     // m_offset from base_type
 };
 
-using rocrand_mrg31k3p      = rocrand_mrg31k3p_template<rocrand_system_device, rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
-using rocrand_mrg31k3p_host = rocrand_mrg31k3p_template<rocrand_system_host, rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
+using rocrand_mrg31k3p = rocrand_mrg31k3p_template<
+    rocrand_system_device,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
+using rocrand_mrg31k3p_host
+    = rocrand_mrg31k3p_template<rocrand_system_host,
+                                rocrand_host::detail::static_config_provider<256, 512>>;
 
 #endif // ROCRAND_RNG_MRG31K3P_H_

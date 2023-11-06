@@ -825,7 +825,7 @@ public:
         ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_MT19937;
     }

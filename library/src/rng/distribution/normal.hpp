@@ -28,7 +28,7 @@
 
 inline constexpr unsigned int normal_distribution_max_input_width_default = 4;
 
-template<template<class> class GeneratorTemplate, class T>
+template<rocrand_rng_type, class T>
 inline constexpr unsigned int normal_distribution_max_input_width
     = normal_distribution_max_input_width_default;
 

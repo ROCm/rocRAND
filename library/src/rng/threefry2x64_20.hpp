@@ -189,7 +189,7 @@ public:
         : base_type(order, offset, stream), m_seed(seed)
     {}
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_THREEFRY2_64_20;
     }
@@ -323,12 +323,6 @@ private:
 
     // m_seed from base_type
     // m_offset from base_type
-};
-
-template<>
-struct distribution_input<rocrand_threefry2x64_20_template>
-{
-    using type = unsigned long long;
 };
 
 using rocrand_threefry2x64_20 = rocrand_threefry2x64_20_template<

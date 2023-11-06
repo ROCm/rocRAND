@@ -212,7 +212,7 @@ public:
         }
     }
 
-    constexpr rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_XORWOW;
     }

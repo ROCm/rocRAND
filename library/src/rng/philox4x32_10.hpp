@@ -226,7 +226,7 @@ public:
         : base_type(order, offset, stream), m_seed(seed)
     {}
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
     }
@@ -279,29 +279,22 @@ public:
             return status;
         }
         rocrand_host::detail::generator_config config;
-        if constexpr(system_type::is_device())
+        const hipError_t                       error
+            = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
+        if(error != hipSuccess)
         {
-            const hipError_t error
-                = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
-            if(error != hipSuccess)
-            {
-                return ROCRAND_STATUS_INTERNAL_ERROR;
-            }
+            return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        // philox returns the same sequence regardless of the number of threads, so we can
-        // launch it with one thread when running on host so that memory accesses are
-        // tightly packed and the whole thing is a little more efficient.
-        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING_SYSTEM(
-            m_order,
-            rocrand_host::detail::generate_philox,
-            dim3(system_type::is_device() ? config.blocks : 1),
-            dim3(system_type::is_device() ? config.threads : 1),
-            m_stream,
-            m_engine,
-            data,
-            data_size,
-            distribution);
+        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING_SYSTEM(m_order,
+                                                  rocrand_host::detail::generate_philox,
+                                                  dim3(config.blocks),
+                                                  dim3(config.threads),
+                                                  m_stream,
+                                                  m_engine,
+                                                  data,
+                                                  data_size,
+                                                  distribution);
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
@@ -370,8 +363,8 @@ public:
     }
 
 private:
-    bool         m_engines_initialized = false;
-    engine_type  m_engine;
+    bool        m_engines_initialized = false;
+    engine_type m_engine;
 
     unsigned long long m_seed;
 
@@ -383,7 +376,15 @@ private:
     // m_offset from base_type
 };
 
-using rocrand_philox4x32_10      = rocrand_philox4x32_10_template<rocrand_system_device, rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
-using rocrand_philox4x32_10_host = rocrand_philox4x32_10_template<rocrand_system_host, rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
+using rocrand_philox4x32_10 = rocrand_philox4x32_10_template<
+    rocrand_system_device,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
+
+// philox returns the same sequence regardless of the number of threads, so we can
+// launch it with one thread when running on host so that memory accesses are
+// tightly packed and the whole thing is a little more efficient.
+using rocrand_philox4x32_10_host
+    = rocrand_philox4x32_10_template<rocrand_system_host,
+                                     rocrand_host::detail::static_config_provider<1, 1>>;
 
 #endif // ROCRAND_RNG_PHILOX4X32_10_H_
