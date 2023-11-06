@@ -35,7 +35,7 @@ struct dummy_generator : rocrand_generator_impl_base
 {
     dummy_generator() : rocrand_generator_impl_base(ROCRAND_ORDERING_PSEUDO_DEFAULT, 0, 0) {}
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return static_cast<rocrand_rng_type>(0);
     }

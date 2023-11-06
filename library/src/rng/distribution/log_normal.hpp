@@ -25,10 +25,11 @@
 #include <hip/hip_runtime.h>
 
 #include "device_distributions.hpp"
+#include "rocrand/rocrand.h"
 
 inline constexpr unsigned int log_normal_distribution_max_input_width_default = 4;
 
-template<template<class> class GeneratorTemplate, class T>
+template<rocrand_rng_type, class T>
 inline constexpr unsigned int log_normal_distribution_max_input_width
     = log_normal_distribution_max_input_width_default;
 

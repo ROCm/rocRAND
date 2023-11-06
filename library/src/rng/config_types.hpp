@@ -301,13 +301,13 @@ __host__ __device__ constexpr bool is_ordering_quasi(const rocrand_ordering orde
     if(::rocrand_host::detail::is_ordering_dynamic(ordering))                                      \
     {                                                                                              \
         status                                                                                     \
-            = system_type::template launch<kernel_name<T, Distribution>, T, ConfigProvider, true>( \
+            = system_type::template launch<kernel_name<T, Distribution>, ConfigProvider, T, true>( \
                 __VA_ARGS__);                                                                      \
     }                                                                                              \
     else                                                                                           \
     {                                                                                              \
         status = system_type::                                                                     \
-            template launch<kernel_name<T, Distribution>, T, ConfigProvider, false>(__VA_ARGS__);  \
+            template launch<kernel_name<T, Distribution>, ConfigProvider, T, false>(__VA_ARGS__);  \
     }
 
 /// @brief Selects the preset kernel launch config for the given random engine and
@@ -391,6 +391,34 @@ struct default_config_provider
         return get_generator_config<GeneratorType, T>(stream, ordering, config);
     }
 };
+
+/// @brief ConfigProvider that always returns a config with the specified \ref Blocks and \ref Threads.
+/// This can be used in place of \ref rocrand_host::detail::default_config_provider, which bases the
+/// returned configuration on the current architecture.
+/// @tparam Threads The number of threads in the kernel block.
+/// @tparam Blocks The number of blocks in the kernel grid.
+template<unsigned int Threads, unsigned int Blocks>
+struct static_config_provider
+{
+    static constexpr inline generator_config static_config = {Threads, Blocks};
+
+    template<class>
+    __device__ constexpr generator_config device_config(const bool /*is_dynamic*/)
+    {
+        return static_config;
+    }
+
+    template<class>
+    hipError_t host_config(const hipStream_t /*stream*/,
+                           const rocrand_ordering /*ordering*/,
+                           generator_config& config)
+    {
+        config = static_config;
+        return hipSuccess;
+    }
+};
+template<unsigned int Threads>
+using static_block_size_t = static_config_provider<Threads, 0>;
 
 /// @brief Returns the maximum grid size (blocks * threads) of all kernel configurations
 /// that are possibly selected on the device corresponding to the provided stream.
@@ -494,6 +522,10 @@ __device__ constexpr unsigned int get_block_size(const bool is_dynamic)
 {
     return ConfigProvider{}.template device_config<T>(is_dynamic).threads;
 }
+
+template<template<class> class GeneratorTemplate>
+constexpr inline rocrand_rng_type gen_template_type_v
+    = GeneratorTemplate<static_config_provider<0, 0>>::type();
 
 } // end namespace rocrand_host::detail
 
