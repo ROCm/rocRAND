@@ -48,16 +48,26 @@ void run_benchmark(benchmark::State&      state,
                    const size_t           offset,
                    const rng_type_t       rng_type,
                    const rocrand_ordering ordering,
+                   const bool             benchmark_host,
                    hipStream_t            stream)
 {
     const size_t binary_div   = byte_size ? sizeof(T) : 1;
     const size_t rounded_size = (size / binary_div / dimensions) * dimensions;
 
-    T* data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), rounded_size * sizeof(T)));
-
+    T*                data;
     rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
+
+    if(benchmark_host)
+    {
+        data = new T[rounded_size];
+        ROCRAND_CHECK(rocrand_create_generator_host(&generator, rng_type));
+    }
+    else
+    {
+        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), rounded_size * sizeof(T)));
+        ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
+    }
+
     ROCRAND_CHECK(rocrand_set_ordering(generator, ordering));
 
     rocrand_status status = rocrand_set_quasi_random_generator_dimensions(generator, dimensions);
@@ -105,7 +115,15 @@ void run_benchmark(benchmark::State&      state,
     HIP_CHECK(hipEventDestroy(stop));
     HIP_CHECK(hipEventDestroy(start));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
-    HIP_CHECK(hipFree(data));
+
+    if(benchmark_host)
+    {
+        delete[] data;
+    }
+    else
+    {
+        HIP_CHECK(hipFree(data));
+    }
 }
 
 int main(int argc, char* argv[])
@@ -131,6 +149,10 @@ int main(int argc, char* argv[])
         "lambda",
         {10.0},
         "space-separated list of lambdas of Poisson distribution");
+    parser.set_optional<bool>("host",
+                              "host",
+                              false,
+                              "run benchmarks on the host instead of on the device");
     parser.run_and_exit_if_error();
 
     hipStream_t stream;
@@ -145,32 +167,44 @@ int main(int argc, char* argv[])
     const size_t              dimensions      = parser.get<size_t>("dimensions");
     const size_t              offset          = parser.get<size_t>("offset");
     const std::vector<double> poisson_lambdas = parser.get<std::vector<double>>("lambda");
+    const bool                benchmark_host  = parser.get<bool>("host");
 
     benchmark::AddCustomContext("size", std::to_string(size));
     benchmark::AddCustomContext("byte-size", std::to_string(byte_size));
     benchmark::AddCustomContext("trials", std::to_string(trials));
     benchmark::AddCustomContext("dimensions", std::to_string(dimensions));
     benchmark::AddCustomContext("offset", std::to_string(offset));
+    benchmark::AddCustomContext("benchmark_host", std::to_string(benchmark_host));
 
-    const std::map<rng_type_t, std::string> engine_type_map{
-        {          ROCRAND_RNG_PSEUDO_MTGP32,            "mtgp32"},
-#ifndef USE_HIP_CPU
-        {         ROCRAND_RNG_PSEUDO_MT19937,           "mt19937"},
-#endif
-        {          ROCRAND_RNG_PSEUDO_XORWOW,            "xorwow"},
-        {        ROCRAND_RNG_PSEUDO_MRG31K3P,          "mrg31k3p"},
-        {        ROCRAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"},
-        {   ROCRAND_RNG_PSEUDO_PHILOX4_32_10,            "philox"},
-        {         ROCRAND_RNG_PSEUDO_LFSR113,           "lfsr113"},
-        { ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,      "threefry2x32"},
-        { ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,      "threefry2x64"},
-        { ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,      "threefry4x32"},
-        { ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,      "threefry4x64"},
-        {          ROCRAND_RNG_QUASI_SOBOL32,           "sobol32"},
-        {ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32"},
-        {          ROCRAND_RNG_QUASI_SOBOL64,           "sobol64"},
-        {ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64"},
+    std::map<rng_type_t, std::string> engine_type_map{
+  // clang-format off
+        {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,   "philox"},
+        {     ROCRAND_RNG_PSEUDO_MRG31K3P, "mrg31k3p"},
+  // clang-format on
     };
+
+    if(!benchmark_host)
+    {
+        // clang-format off
+        engine_type_map.insert({          ROCRAND_RNG_PSEUDO_MTGP32,            "mtgp32"});
+#ifndef USE_HIP_CPU
+        engine_type_map.insert({         ROCRAND_RNG_PSEUDO_MT19937,           "mt19937"});
+#endif
+        engine_type_map.insert({          ROCRAND_RNG_PSEUDO_XORWOW,            "xorwow"});
+        engine_type_map.insert({        ROCRAND_RNG_PSEUDO_MRG31K3P,          "mrg31k3p"});
+        engine_type_map.insert({        ROCRAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"});
+        engine_type_map.insert({   ROCRAND_RNG_PSEUDO_PHILOX4_32_10,            "philox"});
+        engine_type_map.insert({         ROCRAND_RNG_PSEUDO_LFSR113,           "lfsr113"});
+        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,      "threefry2x32"});
+        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,      "threefry2x64"});
+        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,      "threefry4x32"});
+        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,      "threefry4x64"});
+        engine_type_map.insert({          ROCRAND_RNG_QUASI_SOBOL32,           "sobol32"});
+        engine_type_map.insert({ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32"});
+        engine_type_map.insert({          ROCRAND_RNG_QUASI_SOBOL64,           "sobol64"});
+        engine_type_map.insert({ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64"});
+        // clang-format on
+    }
 
     const std::map<rocrand_ordering, std::string> ordering_name_map{
         {ROCRAND_ORDERING_PSEUDO_DEFAULT, "default"},
@@ -226,6 +260,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -240,6 +275,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -254,6 +290,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -268,6 +305,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -282,6 +320,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -296,6 +335,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -316,6 +356,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -330,6 +371,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -344,6 +386,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -364,6 +407,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -378,6 +422,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -392,6 +437,7 @@ int main(int argc, char* argv[])
                 offset,
                 engine_type,
                 ordering,
+                benchmark_host,
                 stream));
 
             for(auto lambda : poisson_lambdas)
@@ -410,6 +456,7 @@ int main(int argc, char* argv[])
                     offset,
                     engine_type,
                     ordering,
+                    benchmark_host,
                     stream));
             }
         }
