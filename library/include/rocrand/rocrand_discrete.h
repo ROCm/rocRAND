@@ -22,7 +22,7 @@
 #define ROCRAND_DISCRETE_H_
 
 #ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
+    #define FQUALIFIERS __forceinline__ __device__ __host__
 #endif // FQUALIFIERS
 
 #include <math.h>

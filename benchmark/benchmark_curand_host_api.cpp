@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -54,13 +54,22 @@ void run_benchmark(benchmark::State&     state,
                    const size_t          trials,
                    const size_t          offset,
                    const size_t          dimensions,
+                   const bool            benchmark_host,
                    cudaStream_t          stream)
 {
-    T* data;
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
-
+    T*                data;
     curandGenerator_t generator;
-    CURAND_CALL(curandCreateGenerator(&generator, rng_type));
+
+    if(benchmark_host)
+    {
+        data = new T[size];
+        CURAND_CALL(curandCreateGeneratorHost(&generator, rng_type));
+    }
+    else
+    {
+        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
+        CURAND_CALL(curandCreateGenerator(&generator, rng_type));
+    }
 
     curandStatus_t status = curandSetQuasiRandomGeneratorDimensions(generator, dimensions);
     if(status != CURAND_STATUS_TYPE_ERROR) // If the RNG is not quasi-random
@@ -110,7 +119,15 @@ void run_benchmark(benchmark::State&     state,
     CUDA_CALL(cudaEventDestroy(start));
 
     CURAND_CALL(curandDestroyGenerator(generator));
-    CUDA_CALL(cudaFree(data));
+
+    if(benchmark_host)
+    {
+        delete[] data;
+    }
+    else
+    {
+        CUDA_CALL(cudaFree(data));
+    }
 }
 
 void configure_parser(cli::Parser& parser)
@@ -127,6 +144,10 @@ void configure_parser(cli::Parser& parser)
         "lambda",
         {10.0},
         "space-separated list of lambdas of Poisson distribution");
+    parser.set_optional<bool>("host",
+                              "host",
+                              false,
+                              "run benchmarks on the host instead of on the device");
 }
 
 int main(int argc, char* argv[])
@@ -148,11 +169,13 @@ int main(int argc, char* argv[])
     const size_t              offset          = parser.get<size_t>("offset");
     const size_t              dimensions      = parser.get<size_t>("dimensions");
     const std::vector<double> poisson_lambdas = parser.get<std::vector<double>>("lambda");
+    const bool                benchmark_host  = parser.get<bool>("host");
 
     benchmark::AddCustomContext("size", std::to_string(size));
     benchmark::AddCustomContext("trials", std::to_string(trials));
     benchmark::AddCustomContext("offset", std::to_string(offset));
     benchmark::AddCustomContext("dimensions", std::to_string(dimensions));
+    benchmark::AddCustomContext("benchmark_host", std::to_string(benchmark_host));
 
     const std::map<rng_type_t, std::string> engine_type_map{
         {         CURAND_RNG_PSEUDO_MT19937,           "mt19937"},
@@ -187,6 +210,7 @@ int main(int argc, char* argv[])
                 trials,
                 offset,
                 dimensions,
+                benchmark_host,
                 stream));
         else
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -199,6 +223,7 @@ int main(int argc, char* argv[])
                 trials,
                 offset,
                 dimensions,
+                benchmark_host,
                 stream));
 
         benchmarks.emplace_back(
@@ -211,6 +236,7 @@ int main(int argc, char* argv[])
                                          trials,
                                          offset,
                                          dimensions,
+                                         benchmark_host,
                                          stream));
 
         benchmarks.emplace_back(
@@ -223,6 +249,7 @@ int main(int argc, char* argv[])
                                          trials,
                                          offset,
                                          dimensions,
+                                         benchmark_host,
                                          stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -235,6 +262,7 @@ int main(int argc, char* argv[])
             trials,
             offset,
             dimensions,
+            benchmark_host,
             stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -247,6 +275,7 @@ int main(int argc, char* argv[])
             trials,
             offset,
             dimensions,
+            benchmark_host,
             stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -259,6 +288,7 @@ int main(int argc, char* argv[])
             trials,
             offset,
             dimensions,
+            benchmark_host,
             stream));
 
         benchmarks.emplace_back(benchmark::RegisterBenchmark(
@@ -271,6 +301,7 @@ int main(int argc, char* argv[])
             trials,
             offset,
             dimensions,
+            benchmark_host,
             stream));
 
         for(auto lambda : poisson_lambdas)
@@ -288,6 +319,7 @@ int main(int argc, char* argv[])
                 trials,
                 offset,
                 dimensions,
+                benchmark_host,
                 stream));
         }
     }

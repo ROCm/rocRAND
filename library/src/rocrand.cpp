@@ -100,6 +100,51 @@ rocrand_status ROCRANDAPI rocrand_create_generator(rocrand_generator* generator,
     return ROCRAND_STATUS_SUCCESS;
 }
 
+rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* generator,
+                                                        rocrand_rng_type   rng_type)
+{
+    try
+    {
+        // clang-format off
+        switch(rng_type)
+        {
+            case ROCRAND_RNG_PSEUDO_PHILOX4_32_10:
+                *generator = new rocrand_generator_type<rocrand_philox4x32_10_host>();
+                break;
+            case ROCRAND_RNG_PSEUDO_MRG31K3P:
+                *generator = new rocrand_generator_type<rocrand_mrg31k3p_host>();
+                break;
+            case ROCRAND_RNG_PSEUDO_MRG32K3A:
+            case ROCRAND_RNG_PSEUDO_DEFAULT:
+            case ROCRAND_RNG_PSEUDO_XORWOW:
+            case ROCRAND_RNG_QUASI_DEFAULT:
+            case ROCRAND_RNG_QUASI_SOBOL32:
+            case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32:
+            case ROCRAND_RNG_QUASI_SOBOL64:
+            case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64:
+            case ROCRAND_RNG_PSEUDO_MTGP32:
+            case ROCRAND_RNG_PSEUDO_LFSR113:
+            case ROCRAND_RNG_PSEUDO_MT19937:
+            case ROCRAND_RNG_PSEUDO_THREEFRY2_32_20:
+            case ROCRAND_RNG_PSEUDO_THREEFRY2_64_20:
+            case ROCRAND_RNG_PSEUDO_THREEFRY4_32_20:
+            case ROCRAND_RNG_PSEUDO_THREEFRY4_64_20:
+            default:
+                return ROCRAND_STATUS_TYPE_ERROR;
+        }
+        // clang-format on
+    }
+    catch(const std::bad_alloc& e)
+    {
+        return ROCRAND_STATUS_INTERNAL_ERROR;
+    }
+    catch(rocrand_status status)
+    {
+        return status;
+    }
+    return ROCRAND_STATUS_SUCCESS;
+}
+
 rocrand_status ROCRANDAPI rocrand_destroy_generator(rocrand_generator generator)
 {
     try
