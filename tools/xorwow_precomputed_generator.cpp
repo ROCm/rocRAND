@@ -41,7 +41,7 @@ void mul_mat_vec_inplace(const unsigned int * m, unsigned int * v)
     {
         for (int j = 0; j < XORWOW_M; j++)
         {
-            if (v[i] & (1 << j))
+            if (v[i] & (1U << j))
             {
                 for (int k = 0; k < XORWOW_N; k++)
                 {
@@ -121,7 +121,7 @@ void generate_matrices()
         for (int j = 0; j < XORWOW_M; j++)
         {
             rocrand_xorwow_state state;
-            const unsigned int b = 1 << j;
+            const unsigned int b = 1U << j;
             for (int k = 0; k < XORWOW_N; k++)
             {
                 state.x[k] = (i == k ? b : 0);

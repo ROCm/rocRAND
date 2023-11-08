@@ -266,7 +266,7 @@ protected:
     }
 
 private:
-    FQUALIFIERS void mod_mat_vec_m1(const unsigned int* A, unsigned int* s)
+    FQUALIFIERS static void mod_mat_vec_m1(const unsigned int* A, unsigned int* s)
     {
         unsigned long long x[3] = {s[0], s[1], s[2]};
 
@@ -277,7 +277,7 @@ private:
         s[2] = mod_m1(mod_m1(A[6] * x[0]) + mod_m1(A[7] * x[1]) + mod_m1(A[8] * x[2]));
     }
 
-    FQUALIFIERS void mod_mat_vec_m2(const unsigned int* A, unsigned int* s)
+    FQUALIFIERS static void mod_mat_vec_m2(const unsigned int* A, unsigned int* s)
     {
         unsigned long long x[3] = {s[0], s[1], s[2]};
 
@@ -288,22 +288,22 @@ private:
         s[2] = mod_m2(mod_m2(A[6] * x[0]) + mod_m2(A[7] * x[1]) + mod_m2(A[8] * x[2]));
     }
 
-    FQUALIFIERS unsigned long long mod_mul_m1(unsigned int i, unsigned long long j)
+    FQUALIFIERS static unsigned long long mod_mul_m1(unsigned int i, unsigned long long j)
     {
         return mod_m1(i * j);
     }
 
-    FQUALIFIERS unsigned long long mod_m1(unsigned long long p)
+    FQUALIFIERS static unsigned long long mod_m1(unsigned long long p)
     {
         return p % ROCRAND_MRG31K3P_M1;
     }
 
-    FQUALIFIERS unsigned long long mod_mul_m2(unsigned int i, unsigned long long j)
+    FQUALIFIERS static unsigned long long mod_mul_m2(unsigned int i, unsigned long long j)
     {
         return mod_m2(i * j);
     }
 
-    FQUALIFIERS unsigned long long mod_m2(unsigned long long p)
+    FQUALIFIERS static unsigned long long mod_m2(unsigned long long p)
     {
         return p % ROCRAND_MRG31K3P_M2;
     }
