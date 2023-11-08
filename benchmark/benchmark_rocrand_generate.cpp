@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
     const std::string distribution_desc =
         "space-separated list of distributions:" +
         std::accumulate(all_distributions.begin(), all_distributions.end(), std::string(),
-            [](std::string a, std::string b) {
+            [](const std::string& a, const std::string& b) {
                 return a + "\n      " + b;
             }
         ) +
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
     const std::string engine_desc =
         "space-separated list of random number engines:" +
         std::accumulate(all_engines.begin(), all_engines.end(), std::string(),
-            [](std::string a, std::string b) {
+            [](const std::string& a, const std::string& b) {
                 return a + "\n      " + b;
             }
         ) +
@@ -372,8 +372,8 @@ int main(int argc, char *argv[])
     parser.set_optional<size_t>("dimensions", "dimensions", 1, "number of dimensions of quasi-random values");
     parser.set_optional<size_t>("offset", "offset", 0, "offset of generated pseudo-random values");
     parser.set_optional<size_t>("trials", "trials", 20, "number of trials");
-    parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
-    parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
+    parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc);
+    parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc);
     parser.set_optional<std::vector<double>>("lambda", "lambda", {10.0}, "space-separated list of lambdas of Poisson distribution");
     parser.set_optional<std::string>("format", "format", {"console"}, "output format: console or csv");
     parser.run_and_exit_if_error();

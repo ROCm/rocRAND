@@ -52,7 +52,8 @@ public:
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
-    rocrand_discrete_distribution_base()
+    // rocrand_discrete_distribution_st is a struct 
+    rocrand_discrete_distribution_base()  // cppcheck-suppress uninitDerivedMemberVar
     {
         size = 0;
         probability = NULL;
@@ -195,7 +196,7 @@ protected:
         }
     }
 
-    void normalize(std::vector<double>& p)
+    void normalize(std::vector<double>& p) const
     {
         double sum = 0.0;
         for (unsigned int i = 0; i < size; i++)

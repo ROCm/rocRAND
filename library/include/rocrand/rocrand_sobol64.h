@@ -37,7 +37,7 @@ struct sobol64_state
     unsigned long long int vectors[64];
 
     FQUALIFIERS
-    sobol64_state() { }
+    sobol64_state() : d(), i(), vectors() { }
 
     FQUALIFIERS
     sobol64_state(const unsigned long long int d,
@@ -60,7 +60,7 @@ struct sobol64_state<true>
     const unsigned long long int * vectors;
 
     FQUALIFIERS
-    sobol64_state() { }
+    sobol64_state() : d(), i(), vectors() { }
 
     FQUALIFIERS
     sobol64_state(const unsigned long long int d,
@@ -121,7 +121,7 @@ public:
     }
 
     FQUALIFIERS
-    unsigned long long int current()
+    unsigned long long int current() const
     {
         return m_state.d;
     }

@@ -288,7 +288,7 @@ protected:
 
 private:
     FQUALIFIERS
-    void mod_mat_vec_m1(const unsigned long long * A,
+    static void mod_mat_vec_m1(const unsigned long long * A,
                         unsigned int * s)
     {
         unsigned long long x[3];
@@ -311,7 +311,7 @@ private:
     }
 
     FQUALIFIERS
-    void mod_mat_vec_m2(const unsigned long long * A,
+    static void mod_mat_vec_m2(const unsigned long long * A,
                         unsigned int * s)
     {
         unsigned long long x[3];
@@ -334,7 +334,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_mul_m1(unsigned int i,
+    static unsigned long long mod_mul_m1(unsigned int i,
                                   unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
@@ -351,7 +351,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_m1(unsigned long long p)
+    static unsigned long long mod_m1(unsigned long long p)
     {
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M1C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         if (p >= ROCRAND_MRG32K3A_M1)
@@ -361,7 +361,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_mul_m2(unsigned int i,
+    static unsigned long long mod_mul_m2(unsigned int i,
                                   unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
@@ -378,7 +378,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned long long mod_m2(unsigned long long p)
+    static unsigned long long mod_m2(unsigned long long p)
     {
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));

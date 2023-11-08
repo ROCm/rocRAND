@@ -312,7 +312,7 @@ protected:
 private:
     // Single Philox4x32 round
     FQUALIFIERS
-    uint4 single_round(uint4 counter, uint2 key)
+    static uint4 single_round(uint4 counter, uint2 key)
     {
         // Source: Random123
         unsigned int hi0;
@@ -328,7 +328,7 @@ private:
     }
 
     FQUALIFIERS
-    uint2 bumpkey(uint2 key)
+    static uint2 bumpkey(uint2 key)
     {
         key.x += ROCRAND_PHILOX_W32_0;
         key.y += ROCRAND_PHILOX_W32_1;

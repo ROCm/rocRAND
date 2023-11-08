@@ -39,7 +39,7 @@ public:
     rocrand_poisson_distribution()
         : base() { }
 
-    rocrand_poisson_distribution(double lambda)
+    explicit rocrand_poisson_distribution(double lambda)
         : rocrand_poisson_distribution()
     {
         set_lambda(lambda);
@@ -158,7 +158,7 @@ struct mrg_engine_poisson_distribution
 
     rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis;
 
-    mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+    explicit mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
         : dis(dis)
     { }
 
@@ -180,7 +180,7 @@ struct mrg_engine_poisson_distribution
 
 struct mrg_poisson_distribution : mrg_engine_poisson_distribution<rocrand_state_mrg32k3a>
 {
-    mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+    explicit mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
         : mrg_engine_poisson_distribution(dis)
     {}
 };

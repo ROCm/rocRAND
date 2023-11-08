@@ -153,13 +153,14 @@ class mtgp32_engine
 {
 public:
     FQUALIFIERS
-    mtgp32_engine()
+    // Initialization is not supported for __shared__ variables
+    mtgp32_engine() // cppcheck-suppress uninitMemberVar
     {
 
     }
 
     FQUALIFIERS
-    mtgp32_engine(const mtgp32_state m_state,
+    mtgp32_engine(const mtgp32_state &m_state,
                   const mtgp32_params * params,
                   int bid)
     {
@@ -287,7 +288,7 @@ public:
 
 private:
     FQUALIFIERS
-    unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y)
+    unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y) const
     {
         unsigned int X = (X1 & mask) ^ X2;
         unsigned int MAT;
@@ -299,7 +300,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned int temper(unsigned int V, unsigned int T)
+    unsigned int temper(unsigned int V, unsigned int T) const
     {
         unsigned int MAT;
 
@@ -310,7 +311,7 @@ private:
     }
 
     FQUALIFIERS
-    unsigned int temper_single(unsigned int V, unsigned int T)
+    unsigned int temper_single(unsigned int V, unsigned int T) const 
     {
         unsigned int MAT;
         unsigned int r;
