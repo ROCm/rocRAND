@@ -54,25 +54,30 @@ inline void add_common_benchmark_rocrand_info()
 
 inline std::string engine_name(const rocrand_rng_type rng_type)
 {
+    // The returned names have to be able to reproduce the rocrand_rng_type by prepending
+    // `ROCRAND_RNG_{PSEUDO|QUASI}_` to the name written in all capital letters. The scripts in
+    // scripts/config-tuning/ rely on this.
+    // clang-format off
     switch(rng_type)
     {
-        case ROCRAND_RNG_PSEUDO_MTGP32: return "mtgp32";
-        case ROCRAND_RNG_PSEUDO_MT19937: return "mt19937";
-        case ROCRAND_RNG_PSEUDO_XORWOW: return "xorwow";
-        case ROCRAND_RNG_PSEUDO_MRG31K3P: return "mrg31k3p";
-        case ROCRAND_RNG_PSEUDO_MRG32K3A: return "mrg32k3a";
-        case ROCRAND_RNG_PSEUDO_PHILOX4_32_10: return "philox";
-        case ROCRAND_RNG_PSEUDO_LFSR113: return "lfsr113";
-        case ROCRAND_RNG_PSEUDO_THREEFRY2_32_20: return "threefry2x32";
-        case ROCRAND_RNG_PSEUDO_THREEFRY2_64_20: return "threefry2x64";
-        case ROCRAND_RNG_PSEUDO_THREEFRY4_32_20: return "threefry4x32";
-        case ROCRAND_RNG_PSEUDO_THREEFRY4_64_20: return "threefry4x64";
-        case ROCRAND_RNG_QUASI_SOBOL32: return "sobol32";
+        case ROCRAND_RNG_PSEUDO_XORWOW:           return "xorwow";
+        case ROCRAND_RNG_PSEUDO_MRG32K3A:         return "mrg32k3a";
+        case ROCRAND_RNG_PSEUDO_MTGP32:           return "mtgp32";
+        case ROCRAND_RNG_PSEUDO_PHILOX4_32_10:    return "philox4_32_10";
+        case ROCRAND_RNG_PSEUDO_MRG31K3P:         return "mrg31k3p";
+        case ROCRAND_RNG_PSEUDO_LFSR113:          return "lfsr113";
+        case ROCRAND_RNG_PSEUDO_MT19937:          return "mt19937";
+        case ROCRAND_RNG_PSEUDO_THREEFRY2_32_20:  return "threefry2_32_20";
+        case ROCRAND_RNG_PSEUDO_THREEFRY2_64_20:  return "threefry2_64_20";
+        case ROCRAND_RNG_PSEUDO_THREEFRY4_32_20:  return "threefry4_32_20";
+        case ROCRAND_RNG_PSEUDO_THREEFRY4_64_20:  return "threefry4_64_20";
+        case ROCRAND_RNG_QUASI_SOBOL32:           return "sobol32";
         case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32: return "scrambled_sobol32";
-        case ROCRAND_RNG_QUASI_SOBOL64: return "sobol64";
+        case ROCRAND_RNG_QUASI_SOBOL64:           return "sobol64";
         case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64: return "scrambled_sobol64";
         default: return "unknown_rng_type";
     }
+    // clang-format on
 }
 
 struct benchmark_config
