@@ -59,6 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
+#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"

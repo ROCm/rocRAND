@@ -27,6 +27,7 @@
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
+#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
@@ -72,6 +73,7 @@ ROCRAND_KERNEL
     __launch_bounds__((get_block_size<ConfigProvider, T>(IsDynamic))) void generate_kernel(
         threefry4x64_20_device_engine engine, T* data, const size_t n, Distribution distribution)
 {
+    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
@@ -81,8 +83,8 @@ ROCRAND_KERNEL
 
     using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
 
-    const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride    = gridDim.x * blockDim.x;
+    const unsigned int thread_id = blockIdx.x * BlockSize + threadIdx.x;
+    const unsigned int stride    = gridDim.x * BlockSize;
 
     unsigned long long input[input_width];
     T                  output[output_per_thread][output_width];

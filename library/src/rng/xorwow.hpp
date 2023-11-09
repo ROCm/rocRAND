@@ -46,7 +46,7 @@ ROCRAND_KERNEL
                                                           unsigned long long    seed,
                                                           unsigned long long    offset)
 {
-    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int engine_id = blockIdx.x * BlockSize + threadIdx.x;
     if(engine_id < engines_size)
     {
         engines[engine_id]
@@ -64,12 +64,13 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
 {
     static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
                   "This kernel should only be used with single tile configs");
+    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int thread_idx   = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int thread_idx   = blockIdx.x * BlockSize + threadIdx.x;
     const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
     const size_t misalignment = (output_width - uintptr / sizeof(T) % output_width) % output_width;
     const unsigned int head_size = min(n, misalignment);
@@ -77,7 +78,7 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
     const size_t       vec_n     = (n - head_size) / output_width;
 
     vec_type*            vec_data    = reinterpret_cast<vec_type*>(data + misalignment);
-    const unsigned int   num_engines = gridDim.x * blockDim.x;
+    const unsigned int   num_engines = gridDim.x * BlockSize;
     const unsigned int   engine_id   = (thread_idx + start_engine_id) % num_engines;
     xorwow_device_engine engine      = engines[engine_id];
 

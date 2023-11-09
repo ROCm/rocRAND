@@ -28,6 +28,7 @@
 #include <rocrand/rocrand_mrg32k3a_precomputed.h>
 
 #include "common.hpp"
+#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
@@ -46,7 +47,7 @@ ROCRAND_KERNEL
                                                           unsigned long long      seed,
                                                           unsigned long long      offset)
 {
-    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int engine_id = blockIdx.x * BlockSize + threadIdx.x;
     if(engine_id < engines_size)
     {
         engines[engine_id] = mrg32k3a_device_engine(seed,
@@ -65,14 +66,14 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
 {
     static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
                   "This kernel should only be used with single tile configs");
-
+    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride = gridDim.x * blockDim.x;
+    const unsigned int id     = blockIdx.x * BlockSize + threadIdx.x;
+    const unsigned int stride = gridDim.x * BlockSize;
 
     // Stride must be a power of two
     const unsigned int     engine_id = (id + start_engine_id) & (stride - 1);

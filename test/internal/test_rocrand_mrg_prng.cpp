@@ -27,7 +27,8 @@
 #include <rocrand/rocrand.h>
 
 #include <rng/generator_type.hpp>
-#include <rng/generators.hpp>
+#include <rng/mrg31k3p.hpp>
+#include <rng/mrg32k3a.hpp>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
@@ -109,12 +110,13 @@ TEST(rocrand_mrg_prng_tests, mad_u64_u32_test)
 template<class Params>
 struct rocrand_mrg_prng_tests : public ::testing::Test
 {
-    using params = Params;
+    using generator_t                                 = typename Params::generator_t;
+    static inline constexpr rocrand_ordering ordering = Params::ordering;
 
     auto get_generator() const
     {
-        typename params::generator_t g;
-        if(g.set_order(params::ordering) != ROCRAND_STATUS_SUCCESS)
+        generator_t g;
+        if(g.set_order(ordering) != ROCRAND_STATUS_SUCCESS)
         {
             throw std::runtime_error("Could not set ordering for generator");
         }
@@ -696,86 +698,86 @@ void continuity_test(GenerateFunc     generate_func,
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_uint_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<unsigned int, generator_t>([](generator_t& g, unsigned int* data, size_t s)
                                                { g.generate(data, s); },
-                                               params::ordering);
+                                               ordering);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_char_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<unsigned char, generator_t>([](generator_t& g, unsigned char* data, size_t s)
                                                 { g.generate(data, s); },
-                                                params::ordering,
+                                                ordering,
                                                 4);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_float_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<float, generator_t>([](generator_t& g, float* data, size_t s)
                                         { g.generate_uniform(data, s); },
-                                        params::ordering);
+                                        ordering);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_uniform_double_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<double, generator_t>([](generator_t& g, double* data, size_t s)
                                          { g.generate_uniform(data, s); },
-                                         params::ordering);
+                                         ordering);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_normal_float_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<float, generator_t>([](generator_t& g, float* data, size_t s)
                                         { g.generate_normal(data, s, 0.0f, 1.0f); },
-                                        params::ordering,
+                                        ordering,
                                         2);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_normal_double_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<double, generator_t>([](generator_t& g, double* data, size_t s)
                                          { g.generate_normal(data, s, 0.0, 1.0); },
-                                         params::ordering,
+                                         ordering,
                                          2);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_log_normal_float_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<float, generator_t>([](generator_t& g, float* data, size_t s)
                                         { g.generate_log_normal(data, s, 0.0f, 1.0f); },
-                                        params::ordering,
+                                        ordering,
                                         2);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_log_normal_double_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<double, generator_t>([](generator_t& g, double* data, size_t s)
                                          { g.generate_log_normal(data, s, 0.0, 1.0); },
-                                         params::ordering,
+                                         ordering,
                                          2);
 }
 
 TYPED_TEST(rocrand_mrg_prng_tests, continuity_poisson_test)
 {
-    using params      = typename TestFixture::params;
-    using generator_t = typename params::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     continuity_test<unsigned int, generator_t>([](generator_t& g, unsigned int* data, size_t s)
                                                { g.generate_poisson(data, s, 100.0); },
-                                               params::ordering);
+                                               ordering);
 }
