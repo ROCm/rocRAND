@@ -417,8 +417,40 @@ struct static_config_provider
         return hipSuccess;
     }
 };
+
+template<rocrand_rng_type RngType>
+using static_default_config_provider_t
+    = static_config_provider<generator_config_defaults<RngType, void>::threads,
+                             generator_config_defaults<RngType, void>::blocks>;
+
+/// @brief ConfigProvider that does not specify the grid size. This can be passed directly to a kernel's
+/// template argument list, when only the block size (number of threads) is needed in compile time.
+/// @tparam Threads The number of threads in the kernel block.
 template<unsigned int Threads>
-using static_block_size_t = static_config_provider<Threads, 0>;
+struct static_block_size_config_provider
+{
+    struct block_size_generator_config
+    {
+        unsigned int threads;
+    };
+
+    static constexpr inline block_size_generator_config static_config = {Threads};
+
+    template<class>
+    __device__ constexpr block_size_generator_config device_config(const bool /*is_dynamic*/)
+    {
+        return static_config;
+    }
+
+    template<class>
+    hipError_t host_config(const hipStream_t /*stream*/,
+                           const rocrand_ordering /*ordering*/,
+                           block_size_generator_config& config)
+    {
+        config = static_config;
+        return hipSuccess;
+    }
+};
 
 /// @brief Returns the maximum grid size (blocks * threads) of all kernel configurations
 /// that are possibly selected on the device corresponding to the provided stream.
@@ -523,9 +555,10 @@ __device__ constexpr unsigned int get_block_size(const bool is_dynamic)
     return ConfigProvider{}.template device_config<T>(is_dynamic).threads;
 }
 
+/// @brief Extracts the `rocrand_rng_type` from a generator template.
+/// @tparam GeneratorTemplate The generator template type.
 template<template<class> class GeneratorTemplate>
-constexpr inline rocrand_rng_type gen_template_type_v
-    = GeneratorTemplate<static_config_provider<0, 0>>::type();
+constexpr inline rocrand_rng_type gen_template_type_v = GeneratorTemplate<void>::type();
 
 } // end namespace rocrand_host::detail
 

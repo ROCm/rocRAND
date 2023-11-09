@@ -25,6 +25,7 @@
 #include <hip/hip_runtime.h>
 
 #include "device_distributions.hpp"
+#include "rocrand/rocrand.h"
 
 inline constexpr unsigned int normal_distribution_max_input_width_default = 4;
 

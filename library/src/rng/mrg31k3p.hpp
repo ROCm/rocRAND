@@ -24,11 +24,11 @@
 #include <hip/hip_runtime.h>
 
 #include "common.hpp"
+#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
-#include "rocrand/rocrand.h"
 #include "system.hpp"
 
 namespace rocrand_host::detail
@@ -282,17 +282,17 @@ public:
         constexpr unsigned int init_threads = ROCRAND_DEFAULT_MAX_BLOCK_SIZE;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
 
-        status
-            = system_type::template launch<rocrand_host::detail::init_engines_mrg31k3p,
-                                           rocrand_host::detail::static_block_size_t<init_threads>>(
-                dim3(init_blocks),
-                dim3(init_threads),
-                m_stream,
-                m_engines,
-                m_start_engine_id,
-                m_engines_size,
-                m_seed,
-                m_offset / m_engines_size);
+        status = system_type::template launch<
+            rocrand_host::detail::init_engines_mrg31k3p,
+            rocrand_host::detail::static_block_size_config_provider<init_threads>>(
+            dim3(init_blocks),
+            dim3(init_threads),
+            m_stream,
+            m_engines,
+            m_start_engine_id,
+            m_engines_size,
+            m_seed,
+            m_offset / m_engines_size);
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
@@ -422,8 +422,8 @@ private:
 using rocrand_mrg31k3p = rocrand_mrg31k3p_template<
     rocrand_system_device,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
-using rocrand_mrg31k3p_host
-    = rocrand_mrg31k3p_template<rocrand_system_host,
-                                rocrand_host::detail::static_config_provider<256, 512>>;
+using rocrand_mrg31k3p_host = rocrand_mrg31k3p_template<
+    rocrand_system_host,
+    rocrand_host::detail::static_default_config_provider_t<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
 
 #endif // ROCRAND_RNG_MRG31K3P_H_

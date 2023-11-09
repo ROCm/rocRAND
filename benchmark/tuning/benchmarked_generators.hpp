@@ -31,6 +31,10 @@
 #include "benchmark_tuning.hpp"
 #include "rng/system.hpp"
 
+// Forward declaring generator templates, so includes can be omitted.
+// The tuning benchmarks are instantiated in the respective benchmark_tuning_*.cpp
+// source files.
+
 template<class ConfigProvider>
 class rocrand_lfsr113_template;
 

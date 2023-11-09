@@ -84,8 +84,8 @@ struct rocrand_system_host
     }
 
     template<auto Kernel,
-             typename ConfigProvider
-             = rocrand_host::detail::static_block_size_t<ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
+                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
@@ -200,8 +200,8 @@ struct rocrand_system_device
     }
 
     template<auto Kernel,
-             typename ConfigProvider
-             = rocrand_host::detail::static_block_size_t<ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
+                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>

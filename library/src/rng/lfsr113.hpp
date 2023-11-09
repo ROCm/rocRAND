@@ -41,7 +41,7 @@ template<unsigned int BlockSize>
 ROCRAND_KERNEL __launch_bounds__(BlockSize) void init_engines_kernel(
     lfsr113_device_engine* engines, const unsigned int engines_size, uint4 seeds)
 {
-    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int engine_id = blockIdx.x * BlockSize + threadIdx.x;
     if(engine_id < engines_size)
     {
         engines[engine_id] = lfsr113_device_engine(seeds, engine_id);
@@ -58,13 +58,14 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
 {
     static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
                   "This kernel should only be used with single tile configs");
+    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride = gridDim.x * blockDim.x;
+    const unsigned int id     = blockIdx.x * BlockSize + threadIdx.x;
+    const unsigned int stride = gridDim.x * BlockSize;
 
     const unsigned int    engine_id = (id + start_engine_id) & (stride - 1);
     lfsr113_device_engine engine    = engines[engine_id];
