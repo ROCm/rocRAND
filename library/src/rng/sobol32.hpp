@@ -186,7 +186,7 @@ public:
         ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
     }
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_QUASI_SOBOL32;
     }

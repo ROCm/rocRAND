@@ -59,6 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rocrand/rocrand.h>
 
 #include "common.hpp"
+#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
@@ -211,7 +212,7 @@ __host__ __device__ void generate_philox(dim3                        block_idx,
 
 } // end namespace rocrand_host::detail
 
-template<typename System>
+template<typename System, typename ConfigProvider>
 class rocrand_philox4x32_10_template : public rocrand_generator_impl_base
 {
 public:
@@ -223,10 +224,10 @@ public:
                                    unsigned long long offset = 0,
                                    rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
                                    hipStream_t        stream = 0)
-        : base_type(order, offset, stream), m_engines_initialized(false), m_seed(seed)
+        : base_type(order, offset, stream), m_seed(seed)
     {}
 
-    rocrand_rng_type type() const
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_PHILOX4_32_10;
     }
@@ -275,20 +276,26 @@ public:
     {
         rocrand_status status = init();
         if(status != ROCRAND_STATUS_SUCCESS)
+        {
             return status;
+        }
+        rocrand_host::detail::generator_config config;
+        const hipError_t                       error
+            = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
-        status
-            = system_type::template launch<rocrand_host::detail::generate_philox<T, Distribution>>(
-                // philox returns the same sequence regardless of the number of threads, so we can
-                // launch it with one thread when running on host so that memory accesses are
-                // tightly packed and the whole thing is a little more efficient.
-                dim3(system_type::is_device() ? s_blocks : 1),
-                dim3(system_type::is_device() ? s_threads : 1),
-                m_stream,
-                m_engine,
-                data,
-                data_size,
-                distribution);
+        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING_SYSTEM(m_order,
+                                                  rocrand_host::detail::generate_philox,
+                                                  dim3(config.blocks),
+                                                  dim3(config.threads),
+                                                  m_stream,
+                                                  m_engine,
+                                                  data,
+                                                  data_size,
+                                                  distribution);
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
@@ -357,13 +364,10 @@ public:
     }
 
 private:
-    bool        m_engines_initialized;
+    bool        m_engines_initialized = false;
     engine_type m_engine;
 
     unsigned long long m_seed;
-
-    const static uint32_t s_threads = 256;
-    const static uint32_t s_blocks  = 1024;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
@@ -373,7 +377,15 @@ private:
     // m_offset from base_type
 };
 
-using rocrand_philox4x32_10      = rocrand_philox4x32_10_template<rocrand_system_device>;
-using rocrand_philox4x32_10_host = rocrand_philox4x32_10_template<rocrand_system_host>;
+using rocrand_philox4x32_10 = rocrand_philox4x32_10_template<
+    rocrand_system_device,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
+
+// philox returns the same sequence regardless of the number of threads, so we can
+// launch it with one thread when running on host so that memory accesses are
+// tightly packed and the whole thing is a little more efficient.
+using rocrand_philox4x32_10_host
+    = rocrand_philox4x32_10_template<rocrand_system_host,
+                                     rocrand_host::detail::static_config_provider<1, 1>>;
 
 #endif // ROCRAND_RNG_PHILOX4X32_10_H_

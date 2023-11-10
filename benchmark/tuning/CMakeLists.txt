@@ -37,7 +37,17 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/benchmark_tuning_setup.hpp.in"
 set(CMAKE_CXX_STANDARD 17)
 add_executable(benchmark_rocrand_tuning
   benchmark_tuning.cpp
-  benchmark_tuning_xorwow.cpp)
+  benchmark_tuning_lfsr113.cpp
+  benchmark_tuning_mrg31k3p.cpp
+  benchmark_tuning_mrg32k3a.cpp
+  benchmark_tuning_mtgp32.cpp
+  benchmark_tuning_philox.cpp
+  benchmark_tuning_threefry2x32_20.cpp
+  benchmark_tuning_threefry2x64_20.cpp
+  benchmark_tuning_threefry4x32_20.cpp
+  benchmark_tuning_threefry4x64_20.cpp
+  benchmark_tuning_xorwow.cpp
+)
 target_link_libraries(benchmark_rocrand_tuning PRIVATE roc::rocrand benchmark::benchmark hip::device)
 target_include_directories(benchmark_rocrand_tuning PRIVATE
   "${CMAKE_BINARY_DIR}/benchmark"

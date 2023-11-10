@@ -169,7 +169,7 @@ struct default_distribution<normal_distribution<T, U, I>>
     {
         const T mean   = 0;
         const T stddev = 1;
-        return normal_distribution<T, U>(mean, stddev);
+        return normal_distribution<T, U, I>(mean, stddev);
     }
 };
 
@@ -180,7 +180,7 @@ struct default_distribution<log_normal_distribution<T, U, I>>
     {
         const T mean   = 0;
         const T stddev = 1;
-        return log_normal_distribution<T, U>(mean, stddev);
+        return log_normal_distribution<T, U, I>(mean, stddev);
     }
 };
 
