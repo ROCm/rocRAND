@@ -58,6 +58,12 @@ module hipfor
             type(c_ptr), value :: ptr
             integer(c_int) :: hipFree
         end function
+
+        function hipDeviceSynchronize() bind(C, name = "hipDeviceSynchronize")
+            use iso_c_binding
+            implicit none
+            integer(c_int) :: hipDeviceSynchronize
+        end function
     end interface
 
 end module

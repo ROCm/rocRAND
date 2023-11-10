@@ -15,7 +15,10 @@ target_include_directories(${test_rocrand}
     PRIVATE
         "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/library/fortran>"
 )
-target_link_libraries(${test_rocrand} rocrand_fortran)
+target_link_libraries(${test_rocrand} PRIVATE rocrand_fortran hip::host)
+if(HIP_COMPILER STREQUAL "nvcc")
+    target_link_libraries(${test_rocrand} PRIVATE CUDA::cudart)
+endif()
 set_target_properties(${test_rocrand}
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
