@@ -1,4 +1,4 @@
-!! Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+!! Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 !!
 !! Permission is hereby granted, free of charge, to any person obtaining a copy
 !! of this software and associated documentation files (the "Software"), to deal
@@ -56,6 +56,15 @@ module rocrand_m
             use iso_c_binding
             implicit none
             integer(c_int) :: rocrand_create_generator
+            integer(c_size_t) :: generator
+            integer(c_int), value :: rng_type
+        end function
+
+        function rocrand_create_generator_host(generator, rng_type) &
+        bind(C, name="rocrand_create_generator_host")
+            use iso_c_binding
+            implicit none
+            integer(c_int) :: rocrand_create_generator_host
             integer(c_size_t) :: generator
             integer(c_int), value :: rng_type
         end function

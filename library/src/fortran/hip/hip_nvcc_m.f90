@@ -1,4 +1,4 @@
-!! Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+!! Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 !!
 !! Permission is hereby granted, free of charge, to any person obtaining a copy
 !! of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,12 @@ module hipfor
             implicit none
             type(c_ptr), value :: ptr
             integer(c_int) :: hipFree
+        end function
+
+        function hipDeviceSynchronize() bind(C, name = "cudaDeviceSynchronize")
+            use iso_c_binding
+            implicit none
+            integer(c_int) :: hipDeviceSynchronize
         end function
     end interface
 

@@ -1,4 +1,4 @@
-!! Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+!! Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 !!
 !! Permission is hereby granted, free of charge, to any person obtaining a copy
 !! of this software and associated documentation files (the "Software"), to deal
@@ -63,6 +63,18 @@ contains
         call assert_equals(hipSuccess, hipFree(d_x))
         call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
     end subroutine test_rocrand_generate
+
+    !> Test rocrand_generate using a host generator.
+    subroutine test_rocrand_generate_host()
+        integer(kind =8) :: gen
+        integer(kind =4), target, dimension(128) :: h_x
+        integer(c_size_t), parameter :: output_size = 128
+        call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_create_generator_host(gen, &
+        ROCRAND_RNG_PSEUDO_MRG31K3P))
+        call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_generate(gen, c_loc(h_x), output_size))
+        call assert_equals(hipSuccess, hipDeviceSynchronize())
+        call assert_equals(ROCRAND_STATUS_SUCCESS, rocrand_destroy_generator(gen))
+    end subroutine test_rocrand_generate_host
 
     !> Test rocrand_generate_uniform.
     subroutine test_rocrand_generate_uniform()
@@ -218,6 +230,9 @@ contains
         setup,teardown,suite_name)
 
     call run_fruit_test_case(test_rocrand_generate,'test_rocrand_generate',&
+        setup,teardown,suite_name)
+
+    call run_fruit_test_case(test_rocrand_generate_host,'test_rocrand_generate_host',&
         setup,teardown,suite_name)
 
     call run_fruit_test_case(test_rocrand_generate_uniform,'test_rocrand_generate_uniform',&
