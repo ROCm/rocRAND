@@ -82,7 +82,7 @@ struct rocrand_generator_type : rocrand_generator_base_type
 
     rocrand_rng_type type() const override final
     {
-        return m_generator.type();
+        return Generator::type();
     }
 
     unsigned long long get_seed() const override final

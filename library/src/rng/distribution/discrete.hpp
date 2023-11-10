@@ -57,6 +57,7 @@ public:
     rocrand_discrete_distribution_base()  // cppcheck-suppress uninitDerivedMemberVar
     {
         size = 0;
+        offset      = 0;
         probability = NULL;
         alias = NULL;
         cdf = NULL;

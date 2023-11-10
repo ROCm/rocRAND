@@ -31,6 +31,8 @@
 #define ROCRAND_RNG_SYSTEM_H_
 
 #include "common.hpp"
+#include "config_types.hpp"
+#include "rocrand/rocrand.h"
 
 #include <hip/hip_runtime.h>
 
@@ -81,11 +83,16 @@ struct rocrand_system_host
         Kernel(block, thread, grid_dim, block_dim, std::get<Is>(args)...);
     }
 
-    template<auto Kernel, uint32_t LaunchBounds = ROCRAND_DEFAULT_MAX_BLOCK_SIZE, typename... Args>
+    template<auto Kernel,
+             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
+                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename T     = unsigned int,
+             bool IsDynamic = false,
+             typename... Args>
     static rocrand_status
         launch(dim3 num_blocks, dim3 num_threads, hipStream_t stream, Args... args)
     {
-        (void)LaunchBounds; // Not relevant on host launches
+        (void)IsDynamic; // Not relevant on host launches
 
         using KernelArgsType = KernelArgs<Args...>;
 
@@ -154,8 +161,9 @@ struct rocrand_system_host
 namespace detail
 {
 
-template<auto Kernel, uint32_t LaunchBounds, typename... Args>
-__global__ __launch_bounds__(LaunchBounds) void kernel_wrapper(Args... args)
+template<auto Kernel, typename ConfigProvider, typename T, bool IsDynamic, typename... Args>
+__global__ __launch_bounds__((rocrand_host::detail::get_block_size<ConfigProvider, T>(
+    IsDynamic))) void kernel_wrapper(Args... args)
 {
     // We need to write out these constructors because of HIP-CPU.
     Kernel(dim3(blockIdx.x, blockIdx.y, blockIdx.z),
@@ -191,17 +199,23 @@ struct rocrand_system_device
         ROCRAND_HIP_FATAL_ASSERT(hipFree(ptr));
     }
 
-    template<auto Kernel, uint32_t LaunchBounds = ROCRAND_DEFAULT_MAX_BLOCK_SIZE, typename... Args>
+    template<auto Kernel,
+             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
+                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename T     = unsigned int,
+             bool IsDynamic = false,
+             typename... Args>
     static rocrand_status
         launch(dim3 num_blocks, dim3 num_threads, hipStream_t stream, Args... args)
     {
         // We cannot use chevron syntax because HIP-CPU fails to parse it properly.
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(detail::kernel_wrapper<Kernel, LaunchBounds>),
-                           num_blocks,
-                           num_threads,
-                           0,
-                           stream,
-                           args...);
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(detail::kernel_wrapper<Kernel, ConfigProvider, T, IsDynamic>),
+            num_blocks,
+            num_threads,
+            0,
+            stream,
+            args...);
         if(hipGetLastError() != hipSuccess)
         {
             return ROCRAND_STATUS_LAUNCH_FAILURE;

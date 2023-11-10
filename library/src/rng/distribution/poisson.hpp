@@ -116,17 +116,31 @@ public:
 
     rocrand_poisson_distribution<Method, IsHostSide> dis;
 
-    poisson_distribution_manager()
-        : lambda(0.0)
-    { }
+    poisson_distribution_manager() = default;
 
     poisson_distribution_manager(const poisson_distribution_manager&) = delete;
 
-    poisson_distribution_manager(poisson_distribution_manager&&) = delete;
+    poisson_distribution_manager(poisson_distribution_manager&& other)
+        : dis(other.dis), lambda(other.lambda)
+    {
+        // For now, we didn't make rocrand_poisson_distribution move-only
+        // We copied the pointers of dis. Prevent deallocation by the destructor of other
+        other.dis = {};
+    }
 
     poisson_distribution_manager& operator=(const poisson_distribution_manager&) = delete;
 
-    poisson_distribution_manager& operator=(poisson_distribution_manager&&) = delete;
+    poisson_distribution_manager& operator=(poisson_distribution_manager&& other)
+    {
+        dis    = other.dis;
+        lambda = other.lambda;
+
+        // For now, we didn't make rocrand_poisson_distribution move-only
+        // We copied the pointers of dis. Prevent deallocation by the destructor of other
+        other.dis = {};
+
+        return *this;
+    }
 
     ~poisson_distribution_manager()
     {
@@ -144,8 +158,7 @@ public:
     }
 
 private:
-
-    double lambda;
+    double lambda = 0.0;
 };
 
 // Mrg32k3a and Mrg31k3p

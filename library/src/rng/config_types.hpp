@@ -297,6 +297,19 @@ __host__ __device__ constexpr bool is_ordering_quasi(const rocrand_ordering orde
         hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<ConfigProvider, false>), __VA_ARGS__); \
     }
 
+#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING_SYSTEM(ordering, kernel_name, ...)                      \
+    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                                      \
+    {                                                                                              \
+        status                                                                                     \
+            = system_type::template launch<kernel_name<T, Distribution>, ConfigProvider, T, true>( \
+                __VA_ARGS__);                                                                      \
+    }                                                                                              \
+    else                                                                                           \
+    {                                                                                              \
+        status = system_type::                                                                     \
+            template launch<kernel_name<T, Distribution>, ConfigProvider, T, false>(__VA_ARGS__);  \
+    }
+
 /// @brief Selects the preset kernel launch config for the given random engine and
 /// generated value type.
 /// @tparam T The datatype of the generated random values.
@@ -376,6 +389,66 @@ struct default_config_provider
                            generator_config&      config) const
     {
         return get_generator_config<GeneratorType, T>(stream, ordering, config);
+    }
+};
+
+/// @brief ConfigProvider that always returns a config with the specified \ref Blocks and \ref Threads.
+/// This can be used in place of \ref rocrand_host::detail::default_config_provider, which bases the
+/// returned configuration on the current architecture.
+/// @tparam Threads The number of threads in the kernel block.
+/// @tparam Blocks The number of blocks in the kernel grid.
+template<unsigned int Threads, unsigned int Blocks>
+struct static_config_provider
+{
+    static constexpr inline generator_config static_config = {Threads, Blocks};
+
+    template<class>
+    __device__ constexpr generator_config device_config(const bool /*is_dynamic*/)
+    {
+        return static_config;
+    }
+
+    template<class>
+    hipError_t host_config(const hipStream_t /*stream*/,
+                           const rocrand_ordering /*ordering*/,
+                           generator_config& config)
+    {
+        config = static_config;
+        return hipSuccess;
+    }
+};
+
+template<rocrand_rng_type RngType>
+using static_default_config_provider_t
+    = static_config_provider<generator_config_defaults<RngType, void>::threads,
+                             generator_config_defaults<RngType, void>::blocks>;
+
+/// @brief ConfigProvider that does not specify the grid size. This can be passed directly to a kernel's
+/// template argument list, when only the block size (number of threads) is needed in compile time.
+/// @tparam Threads The number of threads in the kernel block.
+template<unsigned int Threads>
+struct static_block_size_config_provider
+{
+    struct block_size_generator_config
+    {
+        unsigned int threads;
+    };
+
+    static constexpr inline block_size_generator_config static_config = {Threads};
+
+    template<class>
+    __device__ constexpr block_size_generator_config device_config(const bool /*is_dynamic*/)
+    {
+        return static_config;
+    }
+
+    template<class>
+    hipError_t host_config(const hipStream_t /*stream*/,
+                           const rocrand_ordering /*ordering*/,
+                           block_size_generator_config& config)
+    {
+        config = static_config;
+        return hipSuccess;
     }
 };
 
@@ -481,6 +554,11 @@ __device__ constexpr unsigned int get_block_size(const bool is_dynamic)
 {
     return ConfigProvider{}.template device_config<T>(is_dynamic).threads;
 }
+
+/// @brief Extracts the `rocrand_rng_type` from a generator template.
+/// @tparam GeneratorTemplate The generator template type.
+template<template<class> class GeneratorTemplate>
+constexpr inline rocrand_rng_type gen_template_type_v = GeneratorTemplate<void>::type();
 
 } // end namespace rocrand_host::detail
 

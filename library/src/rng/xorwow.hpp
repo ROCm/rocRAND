@@ -46,7 +46,7 @@ ROCRAND_KERNEL
                                                           unsigned long long    seed,
                                                           unsigned long long    offset)
 {
-    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int engine_id = blockIdx.x * BlockSize + threadIdx.x;
     if(engine_id < engines_size)
     {
         engines[engine_id]
@@ -64,12 +64,13 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
 {
     static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
                   "This kernel should only be used with single tile configs");
+    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int thread_idx   = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int thread_idx   = blockIdx.x * BlockSize + threadIdx.x;
     const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
     const size_t misalignment = (output_width - uintptr / sizeof(T) % output_width) % output_width;
     const unsigned int head_size = min(n, misalignment);
@@ -77,7 +78,7 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
     const size_t       vec_n     = (n - head_size) / output_width;
 
     vec_type*            vec_data    = reinterpret_cast<vec_type*>(data + misalignment);
-    const unsigned int   num_engines = gridDim.x * blockDim.x;
+    const unsigned int   num_engines = gridDim.x * BlockSize;
     const unsigned int   engine_id   = (thread_idx + start_engine_id) % num_engines;
     xorwow_device_engine engine      = engines[engine_id];
 
@@ -172,13 +173,47 @@ public:
 
     rocrand_xorwow_template(const rocrand_xorwow_template&) = delete;
 
-    rocrand_xorwow_template(rocrand_xorwow_template&&) = delete;
+    rocrand_xorwow_template(rocrand_xorwow_template&& other)
+        : base_type(other)
+        , m_engines_initialized(other.m_engines_initialized)
+        , m_engines(other.m_engines)
+        , m_start_engine_id(other.m_start_engine_id)
+        , m_engines_size(other.m_engines_size)
+        , m_seed(other.m_seed)
+        , m_poisson(std::move(other.m_poisson))
+    {
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+    }
 
-    rocrand_xorwow_template& operator=(const rocrand_xorwow_template&&) = delete;
+    rocrand_xorwow_template& operator=(const rocrand_xorwow_template&) = delete;
 
-    rocrand_xorwow_template& operator=(rocrand_xorwow_template&&) = delete;
+    rocrand_xorwow_template& operator=(rocrand_xorwow_template&& other)
+    {
+        *static_cast<base_type*>(this) = other;
+        m_engines_initialized          = other.m_engines_initialized;
+        m_engines                      = other.m_engines;
+        m_start_engine_id              = other.m_start_engine_id;
+        m_engines_size                 = other.m_engine_size;
+        m_seed                         = other.m_seed;
+        m_poisson                      = std::move(other.m_poisson);
 
-    rocrand_rng_type type() const
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+
+        return *this;
+    }
+
+    ~rocrand_xorwow_template()
+    {
+        if(m_engines != nullptr)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+            m_engines = nullptr;
+        }
+    }
+
+    static constexpr rocrand_rng_type type()
     {
         return ROCRAND_RNG_PSEUDO_XORWOW;
     }
@@ -214,21 +249,31 @@ public:
     rocrand_status init()
     {
         if (m_engines_initialized)
+        {
             return ROCRAND_STATUS_SUCCESS;
+        }
 
         hipError_t error
             = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(m_stream,
                                                                                m_order,
                                                                                m_engines_size);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
         m_start_engine_id = m_offset % m_engines_size;
 
+        if(m_engines != nullptr)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        }
         error
             = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
 
         constexpr unsigned int init_threads = ROCRAND_DEFAULT_MAX_BLOCK_SIZE;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
@@ -244,7 +289,9 @@ public:
                            m_seed,
                            m_offset / m_engines_size);
         if(hipGetLastError() != hipSuccess)
+        {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+        }
 
         m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
@@ -256,13 +303,17 @@ public:
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
+        {
             return status;
+        }
 
         rocrand_host::detail::generator_config config;
         const hipError_t                       error
             = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
         ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
                                            m_order,
@@ -279,7 +330,9 @@ public:
 
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
+        {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+        }
 
         // Generating data_size values will use this many distributions
         const auto touched_engines =
