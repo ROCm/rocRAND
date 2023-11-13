@@ -177,6 +177,7 @@ copyright-date:
     - .rules:build
   needs: []
   script:
+    - $SUDO_CMD apt-get install -y flang
     - cmake
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
@@ -188,7 +189,7 @@ copyright-date:
       -D BENCHMARK_TUNING_MIN_GRID_SIZE=32768
       -D BENCHMARK_TUNING_THREAD_OPTIONS="128, 256"
       -D BENCHMARK_TUNING_BLOCK_OPTIONS="128, 256"
-      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_FORTRAN_WRAPPER=ON
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
@@ -204,6 +205,7 @@ copyright-date:
     - .rules:build
   needs: []
   script:
+    - $SUDO_CMD apt-get install -y flang
     - cmake
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
@@ -211,7 +213,7 @@ copyright-date:
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
-      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_FORTRAN_WRAPPER=ON
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
@@ -247,15 +249,13 @@ copyright-date:
     paths:
       - $CI_PROJECT_DIR/build/library/
       - $CI_PROJECT_DIR/build/test/test_*
-      - $CI_PROJECT_DIR/build/test/CTestTestfile.cmake
-      - $CI_PROJECT_DIR/build/test/linkage/CTestTestfile.cmake
+      - $CI_PROJECT_DIR/build/**/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/benchmark/benchmark_*
       - $CI_PROJECT_DIR/build/deps/googlebenchmark/
       - $CI_PROJECT_DIR/build/deps/hip-cpu/
       - $CI_PROJECT_DIR/build/deps/tbb/
       - $CI_PROJECT_DIR/build/tbb-src/
       - $CI_PROJECT_DIR/build/CMakeCache.txt
-      - $CI_PROJECT_DIR/build/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/*.deb
       - $CI_PROJECT_DIR/build/*.zip
     expire_in: 2 weeks
@@ -446,6 +446,7 @@ benchmark:benchmark-tuning-generate-results:
     - .rules:test
   stage: test
   script:
+    - $SUDO_CMD apt-get install -y flang
     - cd $CI_PROJECT_DIR/build
     # Parallel execution (with other AMDGPU processes) can oversubscribe the SDMA queue.
     # This causes the hipMemcpy to fail, which is not reported as an error by HIP.
