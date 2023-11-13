@@ -8,6 +8,7 @@ Documentation for rocRAND is available at
 ### Additions
 
 * Added `rocrand_create_generator_host` with initial support for `ROCRAND_RNG_PSEUDO_PHILOX4_32_10` and `ROCRAND_RNG_PSEUDO_MRG31K3P`.
+* Added the option to create a host generator to the Python wrapper
 
 ### Changes
 
