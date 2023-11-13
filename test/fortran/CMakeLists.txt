@@ -17,7 +17,13 @@ target_include_directories(${test_rocrand}
 )
 target_link_libraries(${test_rocrand} PRIVATE rocrand_fortran hip::host)
 if(HIP_COMPILER STREQUAL "nvcc")
-    target_link_libraries(${test_rocrand} PRIVATE CUDA::cudart)
+    if(CMAKE_VERSION VERSION_LESS 3.17)
+        find_package(CUDA REQUIRED)
+    else()
+        find_package(CUDAToolkit)
+        set(CUDA_LIBRARIES CUDA::cudart)
+    endif()
+    target_link_libraries(${test_rocrand} PRIVATE ${CUDA_LIBRARIES})
 endif()
 set_target_properties(${test_rocrand}
     PROPERTIES
