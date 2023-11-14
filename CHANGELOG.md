@@ -19,6 +19,8 @@ Documentation for rocRAND is available at
   * These types should be moved instead of copied; move constructors and operators are now
     defined
 * Building rocRAND now requires a C++17 capable compiler, as the internal library sources now require it. However consuming rocRAND is still possible from C++11 as public headers don't make use of the new features.
+* Building rocRAND should be faster on machines with multiple CPU cores as the library has been
+  split to multiple compilation units.
 
 ### Optimizations
 
