@@ -24,7 +24,7 @@
 # C++17 is used internally
 set(CMAKE_CXX_STANDARD 17)
 # Get sources
-file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 set(rocRAND_SRCS ${tmp})
 
 # When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which

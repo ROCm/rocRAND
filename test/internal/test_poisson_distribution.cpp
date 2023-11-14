@@ -25,8 +25,6 @@
 #include <vector>
 
 #include <rng/distribution/poisson.hpp>
-#include <rng/generator_type.hpp>
-#include <rng/generators.hpp>
 
 template<typename T>
 double get_mean(std::vector<T> values)

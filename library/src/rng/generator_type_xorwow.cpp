@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,23 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_GENERATORS_H_
-#define ROCRAND_RNG_GENERATORS_H_
+#include "generator_type.hpp"
 
-#include "lfsr113.hpp"
-#include "mrg31k3p.hpp"
-#include "mrg32k3a.hpp"
-#include "mt19937.hpp"
-#include "mtgp32.hpp"
-#include "philox4x32_10.hpp"
-#include "scrambled_sobol32.hpp"
-#include "scrambled_sobol64.hpp"
-#include "sobol32.hpp"
-#include "sobol64.hpp"
-#include "threefry2x32_20.hpp"
-#include "threefry2x64_20.hpp"
-#include "threefry4x32_20.hpp"
-#include "threefry4x64_20.hpp"
 #include "xorwow.hpp"
 
-#endif // ROCRAND_RNG_GENERATORS_H_
+template struct rocrand_generator_type<rocrand_xorwow>;
