@@ -62,32 +62,26 @@
 
 #include <hip/hip_runtime.h>
 
-namespace
-{
-/// Number of threads per block for jump-ahead kernel. Can be tweaked for performance.
-static constexpr unsigned int jump_ahead_thread_count = 128;
-} // namespace
-
 namespace rocrand_host::detail
 {
 
 /// Computes i % n, i must be in range [0, 2 * n)
 MT_FQUALIFIERS unsigned int wrap_n(unsigned int i)
 {
-    return i - (i < n ? 0 : n);
+    return i - (i < mt19937_constants::n ? 0 : mt19937_constants::n);
 }
 
-ROCRAND_KERNEL
-__launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
+template<unsigned int jump_ahead_thread_count>
+ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
     unsigned int* __restrict__ engines,
     unsigned long long seed,
     const unsigned int* __restrict__ jump)
 {
     constexpr unsigned int block_size       = jump_ahead_thread_count;
-    constexpr unsigned int items_per_thread = (n + block_size - 1) / block_size;
-    constexpr unsigned int tail_n           = n - (items_per_thread - 1) * block_size;
+    constexpr unsigned int items_per_thread = (mt19937_constants::n + block_size - 1) / block_size;
+    constexpr unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
 
-    __shared__ unsigned int temp[n];
+    __shared__ unsigned int temp[mt19937_constants::n];
     unsigned int            state[items_per_thread];
 
     // Initialize state 0 (engine_id = 0) used as a base for all engines.
@@ -96,7 +90,7 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
     {
         const unsigned int seedu = (seed >> 32) ^ seed;
         temp[0]                  = seedu;
-        for(unsigned int i = 1; i < n; i++)
+        for(unsigned int i = 1; i < mt19937_constants::n; i++)
         {
             temp[i] = 1812433253 * (temp[i - 1] ^ (temp[i - 1] >> 30)) + i;
         }
@@ -130,7 +124,7 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
         // Compute jumping ahead with standard Horner method
 
         unsigned int ptr = 0;
-        for(unsigned int i = threadIdx.x; i < n; i += block_size)
+        for(unsigned int i = threadIdx.x; i < mt19937_constants::n; i += block_size)
         {
             temp[i] = 0;
         }
@@ -138,16 +132,17 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
 
         const unsigned int* pf
             = jump + (r * (mt19937_jumps_radix - 1) + radix - 1) * mt19937_p_size;
-        for(int pfi = mexp - 1; pfi >= 0; pfi--)
+        for(int pfi = mt19937_constants::mexp - 1; pfi >= 0; pfi--)
         {
             // Generate next state
             if(threadIdx.x == 0)
             {
                 unsigned int t0 = temp[ptr];
                 unsigned int t1 = temp[wrap_n(ptr + 1)];
-                unsigned int tm = temp[wrap_n(ptr + m)];
-                unsigned int y  = (t0 & upper_mask) | (t1 & lower_mask);
-                temp[ptr]       = tm ^ (y >> 1) ^ ((y & 0x1U) ? matrix_a : 0);
+                unsigned int tm = temp[wrap_n(ptr + mt19937_constants::m)];
+                unsigned int y
+                    = (t0 & mt19937_constants::upper_mask) | (t1 & mt19937_constants::lower_mask);
+                temp[ptr] = tm ^ (y >> 1) ^ ((y & 0x1U) ? mt19937_constants::matrix_a : 0);
             }
             __syncthreads();
             ptr = wrap_n(ptr + 1);
@@ -182,39 +177,43 @@ __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
     {
         if(i < items_per_thread - 1 || threadIdx.x < tail_n)
         {
-            engines[engine_id * n + i * block_size + threadIdx.x] = state[i];
+            engines[engine_id * mt19937_constants::n + i * block_size + threadIdx.x] = state[i];
         }
     }
 }
 
+template<unsigned int BlockSize, unsigned int GridSize>
 ROCRAND_KERNEL
-__launch_bounds__(thread_count) void init_engines_kernel(mt19937_octo_engine::accessor octo_engines,
-                                                         const unsigned int* __restrict__ engines)
+    __launch_bounds__(BlockSize) void init_engines_kernel(unsigned int* __restrict__ octo_engines,
+                                                          const unsigned int* __restrict__ engines)
 {
-    const unsigned int thread_id = blockIdx.x * thread_count + threadIdx.x;
+    constexpr unsigned int stride    = BlockSize * GridSize;
+    const unsigned int     thread_id = blockIdx.x * BlockSize + threadIdx.x;
     // every eight octo engines gather from the same engine
+    mt19937_octo_engine_accessor<stride> accessor(octo_engines);
     mt19937_octo_engine engine;
-    engine.gather(&engines[thread_id / threads_per_generator * n]);
-    octo_engines.save(thread_id, engine);
+    engine.gather(
+        &engines[thread_id / mt19937_octo_engine::threads_per_generator * mt19937_constants::n]);
+    accessor.save(thread_id, engine);
 }
 
-template<class T, class VecT, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_short_kernel(
-    mt19937_octo_engine::accessor engines,
-    const unsigned int            start_input,
-    T* __restrict__ data,
-    const size_t size,
-    VecT* __restrict__ vec_data,
-    const size_t       vec_size,
-    const unsigned int head_size,
-    const unsigned int tail_size,
-    Distribution       distribution)
+template<unsigned int BlockSize, unsigned int GridSize, class T, class VecT, class Distribution>
+ROCRAND_KERNEL
+    __launch_bounds__(BlockSize) void generate_short_kernel(unsigned int* __restrict__ engines,
+                                                            const unsigned int start_input,
+                                                            T* __restrict__ data,
+                                                            const size_t size,
+                                                            VecT* __restrict__ vec_data,
+                                                            const size_t       vec_size,
+                                                            const unsigned int head_size,
+                                                            const unsigned int tail_size,
+                                                            Distribution       distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
-    constexpr unsigned int stride       = threads_per_generator * generator_count;
+    constexpr unsigned int stride       = BlockSize * GridSize;
 
-    const unsigned int thread_id = blockIdx.x * thread_count + threadIdx.x;
+    const unsigned int thread_id = blockIdx.x * BlockSize + threadIdx.x;
 
     unsigned int input[input_width];
     T            output[output_width];
@@ -235,11 +234,12 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_short_kernel(
         if(j * stride + thread_id >= start_input
            && j * stride + thread_id - start_input < vec_size + extra)
         {
+            mt19937_octo_engine_accessor<stride> accessor(engines);
 #pragma unroll
             for(unsigned int i = 0; i < input_width; i++)
             {
                 input[i] = mt19937_octo_engine::temper(
-                    engines.load_value(thread_id, j * input_width + i));
+                    accessor.load_value(thread_id, j * input_width + i));
             }
 
             distribution(input, output);
@@ -276,33 +276,35 @@ ROCRAND_KERNEL __launch_bounds__(thread_count) void generate_short_kernel(
     }
 }
 
-template<class T, class VecT, class Distribution>
+template<unsigned int BlockSize, unsigned int GridSize, class T, class VecT, class Distribution>
 ROCRAND_KERNEL
-    __launch_bounds__(thread_count) void generate_long_kernel(mt19937_octo_engine::accessor engines,
-                                                              const unsigned int start_input,
-                                                              T* __restrict__ data,
-                                                              const size_t size,
-                                                              VecT* __restrict__ vec_data,
-                                                              const size_t       vec_size,
-                                                              const unsigned int head_size,
-                                                              const unsigned int tail_size,
-                                                              Distribution       distribution)
+    __launch_bounds__(BlockSize) void generate_long_kernel(unsigned int* __restrict__ engines,
+                                                           const unsigned int start_input,
+                                                           T* __restrict__ data,
+                                                           const size_t size,
+                                                           VecT* __restrict__ vec_data,
+                                                           const size_t       vec_size,
+                                                           const unsigned int head_size,
+                                                           const unsigned int tail_size,
+                                                           Distribution       distribution)
 {
     constexpr unsigned int input_width      = Distribution::input_width;
     constexpr unsigned int output_width     = Distribution::output_width;
-    constexpr unsigned int inputs_per_state = (n / threads_per_generator) / input_width;
-    constexpr unsigned int stride           = threads_per_generator * generator_count;
+    constexpr unsigned int inputs_per_state
+        = (mt19937_constants::n / mt19937_octo_engine::threads_per_generator) / input_width;
+    constexpr unsigned int stride           = BlockSize * GridSize;
     constexpr unsigned int full_stride      = stride * inputs_per_state;
 
-    const unsigned int thread_id = blockIdx.x * thread_count + threadIdx.x;
+    const unsigned int thread_id = blockIdx.x * BlockSize + threadIdx.x;
 
     unsigned int input[input_width];
     T            output[output_width];
 
     // Workaround: since load() and store() use the same indices, the compiler decides to keep
-    // computed addresses alive wasting 78 * 2 VGPRs. blockDim.x equals to thread_count but it is
+    // computed addresses alive wasting 78 * 2 VGPRs. blockDim.x equals to BlockSize but it is
     // a runtime value so save() will compute new addresses.
-    mt19937_octo_engine engine = engines.load(blockIdx.x * blockDim.x + threadIdx.x);
+    mt19937_octo_engine_accessor<stride> accessor(engines);
+    mt19937_octo_engine engine = accessor.load(blockIdx.x * blockDim.x + threadIdx.x);
 
     size_t base_index = 0;
 
@@ -331,7 +333,7 @@ ROCRAND_KERNEL
         base_index = full_stride - start_input;
     }
 
-    // Middle sequence: all engines write n * generator_count values together and use them all
+    // Middle sequence: all engines write n * stride values together and use them all
     // in a fast unrolled loop.
     for(; base_index + full_stride <= vec_size; base_index += full_stride)
     {
@@ -408,7 +410,7 @@ ROCRAND_KERNEL
     }
 
     // save state
-    engines.save(thread_id, engine);
+    accessor.save(thread_id, engine);
 }
 
 } // end namespace rocrand_host::detail
@@ -419,6 +421,29 @@ public:
     using base_type        = rocrand_generator_impl_base;
     using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
 
+    static constexpr inline unsigned int threads_per_generator
+        = octo_engine_type::threads_per_generator;
+
+    /// Number of independent generators. Value is fixed to produce deterministic number stream.
+    static constexpr inline unsigned int generator_count = 8192;
+    /// Number of threads per block. Can be tweaked for performance.
+    static constexpr inline unsigned int thread_count = 256;
+    /// Number of threads per block for jump_ahead_kernel. Can be tweaked for performance.
+    static constexpr inline unsigned int jump_ahead_thread_count = 128;
+
+    static constexpr inline unsigned int generators_per_block
+        = thread_count / threads_per_generator;
+    static constexpr inline unsigned int block_count = generator_count / generators_per_block;
+
+    static_assert(thread_count % threads_per_generator == 0,
+                  "All eight threads of the generator must be in the same block");
+    static_assert(generator_count <= mt19937_jumps_radix * mt19937_jumps_radix
+                      && mt19937_jumps_radixes == 2,
+                  "Not enough rocrand_h_mt19937_jump values to initialize all generators");
+
+    static_assert(generator_count % generators_per_block == 0,
+                  "generator count must be a multiple of generators per block");
+
     rocrand_mt19937(unsigned long long seed = 0, hipStream_t stream = 0)
         : base_type(ROCRAND_ORDERING_PSEUDO_DEFAULT, 0, stream)
         , m_engines_initialized(false)
@@ -427,7 +452,8 @@ public:
     {
         // Allocate device random number engines
         auto error = hipMalloc(reinterpret_cast<void**>(&m_engines),
-                               generator_count * rocrand_host::detail::n * sizeof(unsigned int));
+                               generator_count * rocrand_host::detail::mt19937_constants::n
+                                   * sizeof(unsigned int));
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -498,7 +524,8 @@ public:
 
         unsigned int* d_engines{};
         err = hipMalloc(reinterpret_cast<void**>(&d_engines),
-                        generator_count * rocrand_host::detail::n * sizeof(unsigned int));
+                        generator_count * rocrand_host::detail::mt19937_constants::n
+                            * sizeof(unsigned int));
         if(err != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -523,14 +550,15 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
-                           dim3(generator_count),
-                           dim3(jump_ahead_thread_count),
-                           0,
-                           m_stream,
-                           d_engines,
-                           m_seed,
-                           d_mt19937_jump);
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::jump_ahead_kernel<jump_ahead_thread_count>),
+            dim3(generator_count),
+            dim3(jump_ahead_thread_count),
+            0,
+            m_stream,
+            d_engines,
+            m_seed,
+            d_mt19937_jump);
 
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
@@ -547,13 +575,14 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        hipLaunchKernelGGL(rocrand_host::detail::init_engines_kernel,
-                           dim3(block_count),
-                           dim3(thread_count),
-                           0,
-                           m_stream,
-                           octo_engine_type::accessor(m_engines),
-                           d_engines);
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel<thread_count, block_count>),
+            dim3(block_count),
+            dim3(thread_count),
+            0,
+            m_stream,
+            m_engines,
+            d_engines);
 
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
@@ -588,7 +617,7 @@ public:
         constexpr unsigned int output_width = Distribution::output_width;
         constexpr unsigned int stride       = threads_per_generator * generator_count;
         constexpr unsigned int inputs_per_state
-            = (rocrand_host::detail::n / threads_per_generator) / input_width;
+            = (rocrand_host::detail::mt19937_constants::n / threads_per_generator) / input_width;
         constexpr unsigned int full_stride = stride * inputs_per_state;
 
         using vec_type = aligned_vec_type<T, output_width>;
@@ -631,38 +660,42 @@ public:
             // Engines have enough values, generated by the previous generate_long_kernel call.
             // This kernel does not load and store engines but loads values directly from global
             // memory.
-            hipLaunchKernelGGL(rocrand_host::detail::generate_short_kernel,
-                               dim3(block_count),
-                               dim3(thread_count),
-                               0,
-                               m_stream,
-                               octo_engine_type::accessor(m_engines),
-                               m_start_input,
-                               data,
-                               size,
-                               vec_data,
-                               vec_size,
-                               head_size,
-                               tail_size,
-                               distribution);
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(
+                    rocrand_host::detail::generate_short_kernel<thread_count, block_count>),
+                dim3(block_count),
+                dim3(thread_count),
+                0,
+                m_stream,
+                m_engines,
+                m_start_input,
+                data,
+                size,
+                vec_data,
+                vec_size,
+                head_size,
+                tail_size,
+                distribution);
         }
         else
         {
             // There are not enough generated values or no values at all
-            hipLaunchKernelGGL(rocrand_host::detail::generate_long_kernel,
-                               dim3(block_count),
-                               dim3(thread_count),
-                               0,
-                               m_stream,
-                               octo_engine_type::accessor(m_engines),
-                               m_start_input,
-                               data,
-                               size,
-                               vec_data,
-                               vec_size,
-                               head_size,
-                               tail_size,
-                               distribution);
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(
+                    rocrand_host::detail::generate_long_kernel<thread_count, block_count>),
+                dim3(block_count),
+                dim3(thread_count),
+                0,
+                m_stream,
+                m_engines,
+                m_start_input,
+                data,
+                size,
+                vec_data,
+                vec_size,
+                head_size,
+                tail_size,
+                distribution);
         }
 
         // check kernel status
@@ -739,11 +772,6 @@ private:
     unsigned int m_prev_input_width;
 
     unsigned long long m_seed;
-
-    static constexpr unsigned int generators_per_block = thread_count / threads_per_generator;
-    static constexpr unsigned int block_count          = generator_count / generators_per_block;
-    static_assert(generator_count % generators_per_block == 0,
-                  "generator count must be a multiple of generators per block");
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> m_poisson;
