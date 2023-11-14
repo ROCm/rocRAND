@@ -122,7 +122,6 @@ if(BUILD_LEGACY_BENCHMARK)
   endif()
 endif()
 
-option(BUILD_BENCHMARK_TUNING "Build extra benchmarks for kernel configuration tuning" OFF)
 if(BUILD_BENCHMARK_TUNING)
   add_subdirectory(tuning)
 endif()
