@@ -57,137 +57,92 @@
 
 #include <hip/hip_runtime.h>
 
-namespace
-{
-/// Number of independent generators. Value is fixed to produce deterministic number stream.
-static constexpr unsigned int generator_count = 8192;
-/// Number of threads that cooperate to run one generator. Value is fixed in implementation.
-static constexpr unsigned int threads_per_generator = 8;
-/// Number of threads per block. Can be tweaked for performance.
-static constexpr unsigned int thread_count = 256;
-
-static_assert(thread_count % threads_per_generator == 0,
-              "All eight threads of the generator must be in the same block");
-static_assert(generator_count <= mt19937_jumps_radix * mt19937_jumps_radix
-                  && mt19937_jumps_radixes == 2,
-              "Not enough rocrand_h_mt19937_jump values to initialize all generators");
-} // namespace
-
 namespace rocrand_host::detail
 {
-
-namespace
+namespace mt19937_constants
 {
 // MT19937 constants.
 
 /// Number of elements in the state vector.
-static constexpr unsigned int n = 624;
+inline constexpr unsigned int n = 624;
 /// Exponent of Mersenne prime.
-static constexpr unsigned int mexp = 19937;
+inline constexpr unsigned int mexp = 19937;
 /// The next value of element \p i depends on <tt>(i + 1) % n</tt> and <tt>(i + m) % n</tt>.
-static constexpr unsigned int m = 397;
+inline constexpr unsigned int m = 397;
 /// Vector constant used in masking operation to represent multiplication by matrix A.
-static constexpr unsigned int matrix_a = 0x9908B0DFU;
+inline constexpr unsigned int matrix_a = 0x9908B0DFU;
 /// Mask to select the most significant <tt>w - r</tt> bits from a \p w bits word, where
 /// \p w is the number of bits per generated word (32) and \p r is an algorithm constant.
-static constexpr unsigned int upper_mask = 0x80000000U;
+inline constexpr unsigned int upper_mask = 0x80000000U;
 /// Mask to select the least significant \p r bits from a \p w bits word, where
 /// \p w is the number of bits per generated word (32) and \p r is an algorithm constant.
-static constexpr unsigned int lower_mask = 0x7FFFFFFFU;
-} // namespace
+inline constexpr unsigned int lower_mask = 0x7FFFFFFFU;
+} // namespace mt19937_constants
+
+struct mt19937_octo_state
+{
+    /// Tuples of \p items_per_thread follow a regular pattern.
+    static constexpr inline unsigned int items_per_thread = 7U;
+
+    /// Thread 0 has element   0, thread 1 has element 113, thread 2 has element 170,
+    /// thread 3 had element 283, thread 4 has element 340, thread 5 has element 397,
+    /// thread 6 has element 510, thread 7 has element 567.
+    /// Thread i for i in [0, 7) has the following elements (ipt = items_per_thread):
+    /// [  1 + ipt * i,   1 + ipt * (i + 1)), [398 + ipt * i, 398 + ipt * (i + 1)), [171 + ipt * i, 171 + ipt * (i + 1)),
+    /// [568 + ipt * i, 568 + ipt * (i + 1)), [341 + ipt * i, 341 + ipt * (i + 1)), [114 + ipt * i, 114 + ipt * (i + 1)),
+    /// [511 + ipt * i, 511 + ipt * (i + 1)), [284 + ipt * i, 284 + ipt * (i + 1)), [ 57 + ipt * i,  57 + ipt * (i + 1)),
+    /// [454 + ipt * i, 454 + ipt * (i + 1)), [227 + ipt * i, 227 + ipt * (i + 1))
+    ///
+    /// which are 1 + 11 * 7 = 78 values per thread.
+    unsigned int mt[1U + items_per_thread * 11U];
+};
+
+template<unsigned int>
+struct mt19937_octo_engine_accessor;
 
 struct mt19937_octo_engine
 {
-    /// Tuples of \p items_per_thread follow a regular pattern.
-    static constexpr unsigned int items_per_thread = 7U;
+    template<unsigned int>
+    friend struct mt19937_octo_engine_accessor;
 
-    struct mt19937_octo_state
-    {
-        /// Thread 0 has element   0, thread 1 has element 113, thread 2 has element 170,
-        /// thread 3 had element 283, thread 4 has element 340, thread 5 has element 397,
-        /// thread 6 has element 510, thread 7 has element 567.
-        /// Thread i for i in [0, 7) has the following elements (ipt = items_per_thread):
-        /// [  1 + ipt * i,   1 + ipt * (i + 1)), [398 + ipt * i, 398 + ipt * (i + 1)), [171 + ipt * i, 171 + ipt * (i + 1)),
-        /// [568 + ipt * i, 568 + ipt * (i + 1)), [341 + ipt * i, 341 + ipt * (i + 1)), [114 + ipt * i, 114 + ipt * (i + 1)),
-        /// [511 + ipt * i, 511 + ipt * (i + 1)), [284 + ipt * i, 284 + ipt * (i + 1)), [ 57 + ipt * i,  57 + ipt * (i + 1)),
-        /// [454 + ipt * i, 454 + ipt * (i + 1)), [227 + ipt * i, 227 + ipt * (i + 1))
-        ///
-        /// which are 1 + 11 * 7 = 78 values per thread.
-        unsigned int mt[1U + items_per_thread * 11U];
-    };
+    static constexpr inline unsigned int items_per_thread = mt19937_octo_state::items_per_thread;
 
-    struct accessor
-    {
-        accessor(unsigned int* _engines) : engines(_engines) {}
-
-        /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
-        /// access
-        MT_FQUALIFIERS unsigned int load_value(unsigned int engine_id, unsigned int i) const
-        {
-            return engines[i * stride + engine_id];
-        }
-
-        /// Load the octo engine from global memory with coalesced access
-        MT_FQUALIFIERS mt19937_octo_engine load(unsigned int engine_id) const
-        {
-            mt19937_octo_engine engine;
-#pragma unroll
-            for(unsigned int i = 0; i < n / threads_per_generator; i++)
-            {
-                engine.m_state.mt[i] = engines[i * stride + engine_id];
-            }
-            return engine;
-        }
-
-        /// Save the octo engine to global memory with coalesced access
-        MT_FQUALIFIERS void save(unsigned int engine_id, const mt19937_octo_engine& engine) const
-        {
-#pragma unroll
-            for(unsigned int i = 0; i < n / threads_per_generator; i++)
-            {
-                engines[i * stride + engine_id] = engine.m_state.mt[i];
-            }
-        }
-
-    private:
-        static constexpr unsigned int stride = threads_per_generator * generator_count;
-
-        unsigned int* engines;
-    };
+    /// Number of threads that cooperate to run one generator. Value is fixed in implementation.
+    static constexpr inline unsigned int threads_per_generator = 8;
 
     /// Constants to map the indices to \p mt19937_octo_state.mt_extra indices.
     /// For example, \p i000_0 is the index of \p 0 owned by thread 0.
 
-    static constexpr unsigned int i000_0 = 0;
-    static constexpr unsigned int i113_1 = 0;
-    static constexpr unsigned int i170_2 = 0;
-    static constexpr unsigned int i283_3 = 0;
-    static constexpr unsigned int i340_4 = 0;
-    static constexpr unsigned int i397_5 = 0;
-    static constexpr unsigned int i510_6 = 0;
-    static constexpr unsigned int i567_7 = 0;
+    static constexpr inline unsigned int i000_0 = 0;
+    static constexpr inline unsigned int i113_1 = 0;
+    static constexpr inline unsigned int i170_2 = 0;
+    static constexpr inline unsigned int i283_3 = 0;
+    static constexpr inline unsigned int i340_4 = 0;
+    static constexpr inline unsigned int i397_5 = 0;
+    static constexpr inline unsigned int i510_6 = 0;
+    static constexpr inline unsigned int i567_7 = 0;
 
     /// Constants used to map the indices to \p mt19937_octo_state.mt indices.
     /// For example, \p i001 is the index of <tt>1 + tid * ipt</tt>.
 
-    static constexpr unsigned int i001 = 1 + items_per_thread * 0;
-    static constexpr unsigned int i057 = 1 + items_per_thread * 1;
-    static constexpr unsigned int i114 = 1 + items_per_thread * 2;
-    static constexpr unsigned int i171 = 1 + items_per_thread * 3;
-    static constexpr unsigned int i227 = 1 + items_per_thread * 4;
-    static constexpr unsigned int i284 = 1 + items_per_thread * 5;
-    static constexpr unsigned int i341 = 1 + items_per_thread * 6;
-    static constexpr unsigned int i398 = 1 + items_per_thread * 7;
-    static constexpr unsigned int i454 = 1 + items_per_thread * 8;
-    static constexpr unsigned int i511 = 1 + items_per_thread * 9;
-    static constexpr unsigned int i568 = 1 + items_per_thread * 10;
+    static constexpr inline unsigned int i001 = 1 + items_per_thread * 0;
+    static constexpr inline unsigned int i057 = 1 + items_per_thread * 1;
+    static constexpr inline unsigned int i114 = 1 + items_per_thread * 2;
+    static constexpr inline unsigned int i171 = 1 + items_per_thread * 3;
+    static constexpr inline unsigned int i227 = 1 + items_per_thread * 4;
+    static constexpr inline unsigned int i284 = 1 + items_per_thread * 5;
+    static constexpr inline unsigned int i341 = 1 + items_per_thread * 6;
+    static constexpr inline unsigned int i398 = 1 + items_per_thread * 7;
+    static constexpr inline unsigned int i454 = 1 + items_per_thread * 8;
+    static constexpr inline unsigned int i511 = 1 + items_per_thread * 9;
+    static constexpr inline unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
-    MT_FQUALIFIERS void gather(const unsigned int engine[n])
+    MT_FQUALIFIERS void gather(const unsigned int engine[mt19937_constants::n])
     {
         constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
-        static constexpr unsigned int offsets[off_cnt]
+        constexpr unsigned int offsets[off_cnt]
             = {1, 57, 114, 171, 227, 284, 341, 398, 454, 511, 568};
 
         const unsigned int tid = threadIdx.x & 7U;
@@ -232,8 +187,9 @@ struct mt19937_octo_engine
     static MT_FQUALIFIERS unsigned int
         comp(unsigned int mt_i, unsigned int mt_i_1, unsigned int mt_i_m)
     {
-        const unsigned int y   = (mt_i & upper_mask) | (mt_i_1 & lower_mask);
-        const unsigned int mag = (y & 0x1U) * matrix_a;
+        const unsigned int y
+            = (mt_i & mt19937_constants::upper_mask) | (mt_i_1 & mt19937_constants::lower_mask);
+        const unsigned int mag = (y & 0x1U) * mt19937_constants::matrix_a;
         return mt_i_m ^ (y >> 1) ^ mag;
     }
 
@@ -435,6 +391,48 @@ struct mt19937_octo_engine
 
 private:
     mt19937_octo_state m_state;
+};
+
+template<unsigned int stride>
+struct mt19937_octo_engine_accessor
+{
+    MT_FQUALIFIERS explicit mt19937_octo_engine_accessor(unsigned int* _engines) : engines(_engines)
+    {}
+
+    /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
+    /// access
+    MT_FQUALIFIERS unsigned int load_value(unsigned int engine_id, unsigned int i) const
+    {
+        return engines[i * stride + engine_id];
+    }
+
+    /// Load the octo engine from global memory with coalesced access
+    MT_FQUALIFIERS mt19937_octo_engine load(unsigned int engine_id) const
+    {
+        mt19937_octo_engine engine;
+#pragma unroll
+        for(unsigned int i = 0; i < mt19937_constants::n / threads_per_generator; i++)
+        {
+            engine.m_state.mt[i] = engines[i * stride + engine_id];
+        }
+        return engine;
+    }
+
+    /// Save the octo engine to global memory with coalesced access
+    MT_FQUALIFIERS void save(unsigned int engine_id, const mt19937_octo_engine& engine) const
+    {
+#pragma unroll
+        for(unsigned int i = 0; i < mt19937_constants::n / threads_per_generator; i++)
+        {
+            engines[i * stride + engine_id] = engine.m_state.mt[i];
+        }
+    }
+
+private:
+    static constexpr inline unsigned int threads_per_generator
+        = mt19937_octo_engine::threads_per_generator;
+
+    unsigned int* engines;
 };
 
 } // end namespace rocrand_host::detail

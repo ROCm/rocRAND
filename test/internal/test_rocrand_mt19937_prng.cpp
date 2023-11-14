@@ -18,19 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <gtest/gtest.h>
-#include <numeric>
-#include <stdio.h>
-#include <vector>
-
-#include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
+#include "test_common.hpp"
+#include "test_rocrand_common.hpp"
 
 #include <rng/generator_type.hpp>
 #include <rng/mt19937.hpp>
 
-#include "test_common.hpp"
-#include "test_rocrand_common.hpp"
+#include <rocrand/rocrand.h>
+
+#include <cstdio>
+#include <gtest/gtest.h>
+#include <hip/hip_runtime.h>
+#include <numeric>
+#include <vector>
 
 TEST(rocrand_mt19937_prng_tests, uniform_uint_test)
 {
@@ -285,18 +285,16 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
-static constexpr unsigned int n = 624;
+using mt19937_octo_engine = rocrand_host::detail::mt19937_octo_engine;
 
 /// Initialize the octo engines for both generators. Skip \p subsequence_size for the first generator.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
-    ::rocrand_host::detail::mt19937_octo_engine* octo_engines,
-    const unsigned int*                          engines,
-    unsigned int                                 subsequence_size)
+    mt19937_octo_engine* octo_engines, const unsigned int* engines, unsigned int subsequence_size)
 {
-    const unsigned int                          thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-    constexpr unsigned int                      threads_per_generator = 8U;
-    unsigned int                                engine_id = thread_id / threads_per_generator;
-    ::rocrand_host::detail::mt19937_octo_engine engine    = octo_engines[thread_id];
+    constexpr unsigned int n         = rocrand_host::detail::mt19937_constants::n;
+    const unsigned int     thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int           engine_id = thread_id / mt19937_octo_engine::threads_per_generator;
+    mt19937_octo_engine    engine    = octo_engines[thread_id];
     engine.gather(&engines[engine_id * n]);
 
     engine.gen_next_n();
@@ -313,18 +311,19 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
 
 /// Each generator produces \p n elements in its own \p data section.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    ::rocrand_host::detail::mt19937_octo_engine* engines,
-    unsigned int*                                data,
-    unsigned int                                 elements_per_generator,
-    unsigned int                                 subsequence_size)
+    mt19937_octo_engine* engines,
+    unsigned int*        data,
+    unsigned int         elements_per_generator,
+    unsigned int         subsequence_size)
 {
+    constexpr unsigned int n                     = rocrand_host::detail::mt19937_constants::n;
+    constexpr unsigned int threads_per_generator = mt19937_octo_engine::threads_per_generator;
     const unsigned int     local_thread_id       = threadIdx.x & 7U;
-    constexpr unsigned int threads_per_generator = 8U;
     const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int           engine_id             = thread_id / threads_per_generator;
     unsigned int*          ptr                   = data + engine_id * elements_per_generator;
 
-    ::rocrand_host::detail::mt19937_octo_engine engine = engines[thread_id];
+    mt19937_octo_engine engine = engines[thread_id];
 
     unsigned int mti = engine_id == 0 ? subsequence_size % n : 0;
 
@@ -345,8 +344,8 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
 
 TEST(rocrand_mt19937_prng_tests, subsequence_test)
 {
-    using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
-    constexpr unsigned int           threads_per_generator = 8U;
+    using octo_engine_type                       = mt19937_octo_engine;
+    constexpr unsigned int threads_per_generator = mt19937_octo_engine::threads_per_generator;
     constexpr unsigned long long int seed                  = 1ULL;
     constexpr unsigned int           subsequence_size      = 552552U;
     // The size of the subsequence must be a multiple of threads per generator
@@ -355,7 +354,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     static_assert(subsequence_size % threads_per_generator == 0,
                   "size of subsequence must be multiple of eight");
     constexpr unsigned int generator_count = 2U;
-    constexpr unsigned int state_size      = n;
+    constexpr unsigned int state_size      = rocrand_host::detail::mt19937_constants::n;
 
     // Constants to skip subsequence_size states.
     // Generated with tools/mt19937_precomputed_generator.cpp
@@ -486,16 +485,18 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
 
     unsigned int* d_engines{};
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines),
-                        generator_count * n * sizeof(unsigned int)));
+                        generator_count * state_size * sizeof(unsigned int)));
 
-    hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
-                       dim3(generator_count),
-                       dim3(jump_ahead_thread_count),
-                       0,
-                       0,
-                       d_engines,
-                       seed,
-                       d_mt19937_jump);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(
+            rocrand_host::detail::jump_ahead_kernel<rocrand_mt19937::jump_ahead_thread_count>),
+        dim3(generator_count),
+        dim3(rocrand_mt19937::jump_ahead_thread_count),
+        0,
+        0,
+        d_engines,
+        seed,
+        d_mt19937_jump);
 
     octo_engine_type* d_octo_engines{};
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_octo_engines),
@@ -599,15 +600,20 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
 
 struct mt19937_engine
 {
-    static constexpr unsigned int m          = 397;
-    static constexpr unsigned int mexp       = 19937;
-    static constexpr unsigned int matrix_a   = 0x9908B0DFU;
-    static constexpr unsigned int upper_mask = 0x80000000U;
-    static constexpr unsigned int lower_mask = 0x7FFFFFFFU;
+    static constexpr inline unsigned int m    = rocrand_host::detail::mt19937_constants::m;
+    static constexpr inline unsigned int mexp = rocrand_host::detail::mt19937_constants::mexp;
+    static constexpr inline unsigned int matrix_a
+        = rocrand_host::detail::mt19937_constants::matrix_a;
+    static constexpr inline unsigned int upper_mask
+        = rocrand_host::detail::mt19937_constants::upper_mask;
+    static constexpr inline unsigned int lower_mask
+        = rocrand_host::detail::mt19937_constants::lower_mask;
 
     // Jumping constants.
-    static constexpr unsigned int qq = 7;
-    static constexpr unsigned int ll = 1U << qq;
+    static constexpr inline unsigned int qq = 7;
+    static constexpr inline unsigned int ll = 1U << qq;
+
+    static constexpr inline unsigned int n = rocrand_host::detail::mt19937_constants::n;
 
     struct mt19937_state
     {
@@ -858,6 +864,9 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
 
     const unsigned long long seed = 12345678;
 
+    constexpr unsigned int generator_count = rocrand_mt19937::generator_count;
+    constexpr unsigned int n               = rocrand_host::detail::mt19937_constants::n;
+
     // Initialize the engines on host using Sliding window algorithm
     std::vector<mt19937_engine> h_engines0;
     h_engines0.reserve(generator_count);
@@ -883,14 +892,16 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines1),
                         generator_count * n * sizeof(unsigned int)));
 
-    hipLaunchKernelGGL(rocrand_host::detail::jump_ahead_kernel,
-                       dim3(generator_count),
-                       dim3(jump_ahead_thread_count),
-                       0,
-                       0,
-                       d_engines1,
-                       seed,
-                       d_mt19937_jump);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(
+            rocrand_host::detail::jump_ahead_kernel<rocrand_mt19937::jump_ahead_thread_count>),
+        dim3(generator_count),
+        dim3(rocrand_mt19937::jump_ahead_thread_count),
+        0,
+        0,
+        d_engines1,
+        seed,
+        d_mt19937_jump);
 
     std::vector<unsigned int> h_engines1(generator_count * n);
     HIP_CHECK(hipMemcpy(h_engines1.data(),
@@ -924,7 +935,8 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
 template<typename T, typename GenerateFunc>
 void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
 {
-    const size_t stride = n * generator_count * divisor;
+    const size_t stride
+        = rocrand_host::detail::mt19937_constants::n * rocrand_mt19937::generator_count * divisor;
     // Large sizes are used for triggering all code paths in the kernels (generating of middle,
     // start and end sequences).
     std::vector<size_t> sizes0{stride,
@@ -1099,7 +1111,8 @@ TEST(rocrand_mt19937_prng_tests, continuity_poisson_test)
 template<typename T, typename GenerateFunc>
 void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
 {
-    const size_t stride = n * generator_count * divisor;
+    const size_t stride
+        = rocrand_host::detail::mt19937_constants::n * rocrand_mt19937::generator_count * divisor;
     // Large sizes are used for triggering all code paths in the kernels.
     std::vector<size_t>
         sizes{stride, 1, stride * 2 + 45651, 5, stride * 3 + 123, 6, 45, stride - 12};
@@ -1197,7 +1210,7 @@ void change_distribution_test(GenerateFunc0 generate_func0,
 {
     SCOPED_TRACE(testing::Message() << "size0 = " << size0 << " start1 = " << start1);
 
-    const size_t size1 = threads_per_generator * generator_count * 3;
+    constexpr size_t size1 = rocrand_mt19937::thread_count * rocrand_mt19937::block_count * 3;
 
     T0* data0;
     T1* data10;
@@ -1233,10 +1246,10 @@ void change_distribution_test(GenerateFunc0 generate_func0,
     HIP_CHECK(hipFree(data11));
 }
 
-const size_t s = threads_per_generator * generator_count;
-
 TEST(rocrand_mt19937_prng_tests, change_distribution0_test)
 {
+    constexpr size_t s = rocrand_mt19937::thread_count * rocrand_mt19937::block_count;
+
     // Larger type (normal float) to smaller type (uniform uint)
     std::vector<std::pair<size_t, size_t>> test_cases{
         {         (s + 4) * 2, s * 4},
@@ -1257,6 +1270,8 @@ TEST(rocrand_mt19937_prng_tests, change_distribution0_test)
 
 TEST(rocrand_mt19937_prng_tests, change_distribution1_test)
 {
+    constexpr size_t s = rocrand_mt19937::thread_count * rocrand_mt19937::block_count;
+
     // Smaller type (uniform float) to larger type (normal double)
     std::vector<std::pair<size_t, size_t>> test_cases{
         {s * 2 + 100,  (s * 1) * 2},
@@ -1278,6 +1293,8 @@ TEST(rocrand_mt19937_prng_tests, change_distribution1_test)
 
 TEST(rocrand_mt19937_prng_tests, change_distribution2_test)
 {
+    constexpr size_t s = rocrand_mt19937::thread_count * rocrand_mt19937::block_count;
+
     // Smaller type (uniform double) to larger type (normal double)
     std::vector<std::pair<size_t, size_t>> test_cases{
         {s * 2 + 400, (s * 2) * 2},
@@ -1298,6 +1315,8 @@ TEST(rocrand_mt19937_prng_tests, change_distribution2_test)
 
 TEST(rocrand_mt19937_prng_tests, change_distribution3_test)
 {
+    constexpr size_t s = rocrand_mt19937::thread_count * rocrand_mt19937::block_count;
+
     // Larger type (normal double) to smaller type (uniform ushort)
     std::vector<std::pair<size_t, size_t>> test_cases{
         {     100 * 2,  s * 8},
