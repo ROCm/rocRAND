@@ -24,8 +24,28 @@
 # C++17 is used internally
 set(CMAKE_CXX_STANDARD 17)
 # Get sources
-file(GLOB_RECURSE tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-set(rocRAND_SRCS ${tmp})
+set(rocRAND_SRCS
+    "src/rng/generator_type_lfsr113.cpp"
+    "src/rng/generator_type_mrg31k3p.cpp"
+    "src/rng/generator_type_mrg32k3a.cpp"
+    "src/rng/generator_type_mt19937.cpp"
+    "src/rng/generator_type_mtgp32.cpp"
+    "src/rng/generator_type_philox4x32_10.cpp"
+    "src/rng/generator_type_scrambled_sobol32.cpp"
+    "src/rng/generator_type_scrambled_sobol64.cpp"
+    "src/rng/generator_type_sobol32.cpp"
+    "src/rng/generator_type_sobol64.cpp"
+    "src/rng/generator_type_threefry2x32_20.cpp"
+    "src/rng/generator_type_threefry2x64_20.cpp"
+    "src/rng/generator_type_threefry4x32_20.cpp"
+    "src/rng/generator_type_threefry4x64_20.cpp"
+    "src/rng/generator_type_xorwow.cpp"
+    "src/rocrand_mt19937_precomputed.cpp"
+    "src/rocrand_scrambled_sobol32_precomputed.cpp"
+    "src/rocrand_scrambled_sobol64_precomputed.cpp"
+    "src/rocrand_sobol32_precomputed.cpp"
+    "src/rocrand_sobol64_precomputed.cpp"
+    "src/rocrand.cpp")
 
 # When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
 # turns on inline asm in rocRAND (for both compiled library and device functions).
