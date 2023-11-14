@@ -41,12 +41,17 @@ else()
 endif()
 
 # Build options
+include(CMakeDependentOption)
+
 option(USE_HIP_CPU "Prefer HIP-CPU runtime instead of HW acceleration" OFF)
 option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
+cmake_dependent_option(BUILD_BENCHMARK_TUNING
+  "Build extra benchmarks for kernel configuration tuning" OFF "BUILD_BENCHMARK" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 option(CODE_COVERAGE "Build with code coverage flags (clang only)" OFF)
+option(DEPENDENCIES_FORCE_DOWNLOAD "Don't search the system for dependencies, always download them" OFF)
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
