@@ -20,7 +20,8 @@
 
 #include <hip/hip_runtime.h>
 
-#include "rng/generators.hpp"
+#include "rng/generator_type.hpp"
+#include "rng/generator_types.hpp"
 
 #include <new>
 #include <rocrand/rocrand.h>
