@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -152,7 +152,7 @@ public:
     rocrand_sobol32(unsigned long long offset = 0,
                     rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                     hipStream_t        stream = 0)
-        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1)
+        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1), m_current_offset()
     {
         // Allocate direction vectors
         hipError_t error;
@@ -172,9 +172,17 @@ public:
         }
     }
 
+    rocrand_sobol32(const rocrand_sobol32&) = delete;
+
+    rocrand_sobol32(rocrand_sobol32&&) = delete;
+
+    rocrand_sobol32& operator=(const rocrand_sobol32&&) = delete;
+
+    rocrand_sobol32& operator=(rocrand_sobol32&&) = delete;
+
     ~rocrand_sobol32()
     {
-        hipFree(m_direction_vectors);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
     }
 
     void reset()
@@ -307,7 +315,7 @@ private:
 
     // m_offset from base_type
 
-    size_t next_power2(size_t x)
+    static size_t next_power2(size_t x)
     {
         size_t power = 1;
         while (power < x)

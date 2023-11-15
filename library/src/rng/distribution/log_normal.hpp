@@ -256,8 +256,8 @@ struct mrg_engine_log_normal_distribution<__half, state_type>
     const __half2 mean;
     const __half2 stddev;
 
-    __host__ __device__ mrg_engine_log_normal_distribution(__half mean, __half stddev)
-        : mean(mean, mean), stddev(stddev, stddev)
+    __host__ __device__ mrg_engine_log_normal_distribution(__half mean, __half stddev) // cppcheck-suppress uninitMemberVar
+        : mean(mean, mean), stddev(stddev, stddev) 
     {}
 
     __host__ __device__

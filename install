@@ -17,7 +17,6 @@ function display_help()
     echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
     echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
     echo "    [--address-sanitizer] build with address sanitizer enabled"
-    echo "    [--no-hiprand] build without integrated hipRAND"
 }
 
 
@@ -34,8 +33,7 @@ rocm_path=/opt/rocm
 build_relocatable=false
 install_dependencies=false
 build_address_sanitizer=false
-no_hiprand=false
-build_freorg_bkwdcomp=true
+build_freorg_bkwdcomp=false
 
 # #################################################
 # Parameter parsing
@@ -44,7 +42,7 @@ build_freorg_bkwdcomp=true
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,address-sanitizer,no-hiprand,rm-legacy-include-dir --options hicgtprd -- "$@")
+    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,dependencies,address-sanitizer,rm-legacy-include-dir --options hicgtprd -- "$@")
 else
     echo "Need a new version of getopt"
     exit 1
@@ -97,9 +95,6 @@ while true; do
     --address-sanitizer)
         build_address_sanitizer=true
         shift ;;
-    --no-hiprand)
-        no_hiprand=true
-        shift ;;
     --rm-legacy-include-dir)
         build_freorg_bkwdcomp=false
         shift ;;
@@ -147,7 +142,7 @@ fi
 #   BUILD_BENCHMARK - off by default.
 #
 # ! IMPORTANT !
-# On ROCm platform set C++ compiler to HIPCC. You can do it by adding 'CXX=<path-to-hcc>'
+# On ROCm platform set C++ compiler to HIPCC. You can do it by adding 'CXX=<path-to-hipcc>'
 # before 'cmake' or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HIPCC compiler.
 #
 
@@ -167,12 +162,6 @@ if ($install_dependencies); then
     cmake_common_options="${cmake_common_options} -DDEPENDENCIES_FORCE_DOWNLOAD=ON"
 fi
 
-if ($no_hiprand); then
-    cmake_common_options="${cmake_common_options} -DBUILD_HIPRAND=OFF"
-elif ! [ -f "../../hipRAND/CMakeLists.txt" ]; then
-    git submodule update --init --force
-fi
-
 if ($build_freorg_bkwdcomp); then
     cmake_common_options="${cmake_common_options} -DBUILD_FILE_REORG_BACKWARD_COMPATIBILITY=ON"
 else
@@ -182,7 +171,7 @@ fi
 if [[ "${build_relocatable}" == true ]]; then
     CXX=${rocm_path}/bin/$compiler ${cmake_executable}  -DCMAKE_INSTALL_PREFIX="${rocm_path}" \
     -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ${cmake_common_options} \
-    -DCMAKE_PREFIX_PATH="${rocm_path};${rocm_path}/hcc;${rocm_path}/hip" \
+    -DCMAKE_PREFIX_PATH="${rocm_path};${rocm_path}/hip" \
     -DCMAKE_SHARED_LINKER_FLAGS="${rocm_rpath}" \
     -DROCM_DISABLE_LDCONFIG=ON \
     -DCMAKE_MODULE_PATH="${rocm_path}/lib/cmake/hip;${rocm_path}/hip/cmake" \

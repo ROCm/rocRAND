@@ -8,7 +8,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
     )
 else()
     configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_hcc_m.f90"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_rocm_m.f90"
         "${PROJECT_BINARY_DIR}/src/fortran/hip_m.f90"
         COPYONLY
     )
@@ -33,7 +33,7 @@ else()
     target_link_libraries(rocrand_fortran
         PRIVATE
             rocrand
-            "-L${HIP_ROOT_DIR}/lib -lhip_hcc -Wl,-rpath,${HIP_ROOT_DIR}/lib"
+            "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
     )
 endif()
 

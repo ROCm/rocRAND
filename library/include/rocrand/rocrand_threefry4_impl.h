@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -152,7 +152,7 @@ public:
 
     FQUALIFIERS value next()
     {
-#if defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)
+#if defined(__HIP_PLATFORM_AMD__)
         value ret = m_state.result.data[m_state.substate];
 #else
         value ret = (&m_state.result.x)[m_state.substate];
@@ -177,7 +177,7 @@ public:
     }
 
 protected:
-    FQUALIFIERS state_value threefry_rounds(state_value counter, state_value key)
+    FQUALIFIERS static state_value threefry_rounds(state_value counter, state_value key)
     {
         state_value X;
         value       ks[4 + 1];

@@ -36,7 +36,7 @@ class scrambled_sobol64_engine
 {
 public:
     FQUALIFIERS
-    scrambled_sobol64_engine() {}
+    scrambled_sobol64_engine() : scramble_constant() {}
 
     FQUALIFIERS
     scrambled_sobol64_engine(const unsigned long long int* vectors,

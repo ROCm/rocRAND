@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,11 @@ endif()
 add_library(rocrand ${rocRAND_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
 
+set_target_properties(rocrand PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
+
 # Add interface include directory so that other CMake applications can maintain previous behaviour.
 # This will be removed with upcoming packaging changes.
 target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
@@ -72,11 +77,6 @@ if(NOT USE_HIP_CPU)
         set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     else()
         target_link_libraries(rocrand PRIVATE hip::device)
-        if(NOT WIN32)
-            foreach(amdgpu_target ${AMDGPU_TARGETS})
-                target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
-            endforeach()
-        endif()
     endif()
 else()
     # Check hipRuntimeGetVersion() function availability
@@ -205,7 +205,7 @@ if (WIN32)
     endif()	
 endif()
 
-# Fortran wrappers for hipRAND and rocRAND
+# Fortran wrappers for rocRAND
 if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()

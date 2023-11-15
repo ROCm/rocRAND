@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -39,14 +39,11 @@ public:
     rocrand_poisson_distribution()
         : base() { }
 
-    rocrand_poisson_distribution(double lambda)
+    explicit rocrand_poisson_distribution(double lambda)
         : rocrand_poisson_distribution()
     {
         set_lambda(lambda);
     }
-
-    __host__ __device__
-    ~rocrand_poisson_distribution() { }
 
     void set_lambda(double lambda)
     {
@@ -123,6 +120,14 @@ public:
         : lambda(0.0)
     { }
 
+    poisson_distribution_manager(const poisson_distribution_manager&) = delete;
+
+    poisson_distribution_manager(poisson_distribution_manager&&) = delete;
+
+    poisson_distribution_manager& operator=(const poisson_distribution_manager&) = delete;
+
+    poisson_distribution_manager& operator=(poisson_distribution_manager&&) = delete;
+
     ~poisson_distribution_manager()
     {
         dis.deallocate();
@@ -153,7 +158,7 @@ struct mrg_engine_poisson_distribution
 
     rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis;
 
-    mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+    explicit mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
         : dis(dis)
     { }
 
@@ -175,7 +180,7 @@ struct mrg_engine_poisson_distribution
 
 struct mrg_poisson_distribution : mrg_engine_poisson_distribution<rocrand_state_mrg32k3a>
 {
-    mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+    explicit mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
         : mrg_engine_poisson_distribution(dis)
     {}
 };

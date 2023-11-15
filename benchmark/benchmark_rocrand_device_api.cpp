@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,6 @@
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_kernel.h>
 #include <rocrand/rocrand_mtgp32_11213.h>
-#include <rocrand/rocrand_scrambled_sobol32_constants.h>
-#include <rocrand/rocrand_scrambled_sobol32_precomputed.h>
-#include <rocrand/rocrand_scrambled_sobol64_constants.h>
-#include <rocrand/rocrand_scrambled_sobol64_precomputed.h>
-#include <rocrand/rocrand_sobol32_precomputed.h>
-#include <rocrand/rocrand_sobol64_precomputed.h>
 
 #include <algorithm>
 #include <iomanip>
@@ -324,6 +318,10 @@ struct runner<rocrand_state_sobol32>
     {
         this->dimensions = dimensions;
 
+        const unsigned int* h_directions;
+        ROCRAND_CHECK(
+            rocrand_get_direction_vectors32(&h_directions, ROCRAND_DIRECTION_VECTORS_32_JOEKUO6));
+
         const size_t states_size = blocks * threads * dimensions;
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
                             states_size * sizeof(rocrand_state_sobol32)));
@@ -331,10 +329,7 @@ struct runner<rocrand_state_sobol32>
         unsigned int* directions;
         const size_t  size = dimensions * 32 * sizeof(unsigned int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
-        HIP_CHECK(hipMemcpy(directions,
-                            rocrand_h_sobol32_direction_vectors,
-                            size,
-                            hipMemcpyHostToDevice));
+        HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
@@ -392,6 +387,14 @@ struct runner<rocrand_state_scrambled_sobol32>
     {
         this->dimensions = dimensions;
 
+        const unsigned int* h_directions;
+        const unsigned int* h_constants;
+
+        ROCRAND_CHECK(
+            rocrand_get_direction_vectors32(&h_directions,
+                                            ROCRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6));
+        ROCRAND_CHECK(rocrand_get_scramble_constants32(&h_constants));
+
         const size_t states_size = blocks * threads * dimensions;
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
                             states_size * sizeof(rocrand_state_scrambled_sobol32)));
@@ -399,18 +402,13 @@ struct runner<rocrand_state_scrambled_sobol32>
         unsigned int* directions;
         const size_t  directions_size = dimensions * 32 * sizeof(unsigned int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
-        HIP_CHECK(hipMemcpy(directions,
-                            rocrand_h_scrambled_sobol32_direction_vectors,
-                            directions_size,
-                            hipMemcpyHostToDevice));
+        HIP_CHECK(hipMemcpy(directions, h_directions, directions_size, hipMemcpyHostToDevice));
 
         unsigned int* scramble_constants;
         const size_t  constants_size = dimensions * sizeof(unsigned int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
-        HIP_CHECK(hipMemcpy(scramble_constants,
-                            h_scrambled_sobol32_constants,
-                            constants_size,
-                            hipMemcpyHostToDevice));
+        HIP_CHECK(
+            hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
@@ -470,6 +468,9 @@ struct runner<rocrand_state_sobol64>
     {
         this->dimensions = dimensions;
 
+        const unsigned long long* h_directions;
+        rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
+
         const size_t states_size = blocks * threads * dimensions;
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
                             states_size * sizeof(rocrand_state_sobol64)));
@@ -477,10 +478,7 @@ struct runner<rocrand_state_sobol64>
         unsigned long long int* directions;
         const size_t            size = dimensions * 64 * sizeof(unsigned long long int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
-        HIP_CHECK(hipMemcpy(directions,
-                            rocrand_h_sobol64_direction_vectors,
-                            size,
-                            hipMemcpyHostToDevice));
+        HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
@@ -538,6 +536,13 @@ struct runner<rocrand_state_scrambled_sobol64>
     {
         this->dimensions = dimensions;
 
+        const unsigned long long* h_directions;
+        const unsigned long long* h_constants;
+
+        rocrand_get_direction_vectors64(&h_directions,
+                                        ROCRAND_SCRAMBLED_DIRECTION_VECTORS_64_JOEKUO6);
+        rocrand_get_scramble_constants64(&h_constants);
+
         const size_t states_size = blocks * threads * dimensions;
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
                             states_size * sizeof(rocrand_state_scrambled_sobol64)));
@@ -545,18 +550,13 @@ struct runner<rocrand_state_scrambled_sobol64>
         unsigned long long int* directions;
         const size_t            directions_size = dimensions * 64 * sizeof(unsigned long long int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
-        HIP_CHECK(hipMemcpy(directions,
-                            rocrand_h_scrambled_sobol64_direction_vectors,
-                            directions_size,
-                            hipMemcpyHostToDevice));
+        HIP_CHECK(hipMemcpy(directions, h_directions, directions_size, hipMemcpyHostToDevice));
 
         unsigned long long int* scramble_constants;
         const size_t            constants_size = dimensions * sizeof(unsigned long long int);
         HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
-        HIP_CHECK(hipMemcpy(scramble_constants,
-                            h_scrambled_sobol64_constants,
-                            constants_size,
-                            hipMemcpyHostToDevice));
+        HIP_CHECK(
+            hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
@@ -605,9 +605,9 @@ struct runner<rocrand_state_scrambled_sobol64>
 // Provide optional create and destroy functions for the generators.
 struct generator_type
 {
-    void create() {}
+    static void create() {}
 
-    void destroy() {}
+    static void destroy() {}
 };
 
 template<typename Engine>
@@ -620,7 +620,7 @@ struct generator_uint : public generator_type
         return "uniform-uint";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand(state);
     }
@@ -636,7 +636,7 @@ struct generator_ullong : public generator_type
         return "uniform-ullong";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand(state);
     }
@@ -652,7 +652,7 @@ struct generator_uniform : public generator_type
         return "uniform-float";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_uniform(state);
     }
@@ -668,7 +668,7 @@ struct generator_uniform_double : public generator_type
         return "uniform-double";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_uniform_double(state);
     }
@@ -684,7 +684,7 @@ struct generator_normal : public generator_type
         return "normal-float";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_normal(state);
     }
@@ -700,7 +700,7 @@ struct generator_normal_double : public generator_type
         return "normal-double";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_normal_double(state);
     }
@@ -716,7 +716,7 @@ struct generator_log_normal : public generator_type
         return "log-normal-float";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_log_normal(state, 0.f, 1.f);
     }
@@ -732,7 +732,7 @@ struct generator_log_normal_double : public generator_type
         return "log-normal-double";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__ data_type operator()(Engine* state) const
     {
         return rocrand_log_normal_double(state, 0., 1.);
     }

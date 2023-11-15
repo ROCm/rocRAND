@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -191,11 +191,11 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-        #if defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)
-            unsigned int ret = m_state.result.data[m_state.substate];
-        #else
-            unsigned int ret = (&m_state.result.x)[m_state.substate];
-        #endif
+    #if defined(__HIP_PLATFORM_AMD__)
+        unsigned int ret = m_state.result.data[m_state.substate];
+    #else
+        unsigned int ret = (&m_state.result.x)[m_state.substate];
+    #endif
         m_state.substate++;
         if(m_state.substate == 4)
         {
@@ -312,7 +312,7 @@ protected:
 private:
     // Single Philox4x32 round
     FQUALIFIERS
-    uint4 single_round(uint4 counter, uint2 key)
+    static uint4 single_round(uint4 counter, uint2 key)
     {
         // Source: Random123
         unsigned int hi0;
@@ -328,7 +328,7 @@ private:
     }
 
     FQUALIFIERS
-    uint2 bumpkey(uint2 key)
+    static uint2 bumpkey(uint2 key)
     {
         key.x += ROCRAND_PHILOX_W32_0;
         key.y += ROCRAND_PHILOX_W32_1;

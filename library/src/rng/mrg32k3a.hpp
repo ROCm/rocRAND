@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -157,6 +157,7 @@ public:
         , m_engines_initialized(false)
         , m_engines(NULL)
         , m_engines_size(s_threads * s_blocks)
+        , m_start_engine_id()
     {
         // Allocate device random number engines
         hipError_t error
@@ -171,9 +172,17 @@ public:
         }
     }
 
+    rocrand_mrg32k3a(const rocrand_mrg32k3a&) = delete;
+
+    rocrand_mrg32k3a(rocrand_mrg32k3a&&) = delete;
+
+    rocrand_mrg32k3a& operator=(const rocrand_mrg32k3a&&) = delete;
+
+    rocrand_mrg32k3a& operator=(rocrand_mrg32k3a&&) = delete;
+
     ~rocrand_mrg32k3a()
     {
-        hipFree(m_engines);
+        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
     }
 
     void reset()
