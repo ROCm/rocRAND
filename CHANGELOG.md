@@ -3,7 +3,27 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-## rocRAND-3.0.0 for ROCm 6.0.0
+## (Unreleased) rocRAND-3.1.0 for ROCm 6.1.0
+
+### Additions
+
+* Added `rocrand_create_generator_host` with initial support for `ROCRAND_RNG_PSEUDO_PHILOX4_32_10` and `ROCRAND_RNG_PSEUDO_MRG31K3P`.
+* Added the option to create a host generator to the Python wrapper
+* Added the option to create a host generator to the Fortran wrapper
+* Added dynamic ordering. This ordering is free to rearrange the produced numbers, 
+  which can be specific to devices and distributions. It is implemented for:
+  * XORWOW, MRG32K3A, MTGP32, Philox 4x32-10, MRG31K3P, LFSR113, and ThreeFry
+
+### Changes
+
+* Building rocRAND now requires a C++17 capable compiler, as the internal library sources now require it. However consuming rocRAND is still possible from C++11 as public headers don't make use of the new features.
+* Building rocRAND should be faster on machines with multiple CPU cores as the library has been
+  split to multiple compilation units.
+
+### Removals
+- Removed references to and workarounds for deprecated hcc.
+
+## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
 
 ### Additions
 
@@ -18,9 +38,6 @@ Documentation for rocRAND is available at
   errors)
   * These types should be moved instead of copied; move constructors and operators are now
     defined
-* Building rocRAND now requires a C++17 capable compiler, as the internal library sources now require it. However consuming rocRAND is still possible from C++11 as public headers don't make use of the new features.
-* Building rocRAND should be faster on machines with multiple CPU cores as the library has been
-  split to multiple compilation units.
 
 ### Optimizations
 
