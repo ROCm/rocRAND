@@ -165,8 +165,8 @@ public:
         : base_type(order, offset, stream)
         , m_engines_initialized(false)
         , m_engines(NULL)
-        , m_seed(seed)
         , m_start_engine_id()
+        , m_seed(seed)
     {
         if(m_seed == 0)
         {
