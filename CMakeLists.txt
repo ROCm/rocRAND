@@ -123,7 +123,7 @@ if(NOT USE_HIP_CPU)
   endif()
 else()
   # HIP CPU doesn't use GPU_TARGETS, hide it from the Cmake GUI
-  set(GPU_TARGETS CACHE "all" INTERNAL "")
+  set(GPU_TARGETS "all" CACHE INTERNAL "")
 endif()
 
 # Build option to disable -Werror
