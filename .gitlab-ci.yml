@@ -49,7 +49,7 @@ clang-format:
   stage: lint
   needs: []
   tags:
-    - rocm-build
+    - build
   variables:
     CLANG_FORMAT: "/opt/rocm/llvm/bin/clang-format"
     GIT_CLANG_FORMAT: "/opt/rocm/llvm/bin/git-clang-format"
@@ -66,7 +66,7 @@ copyright-date:
   stage: lint
   needs: []
   tags:
-    - rocm-build
+    - build
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
@@ -262,7 +262,7 @@ copyright-date:
 
 build:rocm-cmake-minimum:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm:cmake-minimum
@@ -273,7 +273,7 @@ build:rocm-cmake-minimum:
 
 build:rocm-clang-cmake-minimum:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm-clang:cmake-minimum
@@ -284,7 +284,7 @@ build:rocm-clang-cmake-minimum:
 
 build:rocm-clang-cmake-latest:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm-clang:cmake-latest
@@ -294,7 +294,7 @@ build:rocm-clang-cmake-latest:
 
 build:rocm-static-cmake-minimum:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm:cmake-minimum
@@ -304,7 +304,7 @@ build:rocm-static-cmake-minimum:
 
 build:rocm-cmake-latest:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm:cmake-latest
@@ -314,7 +314,7 @@ build:rocm-cmake-latest:
 
 build:rocm-static-cmake-latest:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm:cmake-latest
@@ -324,7 +324,7 @@ build:rocm-static-cmake-latest:
 
 build:nvcc-cmake-minimum:
   tags:
-    - nvcc-build
+    - build
   needs: []
   extends:
     - .nvcc:cmake-minimum
@@ -335,7 +335,7 @@ build:nvcc-cmake-minimum:
 
 build:nvcc-static-cmake-minimum:
   tags:
-    - nvcc-build
+    - build
   needs: []
   extends:
     - .nvcc:cmake-minimum
@@ -345,7 +345,7 @@ build:nvcc-static-cmake-minimum:
 
 build:nvcc-cmake-latest:
   tags:
-    - nvcc-build
+    - build
   needs: []
   extends:
     - .nvcc:cmake-latest
@@ -355,7 +355,7 @@ build:nvcc-cmake-latest:
 
 build:nvcc-static-cmake-latest:
   tags:
-    - nvcc-build
+    - build
   needs: []
   extends:
     - .nvcc:cmake-latest
@@ -365,7 +365,7 @@ build:nvcc-static-cmake-latest:
 
 build-cpu:cmake-minimum:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .hip-cpu:cmake-minimum
@@ -376,7 +376,7 @@ build-cpu:cmake-minimum:
 
 build-cpu:cmake-latest:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .hip-cpu:cmake-latest
@@ -479,7 +479,7 @@ test:hip-cpu:
     - .hip-cpu:cmake-minimum
     - .test:ctest
   tags:
-    - rocm-build
+    - build
 
 .benchmark:
   extends:
@@ -521,7 +521,7 @@ benchmark:hip-cpu:
     - .hip-cpu:cmake-minimum
     - .benchmark
   tags:
-    - rocm-build
+    - build
   timeout: 8h
 
 .test:python:
