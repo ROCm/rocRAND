@@ -57,10 +57,15 @@
 #include "generator_type.hpp"
 #include "mt19937_octo_engine.hpp"
 
+#include "config/config_defaults.hpp"
+#include "config_types.hpp"
+
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_mt19937_precomputed.h>
 
 #include <hip/hip_runtime.h>
+
+#include <utility>
 
 namespace rocrand_host::detail
 {
@@ -71,12 +76,21 @@ MT_FQUALIFIERS unsigned int wrap_n(unsigned int i)
     return i - (i < mt19937_constants::n ? 0 : mt19937_constants::n);
 }
 
-template<unsigned int jump_ahead_thread_count>
+// Config is not actually used for kernel launch here, but is needed to check the number of generators
+// As this kernel is not dependent on any type just use void for the config, as mt19937 is not tuned for types independently, so all configs are the same for different types.
+template<unsigned int jump_ahead_thread_count, class ConfigProvider, bool IsDynamic>
 ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
     unsigned int* __restrict__ engines,
     unsigned long long seed,
     const unsigned int* __restrict__ jump)
 {
+    constexpr generator_config config = ConfigProvider::template device_config<void>(IsDynamic);
+    constexpr unsigned int     GeneratorCount
+        = config.threads * config.blocks / mt19937_octo_engine::threads_per_generator;
+    static_assert(GeneratorCount <= mt19937_jumps_radix * mt19937_jumps_radix
+                      && mt19937_jumps_radixes == 2,
+                  "Not enough rocrand_h_mt19937_jump values to initialize all generators");
+
     constexpr unsigned int block_size       = jump_ahead_thread_count;
     constexpr unsigned int items_per_thread = (mt19937_constants::n + block_size - 1) / block_size;
     constexpr unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
@@ -182,13 +196,23 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
     }
 }
 
-template<unsigned int BlockSize, unsigned int GridSize>
+// This kernel is not explicitly tuned, but uses the same configs as the generate-kernels.
+// As this kernel is not dependent on any type just use void for the config, as mt19937 is not tuned for types independently, so all configs are the same for different types.
+template<class ConfigProvider, bool IsDynamic>
 ROCRAND_KERNEL
-    __launch_bounds__(BlockSize) void init_engines_kernel(unsigned int* __restrict__ octo_engines,
-                                                          const unsigned int* __restrict__ engines)
+    __launch_bounds__((get_block_size<ConfigProvider, void>(IsDynamic))) void init_engines_kernel(
+        unsigned int* __restrict__ octo_engines, const unsigned int* __restrict__ engines)
 {
-    constexpr unsigned int stride    = BlockSize * GridSize;
-    const unsigned int     thread_id = blockIdx.x * BlockSize + threadIdx.x;
+    constexpr generator_config config     = ConfigProvider::template device_config<void>(IsDynamic);
+    constexpr unsigned int     block_size = config.threads;
+    constexpr unsigned int     grid_size  = config.blocks;
+    constexpr unsigned int     stride     = block_size * grid_size;
+    constexpr unsigned int     threads_per_generator = mt19937_octo_engine::threads_per_generator;
+    // All threads of a generator must be in the same block
+    static_assert(block_size % threads_per_generator == 0,
+                  "All eight threads of the generator must be in the same block");
+
+    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
     // every eight octo engines gather from the same engine
     mt19937_octo_engine_accessor<stride> accessor(octo_engines);
     mt19937_octo_engine engine;
@@ -197,23 +221,30 @@ ROCRAND_KERNEL
     accessor.save(thread_id, engine);
 }
 
-template<unsigned int BlockSize, unsigned int GridSize, class T, class VecT, class Distribution>
-ROCRAND_KERNEL
-    __launch_bounds__(BlockSize) void generate_short_kernel(unsigned int* __restrict__ engines,
-                                                            const unsigned int start_input,
-                                                            T* __restrict__ data,
-                                                            const size_t size,
-                                                            VecT* __restrict__ vec_data,
-                                                            const size_t       vec_size,
-                                                            const unsigned int head_size,
-                                                            const unsigned int tail_size,
-                                                            Distribution       distribution)
+template<class ConfigProvider, bool IsDynamic, class T, class VecT, class Distribution>
+ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
+    IsDynamic))) void generate_short_kernel(unsigned int* __restrict__ engines,
+                                            const unsigned int start_input,
+                                            T* __restrict__ data,
+                                            const size_t size,
+                                            VecT* __restrict__ vec_data,
+                                            const size_t       vec_size,
+                                            const unsigned int head_size,
+                                            const unsigned int tail_size,
+                                            Distribution       distribution)
 {
+    constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
+    constexpr unsigned int     block_size = config.threads;
+    constexpr unsigned int     grid_size  = config.blocks;
+    constexpr unsigned int     stride     = block_size * grid_size;
+    // All threads of a generator must be in the same block
+    static_assert(block_size % mt19937_octo_engine::threads_per_generator == 0,
+                  "All eight threads of the generator must be in the same block");
+
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
-    constexpr unsigned int stride       = BlockSize * GridSize;
 
-    const unsigned int thread_id = blockIdx.x * BlockSize + threadIdx.x;
+    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
 
     unsigned int input[input_width];
     T            output[output_width];
@@ -276,32 +307,40 @@ ROCRAND_KERNEL
     }
 }
 
-template<unsigned int BlockSize, unsigned int GridSize, class T, class VecT, class Distribution>
-ROCRAND_KERNEL
-    __launch_bounds__(BlockSize) void generate_long_kernel(unsigned int* __restrict__ engines,
-                                                           const unsigned int start_input,
-                                                           T* __restrict__ data,
-                                                           const size_t size,
-                                                           VecT* __restrict__ vec_data,
-                                                           const size_t       vec_size,
-                                                           const unsigned int head_size,
-                                                           const unsigned int tail_size,
-                                                           Distribution       distribution)
+template<class ConfigProvider, bool IsDynamic, class T, class VecT, class Distribution>
+ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
+    IsDynamic))) void generate_long_kernel(unsigned int* __restrict__ engines,
+                                           const unsigned int start_input,
+                                           T* __restrict__ data,
+                                           const size_t size,
+                                           VecT* __restrict__ vec_data,
+                                           const size_t       vec_size,
+                                           const unsigned int head_size,
+                                           const unsigned int tail_size,
+                                           Distribution       distribution)
 {
+    constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
+    constexpr unsigned int     block_size = config.threads;
+    constexpr unsigned int     grid_size  = config.blocks;
+    constexpr unsigned int     threads_per_generator = mt19937_octo_engine::threads_per_generator;
+    // All threads of a generator must be in the same block
+    static_assert(block_size % threads_per_generator == 0,
+                  "All eight threads of the generator must be in the same block");
+
     constexpr unsigned int input_width      = Distribution::input_width;
     constexpr unsigned int output_width     = Distribution::output_width;
     constexpr unsigned int inputs_per_state
         = (mt19937_constants::n / mt19937_octo_engine::threads_per_generator) / input_width;
-    constexpr unsigned int stride           = BlockSize * GridSize;
+    constexpr unsigned int stride           = block_size * grid_size;
     constexpr unsigned int full_stride      = stride * inputs_per_state;
 
-    const unsigned int thread_id = blockIdx.x * BlockSize + threadIdx.x;
+    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
 
     unsigned int input[input_width];
     T            output[output_width];
 
     // Workaround: since load() and store() use the same indices, the compiler decides to keep
-    // computed addresses alive wasting 78 * 2 VGPRs. blockDim.x equals to BlockSize but it is
+    // computed addresses alive wasting 78 * 2 VGPRs. blockDim.x equals to block_size but it is
     // a runtime value so save() will compute new addresses.
     mt19937_octo_engine_accessor<stride> accessor(engines);
     mt19937_octo_engine engine = accessor.load(blockIdx.x * blockDim.x + threadIdx.x);
@@ -415,7 +454,8 @@ ROCRAND_KERNEL
 
 } // end namespace rocrand_host::detail
 
-class rocrand_mt19937 : public rocrand_generator_impl_base
+template<class ConfigProvider>
+class rocrand_mt19937_template : public rocrand_generator_impl_base
 {
 public:
     using base_type        = rocrand_generator_impl_base;
@@ -424,35 +464,17 @@ public:
     static constexpr inline unsigned int threads_per_generator
         = octo_engine_type::threads_per_generator;
 
-    /// Number of independent generators. Value is fixed to produce deterministic number stream.
-    static constexpr inline unsigned int generator_count = 8192;
-    /// Number of threads per block. Can be tweaked for performance.
-    static constexpr inline unsigned int thread_count = 256;
     /// Number of threads per block for jump_ahead_kernel. Can be tweaked for performance.
     static constexpr inline unsigned int jump_ahead_thread_count = 128;
 
-    static constexpr inline unsigned int generators_per_block
-        = thread_count / threads_per_generator;
-    static constexpr inline unsigned int block_count = generator_count / generators_per_block;
-
-    static_assert(thread_count % threads_per_generator == 0,
-                  "All eight threads of the generator must be in the same block");
-    static_assert(generator_count <= mt19937_jumps_radix * mt19937_jumps_radix
-                      && mt19937_jumps_radixes == 2,
-                  "Not enough rocrand_h_mt19937_jump values to initialize all generators");
-
-    static_assert(generator_count % generators_per_block == 0,
-                  "generator count must be a multiple of generators per block");
-
-    rocrand_mt19937(unsigned long long seed = 0, hipStream_t stream = 0)
-        : base_type(ROCRAND_ORDERING_PSEUDO_DEFAULT, 0, stream)
-        , m_engines_initialized(false)
-        , m_engines(NULL)
-        , m_seed(seed)
+    rocrand_mt19937_template(unsigned long long seed   = 0,
+                             rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                             hipStream_t        stream = 0)
+        : base_type(order, 0, stream), m_seed(seed)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines,
-                               generator_count * rocrand_host::detail::mt19937_constants::n
+                               m_generator_count * rocrand_host::detail::mt19937_constants::n
                                    * sizeof(unsigned int));
         if(error != hipSuccess)
         {
@@ -460,17 +482,42 @@ public:
         }
     }
 
-    rocrand_mt19937(const rocrand_mt19937&) = delete;
+    rocrand_mt19937_template(const rocrand_mt19937_template&) = delete;
 
-    rocrand_mt19937(rocrand_mt19937&&) = delete;
+    rocrand_mt19937_template(rocrand_mt19937_template&& other)
+        : base_type(other)
+        , m_engines_initialized(std::exchange(other.m_engines_initialized, false))
+        , m_engines(std::exchange(other.m_engines, nullptr))
+        , m_start_input(other.m_start_input)
+        , m_prev_input_width(other.m_prev_input_width)
+        , m_seed(other.m_seed)
+        , m_poisson(std::move(other.m_poisson))
+        , m_generator_count(other.m_generator_count)
+    {}
 
-    rocrand_mt19937& operator=(const rocrand_mt19937&) = delete;
+    rocrand_mt19937_template& operator=(const rocrand_mt19937_template&) = delete;
 
-    rocrand_mt19937& operator=(rocrand_mt19937&&) = delete;
-
-    ~rocrand_mt19937()
+    rocrand_mt19937_template& operator=(rocrand_mt19937_template&& other)
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        *static_cast<base_type*>(this) = other;
+
+        m_engines_initialized = std::exchange(other.m_engines_initialized, false);
+        m_engines             = std::exchange(other.m_engines, nullptr);
+        m_start_input         = other.m_start_input;
+        m_prev_input_width    = other.m_prev_input_width;
+        m_seed                = other.m_seed;
+        m_poisson             = std::move(other.m_poisson);
+        m_generator_count     = other.m_generator_count;
+
+        return *this;
+    }
+
+    ~rocrand_mt19937_template()
+    {
+        if(m_engines != nullptr)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        }
     }
 
     static constexpr rocrand_rng_type type()
@@ -515,16 +562,37 @@ public:
 
     rocrand_status init()
     {
-        hipError_t err;
-
         if(m_engines_initialized)
         {
             return ROCRAND_STATUS_SUCCESS;
         }
 
+        // TODO: make a version for generators that don't support per-type specialization of the configs and use that one
+        // For now: just use the void config, assuming that all configs are the same
+        rocrand_host::detail::generator_config config;
+        hipError_t err = ConfigProvider::template host_config<void>(m_stream, m_order, config);
+        if(err != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        m_generator_count = config.threads * config.blocks / threads_per_generator;
+
+        if(m_engines != nullptr)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        }
+        // Allocate device random number engines
+        err = hipMalloc(reinterpret_cast<void**>(&m_engines),
+                        m_generator_count * rocrand_host::detail::mt19937_constants::n
+                            * sizeof(unsigned int));
+        if(err != hipSuccess)
+        {
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
+
         unsigned int* d_engines{};
         err = hipMalloc(&d_engines,
-                        generator_count * rocrand_host::detail::mt19937_constants::n
+                        m_generator_count * rocrand_host::detail::mt19937_constants::n
                             * sizeof(unsigned int));
         if(err != hipSuccess)
         {
@@ -550,15 +618,30 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::jump_ahead_kernel<jump_ahead_thread_count>),
-            dim3(generator_count),
-            dim3(jump_ahead_thread_count),
-            0,
-            m_stream,
-            d_engines,
-            m_seed,
-            d_mt19937_jump);
+        if(::rocrand_host::detail::is_ordering_dynamic(m_order))
+        {
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(rocrand_host::detail::jump_ahead_kernel<jump_ahead_thread_count, ConfigProvider, true>),
+                dim3(m_generator_count),
+                dim3(jump_ahead_thread_count),
+                0,
+                m_stream,
+                d_engines,
+                m_seed,
+                d_mt19937_jump);
+        }
+        else
+        {
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(rocrand_host::detail::jump_ahead_kernel<jump_ahead_thread_count, ConfigProvider, false>),
+                dim3(m_generator_count),
+                dim3(jump_ahead_thread_count),
+                0,
+                m_stream,
+                d_engines,
+                m_seed,
+                d_mt19937_jump);
+        }
 
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
@@ -575,14 +658,16 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel<thread_count, block_count>),
-            dim3(block_count),
-            dim3(thread_count),
-            0,
-            m_stream,
-            m_engines,
-            d_engines);
+        // Assume all configs are the same and just use the one for unsigned int
+        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(unsigned int,
+                                           m_order,
+                                           rocrand_host::detail::init_engines_kernel,
+                                           dim3(config.blocks),
+                                           dim3(config.threads),
+                                           0,
+                                           m_stream,
+                                           m_engines,
+                                           d_engines);
 
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
@@ -615,10 +700,17 @@ public:
 
         constexpr unsigned int input_width  = Distribution::input_width;
         constexpr unsigned int output_width = Distribution::output_width;
-        constexpr unsigned int stride       = threads_per_generator * generator_count;
         constexpr unsigned int inputs_per_state
             = (rocrand_host::detail::mt19937_constants::n / threads_per_generator) / input_width;
-        constexpr unsigned int full_stride = stride * inputs_per_state;
+        const unsigned int stride      = threads_per_generator * m_generator_count;
+        const unsigned int full_stride = stride * inputs_per_state;
+
+        rocrand_host::detail::generator_config config;
+        hipError_t err = ConfigProvider::template host_config<T>(m_stream, m_order, config);
+        if(err != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
         using vec_type = aligned_vec_type<T, output_width>;
 
@@ -660,42 +752,42 @@ public:
             // Engines have enough values, generated by the previous generate_long_kernel call.
             // This kernel does not load and store engines but loads values directly from global
             // memory.
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(
-                    rocrand_host::detail::generate_short_kernel<thread_count, block_count>),
-                dim3(block_count),
-                dim3(thread_count),
-                0,
-                m_stream,
-                m_engines,
-                m_start_input,
-                data,
-                size,
-                vec_data,
-                vec_size,
-                head_size,
-                tail_size,
-                distribution);
+            ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
+                                               m_order,
+                                               rocrand_host::detail::generate_short_kernel,
+                                               dim3(config.blocks),
+                                               dim3(config.threads),
+                                               0,
+                                               m_stream,
+                                               m_engines,
+                                               m_start_input,
+                                               data,
+                                               size,
+                                               vec_data,
+                                               vec_size,
+                                               head_size,
+                                               tail_size,
+                                               distribution);
         }
         else
         {
             // There are not enough generated values or no values at all
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(
-                    rocrand_host::detail::generate_long_kernel<thread_count, block_count>),
-                dim3(block_count),
-                dim3(thread_count),
-                0,
-                m_stream,
-                m_engines,
-                m_start_input,
-                data,
-                size,
-                vec_data,
-                vec_size,
-                head_size,
-                tail_size,
-                distribution);
+            ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
+                                               m_order,
+                                               rocrand_host::detail::generate_long_kernel,
+                                               dim3(config.blocks),
+                                               dim3(config.threads),
+                                               0,
+                                               m_stream,
+                                               m_engines,
+                                               m_start_input,
+                                               data,
+                                               size,
+                                               vec_data,
+                                               vec_size,
+                                               head_size,
+                                               tail_size,
+                                               distribution);
         }
 
         // check kernel status
@@ -763,8 +855,8 @@ public:
     }
 
 private:
-    bool          m_engines_initialized;
-    unsigned int* m_engines;
+    bool          m_engines_initialized = false;
+    unsigned int* m_engines             = nullptr;
     // The index of the next unused input across all engines (where "input" is `input_width`
     // unsigned int state values), it equals to the number of inputs used by previous generate
     // calls. 0 means that a new generation (gen_next_n) is required.
@@ -776,8 +868,11 @@ private:
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<> m_poisson;
 
-    // m_seed from base_type
-    // m_offset from base_type
+    /// Number of independent generators. Value changes generated number stream.
+    unsigned int m_generator_count = 0;
 };
+
+using rocrand_mt19937 = rocrand_mt19937_template<
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
 
 #endif // ROCRAND_RNG_MT19937_H_
