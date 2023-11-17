@@ -372,7 +372,7 @@ struct default_config_provider
     /// @param is_dynamic Controls if the returned config belongs to the static or the dynamic ordering.
     /// @return The kernel config struct.
     template<class T>
-    __device__ constexpr generator_config device_config(const bool is_dynamic)
+    __device__ static constexpr generator_config device_config(const bool is_dynamic)
     {
         return get_generator_config_device<GeneratorType, T>(is_dynamic);
     }
@@ -384,9 +384,9 @@ struct default_config_provider
     /// @return \c hipSuccess if the query was successful, otherwise the error code from the
     /// first failing HIP runtime function invocation.
     template<class T>
-    hipError_t host_config(const hipStream_t      stream,
-                           const rocrand_ordering ordering,
-                           generator_config&      config) const
+    static hipError_t host_config(const hipStream_t      stream,
+                                  const rocrand_ordering ordering,
+                                  generator_config&      config)
     {
         return get_generator_config<GeneratorType, T>(stream, ordering, config);
     }
@@ -409,9 +409,9 @@ struct static_config_provider
     }
 
     template<class>
-    hipError_t host_config(const hipStream_t /*stream*/,
-                           const rocrand_ordering /*ordering*/,
-                           generator_config& config)
+    static hipError_t host_config(const hipStream_t /*stream*/,
+                                  const rocrand_ordering /*ordering*/,
+                                  generator_config& config)
     {
         config = static_config;
         return hipSuccess;
@@ -443,9 +443,9 @@ struct static_block_size_config_provider
     }
 
     template<class>
-    hipError_t host_config(const hipStream_t /*stream*/,
-                           const rocrand_ordering /*ordering*/,
-                           block_size_generator_config& config)
+    static hipError_t host_config(const hipStream_t /*stream*/,
+                                  const rocrand_ordering /*ordering*/,
+                                  block_size_generator_config& config)
     {
         config = static_config;
         return hipSuccess;
@@ -472,9 +472,9 @@ hipError_t get_least_common_grid_size(const hipStream_t      stream,
     {
         generator_config config{};
         const hipError_t error
-            = ConfigProvider{}.template host_config<std::decay_t<decltype(tag)>>(stream,
-                                                                                 ordering,
-                                                                                 config);
+            = ConfigProvider::template host_config<std::decay_t<decltype(tag)>>(stream,
+                                                                                ordering,
+                                                                                config);
         if(error != hipSuccess)
             return error;
         least_common_grid_size = std::lcm(least_common_grid_size, config.blocks * config.threads);
