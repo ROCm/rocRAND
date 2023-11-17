@@ -21,9 +21,11 @@
 #ifndef ROCRAND_RNG_SOBOL_H_
 #define ROCRAND_RNG_SOBOL_H_
 
-#include <algorithm>
-#include <cstdint>
-#include <hip/hip_runtime.h>
+#include "common.hpp"
+#include "config_types.hpp"
+#include "device_engines.hpp"
+#include "distributions.hpp"
+#include "generator_type.hpp"
 
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_scrambled_sobol32_constants.h>
@@ -32,15 +34,12 @@
 #include <rocrand/rocrand_scrambled_sobol64_precomputed.h>
 #include <rocrand/rocrand_sobol32_precomputed.h>
 #include <rocrand/rocrand_sobol64_precomputed.h>
-#include <type_traits>
 
-#include "common.hpp"
-#include "config_types.hpp"
-#include "device_engines.hpp"
-#include "distributions.hpp"
-#include "generator_type.hpp"
-#include "rocrand/rocrand_scrambled_sobol32.h"
-#include "rocrand/rocrand_sobol32.h"
+#include <hip/hip_runtime.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <type_traits>
 
 namespace rocrand_host::detail
 {
@@ -48,14 +47,14 @@ namespace rocrand_host::detail
 template<unsigned int OutputPerThread,
          bool         Scrambled,
          class Engine,
-         class Vector,
+         class Constant,
          class T,
          class Distribution>
 ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
     T*                 data,
     const size_t       n,
-    const Vector*      direction_vectors,
-    const Vector*      scramble_constants,
+    const Constant*    direction_vectors,
+    const Constant*    scramble_constants,
     const unsigned int offset,
     Distribution       distribution)
 {
@@ -67,17 +66,18 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     const unsigned int stride    = gridDim.x * blockDim.x;
     size_t             index     = engine_id;
 
-    // Each thread of the current block use the same direction vectors
+    // Each thread of the current block uses the same direction vectors
     // (the dimension is determined by blockIdx.y)
-    constexpr unsigned int vector_size = sizeof(Vector) == 4 ? 32 : 64;
-    __shared__ Vector      vectors[vector_size];
+    constexpr unsigned int vector_size = sizeof(Constant) == 4 ? 32 : 64;
+    __shared__ Constant    vectors[vector_size];
     if(threadIdx.x < vector_size)
     {
         vectors[threadIdx.x] = direction_vectors[dimension * vector_size + threadIdx.x];
     }
     __syncthreads();
-    const Vector scramble_constant = Scrambled ? scramble_constants[dimension] : 0;
-    const auto create_engine = [scramble_constant](const Vector* vectors, const unsigned int offset)
+    const Constant scramble_constant = Scrambled ? scramble_constants[dimension] : 0;
+    const auto     create_engine
+        = [scramble_constant](const Constant* vectors, const unsigned int offset)
     {
         if constexpr(Scrambled)
         {
@@ -112,9 +112,8 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     }
     else
     {
-        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
-        const size_t    misalignment
-            = (output_per_thread - uintptr / sizeof(T) % output_per_thread) % output_per_thread;
+        const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
+        const size_t misalignment = (output_per_thread - uintptr / sizeof(T)) % output_per_thread;
         const unsigned int head_size = min(n, misalignment);
         const unsigned int tail_size = (n - head_size) % output_per_thread;
         const size_t       vec_n     = (n - head_size) / output_per_thread;
@@ -196,11 +195,12 @@ struct sobol_device_engine<true, true>
 template<bool Is64, bool Scrambled>
 using sobol_device_engine_t = typename sobol_device_engine<Is64, Scrambled>::type;
 
-constexpr inline const void* sobol_direction_vectors(bool is_64, bool scrambled)
+template<bool Is64, bool IsScrambled>
+constexpr const auto* sobol_direction_vectors()
 {
-    if(is_64)
+    if constexpr(Is64)
     {
-        if(scrambled)
+        if constexpr(IsScrambled)
         {
             return rocrand_h_scrambled_sobol64_direction_vectors;
         }
@@ -211,7 +211,7 @@ constexpr inline const void* sobol_direction_vectors(bool is_64, bool scrambled)
     }
     else
     {
-        if(scrambled)
+        if constexpr(IsScrambled)
         {
             return rocrand_h_scrambled_sobol32_direction_vectors;
         }
@@ -254,9 +254,10 @@ template<bool Is64, bool Scrambled>
 class rocrand_sobol : public rocrand_generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_impl_base;
-    using engine_type = ::rocrand_host::detail::sobol_device_engine_t<Is64, Scrambled>;
-    using vector_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
+    static constexpr inline bool is_scrambled = Scrambled;
+    using base_type                           = rocrand_generator_impl_base;
+    using engine_type   = ::rocrand_host::detail::sobol_device_engine_t<Is64, Scrambled>;
+    using constant_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
 
     rocrand_sobol(unsigned long long offset = 0,
                   rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
@@ -268,7 +269,7 @@ public:
     {
         // Allocate direction vectors
         constexpr size_t direction_vectors_bytes
-            = sizeof(vector_type) * (Is64 ? SOBOL64_N : SOBOL32_N);
+            = sizeof(constant_type) * (Is64 ? SOBOL64_N : SOBOL32_N);
         hipError_t error;
         error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors), direction_vectors_bytes);
         if(error != hipSuccess)
@@ -276,8 +277,10 @@ public:
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
+        constexpr const constant_type* direction_vectors
+            = rocrand_host::detail::sobol_direction_vectors<Is64, Scrambled>();
         error = hipMemcpy(m_direction_vectors,
-                          rocrand_host::detail::sobol_direction_vectors(Is64, Scrambled),
+                          direction_vectors,
                           direction_vectors_bytes,
                           hipMemcpyHostToDevice);
         if(error != hipSuccess)
@@ -289,7 +292,7 @@ public:
         {
             // Allocate scramble constants
             error = hipMalloc(reinterpret_cast<void**>(&m_scramble_constants),
-                              sizeof(vector_type) * SCRAMBLED_SOBOL_DIM);
+                              sizeof(constant_type) * SCRAMBLED_SOBOL_DIM);
             if(error != hipSuccess)
             {
                 throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -299,7 +302,7 @@ public:
                        : static_cast<const void*>(h_scrambled_sobol32_constants);
             error = hipMemcpy(m_scramble_constants,
                               scrambled_constants_source,
-                              sizeof(vector_type) * SCRAMBLED_SOBOL_DIM,
+                              sizeof(constant_type) * SCRAMBLED_SOBOL_DIM,
                               hipMemcpyHostToDevice);
             if(error != hipSuccess)
             {
@@ -312,7 +315,7 @@ public:
 
     rocrand_sobol(rocrand_sobol&&) = delete;
 
-    rocrand_sobol& operator=(const rocrand_sobol&&) = delete;
+    rocrand_sobol& operator=(const rocrand_sobol&) = delete;
 
     rocrand_sobol& operator=(rocrand_sobol&&) = delete;
 
@@ -393,18 +396,22 @@ public:
             = sizeof(T) >= sizeof(int) ? 1 : sizeof(int) / sizeof(T);
 
         if(data_size % m_dimensions != 0)
+        {
             return ROCRAND_STATUS_LENGTH_NOT_MULTIPLE;
+        }
 
         rocrand_status status = init();
         if(status != ROCRAND_STATUS_SUCCESS)
+        {
             return status;
+        }
 
-        const uint32_t threads    = 256;
-        const uint32_t max_blocks = 4096;
+        constexpr uint32_t threads    = 256;
+        constexpr uint32_t max_blocks = 4096;
 
-        const size_t   size             = data_size / m_dimensions;
-        const uint32_t output_per_block = threads * output_per_thread;
-        const uint32_t blocks
+        const size_t       size             = data_size / m_dimensions;
+        constexpr uint32_t output_per_block = threads * output_per_thread;
+        const uint32_t     blocks
             = std::min(max_blocks,
                        static_cast<uint32_t>((size + output_per_block - 1) / output_per_block));
 
@@ -427,7 +434,9 @@ public:
             distribution);
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
+        {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
+        }
 
         m_current_offset += size;
 
@@ -472,11 +481,11 @@ public:
     }
 
 private:
-    bool         m_initialized;
-    unsigned int m_dimensions;
-    unsigned int m_current_offset;
-    vector_type* m_direction_vectors;
-    vector_type* m_scramble_constants;
+    bool           m_initialized;
+    unsigned int   m_dimensions;
+    unsigned int   m_current_offset;
+    constant_type* m_direction_vectors;
+    constant_type* m_scramble_constants;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_CDF> m_poisson;
