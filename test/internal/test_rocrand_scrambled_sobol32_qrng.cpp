@@ -21,7 +21,7 @@
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
-#include <rng/scrambled_sobol32.hpp>
+#include <rng/sobol.hpp>
 
 #include <hip/hip_runtime.h>
 

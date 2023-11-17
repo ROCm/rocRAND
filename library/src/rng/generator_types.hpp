@@ -29,8 +29,6 @@
 #include "mt19937.hpp"
 #include "mtgp32.hpp"
 #include "philox4x32_10.hpp"
-#include "scrambled_sobol32.hpp"
-#include "scrambled_sobol64.hpp"
 #include "sobol.hpp"
 #include "threefry2x32_20.hpp"
 #include "threefry2x64_20.hpp"

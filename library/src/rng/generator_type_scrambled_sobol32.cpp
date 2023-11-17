@@ -20,6 +20,6 @@
 
 #include "generator_type.hpp"
 
-#include "scrambled_sobol32.hpp"
+#include "sobol.hpp"
 
 template struct rocrand_generator_type<rocrand_scrambled_sobol32>;
