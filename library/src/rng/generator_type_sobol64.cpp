@@ -20,6 +20,6 @@
 
 #include "generator_type.hpp"
 
-#include "sobol64.hpp"
+#include "sobol.hpp"
 
 template struct rocrand_generator_type<rocrand_sobol64>;
