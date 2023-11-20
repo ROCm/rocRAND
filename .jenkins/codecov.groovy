@@ -14,6 +14,8 @@ def runCI =
 
     def commonGroovy
 
+    def settings = [codeCoverage: true]
+
     boolean formatCheck = false
 
     def compileCommand =
@@ -21,7 +23,7 @@ def runCI =
         platform, project->
 
         commonGroovy = load "${project.paths.project_src_prefix}/.jenkins/common.groovy"
-        commonGroovy.runCompileCommand(platform, project, jobName, false, false, true)
+        commonGroovy.runCompileCommand(platform, project, jobName, settings)
     }
 
     def testCommand =
