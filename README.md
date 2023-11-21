@@ -50,6 +50,9 @@ python3 -m http.server
 
 * CMake (3.16 or later)
 * C++ compiler with C++17 support to build the library.
+  * Recommended to use at least gcc 9
+  * clang uses the development headers and libraries from gcc, so a recent version of it must still
+    be installed when compiling with clang
 * C++ compiler with C++11 support to consume the library.
 * For AMD platforms:
   * [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) (1.7 or later)
