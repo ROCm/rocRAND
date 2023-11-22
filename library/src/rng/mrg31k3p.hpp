@@ -189,7 +189,7 @@ public:
         other.m_engines             = nullptr;
     }
 
-    rocrand_mrg31k3p_template& operator=(const rocrand_mrg31k3p_template&&) = delete;
+    rocrand_mrg31k3p_template& operator=(const rocrand_mrg31k3p_template&) = delete;
 
     rocrand_mrg31k3p_template& operator=(rocrand_mrg31k3p_template&& other)
     {
