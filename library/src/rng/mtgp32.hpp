@@ -206,7 +206,7 @@ public:
         other.m_engines             = nullptr;
     }
 
-    rocrand_mtgp32_template& operator=(const rocrand_mtgp32_template&&) = delete;
+    rocrand_mtgp32_template& operator=(const rocrand_mtgp32_template&) = delete;
 
     rocrand_mtgp32_template& operator=(rocrand_mtgp32_template&& other)
     {
