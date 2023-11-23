@@ -31,9 +31,14 @@
 #include "benchmark_tuning.hpp"
 #include "rng/system.hpp"
 
+#include "rocrand/rocrand_mt19937_precomputed.h"
+
 // Forward declaring generator templates, so includes can be omitted.
 // The tuning benchmarks are instantiated in the respective benchmark_tuning_*.cpp
 // source files.
+
+// mt19937 needs to be included, as access to threads_per_generator is needed
+#include "rng/mt19937.hpp"
 
 template<class ConfigProvider>
 class rocrand_lfsr113_template;
@@ -86,6 +91,9 @@ template<class ConfigProvider>
 using rocrand_mtgp32_template = ::rocrand_mtgp32_template<ConfigProvider>;
 
 template<class ConfigProvider>
+using rocrand_mt19937_template = ::rocrand_mt19937_template<ConfigProvider>;
+
+template<class ConfigProvider>
 using rocrand_philox4x32_10_template
     = ::rocrand_philox4x32_10_template<rocrand_system_device, ConfigProvider>;
 
@@ -121,6 +129,10 @@ struct output_type_supported<unsigned long long, rocrand_mtgp32_template> : publ
 {};
 
 template<>
+struct output_type_supported<unsigned long long, rocrand_mt19937_template> : public std::false_type
+{};
+
+template<>
 struct output_type_supported<unsigned long long, rocrand_philox4x32_10_template>
     : public std::false_type
 {};
@@ -148,6 +160,16 @@ struct config_filter<rocrand_mtgp32_template, T>
     }
 };
 
+template<class T>
+struct config_filter<rocrand_mt19937_template, T>
+{
+    static constexpr bool is_enabled(rocrand_host::detail::generator_config config)
+    {
+        return (config.blocks * config.threads / rocrand_mt19937::threads_per_generator)
+               <= mt19937_jumps_radix * mt19937_jumps_radix;
+    }
+};
+
 template<>
 struct distribution_input<rocrand_threefry2x64_20_template>
 {
@@ -167,6 +189,9 @@ extern template void add_all_benchmarks_for_generator<rocrand_mrg31k3p_template>
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 extern template void add_all_benchmarks_for_generator<rocrand_mrg32k3a_template>(
+    std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
+
+extern template void add_all_benchmarks_for_generator<rocrand_mt19937_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 extern template void add_all_benchmarks_for_generator<rocrand_mtgp32_template>(
