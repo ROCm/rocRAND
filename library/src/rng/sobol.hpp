@@ -58,8 +58,9 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     const unsigned int offset,
     Distribution       distribution)
 {
-    constexpr unsigned int output_per_thread = OutputPerThread;
-    using vec_type                           = aligned_vec_type<T, output_per_thread>;
+    constexpr unsigned int output_per_thread  = OutputPerThread;
+    constexpr bool         use_shared_vectors = Engine::uses_shared_vectors();
+    using vec_type                            = aligned_vec_type<T, output_per_thread>;
 
     const unsigned int dimension = blockIdx.y;
     const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -69,24 +70,33 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     // Each thread of the current block uses the same direction vectors
     // (the dimension is determined by blockIdx.y)
     constexpr unsigned int vector_size = sizeof(Constant) == 4 ? 32 : 64;
-    __shared__ Constant    vectors[vector_size];
-    if(threadIdx.x < vector_size)
+    const Constant*        vectors_ptr;
+    if constexpr(use_shared_vectors)
     {
-        vectors[threadIdx.x] = direction_vectors[dimension * vector_size + threadIdx.x];
+        __shared__ Constant shared_vectors[vector_size];
+        if(threadIdx.x < vector_size)
+        {
+            shared_vectors[threadIdx.x] = direction_vectors[dimension * vector_size + threadIdx.x];
+        }
+        __syncthreads();
+        vectors_ptr = shared_vectors;
     }
-    __syncthreads();
+    else
+    {
+        vectors_ptr = direction_vectors + dimension * vector_size;
+    }
+
     const Constant scramble_constant = Scrambled ? scramble_constants[dimension] : 0;
-    const auto     create_engine
-        = [scramble_constant](const Constant* vectors, const unsigned int offset)
+    const auto     create_engine     = [scramble_constant, vectors_ptr](const unsigned int offset)
     {
         if constexpr(Scrambled)
         {
-            return Engine(vectors, scramble_constant, offset);
+            return Engine(vectors_ptr, scramble_constant, offset);
         }
         else
         {
             (void)scramble_constant;
-            return Engine(vectors, offset);
+            return Engine(vectors_ptr, offset);
         }
     };
 
@@ -101,7 +111,7 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     if(output_per_thread == 1)
     {
         const unsigned int engine_offset = engine_id * output_per_thread;
-        Engine             engine        = create_engine(vectors, offset + engine_offset);
+        Engine             engine        = create_engine(offset + engine_offset);
 
         while(index < n)
         {
@@ -121,7 +131,7 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
         const unsigned int engine_offset
             = engine_id * output_per_thread
               + (engine_id == 0 ? 0 : head_size); // The first engine writes head_size values
-        Engine engine = create_engine(vectors, offset + engine_offset);
+        Engine engine = create_engine(offset + engine_offset);
 
         if(engine_id == 0)
         {
@@ -165,35 +175,35 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
     }
 }
 
-template<bool Is64, bool Scrambled>
+template<bool Is64, bool Scrambled, bool UseSharedVectors>
 struct sobol_device_engine;
 
-template<>
-struct sobol_device_engine<false, false>
+template<bool UseSharedVectors>
+struct sobol_device_engine<false, false, UseSharedVectors>
 {
-    using type = ::rocrand_device::sobol32_engine<true>;
+    using type = ::rocrand_device::sobol32_engine<UseSharedVectors>;
 };
 
-template<>
-struct sobol_device_engine<false, true>
+template<bool UseSharedVectors>
+struct sobol_device_engine<false, true, UseSharedVectors>
 {
-    using type = ::rocrand_device::scrambled_sobol32_engine<true>;
+    using type = ::rocrand_device::scrambled_sobol32_engine<UseSharedVectors>;
 };
 
-template<>
-struct sobol_device_engine<true, false>
+template<bool UseSharedVectors>
+struct sobol_device_engine<true, false, UseSharedVectors>
 {
-    using type = ::rocrand_device::sobol64_engine<true>;
+    using type = ::rocrand_device::sobol64_engine<UseSharedVectors>;
 };
 
-template<>
-struct sobol_device_engine<true, true>
+template<bool UseSharedVectors>
+struct sobol_device_engine<true, true, UseSharedVectors>
 {
-    using type = ::rocrand_device::scrambled_sobol64_engine<true>;
+    using type = ::rocrand_device::scrambled_sobol64_engine<UseSharedVectors>;
 };
 
-template<bool Is64, bool Scrambled>
-using sobol_device_engine_t = typename sobol_device_engine<Is64, Scrambled>::type;
+template<bool Is64, bool Scrambled, bool UseSharedVectors>
+using sobol_device_engine_t = typename sobol_device_engine<Is64, Scrambled, UseSharedVectors>::type;
 
 } // end namespace rocrand_host::detail
 
@@ -203,7 +213,7 @@ class rocrand_sobol : public rocrand_generator_impl_base
 public:
     static constexpr inline bool is_scrambled = Scrambled;
     using base_type                           = rocrand_generator_impl_base;
-    using engine_type   = ::rocrand_host::detail::sobol_device_engine_t<Is64, Scrambled>;
+    using engine_type   = ::rocrand_host::detail::sobol_device_engine_t<Is64, Scrambled, true>;
     using constant_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
 
     rocrand_sobol(unsigned long long offset = 0,
