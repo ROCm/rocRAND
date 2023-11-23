@@ -522,7 +522,9 @@ TYPED_TEST(rocrand_mt19937_prng_tests, subsequence_test)
         = rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
 
     hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(rocrand_host::detail::jump_ahead_kernel<rocrand_mt19937::jump_ahead_thread_count, ConfigProvider, true>),
+        HIP_KERNEL_NAME(
+            rocrand_host::detail::
+                jump_ahead_kernel<rocrand_mt19937::jump_ahead_thread_count, ConfigProvider, true>),
         dim3(generator_count),
         dim3(rocrand_mt19937::jump_ahead_thread_count),
         0,
@@ -902,12 +904,10 @@ TYPED_TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
     using ConfigProvider
         = rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
     rocrand_host::detail::generator_config config;
-    HIP_CHECK(
-        ConfigProvider::host_config<unsigned int>(0, TestFixture::ordering, config));
+    HIP_CHECK(ConfigProvider::host_config<unsigned int>(0, TestFixture::ordering, config));
 
     const unsigned int generator_count
         = config.threads * config.blocks / mt19937_octo_engine::threads_per_generator;
-
 
     // Initialize the engines on host using Sliding window algorithm
     std::vector<mt19937_engine> h_engines0;
@@ -933,32 +933,22 @@ TYPED_TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
     unsigned int* d_engines1{};
     HIP_CHECK(hipMalloc(&d_engines1, generator_count * n * sizeof(unsigned int)));
 
-    if(::rocrand_host::detail::is_ordering_dynamic(TestFixture::ordering))
-    {
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(
-                rocrand_host::detail::jump_ahead_kernel<rocrand_mt19937::jump_ahead_thread_count, ConfigProvider, true>),
-            dim3(generator_count),
-            dim3(rocrand_mt19937::jump_ahead_thread_count),
-            0,
-            0,
-            d_engines1,
-            seed,
-            d_mt19937_jump);
-    }
-    else
-    {
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(
-                rocrand_host::detail::jump_ahead_kernel<rocrand_mt19937::jump_ahead_thread_count, ConfigProvider, false>),
-            dim3(generator_count),
-            dim3(rocrand_mt19937::jump_ahead_thread_count),
-            0,
-            0,
-            d_engines1,
-            seed,
-            d_mt19937_jump);
-    }
+    rocrand_host::detail::dynamic_dispatch(
+        TestFixture::ordering,
+        [&](auto is_dynamic)
+        {
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::jump_ahead_kernel<
+                                               rocrand_mt19937::jump_ahead_thread_count,
+                                               ConfigProvider,
+                                               is_dynamic>),
+                               dim3(generator_count),
+                               dim3(rocrand_mt19937::jump_ahead_thread_count),
+                               0,
+                               0,
+                               d_engines1,
+                               seed,
+                               d_mt19937_jump);
+        });
 
     std::vector<unsigned int> h_engines1(generator_count * n);
     HIP_CHECK(hipMemcpy(h_engines1.data(),
