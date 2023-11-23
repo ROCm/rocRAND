@@ -73,7 +73,7 @@ struct philox4x32_10_device_engine : public ::rocrand_device::philox4x32_10_engi
     typedef ::rocrand_device::philox4x32_10_engine base_type;
     typedef base_type::philox4x32_10_state         state_type;
 
-    __forceinline__ __device__ __host__ philox4x32_10_device_engine() = default;
+    __forceinline__ philox4x32_10_device_engine() = default;
 
     __forceinline__ __device__ __host__
         philox4x32_10_device_engine(const unsigned long long seed,
