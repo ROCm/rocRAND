@@ -86,8 +86,7 @@ void test_int_parity(rocrand_rng_type rng_type, F generate)
     std::vector<Type> device_results(host_results.size());
 
     Type* output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), host_results.size() * sizeof(Type)));
+    HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
     for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
     {
@@ -138,8 +137,7 @@ void test_uniform_parity(rocrand_rng_type rng_type, F generate)
     std::vector<Type> device_results(host_results.size());
 
     Type* output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), host_results.size() * sizeof(Type)));
+    HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
     for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
     {
@@ -193,8 +191,7 @@ void test_normal_parity(rocrand_rng_type rng_type, F generate, double eps)
     std::vector<Type> device_results(host_results.size());
 
     Type* output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), host_results.size() * sizeof(Type)));
+    HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
     for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
     {
@@ -266,8 +263,7 @@ TEST_P(rocrand_generate_host_test, poisson_parity_test)
     std::vector<Type> device_results(host_results.size());
 
     Type* output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), host_results.size() * sizeof(Type)));
+    HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
     for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
     {

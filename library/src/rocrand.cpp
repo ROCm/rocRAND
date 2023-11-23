@@ -437,8 +437,7 @@ rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
     }
 
     hipError_t error;
-    error = hipMalloc(reinterpret_cast<void**>(discrete_distribution),
-                      sizeof(rocrand_discrete_distribution_st));
+    error = hipMalloc(discrete_distribution, sizeof(rocrand_discrete_distribution_st));
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -487,8 +486,7 @@ rocrand_status ROCRANDAPI
     }
 
     hipError_t error;
-    error = hipMalloc(reinterpret_cast<void**>(discrete_distribution),
-                      sizeof(rocrand_discrete_distribution_st));
+    error = hipMalloc(discrete_distribution, sizeof(rocrand_discrete_distribution_st));
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_ALLOCATION_FAILED;

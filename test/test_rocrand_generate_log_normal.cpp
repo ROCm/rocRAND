@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ TEST_P(rocrand_generate_log_normal_tests, float_test)
     float mean = 5.0f;
     float stddev = 2.0f;
     float * data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -85,7 +85,7 @@ TEST_P(rocrand_generate_log_normal_tests, double_test)
     double mean = 5.0;
     double stddev = 2.0;
     double * data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(double)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -125,7 +125,7 @@ TEST_P(rocrand_generate_log_normal_tests, half_test)
     half         mean   = __float2half(5.0f);
     half         stddev = __float2half(2.0f);
     half * data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(half)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(half)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes

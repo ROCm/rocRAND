@@ -58,10 +58,10 @@ TEST(rocrand_mrg_prng_tests, mad_u64_u32_test)
     unsigned int*       y;
     unsigned long long* z;
     unsigned long long* r;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&x), size * sizeof(unsigned int)));
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&y), size * sizeof(unsigned int)));
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&z), size * sizeof(unsigned long long)));
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&r), size * sizeof(unsigned long long)));
+    HIP_CHECK(hipMallocHelper(&x, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&y, size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&z, size * sizeof(unsigned long long)));
+    HIP_CHECK(hipMallocHelper(&r, size * sizeof(unsigned long long)));
 
     unsigned int       h_x[size];
     unsigned int       h_y[size];
@@ -143,7 +143,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_uint_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate(data, size));
@@ -168,7 +168,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate(data, size));
@@ -193,7 +193,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_double_test)
 {
     const size_t size = 1313;
     double*      data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(double) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(double) * size));
 
     auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate(data, size));
@@ -218,7 +218,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_float_range_test)
 {
     const size_t size = 1 << 26;
     float*       data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate(data, size));
@@ -242,7 +242,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, uniform_double_range_test)
 {
     const size_t size = 1 << 26;
     double*      data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(double) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(double) * size));
 
     auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate(data, size));
@@ -266,7 +266,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, normal_float_test)
 {
     const size_t size = 1314;
     float*       data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
@@ -300,7 +300,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, poisson_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -338,7 +338,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, state_progress_test)
     // Device data
     const size_t  size = 1025;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
     auto g0 = TestFixture::get_generator();
@@ -381,7 +381,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, same_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
     auto g0 = TestFixture::get_generator(), g1 = TestFixture::get_generator();
@@ -425,7 +425,7 @@ TYPED_TEST(rocrand_mrg_prng_tests, different_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
     auto g0 = TestFixture::get_generator(), g1 = TestFixture::get_generator();
@@ -613,8 +613,8 @@ TYPED_TEST(rocrand_mrg_prng_offset, offsets_test)
         const size_t size1 = (size + offset);
         T*           data0;
         T*           data1;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
+        HIP_CHECK(hipMalloc(&data0, sizeof(T) * size0));
+        HIP_CHECK(hipMalloc(&data1, sizeof(T) * size1));
 
         auto g0 = TestFixture::get_generator();
         g0.set_offset(offset);
@@ -661,8 +661,8 @@ void continuity_test(GenerateFunc     generate_func,
 
     T* data0;
     T* data1;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
+    HIP_CHECK(hipMalloc(&data0, sizeof(T) * size0));
+    HIP_CHECK(hipMalloc(&data1, sizeof(T) * size1));
 
     GeneratorType g0;
     g0.set_order(ordering);
