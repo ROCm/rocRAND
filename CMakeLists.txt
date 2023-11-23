@@ -43,7 +43,6 @@ endif()
 # Build options
 include(CMakeDependentOption)
 
-option(USE_HIP_CPU "Prefer HIP-CPU runtime instead of HW acceleration" OFF)
 option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
@@ -95,35 +94,30 @@ endif()
 
 # Verify that hipcc compiler is used on ROCM platform
 # TODO: Fix VerifyCompiler for Windows
-if(NOT USE_HIP_CPU)
-  # This will run for NVIDIA too, which is unnecessary, but not harmful, since we use the CUDA cmake
-  # language in that case which will ignore GPU_TARGETS.
-  # The reason for this is that this has to happen before find_package(hip), because we're providing
-  # our own defaults, but because of that we have no reasonable way to detect the platform we're
-  # targeting yet.
-  if (NOT DEFINED AMDGPU_TARGETS)
-    set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
-  else()
-    set(GPU_TARGETS "${AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for")
-  endif()
-  set_property(CACHE GPU_TARGETS PROPERTY STRINGS "all")
-
-  if(GPU_TARGETS STREQUAL "all")
-    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-      TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx940;gfx941;gfx942;gfx1030;gfx1100;gfx1101;gfx1102"
-    )
-    set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
-  endif()
-
-  if(NOT WIN32)
-    include(cmake/VerifyCompiler.cmake)
-  else()
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
-    find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
-  endif()
+# This will run for NVIDIA too, which is unnecessary, but not harmful, since we use the CUDA cmake
+# language in that case which will ignore GPU_TARGETS.
+# The reason for this is that this has to happen before find_package(hip), because we're providing
+# our own defaults, but because of that we have no reasonable way to detect the platform we're
+# targeting yet.
+if (NOT DEFINED AMDGPU_TARGETS)
+  set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
 else()
-  # HIP CPU doesn't use GPU_TARGETS, hide it from the Cmake GUI
-  set(GPU_TARGETS "all" CACHE INTERNAL "")
+  set(GPU_TARGETS "${AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for")
+endif()
+set_property(CACHE GPU_TARGETS PROPERTY STRINGS "all")
+
+if(GPU_TARGETS STREQUAL "all")
+  rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx940;gfx941;gfx942;gfx1030;gfx1100;gfx1101;gfx1102"
+  )
+  set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
+endif()
+
+if(NOT WIN32)
+  include(cmake/VerifyCompiler.cmake)
+else()
+  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
+  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
 endif()
 
 # Build option to disable -Werror
