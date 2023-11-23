@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ void test_generate(GenerateFunc generate_func)
     const size_t size   = 12563;
     double       lambda = 100.0;
     T*           data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(T)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(T)));
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(generate_func(generator, data, size, lambda));
@@ -61,7 +61,7 @@ void test_out_of_range(GenerateFunc generate_func)
     const size_t size   = 256;
     double       lambda = 0.0;
     T*           data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(T)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(T)));
     HIP_CHECK(hipDeviceSynchronize());
 
     EXPECT_EQ(generate_func(generator, data, size, lambda), ROCRAND_STATUS_OUT_OF_RANGE);

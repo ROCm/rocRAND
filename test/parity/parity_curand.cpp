@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -68,7 +68,7 @@ template<typename T, typename F>
 static std::vector<T> generate(const test_case& test_case, F callback)
 {
     T* data;
-    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&data), test_case.size * sizeof(T)));
+    CUDA_CHECK(cudaMalloc(&data, test_case.size * sizeof(T)));
 
     curandGenerator_t generator;
     CURAND_CHECK(curandCreateGenerator(&generator, rng_type_to_curand(test_case.rng_type)));

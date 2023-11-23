@@ -64,7 +64,7 @@ void run_benchmark(benchmark::State&      state,
     }
     else
     {
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), rounded_size * sizeof(T)));
+        HIP_CHECK(hipMalloc(&data, rounded_size * sizeof(T)));
         ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
     }
 

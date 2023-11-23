@@ -75,7 +75,7 @@ void run_benchmark(const cli::Parser& parser,
     const std::string format = parser.get<std::string>("format");
 
     T * data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
+    HIP_CHECK(hipMalloc(&data, size * sizeof(T)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));

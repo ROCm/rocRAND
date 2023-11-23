@@ -176,12 +176,12 @@ protected:
             hipError_t error;
             if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&probability), sizeof(double) * size);
+                error = hipMalloc(&probability, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
-                error = hipMalloc(reinterpret_cast<void**>(&alias), sizeof(unsigned int) * size);
+                error = hipMalloc(&alias, sizeof(unsigned int) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -189,7 +189,7 @@ protected:
             }
             if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&cdf), sizeof(double) * size);
+                error = hipMalloc(&cdf, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;

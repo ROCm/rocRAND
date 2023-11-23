@@ -112,8 +112,7 @@ struct runner
            const unsigned long long offset)
     {
         const size_t states_size = blocks * threads;
-        HIP_CHECK(
-            hipMalloc(reinterpret_cast<void**>(&states), states_size * sizeof(GeneratorState)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(GeneratorState)));
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(init_kernel),
@@ -199,8 +198,7 @@ struct runner<rocrand_state_mtgp32>
            const unsigned long long /* offset */)
     {
         const size_t states_size = std::min((size_t)200, blocks);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_mtgp32)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_mtgp32)));
 
         ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, states_size, seed));
     }
@@ -255,8 +253,7 @@ struct runner<rocrand_state_lfsr113>
     {
         this->dimensions = 0;
         const size_t states_size = blocks * threads;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_lfsr113)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_lfsr113)));
 
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
                            dim3(blocks),
@@ -376,12 +373,11 @@ struct runner<rocrand_state_sobol32>
             rocrand_get_direction_vectors32(&h_directions, ROCRAND_DIRECTION_VECTORS_32_JOEKUO6));
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_sobol32)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_sobol32)));
 
         unsigned int * directions;
         const size_t size = dimensions * 32 * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
+        HIP_CHECK(hipMalloc(&directions, size));
         HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -456,17 +452,16 @@ struct runner<rocrand_state_scrambled_sobol32>
         ROCRAND_CHECK(rocrand_get_scramble_constants32(&h_constants));
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_scrambled_sobol32)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_scrambled_sobol32)));
 
         unsigned int* directions;
         const size_t  directions_size = dimensions * 32 * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
+        HIP_CHECK(hipMalloc(&directions, directions_size));
         HIP_CHECK(hipMemcpy(directions, h_directions, directions_size, hipMemcpyHostToDevice));
 
         unsigned int* scramble_constants;
         const size_t  constants_size = dimensions * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
+        HIP_CHECK(hipMalloc(&scramble_constants, constants_size));
         HIP_CHECK(
             hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
@@ -539,12 +534,11 @@ struct runner<rocrand_state_sobol64>
         rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_sobol64)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_sobol64)));
 
         unsigned long long int * directions;
         const size_t size = dimensions * 64 * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
+        HIP_CHECK(hipMalloc(&directions, size));
         HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -618,17 +612,16 @@ struct runner<rocrand_state_scrambled_sobol64>
         rocrand_get_scramble_constants64(&h_constants);
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_scrambled_sobol64)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_scrambled_sobol64)));
 
         unsigned long long int* directions;
         const size_t            directions_size = dimensions * 64 * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
+        HIP_CHECK(hipMalloc(&directions, directions_size));
         HIP_CHECK(hipMemcpy(directions, h_directions, directions_size, hipMemcpyHostToDevice));
 
         unsigned long long int* scramble_constants;
         const size_t            constants_size = dimensions * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
+        HIP_CHECK(hipMalloc(&scramble_constants, constants_size));
         HIP_CHECK(
             hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
@@ -702,7 +695,7 @@ void run_benchmark(const cli::Parser& parser,
     const std::string format = parser.get<std::string>("format");
 
     T * data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
+    HIP_CHECK(hipMalloc(&data, size * sizeof(T)));
 
     runner<GeneratorState> r(dimensions, blocks, threads, 12345ULL, 6789ULL);
 

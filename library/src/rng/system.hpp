@@ -170,7 +170,7 @@ struct rocrand_system_device
     template<typename T>
     static rocrand_status alloc(T** ptr, size_t n)
     {
-        hipError_t error = hipMalloc(reinterpret_cast<void**>(ptr), sizeof(T) * n);
+        hipError_t error = hipMalloc(ptr, sizeof(T) * n);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;

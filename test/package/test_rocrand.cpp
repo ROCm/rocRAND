@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
     const size_t size = 128;
     unsigned int * data = NULL;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), size * sizeof(unsigned int)));
+    HIP_CHECK(hipMalloc(&data, size * sizeof(unsigned int)));
     ROCRAND_CHECK(rocrand_generate(generator, (unsigned int *) data, size));
     HIP_CHECK(hipDeviceSynchronize());
 

@@ -134,7 +134,7 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, uniform_uint_test)
 
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     generator_t g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -165,7 +165,7 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, uniform_uint64_test)
 
     constexpr size_t size = 1313;
     constant_t*      data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(constant_t) * size));
+    HIP_CHECK(hipMalloc(&data, sizeof(constant_t) * size));
 
     generator_t g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -191,7 +191,7 @@ void uniform_floating_point_test()
 {
     const size_t size = 1313;
     T*           data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(*data) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
     Generator g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -231,7 +231,7 @@ void normal_floating_point_test()
 {
     const size_t size = 1313;
     T*           data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(*data) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
     Generator g;
     ROCRAND_CHECK(g.generate_normal(data, size, static_cast<T>(2.0), static_cast<T>(5.0)));
@@ -279,7 +279,7 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, poisson_test)
 
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     generator_t g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -316,7 +316,7 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, dimensions_test)
 
     const size_t size = 12345;
     float*       data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     generator_t g;
 
@@ -341,7 +341,7 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, state_progress_test)
     // Device data
     const size_t  size = 1025;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
     generator_t g0;
@@ -453,8 +453,8 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, offsets_test)
             const size_t  size1 = (size + offset) * dimensions;
             unsigned int* data0;
             unsigned int* data1;
-            HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0));
-            HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1));
+            HIP_CHECK(hipMalloc(&data0, sizeof(unsigned int) * size0));
+            HIP_CHECK(hipMalloc(&data1, sizeof(unsigned int) * size1));
 
             generator_t g0;
             g0.set_offset(offset);
@@ -513,8 +513,8 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, continuity_test)
 
         unsigned int* data0;
         unsigned int* data1;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0));
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1));
+        HIP_CHECK(hipMalloc(&data0, sizeof(unsigned int) * size0));
+        HIP_CHECK(hipMalloc(&data1, sizeof(unsigned int) * size1));
 
         rocrand_sobol32 g0;
         rocrand_sobol32 g1;
