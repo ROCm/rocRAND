@@ -179,7 +179,7 @@ public:
         other.m_engines             = nullptr;
     }
 
-    rocrand_lfsr113_template& operator=(const rocrand_lfsr113_template&&) = delete;
+    rocrand_lfsr113_template& operator=(const rocrand_lfsr113_template&) = delete;
 
     rocrand_lfsr113_template& operator=(rocrand_lfsr113_template&& other)
     {
