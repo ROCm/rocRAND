@@ -187,9 +187,7 @@ int main(int argc, char* argv[])
     {
         // clang-format off
         engine_type_map.insert({          ROCRAND_RNG_PSEUDO_MTGP32,            "mtgp32"});
-#ifndef USE_HIP_CPU
         engine_type_map.insert({         ROCRAND_RNG_PSEUDO_MT19937,           "mt19937"});
-#endif
         engine_type_map.insert({          ROCRAND_RNG_PSEUDO_XORWOW,            "xorwow"});
         engine_type_map.insert({        ROCRAND_RNG_PSEUDO_MRG31K3P,          "mrg31k3p"});
         engine_type_map.insert({        ROCRAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"});
