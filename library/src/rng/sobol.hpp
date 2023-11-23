@@ -195,59 +195,6 @@ struct sobol_device_engine<true, true>
 template<bool Is64, bool Scrambled>
 using sobol_device_engine_t = typename sobol_device_engine<Is64, Scrambled>::type;
 
-template<bool Is64, bool IsScrambled>
-constexpr const auto* sobol_direction_vectors()
-{
-    if constexpr(Is64)
-    {
-        if constexpr(IsScrambled)
-        {
-            return rocrand_h_scrambled_sobol64_direction_vectors;
-        }
-        else
-        {
-            return rocrand_h_sobol64_direction_vectors;
-        }
-    }
-    else
-    {
-        if constexpr(IsScrambled)
-        {
-            return rocrand_h_scrambled_sobol32_direction_vectors;
-        }
-        else
-        {
-            return rocrand_h_sobol32_direction_vectors;
-        }
-    }
-}
-
-constexpr inline rocrand_rng_type sobol_rng_type(bool is_64, bool scrambled)
-{
-    if(is_64)
-    {
-        if(scrambled)
-        {
-            return ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64;
-        }
-        else
-        {
-            return ROCRAND_RNG_QUASI_SOBOL64;
-        }
-    }
-    else
-    {
-        if(scrambled)
-        {
-            return ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32;
-        }
-        else
-        {
-            return ROCRAND_RNG_QUASI_SOBOL32;
-        }
-    }
-}
-
 } // end namespace rocrand_host::detail
 
 template<bool Is64, bool Scrambled>
@@ -277,9 +224,8 @@ public:
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
-        constexpr const constant_type* direction_vectors
-            = rocrand_host::detail::sobol_direction_vectors<Is64, Scrambled>();
-        error = hipMemcpy(m_direction_vectors,
+        const constant_type* direction_vectors = get_direction_vectors();
+        error                                  = hipMemcpy(m_direction_vectors,
                           direction_vectors,
                           direction_vectors_bytes,
                           hipMemcpyHostToDevice);
@@ -330,7 +276,28 @@ public:
 
     static constexpr rocrand_rng_type type()
     {
-        return rocrand_host::detail::sobol_rng_type(Is64, Scrambled);
+        if constexpr(Is64)
+        {
+            if constexpr(Scrambled)
+            {
+                return ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64;
+            }
+            else
+            {
+                return ROCRAND_RNG_QUASI_SOBOL64;
+            }
+        }
+        else
+        {
+            if constexpr(Scrambled)
+            {
+                return ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32;
+            }
+            else
+            {
+                return ROCRAND_RNG_QUASI_SOBOL32;
+            }
+        }
     }
 
     void reset() override final
@@ -376,7 +343,9 @@ public:
     rocrand_status init()
     {
         if(m_initialized)
+        {
             return ROCRAND_STATUS_SUCCESS;
+        }
 
         m_current_offset = static_cast<unsigned int>(m_offset);
         m_initialized    = true;
@@ -481,6 +450,32 @@ public:
     }
 
 private:
+    static const auto* get_direction_vectors()
+    {
+        if constexpr(Is64)
+        {
+            if constexpr(Scrambled)
+            {
+                return rocrand_h_scrambled_sobol64_direction_vectors;
+            }
+            else
+            {
+                return rocrand_h_sobol64_direction_vectors;
+            }
+        }
+        else
+        {
+            if constexpr(Scrambled)
+            {
+                return rocrand_h_scrambled_sobol32_direction_vectors;
+            }
+            else
+            {
+                return rocrand_h_sobol32_direction_vectors;
+            }
+        }
+    }
+
     bool           m_initialized;
     unsigned int   m_dimensions;
     unsigned int   m_current_offset;
