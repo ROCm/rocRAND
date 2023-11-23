@@ -68,52 +68,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #define THREEFRY4x64_DEFAULT_ROUNDS 20
 #endif
 
-/* These are the R_256 constants from the Threefish reference sources
-   with names changed to R_64x4... */
-static constexpr __device__ int THREEFRY_ROTATION_64_4[8][2] = {
-    {14, 16},
-    {52, 57},
-    {23, 40},
-    { 5, 37},
-    {25, 33},
-    {46, 12},
-    {58, 22},
-    {32, 32}
-};
-
-/* Output from skein_rot_search: (srs-B128-X5000.out)
-// Random seed = 1. BlockSize = 64 bits. sampleCnt =  1024. rounds =  8, minHW_or=28
-// Start: Mon Aug 24 22:41:36 2009
-// ...
-// rMin = 0.472. #0A4B[*33] [CRC=DD1ECE0F. hw_OR=31. cnt=16384. blkSize= 128].format    */
-static constexpr __device__ int THREEFRY_ROTATION_32_4[8][2] = {
-    {10, 26},
-    {11, 21},
-    {13, 27},
-    {23,  5},
-    { 6, 20},
-    {17, 11},
-    {25, 10},
-    {18, 20}
-};
-
 namespace rocrand_device
 {
 
 template<class value>
-FQUALIFIERS int threefry_rotation_array(int indexX, int indexY);
+FQUALIFIERS int threefry_rotation_array(int indexX, int indexY) = delete;
 
 template<>
 FQUALIFIERS int threefry_rotation_array<unsigned int>(int indexX, int indexY)
 {
+    // Output from skein_rot_search: (srs-B128-X5000.out)
+    // Random seed = 1. BlockSize = 64 bits. sampleCnt =  1024. rounds =  8, minHW_or=28
+    // Start: Mon Aug 24 22:41:36 2009
+    // ...
+    // rMin = 0.472. #0A4B[*33] [CRC=DD1ECE0F. hw_OR=31. cnt=16384. blkSize= 128].format
+    static constexpr int THREEFRY_ROTATION_32_4[8][2] = {
+        {10, 26},
+        {11, 21},
+        {13, 27},
+        {23,  5},
+        { 6, 20},
+        {17, 11},
+        {25, 10},
+        {18, 20}
+    };
     return THREEFRY_ROTATION_32_4[indexX][indexY];
-};
+}
 
 template<>
 FQUALIFIERS int threefry_rotation_array<unsigned long long>(int indexX, int indexY)
 {
+    // These are the R_256 constants from the Threefish reference sources
+    // with names changed to R_64x4... */
+    static constexpr int THREEFRY_ROTATION_64_4[8][2] = {
+        {14, 16},
+        {52, 57},
+        {23, 40},
+        { 5, 37},
+        {25, 33},
+        {46, 12},
+        {58, 22},
+        {32, 32}
+    };
     return THREEFRY_ROTATION_64_4[indexX][indexY];
-};
+}
 
 template<typename state_value, typename value, unsigned int Nrounds>
 class threefry_engine4_base
