@@ -13,6 +13,7 @@ Documentation for rocRAND is available at
 * Added dynamic ordering. This ordering is free to rearrange the produced numbers, 
   which can be specific to devices and distributions. It is implemented for:
   * XORWOW, MRG32K3A, MTGP32, Philox 4x32-10, MRG31K3P, LFSR113, and ThreeFry
+* For the NVIDIA platform compilation using clang as the host compiler is now supported.
 
 ### Changes
 
