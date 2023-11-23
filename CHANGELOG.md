@@ -22,6 +22,7 @@ Documentation for rocRAND is available at
 
 ### Removals
 - Removed references to and workarounds for deprecated hcc.
+- Support for HIP-CPU
 
 ## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
 

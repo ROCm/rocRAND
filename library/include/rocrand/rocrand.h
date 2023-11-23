@@ -27,7 +27,6 @@
  */
 
 #include "rocrand/rocrand_discrete_types.h"
-#include "rocrand/rocrand_hip_cpu.h"
 
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
