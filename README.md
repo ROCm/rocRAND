@@ -61,8 +61,6 @@ python3 -m http.server
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm/HIP)
   * Latest CUDA SDK
-* For CPU runs (experimental):
-  * [HIP-CPU](https://github.com/ROCm/HIP-CPU)
 * Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
 * Strawberry Perl (HIP on Windows only)
@@ -110,9 +108,6 @@ cd rocRAND; mkdir build; cd build
 cmake -DBUILD_BENCHMARK=ON ../. -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_MODULE_PATH=/opt/rocm/hip/cmake # or cmake-gui ../.
 # or
 [CXX=g++] cmake -DBUILD_BENCHMARK=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_MODULE_PATH=/opt/rocm/hip/cmake ../. # or cmake-gui ../.
-
-# To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required
-[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_BENCHMARK=ON -DCMAKE_PREFIX_PATH=/opt/rocm ../. # or cmake-gui ../.
 
 # Build
 make -j4
