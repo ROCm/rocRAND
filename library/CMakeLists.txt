@@ -91,68 +91,16 @@ set_target_properties(rocrand PROPERTIES
 target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
 
 # Build library
-if(NOT USE_HIP_CPU)
-    if(HIP_COMPILER STREQUAL "nvcc")
-        set_source_files_properties(${rocRAND_SRCS}
-            PROPERTIES LANGUAGE CUDA CUDA_STANDARD 17)
-        if(${CMAKE_VERSION} VERSION_LESS "3.18")
-            set_source_files_properties(${rocRAND_SRCS} PROPERTIES COMPILE_OPTIONS "-std=c++17")
-        endif()
-        set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    else()
-        target_link_libraries(rocrand PRIVATE hip::device)
+if(HIP_COMPILER STREQUAL "nvcc")
+    set_source_files_properties(${rocRAND_SRCS}
+        PROPERTIES LANGUAGE CUDA CUDA_STANDARD 17)
+    if(${CMAKE_VERSION} VERSION_LESS "3.18")
+        set_source_files_properties(${rocRAND_SRCS} PROPERTIES COMPILE_OPTIONS "-std=c++17")
     endif()
+    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 else()
-    # Check hipRuntimeGetVersion() function availability
-    file(WRITE "${PROJECT_BINARY_DIR}/hip_cpu_test/test_runtime_get_version.cpp"
-        [[
-            #include <hip/hip_runtime.h>
-            int main()
-            {
-                int runtime_version;
-                hipRuntimeGetVersion(&runtime_version);
-            }
-        ]]
-    )
-    # Check HIP min() function availability
-    file(WRITE "${PROJECT_BINARY_DIR}/hip_cpu_test/test_hip_math.cpp"
-        [[
-            #include <hip/hip_runtime.h>
-            int main()
-            {
-                return min(2, 3);
-            }
-        ]]
-    )
-    try_compile(HAVE_HIP_RUNTIME_GET_VERSION
-        "${PROJECT_BINARY_DIR}/hip_cpu_test"
-        "${PROJECT_BINARY_DIR}/hip_cpu_test/test_runtime_get_version.cpp"
-        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${PROJECT_BINARY_DIR}/deps/hip-cpu/include"
-        CXX_STANDARD 17
-        LINK_LIBRARIES Threads::Threads
-    )
-    try_compile(HAVE_HIP_MATH
-        "${PROJECT_BINARY_DIR}/hip_cpu_test"
-        "${PROJECT_BINARY_DIR}/hip_cpu_test/test_hip_math.cpp"
-        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${PROJECT_BINARY_DIR}/deps/hip-cpu/include"
-        CXX_STANDARD 17
-        LINK_LIBRARIES Threads::Threads
-    )
-    target_link_libraries(rocrand
-        Threads::Threads
-        hip_cpu_rt::hip_cpu_rt
-    )
-    if(STL_DEPENDS_ON_TBB)
-        target_link_libraries(rocrand TBB::tbb)
-    endif()
+    target_link_libraries(rocrand PRIVATE hip::device)
 endif()
-
-# Configure a header file for min() and hipRuntimeGetVersion() functions
-configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_hip_cpu.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_hip_cpu.h"
-    @ONLY
-)
 
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
@@ -176,19 +124,9 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/rocrand-fortran-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake
-    INSTALL_DESTINATION ${CONFIG_PACKAGE_INSTALL_DIR}
 )
 
-if(USE_HIP_CPU)
-    rocm_export_targets(
-        TARGETS roc::rocrand
-        NAMESPACE roc::
-        DEPENDS PACKAGE Threads
-        DEPENDS PACKAGE hip_cpu_rt
-        DEPENDS PACKAGE TBB
-        INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
-    )
-elseif(HIP_COMPILER STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(
         TARGETS roc::rocrand
         NAMESPACE roc::

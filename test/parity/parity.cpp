@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -155,9 +155,7 @@ int main()
                                                   generator_type::MRG32K3A,
                                                   generator_type::MTGP32,
                                                   generator_type::PHILOX4_32_10,
-#ifndef USE_HIP_CPU
                                                   generator_type::MT19937,
-#endif
                                                   generator_type::SOBOL32,
                                                   generator_type::SCRAMBLED_SOBOL32,
                                                   generator_type::SOBOL64,

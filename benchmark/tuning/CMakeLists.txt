@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-if(USE_HIP_CPU OR(HIP_COMPILER STREQUAL "nvcc"))
+if(HIP_COMPILER STREQUAL "nvcc")
   message(FATAL_ERROR "Configuration tuning is currently supported for AMD GPUs only")
 endif()
 
