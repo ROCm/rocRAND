@@ -76,7 +76,7 @@ copyright-date:
 
 .rocm:cmake-minimum:
   variables:
-    COMPILER: hipcc
+    COMPILER: /opt/rocm/bin/hipcc
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
@@ -86,7 +86,7 @@ copyright-date:
 
 .rocm:cmake-latest:
   variables:
-    COMPILER: hipcc
+    COMPILER: /opt/rocm/bin/hipcc
   extends:
     - .deps:rocm
     - .deps:cmake-latest
@@ -96,7 +96,7 @@ copyright-date:
 
 .rocm-clang:cmake-minimum:
   variables:
-    COMPILER: amdclang++
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
@@ -106,7 +106,7 @@ copyright-date:
 
 .rocm-clang:cmake-latest:
   variables:
-    COMPILER: amdclang++
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-latest
@@ -116,7 +116,7 @@ copyright-date:
 
 .nvcc:cmake-minimum:
   variables:
-    COMPILER: c++
+    COMPILER: /usr/bin/g++
   extends:
     - .deps:nvcc
     - .deps:cmake-minimum
@@ -126,7 +126,7 @@ copyright-date:
 
 .nvcc:cmake-latest:
   variables:
-    COMPILER: c++
+    COMPILER: /usr/bin/g++
   extends:
     - .deps:nvcc
     - .deps:cmake-latest
@@ -136,7 +136,7 @@ copyright-date:
 
 .nvcc-clang:cmake-minimum:
   variables:
-    COMPILER: clang++
+    COMPILER: /usr/local/bin/clang++
   extends:
     - .deps:nvcc
     - .deps:cmake-latest
@@ -156,6 +156,7 @@ copyright-date:
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
+      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
@@ -184,6 +185,7 @@ copyright-date:
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
+      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D CMAKE_CUDA_HOST_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
