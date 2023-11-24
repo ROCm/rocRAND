@@ -58,7 +58,7 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
                                         dim3               block_dim,
                                         T*                 data,
                                         const size_t       n,
-                                        const Constant*    direction_vectors,
+                                        Constant*          direction_vectors,
                                         const Constant*    scramble_constants,
                                         const unsigned int offset,
                                         Distribution       distribution)
@@ -75,17 +75,16 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
     // Each thread of the current block uses the same direction vectors
     // (the dimension is determined by blockIdx.y)
     constexpr unsigned int vector_size = sizeof(Constant) == 4 ? 32 : 64;
-    const Constant*        vectors_ptr;
+    Constant*              vectors_ptr;
     if constexpr(use_shared_vectors)
     {
-        __shared__ Constant shared_vectors[vector_size];
+        extern __shared__ unsigned char shared_bytes[];
+        vectors_ptr = reinterpret_cast<Constant*>(&shared_bytes[0]);
         if(thread_idx.x < vector_size)
         {
-            shared_vectors[thread_idx.x]
-                = direction_vectors[dimension * vector_size + thread_idx.x];
+            vectors_ptr[thread_idx.x] = direction_vectors[dimension * vector_size + thread_idx.x];
         }
-        __syncthreads();
-        vectors_ptr = shared_vectors;
+        syncthreads<use_shared_vectors>{}();
     }
     else
     {
@@ -344,6 +343,8 @@ public:
 
         constexpr uint32_t threads    = 256;
         constexpr uint32_t max_blocks = 4096;
+        constexpr uint32_t shared_mem_bytes
+            = system_type::is_device() ? ((Is64 ? 64 : 32) * sizeof(constant_type)) : 0;
 
         const size_t       size             = data_size / m_dimensions;
         constexpr uint32_t output_per_block = threads * output_per_thread;
@@ -368,6 +369,7 @@ public:
                                                                                 Distribution>,
                                            block_size_provider>(dim3(blocks_x, blocks_y),
                                                                 dim3(threads),
+                                                                shared_mem_bytes,
                                                                 m_stream,
                                                                 data,
                                                                 size,

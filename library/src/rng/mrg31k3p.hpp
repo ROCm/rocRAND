@@ -287,6 +287,7 @@ public:
             rocrand_host::detail::static_block_size_config_provider<init_threads>>(
             dim3(init_blocks),
             dim3(init_threads),
+            0,
             m_stream,
             m_engines,
             m_start_engine_id,
@@ -330,6 +331,7 @@ public:
                     T,
                     is_dynamic>(dim3(config.blocks),
                                 dim3(config.threads),
+                                0,
                                 m_stream,
                                 m_engines,
                                 m_start_engine_id,
