@@ -25,35 +25,33 @@ cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 project(rocrand_package_test CXX)
 
-if(NOT USE_HIP_CPU)
-    # CMake modules
-    list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
-    list(APPEND CMAKE_MODULE_PATH
-        $ENV{ROCM_PATH}/lib/cmake/hip
-        ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
-    )
-    # Find HIP
-    if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
-        if(NOT hip_FOUND)
-            find_package(HIP REQUIRED)
-            if((HIP_COMPILER STREQUAL "hipcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
-            # TODO: The HIP package on NVIDIA platform is incorrect at few versions
-            set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
-            endif()
+# CMake modules
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
+list(APPEND CMAKE_MODULE_PATH
+    $ENV{ROCM_PATH}/lib/cmake/hip
+    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+)
+# Find HIP
+if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
+    if(NOT hip_FOUND)
+        find_package(HIP REQUIRED)
+        if((HIP_COMPILER STREQUAL "hipcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
+        # TODO: The HIP package on NVIDIA platform is incorrect at few versions
+        set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
         endif()
-    else()
-    find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
     endif()
-
-    # Get HIP options
-    execute_process(
-        COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
-        OUTPUT_VARIABLE HIP_CPP_CONFIG
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_STRIP_TRAILING_WHITESPACE
-    )
+else()
+find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
 endif()
+
+# Get HIP options
+execute_process(
+    COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
+    OUTPUT_VARIABLE HIP_CPP_CONFIG
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE
+)
 
 if(HIP_COMPILER STREQUAL "nvcc")
     enable_language(CUDA)
@@ -106,13 +104,7 @@ endfunction()
 foreach(test_src ${rocrand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    if(USE_HIP_CPU)
-        target_link_libraries(${test_name}
-            PRIVATE
-                roc::rocrand
-                hip_cpu_rt::hip_cpu_rt
-        )
-    elseif(HIP_COMPILER STREQUAL "nvcc")
+    if(HIP_COMPILER STREQUAL "nvcc")
         target_link_libraries(${test_name} 
             PRIVATE
                 roc::rocrand

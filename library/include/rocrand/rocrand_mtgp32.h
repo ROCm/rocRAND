@@ -179,7 +179,7 @@ public:
     FQUALIFIERS
     void copy(const mtgp32_engine * m_engine)
     {
-#if defined(__HIP_DEVICE_COMPILE__) || defined(USE_HIP_CPU)
+#if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int thread_id = threadIdx.x;
         for(int i = thread_id; i < MTGP_STATE; i += blockDim.x)
             m_state.status[i] = m_engine->m_state.status[i];
@@ -237,7 +237,7 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-#if defined(__HIP_DEVICE_COMPILE__) || defined(USE_HIP_CPU)
+#if defined(__HIP_DEVICE_COMPILE__)
         unsigned int t   = threadIdx.x;
         unsigned int d   = blockDim.x;
         int pos = pos_tbl;
@@ -263,7 +263,7 @@ public:
     FQUALIFIERS
     unsigned int next_single()
     {
-#if defined(__HIP_DEVICE_COMPILE__) || defined(USE_HIP_CPU)
+#if defined(__HIP_DEVICE_COMPILE__)
         unsigned int t   = threadIdx.x;
         unsigned int d   = blockDim.x;
         int pos = pos_tbl;

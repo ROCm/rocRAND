@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@
 #define ROCRAND_BENCHMARK_UTILS_HPP_
 
 #include <benchmark/benchmark.h>
-#include <rocrand/rocrand_hip_cpu.h>
 #include <hip/hip_runtime.h>
 
 #include <iostream>
@@ -40,7 +39,6 @@
     }                                                                                   \
     while(0)
 
-#cmakedefine HAVE_FULL_DEVICE_PROPERTIES
 inline void add_common_benchmark_info()
 {
     auto str = [](const std::string& name, const std::string& val)
@@ -68,7 +66,9 @@ inline void add_common_benchmark_info()
     HIP_CHECK(hipRuntimeGetVersion(&runtime_version));
     num("hip_runtime_version", runtime_version);
 
-    hipDeviceProp_t devProp;
+    // On the NVIDIA platform not all members of this struct will be written to
+    // Zero-initialize to avoid referencing dangling memory
+    hipDeviceProp_t devProp{};
     int             device_id = 0;
     HIP_CHECK(hipGetDevice(&device_id));
     HIP_CHECK(hipGetDeviceProperties(&devProp, device_id));
@@ -99,19 +99,11 @@ inline void add_common_benchmark_info()
     num("hdp_max_shared_memory_per_multi_processor", devProp.maxSharedMemoryPerMultiProcessor);
     num("hdp_is_multi_gpu_board", devProp.isMultiGpuBoard);
     num("hdp_can_map_host_memory", devProp.canMapHostMemory);
-#ifdef HAVE_FULL_DEVICE_PROPERTIES
     str("hdp_gcn_arch_name", devProp.gcnArchName);
-#else
-    str("hdp_gcn_arch_name", "AMD64");
-#endif
     num("hdp_integrated", devProp.integrated);
     num("hdp_cooperative_launch", devProp.cooperativeLaunch);
     num("hdp_cooperative_multi_device_launch", devProp.cooperativeMultiDeviceLaunch);
-#ifdef HAVE_FULL_DEVICE_PROPERTIES
     num_size_t("hdp_max_texture_1d_linear", devProp.maxTexture1DLinear);
-#else
-    num_size_t("hdp_max_texture_1d_linear", 0);
-#endif
     num("hdp_max_texture_1d", devProp.maxTexture1D);
     dim2("hdp_max_texture_2d", devProp.maxTexture2D);
     dim3("hdp_max_texture_3d", devProp.maxTexture3D);
@@ -128,7 +120,6 @@ inline void add_common_benchmark_info()
         devProp.cooperativeMultiDeviceUnmatchedBlockDim);
     num("hdp_cooperative_multi_device_unmatched_shared_mem",
         devProp.cooperativeMultiDeviceUnmatchedSharedMem);
-#ifdef HAVE_FULL_DEVICE_PROPERTIES
     num("hdp_is_large_bar", devProp.isLargeBar);
     num("hdp_asic_revision", devProp.asicRevision);
     num("hdp_managed_memory", devProp.managedMemory);
@@ -137,15 +128,6 @@ inline void add_common_benchmark_info()
     num("hdp_pageable_memory_access", devProp.pageableMemoryAccess);
     num("hdp_pageable_memory_access_uses_host_page_tables",
         devProp.pageableMemoryAccessUsesHostPageTables);
-#else
-    num("hdp_is_large_bar", true);
-    num("hdp_asic_revision", -1);
-    num("hdp_managed_memory", false);
-    num("hdp_direct_managed_mem_access_from_host", false);
-    num("hdp_concurrent_managed_access", false);
-    num("hdp_pageable_memory_access", false);
-    num("hdp_pageable_memory_access_uses_host_page_tables", false);
-#endif
 
     const auto arch = devProp.arch;
     num("hdp_arch_has_global_int32_atomics", arch.hasGlobalInt32Atomics);

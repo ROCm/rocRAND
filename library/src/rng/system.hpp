@@ -133,7 +133,6 @@ struct rocrand_system_host
         auto* kernel_args
             = new KernelArgsType{num_blocks, num_threads, std::tuple<Args...>(args...)};
 
-#ifndef USE_HIP_CPU
         hipError_t status = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
 
         if(status != hipSuccess)
@@ -144,15 +143,6 @@ struct rocrand_system_host
             // free (crash) instead of a memory leak, so we will just leak it.
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
-#else
-        // HIP-CPU does not have hipLaunchHostFunc...
-        hipError_t status = hipStreamSynchronize(stream);
-        if(status != hipSuccess)
-        {
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
-        }
-        kernel_callback(reinterpret_cast<void*>(kernel_args));
-#endif
 
         return ROCRAND_STATUS_SUCCESS;
     }
@@ -165,12 +155,7 @@ template<auto Kernel, typename ConfigProvider, typename T, bool IsDynamic, typen
 __global__ __launch_bounds__((rocrand_host::detail::get_block_size<ConfigProvider, T>(
     IsDynamic))) void kernel_wrapper(Args... args)
 {
-    // We need to write out these constructors because of HIP-CPU.
-    Kernel(dim3(blockIdx.x, blockIdx.y, blockIdx.z),
-           dim3(threadIdx.x, threadIdx.y, threadIdx.z),
-           dim3(gridDim.x, gridDim.y, gridDim.z),
-           dim3(blockDim.x, blockDim.y, blockDim.z),
-           args...);
+    Kernel(blockIdx, threadIdx, gridDim, blockDim, args...);
 }
 
 } // namespace detail
@@ -208,14 +193,8 @@ struct rocrand_system_device
     static rocrand_status
         launch(dim3 num_blocks, dim3 num_threads, hipStream_t stream, Args... args)
     {
-        // We cannot use chevron syntax because HIP-CPU fails to parse it properly.
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::kernel_wrapper<Kernel, ConfigProvider, T, IsDynamic>),
-            num_blocks,
-            num_threads,
-            0,
-            stream,
-            args...);
+        detail::kernel_wrapper<Kernel, ConfigProvider, T, IsDynamic>
+            <<<num_blocks, num_threads, 0, stream>>>(args...);
         if(hipGetLastError() != hipSuccess)
         {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
