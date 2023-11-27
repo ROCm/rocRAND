@@ -58,7 +58,7 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
                                         dim3               block_dim,
                                         T*                 data,
                                         const size_t       n,
-                                        Constant*          direction_vectors,
+                                        const Constant*    direction_vectors,
                                         const Constant*    scramble_constants,
                                         const unsigned int offset,
                                         Distribution       distribution)
@@ -75,33 +75,45 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
     // Each thread of the current block uses the same direction vectors
     // (the dimension is determined by blockIdx.y)
     constexpr unsigned int vector_size = sizeof(Constant) == 4 ? 32 : 64;
-    Constant*              vectors_ptr;
-    if constexpr(use_shared_vectors)
+    const Constant*        vectors_ptr = [=]
     {
-        extern __shared__ unsigned char shared_bytes[];
-        vectors_ptr = reinterpret_cast<Constant*>(&shared_bytes[0]);
-        if(thread_idx.x < vector_size)
+        if constexpr(use_shared_vectors)
         {
-            vectors_ptr[thread_idx.x] = direction_vectors[dimension * vector_size + thread_idx.x];
+#ifdef __HIP_PLATFORM_AMD__
+            // On AMD GPUs we must use a constexpr size shared array for performance.
+            // But this code won't compile with NVCC, because we are in a __host__ __device__
+            // function.
+            __shared__ Constant shared_vectors[vector_size];
+#else
+            extern __shared__ unsigned char shared_bytes[];
+            auto* shared_vectors = reinterpret_cast<Constant*>(&shared_bytes[0]);
+#endif
+            if(thread_idx.x < vector_size)
+            {
+                shared_vectors[thread_idx.x]
+                    = direction_vectors[dimension * vector_size + thread_idx.x];
+            }
+            syncthreads<true>{}();
+            return shared_vectors;
         }
-        syncthreads<use_shared_vectors>{}();
-    }
-    else
-    {
-        vectors_ptr = direction_vectors + dimension * vector_size;
-    }
+        else
+        {
+            return direction_vectors + dimension * vector_size;
+        }
+    }();
 
     const Constant scramble_constant = Scrambled ? scramble_constants[dimension] : 0;
-    const auto     create_engine     = [scramble_constant, vectors_ptr](const unsigned int offset)
+    const auto     create_engine
+        = [scramble_constant](const Constant* vectors, const unsigned int offset)
     {
         if constexpr(Scrambled)
         {
-            return Engine(vectors_ptr, scramble_constant, offset);
+            return Engine(vectors, scramble_constant, offset);
         }
         else
         {
             (void)scramble_constant;
-            return Engine(vectors_ptr, offset);
+            return Engine(vectors, offset);
         }
     };
 
@@ -116,7 +128,7 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
     if(output_per_thread == 1)
     {
         const unsigned int engine_offset = engine_id * output_per_thread;
-        Engine             engine        = create_engine(offset + engine_offset);
+        Engine             engine        = create_engine(vectors_ptr, offset + engine_offset);
 
         while(index < n)
         {
@@ -136,7 +148,7 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
         const unsigned int engine_offset
             = engine_id * output_per_thread
               + (engine_id == 0 ? 0 : head_size); // The first engine writes head_size values
-        Engine engine = create_engine(offset + engine_offset);
+        Engine engine = create_engine(vectors_ptr, offset + engine_offset);
 
         if(engine_id == 0)
         {
@@ -344,7 +356,12 @@ public:
         constexpr uint32_t threads    = 256;
         constexpr uint32_t max_blocks = 4096;
         constexpr uint32_t shared_mem_bytes
+#ifdef __HIP_PLATFORM_AMD__
+            // On AMD GPUs we must resort to static shared memory for performance.
+            = 0;
+#else
             = system_type::is_device() ? ((Is64 ? 64 : 32) * sizeof(constant_type)) : 0;
+#endif
 
         const size_t       size             = data_size / m_dimensions;
         constexpr uint32_t output_per_block = threads * output_per_thread;
