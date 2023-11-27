@@ -76,7 +76,7 @@ copyright-date:
 
 .rocm:cmake-minimum:
   variables:
-    COMPILER: /opt/rocm/bin/hipcc
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
@@ -86,7 +86,7 @@ copyright-date:
 
 .rocm:cmake-latest:
   variables:
-    COMPILER: /opt/rocm/bin/hipcc
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-latest
@@ -94,25 +94,15 @@ copyright-date:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-latest", before_script]
 
-.rocm-clang:cmake-minimum:
+.rocm-hipcc:cmake-minimum:
   variables:
-    COMPILER: /opt/rocm/bin/amdclang++
+    COMPILER: /opt/rocm/bin/hipcc
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
   before_script:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-minimum", before_script]
-
-.rocm-clang:cmake-latest:
-  variables:
-    COMPILER: /opt/rocm/bin/amdclang++
-  extends:
-    - .deps:rocm
-    - .deps:cmake-latest
-  before_script:
-    - !reference [".deps:rocm", before_script]
-    - !reference [".deps:cmake-latest", before_script]
 
 .nvcc:cmake-minimum:
   variables:
@@ -225,24 +215,14 @@ build:rocm-cmake-minimum:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
-build:rocm-clang-cmake-minimum:
+build:rocm-hipcc-cmake-minimum:
   tags:
     - build
   needs: []
   extends:
-    - .rocm-clang:cmake-minimum
+    - .rocm-hipcc:cmake-minimum
     - .rocm:build
     - .save-artifacts
-  variables:
-    BUILD_SHARED_LIBS: "ON"
-
-build:rocm-clang-cmake-latest:
-  tags:
-    - build
-  needs: []
-  extends:
-    - .rocm-clang:cmake-latest
-    - .rocm:build
   variables:
     BUILD_SHARED_LIBS: "ON"
 
