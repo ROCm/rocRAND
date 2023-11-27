@@ -76,7 +76,7 @@ copyright-date:
 
 .rocm:cmake-minimum:
   variables:
-    COMPILER: hipcc
+    COMPILER: /opt/rocm/bin/hipcc
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
@@ -86,7 +86,7 @@ copyright-date:
 
 .rocm:cmake-latest:
   variables:
-    COMPILER: hipcc
+    COMPILER: /opt/rocm/bin/hipcc
   extends:
     - .deps:rocm
     - .deps:cmake-latest
@@ -96,7 +96,7 @@ copyright-date:
 
 .rocm-clang:cmake-minimum:
   variables:
-    COMPILER: amdclang++
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
@@ -106,7 +106,7 @@ copyright-date:
 
 .rocm-clang:cmake-latest:
   variables:
-    COMPILER: amdclang++
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-latest
@@ -116,7 +116,7 @@ copyright-date:
 
 .nvcc:cmake-minimum:
   variables:
-    COMPILER: c++
+    COMPILER: /usr/bin/g++
   extends:
     - .deps:nvcc
     - .deps:cmake-minimum
@@ -126,7 +126,17 @@ copyright-date:
 
 .nvcc:cmake-latest:
   variables:
-    COMPILER: c++
+    COMPILER: /usr/bin/g++
+  extends:
+    - .deps:nvcc
+    - .deps:cmake-latest
+  before_script:
+    - !reference [".deps:nvcc", before_script]
+    - !reference [".deps:cmake-latest", before_script]
+
+.nvcc-clang:cmake-minimum:
+  variables:
+    COMPILER: /usr/local/bin/clang++
   extends:
     - .deps:nvcc
     - .deps:cmake-latest
@@ -146,6 +156,7 @@ copyright-date:
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
+      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
@@ -174,7 +185,9 @@ copyright-date:
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
+      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
+      -D CMAKE_CUDA_HOST_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
       -D BUILD_FORTRAN_WRAPPER=ON
@@ -269,6 +282,17 @@ build:nvcc-cmake-minimum:
   needs: []
   extends:
     - .nvcc:cmake-minimum
+    - .nvcc:build
+    - .save-artifacts
+  variables:
+    BUILD_SHARED_LIBS: "ON"
+
+build:nvcc-clang-cmake-minimum:
+  tags:
+    - build
+  needs: []
+  extends:
+    - .nvcc-clang:cmake-minimum
     - .nvcc:build
     - .save-artifacts
   variables:
