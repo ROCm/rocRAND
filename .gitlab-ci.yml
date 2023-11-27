@@ -246,16 +246,6 @@ build:rocm-cmake-latest:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
-build:rocm-static-cmake-latest:
-  tags:
-    - build
-  needs: []
-  extends:
-    - .rocm:cmake-latest
-    - .rocm:build
-  variables:
-    BUILD_SHARED_LIBS: "OFF"
-
 build:nvcc-cmake-minimum:
   tags:
     - build
@@ -297,16 +287,6 @@ build:nvcc-cmake-latest:
     - .nvcc:build
   variables:
     BUILD_SHARED_LIBS: "ON"
-
-build:nvcc-static-cmake-latest:
-  tags:
-    - build
-  needs: []
-  extends:
-    - .nvcc:cmake-latest
-    - .nvcc:build
-  variables:
-    BUILD_SHARED_LIBS: "OFF"
 
 benchmark:benchmark-tuning:
   extends:
