@@ -45,15 +45,7 @@ else()
 find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
 endif()
 
-# Get HIP options
-execute_process(
-    COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
-    OUTPUT_VARIABLE HIP_CPP_CONFIG
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE
-)
-
-if(HIP_COMPILER STREQUAL "nvcc")
+if (HIP_COMPILER STREQUAL "nvcc")
     enable_language(CUDA)
     set(LANG CUDA)
 else()
@@ -63,7 +55,6 @@ endif()
 set(CMAKE_${LANG}_STANDARD 11)
 set(CMAKE_${LANG}_STANDARD_REQUIRED ON)
 set(CMAKE_${LANG}_EXTENSIONS OFF)
-set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} ${HIP_CPP_CONFIG}")
 
 # Find rocRAND
 find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")
@@ -112,6 +103,16 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
         # https://github.com/ROCm-Developer-Tools/hipamd/commit/60357b1e9512328a9b54d449df6f3e725734ec3d
         # is included in the release
         set_source_files_properties(${test_src} PROPERTIES LANGUAGE CUDA)
+
+        # Get HIP options
+        execute_process(
+            COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
+            OUTPUT_VARIABLE HIP_CPP_CONFIG
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_STRIP_TRAILING_WHITESPACE
+        )
+        separate_arguments(HIP_CPP_CONFIG UNIX_COMMAND "${HIP_CPP_CONFIG}")
+        target_compile_options(${test_name} PRIVATE ${HIP_CPP_CONFIG})
     else()
         target_link_libraries(${test_name} PRIVATE hip::host)
     endif()
