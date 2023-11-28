@@ -56,16 +56,9 @@ else()
     set(CUDA_INCLUDE_DIRS ${CUDAToolkit_INCLUDE_DIRS})
 endif()
 
-if(HIP_COMPILER STREQUAL "nvcc")
-    enable_language(CUDA)
-    set(LANG CUDA)
-else()
-    set(LANG CXX)
-endif()
-
-set(CMAKE_${LANG}_STANDARD 14)
-set(CMAKE_${LANG}_STANDARD_REQUIRED ON)
-set(CMAKE_${LANG}_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find rocRAND
 find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")
@@ -81,13 +74,6 @@ add_library(test_rocrand_parity_rocrand OBJECT parity_rocrand.cpp)
 
 target_link_libraries(test_rocrand_parity_rocrand PRIVATE roc::rocrand)
 if(HIP_COMPILER STREQUAL "nvcc")
-    # Set the source as a cuda file, to work around a bug in nvidia hip headers including
-    # device code to the host compiler
-    # Can be removed once the fix in hipamd
-    # https://github.com/ROCm-Developer-Tools/hipamd/commit/60357b1e9512328a9b54d449df6f3e725734ec3d
-    # is included in the release
-    set_source_files_properties(parity_rocrand.cpp PROPERTIES LANGUAGE CUDA)
-
     # Get HIP options
     execute_process(
         COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
@@ -97,6 +83,9 @@ if(HIP_COMPILER STREQUAL "nvcc")
     )
     separate_arguments(HIP_CPP_CONFIG UNIX_COMMAND "${HIP_CPP_CONFIG}")
     target_compile_options(test_rocrand_parity_rocrand PRIVATE ${HIP_CPP_CONFIG})
+
+    target_include_directories(test_rocrand_parity_rocrand PRIVATE ${CUDA_INCLUDE_DIRS})
+    target_link_libraries(test_rocrand_parity_rocrand PRIVATE ${CUDA_LIBRARIES})
 else()
     target_link_libraries(test_rocrand_parity_rocrand PRIVATE hip::host)
 endif()
