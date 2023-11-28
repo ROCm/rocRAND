@@ -30,10 +30,7 @@
 #include "mtgp32.hpp"
 #include "philox4x32_10.hpp"
 #include "sobol.hpp"
-#include "threefry2x32_20.hpp"
-#include "threefry2x64_20.hpp"
-#include "threefry4x32_20.hpp"
-#include "threefry4x64_20.hpp"
+#include "threefry.hpp"
 #include "xorwow.hpp"
 
 extern template struct rocrand_generator_type<rocrand_lfsr113>;
