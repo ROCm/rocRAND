@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 # Package test
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(rocrand_package_test CXX)
 
