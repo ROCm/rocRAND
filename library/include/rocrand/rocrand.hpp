@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -1876,7 +1876,7 @@ public:
         }
     }
 
-    /// \copydoc lfsr113_engine::lfsr113_engine
+    /// \copydoc lfsr113_engine::lfsr113_engine(seed_type,order_type)
     lfsr113_engine(unsigned long long seed_value,
                    order_type         order_value = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
