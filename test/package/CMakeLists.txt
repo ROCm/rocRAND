@@ -104,12 +104,8 @@ endfunction()
 foreach(test_src ${rocrand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
+    target_link_libraries(${test_name} PRIVATE roc::rocrand)
     if(HIP_COMPILER STREQUAL "nvcc")
-        target_link_libraries(${test_name} 
-            PRIVATE
-                roc::rocrand
-        )
-
         # Set the source as a cuda file, to work around a bug in nvidia hip headers including
         # device code to the host compiler
         # Can be removed once the fix in hipamd
@@ -117,11 +113,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
         # is included in the release
         set_source_files_properties(${test_src} PROPERTIES LANGUAGE CUDA)
     else()
-        target_link_libraries(${test_name}
-            PRIVATE
-                roc::rocrand
-                "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
-        )
+        target_link_libraries(${test_name} PRIVATE hip::host)
     endif()
     add_relative_test(${test_name} ${test_name})
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
