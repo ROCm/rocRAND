@@ -88,12 +88,8 @@ target_link_libraries(test_rocrand_parity_curand ${CUDA_LIBRARIES} ${CUDA_curand
 # Create an object library for the rocrand part of the test.
 add_library(test_rocrand_parity_rocrand OBJECT parity_rocrand.cpp)
 
+target_link_libraries(test_rocrand_parity_rocrand PRIVATE roc::rocrand)
 if(HIP_COMPILER STREQUAL "nvcc")
-    target_link_libraries(test_rocrand_parity_rocrand
-        PRIVATE
-            roc::rocrand
-    )
-
     # Set the source as a cuda file, to work around a bug in nvidia hip headers including
     # device code to the host compiler
     # Can be removed once the fix in hipamd
@@ -101,11 +97,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
     # is included in the release
     set_source_files_properties(parity_rocrand.cpp PROPERTIES LANGUAGE CUDA)
 else()
-    target_link_libraries(test_rocrand_parity_rocrand
-        PRIVATE
-            roc::rocrand
-            "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
-    )
+    target_link_libraries(test_rocrand_parity_rocrand PRIVATE hip::host)
 endif()
 
 # Compile the files that invoke each API separately, to avoid symbol namespacing errors.
