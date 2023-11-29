@@ -218,7 +218,7 @@ public:
         constexpr size_t direction_vectors_bytes
             = sizeof(constant_type) * (Is64 ? SOBOL64_N : SOBOL32_N);
         hipError_t error;
-        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors), direction_vectors_bytes);
+        error = hipMalloc(&m_direction_vectors, direction_vectors_bytes);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -237,8 +237,7 @@ public:
         if constexpr(Scrambled)
         {
             // Allocate scramble constants
-            error = hipMalloc(reinterpret_cast<void**>(&m_scramble_constants),
-                              sizeof(constant_type) * SCRAMBLED_SOBOL_DIM);
+            error = hipMalloc(&m_scramble_constants, sizeof(constant_type) * SCRAMBLED_SOBOL_DIM);
             if(error != hipSuccess)
             {
                 throw ROCRAND_STATUS_ALLOCATION_FAILED;

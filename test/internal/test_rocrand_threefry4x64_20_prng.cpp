@@ -63,8 +63,7 @@ TEST_P(rocrand_threefry_prng_tests, uniform_uint_test)
 {
     const size_t        size = 1313;
     unsigned long long* data;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * (size + 1)));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * (size + 1)));
 
     rocrand_threefry4x64_20 g = get_generator();
     ROCRAND_CHECK(g.generate(data + 1, size));
@@ -89,7 +88,7 @@ TEST_P(rocrand_threefry_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_threefry4x64_20 g = get_generator();
     ROCRAND_CHECK(g.generate(data, size));
@@ -119,7 +118,7 @@ TEST_P(rocrand_threefry_prng_tests, state_progress_test)
     // Device data
     const size_t        size = 1025;
     unsigned long long* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * size));
 
     // Generator
     rocrand_threefry4x64_20 g0 = get_generator();
@@ -163,7 +162,7 @@ TEST_P(rocrand_threefry_prng_tests, same_seed_test)
     // Device side data
     const size_t        size = 1024;
     unsigned long long* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * size));
 
     // Generators
     rocrand_threefry4x64_20 g0 = get_generator(), g1 = get_generator();
@@ -208,7 +207,7 @@ TEST_P(rocrand_threefry_prng_tests, different_seed_test)
     // Device side data
     const size_t        size = 1024;
     unsigned long long* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned long long) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * size));
 
     // Generators
     rocrand_threefry4x64_20 g0 = get_generator(), g1 = get_generator();
@@ -493,8 +492,8 @@ TYPED_TEST(rocrand_threefry_prng_offset, offsets_test)
         const size_t size1 = (size + offset);
         T*           data0;
         T*           data1;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
+        HIP_CHECK(hipMalloc(&data0, sizeof(T) * size0));
+        HIP_CHECK(hipMalloc(&data1, sizeof(T) * size1));
 
         rocrand_threefry4x64_20 g0 = TestFixture::get_generator();
         g0.set_offset(offset);
@@ -541,8 +540,8 @@ void continuity_test(GenerateFunc       generate_func,
 
     T* data0;
     T* data1;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * size0));
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * size1));
+    HIP_CHECK(hipMalloc(&data0, sizeof(T) * size0));
+    HIP_CHECK(hipMalloc(&data1, sizeof(T) * size1));
 
     rocrand_threefry4x64_20 g0;
     g0.set_order(ordering);

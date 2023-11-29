@@ -36,7 +36,7 @@ TEST(rocrand_mt19937_prng_tests, uniform_uint_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -61,7 +61,7 @@ TEST(rocrand_mt19937_prng_tests, uniform_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate(data, size));
@@ -88,7 +88,7 @@ TEST(rocrand_mt19937_prng_tests, normal_float_test)
 {
     const size_t size = 1313;
     float*       data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
@@ -122,7 +122,7 @@ TEST(rocrand_mt19937_prng_tests, poisson_test)
 {
     const size_t  size = 1313;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     rocrand_mt19937 g;
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
@@ -160,7 +160,7 @@ TEST(rocrand_mt19937_prng_tests, state_progress_test)
     // Device data
     const size_t  size = 1025;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
     rocrand_mt19937 g0;
@@ -203,7 +203,7 @@ TEST(rocrand_mt19937_prng_tests, same_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
     rocrand_mt19937 g0, g1;
@@ -247,7 +247,7 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     // Device side data
     const size_t  size = 1024;
     unsigned int* data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
     rocrand_mt19937 g0, g1;
@@ -480,12 +480,11 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     };
 
     unsigned int* d_mt19937_jump{};
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(jump)));
+    HIP_CHECK(hipMalloc(&d_mt19937_jump, sizeof(jump)));
     HIP_CHECK(hipMemcpy(d_mt19937_jump, jump, sizeof(jump), hipMemcpyHostToDevice));
 
     unsigned int* d_engines{};
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines),
-                        generator_count * state_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMalloc(&d_engines, generator_count * state_size * sizeof(unsigned int)));
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
@@ -499,7 +498,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
         d_mt19937_jump);
 
     octo_engine_type* d_octo_engines{};
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_octo_engines),
+    HIP_CHECK(hipMalloc(&d_octo_engines,
                         threads_per_generator * generator_count * sizeof(octo_engine_type)));
 
     // Initialize the octo engines from the two engines.
@@ -520,7 +519,7 @@ TEST(rocrand_mt19937_prng_tests, subsequence_test)
     constexpr unsigned int elements_per_generator = (12345789U / state_size) * state_size;
     constexpr size_t       bytes_per_generator    = elements_per_generator * sizeof(unsigned int);
     unsigned int*          d_data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&d_data), 2 * bytes_per_generator));
+    HIP_CHECK(hipMallocHelper(&d_data, 2 * bytes_per_generator));
 
     // Generate the data
     hipLaunchKernelGGL(generate_kernel,
@@ -882,15 +881,14 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
     // Initialize the engines on device using Horner algorithm
 
     unsigned int* d_mt19937_jump{};
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(rocrand_h_mt19937_jump)));
+    HIP_CHECK(hipMalloc(&d_mt19937_jump, sizeof(rocrand_h_mt19937_jump)));
     HIP_CHECK(hipMemcpy(d_mt19937_jump,
                         rocrand_h_mt19937_jump,
                         sizeof(rocrand_h_mt19937_jump),
                         hipMemcpyHostToDevice));
 
     unsigned int* d_engines1{};
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_engines1),
-                        generator_count * n * sizeof(unsigned int)));
+    HIP_CHECK(hipMalloc(&d_engines1, generator_count * n * sizeof(unsigned int)));
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
@@ -987,7 +985,7 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
     for(size_t s : sizes0)
     {
         T* data0;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * s));
+        HIP_CHECK(hipMalloc(&data0, sizeof(T) * s));
         HIP_CHECK(hipMemset(data0, -1, sizeof(T) * s));
         generate_func(g0, data0, s);
         HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
@@ -998,7 +996,7 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
     for(size_t s : sizes1)
     {
         T* data1;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * s));
+        HIP_CHECK(hipMalloc(&data1, sizeof(T) * s));
         HIP_CHECK(hipMemset(data1, -1, sizeof(T) * s));
         generate_func(g1, data1, s);
         HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
@@ -1006,7 +1004,7 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
         HIP_CHECK(hipFree(data1));
     }
     T* data2;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data2), sizeof(T) * size2));
+    HIP_CHECK(hipMalloc(&data2, sizeof(T) * size2));
     HIP_CHECK(hipMemset(data2, -1, sizeof(T) * size2));
     generate_func(g2, data2, size2);
     HIP_CHECK(hipMemcpy(host_data2.data(), data2, sizeof(T) * size2, hipMemcpyDefault));
@@ -1127,7 +1125,7 @@ void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
 
     std::vector<T> host_data(max_size_with_canary);
     T*             data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * max_size_with_canary));
+    HIP_CHECK(hipMalloc(&data, sizeof(T) * max_size_with_canary));
 
     for(size_t offset : {0, 1, 2, 3})
     {
@@ -1215,9 +1213,9 @@ void change_distribution_test(GenerateFunc0 generate_func0,
     T0* data0;
     T1* data10;
     T1* data11;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T0) * size0));
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data10), sizeof(T1) * size1));
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data11), sizeof(T1) * (start1 + size1)));
+    HIP_CHECK(hipMalloc(&data0, sizeof(T0) * size0));
+    HIP_CHECK(hipMalloc(&data10, sizeof(T1) * size1));
+    HIP_CHECK(hipMalloc(&data11, sizeof(T1) * (start1 + size1)));
 
     rocrand_mt19937 g0;
     // Generate the first distribution
