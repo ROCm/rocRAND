@@ -293,8 +293,7 @@ public:
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
-        error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
+        error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;

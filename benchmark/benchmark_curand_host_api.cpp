@@ -67,7 +67,7 @@ void run_benchmark(benchmark::State&     state,
     }
     else
     {
-        CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
+        CUDA_CALL(cudaMalloc(&data, size * sizeof(T)));
         CURAND_CALL(curandCreateGenerator(&generator, rng_type));
     }
 

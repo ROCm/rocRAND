@@ -451,7 +451,7 @@ public:
         , m_seed(seed)
     {
         // Allocate device random number engines
-        auto error = hipMalloc(reinterpret_cast<void**>(&m_engines),
+        auto error = hipMalloc(&m_engines,
                                generator_count * rocrand_host::detail::mt19937_constants::n
                                    * sizeof(unsigned int));
         if(error != hipSuccess)
@@ -523,7 +523,7 @@ public:
         }
 
         unsigned int* d_engines{};
-        err = hipMalloc(reinterpret_cast<void**>(&d_engines),
+        err = hipMalloc(&d_engines,
                         generator_count * rocrand_host::detail::mt19937_constants::n
                             * sizeof(unsigned int));
         if(err != hipSuccess)
@@ -532,7 +532,7 @@ public:
         }
 
         unsigned int* d_mt19937_jump{};
-        err = hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(rocrand_h_mt19937_jump));
+        err = hipMalloc(&d_mt19937_jump, sizeof(rocrand_h_mt19937_jump));
         if(err != hipSuccess)
         {
             ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
