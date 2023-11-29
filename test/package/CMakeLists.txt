@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 # Package test
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(rocrand_package_test CXX)
 
@@ -45,28 +45,22 @@ else()
 find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
 endif()
 
-# Get HIP options
-execute_process(
-    COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
-    OUTPUT_VARIABLE HIP_CPP_CONFIG
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE
-)
-
-if(HIP_COMPILER STREQUAL "nvcc")
-    enable_language(CUDA)
-    set(LANG CUDA)
-else()
-    set(LANG CXX)
-endif()
-
-set(CMAKE_${LANG}_STANDARD 11)
-set(CMAKE_${LANG}_STANDARD_REQUIRED ON)
-set(CMAKE_${LANG}_EXTENSIONS OFF)
-set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} ${HIP_CPP_CONFIG}")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find rocRAND
 find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")
+
+if(HIP_COMPILER STREQUAL "nvcc")
+    if(CMAKE_VERSION VERSION_LESS 3.17)
+        find_package(CUDA REQUIRED)
+    else()
+        find_package(CUDAToolkit)
+        set(CUDA_LIBRARIES CUDA::cudart)
+        set(CUDA_INCLUDE_DIRS ${CUDAToolkit_INCLUDE_DIRS})
+    endif()
+endif()
 
 # TODO: Fix fortran wrapper
 # Check if Fortran wrapper is installed
@@ -106,12 +100,18 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
     add_executable(${test_name} "${test_src}")
     target_link_libraries(${test_name} PRIVATE roc::rocrand)
     if(HIP_COMPILER STREQUAL "nvcc")
-        # Set the source as a cuda file, to work around a bug in nvidia hip headers including
-        # device code to the host compiler
-        # Can be removed once the fix in hipamd
-        # https://github.com/ROCm-Developer-Tools/hipamd/commit/60357b1e9512328a9b54d449df6f3e725734ec3d
-        # is included in the release
-        set_source_files_properties(${test_src} PROPERTIES LANGUAGE CUDA)
+        # Get HIP options
+        execute_process(
+            COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
+            OUTPUT_VARIABLE HIP_CPP_CONFIG
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_STRIP_TRAILING_WHITESPACE
+        )
+        separate_arguments(HIP_CPP_CONFIG UNIX_COMMAND "${HIP_CPP_CONFIG}")
+        target_compile_options(${test_name} PRIVATE ${HIP_CPP_CONFIG})
+
+        target_include_directories(${test_name} PRIVATE ${CUDA_INCLUDE_DIRS})
+        target_link_libraries(${test_name} PRIVATE ${CUDA_LIBRARIES})
     else()
         target_link_libraries(${test_name} PRIVATE hip::host)
     endif()
