@@ -85,6 +85,8 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
             // function.
             __shared__ Constant shared_vectors[vector_size];
 #else
+            // NVCC won't accept extern __shared__ Constant shared_bytes[];
+            // Thereby we must resort to aliasing.
             extern __shared__ unsigned char shared_bytes[];
             auto* shared_vectors = reinterpret_cast<Constant*>(&shared_bytes[0]);
 #endif
@@ -125,7 +127,7 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
     // is impossible because the resulting sequence is not
     // quasi-random anymore.
 
-    if(output_per_thread == 1)
+    if constexpr(output_per_thread == 1)
     {
         const unsigned int engine_offset = engine_id * output_per_thread;
         Engine             engine        = create_engine(vectors_ptr, offset + engine_offset);
@@ -219,8 +221,203 @@ struct sobol_device_engine<true, true, UseSharedVectors>
     using type = ::rocrand_device::scrambled_sobol64_engine<UseSharedVectors>;
 };
 
+/// \brief Selects the appropriate device engine type for the template parameters.
 template<bool Is64, bool Scrambled, bool UseSharedVectors>
 using sobol_device_engine_t = typename sobol_device_engine<Is64, Scrambled, UseSharedVectors>::type;
+
+/// \brief Loads the appropriate direction vectors and scramble constants (if applicable) for the
+/// Sobol generator specified by the template arguments.
+/// \tparam System The system type, e.g. device or host system. See system.hpp for details.
+/// \tparam Is64 Whether the generator output is 64 bits.
+/// \tparam Scrambled Whether the generator is scrambled Sobol.
+template<class System, bool Is64, bool Scrambled>
+class sobol_constant_accessor
+{
+public:
+    using constant_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
+    using system_type   = System;
+
+    sobol_constant_accessor()
+    {
+        m_status = allocate_direction_vectors(&m_direction_vectors);
+        if(m_status != ROCRAND_STATUS_SUCCESS)
+        {
+            return;
+        }
+        m_status = allocate_scramble_constants(&m_scramble_constants);
+    }
+
+    sobol_constant_accessor(sobol_constant_accessor&& other)
+        : m_status(std::exchange(other.m_status, ROCRAND_STATUS_SUCCESS))
+        , m_direction_vectors(std::exchange(other.m_direction_vectors, nullptr))
+        , m_scramble_constants(std::exchange(other.m_scramble_constants, nullptr))
+    {}
+
+    sobol_constant_accessor(const sobol_constant_accessor&) = delete;
+
+    sobol_constant_accessor& operator=(sobol_constant_accessor&& other)
+    {
+        m_status             = std::exchange(other.m_status, ROCRAND_STATUS_SUCCESS);
+        m_direction_vectors  = std::exchange(other.m_direction_vectors, nullptr);
+        m_scramble_constants = std::exchange(other.m_scramble_constants, nullptr);
+        return *this;
+    }
+
+    sobol_constant_accessor& operator=(const sobol_constant_accessor&) = delete;
+
+    ~sobol_constant_accessor()
+    {
+        deallocate();
+    }
+
+    rocrand_status get_direction_vectors(const constant_type** direction_vectors) const
+    {
+        *direction_vectors = m_direction_vectors;
+        return m_status;
+    }
+
+    rocrand_status get_scramble_constants(const constant_type** scramble_constants) const
+    {
+        *scramble_constants = m_scramble_constants;
+        return m_status;
+    }
+
+private:
+    rocrand_status m_status             = ROCRAND_STATUS_SUCCESS;
+    constant_type* m_direction_vectors  = nullptr;
+    constant_type* m_scramble_constants = nullptr;
+
+    static const constant_type* get_direction_vectors_ptr()
+    {
+        if constexpr(Is64)
+        {
+            if constexpr(Scrambled)
+            {
+                return rocrand_h_scrambled_sobol64_direction_vectors;
+            }
+            else
+            {
+                return rocrand_h_sobol64_direction_vectors;
+            }
+        }
+        else
+        {
+            if constexpr(Scrambled)
+            {
+                return rocrand_h_scrambled_sobol32_direction_vectors;
+            }
+            else
+            {
+                return rocrand_h_sobol32_direction_vectors;
+            }
+        }
+    }
+
+    // Device
+    template<bool IsDevice = system_type::is_device()>
+    static std::enable_if_t<IsDevice, rocrand_status>
+        allocate_direction_vectors(constant_type** direction_vectors)
+    {
+        constexpr size_t direction_vectors_count = Is64 ? SOBOL64_N : SOBOL32_N;
+        constexpr size_t direction_vectors_bytes = sizeof(constant_type) * direction_vectors_count;
+        const rocrand_status status
+            = system_type::alloc(direction_vectors, direction_vectors_count);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        const constant_type* h_direction_vectors = get_direction_vectors_ptr();
+        const hipError_t     error               = hipMemcpy(*direction_vectors,
+                                           h_direction_vectors,
+                                           direction_vectors_bytes,
+                                           hipMemcpyHostToDevice);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    // Not device
+    template<bool IsDevice = system_type::is_device()>
+    static std::enable_if_t<!IsDevice, rocrand_status>
+        allocate_direction_vectors(constant_type** direction_vectors)
+    {
+        *direction_vectors = const_cast<constant_type*>(get_direction_vectors_ptr());
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    static const constant_type* get_scramble_constants_ptr()
+    {
+        if constexpr(Is64)
+        {
+            return h_scrambled_sobol64_constants;
+        }
+        else
+        {
+            return h_scrambled_sobol32_constants;
+        }
+    }
+
+    // Not scrambled
+    template<bool IsScrambled = Scrambled>
+    static std::enable_if_t<!IsScrambled, rocrand_status>
+        allocate_scramble_constants(constant_type** scramble_constants)
+    {
+        *scramble_constants = nullptr;
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    // Scrambled, on device
+    template<bool IsScrambled = Scrambled, bool IsDevice = system_type::is_device()>
+    static std::enable_if_t<IsScrambled && IsDevice, rocrand_status>
+        allocate_scramble_constants(constant_type** scramble_constants)
+    {
+        const rocrand_status status = system_type::alloc(scramble_constants, SCRAMBLED_SOBOL_DIM);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        const hipError_t error = hipMemcpy(*scramble_constants,
+                                           get_scramble_constants_ptr(),
+                                           sizeof(constant_type) * SCRAMBLED_SOBOL_DIM,
+                                           hipMemcpyHostToDevice);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    // Scrambled, not on device
+    template<bool IsScrambled = Scrambled, bool IsDevice = system_type::is_device()>
+    static std::enable_if_t<IsScrambled && !IsDevice, rocrand_status>
+        allocate_scramble_constants(constant_type** scramble_constants)
+    {
+        *scramble_constants = const_cast<constant_type*>(get_scramble_constants_ptr());
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    // Not device
+    template<bool IsDevice = system_type::is_device()>
+    std::enable_if_t<!IsDevice> deallocate()
+    {}
+
+    // Device, not scrambled
+    template<bool IsDevice = system_type::is_device(), bool IsScrambled = Scrambled>
+    std::enable_if_t<IsDevice && !IsScrambled> deallocate()
+    {
+        system_type::free(m_direction_vectors);
+    }
+
+    // Device, scrambled
+    template<bool IsDevice = system_type::is_device(), bool IsScrambled = Scrambled>
+    std::enable_if_t<IsDevice && IsScrambled> deallocate()
+    {
+        system_type::free(m_direction_vectors);
+        system_type::free(m_scramble_constants);
+    }
+};
 
 } // end namespace rocrand_host::detail
 
@@ -234,6 +431,8 @@ public:
     using engine_type
         = ::rocrand_host::detail::sobol_device_engine_t<Is64, Scrambled, system_type::is_device()>;
     using constant_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
+    using constant_accessor
+        = rocrand_host::detail::sobol_constant_accessor<system_type, Is64, Scrambled>;
 
     rocrand_sobol_template(unsigned long long offset = 0,
                            rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
@@ -443,197 +642,19 @@ public:
     }
 
 private:
-    class constant_accessor
-    {
-    public:
-        constant_accessor()
-        {
-            m_status = allocate_direction_vectors(&m_direction_vectors);
-            if(m_status != ROCRAND_STATUS_SUCCESS)
-            {
-                return;
-            }
-            m_status = allocate_scramble_constants(&m_scramble_constants);
-        }
-
-        constant_accessor(constant_accessor&& other)
-            : m_status(std::exchange(other.m_status, ROCRAND_STATUS_SUCCESS))
-            , m_direction_vectors(std::exchange(other.m_direction_vectors, nullptr))
-            , m_scramble_constants(std::exchange(other.m_scramble_constants, nullptr))
-        {}
-
-        constant_accessor(const constant_accessor&) = delete;
-
-        constant_accessor& operator=(constant_accessor&& other)
-        {
-            m_status             = std::exchange(other.m_status, ROCRAND_STATUS_SUCCESS);
-            m_direction_vectors  = std::exchange(other.m_direction_vectors, nullptr);
-            m_scramble_constants = std::exchange(other.m_scramble_constants, nullptr);
-            return *this;
-        }
-
-        constant_accessor& operator=(const constant_accessor&) = delete;
-
-        ~constant_accessor()
-        {
-            deallocate();
-        }
-
-        rocrand_status get_direction_vectors(constant_type** direction_vectors) const
-        {
-            *direction_vectors = m_direction_vectors;
-            return m_status;
-        }
-
-        rocrand_status get_scramble_constants(constant_type** scramble_constants) const
-        {
-            *scramble_constants = m_scramble_constants;
-            return m_status;
-        }
-
-    private:
-        rocrand_status m_status             = ROCRAND_STATUS_SUCCESS;
-        constant_type* m_direction_vectors  = nullptr;
-        constant_type* m_scramble_constants = nullptr;
-
-        static const constant_type* get_direction_vectors()
-        {
-            if constexpr(Is64)
-            {
-                if constexpr(Scrambled)
-                {
-                    return rocrand_h_scrambled_sobol64_direction_vectors;
-                }
-                else
-                {
-                    return rocrand_h_sobol64_direction_vectors;
-                }
-            }
-            else
-            {
-                if constexpr(Scrambled)
-                {
-                    return rocrand_h_scrambled_sobol32_direction_vectors;
-                }
-                else
-                {
-                    return rocrand_h_sobol32_direction_vectors;
-                }
-            }
-        }
-
-        template<bool IsDevice = system_type::is_device()>
-        static std::enable_if_t<IsDevice, rocrand_status>
-            allocate_direction_vectors(constant_type** direction_vectors)
-        {
-            constexpr size_t direction_vectors_count = Is64 ? SOBOL64_N : SOBOL32_N;
-            constexpr size_t direction_vectors_bytes
-                = sizeof(constant_type) * direction_vectors_count;
-            const rocrand_status status
-                = system_type::alloc(direction_vectors, direction_vectors_count);
-            if(status != ROCRAND_STATUS_SUCCESS)
-            {
-                return status;
-            }
-            const constant_type* h_direction_vectors = get_direction_vectors();
-            const hipError_t     error               = hipMemcpy(*direction_vectors,
-                                               h_direction_vectors,
-                                               direction_vectors_bytes,
-                                               hipMemcpyHostToDevice);
-            if(error != hipSuccess)
-            {
-                return ROCRAND_STATUS_INTERNAL_ERROR;
-            }
-            return ROCRAND_STATUS_SUCCESS;
-        }
-
-        template<bool IsDevice = system_type::is_device()>
-        static std::enable_if_t<!IsDevice, rocrand_status>
-            allocate_direction_vectors(constant_type** direction_vectors)
-        {
-            *direction_vectors = const_cast<constant_type*>(get_direction_vectors());
-            return ROCRAND_STATUS_SUCCESS;
-        }
-
-        static const constant_type* get_scramble_constants()
-        {
-            if constexpr(Is64)
-            {
-                return h_scrambled_sobol64_constants;
-            }
-            else
-            {
-                return h_scrambled_sobol32_constants;
-            }
-        }
-
-        template<bool IsScrambled = Scrambled>
-        static std::enable_if_t<!IsScrambled, rocrand_status>
-            allocate_scramble_constants(constant_type** scramble_constants)
-        {
-            *scramble_constants = nullptr;
-            return ROCRAND_STATUS_SUCCESS;
-        }
-
-        template<bool IsScrambled = Scrambled, bool IsDevice = system_type::is_device()>
-        static std::enable_if_t<IsScrambled && IsDevice, rocrand_status>
-            allocate_scramble_constants(constant_type** scramble_constants)
-        {
-            const rocrand_status status
-                = system_type::alloc(scramble_constants, SCRAMBLED_SOBOL_DIM);
-            if(status != ROCRAND_STATUS_SUCCESS)
-            {
-                return status;
-            }
-            const hipError_t error = hipMemcpy(*scramble_constants,
-                                               get_scramble_constants(),
-                                               sizeof(constant_type) * SCRAMBLED_SOBOL_DIM,
-                                               hipMemcpyHostToDevice);
-            if(error != hipSuccess)
-            {
-                return ROCRAND_STATUS_INTERNAL_ERROR;
-            }
-            return ROCRAND_STATUS_SUCCESS;
-        }
-
-        template<bool IsScrambled = Scrambled, bool IsDevice = system_type::is_device()>
-        static std::enable_if_t<IsScrambled && !IsDevice, rocrand_status>
-            allocate_scramble_constants(constant_type** scramble_constants)
-        {
-            *scramble_constants = const_cast<constant_type*>(get_scramble_constants());
-            return ROCRAND_STATUS_SUCCESS;
-        }
-
-        template<bool IsDevice = system_type::is_device()>
-        std::enable_if_t<!IsDevice> deallocate()
-        {}
-
-        template<bool IsDevice = system_type::is_device(), bool IsScrambled = Scrambled>
-        std::enable_if_t<IsDevice && !IsScrambled> deallocate()
-        {
-            system_type::free(m_direction_vectors);
-        }
-
-        template<bool IsDevice = system_type::is_device(), bool IsScrambled = Scrambled>
-        std::enable_if_t<IsDevice && IsScrambled> deallocate()
-        {
-            system_type::free(m_direction_vectors);
-            system_type::free(m_scramble_constants);
-        }
-    };
-
     static const constant_accessor& get_constants()
     {
-        // Every instance of each Sobol variant shares the constants
+        // Every instance of each Sobol variant shares the constants.
+        // The initialization of accessor happens only at the first invocation of this function.
         static constant_accessor accessor;
         return accessor;
     }
 
-    bool           m_initialized        = false;
-    unsigned int   m_dimensions         = 1;
-    unsigned int   m_current_offset     = 0;
-    constant_type* m_direction_vectors  = nullptr;
-    constant_type* m_scramble_constants = nullptr;
+    bool                 m_initialized        = false;
+    unsigned int         m_dimensions         = 1;
+    unsigned int         m_current_offset     = 0;
+    const constant_type* m_direction_vectors  = nullptr;
+    const constant_type* m_scramble_constants = nullptr;
 
     // For caching of Poisson for consecutive generations with the same lambda
     poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_CDF, !system_type::is_device()> m_poisson;
