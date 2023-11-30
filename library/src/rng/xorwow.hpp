@@ -307,25 +307,29 @@ public:
         }
 
         rocrand_host::detail::generator_config config;
-        const hipError_t                       error
-            = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
+        const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T,
-                                           m_order,
-                                           rocrand_host::detail::generate_kernel,
-                                           dim3(config.blocks),
-                                           dim3(config.threads),
-                                           0,
-                                           m_stream,
-                                           m_engines,
-                                           m_start_engine_id,
-                                           data,
-                                           data_size,
-                                           distribution);
+        rocrand_host::detail::dynamic_dispatch(
+            m_order,
+            [&, this](auto is_dynamic)
+            {
+                hipLaunchKernelGGL(
+                    HIP_KERNEL_NAME(
+                        rocrand_host::detail::generate_kernel<ConfigProvider, is_dynamic>),
+                    dim3(config.blocks),
+                    dim3(config.threads),
+                    0,
+                    m_stream,
+                    m_engines,
+                    m_start_engine_id,
+                    data,
+                    data_size,
+                    distribution);
+            });
 
         // Check kernel status
         if(hipGetLastError() != hipSuccess)
