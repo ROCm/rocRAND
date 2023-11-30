@@ -55,7 +55,7 @@ class rocrand_mtgp32_template;
 template<class System, class ConfigProvider>
 class rocrand_philox4x32_10_template;
 
-template<class Engine, class ConfigProvider>
+template<class System, class Engine, class ConfigProvider>
 class rocrand_threefry_template;
 
 template<class System, class ConfigProvider>
@@ -105,21 +105,25 @@ using rocrand_philox4x32_10_template
 
 template<class ConfigProvider>
 using rocrand_threefry2x32_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_threefry2x64_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_threefry4x32_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_threefry4x64_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     ConfigProvider>;
 

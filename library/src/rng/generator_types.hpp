@@ -51,9 +51,13 @@ extern template struct rocrand_generator_type<rocrand_sobol32>;
 extern template struct rocrand_generator_type<rocrand_sobol64_host>;
 extern template struct rocrand_generator_type<rocrand_sobol64>;
 extern template struct rocrand_generator_type<rocrand_threefry2x32_20>;
+extern template struct rocrand_generator_type<rocrand_threefry2x32_20_host>;
 extern template struct rocrand_generator_type<rocrand_threefry2x64_20>;
+extern template struct rocrand_generator_type<rocrand_threefry2x64_20_host>;
 extern template struct rocrand_generator_type<rocrand_threefry4x32_20>;
+extern template struct rocrand_generator_type<rocrand_threefry4x32_20_host>;
 extern template struct rocrand_generator_type<rocrand_threefry4x64_20>;
+extern template struct rocrand_generator_type<rocrand_threefry4x64_20_host>;
 extern template struct rocrand_generator_type<rocrand_xorwow>;
 extern template struct rocrand_generator_type<rocrand_xorwow_host>;
 
