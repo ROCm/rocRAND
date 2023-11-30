@@ -43,3 +43,58 @@ rocrand_add_tool(sobol32_direction_vector_generator sobol32_direction_vector_gen
 rocrand_add_tool(sobol64_direction_vector_generator sobol64_direction_vector_generator.cpp)
 rocrand_add_tool(xorwow_precomputed_generator xorwow_precomputed_generator.cpp)
 
+# Run all (scrabmbled_)sobol(32,64) precomputations and generate all output formats
+# (binary files, cpp files, assembly files)
+# reads the input direction numbers from a file named direction_numbers.txt in the current
+# working directory
+add_custom_target(precompute_sobol_directions)
+
+foreach(NAME IN ITEMS "sobol32" "sobol64")
+    add_custom_target(precompute_${NAME}_directions ${NAME}_direction_vector_generator
+        ${CMAKE_CURRENT_SOURCE_DIR}/direction_numbers.txt
+        rocrand_h_${NAME}_direction_vectors
+        ${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_${NAME}_precomputed.h
+        ${PROJECT_SOURCE_DIR}/library/src/rocrand_${NAME}_precomputed.bin)
+    add_dependencies(precompute_${NAME}_directions ${NAME}_direction_vector_generator)
+    
+    set(SCRAMBLED_NAME scrambled_${NAME})
+    add_custom_target(precompute_${SCRAMBLED_NAME}_directions ${SCRAMBLED_NAME}_direction_vector_generator
+        ${PROJECT_SOURCE_DIR}/library/src/rocrand_${NAME}_precomputed.bin
+        rocrand_h_${SCRAMBLED_NAME}_direction_vectors
+        ${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_${SCRAMBLED_NAME}_precomputed.h
+        ${PROJECT_SOURCE_DIR}/library/src/rocrand_${SCRAMBLED_NAME}_precomputed.bin)
+    add_dependencies(precompute_${SCRAMBLED_NAME}_directions
+        ${SCRAMBLED_NAME}_direction_vector_generator
+        precompute_${NAME}_directions)
+
+    if(NAME STREQUAL sobol32)
+        set(SYMBOL_TYPE "unsigned int")
+    else()
+        set(SYMBOL_TYPE "unsigned long long")
+    endif()
+
+    foreach(INNER_NAME IN ITEMS ${NAME} ${SCRAMBLED_NAME})
+        add_custom_target(precompute_${INNER_NAME}_directions_asm ${CMAKE_COMMAND}
+            -DSYMBOL=rocrand_h_${INNER_NAME}_direction_vectors
+            -DINPUT_BIN=rocrand_${INNER_NAME}_precomputed.bin
+            -DOUTPUT=${PROJECT_SOURCE_DIR}/library/src/rocrand_${INNER_NAME}_precomputed.S
+            -P ${CMAKE_CURRENT_LIST_DIR}/AsmEmbedSymbol.cmake)
+
+        add_custom_target(precompute_${INNER_NAME}_directions_cpp bin2typed
+            ${PROJECT_SOURCE_DIR}/library/src/rocrand_${INNER_NAME}_precomputed.bin
+            rocrand_h_${INNER_NAME}_direction_vectors
+            ${SYMBOL_TYPE}
+            ${PROJECT_SOURCE_DIR}/library/src/rocrand_${INNER_NAME}_precomputed.cpp)
+        add_dependencies(precompute_${INNER_NAME}_directions_cpp
+            bin2typed
+            precompute_${INNER_NAME}_directions)
+    endforeach()
+
+    add_dependencies(precompute_sobol_directions
+                     precompute_${NAME}_directions
+                     precompute_${SCRAMBLED_NAME}_directions
+                     precompute_${NAME}_directions_asm
+                     precompute_${NAME}_directions_cpp
+                     precompute_${SCRAMBLED_NAME}_directions_asm
+                     precompute_${SCRAMBLED_NAME}_directions_cpp)
+endforeach()
