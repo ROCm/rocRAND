@@ -247,7 +247,7 @@ struct vec_wrapper
 };
 
 template<class V>
-vec_wrapper(V) -> vec_wrapper<V>;
+__host__ __device__ vec_wrapper(V) -> vec_wrapper<V>;
 
 } // end namespace cpp_utils
 
