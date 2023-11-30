@@ -60,6 +60,9 @@ int main(int argc, char** argv)
     benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mrg32k3a_template>(
         benchmarks,
         config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mt19937_template>(
+        benchmarks,
+        config);
     benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mtgp32_template>(
         benchmarks,
         config);

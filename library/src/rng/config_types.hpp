@@ -285,30 +285,16 @@ __host__ __device__ constexpr bool is_ordering_quasi(const rocrand_ordering orde
     return ordering == ROCRAND_ORDERING_QUASI_DEFAULT;
 }
 
-// Unfortunately cannot be substituted by a variadic template lambda, because
-// hipLaunchKernelGGL is a macro itself
-#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING(T, ordering, kernel_name, ...)                     \
-    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                                 \
-    {                                                                                         \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<ConfigProvider, true>), __VA_ARGS__);  \
-    }                                                                                         \
-    else                                                                                      \
-    {                                                                                         \
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel_name<ConfigProvider, false>), __VA_ARGS__); \
+template<typename Function>
+auto dynamic_dispatch(rocrand_ordering order, Function&& func)
+{
+    bool is_dynamic = ::rocrand_host::detail::is_ordering_dynamic(order);
+    if(is_dynamic)
+    {
+        return std::forward<Function>(func)(std::true_type{});
     }
-
-#define ROCRAND_LAUNCH_KERNEL_FOR_ORDERING_SYSTEM(ordering, kernel_name, ...)                      \
-    if(::rocrand_host::detail::is_ordering_dynamic(ordering))                                      \
-    {                                                                                              \
-        status                                                                                     \
-            = system_type::template launch<kernel_name<T, Distribution>, ConfigProvider, T, true>( \
-                __VA_ARGS__);                                                                      \
-    }                                                                                              \
-    else                                                                                           \
-    {                                                                                              \
-        status = system_type::                                                                     \
-            template launch<kernel_name<T, Distribution>, ConfigProvider, T, false>(__VA_ARGS__);  \
-    }
+    return std::forward<Function>(func)(std::false_type{});
+}
 
 /// @brief Selects the preset kernel launch config for the given random engine and
 /// generated value type.
@@ -372,7 +358,7 @@ struct default_config_provider
     /// @param is_dynamic Controls if the returned config belongs to the static or the dynamic ordering.
     /// @return The kernel config struct.
     template<class T>
-    __device__ constexpr generator_config device_config(const bool is_dynamic)
+    __device__ static constexpr generator_config device_config(const bool is_dynamic)
     {
         return get_generator_config_device<GeneratorType, T>(is_dynamic);
     }
@@ -384,9 +370,9 @@ struct default_config_provider
     /// @return \c hipSuccess if the query was successful, otherwise the error code from the
     /// first failing HIP runtime function invocation.
     template<class T>
-    hipError_t host_config(const hipStream_t      stream,
-                           const rocrand_ordering ordering,
-                           generator_config&      config) const
+    static hipError_t host_config(const hipStream_t      stream,
+                                  const rocrand_ordering ordering,
+                                  generator_config&      config)
     {
         return get_generator_config<GeneratorType, T>(stream, ordering, config);
     }
@@ -403,15 +389,15 @@ struct static_config_provider
     static constexpr inline generator_config static_config = {Threads, Blocks};
 
     template<class>
-    __device__ constexpr generator_config device_config(const bool /*is_dynamic*/)
+    __device__ static constexpr generator_config device_config(const bool /*is_dynamic*/)
     {
         return static_config;
     }
 
     template<class>
-    hipError_t host_config(const hipStream_t /*stream*/,
-                           const rocrand_ordering /*ordering*/,
-                           generator_config& config)
+    static hipError_t host_config(const hipStream_t /*stream*/,
+                                  const rocrand_ordering /*ordering*/,
+                                  generator_config& config)
     {
         config = static_config;
         return hipSuccess;
@@ -437,15 +423,15 @@ struct static_block_size_config_provider
     static constexpr inline block_size_generator_config static_config = {Threads};
 
     template<class>
-    __device__ constexpr block_size_generator_config device_config(const bool /*is_dynamic*/)
+    __device__ static constexpr block_size_generator_config device_config(const bool /*is_dynamic*/)
     {
         return static_config;
     }
 
     template<class>
-    hipError_t host_config(const hipStream_t /*stream*/,
-                           const rocrand_ordering /*ordering*/,
-                           block_size_generator_config& config)
+    static hipError_t host_config(const hipStream_t /*stream*/,
+                                  const rocrand_ordering /*ordering*/,
+                                  block_size_generator_config& config)
     {
         config = static_config;
         return hipSuccess;
@@ -472,9 +458,9 @@ hipError_t get_least_common_grid_size(const hipStream_t      stream,
     {
         generator_config config{};
         const hipError_t error
-            = ConfigProvider{}.template host_config<std::decay_t<decltype(tag)>>(stream,
-                                                                                 ordering,
-                                                                                 config);
+            = ConfigProvider::template host_config<std::decay_t<decltype(tag)>>(stream,
+                                                                                ordering,
+                                                                                config);
         if(error != hipSuccess)
             return error;
         least_common_grid_size = std::lcm(least_common_grid_size, config.blocks * config.threads);
@@ -508,12 +494,12 @@ template<class ConfigProvider>
 __device__ constexpr unsigned int get_least_common_grid_size(const bool is_dynamic)
 {
     generator_config type_configs[6]{};
-    type_configs[0] = ConfigProvider{}.template device_config<unsigned int>(is_dynamic);
-    type_configs[1] = ConfigProvider{}.template device_config<unsigned short>(is_dynamic);
-    type_configs[2] = ConfigProvider{}.template device_config<unsigned char>(is_dynamic);
-    type_configs[3] = ConfigProvider{}.template device_config<half>(is_dynamic);
-    type_configs[4] = ConfigProvider{}.template device_config<float>(is_dynamic);
-    type_configs[5] = ConfigProvider{}.template device_config<double>(is_dynamic);
+    type_configs[0] = ConfigProvider::template device_config<unsigned int>(is_dynamic);
+    type_configs[1] = ConfigProvider::template device_config<unsigned short>(is_dynamic);
+    type_configs[2] = ConfigProvider::template device_config<unsigned char>(is_dynamic);
+    type_configs[3] = ConfigProvider::template device_config<half>(is_dynamic);
+    type_configs[4] = ConfigProvider::template device_config<float>(is_dynamic);
+    type_configs[5] = ConfigProvider::template device_config<double>(is_dynamic);
 
     unsigned int least_common_grid_size = 1;
     for(const auto config : type_configs)
@@ -534,7 +520,7 @@ __device__ constexpr unsigned int get_least_common_grid_size(const bool is_dynam
 template<class ConfigProvider, class T>
 __device__ constexpr bool is_single_tile_config(const bool is_dynamic)
 {
-    const auto         config        = ConfigProvider{}.template device_config<T>(is_dynamic);
+    const auto         config        = ConfigProvider::template device_config<T>(is_dynamic);
     const unsigned int grid_size     = config.blocks * config.threads;
     const unsigned int lcm_grid_size = get_least_common_grid_size<ConfigProvider>(is_dynamic);
 
@@ -552,7 +538,7 @@ __device__ constexpr bool is_single_tile_config(const bool is_dynamic)
 template<class ConfigProvider, class T>
 __device__ constexpr unsigned int get_block_size(const bool is_dynamic)
 {
-    return ConfigProvider{}.template device_config<T>(is_dynamic).threads;
+    return ConfigProvider::template device_config<T>(is_dynamic).threads;
 }
 
 /// @brief Extracts the `rocrand_rng_type` from a generator template.

@@ -228,8 +228,8 @@ __global__ void config_selector_kernel(unsigned int* output)
 {
     if(threadIdx.x == 0 && blockIdx.x == 0)
     {
-        output[0] = ConfigProvider{}.template device_config<unsigned short>(true).blocks;
-        output[1] = ConfigProvider{}.template device_config<unsigned short>(true).threads;
+        output[0] = ConfigProvider::template device_config<unsigned short>(true).blocks;
+        output[1] = ConfigProvider::template device_config<unsigned short>(true).threads;
     }
 }
 
