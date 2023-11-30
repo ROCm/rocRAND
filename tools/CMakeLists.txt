@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,31 +20,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-add_executable(xorwow_precomputed_generator xorwow_precomputed_generator.cpp)
-add_executable(sobol32_direction_vector_generator sobol32_direction_vector_generator.cpp)
-add_executable(scrambled_sobol32_constants_generator scrambled_sobol32_constants_generator.cpp)
-add_executable(sobol64_direction_vector_generator sobol64_direction_vector_generator.cpp)
-add_executable(scrambled_sobol64_constants_generator scrambled_sobol64_constants_generator.cpp)
-add_executable(mrg31k3p_precomputed_generator mrg31k3p_precomputed_generator.cpp)
-add_executable(mrg32k3a_precomputed_generator mrg32k3a_precomputed_generator.cpp)
-add_executable(mt19937_precomputed_generator mt19937_precomputed_generator.cpp)
+set(CMAKE_CXX_STANDARD 17)
 
-set(ROCRAND_LIBRARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../library")
+add_custom_target(tools)
 
-add_executable(scrambled_sobol32_direction_vector_generator
-    scrambled_sobol32_direction_vector_generator.cpp
-    "${ROCRAND_LIBRARY_DIR}/src/rocrand_sobol32_precomputed.cpp")
-target_include_directories(scrambled_sobol32_direction_vector_generator
-    PRIVATE
-        "${ROCRAND_LIBRARY_DIR}/src" "${ROCRAND_LIBRARY_DIR}/include"
-)
-target_compile_options(scrambled_sobol32_direction_vector_generator PRIVATE -DROCRANDAPI=)
+function(rocrand_add_tool TARGET_NAME)
+    add_executable(${TARGET_NAME} ${ARGN})
+    add_dependencies(tools ${TARGET_NAME})
+endfunction()
 
-add_executable(scrambled_sobol64_direction_vector_generator
-    scrambled_sobol64_direction_vector_generator.cpp
-    "${ROCRAND_LIBRARY_DIR}/src/rocrand_sobol64_precomputed.cpp")
-target_include_directories(scrambled_sobol64_direction_vector_generator
-    PRIVATE
-        "${ROCRAND_LIBRARY_DIR}/src" "${ROCRAND_LIBRARY_DIR}/include"
-)
-target_compile_options(scrambled_sobol64_direction_vector_generator PRIVATE -DROCRANDAPI=)
+rocrand_add_tool(bin2typed bin2typed.cpp)
+rocrand_add_tool(mrg31k3p_precomputed_generator mrg31k3p_precomputed_generator.cpp)
+rocrand_add_tool(mrg32k3a_precomputed_generator mrg32k3a_precomputed_generator.cpp)
+rocrand_add_tool(mt19937_precomputed_generator mt19937_precomputed_generator.cpp)
+rocrand_add_tool(scrambled_sobol32_constants_generator scrambled_sobol32_constants_generator.cpp)
+rocrand_add_tool(scrambled_sobol32_direction_vector_generator
+    scrambled_sobol32_direction_vector_generator.cpp)
+rocrand_add_tool(scrambled_sobol64_constants_generator scrambled_sobol64_constants_generator.cpp)
+rocrand_add_tool(scrambled_sobol64_direction_vector_generator
+    scrambled_sobol64_direction_vector_generator.cpp)
+rocrand_add_tool(sobol32_direction_vector_generator sobol32_direction_vector_generator.cpp)
+rocrand_add_tool(sobol64_direction_vector_generator sobol64_direction_vector_generator.cpp)
+rocrand_add_tool(xorwow_precomputed_generator xorwow_precomputed_generator.cpp)
+
