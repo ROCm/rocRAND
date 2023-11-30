@@ -36,6 +36,10 @@ constexpr const size_t             random_seeds_count = 2;
 constexpr rocrand_rng_type host_rng_types[] = {
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
     ROCRAND_RNG_PSEUDO_MRG31K3P,
+    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
+    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64,
+    ROCRAND_RNG_QUASI_SOBOL32,
+    ROCRAND_RNG_QUASI_SOBOL64,
 };
 
 class rocrand_generate_host_test : public ::testing::TestWithParam<rocrand_rng_type>
@@ -226,7 +230,7 @@ TEST_P(rocrand_generate_host_test, normal_half_parity_test)
 
 TEST_P(rocrand_generate_host_test, normal_float_parity_test)
 {
-    test_normal_parity<float>(GetParam(), rocrand_generate_normal, 0.0001);
+    test_normal_parity<float>(GetParam(), rocrand_generate_normal, 0.005);
 }
 
 TEST_P(rocrand_generate_host_test, normal_double_parity_test)

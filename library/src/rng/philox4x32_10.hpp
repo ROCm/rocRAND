@@ -296,6 +296,7 @@ public:
                     T,
                     is_dynamic>(dim3(config.blocks),
                                 dim3(config.threads),
+                                0,
                                 m_stream,
                                 m_engine,
                                 data,

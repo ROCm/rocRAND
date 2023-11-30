@@ -89,10 +89,14 @@ struct rocrand_system_host
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
-    static rocrand_status
-        launch(dim3 num_blocks, dim3 num_threads, hipStream_t stream, Args... args)
+    static rocrand_status launch(dim3         num_blocks,
+                                 dim3         num_threads,
+                                 unsigned int shared_bytes,
+                                 hipStream_t  stream,
+                                 Args... args)
     {
         (void)IsDynamic; // Not relevant on host launches
+        (void)shared_bytes; // shared memory not supported on host
 
         using KernelArgsType = KernelArgs<Args...>;
 
@@ -190,17 +194,38 @@ struct rocrand_system_device
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
-    static rocrand_status
-        launch(dim3 num_blocks, dim3 num_threads, hipStream_t stream, Args... args)
+    static rocrand_status launch(dim3         num_blocks,
+                                 dim3         num_threads,
+                                 unsigned int shared_bytes,
+                                 hipStream_t  stream,
+                                 Args... args)
     {
         detail::kernel_wrapper<Kernel, ConfigProvider, T, IsDynamic>
-            <<<num_blocks, num_threads, 0, stream>>>(args...);
+            <<<num_blocks, num_threads, shared_bytes, stream>>>(args...);
         if(hipGetLastError() != hipSuccess)
         {
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
         return ROCRAND_STATUS_SUCCESS;
     }
+};
+
+template<bool IsDevice>
+struct syncthreads;
+
+template<>
+struct syncthreads<true>
+{
+    __device__ void operator()()
+    {
+        __syncthreads();
+    }
+};
+
+template<>
+struct syncthreads<false>
+{
+    void operator()() {}
 };
 
 #endif
