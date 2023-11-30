@@ -23,3 +23,4 @@
 #include "sobol.hpp"
 
 template struct rocrand_generator_type<rocrand_scrambled_sobol32>;
+template struct rocrand_generator_type<rocrand_scrambled_sobol32_host>;
