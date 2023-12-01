@@ -1,17 +1,16 @@
 # rocRAND
 
-[![codecov](https://codecov.io/gh/ROCmSoftwarePlatform/rocRAND/branch/develop/graph/badge.svg?token=FdKnEdGxA1)](https://codecov.io/gh/ROCmSoftwarePlatform/rocRAND)
-
-The rocRAND project provides functions that generate pseudo-random and quasi-random numbers.
+The rocRAND project provides functions that generate pseudorandom and quasirandom numbers.
 
 The rocRAND library is implemented in the [HIP](https://github.com/ROCm-Developer-Tools/HIP)
-programming language and optimised for AMD's latest discrete GPUs. It is designed to run on top
-of AMD's Radeon Open Compute [ROCm](https://rocm.github.io/) runtime, but it also works on
-CUDA enabled GPUs.
+programming language and optimized for AMD's latest discrete GPUs. It is designed to run on top
+of AMD's [ROCm](https://rocm.docs.amd.com) runtime, but it also works on CUDA-enabled GPUs.
 
-Prior to ROCm version 5.0, this project included the [hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) wrapper. As of version 5.0, this has been split into a separate library. As of version 6.0, hipRAND can no longer be built from rocRAND.
+Prior to ROCm version 5.0, this project included the
+[hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) wrapper. As of version 5.0, it was
+split into a separate library. As of version 6.0, hipRAND can no longer be built from rocRAND.
 
-## Supported Random Number Generators
+## Supported random number generators
 
 * XORWOW
 * MRG31k3p
@@ -28,11 +27,10 @@ Prior to ROCm version 5.0, this project included the [hipRAND](https://github.co
 
 ## Documentation
 
-Information about the library API and other user topics can be found in the [rocRAND documentation](https://rocrand.readthedocs.io/en/latest).
+Documentation for rocRAND is available at
+[https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-### Building the documentation
-
-Run the steps below to build documentation locally.
+To build documentation locally, use the following code:
 
 ```sh
 # Go to the docs directory
@@ -68,18 +66,20 @@ python3 -m http.server
 
 Optional:
 
-* [GTest](https://github.com/google/googletest) (required only for tests; building tests is enabled by default)
-  * Use `GTEST_ROOT` to specify GTest location (also see [FindGTest](https://cmake.org/cmake/help/latest/module/FindGTest.html))
-  * Note: If GTest is not already installed, it will be automatically downloaded and built
+* [GoogleTest](https://github.com/google/googletest) (required only for tests; building tests is enabled
+  by default)
+  * Use `GTEST_ROOT` to specify the GoogleTest location (see also
+    [FindGTest](https://cmake.org/cmake/help/latest/module/FindGTest.html))
+  * Note: If GoogleTest is not already installed, it will be automatically downloaded and built
 * Fortran compiler (required only for Fortran wrapper)
-  * `gfortran` is recommended.
+  * `gfortran` is recommended
 * Python 3.5+ (required only for Python wrapper)
 
-If some dependencies are missing, cmake script automatically downloads, builds and
-installs them. Setting `DEPENDENCIES_FORCE_DOWNLOAD` option `ON` forces script to
-not to use system-installed libraries, and to download all dependencies.
+If some dependencies are missing, the CMake script automatically downloads, builds, and installs them.
+Setting the `DEPENDENCIES_FORCE_DOWNLOAD` option to `ON` forces the script to download all
+dependencies, rather than using the system-installed libraries.
 
-## Build and Install
+## Build and install
 
 ```shell
 git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
@@ -122,7 +122,9 @@ ctest --output-on-failure
 
 ### HIP on Windows
 
-Initial support for HIP on Windows has been added.  To install, use the provided rmake.py python script:
+We've added initial support for HIP on Windows, which you can install using the `rmake.py` python
+script:
+
 ```shell
 git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
 cd rocRAND
@@ -134,15 +136,16 @@ python rmake.py -i
 python rmake.py -c
 ```
 
-Note: Existing gtest library in the system (especially static gtest libraries built with other compilers)
-may cause build failure; if errors are encountered with existing gtest library or other dependencies,
-`DEPENDENCIES_FORCE_DOWNLOAD` flag can be passed to cmake, as mentioned before, to help solve the problem.
+The existing GoogleTest library in the system (especially static GoogleTest libraries built with other
+compilers) may cause a build failure; if you encounter errors with the existing GoogleTest library or
+other dependencies, you can pass the `DEPENDENCIES_FORCE_DOWNLOAD` flag to CMake, which can
+help to solve the problem.
 
-Note: To disable inline assembly optimisations in rocRAND (for both the host library and
-the device functions provided in `rocrand_kernel.h`) set cmake option `ENABLE_INLINE_ASM`
+To disable inline assembly optimizations in rocRAND (for both the host library and
+the device functions provided in `rocrand_kernel.h`), set the CMake option `ENABLE_INLINE_ASM`
 to `OFF`.
 
-## Running Unit Tests
+## Running unit tests
 
 ```shell
 # Go to rocRAND build directory
@@ -155,7 +158,7 @@ ctest
 ./test/<unit-test-name>
 ```
 
-## Running Benchmarks
+## Running benchmarks
 
 ```shell
 # Go to rocRAND build directory
@@ -210,13 +213,14 @@ cd rocRAND; cd build
 
 ### Legacy benchmarks
 
-The legacy benchmarks (before the move to using googlebenchmark) can be disabled by setting the
-cmake option `BUILD_LEGACY_BENCHMARK` to `OFF`. For compatibility, this settings defaults to `ON`
+You can disable legacy benchmarks (those used prior to Google Benchmark) by setting the
+CMake option `BUILD_LEGACY_BENCHMARK` to `OFF`. For compatibility, the default setting is `ON`
 when `BUILD_BENCHMARK` is set.
-The legacy benchmarks are deprecated and will be removed in a future version once all benchmarks are
-migrated to the new framework.
 
-## Running Statistical Tests
+Legacy benchmarks are deprecated and will be removed in a future version once all benchmarks have
+been migrated to the new framework.
+
+## Running statistical tests
 
 ```shell
 # Go to rocRAND build directory
@@ -234,17 +238,20 @@ cd rocRAND; cd build
 
 ## Wrappers
 
-* C++ wrappers for host API of rocRAND are in [`rocrand.hpp`](./library/include/rocrand/rocrand.hpp).
+* C++ wrappers for the rocRAND host API are in [`rocrand.hpp`](./library/include/rocrand/rocrand.hpp).
 * [Fortran wrappers](./library/src/fortran/).
 * [Python wrappers](./python/): [rocRAND](./python/rocrand).
 
 ## Support
 
-Bugs and feature requests can be reported through [the issue tracker](https://github.com/ROCmSoftwarePlatform/rocRAND/issues).
+Bugs and feature requests can be reported through the
+[issue tracker](https://github.com/ROCmSoftwarePlatform/rocRAND/issues).
 
-## Contributions and License
+## Contributions and license
 
-Contributions of any kind are most welcome! More details are found at [CONTRIBUTING](./CONTRIBUTING.md)
-and [LICENSE](./LICENSE.txt). Please note that [statistical tests](./test/crush) link to TestU01 library
-distributed under GNU General Public License (GPL) version 3, thus GPL version 3 license applies to
-that part of the project.
+Contributions of any kind are most welcome! You can find more information at
+[CONTRIBUTING](./CONTRIBUTING.md).
+
+Licensing information is located at [LICENSE](./LICENSE.txt). Note that [statistical tests](./test/crush) link
+to the TestU01 library distributed under GNU General Public License (GPL) version 3. Therefore, the GPL
+version 3 license applies to that part of the project.
