@@ -41,3 +41,8 @@ rocrand_h_scrambled_sobol64_direction_vectors:
 #if !(defined(_WIN32) || defined(__CYGQIN__))
     .size rocrand_h_scrambled_sobol64_direction_vectors, . - rocrand_h_scrambled_sobol64_direction_vectors
 #endif
+#if defined(_WIN32) || defined(__CYGQIN__)
+    /* dllexport */
+    .section .drectve
+	.ascii " /EXPORT:rocrand_h_scrambled_sobol64_direction_vectors,DATA"
+#endif
