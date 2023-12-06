@@ -31,7 +31,7 @@
 #endif // SCRAMBLED_SOBOL_DIM
 #define SCRAMBLED_SOBOL64_N 1280000
 
-extern ROCRANDAPI const unsigned long long
+extern "C" ROCRANDAPI const unsigned long long
     rocrand_h_scrambled_sobol64_direction_vectors[SCRAMBLED_SOBOL64_N];
 
 #endif // ROCRAND_SCRAMBLED_SOBOL64_PRECOMPUTED_H_
