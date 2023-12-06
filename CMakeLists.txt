@@ -140,7 +140,7 @@ endif()
 
 # HIP on Windows: xhip is required with clang++ to get __half defined
 if (WIN32)
-  add_compile_options(-xhip)
+  add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
 endif()
 
 cmake_dependent_option(BUILD_LEGACY_BENCHMARK "Build the legacy benchmarks" ON "BUILD_BENCHMARK" OFF)
