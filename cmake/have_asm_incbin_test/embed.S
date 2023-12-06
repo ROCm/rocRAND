@@ -41,3 +41,8 @@ array:
 #if !(defined(_WIN32) || defined(__CYGQIN__))
     .size array, . - array
 #endif
+#if defined(_WIN32) || defined(__CYGQIN__)
+    /* dllexport */
+    .section .drectve
+	.ascii " /EXPORT:array,DATA"
+#endif
