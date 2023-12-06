@@ -31,6 +31,6 @@
 #endif // SOBOL_DIM
 #define SOBOL32_N 640000
 
-extern ROCRANDAPI const unsigned int rocrand_h_sobol32_direction_vectors[SOBOL32_N];
+extern "C" ROCRANDAPI const unsigned int rocrand_h_sobol32_direction_vectors[SOBOL32_N];
 
 #endif // ROCRAND_SOBOL32_PRECOMPUTED_H_

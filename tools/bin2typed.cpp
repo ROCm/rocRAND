@@ -41,12 +41,13 @@ void write_array(std::string_view type_name,
 {
     const size_t size_elements = size_bytes / sizeof(T);
 
-    rocrand_tools::write_preamble(os, "bin2typed") << "#include \"rocrand/rocrandapi.h\"\n"
-                                                   << "\n"
-                                                   << "// clang-format off\n"
-                                                   << "extern ROCRANDAPI const " << type_name << " "
-                                                   << symbol << '[' << size_elements << "] =\n"
-                                                   << '{';
+    rocrand_tools::write_preamble(os, "bin2typed")
+        << "#include \"rocrand/rocrandapi.h\"\n"
+        << "\n"
+        << "// clang-format off\n"
+        << "extern \"C\" ROCRANDAPI const " << type_name << " " << symbol << '[' << size_elements
+        << "] =\n"
+        << '{';
 
     const T* values = reinterpret_cast<const T*>(bytes);
 
