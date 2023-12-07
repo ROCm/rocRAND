@@ -107,6 +107,8 @@ public:
         state_value  result;
         unsigned int substate;
     };
+    using state_type        = threefry_state_2;
+    using state_vector_type = state_value;
 
     FQUALIFIERS void discard(unsigned long long offset)
     {
