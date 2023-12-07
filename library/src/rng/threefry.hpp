@@ -38,44 +38,13 @@
 namespace rocrand_host::detail
 {
 
-template<class Engine>
-struct threefry_device_engine_traits;
-
-template<>
-struct threefry_device_engine_traits<rocrand_device::threefry2x32_20_engine>
-{
-    using vector_type = uint2;
-    using state_type  = rocrand_device::threefry2x32_20_engine::threefry2x32_20_state;
-};
-
-template<>
-struct threefry_device_engine_traits<rocrand_device::threefry2x64_20_engine>
-{
-    using vector_type = ulonglong2;
-    using state_type  = rocrand_device::threefry2x64_20_engine::threefry2x64_20_state;
-};
-
-template<>
-struct threefry_device_engine_traits<rocrand_device::threefry4x32_20_engine>
-{
-    using vector_type = uint4;
-    using state_type  = rocrand_device::threefry4x32_20_engine::threefry4x32_20_state;
-};
-
-template<>
-struct threefry_device_engine_traits<rocrand_device::threefry4x64_20_engine>
-{
-    using vector_type = ulonglong4;
-    using state_type  = rocrand_device::threefry4x64_20_engine::threefry4x64_20_state;
-};
-
 template<class BaseType>
 struct threefry_device_engine : public BaseType
 {
     using base_type   = BaseType;
-    using vector_type = typename threefry_device_engine_traits<base_type>::vector_type;
+    using vector_type = typename base_type::state_vector_type;
     using scalar_type = cpp_utils::vector_element_t<vector_type>;
-    using state_type  = typename threefry_device_engine_traits<base_type>::state_type;
+    using state_type  = typename base_type::state_type;
     static inline constexpr unsigned int vector_dim
         = static_cast<unsigned int>(cpp_utils::vector_size_v<vector_type>);
 

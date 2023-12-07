@@ -124,6 +124,8 @@ public:
         state_value  result;
         unsigned int substate;
     };
+    using state_type        = threefry_state_4;
+    using state_vector_type = state_value;
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS void discard(unsigned long long offset)
