@@ -20,6 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+cmake_minimum_required(VERSION 3.16)
+
+# find_package() uses upper-case <PACKAGENAME>_ROOT variables.
+# altough we use GTEST_ROOT for our purposes, it is actually even benefecial for
+# find_package() to look for it there (that's where we are going to put it anyway)
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 # Dependencies
 
 # HIP dependency is handled earlier in the project cmake file
