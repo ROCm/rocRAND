@@ -86,6 +86,10 @@ set_target_properties(rocrand PROPERTIES
   VISIBILITY_INLINES_HIDDEN ON
 )
 
+if (HIP_COMPILER STREQUAL "nvcc")
+    set_target_properties(rocrand PROPERTIES CUDA_VISIBILITY_PRESET hidden)
+endif()
+
 # Add interface include directory so that other CMake applications can maintain previous behaviour.
 # This will be removed with upcoming packaging changes.
 target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
