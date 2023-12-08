@@ -28,26 +28,6 @@
 namespace rocrand_tools
 {
 
-inline void write_asm_binary_embed(const std::filesystem::path output,
-                                   const std::filesystem::path binary,
-                                   const std::string_view      symbol)
-{
-    std::ofstream source_out(output, std::ios_base::out | std::ios_base::trunc);
-    source_out << "#if defined(ROCRAND_EXECUTABLE_FORMAT_ELF)\n"
-               << "    .section .note.GNU-stack,\"\",@progbits\n"
-               << "    .type " << symbol << ",@object\n"
-               << "    .section .rodata\n"
-               << "#elif defined(ROCRAND_EXECUTABLE_FORMAT_PE_COFF)\n"
-               << "    .section .rdata\n"
-               << "#else\n"
-               << "    #error \"Unknown object format\"\n"
-               << "#endif // ROCRAND_EXECUTABLE_FORMAT\n"
-               << "    .globl " << symbol << "\n"
-               << "    .p2align 8\n"
-               << symbol << ":\n"
-               << "    .incbin \"" << binary << "\"\n";
-}
-
 inline std::ostream& write_preamble(std::ostream& os, std::string_view tool_name)
 {
     os << R"(// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
