@@ -40,7 +40,7 @@
 // mt19937 needs to be included, as access to threads_per_generator is needed
 #include "rng/mt19937.hpp"
 
-template<class ConfigProvider>
+template<class System, class ConfigProvider>
 class rocrand_lfsr113_template;
 
 template<class System, class ConfigProvider>
@@ -84,7 +84,7 @@ namespace benchmark_tuning
 // both host and device systems
 
 template<class ConfigProvider>
-using rocrand_lfsr113_template = ::rocrand_lfsr113_template<ConfigProvider>;
+using rocrand_lfsr113_template = ::rocrand_lfsr113_template<rocrand_system_device, ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_mrg31k3p_template

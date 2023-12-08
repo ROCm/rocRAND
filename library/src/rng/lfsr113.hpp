@@ -32,17 +32,22 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
+#include "system.hpp"
 
 namespace rocrand_host::detail
 {
 
 typedef ::rocrand_device::lfsr113_engine lfsr113_device_engine;
 
-template<unsigned int BlockSize>
-ROCRAND_KERNEL __launch_bounds__(BlockSize) void init_engines_kernel(
-    lfsr113_device_engine* engines, const unsigned int engines_size, uint4 seeds)
+__host__ __device__ inline void init_lfsr113_engines(dim3 block_idx,
+                                                     dim3 thread_idx,
+                                                     dim3 /*grid_dim*/,
+                                                     dim3                   block_dim,
+                                                     lfsr113_device_engine* engines,
+                                                     const unsigned int     engines_size,
+                                                     const uint4            seeds)
 {
-    const unsigned int engine_id = blockIdx.x * BlockSize + threadIdx.x;
+    const unsigned int engine_id = block_idx.x * block_dim.x + thread_idx.x;
     if(engine_id < engines_size)
     {
         engines[engine_id] = lfsr113_device_engine(seeds, engine_id);
@@ -50,12 +55,15 @@ ROCRAND_KERNEL __launch_bounds__(BlockSize) void init_engines_kernel(
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
-    IsDynamic))) void generate_kernel(lfsr113_device_engine* engines,
-                                      const unsigned int     start_engine_id,
-                                      T*                     data,
-                                      const size_t           n,
-                                      Distribution           distribution)
+__host__ __device__ void generate_lfsr113(dim3 block_idx,
+                                          dim3 thread_idx,
+                                          dim3 grid_dim,
+                                          dim3 /*block_dim*/,
+                                          lfsr113_device_engine* engines,
+                                          const unsigned int     start_engine_id,
+                                          T*                     data,
+                                          const size_t           n,
+                                          Distribution           distribution)
 {
     static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
                   "This kernel should only be used with single tile configs");
@@ -65,8 +73,8 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = blockIdx.x * BlockSize + threadIdx.x;
-    const unsigned int stride = gridDim.x * BlockSize;
+    const unsigned int id     = block_idx.x * BlockSize + thread_idx.x;
+    const unsigned int stride = grid_dim.x * BlockSize;
 
     const unsigned int    engine_id = (id + start_engine_id) & (stride - 1);
     lfsr113_device_engine engine    = engines[engine_id];
@@ -147,10 +155,11 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
 
 } // namespace rocrand_host::detail
 
-template<class ConfigProvider>
+template<class System, class ConfigProvider>
 class rocrand_lfsr113_template : public rocrand_generator_impl_base
 {
 public:
+    using system_type = System;
     using base_type   = rocrand_generator_impl_base;
     using engine_type = ::rocrand_host::detail::lfsr113_device_engine;
 
@@ -201,7 +210,7 @@ public:
     {
         if(m_engines != nullptr)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+            system_type::free(m_engines);
             m_engines = nullptr;
         }
     }
@@ -301,29 +310,30 @@ public:
 
         if(m_engines != nullptr)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+            system_type::free(m_engines);
         }
-        error = hipMalloc(&m_engines, sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
+        rocrand_status status = system_type::alloc(&m_engines, m_engines_size);
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            return status;
         }
 
         constexpr unsigned int init_threads = 256;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel<init_threads>),
-                           dim3(init_blocks),
-                           dim3(init_threads),
-                           0,
-                           m_stream,
-                           m_engines,
-                           m_engines_size,
-                           m_seed);
-        // Check kernel status
-        if(hipGetLastError() != hipSuccess)
+        status = system_type::template launch<
+            rocrand_host::detail::init_lfsr113_engines,
+            rocrand_host::detail::static_block_size_config_provider<init_threads>>(
+            dim3(init_blocks),
+            dim3(init_threads),
+            0,
+            m_stream,
+            m_engines,
+            m_engines_size,
+            m_seed);
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            return status;
         }
 
         m_engines_initialized = true;
@@ -344,27 +354,29 @@ public:
         if(error != hipSuccess)
             return ROCRAND_STATUS_INTERNAL_ERROR;
 
-        rocrand_host::detail::dynamic_dispatch(
+        status = rocrand_host::detail::dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)
             {
-                hipLaunchKernelGGL(
-                    HIP_KERNEL_NAME(
-                        rocrand_host::detail::generate_kernel<ConfigProvider, is_dynamic>),
-                    dim3(config.blocks),
-                    dim3(config.threads),
-                    0,
-                    m_stream,
-                    m_engines,
-                    m_start_engine_id,
-                    data,
-                    data_size,
-                    distribution);
+                return system_type::template launch<
+                    rocrand_host::detail::
+                        generate_lfsr113<ConfigProvider, is_dynamic, T, Distribution>,
+                    ConfigProvider,
+                    T,
+                    is_dynamic>(dim3(config.blocks),
+                                dim3(config.threads),
+                                0,
+                                m_stream,
+                                m_engines,
+                                m_start_engine_id,
+                                data,
+                                data_size,
+                                distribution);
             });
 
-        if(hipGetLastError() != hipSuccess)
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            return status;
         }
 
         const auto touched_engines
@@ -438,6 +450,11 @@ private:
 };
 
 using rocrand_lfsr113 = rocrand_lfsr113_template<
+    rocrand_system_device,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+
+using rocrand_lfsr113_host = rocrand_lfsr113_template<
+    rocrand_system_host,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
 
 #endif // ROCRAND_RNG_LFSR113_H_

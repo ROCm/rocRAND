@@ -23,3 +23,4 @@
 #include "lfsr113.hpp"
 
 template struct rocrand_generator_type<rocrand_lfsr113>;
+template struct rocrand_generator_type<rocrand_lfsr113_host>;
