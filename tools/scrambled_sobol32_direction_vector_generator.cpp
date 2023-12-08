@@ -26,6 +26,9 @@
 #include <ios>
 #include <iostream>
 #include <string_view>
+#include <vector>
+
+#include <stdint.h>
 
 int main(int argc, char const* argv[])
 {
@@ -67,12 +70,12 @@ int main(int argc, char const* argv[])
         << "\n"
         << "#endif // ROCRAND_SCRAMBLED_SOBOL32_PRECOMPUTED_H_\n";
 
-    auto directions_32 = std::make_unique<uint32_t[]>(rocrand_tools::SOBOL32_N);
-    input.read(reinterpret_cast<char*>(directions_32.get()),
+    std::vector<uint32_t> directions_32(rocrand_tools::SOBOL32_N);
+    input.read(reinterpret_cast<char*>(directions_32.data()),
                rocrand_tools::SOBOL32_N * sizeof(directions_32[0]));
 
     rocrand_tools::write_matrix_with_offset(binary_out,
-                                            directions_32.get(),
+                                            directions_32.data(),
                                             rocrand_tools::SOBOL32_N,
                                             640000);
     return 0;
