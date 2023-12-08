@@ -77,7 +77,6 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
-# Include cmake scripts
 include(cmake/HaveASMIncbin.cmake)
 
 rocrand_check_have_asm_incbin(ROCRAND_HAVE_ASM_INCBIN)
