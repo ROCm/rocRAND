@@ -21,6 +21,13 @@ Documentation for rocRAND is available at
 * Building rocRAND should be faster on machines with multiple CPU cores as the library has been
   split to multiple compilation units.
 
+### Deprecations
+* Deprecated the following typedefs. Please use the unified `state_type` alias instead.
+  * `rocrand_device::threefry2x32_20_engine::threefry2x32_20_state`
+  * `rocrand_device::threefry2x64_20_engine::threefry2x64_20_state`
+  * `rocrand_device::threefry4x32_20_engine::threefry4x32_20_state`
+  * `rocrand_device::threefry4x64_20_engine::threefry4x64_20_state`
+
 ### Removals
 - Removed references to and workarounds for deprecated hcc.
 - Support for HIP-CPU
