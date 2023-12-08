@@ -33,11 +33,11 @@
 #include <stdint.h>
 
 template<typename T>
-void write_array(std::string_view type_name,
-                 std::byte*       bytes,
-                 size_t           size_bytes,
-                 std::string_view symbol,
-                 std::ostream&    os)
+void write_array(const std::string_view type_name,
+                 const std::byte*       bytes,
+                 const size_t           size_bytes,
+                 const std::string_view symbol,
+                 std::ostream&          os)
 {
     const size_t size_elements = size_bytes / sizeof(T);
 
@@ -64,11 +64,11 @@ void write_array(std::string_view type_name,
     os << '\n' << "};\n";
 }
 
-bool write_as_array_of(std::string_view type,
-                       std::byte*       bytes,
-                       size_t           size_bytes,
-                       std::string_view symbol,
-                       std::ostream&    os)
+bool write_as_array_of(const std::string_view type,
+                       const std::byte*       bytes,
+                       const size_t           size_bytes,
+                       const std::string_view symbol,
+                       std::ostream&          os)
 {
     if(type == "unsigned int")
     {
