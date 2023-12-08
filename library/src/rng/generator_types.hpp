@@ -34,6 +34,7 @@
 #include "xorwow.hpp"
 
 extern template struct rocrand_generator_type<rocrand_lfsr113>;
+extern template struct rocrand_generator_type<rocrand_lfsr113_host>;
 extern template struct rocrand_generator_type<rocrand_mrg31k3p>;
 extern template struct rocrand_generator_type<rocrand_mrg31k3p_host>;
 extern template struct rocrand_generator_type<rocrand_mrg32k3a>;

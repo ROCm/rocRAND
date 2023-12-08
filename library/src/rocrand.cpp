@@ -109,6 +109,9 @@ rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* gener
         // clang-format off
         switch(rng_type)
         {
+            case ROCRAND_RNG_PSEUDO_LFSR113:
+                *generator = new rocrand_generator_type<rocrand_lfsr113_host>();
+                break;
             case ROCRAND_RNG_PSEUDO_PHILOX4_32_10:
                 *generator = new rocrand_generator_type<rocrand_philox4x32_10_host>();
                 break;
@@ -134,7 +137,6 @@ rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* gener
                 break;
             case ROCRAND_RNG_PSEUDO_MRG32K3A:
             case ROCRAND_RNG_PSEUDO_MTGP32:
-            case ROCRAND_RNG_PSEUDO_LFSR113:
             case ROCRAND_RNG_PSEUDO_MT19937:
             case ROCRAND_RNG_PSEUDO_THREEFRY2_32_20:
             case ROCRAND_RNG_PSEUDO_THREEFRY2_64_20:
