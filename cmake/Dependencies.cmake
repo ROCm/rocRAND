@@ -20,6 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+cmake_minimum_required(VERSION 3.16)
+
+# find_package() uses upper-case <PACKAGENAME>_ROOT variables.
+# altough we use GTEST_ROOT for our purposes, it is actually even benefecial for
+# find_package() to look for it there (that's where we are going to put it anyway)
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 # Dependencies
 
 # HIP dependency is handled earlier in the project cmake file
@@ -64,8 +73,7 @@ if(BUILD_TEST)
       BUILD_PROJECT       TRUE
       UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
     )
-    list( APPEND CMAKE_PREFIX_PATH ${GTEST_ROOT} )
-    find_package(GTest CONFIG REQUIRED PATHS ${GTEST_ROOT})
+    find_package(GTest CONFIG REQUIRED PATHS ${GTEST_ROOT} NO_DEFAULT_PATH)
   endif()
 endif()
 
@@ -106,7 +114,7 @@ if(BUILD_BENCHMARK)
       UPDATE_DISCONNECTED TRUE
     )
   endif()
-  find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT})
+  find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT} NO_DEFAULT_PATH)
 endif()
 
 set(PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern)
@@ -145,7 +153,7 @@ if(NOT ROCM_FOUND)
   if(rocm_cmake_unpack_error_code)
       message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag}.zip failed")
   endif()
-  find_package(ROCM 0.7.3 REQUIRED CONFIG PATHS ${PROJECT_EXTERN_DIR})
+  find_package(ROCM 0.7.3 REQUIRED CONFIG PATHS ${PROJECT_EXTERN_DIR} NO_DEFAULT_PATH)
 endif()
 
 include(ROCMSetupVersion)

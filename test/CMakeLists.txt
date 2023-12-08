@@ -76,18 +76,16 @@ function(add_test_target test_src is_internal)
     )
     set_target_properties(${test_name} PROPERTIES CXX_STANDARD 17)
   endif()
-  if(TARGET GTest::GTest)
-      target_link_libraries(${test_name}
-          GTest::GTest
-          GTest::Main
-          GTest::gmock
-      )
+  if(TARGET GTest::gtest)
+    target_link_libraries(${test_name}
+        GTest::gtest
+        GTest::gtest_main
+    )
   else()
-      target_link_libraries(${test_name}
-          GTest::gtest
-          GTest::gtest_main
-          GTest::gmock
-      )
+    target_link_libraries(${test_name}
+        GTest::GTest
+        GTest::Main
+    )
   endif()
   target_link_libraries(${test_name}
       rocrand
