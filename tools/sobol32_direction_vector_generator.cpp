@@ -24,8 +24,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <string_view>
+#include <vector>
+
+#include <stdint.h>
 
 int main(int argc, char const* argv[])
 {
@@ -54,16 +56,16 @@ int main(int argc, char const* argv[])
 
     const std::filesystem::path vector_file(argv[1]);
 
-    auto inputs        = std::make_unique<rocrand_tools::sobol_set[]>(rocrand_tools::SOBOL_DIM);
-    auto directions_32 = std::make_unique<uint32_t[]>(rocrand_tools::SOBOL32_N);
+    std::vector<rocrand_tools::sobol_set> inputs(rocrand_tools::SOBOL_DIM);
+    std::vector<uint32_t>                 directions_32(rocrand_tools::SOBOL32_N);
 
-    if(!rocrand_tools::read_sobol_set(inputs.get(), rocrand_tools::SOBOL_DIM, vector_file))
+    if(!rocrand_tools::read_sobol_set(inputs.data(), rocrand_tools::SOBOL_DIM, vector_file))
     {
         return -1;
     }
 
-    rocrand_tools::init_direction_vectors<uint32_t>(inputs.get(),
-                                                    directions_32.get(),
+    rocrand_tools::init_direction_vectors<uint32_t>(inputs.data(),
+                                                    directions_32.data(),
                                                     32,
                                                     rocrand_tools::SOBOL_DIM);
 
@@ -90,7 +92,7 @@ int main(int argc, char const* argv[])
         << "\n"
         << "#endif // ROCRAND_SOBOL32_PRECOMPUTED_H_\n";
 
-    binary_out.write(reinterpret_cast<const char*>(directions_32.get()),
+    binary_out.write(reinterpret_cast<const char*>(directions_32.data()),
                      rocrand_tools::SOBOL32_N * sizeof(directions_32[0]));
 
     return 0;
