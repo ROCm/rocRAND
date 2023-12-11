@@ -1,5 +1,6 @@
 name: Issue Report
-description: File a report for ROCm related issues on Linux and Windows. For issues pertaining to documentation or non-bug related, please open a blank issue located below.
+description: File a report for ROCm-related issues on Linux and Windows. For issues pertaining to documentation or non-bug related issues, 
+open a blank issue using the following template.
 title: "[Issue]: "
 
 body:
@@ -8,7 +9,7 @@ body:
     value: |
       Thank you for taking the time to fill out this report!
 
-      You can acquire your OS, CPU, GPU (for filling out this report) with the following commands:
+      You can get your OS, CPU, and GPU details (required for completing out this report) using the following commands:
 
       Linux:
         echo "OS:" && cat /etc/os-release | grep -E "^(NAME=|VERSION=)";
@@ -42,7 +43,7 @@ body:
 - type: dropdown
   attributes:
     label: GPU
-    description: What GPU(s) did you encounter the issue on (you can select multiple GPUs from the list)
+    description: What GPU(s) did you encounter the issue on (you can select multiple)?
     multiple: true
     options:
         - AMD Instinct MI250X
@@ -78,7 +79,7 @@ body:
 - type: input
   attributes:
     label: Other
-    description: If you selected Other, please specify
+    description: If you selected Other, please specify.
 - type: dropdown
   attributes:
     label: ROCm Version
@@ -95,7 +96,7 @@ body:
 - type: dropdown
   attributes:
     label: ROCm Component
-    description: (Optional) If this issue relates to a specific ROCm component, it can be mentioned here.
+    description: (Optional) If this issue relates to a specific ROCm component, mention it here.
     multiple: true
     options:
         - Other
@@ -204,13 +205,13 @@ body:
 - type: textarea
   attributes:
     label: (Optional for Linux users) Output of /opt/rocm/bin/rocminfo --support
-    description: The output of rocminfo --support could help to better address the problem.
+    description: The output of `rocminfo --support` could help to better address the problem.
   validations:
     required: false
 
 - type: textarea
   attributes:
     label: Additional Information
-    description: (Optional) Any additional information that is relevant, e.g. relevant environment variables, dockerfiles, log files, dmesg output (on Linux), etc.
+    description: (Optional) Any additional information that is relevant; e.g., environment variables, Dockerfiles, log files, dmesg output (on Linux), etc.
   validations:
     required: false
