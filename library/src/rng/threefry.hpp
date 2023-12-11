@@ -18,76 +18,86 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_THREEFRY2X32_20_H_
-#define ROCRAND_RNG_THREEFRY2X32_20_H_
-
-#include <algorithm>
-#include <hip/hip_runtime.h>
-
-#include <rocrand/rocrand.h>
+#ifndef ROCRAND_RNG_THREEFRY_H_
+#define ROCRAND_RNG_THREEFRY_H_
 
 #include "common.hpp"
 #include "config/config_defaults.hpp"
 #include "config_types.hpp"
+#include "cpp_utils.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 
+#include <rocrand/rocrand.h>
+
+#include <hip/hip_runtime.h>
+
+#include <type_traits>
+
 namespace rocrand_host::detail
 {
 
-struct threefry2x32_20_device_engine : public ::rocrand_device::threefry2x32_20_engine
+template<class BaseType>
+struct threefry_device_engine : public BaseType
 {
-    typedef ::rocrand_device::threefry2x32_20_engine base_type;
-    typedef base_type::threefry2x32_20_state         state_type;
+    using base_type   = BaseType;
+    using vector_type = typename base_type::state_vector_type;
+    using scalar_type = cpp_utils::vector_element_t<vector_type>;
+    using state_type  = typename base_type::state_type;
+    static inline constexpr unsigned int vector_dim
+        = static_cast<unsigned int>(cpp_utils::vector_size_v<vector_type>);
 
-    __forceinline__ __device__ __host__ threefry2x32_20_device_engine() {}
+    __forceinline__ __device__ __host__ threefry_device_engine() {}
 
-    __forceinline__ __device__ __host__
-        threefry2x32_20_device_engine(const unsigned long long seed,
-                                      const unsigned long long subsequence,
-                                      const unsigned long long offset)
+    __forceinline__ __device__ __host__ threefry_device_engine(const unsigned long long seed,
+                                                               const unsigned long long subsequence,
+                                                               const unsigned long long offset)
         : base_type(seed, subsequence, offset)
     {}
 
-    __forceinline__ __device__ __host__ uint2 next2_leap(unsigned int leap)
+    __forceinline__ __device__ __host__ vector_type next_leap(unsigned int leap)
     {
-        uint2 ret = m_state.result;
-        if(m_state.substate > 0)
+        vector_type ret = this->m_state.result;
+        if(this->m_state.substate > 0)
         {
-            const uint2 next_counter = this->bump_counter(m_state.counter);
-            const uint2 next         = this->threefry_rounds(next_counter, m_state.key);
-            ret                      = this->interleave(ret, next);
+            const vector_type next_counter = this->bump_counter(this->m_state.counter);
+            const vector_type next         = this->threefry_rounds(next_counter, this->m_state.key);
+            ret                            = this->interleave(ret, next);
         }
 
         this->discard_state(leap);
-        m_state.result = this->threefry_rounds(m_state.counter, m_state.key);
+        this->m_state.result = this->threefry_rounds(this->m_state.counter, this->m_state.key);
         return ret;
     }
 
     // m_state from base class
 };
 
-template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
+template<class ConfigProvider, bool IsDynamic, class Engine, class T, class Distribution>
 ROCRAND_KERNEL
     __launch_bounds__((get_block_size<ConfigProvider, T>(IsDynamic))) void generate_kernel(
-        threefry2x32_20_device_engine engine, T* data, const size_t n, Distribution distribution)
+        Engine engine, T* data, const size_t n, Distribution distribution)
 {
-    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
+    using engine_scalar_type = typename Engine::scalar_type;
+
+    constexpr unsigned int block_size   = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
+    constexpr unsigned int vector_dim   = Engine::vector_dim;
 
-    static_assert(2 % input_width == 0 && input_width <= 2, "Incorrect input_width");
-    constexpr unsigned int output_per_thread = 2 / input_width;
+    static_assert(vector_dim % input_width == 0 && input_width <= vector_dim,
+                  "Incorrect input_width");
+    constexpr unsigned int output_per_thread = vector_dim / input_width;
     constexpr unsigned int full_output_width = output_per_thread * output_width;
 
     using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
 
-    const unsigned int thread_id = blockIdx.x * BlockSize + threadIdx.x;
-    const unsigned int stride    = gridDim.x * BlockSize;
+    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
+    const unsigned int stride    = gridDim.x * block_size;
 
-    unsigned int input[input_width];
-    T            output[output_per_thread][output_width];
+    engine_scalar_type input[input_width];
+    T                  output[output_per_thread][output_width];
 
     const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
     const size_t    misalignment
@@ -96,7 +106,7 @@ ROCRAND_KERNEL
     const unsigned int tail_size = (n - head_size) % full_output_width;
     const size_t       vec_n     = (n - head_size) / full_output_width;
 
-    const unsigned int engine_offset = 2 * thread_id + (thread_id == 0 ? 0 : head_size);
+    const unsigned int engine_offset = vector_dim * thread_id + (thread_id == 0 ? 0 : head_size);
     engine.discard(engine_offset);
 
     // If data is not aligned by sizeof(vec_type)
@@ -130,8 +140,8 @@ ROCRAND_KERNEL
     size_t    index    = thread_id;
     while(index < vec_n)
     {
-        const uint2        v     = engine.next2_leap(stride);
-        const unsigned int vs[2] = {v.x, v.y};
+        const auto             v = engine.next_leap(stride);
+        cpp_utils::vec_wrapper vs(v);
         for(unsigned int s = 0; s < output_per_thread; s++)
         {
             for(unsigned int i = 0; i < input_width; i++)
@@ -176,23 +186,45 @@ ROCRAND_KERNEL
 
 } // end namespace rocrand_host::detail
 
-template<class ConfigProvider>
-class rocrand_threefry2x32_20_template : public rocrand_generator_impl_base
+template<class Engine, class ConfigProvider>
+class rocrand_threefry_template : public rocrand_generator_impl_base
 {
 public:
     using base_type   = rocrand_generator_impl_base;
-    using engine_type = ::rocrand_host::detail::threefry2x32_20_device_engine;
+    using engine_type = Engine;
+    using scalar_type = typename engine_type::scalar_type;
 
-    rocrand_threefry2x32_20_template(unsigned long long seed   = 0,
-                                     unsigned long long offset = 0,
-                                     rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                                     hipStream_t        stream = 0)
+    rocrand_threefry_template(unsigned long long seed   = 0,
+                              unsigned long long offset = 0,
+                              rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                              hipStream_t        stream = 0)
         : base_type(order, offset, stream), m_seed(seed)
     {}
 
     static constexpr rocrand_rng_type type()
     {
-        return ROCRAND_RNG_PSEUDO_THREEFRY2_32_20;
+        if constexpr(engine_type::vector_dim == 2)
+        {
+            if constexpr(std::is_same_v<unsigned int, scalar_type>)
+            {
+                return ROCRAND_RNG_PSEUDO_THREEFRY2_32_20;
+            }
+            else
+            {
+                return ROCRAND_RNG_PSEUDO_THREEFRY2_64_20;
+            }
+        }
+        else
+        {
+            if constexpr(std::is_same_v<unsigned int, scalar_type>)
+            {
+                return ROCRAND_RNG_PSEUDO_THREEFRY4_32_20;
+            }
+            else
+            {
+                return ROCRAND_RNG_PSEUDO_THREEFRY4_64_20;
+            }
+        }
     }
 
     void reset() override final
@@ -234,76 +266,74 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    template<class T, class Distribution = uniform_distribution<T>>
+    template<class T, class Distribution = uniform_distribution<T, scalar_type>>
     rocrand_status generate(T* data, size_t data_size, Distribution distribution = Distribution())
     {
-        rocrand_status status = init();
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if constexpr(std::is_same_v<T, unsigned long long int>
+                     && std::is_same_v<scalar_type, unsigned int>)
         {
-            return status;
+            // Cannot generate 64-bit values with this generator.
+            return ROCRAND_STATUS_TYPE_ERROR;
         }
-
-        rocrand_host::detail::generator_config config;
-        const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
-        if(error != hipSuccess)
+        else
         {
-            return ROCRAND_STATUS_INTERNAL_ERROR;
-        }
-
-        rocrand_host::detail::dynamic_dispatch(
-            m_order,
-            [&, this](auto is_dynamic)
+            rocrand_status status = init();
+            if(status != ROCRAND_STATUS_SUCCESS)
             {
-                hipLaunchKernelGGL(
-                    HIP_KERNEL_NAME(
-                        rocrand_host::detail::generate_kernel<ConfigProvider, is_dynamic>),
-                    dim3(config.blocks),
-                    dim3(config.threads),
-                    0,
-                    m_stream,
-                    m_engine,
-                    data,
-                    data_size,
-                    distribution);
-            });
-        // Check kernel status
-        if(hipGetLastError() != hipSuccess)
-        {
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+                return status;
+            }
+
+            rocrand_host::detail::generator_config config;
+            const hipError_t                       error
+                = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
+            if(error != hipSuccess)
+            {
+                return ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+
+            rocrand_host::detail::dynamic_dispatch(
+                m_order,
+                [&, this](auto is_dynamic)
+                {
+                    rocrand_host::detail::generate_kernel<ConfigProvider, is_dynamic>
+                        <<<dim3(config.blocks), dim3(config.threads), 0, m_stream>>>(m_engine,
+                                                                                     data,
+                                                                                     data_size,
+                                                                                     distribution);
+                });
+
+            // Check kernel status
+            if(hipGetLastError() != hipSuccess)
+            {
+                return ROCRAND_STATUS_LAUNCH_FAILURE;
+            }
+
+            // Generating data_size values will use this many distributions
+            const auto num_applied_generators = (data_size + Distribution::output_width - 1)
+                                                / Distribution::output_width
+                                                * Distribution::input_width;
+
+            m_engine.discard(num_applied_generators);
+
+            return ROCRAND_STATUS_SUCCESS;
         }
-
-        // Generating data_size values will use this many distributions
-        const auto num_applied_generators = (data_size + Distribution::output_width - 1)
-                                            / Distribution::output_width
-                                            * Distribution::input_width;
-
-        m_engine.discard(num_applied_generators);
-
-        return ROCRAND_STATUS_SUCCESS;
     }
 
-    rocrand_status generate(unsigned long long* data, size_t data_size)
+    rocrand_status generate(unsigned long long int* data, size_t data_size)
     {
-        // Cannot generate 64-bit values with this generator.
-        (void)data;
-        (void)data_size;
-        return ROCRAND_STATUS_TYPE_ERROR;
-    }
-
-    template<typename Distribution>
-    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
-    {
-        // Cannot generate 64-bit values with this generator.
-        (void)data;
-        (void)data_size;
-        (void)distribution;
-        return ROCRAND_STATUS_TYPE_ERROR;
+        if constexpr(std::is_same_v<scalar_type, unsigned int>)
+        {
+            // Cannot generate 64-bit values with this generator.
+            return ROCRAND_STATUS_TYPE_ERROR;
+        }
+        uniform_distribution<unsigned long long int, unsigned long long int> distribution;
+        return generate(data, data_size, distribution);
     }
 
     template<class T>
     rocrand_status generate_uniform(T* data, size_t data_size)
     {
-        uniform_distribution<T> distribution;
+        uniform_distribution<T, scalar_type> distribution;
         return generate(data, data_size, distribution);
     }
 
@@ -311,7 +341,7 @@ public:
     rocrand_status generate_normal(T* data, size_t data_size, T mean, T stddev)
     {
         constexpr unsigned int input_width = normal_distribution_max_input_width<type(), T>;
-        normal_distribution<T, unsigned int, input_width> distribution(mean, stddev);
+        normal_distribution<T, scalar_type, input_width> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
@@ -319,11 +349,12 @@ public:
     rocrand_status generate_log_normal(T* data, size_t data_size, T mean, T stddev)
     {
         constexpr unsigned int input_width = log_normal_distribution_max_input_width<type(), T>;
-        log_normal_distribution<T, unsigned int, input_width> distribution(mean, stddev);
+        log_normal_distribution<T, scalar_type, input_width> distribution(mean, stddev);
         return generate(data, data_size, distribution);
     }
 
-    rocrand_status generate_poisson(unsigned int* data, size_t data_size, double lambda)
+    template<class T>
+    rocrand_status generate_poisson(T* data, size_t data_size, double lambda)
     {
         try
         {
@@ -359,7 +390,20 @@ constexpr inline unsigned int
     log_normal_distribution_max_input_width<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20, double>
     = 2;
 
-using rocrand_threefry2x32_20 = rocrand_threefry2x32_20_template<
+using rocrand_threefry2x32_20 = rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
+
+using rocrand_threefry2x64_20 = rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20>>;
+
+using rocrand_threefry4x32_20 = rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20>>;
+
+using rocrand_threefry4x64_20 = rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20>>;
 
 #endif // ROCRAND_RNG_THREEFRY2X32_20_H_

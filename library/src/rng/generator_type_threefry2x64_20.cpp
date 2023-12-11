@@ -20,6 +20,6 @@
 
 #include "generator_type.hpp"
 
-#include "threefry2x64_20.hpp"
+#include "threefry.hpp"
 
 template struct rocrand_generator_type<rocrand_threefry2x64_20>;

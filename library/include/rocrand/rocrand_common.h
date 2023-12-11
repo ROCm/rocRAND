@@ -81,6 +81,16 @@
     #define ROCRAND_PRAGMA_MESSAGE(x)
 #endif
 
+#if __cplusplus >= 201402L
+    #define ROCRAND_DEPRECATED(msg) [[deprecated(msg)]]
+#elif defined(_MSC_VER) && !defined(__clang__)
+    #define ROCRAND_DEPRECATED(msg) __declspec(deprecated(msg))
+#elif defined(__clang__) || defined(__GNUC__)
+    #define ROCRAND_DEPRECATED(msg) __attribute__((deprecated(msg)))
+#else
+    #define ROCRAND_DEPRECATED(msg)
+#endif
+
 namespace rocrand_device {
 namespace detail {
 

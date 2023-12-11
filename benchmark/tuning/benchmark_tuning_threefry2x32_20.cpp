@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 #include "benchmarked_generators.hpp"
-#include "rng/threefry2x32_20.hpp"
+#include "rng/threefry.hpp"
 
 namespace benchmark_tuning
 {

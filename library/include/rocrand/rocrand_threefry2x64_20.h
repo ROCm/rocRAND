@@ -65,6 +65,7 @@ namespace rocrand_device
 class threefry2x64_20_engine : public threefry_engine2_base<ulonglong2, unsigned long long, 20>
 {
 public:
+    ROCRAND_DEPRECATED("Alias \"threefry2x64_20_state\" is deprecated. Use \"state_type\" instead.")
     typedef threefry_engine2_base<ulonglong2, unsigned long long, 20>::threefry_state_2
         threefry2x64_20_state;
 
