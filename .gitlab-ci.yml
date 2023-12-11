@@ -135,6 +135,8 @@ copyright-date:
     - !reference [".deps:cmake-latest", before_script]
 
 .rocm:build:
+  variables:
+    BUILD_BENCHMARK_TUNING: "OFF"
   stage: build
   extends:
     - .gpus:rocm-gpus
@@ -150,7 +152,7 @@ copyright-date:
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
-      -D BUILD_BENCHMARK_TUNING=ON
+      -D BUILD_BENCHMARK_TUNING=${BUILD_BENCHMARK_TUNING}
       -D BENCHMARK_TUNING_MIN_GRID_SIZE=32768
       -D BENCHMARK_TUNING_THREAD_OPTIONS="128, 256"
       -D BENCHMARK_TUNING_BLOCK_OPTIONS="128, 256"
@@ -214,6 +216,7 @@ build:rocm-cmake-minimum:
     - .save-artifacts
   variables:
     BUILD_SHARED_LIBS: "ON"
+    BUILD_BENCHMARK_TUNING: "ON"
 
 build:rocm-hipcc-cmake-minimum:
   tags:
