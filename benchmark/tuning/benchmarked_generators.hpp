@@ -55,20 +55,26 @@ class rocrand_mtgp32_template;
 template<class System, class ConfigProvider>
 class rocrand_philox4x32_10_template;
 
-template<class ConfigProvider>
-class rocrand_threefry2x32_20_template;
-
-template<class ConfigProvider>
-class rocrand_threefry2x64_20_template;
-
-template<class ConfigProvider>
-class rocrand_threefry4x32_20_template;
-
-template<class ConfigProvider>
-class rocrand_threefry4x64_20_template;
+template<class Engine, class ConfigProvider>
+class rocrand_threefry_template;
 
 template<class ConfigProvider>
 class rocrand_xorwow_template;
+
+// Further forward declarations
+namespace rocrand_device
+{
+class threefry2x32_20_engine;
+class threefry2x64_20_engine;
+class threefry4x32_20_engine;
+class threefry4x64_20_engine;
+} // namespace rocrand_device
+
+namespace rocrand_host::detail
+{
+template<class DeviceEngine>
+struct threefry_device_engine;
+} // namespace rocrand_host::detail
 
 namespace benchmark_tuning
 {
@@ -98,16 +104,24 @@ using rocrand_philox4x32_10_template
     = ::rocrand_philox4x32_10_template<rocrand_system_device, ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry2x32_20_template = ::rocrand_threefry2x32_20_template<ConfigProvider>;
+using rocrand_threefry2x32_20_template = ::rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
+    ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry2x64_20_template = ::rocrand_threefry2x64_20_template<ConfigProvider>;
+using rocrand_threefry2x64_20_template = ::rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
+    ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry4x32_20_template = ::rocrand_threefry4x32_20_template<ConfigProvider>;
+using rocrand_threefry4x32_20_template = ::rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
+    ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry4x64_20_template = ::rocrand_threefry4x64_20_template<ConfigProvider>;
+using rocrand_threefry4x64_20_template = ::rocrand_threefry_template<
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
+    ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_xorwow_template = ::rocrand_xorwow_template<ConfigProvider>;

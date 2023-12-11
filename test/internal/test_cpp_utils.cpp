@@ -83,3 +83,19 @@ TEST(rocrand_cpp_utils_tests, lcm)
     ASSERT_EQ(lcm(2048, 512), 2048);
     ASSERT_EQ(lcm(12, 18), 36);
 }
+
+TEST(rocrand_cpp_utils_tests, vec_wrapper)
+{
+    using namespace cpp_utils;
+    const int4  f{1, 2, 3, 4};
+    vec_wrapper wrapper(f);
+
+    ASSERT_EQ(1, wrapper[0]);
+    ASSERT_EQ(2, wrapper[1]);
+    ASSERT_EQ(3, wrapper[2]);
+    ASSERT_EQ(4, wrapper[3]);
+
+    wrapper[2] = 100;
+    ASSERT_EQ(100, wrapper[2]);
+    ASSERT_EQ(3, f.z);
+}

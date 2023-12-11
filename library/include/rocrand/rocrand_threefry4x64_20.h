@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -65,6 +65,7 @@ namespace rocrand_device
 class threefry4x64_20_engine : public threefry_engine4_base<ulonglong4, unsigned long long, 20>
 {
 public:
+    ROCRAND_DEPRECATED("Alias \"threefry4x64_20_state\" is deprecated. Use \"state_type\" instead.")
     typedef threefry_engine4_base<ulonglong4, unsigned long long, 20>::threefry_state_4
         threefry4x64_20_state;
 

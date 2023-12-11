@@ -27,7 +27,7 @@
 #include <rocrand/rocrand.h>
 
 #include <rng/generator_type.hpp>
-#include <rng/threefry2x64_20.hpp>
+#include <rng/threefry.hpp>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
@@ -53,7 +53,7 @@ INSTANTIATE_TEST_SUITE_P(rocrand,
 // Assert that the kernel arguments are trivially copyable and destructible.
 TEST(rocrand_threefry_prng_tests, type)
 {
-    typedef ::rocrand_host::detail::threefry2x64_20_device_engine engine_type;
+    using engine_type = typename rocrand_threefry2x64_20::engine_type::base_type;
     // TODO: Enable once ulonglong2 is trivially copyable.
     // EXPECT_TRUE(std::is_trivially_copyable<engine_type>::value);
     EXPECT_TRUE(std::is_trivially_destructible<engine_type>::value);
