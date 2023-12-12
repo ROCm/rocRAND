@@ -178,6 +178,7 @@ int main(int argc, char* argv[])
 
     std::vector<rng_type_t> benchmarked_engine_types{ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
                                                      ROCRAND_RNG_PSEUDO_MRG31K3P,
+                                                     ROCRAND_RNG_PSEUDO_XORWOW,
                                                      ROCRAND_RNG_QUASI_SOBOL32,
                                                      ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
                                                      ROCRAND_RNG_QUASI_SOBOL64,
@@ -187,7 +188,6 @@ int main(int argc, char* argv[])
     {
         benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MTGP32);
         benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MT19937);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_XORWOW);
         benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MRG32K3A);
         benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_LFSR113);
         benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY2_32_20);

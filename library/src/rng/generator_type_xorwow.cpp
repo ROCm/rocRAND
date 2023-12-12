@@ -23,3 +23,4 @@
 #include "xorwow.hpp"
 
 template struct rocrand_generator_type<rocrand_xorwow>;
+template struct rocrand_generator_type<rocrand_xorwow_host>;

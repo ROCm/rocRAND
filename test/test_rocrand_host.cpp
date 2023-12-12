@@ -36,6 +36,7 @@ constexpr const size_t             random_seeds_count = 2;
 constexpr rocrand_rng_type host_rng_types[] = {
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
     ROCRAND_RNG_PSEUDO_MRG31K3P,
+    ROCRAND_RNG_PSEUDO_XORWOW,
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64,
     ROCRAND_RNG_QUASI_SOBOL32,
