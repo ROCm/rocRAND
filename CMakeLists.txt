@@ -77,8 +77,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
-# Include cmake scripts
-include(CMakeDependentOption)
+include(cmake/HaveASMIncbin.cmake)
+
+rocrand_check_have_asm_incbin(ROCRAND_HAVE_ASM_INCBIN)
 
 # Get dependencies
 include(cmake/Dependencies.cmake)
@@ -138,7 +139,7 @@ endif()
 
 # HIP on Windows: xhip is required with clang++ to get __half defined
 if (WIN32)
-  add_compile_options(-xhip)
+  add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
 endif()
 
 cmake_dependent_option(BUILD_LEGACY_BENCHMARK "Build the legacy benchmarks" ON "BUILD_BENCHMARK" OFF)

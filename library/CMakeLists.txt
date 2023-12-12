@@ -24,7 +24,7 @@
 # C++17 is used internally
 set(CMAKE_CXX_STANDARD 17)
 # Get sources
-set(rocRAND_SRCS
+set(rocRAND_HIP_SRCS
     "src/rng/generator_type_lfsr113.cpp"
     "src/rng/generator_type_mrg31k3p.cpp"
     "src/rng/generator_type_mrg32k3a.cpp"
@@ -41,10 +41,6 @@ set(rocRAND_SRCS
     "src/rng/generator_type_threefry4x64_20.cpp"
     "src/rng/generator_type_xorwow.cpp"
     "src/rocrand_mt19937_precomputed.cpp"
-    "src/rocrand_scrambled_sobol32_precomputed.cpp"
-    "src/rocrand_scrambled_sobol64_precomputed.cpp"
-    "src/rocrand_sobol32_precomputed.cpp"
-    "src/rocrand_sobol64_precomputed.cpp"
     "src/rocrand.cpp")
 
 # When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
@@ -78,8 +74,24 @@ if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
     )
 endif()
 
-add_library(rocrand ${rocRAND_SRCS})
+add_library(rocrand ${rocRAND_HIP_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
+
+set(SOBOL_PRECOMPUTED_SOURCES
+    "src/rocrand_scrambled_sobol32_precomputed"
+    "src/rocrand_scrambled_sobol64_precomputed"
+    "src/rocrand_sobol32_precomputed"
+    "src/rocrand_sobol64_precomputed")
+
+if (ROCRAND_HAVE_ASM_INCBIN)
+    enable_language(ASM)
+    list(TRANSFORM SOBOL_PRECOMPUTED_SOURCES APPEND ".S")
+    set_source_files_properties(${SOBOL_PRECOMPUTED_SOURCES} PROPERTIES
+                                INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src) 
+else()
+    list(TRANSFORM SOBOL_PRECOMPUTED_SOURCES APPEND ".cpp")
+endif()
+target_sources(rocrand PRIVATE ${SOBOL_PRECOMPUTED_SOURCES})
 
 set_target_properties(rocrand PROPERTIES
   CXX_VISIBILITY_PRESET hidden
@@ -96,10 +108,10 @@ target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFI
 
 # Build library
 if(HIP_COMPILER STREQUAL "nvcc")
-    set_source_files_properties(${rocRAND_SRCS}
+    set_source_files_properties(${rocRAND_HIP_SRCS}
         PROPERTIES LANGUAGE CUDA CUDA_STANDARD 17)
     if(${CMAKE_VERSION} VERSION_LESS "3.18")
-        set_source_files_properties(${rocRAND_SRCS} PROPERTIES COMPILE_OPTIONS "-std=c++17")
+        set_source_files_properties(${rocRAND_HIP_SRCS} PROPERTIES COMPILE_OPTIONS "-std=c++17")
     endif()
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 else()
