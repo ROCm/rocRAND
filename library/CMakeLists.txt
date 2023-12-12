@@ -118,6 +118,18 @@ else()
     target_link_libraries(rocrand PRIVATE hip::device)
 endif()
 
+if(NOT WIN32)
+    find_package(TBB QUIET)
+    if(NOT TARGET TBB::tbb)
+        message(WARNING "TBB is not found. Building without parallel STL support")
+    else()
+        target_link_libraries(rocrand PRIVATE TBB::tbb)
+
+        # Older libstdc++ headers require TBB to be installed to be able to #include <execution>
+        target_compile_definitions(rocrand PRIVATE ROCRAND_PARALLEL_STL)
+    endif()
+endif()
+
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
     PROPERTIES
