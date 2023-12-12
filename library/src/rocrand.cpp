@@ -115,6 +115,7 @@ rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* gener
             case ROCRAND_RNG_PSEUDO_MRG31K3P:
                 *generator = new rocrand_generator_type<rocrand_mrg31k3p_host>();
                 break;
+            case ROCRAND_RNG_QUASI_DEFAULT:
             case ROCRAND_RNG_QUASI_SOBOL32:
                 *generator = new rocrand_generator_type<rocrand_sobol32_host>();
                 break;
@@ -127,10 +128,11 @@ rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* gener
             case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64:
                 *generator = new rocrand_generator_type<rocrand_scrambled_sobol64_host>();
                 break;
-            case ROCRAND_RNG_PSEUDO_MRG32K3A:
             case ROCRAND_RNG_PSEUDO_DEFAULT:
             case ROCRAND_RNG_PSEUDO_XORWOW:
-            case ROCRAND_RNG_QUASI_DEFAULT:
+                *generator = new rocrand_generator_type<rocrand_xorwow_host>();
+                break;
+            case ROCRAND_RNG_PSEUDO_MRG32K3A:
             case ROCRAND_RNG_PSEUDO_MTGP32:
             case ROCRAND_RNG_PSEUDO_LFSR113:
             case ROCRAND_RNG_PSEUDO_MT19937:

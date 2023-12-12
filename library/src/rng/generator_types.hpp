@@ -54,5 +54,6 @@ extern template struct rocrand_generator_type<rocrand_threefry2x64_20>;
 extern template struct rocrand_generator_type<rocrand_threefry4x32_20>;
 extern template struct rocrand_generator_type<rocrand_threefry4x64_20>;
 extern template struct rocrand_generator_type<rocrand_xorwow>;
+extern template struct rocrand_generator_type<rocrand_xorwow_host>;
 
 #endif // ROCRAND_RNG_GENERATOR_TYPES_H_

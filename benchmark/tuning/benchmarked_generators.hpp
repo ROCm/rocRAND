@@ -58,7 +58,7 @@ class rocrand_philox4x32_10_template;
 template<class Engine, class ConfigProvider>
 class rocrand_threefry_template;
 
-template<class ConfigProvider>
+template<class System, class ConfigProvider>
 class rocrand_xorwow_template;
 
 // Further forward declarations
@@ -124,7 +124,7 @@ using rocrand_threefry4x64_20_template = ::rocrand_threefry_template<
     ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_xorwow_template = ::rocrand_xorwow_template<ConfigProvider>;
+using rocrand_xorwow_template = ::rocrand_xorwow_template<rocrand_system_device, ConfigProvider>;
 
 template<>
 struct output_type_supported<unsigned long long, rocrand_lfsr113_template> : public std::false_type
