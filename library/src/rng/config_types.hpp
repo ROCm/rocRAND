@@ -22,8 +22,8 @@
 #define ROCRAND_RNG_CONFIG_TYPES_H_
 
 #include "common.hpp"
-#include "cpp_utils.hpp"
 #include "rocrand/rocrand.h"
+#include "utils/cpp_utils.hpp"
 
 #include <hip/hip_runtime.h>
 
