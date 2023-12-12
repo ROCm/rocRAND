@@ -199,8 +199,6 @@ copyright-date:
       - $CI_PROJECT_DIR/build/**/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/benchmark/benchmark_*
       - $CI_PROJECT_DIR/build/deps/googlebenchmark/
-      - $CI_PROJECT_DIR/build/deps/tbb/
-      - $CI_PROJECT_DIR/build/tbb-src/
       - $CI_PROJECT_DIR/build/CMakeCache.txt
       - $CI_PROJECT_DIR/build/*.deb
       - $CI_PROJECT_DIR/build/*.zip
