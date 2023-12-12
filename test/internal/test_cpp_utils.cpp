@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "rng/cpp_utils.hpp"
+#include "rng/utils/cpp_utils.hpp"
+
 #include <gtest/gtest.h>
 
 #include <algorithm>
