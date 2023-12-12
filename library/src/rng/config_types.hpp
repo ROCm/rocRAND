@@ -58,7 +58,9 @@ enum class target_arch : unsigned int
 /// @brief Returns the detected processor architecture of the device that is currently compiled against.
 __device__ constexpr target_arch get_device_arch()
 {
-#if defined(__gfx900__)
+#if !defined(USE_DEVICE_DISPATCH)
+    return target_arch::unknown;
+#elif defined(__gfx900__)
     return target_arch::gfx900;
 #elif defined(__gfx902__)
     return target_arch::gfx902;
@@ -133,7 +135,7 @@ inline target_arch parse_gcn_arch(const std::string& arch_name)
 /// @param device_id The ID of the HIP device.
 /// @param arch Out parameter. The detected device architecture is set here.
 /// @return \ref hipSuccess if the querying was successful, a different error code otherwise.
-inline hipError_t get_device_arch(int device_id, target_arch& arch)
+inline hipError_t get_device_arch([[maybe_unused]] int device_id, target_arch& arch)
 {
 #ifdef USE_DEVICE_DISPATCH
     constexpr unsigned int          device_arch_cache_size             = 512;
