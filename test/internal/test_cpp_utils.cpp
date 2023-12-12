@@ -19,17 +19,21 @@
 // THE SOFTWARE.
 
 #include "rng/utils/cpp_utils.hpp"
+#include "rng/utils/threedim_iterator.hpp"
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <set>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <vector>
+
+#include <stdint.h>
 
 TEST(rocrand_cpp_utils_tests, visit_tuple)
 {
@@ -99,4 +103,66 @@ TEST(rocrand_cpp_utils_tests, vec_wrapper)
     wrapper[2] = 100;
     ASSERT_EQ(100, wrapper[2]);
     ASSERT_EQ(3, f.z);
+}
+
+static bool operator==(const dim3& lhs, const dim3& rhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+}
+
+TEST(rocrand_cpp_utils_tests, threedim_iterator)
+{
+    using namespace cpp_utils;
+
+    const dim3        dim(100, 256, 4);
+    threedim_iterator it(dim);
+    ASSERT_EQ(it, threedim_iterator::begin(dim));
+    ASSERT_NE(it, threedim_iterator::end(dim));
+    {
+        const dim3 d = *it;
+        const dim3 expected{0, 0, 0};
+        ASSERT_EQ(d, expected);
+    }
+
+    std::advance(it, 125);
+    {
+        const dim3 d = *it;
+        const dim3 expected{25, 1, 0};
+        ASSERT_EQ(d, expected);
+    }
+
+    std::advance(it, 68322);
+    {
+        const dim3 d = *it;
+        const dim3 expected{47, 172, 2};
+        ASSERT_EQ(d, expected);
+    }
+
+    std::advance(it, 33953);
+    ASSERT_EQ(it, threedim_iterator::end(dim));
+}
+
+TEST(rocrand_cpp_utils_tests, threedim_iterator_list)
+{
+    using namespace cpp_utils;
+
+    const dim3        dim{3, 2, 4};
+    std::vector<dim3> results;
+    std::copy(threedim_iterator::begin(dim),
+              threedim_iterator::end(dim),
+              std::back_inserter(results));
+
+    ASSERT_EQ(dim.x * dim.y * dim.z, results.size());
+    size_t index = 0;
+    for(uint32_t z = 0; z < dim.z; ++z)
+    {
+        for(uint32_t y = 0; y < dim.y; ++y)
+        {
+            for(uint32_t x = 0; x < dim.x; ++x, ++index)
+            {
+                const dim3 expected{x, y, z};
+                ASSERT_EQ(expected, results[index]);
+            }
+        }
+    }
 }
