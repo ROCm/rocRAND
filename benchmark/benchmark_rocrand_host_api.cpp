@@ -178,8 +178,12 @@ int main(int argc, char* argv[])
 
     std::map<rng_type_t, std::string> engine_type_map{
   // clang-format off
-        {ROCRAND_RNG_PSEUDO_PHILOX4_32_10,   "philox"},
-        {     ROCRAND_RNG_PSEUDO_MRG31K3P, "mrg31k3p"},
+        {    ROCRAND_RNG_PSEUDO_PHILOX4_32_10, "philox"            },
+        {         ROCRAND_RNG_PSEUDO_MRG31K3P, "mrg31k3p"          },
+        {           ROCRAND_RNG_QUASI_SOBOL32, "sobol32"           },
+        { ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32" },
+        {           ROCRAND_RNG_QUASI_SOBOL64, "sobol64"           },
+        { ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64" },
   // clang-format on
     };
 
@@ -189,18 +193,12 @@ int main(int argc, char* argv[])
         engine_type_map.insert({          ROCRAND_RNG_PSEUDO_MTGP32,            "mtgp32"});
         engine_type_map.insert({         ROCRAND_RNG_PSEUDO_MT19937,           "mt19937"});
         engine_type_map.insert({          ROCRAND_RNG_PSEUDO_XORWOW,            "xorwow"});
-        engine_type_map.insert({        ROCRAND_RNG_PSEUDO_MRG31K3P,          "mrg31k3p"});
         engine_type_map.insert({        ROCRAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"});
-        engine_type_map.insert({   ROCRAND_RNG_PSEUDO_PHILOX4_32_10,            "philox"});
         engine_type_map.insert({         ROCRAND_RNG_PSEUDO_LFSR113,           "lfsr113"});
         engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,      "threefry2x32"});
         engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,      "threefry2x64"});
         engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,      "threefry4x32"});
         engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,      "threefry4x64"});
-        engine_type_map.insert({          ROCRAND_RNG_QUASI_SOBOL32,           "sobol32"});
-        engine_type_map.insert({ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32"});
-        engine_type_map.insert({          ROCRAND_RNG_QUASI_SOBOL64,           "sobol64"});
-        engine_type_map.insert({ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64"});
         // clang-format on
     }
 
