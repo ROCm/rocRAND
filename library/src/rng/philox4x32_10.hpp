@@ -388,11 +388,8 @@ using rocrand_philox4x32_10 = rocrand_philox4x32_10_template<
     rocrand_system_device,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
 
-// philox returns the same sequence regardless of the number of threads, so we can
-// launch it with one thread when running on host so that memory accesses are
-// tightly packed and the whole thing is a little more efficient.
-using rocrand_philox4x32_10_host
-    = rocrand_philox4x32_10_template<rocrand_system_host,
-                                     rocrand_host::detail::static_config_provider<1, 1>>;
+using rocrand_philox4x32_10_host = rocrand_philox4x32_10_template<
+    rocrand_system_host,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
 
 #endif // ROCRAND_RNG_PHILOX4X32_10_H_
