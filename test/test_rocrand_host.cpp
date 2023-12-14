@@ -50,6 +50,7 @@ std::vector<unsigned long long> get_seeds()
 constexpr rocrand_rng_type host_rng_types[] = {
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
     ROCRAND_RNG_PSEUDO_MRG31K3P,
+    ROCRAND_RNG_PSEUDO_MRG32K3A,
     ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
     ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
     ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,

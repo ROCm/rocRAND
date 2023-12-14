@@ -43,11 +43,8 @@
 template<class System, class ConfigProvider>
 class rocrand_lfsr113_template;
 
-template<class System, class ConfigProvider>
-class rocrand_mrg31k3p_template;
-
-template<class ConfigProvider>
-class rocrand_mrg32k3a_template;
+template<class System, class Engine, class ConfigProvider>
+class rocrand_mrg_template;
 
 template<class ConfigProvider>
 class rocrand_mtgp32_template;
@@ -64,6 +61,8 @@ class rocrand_xorwow_template;
 // Further forward declarations
 namespace rocrand_device
 {
+class mrg31k3p_engine;
+class mrg32k3a_engine;
 class threefry2x32_20_engine;
 class threefry2x64_20_engine;
 class threefry4x32_20_engine;
@@ -87,11 +86,12 @@ template<class ConfigProvider>
 using rocrand_lfsr113_template = ::rocrand_lfsr113_template<rocrand_system_device, ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mrg31k3p_template
-    = ::rocrand_mrg31k3p_template<rocrand_system_device, ConfigProvider>;
+using rocrand_mrg31k3p_template = ::
+    rocrand_mrg_template<rocrand_system_device, rocrand_device::mrg31k3p_engine, ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mrg32k3a_template = ::rocrand_mrg32k3a_template<ConfigProvider>;
+using rocrand_mrg32k3a_template = ::
+    rocrand_mrg_template<rocrand_system_device, rocrand_device::mrg32k3a_engine, ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_mtgp32_template = ::rocrand_mtgp32_template<ConfigProvider>;

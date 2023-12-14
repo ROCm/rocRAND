@@ -20,7 +20,7 @@
 
 #include "generator_type.hpp"
 
-#include "mrg31k3p.hpp"
+#include "mrg.hpp"
 
 template struct rocrand_generator_type<rocrand_mrg31k3p>;
 template struct rocrand_generator_type<rocrand_mrg31k3p_host>;
