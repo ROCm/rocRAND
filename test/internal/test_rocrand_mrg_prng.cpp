@@ -27,8 +27,7 @@
 #include <rocrand/rocrand.h>
 
 #include <rng/generator_type.hpp>
-#include <rng/mrg31k3p.hpp>
-#include <rng/mrg32k3a.hpp>
+#include <rng/mrg.hpp>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"

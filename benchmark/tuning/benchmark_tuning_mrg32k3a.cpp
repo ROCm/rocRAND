@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 #include "benchmarked_generators.hpp"
-#include "rng/mrg32k3a.hpp"
+#include "rng/mrg.hpp"
 
 namespace benchmark_tuning
 {

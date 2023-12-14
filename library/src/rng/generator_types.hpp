@@ -24,8 +24,7 @@
 #include "generator_type.hpp"
 
 #include "lfsr113.hpp"
-#include "mrg31k3p.hpp"
-#include "mrg32k3a.hpp"
+#include "mrg.hpp"
 #include "mt19937.hpp"
 #include "mtgp32.hpp"
 #include "philox4x32_10.hpp"
@@ -38,6 +37,7 @@ extern template struct rocrand_generator_type<rocrand_lfsr113_host>;
 extern template struct rocrand_generator_type<rocrand_mrg31k3p>;
 extern template struct rocrand_generator_type<rocrand_mrg31k3p_host>;
 extern template struct rocrand_generator_type<rocrand_mrg32k3a>;
+extern template struct rocrand_generator_type<rocrand_mrg32k3a_host>;
 extern template struct rocrand_generator_type<rocrand_mt19937>;
 extern template struct rocrand_generator_type<rocrand_mtgp32>;
 extern template struct rocrand_generator_type<rocrand_philox4x32_10>;
