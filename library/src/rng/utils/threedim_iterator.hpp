@@ -111,7 +111,7 @@ public:
         return *this;
     }
 
-    [[maybe_unused]] threedim_iterator operator++(int)
+    [[nodiscard]] threedim_iterator operator++(int)
     {
         const auto tmp = *this;
         this->     operator++();
@@ -141,7 +141,7 @@ public:
         return *this;
     }
 
-    [[maybe_unused]] threedim_iterator operator--(int)
+    [[nodiscard]] threedim_iterator operator--(int)
     {
         const auto tmp = *this;
         this->     operator--();
