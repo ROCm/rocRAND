@@ -176,30 +176,24 @@ int main(int argc, char* argv[])
     benchmark::AddCustomContext("offset", std::to_string(offset));
     benchmark::AddCustomContext("benchmark_host", std::to_string(benchmark_host));
 
-    std::map<rng_type_t, std::string> engine_type_map{
-  // clang-format off
-        {    ROCRAND_RNG_PSEUDO_PHILOX4_32_10, "philox"            },
-        {         ROCRAND_RNG_PSEUDO_MRG31K3P, "mrg31k3p"          },
-        {           ROCRAND_RNG_QUASI_SOBOL32, "sobol32"           },
-        { ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32" },
-        {           ROCRAND_RNG_QUASI_SOBOL64, "sobol64"           },
-        { ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64" },
-  // clang-format on
-    };
+    std::vector<rng_type_t> benchmarked_engine_types{ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+                                                     ROCRAND_RNG_PSEUDO_MRG31K3P,
+                                                     ROCRAND_RNG_QUASI_SOBOL32,
+                                                     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
+                                                     ROCRAND_RNG_QUASI_SOBOL64,
+                                                     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64};
 
     if(!benchmark_host)
     {
-        // clang-format off
-        engine_type_map.insert({          ROCRAND_RNG_PSEUDO_MTGP32,            "mtgp32"});
-        engine_type_map.insert({         ROCRAND_RNG_PSEUDO_MT19937,           "mt19937"});
-        engine_type_map.insert({          ROCRAND_RNG_PSEUDO_XORWOW,            "xorwow"});
-        engine_type_map.insert({        ROCRAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"});
-        engine_type_map.insert({         ROCRAND_RNG_PSEUDO_LFSR113,           "lfsr113"});
-        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,      "threefry2x32"});
-        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,      "threefry2x64"});
-        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,      "threefry4x32"});
-        engine_type_map.insert({ ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,      "threefry4x64"});
-        // clang-format on
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MTGP32);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MT19937);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_XORWOW);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MRG32K3A);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_LFSR113);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY2_32_20);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY2_64_20);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY4_32_20);
+        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY4_64_20);
     }
 
     const std::map<rocrand_ordering, std::string> ordering_name_map{
@@ -244,14 +238,13 @@ int main(int argc, char* argv[])
     const std::string benchmark_name_prefix = "device_generate";
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks = {};
-    for(std::pair<rng_type_t, std::string> engine : engine_type_map)
+    for(const rocrand_rng_type engine_type : benchmarked_engine_types)
     {
-        const rng_type_t engine_type = engine.first;
-
+        const std::string name = engine_name(engine_type);
         for(const rocrand_ordering ordering : benchmarked_orderings.at(engine_type))
         {
-            const std::string name_engine_prefix = benchmark_name_prefix + "<" + engine.second + ","
-                                                   + ordering_name_map.at(ordering) + ",";
+            const std::string name_engine_prefix
+                = benchmark_name_prefix + "<" + name + "," + ordering_name_map.at(ordering) + ",";
 
             benchmarks.emplace_back(benchmark::RegisterBenchmark(
                 (name_engine_prefix + "uniform-uint>").c_str(),
