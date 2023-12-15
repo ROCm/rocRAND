@@ -166,3 +166,22 @@ TEST(rocrand_cpp_utils_tests, threedim_iterator_list)
         }
     }
 }
+
+// must be in global namespace
+static bool operator<(const dim3& /*lhs*/, const dim3& /*rhs*/)
+{
+    // not relevant for the test below
+    return true;
+}
+
+TEST(rocrand_cpp_utils_tests, threedim_iterator_check_stl)
+{
+    // std::is_heap requires a named concept LegacyRandomAccessIterator for the iterator
+    // This is a primitive test to check whether threedim_iterator fulfills this requirement
+    //
+    // This is not full coverage of the required members of the aforementioned requirement,
+    // since there is no guarantee that the algorithm would call every required member function
+    //
+    // A better solution will be checking against the std::random_access_iterator_concept in C++20
+    std::is_heap(cpp_utils::threedim_iterator(), cpp_utils::threedim_iterator());
+}
