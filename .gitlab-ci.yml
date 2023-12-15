@@ -291,7 +291,7 @@ build:nvcc-cmake-latest:
 
 benchmark:benchmark-tuning:
   extends:
-    - .rules:benchmark
+    - .rules:manual
     - .rocm:cmake-latest
     - .gpus:rocm
   stage: benchmark
@@ -333,7 +333,7 @@ benchmark:benchmark-tuning-generate-results:
   image: python:3.11
   stage: benchmark
   extends:
-    - .rules:benchmark
+    - .rules:manual
   needs:
     - benchmark:benchmark-tuning
   script:
@@ -378,7 +378,7 @@ test:nvcc:
 
 .benchmark:
   extends:
-    - .rules:benchmark
+    - .rules:manual
   stage: benchmark
   script:
     - cd $CI_PROJECT_DIR/build
