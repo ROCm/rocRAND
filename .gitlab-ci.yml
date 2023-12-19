@@ -295,6 +295,7 @@ benchmark:benchmark-tuning:
     - .rocm:cmake-latest
     - .gpus:rocm
   stage: benchmark
+  needs: []
   variables:
     BENCHMARK_TUNING_MIN_GRID_SIZE: 32768
     BENCHMARK_TUNING_THREAD_OPTIONS: "128, 256, 512"
