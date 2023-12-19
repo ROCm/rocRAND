@@ -553,3 +553,67 @@ test:nvcc-parity:
     - build:nvcc-cmake-minimum
   before_script:
     - !reference [".nvcc:cmake-minimum", before_script]
+
+test:windows:
+  tags:
+    - windows
+    - shell
+    - rx6900
+  stage: test
+  extends:
+    - .rules:test
+  needs: []
+  variables:
+    VS_VERSION: 2022
+    ROCM_PATH: "C:/PROGRA~1/AMD/ROCm/5.7"
+    # Must define CMake variables as environment variables,
+    # otherwise modules grabbed via FetchContent won't work
+    CXX: "C:/PROGRA~1/AMD/ROCm/5.7/bin/clang++.exe"
+    CC: "C:/PROGRA~1/AMD/ROCm/5.7/bin/clang.exe"
+    CMAKE_BUILD_TYPE: Release
+  before_script:
+    - | # Find VS installation
+      $VS_PATH = (
+        & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property InstallationPath
+        | Select-String -Pattern $VS_VERSION
+      )[0]
+    - | # Find DevShell.dll
+      $VS_DEV_SHELL = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -path "$VS_PATH" -find "**\Tools\Microsoft.VisualStudio.DevShell.dll"
+    - Import-Module "$VS_DEV_SHELL"
+    - Enter-VsDevShell -InstallPath "$VS_PATH" -SkipAutomaticLocation -DevCmdArguments '/arch=x64 /host_arch=x64 /no_logo'
+  script:
+    # Configure rocRAND
+    - cmake
+      -S "$CI_PROJECT_DIR"
+      -B "$CI_PROJECT_DIR/build"
+      -G Ninja
+      -D AMDGPU_TARGETS=gfx1030
+      -D BUILD_BENCHMARK=OFF
+      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
+      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_SHARED_LIBS=ON
+      -D BUILD_TEST=ON
+      -D CMAKE_CXX_FLAGS="--rocm-path=$ROCM_PATH"
+      -D CMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/build/install"
+      -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake"
+      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
+      -D DISABLE_WERROR=OFF *>&1
+    # Building
+    - cmake --build "$CI_PROJECT_DIR/build" *>&1
+    # Running test suite
+    - ctest --test-dir "$CI_PROJECT_DIR/build" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1
+    # Installing
+    - cmake --build "$CI_PROJECT_DIR/build" --target install *>&1
+    # Configure package test
+    - cmake
+      -S "$CI_PROJECT_DIR/test/package/"
+      -B "$CI_PROJECT_DIR/build_install_test"
+      -G Ninja
+      -D CMAKE_CXX_FLAGS="--rocm-path=$ROCM_PATH"
+      -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
+    # Build package test
+    - cmake --build "$CI_PROJECT_DIR/build_install_test"
+    # Copy rocRAND.dll to the package test build directory
+    - cmake -E copy "$CI_PROJECT_DIR/build/install/bin/rocRAND.dll" "$CI_PROJECT_DIR/build_install_test" *>&1
+    # Run package test
+    - ctest --test-dir "$CI_PROJECT_DIR/build_install_test" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1
