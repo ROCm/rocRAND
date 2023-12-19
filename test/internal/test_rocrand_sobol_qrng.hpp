@@ -21,9 +21,9 @@
 #ifndef ROCRAND_TEST_INTERNAL_TEST_ROCRAND_SOBOL_QRNG_HPP_
 #define ROCRAND_TEST_INTERNAL_TEST_ROCRAND_SOBOL_QRNG_HPP_
 
-#include "rocrand/rocrand.h"
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include <rocrand/rocrand.h>
 
 #include <rng/sobol.hpp>
 
@@ -31,6 +31,9 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <numeric>
 #include <type_traits>
 #include <vector>
