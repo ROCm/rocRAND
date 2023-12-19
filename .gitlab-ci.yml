@@ -297,9 +297,7 @@ benchmark:benchmark-tuning:
     - .gpus:rocm
   stage: benchmark
   needs: []
-  variables:
-    BENCHMARK_TUNING_MIN_GRID_SIZE: 32768
-    BENCHMARK_TUNING_THREAD_OPTIONS: "128, 256, 512"
+  timeout: 3h
   script:
     # Build the appropriate benchmarks
     - export BENCHMARK_TUNING_BLOCK_OPTIONS=`$CI_PROJECT_DIR/scripts/config-tuning/get_tuned_grid_sizes.py`
