@@ -87,7 +87,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
     target_include_directories(test_rocrand_parity_rocrand PRIVATE ${CUDA_INCLUDE_DIRS})
     target_link_libraries(test_rocrand_parity_rocrand PRIVATE ${CUDA_LIBRARIES})
 else()
-    target_link_libraries(test_rocrand_parity_rocrand PRIVATE hip::host)
+    target_link_libraries(test_rocrand_parity_rocrand PRIVATE hip::device)
 endif()
 
 # Compile the files that invoke each API separately, to avoid symbol namespacing errors.
