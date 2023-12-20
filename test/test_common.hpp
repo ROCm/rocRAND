@@ -41,7 +41,19 @@
     } \
 }
 
-bool use_hmm()
+#ifdef _MSC_VER
+inline bool use_hmm()
+{
+    char   buffer[2]{};
+    size_t size;
+    if(getenv_s(&size, buffer, "ROCRAND_USE_HMM") != 0)
+    {
+        return false;
+    }
+    return strcmp(buffer, "1") == 0;
+}
+#else
+inline bool use_hmm()
 {
     if (getenv("ROCRAND_USE_HMM") == nullptr)
     {
@@ -54,6 +66,7 @@ bool use_hmm()
     }
     return false;
 }
+#endif
 
 // Helper for HMM allocations: if HMM is requested through
 // setting environment variable ROCRAND_USE_HMM=1
