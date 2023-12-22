@@ -297,7 +297,7 @@ benchmark:benchmark-tuning:
     - .gpus:rocm
   stage: benchmark
   needs: []
-  timeout: 3h
+  timeout: 12h
   script:
     # Build the appropriate benchmarks
     - export BENCHMARK_TUNING_BLOCK_OPTIONS=`$CI_PROJECT_DIR/scripts/config-tuning/get_tuned_grid_sizes.py`
