@@ -21,10 +21,10 @@
 /// \file cpp_utils.hpp
 /// Utility templates to provide extended functionality to standard library types.
 
-#ifndef ROCRAND_RNG_CPP_UTILS_HPP_
-#define ROCRAND_RNG_CPP_UTILS_HPP_
+#ifndef ROCRAND_RNG_UTILS_CPP_UTILS_HPP_
+#define ROCRAND_RNG_UTILS_CPP_UTILS_HPP_
 
-#include "utils/unreachable.hpp"
+#include "unreachable.hpp"
 
 #include <hip/hip_runtime.h>
 

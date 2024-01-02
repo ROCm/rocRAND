@@ -8,6 +8,7 @@ Documentation for rocRAND is available at
 ### Additions
 
 * Added `rocrand_create_generator_host` with initial support for `ROCRAND_RNG_PSEUDO_PHILOX4_32_10` and `ROCRAND_RNG_PSEUDO_MRG31K3P`.
+  * The host-side generators support multi-core processing. On Linux, this requires the TBB (Thread Building Blocks) development package to be installed on the system when building rocRAND (`libtbb-dev` on Ubuntu and derivatives).
 * Added the option to create a host generator to the Python wrapper
 * Added the option to create a host generator to the Fortran wrapper
 * Added dynamic ordering. This ordering is free to rearrange the produced numbers, 
