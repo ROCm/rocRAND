@@ -30,8 +30,8 @@
 #include "rocrand/rocrand.h"
 
 #include "rng/config_types.hpp"
-#include "rng/cpp_utils.hpp"
 #include "rng/distributions.hpp"
+#include "rng/utils/cpp_utils.hpp"
 
 #include "benchmark_rocrand_utils.hpp"
 #include "benchmark_tuning_setup.hpp"

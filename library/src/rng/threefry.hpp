@@ -24,10 +24,10 @@
 #include "common.hpp"
 #include "config/config_defaults.hpp"
 #include "config_types.hpp"
-#include "cpp_utils.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand.h>
 

@@ -33,9 +33,14 @@
 #include "common.hpp"
 #include "config_types.hpp"
 #include "rocrand/rocrand.h"
+#include "utils/threedim_iterator.hpp"
 
 #include <hip/hip_runtime.h>
 
+#include <algorithm>
+#ifdef ROCRAND_PARALLEL_STL
+    #include <execution>
+#endif
 #include <new>
 
 #include <stdint.h>
@@ -102,34 +107,35 @@ struct rocrand_system_host
 
         const auto kernel_callback = [](void* userdata)
         {
-            auto*      kernel_args = reinterpret_cast<KernelArgsType*>(userdata);
-            const auto num_blocks  = kernel_args->num_blocks;
-            const auto num_threads = kernel_args->num_threads;
-            for(uint32_t bz = 0; bz < num_blocks.z; ++bz)
+            auto*      kernel_args   = reinterpret_cast<KernelArgsType*>(userdata);
+            const auto num_blocks    = kernel_args->num_blocks;
+            const auto num_threads   = kernel_args->num_threads;
+            const auto execute_block = [&](const dim3 block_idx)
             {
-                for(uint32_t by = 0; by < num_blocks.y; ++by)
+                for(uint32_t tz = 0; tz < num_threads.z; ++tz)
                 {
-                    for(uint32_t bx = 0; bx < num_blocks.x; ++bx)
+                    for(uint32_t ty = 0; ty < num_threads.y; ++ty)
                     {
-                        for(uint32_t tz = 0; tz < num_threads.z; ++tz)
+                        for(uint32_t tx = 0; tx < num_threads.x; ++tx)
                         {
-                            for(uint32_t ty = 0; ty < num_threads.y; ++ty)
-                            {
-                                for(uint32_t tx = 0; tx < num_threads.x; ++tx)
-                                {
-                                    invoke_kernel<Kernel>(
-                                        dim3(bx, by, bz),
-                                        dim3(tx, ty, tz),
-                                        num_blocks,
-                                        num_threads,
-                                        std::make_index_sequence<sizeof...(Args)>(),
-                                        kernel_args->user_args);
-                                }
-                            }
+                            invoke_kernel<Kernel>(block_idx,
+                                                  dim3(tx, ty, tz),
+                                                  num_blocks,
+                                                  num_threads,
+                                                  std::make_index_sequence<sizeof...(Args)>(),
+                                                  kernel_args->user_args);
                         }
                     }
                 }
-            }
+            };
+
+            std::for_each(
+#ifdef ROCRAND_PARALLEL_STL
+                std::execution::par_unseq,
+#endif
+                cpp_utils::threedim_iterator::begin(num_blocks),
+                cpp_utils::threedim_iterator::end(num_blocks),
+                execute_block);
 
             delete kernel_args;
         };
