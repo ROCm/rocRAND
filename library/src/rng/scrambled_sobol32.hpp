@@ -157,39 +157,9 @@ public:
     rocrand_scrambled_sobol32(unsigned long long offset = 0,
                               rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                               hipStream_t        stream = 0)
-        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1), m_current_offset()
+        : base_type(order, 0, offset, stream), m_initialized(false), m_dir_vecs_allocated(false),
+          m_dimensions(1), m_current_offset()
     {
-        // Allocate direction vectors
-        hipError_t error;
-        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors),
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL32_N);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
-        error = hipMemcpy(m_direction_vectors,
-                          rocrand_h_scrambled_sobol32_direction_vectors,
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL32_N,
-                          hipMemcpyHostToDevice);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_INTERNAL_ERROR;
-        }
-        // Allocate scramble constants
-        error = hipMalloc(reinterpret_cast<void**>(&m_scramble_constants),
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
-        error = hipMemcpy(m_scramble_constants,
-                          h_scrambled_sobol32_constants,
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
-                          hipMemcpyHostToDevice);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_INTERNAL_ERROR;
-        }
     }
 
     rocrand_scrambled_sobol32(const rocrand_scrambled_sobol32&) = delete;
@@ -202,8 +172,11 @@ public:
 
     ~rocrand_scrambled_sobol32()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_scramble_constants));
+        if (m_dir_vecs_allocated)
+        {
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_direction_vectors, m_stream));
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_scramble_constants, m_stream));
+        }
     }
 
     void reset()
@@ -240,6 +213,46 @@ public:
     {
         if(m_initialized)
             return ROCRAND_STATUS_SUCCESS;
+
+        if (!m_dir_vecs_allocated)
+        {
+            // Allocate direction vectors
+            hipError_t error;
+            error = hipMallocAsync(reinterpret_cast<void**>(&m_direction_vectors),
+                                sizeof(unsigned int) * SCRAMBLED_SOBOL32_N,
+                                m_stream);
+            if(error != hipSuccess)
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+
+            error = hipMemcpyAsync(m_direction_vectors,
+                                rocrand_h_scrambled_sobol32_direction_vectors,
+                                sizeof(unsigned int) * SCRAMBLED_SOBOL32_N,
+                                hipMemcpyHostToDevice,
+                                m_stream);
+            if(error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+            // Allocate scramble constants
+            error = hipMallocAsync(reinterpret_cast<void**>(&m_scramble_constants),
+                                sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
+                                m_stream);
+            if(error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+            }
+            error = hipMemcpyAsync(m_scramble_constants,
+                                h_scrambled_sobol32_constants,
+                                sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
+                                hipMemcpyHostToDevice,
+                                m_stream);
+            if(error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+
+            m_dir_vecs_allocated = true;
+        }
 
         m_current_offset = static_cast<unsigned int>(m_offset);
         m_initialized    = true;
@@ -330,6 +343,7 @@ public:
 
 private:
     bool          m_initialized;
+    bool          m_dir_vecs_allocated;
     unsigned int  m_dimensions;
     unsigned int  m_current_offset;
     unsigned int* m_direction_vectors;

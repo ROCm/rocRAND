@@ -26,17 +26,16 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
-class rocrand_generate_poisson_tests : public ::testing::TestWithParam<rocrand_rng_type>
+class rocrand_generate_poisson_tests : public ::testing::TestWithParam<std::tuple<rocrand_rng_type, bool>>
 {};
 
 template<typename T, typename GenerateFunc>
 void test_generate(GenerateFunc generate_func)
 {
-    const rocrand_rng_type rng_type = rocrand_generate_poisson_tests::GetParam();
-
-    rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
+    const rocrand_rng_type rng_type = std::get<0>(rocrand_generate_poisson_tests::GetParam());
+    const bool use_graphs = std::get<1>(rocrand_generate_poisson_tests::GetParam());
 
     const size_t size   = 12563;
     double       lambda = 100.0;
@@ -44,19 +43,49 @@ void test_generate(GenerateFunc generate_func)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(T)));
     HIP_CHECK(hipDeviceSynchronize());
 
-    ROCRAND_CHECK(generate_func(generator, data, size, lambda));
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+
+    // This anonymous block ensures that generators are destroyed before the stream
+    // (because their destructors may call hipFreeAsync)
+    {
+        rocrand_generator generator;
+        ROCRAND_CHECK(
+            rocrand_create_generator(
+                &generator,
+                rng_type
+            )
+        );
+
+        if (use_graphs)
+        {
+            // Default stream does not support hipGraph stream capture, so create a non-blocking one
+            HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+            ROCRAND_CHECK(rocrand_set_stream(generator, stream));
+            graph = test_utils::createGraphHelper(stream);
+        }
+
+        ROCRAND_CHECK(generate_func(generator, data, size, lambda));
+        ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     HIP_CHECK(hipFree(data));
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 template<typename T, typename GenerateFunc>
 void test_out_of_range(GenerateFunc generate_func)
 {
-    const rocrand_rng_type rng_type = rocrand_generate_poisson_tests::GetParam();
-
-    rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
+    const rocrand_rng_type rng_type = std::get<0>(rocrand_generate_poisson_tests::GetParam());
+    const bool use_graphs = std::get<1>(rocrand_generate_poisson_tests::GetParam());
 
     const size_t size   = 256;
     double       lambda = 0.0;
@@ -64,10 +93,42 @@ void test_out_of_range(GenerateFunc generate_func)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(T)));
     HIP_CHECK(hipDeviceSynchronize());
 
-    EXPECT_EQ(generate_func(generator, data, size, lambda), ROCRAND_STATUS_OUT_OF_RANGE);
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+
+    // This anonymous block ensures that generators are destroyed before the stream
+    // (because their destructors may call hipFreeAsync)
+    {
+        rocrand_generator generator;
+        ROCRAND_CHECK(
+            rocrand_create_generator(
+                &generator,
+                rng_type
+            )
+        );
+
+        if (use_graphs)
+        {
+            // Default stream does not support hipGraph stream capture, so create a non-blocking one
+            HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+            ROCRAND_CHECK(rocrand_set_stream(generator, stream));
+            graph = test_utils::createGraphHelper(stream);
+        }
+
+        EXPECT_EQ(generate_func(generator, data, size, lambda), ROCRAND_STATUS_OUT_OF_RANGE);
+        ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     HIP_CHECK(hipFree(data));
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TEST_P(rocrand_generate_poisson_tests, generate_test)
@@ -99,4 +160,6 @@ TEST_P(rocrand_generate_poisson_tests, out_of_range_test)
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_poisson_tests,
                          rocrand_generate_poisson_tests,
-                         ::testing::ValuesIn(rng_types));
+                         ::testing::Combine(
+                            ::testing::ValuesIn(rng_types),
+                            ::testing::Bool()));

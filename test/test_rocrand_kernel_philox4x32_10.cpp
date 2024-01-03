@@ -33,6 +33,7 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
 template <class GeneratorState>
 __global__
@@ -205,7 +206,9 @@ TEST(rocrand_kernel_philox4x32_10, DISABLED_rocrand_state_philox4x32_10_copyable
     EXPECT_TRUE(std::is_trivially_copyable<state_type>::value);
 }
 
-TEST(rocrand_kernel_philox4x32_10, rocrand_init)
+class rocrand_kernel_philox4x32_10 : public ::testing::TestWithParam<bool> { };
+
+TEST_P(rocrand_kernel_philox4x32_10, rocrand_init)
 {
     // Just get access to internal state
     class rocrand_state_philox4x32_10_test : public rocrand_state_philox4x32_10
@@ -224,6 +227,7 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
 
     typedef rocrand_state_philox4x32_10 state_type;
     typedef rocrand_state_philox4x32_10_test state_type_test;
+    const bool use_graphs = GetParam();
 
     unsigned long long seed = 0xdeadbeefbeefdeadULL;
     unsigned long long offset = 4 * ((UINT_MAX * 17ULL) + 17);
@@ -233,13 +237,26 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&states), states_size * sizeof(state_type)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_init_kernel),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         states, states_size,
         seed, offset
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<state_type_test> states_host(states_size);
     HIP_CHECK(
@@ -275,11 +292,18 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_init)
 
         subsequence++;
     }
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_kernel_philox4x32_10, rocrand)
+TEST_P(rocrand_kernel_philox4x32_10, rocrand)
 {
     typedef rocrand_state_philox4x32_10 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     unsigned int * output;
@@ -287,12 +311,25 @@ TEST(rocrand_kernel_philox4x32_10, rocrand)
         hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -312,23 +349,43 @@ TEST(rocrand_kernel_philox4x32_10, rocrand)
     }
     mean = mean / output_size;
     EXPECT_NEAR(mean, 0.5, 0.1);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_kernel_philox4x32_10, rocrand_uniform)
+TEST_P(rocrand_kernel_philox4x32_10, rocrand_uniform)
 {
     typedef rocrand_state_philox4x32_10 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -348,23 +405,43 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_uniform)
     }
     mean = mean / output_size;
     EXPECT_NEAR(mean, 0.5, 0.1);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_kernel_philox4x32_10, rocrand_normal)
+TEST_P(rocrand_kernel_philox4x32_10, rocrand_normal)
 {
     typedef rocrand_state_philox4x32_10 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_normal_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -392,23 +469,43 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_normal)
     }
     stddev = stddev / output_size;
     EXPECT_NEAR(stddev, 1.0, 0.2);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_kernel_philox4x32_10, rocrand_log_normal)
+TEST_P(rocrand_kernel_philox4x32_10, rocrand_log_normal)
 {
     typedef rocrand_state_philox4x32_10 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     float * output;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_log_normal_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -440,15 +537,26 @@ TEST(rocrand_kernel_philox4x32_10, rocrand_log_normal)
 
     EXPECT_NEAR(1.6, logmean, 1.6 * 0.2);
     EXPECT_NEAR(0.25, logstd, 0.25 * 0.2);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-class rocrand_kernel_philox4x32_10_poisson : public ::testing::TestWithParam<double> { };
+INSTANTIATE_TEST_SUITE_P(rocrand_kernel_philox4x32_10,
+                         rocrand_kernel_philox4x32_10,
+                         ::testing::Bool());
+
+class rocrand_kernel_philox4x32_10_poisson : public ::testing::TestWithParam<std::tuple<double, bool>> { };
 
 TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_poisson)
 {
     typedef rocrand_state_philox4x32_10 state_type;
 
-    const double lambda = GetParam();
+    const double lambda = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     const size_t output_size = 8192;
     unsigned int * output;
@@ -456,12 +564,27 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_poisson)
         hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
-        dim3(4), dim3(64), 0, 0,
+        dim3(4), dim3(64), 0, stream,
         output, output_size, lambda
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipStreamSynchronize(stream));
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -490,13 +613,20 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_poisson)
 
     EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_discrete)
 {
     typedef rocrand_state_philox4x32_10 state_type;
 
-    const double lambda = GetParam();
+    const double lambda = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     const size_t output_size = 8192;
     unsigned int * output;
@@ -504,15 +634,30 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_discrete)
         hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     rocrand_discrete_distribution discrete_distribution;
     ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_discrete_kernel<state_type>),
-        dim3(4), dim3(64), 0, 0,
+        dim3(4), dim3(64), 0, stream,
         output, output_size, discrete_distribution
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipStreamSynchronize(stream));
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -542,10 +687,18 @@ TEST_P(rocrand_kernel_philox4x32_10_poisson, rocrand_discrete)
 
     EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
 
 INSTANTIATE_TEST_SUITE_P(rocrand_kernel_philox4x32_10_poisson,
-                        rocrand_kernel_philox4x32_10_poisson,
-                        ::testing::ValuesIn(lambdas));
+                         rocrand_kernel_philox4x32_10_poisson,
+                         ::testing::Combine(
+                            ::testing::ValuesIn(lambdas),
+                            ::testing::Bool()));

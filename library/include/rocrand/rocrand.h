@@ -696,6 +696,7 @@ rocrand_get_version(int * version);
  *
  * \param lambda - lambda for the Poisson distribution
  * \param discrete_distribution - pointer to the histogram in device memory
+ * \param stream - stream to use for generating the distribution (defaults to the default stream)
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if memory could not be allocated \n
@@ -705,7 +706,8 @@ rocrand_get_version(int * version);
  */
 rocrand_status ROCRANDAPI
 rocrand_create_poisson_distribution(double lambda,
-                                    rocrand_discrete_distribution * discrete_distribution);
+                                    rocrand_discrete_distribution * discrete_distribution, 
+                                    hipStream_t stream = 0);
 
 /**
  * \brief Construct the histogram for a custom discrete distribution.
@@ -718,6 +720,7 @@ rocrand_create_poisson_distribution(double lambda,
  * \param size - size of \p probabilities
  * \param offset - offset of values
  * \param discrete_distribution - pointer to the histogram in device memory
+ * \param stream - stream to use for generating the distribution (defaults to the default stream)
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if memory could not be allocated \n
@@ -729,7 +732,8 @@ rocrand_status ROCRANDAPI
 rocrand_create_discrete_distribution(const double * probabilities,
                                      unsigned int size,
                                      unsigned int offset,
-                                     rocrand_discrete_distribution * discrete_distribution);
+                                     rocrand_discrete_distribution * discrete_distribution,
+                                     hipStream_t stream = 0);
 
 /**
  * \brief Destroy the histogram array for a discrete distribution.
@@ -738,13 +742,14 @@ rocrand_create_discrete_distribution(const double * probabilities,
  * rocrand_create_poisson_distribution.
  *
  * \param discrete_distribution - pointer to the histogram in device memory
+ * \param stream - stream to use for generating the distribution (defaults to the default stream)
  *
  * \return
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution was null \n
  * - ROCRAND_STATUS_SUCCESS if the histogram was destroyed successfully \n
  */
 rocrand_status ROCRANDAPI
-rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution);
+rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution, hipStream_t stream = 0);
 
 /**
  * \brief Get the vector for 32-bit (scrambled-)sobol generation.

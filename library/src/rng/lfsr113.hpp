@@ -152,13 +152,6 @@ public:
         , m_engines_size(s_threads * s_blocks)
         , m_start_engine_id()
     {
-        // Allocate device random number engines
-        hipError_t error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
     }
 
     rocrand_lfsr113(const rocrand_lfsr113&) = delete;
@@ -171,7 +164,8 @@ public:
 
     ~rocrand_lfsr113()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        if (m_engines)
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_engines, m_stream));
     }
 
     void set_seed(unsigned long long seed)
@@ -225,6 +219,13 @@ public:
     {
         if(m_engines_initialized)
             return ROCRAND_STATUS_SUCCESS;
+
+        // If this is the first time init() is being called, allocate memory for the device engines.
+        if (!m_engines)
+        {
+            if (hipMallocAsync(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size, m_stream) != hipSuccess)
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
 
         m_start_engine_id = m_offset % m_engines_size;
 
@@ -311,7 +312,7 @@ private:
     bool         m_engines_initialized;
     engine_type* m_engines;
     size_t       m_engines_size;
-
+    
     static const uint32_t s_threads = 256;
     static const uint32_t s_blocks  = 512;
 

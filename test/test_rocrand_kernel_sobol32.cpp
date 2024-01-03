@@ -33,6 +33,7 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
 template <class GeneratorState>
 __global__
@@ -141,6 +142,8 @@ void rocrand_poisson_kernel(unsigned int * output, unsigned int * vectors, const
     }
 }
 
+class rocrand_kernel_sobol32 : public ::testing::TestWithParam<bool> { };
+
 TEST(rocrand_kernel_sobol32, rocrand_state_sobol32_type)
 {
     typedef rocrand_state_sobol32 state_type;
@@ -150,9 +153,10 @@ TEST(rocrand_kernel_sobol32, rocrand_state_sobol32_type)
     EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
 }
 
-TEST(rocrand_kernel_sobol32, rocrand)
+TEST_P(rocrand_kernel_sobol32, rocrand)
 {
     typedef rocrand_state_sobol32 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     unsigned int * output;
@@ -170,12 +174,25 @@ TEST(rocrand_kernel_sobol32, rocrand)
         hipMemcpy(m_vector, h_directions, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, m_vector, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -196,11 +213,18 @@ TEST(rocrand_kernel_sobol32, rocrand)
     }
     mean = mean / output_size;
     EXPECT_NEAR(mean, 0.5, 0.1);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_kernel_sobol32, rocrand_uniform)
+TEST_P(rocrand_kernel_sobol32, rocrand_uniform)
 {
     typedef rocrand_state_sobol32 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     float * output;
@@ -217,12 +241,25 @@ TEST(rocrand_kernel_sobol32, rocrand_uniform)
         hipMemcpy(m_vector, h_directions, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, m_vector, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -243,11 +280,18 @@ TEST(rocrand_kernel_sobol32, rocrand_uniform)
     }
     mean = mean / output_size;
     EXPECT_NEAR(mean, 0.5, 0.1);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_kernel_sobol32, rocrand_normal)
+TEST_P(rocrand_kernel_sobol32, rocrand_normal)
 {
     typedef rocrand_state_sobol32 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     float * output;
@@ -264,12 +308,25 @@ TEST(rocrand_kernel_sobol32, rocrand_normal)
         hipMemcpy(m_vector, h_directions, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_normal_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, m_vector, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -298,11 +355,18 @@ TEST(rocrand_kernel_sobol32, rocrand_normal)
     }
     stddev = stddev / output_size;
     EXPECT_NEAR(stddev, 1.0, 0.2);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_kernel_sobol32, rocrand_log_normal)
+TEST_P(rocrand_kernel_sobol32, rocrand_log_normal)
 {
     typedef rocrand_state_sobol32 state_type;
+    const bool use_graphs = GetParam();
 
     const size_t output_size = 8192;
     float * output;
@@ -319,12 +383,25 @@ TEST(rocrand_kernel_sobol32, rocrand_log_normal)
         hipMemcpy(m_vector, h_directions, sizeof(unsigned int) * 8 * 32, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_log_normal_kernel<state_type>),
         dim3(8), dim3(32), 0, 0,
         output, m_vector, output_size
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
@@ -357,15 +434,26 @@ TEST(rocrand_kernel_sobol32, rocrand_log_normal)
 
     EXPECT_NEAR(1.6, logmean, 1.6 * 0.2);
     EXPECT_NEAR(0.25, logstd, 0.25 * 0.2);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-class rocrand_kernel_sobol32_poisson : public ::testing::TestWithParam<double> { };
+INSTANTIATE_TEST_SUITE_P(rocrand_kernel_sobol32,
+                         rocrand_kernel_sobol32,
+                         ::testing::Bool());
+
+class rocrand_kernel_sobol32_poisson : public ::testing::TestWithParam<std::tuple<double, bool>> { };
 
 TEST_P(rocrand_kernel_sobol32_poisson, rocrand_poisson)
 {
     typedef rocrand_state_sobol32 state_type;
 
-    const double lambda = GetParam();
+    const double lambda = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     const unsigned int* h_directions;
     ROCRAND_CHECK(
@@ -383,12 +471,27 @@ TEST_P(rocrand_kernel_sobol32_poisson, rocrand_poisson)
         hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
-        dim3(8), dim3(32), 0, 0,
+        dim3(8), dim3(32), 0, stream,
         output, m_vector, output_size, lambda
     );
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipStreamSynchronize(stream));
 
     std::vector<unsigned int> output_host(output_size);
     HIP_CHECK(
@@ -418,10 +521,18 @@ TEST_P(rocrand_kernel_sobol32_poisson, rocrand_poisson)
 
     EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
 
 INSTANTIATE_TEST_SUITE_P(rocrand_kernel_sobol32_poisson,
-                        rocrand_kernel_sobol32_poisson,
-                        ::testing::ValuesIn(lambdas));
+                         rocrand_kernel_sobol32_poisson,
+                         ::testing::Combine(
+                            ::testing::ValuesIn(lambdas),
+                            ::testing::Bool()));

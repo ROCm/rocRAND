@@ -361,6 +361,7 @@ typedef rocrand_device::mtgp32_params mtgp32_params;
  * \param params - Pointer to an array of type mtgp32_fast_params in host memory
  * \param n - Number of states to initialize
  * \param seed - Seed value
+ * \param stream - The stream to use to memcopy the host-generated state to the device.
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if states could not be initialized
@@ -370,7 +371,8 @@ __host__ inline
 rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
                                          mtgp32_fast_params params[],
                                          int n,
-                                         unsigned long long seed)
+                                         unsigned long long seed,
+                                         hipStream_t stream = 0)
 {
     int i;
     rocrand_state_mtgp32 * h_state = (rocrand_state_mtgp32 *) malloc(sizeof(rocrand_state_mtgp32) * n);
@@ -394,8 +396,14 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
         }
     }
 
-    hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
-    free(h_state);
+    hipMemcpyAsync(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice, stream);
+
+    // To free h_state, insert a host callback into the stream - otherwise it may execute before the above hipMemcpyAsync call completes.
+    hipHostFn_t callback = [](void *user_data) {
+        rocrand_state_mtgp32* h_state = reinterpret_cast<rocrand_state_mtgp32*>(user_data);
+        free(h_state);
+    };
+    hipLaunchHostFunc(stream, callback, static_cast<void*>(h_state));
 
     if (hipGetLastError() != hipSuccess)
         return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -414,13 +422,14 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
  *
  * \param params - Pointer to an array of type mtgp32_fast_params in host memory
  * \param p - Pointer to a mtgp32_params structure allocated in device memory
+ * \param stream - The stream to use to memcopy the host-generated state to the device.
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if parameters could not be loaded
  * - ROCRAND_STATUS_SUCCESS if parameters are loaded
  */
 __host__ inline
-rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_params * p)
+rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_params * p, hipStream_t stream = 0)
 {
     const int block_num = MTGP_BN_MAX;
     const int size1 = sizeof(uint32_t) * block_num;
@@ -460,29 +469,55 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_p
             }
         }
 
-        if (hipMemcpy(p->pos_tbl, h_pos_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+        if (hipMemcpyAsync(p->pos_tbl, h_pos_tbl, size1, hipMemcpyHostToDevice, stream) != hipSuccess)
             status = ROCRAND_STATUS_ALLOCATION_FAILED;
-        if (hipMemcpy(p->sh1_tbl, h_sh1_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+        if (hipMemcpyAsync(p->sh1_tbl, h_sh1_tbl, size1, hipMemcpyHostToDevice, stream) != hipSuccess)
             status = ROCRAND_STATUS_ALLOCATION_FAILED;
-        if (hipMemcpy(p->sh2_tbl, h_sh2_tbl, size1, hipMemcpyHostToDevice) != hipSuccess)
+        if (hipMemcpyAsync(p->sh2_tbl, h_sh2_tbl, size1, hipMemcpyHostToDevice, stream) != hipSuccess)
             status = ROCRAND_STATUS_ALLOCATION_FAILED;
-        if (hipMemcpy(p->param_tbl, h_param_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+        if (hipMemcpyAsync(p->param_tbl, h_param_tbl, size2, hipMemcpyHostToDevice, stream) != hipSuccess)
             status = ROCRAND_STATUS_ALLOCATION_FAILED;
-        if (hipMemcpy(p->temper_tbl, h_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+        if (hipMemcpyAsync(p->temper_tbl, h_temper_tbl, size2, hipMemcpyHostToDevice, stream) != hipSuccess)
             status = ROCRAND_STATUS_ALLOCATION_FAILED;
-        if (hipMemcpy(p->single_temper_tbl, h_single_temper_tbl, size2, hipMemcpyHostToDevice) != hipSuccess)
+        if (hipMemcpyAsync(p->single_temper_tbl, h_single_temper_tbl, size2, hipMemcpyHostToDevice, stream) != hipSuccess)
             status = ROCRAND_STATUS_ALLOCATION_FAILED;
-        if (hipMemcpy(p->mask, h_mask, sizeof(unsigned int), hipMemcpyHostToDevice) != hipSuccess)
+        if (hipMemcpyAsync(p->mask, h_mask, sizeof(unsigned int), hipMemcpyHostToDevice, stream) != hipSuccess)
             status = ROCRAND_STATUS_ALLOCATION_FAILED;
     }
 
-    free(h_pos_tbl);
-    free(h_sh1_tbl);
-    free(h_sh2_tbl);
-    free(h_param_tbl);
-    free(h_temper_tbl);
-    free(h_single_temper_tbl);
-    free(h_mask);
+    // To free host state pointers, insert a host callback into the stream - otherwise it may execute before the above hipMamcpyAsync calls complete.
+    struct host_ptrs
+    {
+        uint32_t* h_pos_tbl;
+        uint32_t* h_sh1_tbl;
+        uint32_t* h_sh2_tbl;
+        uint32_t* h_param_tbl;
+        uint32_t* h_temper_tbl;
+        uint32_t* h_single_temper_tbl;
+        uint32_t* h_mask;
+    };
+
+    host_ptrs user_data = host_ptrs {
+        h_pos_tbl,
+        h_sh1_tbl,
+        h_sh2_tbl,
+        h_param_tbl,
+        h_temper_tbl,
+        h_single_temper_tbl,
+        h_mask
+    };
+
+    hipHostFn_t callback = [](void *user_data) {
+        host_ptrs* ptrs = reinterpret_cast<host_ptrs*>(user_data);
+        free(ptrs->h_pos_tbl);
+        free(ptrs->h_sh1_tbl);
+        free(ptrs->h_sh2_tbl);
+        free(ptrs->h_param_tbl);
+        free(ptrs->h_temper_tbl);
+        free(ptrs->h_single_temper_tbl);
+        free(ptrs->h_mask);
+    };
+    hipLaunchHostFunc(stream, callback, static_cast<void*>(&user_data));
 
     return status;
 }

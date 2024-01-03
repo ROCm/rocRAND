@@ -153,24 +153,9 @@ public:
     rocrand_sobol64(unsigned long long int offset = 0,
                     rocrand_ordering       order  = ROCRAND_ORDERING_QUASI_DEFAULT,
                     hipStream_t            stream = 0)
-        : base_type(order, 0, offset, stream), m_initialized(false), m_dimensions(1), m_current_offset()
+        : base_type(order, 0, offset, stream), m_initialized(false), m_dir_vecs_allocated(false),
+          m_dimensions(1), m_current_offset()
     {
-        // Allocate direction vectors
-        hipError_t error;
-        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors),
-                          sizeof(unsigned long long int) * SOBOL64_N);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
-        error = hipMemcpy(m_direction_vectors,
-                          rocrand_h_sobol64_direction_vectors,
-                          sizeof(unsigned long long int) * SOBOL64_N,
-                          hipMemcpyHostToDevice);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_INTERNAL_ERROR;
-        }
     }
 
     rocrand_sobol64(const rocrand_sobol64&) = delete;
@@ -183,7 +168,8 @@ public:
 
     ~rocrand_sobol64()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
+        if (m_dir_vecs_allocated)
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_direction_vectors, m_stream));
     }
 
     void reset()
@@ -220,6 +206,30 @@ public:
     {
         if (m_initialized)
             return ROCRAND_STATUS_SUCCESS;
+
+        if (!m_dir_vecs_allocated)
+        {
+            // Allocate direction vectors
+            hipError_t error;
+            error = hipMallocAsync(reinterpret_cast<void**>(&m_direction_vectors),
+                                sizeof(unsigned long long int) * SOBOL64_N,
+                                m_stream);
+            if(error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+            }
+            error = hipMemcpyAsync(m_direction_vectors,
+                                rocrand_h_sobol64_direction_vectors,
+                                sizeof(unsigned long long int) * SOBOL64_N,
+                                hipMemcpyHostToDevice,
+                                m_stream);
+            if(error != hipSuccess)
+            {
+                throw ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+
+            m_dir_vecs_allocated = true;
+        }
 
         m_current_offset = static_cast<unsigned int>(m_offset);
         m_initialized = true;
@@ -308,6 +318,7 @@ public:
 
 private:
     bool m_initialized;
+    bool m_dir_vecs_allocated;
     unsigned int m_dimensions;
     unsigned int m_current_offset;
     unsigned long long int * m_direction_vectors;

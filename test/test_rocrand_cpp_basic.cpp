@@ -26,28 +26,55 @@
 
 #include <hip/hip_runtime_api.h>
 
-template<typename GeneratorType>
+#include "test_utils_hipgraphs.hpp"
+
+#include <iostream>
+
+template<typename GeneratorType, bool UseGraphs = false>
+struct rocrand_cpp_basic_params
+{
+    using generator_type = GeneratorType;
+    static const bool use_graphs = UseGraphs;
+};
+
+template<class Params>
 class rocrand_cpp_basic_tests : public ::testing::Test
 {
 public:
-    using generator_type = GeneratorType;
+    using generator_type = typename Params::generator_type;
+    static const bool use_graphs = Params::use_graphs;
 };
 
-using GeneratorTypes = testing::Types<rocrand_cpp::lfsr113,
-                                      rocrand_cpp::mrg31k3p,
-                                      rocrand_cpp::mrg32k3a,
-                                      rocrand_cpp::mt19937,
-                                      rocrand_cpp::mtgp32,
-                                      rocrand_cpp::philox4x32_10,
-                                      rocrand_cpp::scrambled_sobol32,
-                                      rocrand_cpp::scrambled_sobol64,
-                                      rocrand_cpp::sobol32,
-                                      rocrand_cpp::sobol64,
-                                      rocrand_cpp::threefry2x32,
-                                      rocrand_cpp::threefry2x64,
-                                      rocrand_cpp::threefry4x32,
-                                      rocrand_cpp::threefry4x64,
-                                      rocrand_cpp::xorwow>;
+using GeneratorTypes = testing::Types<rocrand_cpp_basic_params<rocrand_cpp::lfsr113>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::mrg31k3p>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::mrg32k3a>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::mt19937>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::mtgp32>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::philox4x32_10>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::scrambled_sobol32>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::scrambled_sobol64>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::sobol32>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::sobol64>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry2x32>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry2x64>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry4x32>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry4x64>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::xorwow>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::lfsr113, true>, // test with hipGraphs
+                                      rocrand_cpp_basic_params<rocrand_cpp::mrg31k3p, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::mrg32k3a, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::mt19937, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::mtgp32, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::philox4x32_10, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::scrambled_sobol32, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::scrambled_sobol64, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::sobol32, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::sobol64, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry2x32, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry2x64, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry4x32, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::threefry4x64, true>,
+                                      rocrand_cpp_basic_params<rocrand_cpp::xorwow, true>>;
 
 TYPED_TEST_SUITE(rocrand_cpp_basic_tests, GeneratorTypes);
 
@@ -60,32 +87,67 @@ TYPED_TEST(rocrand_cpp_basic_tests, move_construction)
     float* d_data;
     HIP_CHECK(hipMallocHelper(&d_data, sizeof(*d_data)));
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     float expected;
     {
         // Generate two values to verify that moving from a generator transfers the state
         generator_type g;
+
+        if (TestFixture::use_graphs)
+            g.stream(stream);
+
         dist(g, d_data, 1);
         dist(g, d_data, 1);
+
+        if (TestFixture::use_graphs)
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
         HIP_CHECK(hipMemcpy(&expected, d_data, sizeof(expected), hipMemcpyDeviceToHost));
     }
 
-    // Create g2 in a new scope so that it gets destroyed before g1.
-    // Have to have some kind of indirection here for the deferred lifetimes, unique_ptr is chosen
-    // because std::optional would be C++17
-    std::unique_ptr<generator_type> g1;
+    if (TestFixture::use_graphs)
+        test_utils::resetGraphHelper(graph, graph_instance, stream);
+
+    // This anonymous block ensures that g1 is destroyed before the stream it uses.
     {
-        generator_type g2;
-        dist(g2, d_data, 1);
-        g1.reset(new generator_type(std::move(g2)));
+        // Create g2 in a new scope so that it gets destroyed before g1.
+        // Have to have some kind of indirection here for the deferred lifetimes, unique_ptr is chosen
+        // because std::optional would be C++17
+        std::unique_ptr<generator_type> g1;
+        {
+            generator_type g2;
+            if (TestFixture::use_graphs)
+                g2.stream(stream);
+
+            dist(g2, d_data, 1);
+
+            g1.reset(new generator_type(std::move(g2)));
+        }
+
+        dist(*g1, d_data, 1);
     }
 
-    dist(*g1, d_data, 1);
+    if (TestFixture::use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     float actual;
     HIP_CHECK(hipMemcpy(&actual, d_data, sizeof(actual), hipMemcpyDeviceToHost));
 
     ASSERT_EQ(expected, actual);
+
+    if (TestFixture::use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TYPED_TEST(rocrand_cpp_basic_tests, move_assignment)
@@ -97,28 +159,64 @@ TYPED_TEST(rocrand_cpp_basic_tests, move_assignment)
     float* d_data;
     HIP_CHECK(hipMallocHelper(&d_data, sizeof(*d_data)));
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     float expected;
     {
         // Generate two values to verify that moving from a generator transfers the state
         generator_type g;
+        if (TestFixture::use_graphs)
+            g.stream(stream);
+
         dist(g, d_data, 1);
         dist(g, d_data, 1);
+
+        if (TestFixture::use_graphs)
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
         HIP_CHECK(hipMemcpy(&expected, d_data, sizeof(expected), hipMemcpyDeviceToHost));
     }
 
-    // Create g2 in a new scope so that it gets destroyed before g1.
-    generator_type g1;
+    if (TestFixture::use_graphs)
+        test_utils::resetGraphHelper(graph, graph_instance, stream);
+
+    // This anonymous block ensures that g1 is destroyed before the stream it uses.
     {
-        generator_type g2;
-        dist(g2, d_data, 1);
-        g1 = std::move(g2);
+        // Create g2 in a new scope so that it gets destroyed before g1.
+        generator_type g1;
+        if (TestFixture::use_graphs)
+            g1.stream(stream);
+
+        {
+            generator_type g2;
+            if (TestFixture::use_graphs)
+                g2.stream(stream);
+
+            dist(g2, d_data, 1);
+            g1 = std::move(g2);
+        }
+
+        dist(g1, d_data, 1);
     }
 
-    dist(g1, d_data, 1);
+    if (TestFixture::use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     float actual;
     HIP_CHECK(hipMemcpy(&actual, d_data, sizeof(actual), hipMemcpyDeviceToHost));
 
     ASSERT_EQ(expected, actual);
+
+    if (TestFixture::use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }

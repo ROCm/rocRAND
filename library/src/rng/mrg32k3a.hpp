@@ -159,13 +159,6 @@ public:
         , m_engines_size(s_threads * s_blocks)
         , m_start_engine_id()
     {
-        // Allocate device random number engines
-        hipError_t error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
         if(m_seed == 0)
         {
             m_seed = ROCRAND_MRG32K3A_DEFAULT_SEED;
@@ -182,7 +175,8 @@ public:
 
     ~rocrand_mrg32k3a()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        if (m_engines)
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_engines, m_stream));
     }
 
     void reset()
@@ -222,6 +216,13 @@ public:
             return ROCRAND_STATUS_SUCCESS;
 
         m_start_engine_id = m_offset % m_engines_size;
+
+        // If this is the first time init() is being called, allocate memory for the device engines.
+        if (!m_engines)
+        {
+            if(hipMallocAsync(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size, m_stream) != hipSuccess)
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
 
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),

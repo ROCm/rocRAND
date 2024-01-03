@@ -20,6 +20,7 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
 #include <rng/sobol32.hpp>
 
@@ -29,15 +30,40 @@
 #include <numeric>
 #include <vector>
 
-TEST(rocrand_sobol32_qrng_tests, uniform_uint_test)
+class rocrand_sobol32_qrng_tests : public ::testing::TestWithParam<bool> { };
+
+TEST_P(rocrand_sobol32_qrng_tests, uniform_uint_test)
 {
+    const bool use_graphs = GetParam();
     const size_t size = 1313;
     unsigned int * data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    rocrand_sobol32 g;
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_sobol32 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
@@ -52,17 +78,45 @@ TEST(rocrand_sobol32_qrng_tests, uniform_uint_test)
     ASSERT_NEAR(mean, UINT_MAX / 2, UINT_MAX / 20);
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_sobol32_qrng_tests, uniform_float_test)
+TEST_P(rocrand_sobol32_qrng_tests, uniform_float_test)
 {
+    const bool use_graphs = GetParam();
     const size_t size = 1313;
     float * data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
-    rocrand_sobol32 g;
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_sobol32 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     float host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
@@ -79,17 +133,45 @@ TEST(rocrand_sobol32_qrng_tests, uniform_float_test)
     ASSERT_NEAR(mean, 0.5f, 0.05f);
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_sobol32_qrng_tests, normal_float_test)
+TEST_P(rocrand_sobol32_qrng_tests, normal_float_test)
 {
+    const bool use_graphs = GetParam();
     const size_t size = 1313;
     float * data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
 
-    rocrand_sobol32 g;
-    ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_sobol32 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     float host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
@@ -113,17 +195,45 @@ TEST(rocrand_sobol32_qrng_tests, normal_float_test)
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_sobol32_qrng_tests, poisson_test)
+TEST_P(rocrand_sobol32_qrng_tests, poisson_test)
 {
+    const bool use_graphs = GetParam();
     const size_t size = 1313;
     unsigned int * data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    rocrand_sobol32 g;
-    ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_sobol32 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
@@ -148,53 +258,116 @@ TEST(rocrand_sobol32_qrng_tests, poisson_test)
     EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_sobol32_qrng_tests, dimesions_test)
+TEST_P(rocrand_sobol32_qrng_tests, dimesions_test)
 {
+    const bool use_graphs = GetParam();
     const size_t size = 12345;
     float * data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size));
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
-    rocrand_sobol32 g;
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
 
-    ROCRAND_CHECK(g.generate(data, size));
+        rocrand_sobol32 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate(data, size));
 
-    ROCRAND_CHECK(g.set_dimensions(4));
-    EXPECT_EQ(g.generate(data, size), ROCRAND_STATUS_LENGTH_NOT_MULTIPLE);
+        ROCRAND_CHECK(g.set_dimensions(4));
+        EXPECT_EQ(g.generate(data, size), ROCRAND_STATUS_LENGTH_NOT_MULTIPLE);
 
-    ROCRAND_CHECK(g.set_dimensions(15));
-    ROCRAND_CHECK(g.generate(data, size));
+        ROCRAND_CHECK(g.set_dimensions(15));
+        ROCRAND_CHECK(g.generate(data, size));
+    }
 
-    HIP_CHECK(hipDeviceSynchronize());
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
+
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 // Check if the numbers generated by first generate() call are different from
 // the numbers generated by the 2nd call (same generator)
-TEST(rocrand_sobol32_qrng_tests, state_progress_test)
+TEST_P(rocrand_sobol32_qrng_tests, state_progress_test)
 {
+    const bool use_graphs = GetParam();
+
     // Device data
     const size_t size = 1025;
     unsigned int * data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    // Generator
-    rocrand_sobol32 g0;
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     unsigned int host_data1[size];
-    HIP_CHECK(hipMemcpy(host_data1, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
     unsigned int host_data2[size];
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        // Generator
+        rocrand_sobol32 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+
+        // Generate using g0 and copy to host
+        ROCRAND_CHECK(g0.generate(data, size));
+
+        if (use_graphs)
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        HIP_CHECK(hipMemcpy(host_data1, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        if (use_graphs)
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+
+        // Generate using g0 and copy to host
+        ROCRAND_CHECK(g0.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
+
     HIP_CHECK(hipMemcpy(host_data2, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -208,9 +381,14 @@ TEST(rocrand_sobol32_qrng_tests, state_progress_test)
     EXPECT_LT(same, static_cast<size_t>(0.01f * size));
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_sobol32_qrng_tests, discard_test)
+TEST(rocrand_sobol32_qrng_engine_tests, discard_test)
 {
     const unsigned int* h_directions;
     ROCRAND_CHECK(
@@ -247,7 +425,7 @@ TEST(rocrand_sobol32_qrng_tests, discard_test)
     }
 }
 
-TEST(rocrand_sobol32_qrng_tests, discard_stride_test)
+TEST(rocrand_sobol32_qrng_engine_tests, discard_stride_test)
 {
     const unsigned int* h_directions;
     ROCRAND_CHECK(
@@ -271,13 +449,18 @@ TEST(rocrand_sobol32_qrng_tests, discard_stride_test)
     }
 }
 
+INSTANTIATE_TEST_SUITE_P(rocrand_sobol32_qrng_tests,
+                         rocrand_sobol32_qrng_tests,
+                         ::testing::Bool());
+
 class rocrand_sobol32_qrng_offset
-    : public ::testing::TestWithParam<std::tuple<unsigned int, unsigned long long>> { };
+    : public ::testing::TestWithParam<std::tuple<unsigned int, unsigned long long, bool>> { };
 
 TEST_P(rocrand_sobol32_qrng_offset, offsets_test)
 {
-    const unsigned int dimensions = std::get<0>(GetParam());
+    const unsigned int dimensions   = std::get<0>(GetParam());
     const unsigned long long offset = std::get<1>(GetParam());
+    const bool use_graphs           = std::get<2>(GetParam());
 
     const size_t size = 1313;
 
@@ -288,14 +471,38 @@ TEST_P(rocrand_sobol32_qrng_offset, offsets_test)
     hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
     hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
-    rocrand_sobol32 g0;
-    g0.set_offset(offset);
-    g0.set_dimensions(dimensions);
-    g0.generate(data0, size0);
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
-    rocrand_sobol32 g1;
-    g1.set_dimensions(dimensions);
-    g1.generate(data1, size1);
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_sobol32 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+        g0.set_offset(offset);
+        g0.set_dimensions(dimensions);
+        g0.generate(data0, size0);
+
+        rocrand_sobol32 g1;
+        ROCRAND_CHECK(rocrand_set_stream(&g1, stream));
+        g1.set_dimensions(dimensions);
+        g1.generate(data1, size1);
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        hipDeviceSynchronize();
 
     std::vector<unsigned int> host_data0(size0);
     std::vector<unsigned int> host_data1(size1);
@@ -316,6 +523,11 @@ TEST_P(rocrand_sobol32_qrng_offset, offsets_test)
 
     hipFree(data0);
     hipFree(data1);
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 const unsigned int dimensions[] = { 1, 2, 10, 321 };
@@ -323,16 +535,19 @@ const unsigned long long offsets[] = { 0, 1, 11, 112233 };
 
 INSTANTIATE_TEST_SUITE_P(rocrand_sobol32_qrng_offset,
                         rocrand_sobol32_qrng_offset,
-                        ::testing::Combine(::testing::ValuesIn(dimensions), ::testing::ValuesIn(offsets)));
+                        ::testing::Combine(
+                            ::testing::ValuesIn(dimensions), ::testing::ValuesIn(offsets), 
+                            ::testing::Bool()));
 
 class rocrand_sobol32_qrng_continuity
-    : public ::testing::TestWithParam<unsigned int> { };
+    : public ::testing::TestWithParam<std::tuple<unsigned int, bool>> { };
 
 // Check that subsequent generations of different sizes produce one Sobol
 // sequence without gaps, no matter how many values are generated per call.
 TEST_P(rocrand_sobol32_qrng_continuity, continuity_test)
 {
-    const unsigned int dimensions = GetParam();
+    const unsigned int dimensions = std::get<0>(GetParam());
+    const bool use_graphs         = std::get<1>(GetParam());
 
     const std::vector<size_t> sizes0({ 100, 1, 24783, 3, 2, 776543 });
     const std::vector<size_t> sizes1({ 1024, 56, 65536, 623456, 30, 111330 });
@@ -348,42 +563,66 @@ TEST_P(rocrand_sobol32_qrng_continuity, continuity_test)
     hipMalloc(reinterpret_cast<void**>(&data0), sizeof(unsigned int) * size0);
     hipMalloc(reinterpret_cast<void**>(&data1), sizeof(unsigned int) * size1);
 
-    rocrand_sobol32 g0;
-    rocrand_sobol32 g1;
-    g0.set_dimensions(dimensions);
-    g1.set_dimensions(dimensions);
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     std::vector<unsigned int> host_data0(size0);
     std::vector<unsigned int> host_data1(size1);
 
-    // host_data0 contains all s0 values of dim0, then all s0 values of dim1...
-    // host_data1 contains all s1 values of dim0, then all s1 values of dim1...
-    size_t current0 = 0;
-    for (size_t s : sizes0)
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
     {
-        g0.generate(data0, s * dimensions);
-        for(unsigned int d = 0; d < dimensions; d++)
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_sobol32 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+        rocrand_sobol32 g1;
+        ROCRAND_CHECK(rocrand_set_stream(&g1, stream));
+
+        g0.set_dimensions(dimensions);
+        g1.set_dimensions(dimensions);
+
+        // host_data0 contains all s0 values of dim0, then all s0 values of dim1...
+        // host_data1 contains all s1 values of dim0, then all s1 values of dim1...
+        size_t current0 = 0;
+        for (size_t s : sizes0)
         {
-            hipMemcpy(
-                host_data0.data() + s0 * d + current0,
-                data0 + d * s,
-                sizeof(unsigned int) * s, hipMemcpyDefault);
+            g0.generate(data0, s * dimensions);
+            for(unsigned int d = 0; d < dimensions; d++)
+            {
+                hipMemcpyAsync(
+                    host_data0.data() + s0 * d + current0,
+                    data0 + d * s,
+                    sizeof(unsigned int) * s, hipMemcpyDefault, 
+                    stream);
+            }
+            current0 += s;
         }
-        current0 += s;
-    }
-    size_t current1 = 0;
-    for (size_t s : sizes1)
-    {
-        g1.generate(data1, s * dimensions);
-        for(unsigned int d = 0; d < dimensions; d++)
+        size_t current1 = 0;
+        for (size_t s : sizes1)
         {
-            hipMemcpy(
-                host_data1.data() + s1 * d + current1,
-                data1 + d * s,
-                sizeof(unsigned int) * s, hipMemcpyDefault);
+            g1.generate(data1, s * dimensions);
+            for(unsigned int d = 0; d < dimensions; d++)
+            {
+                hipMemcpyAsync(
+                    host_data1.data() + s1 * d + current1,
+                    data1 + d * s,
+                    sizeof(unsigned int) * s, hipMemcpyDefault,
+                    stream);
+            }
+            current1 += s;
         }
-        current1 += s;
     }
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     for(unsigned int d = 0; d < dimensions; d++)
     {
@@ -398,10 +637,17 @@ TEST_P(rocrand_sobol32_qrng_continuity, continuity_test)
 
     hipFree(data0);
     hipFree(data1);
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 const unsigned int continuity_test_dimensions[] = { 1, 2, 10, 21 };
 
 INSTANTIATE_TEST_SUITE_P(rocrand_sobol32_qrng_continuity,
                         rocrand_sobol32_qrng_continuity,
-                        ::testing::ValuesIn(continuity_test_dimensions));
+                        ::testing::Combine(
+                            ::testing::ValuesIn(continuity_test_dimensions),
+                            ::testing::Bool()));
