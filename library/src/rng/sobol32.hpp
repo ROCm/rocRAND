@@ -156,16 +156,18 @@ public:
     {
         // Allocate direction vectors
         hipError_t error;
-        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors),
-                          sizeof(unsigned int) * SOBOL32_N);
+        error = hipMallocAsync(reinterpret_cast<void**>(&m_direction_vectors),
+                               sizeof(unsigned int) * SOBOL32_N,
+                               m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
-        error = hipMemcpy(m_direction_vectors,
-                          rocrand_h_sobol32_direction_vectors,
-                          sizeof(unsigned int) * SOBOL32_N,
-                          hipMemcpyHostToDevice);
+        error = hipMemcpyAsync(m_direction_vectors,
+                               rocrand_h_sobol32_direction_vectors,
+                               sizeof(unsigned int) * SOBOL32_N,
+                               hipMemcpyHostToDevice,
+                               m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_INTERNAL_ERROR;
@@ -182,7 +184,7 @@ public:
 
     ~rocrand_sobol32()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
+        ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_direction_vectors, m_stream));
     }
 
     void reset()

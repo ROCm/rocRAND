@@ -160,7 +160,7 @@ public:
     {
         // Allocate device random number engines
         auto error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
+            = hipMallocAsync(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size, m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -177,7 +177,7 @@ public:
 
     ~rocrand_xorwow()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_engines, m_stream));
     }
 
     /// Changes seed to \p seed and resets generator state.

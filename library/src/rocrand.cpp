@@ -1906,7 +1906,7 @@ rocrand_status ROCRANDAPI rocrand_get_version(int* version)
 }
 
 rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
-    double lambda, rocrand_discrete_distribution* discrete_distribution)
+    double lambda, rocrand_discrete_distribution* discrete_distribution, hipStream_t stream /* = 0 */)
 {
     if(discrete_distribution == NULL)
     {
@@ -1932,16 +1932,18 @@ rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
     }
 
     hipError_t error;
-    error = hipMalloc(reinterpret_cast<void**>(discrete_distribution),
-                      sizeof(rocrand_discrete_distribution_st));
+    error = hipMallocAsync(reinterpret_cast<void**>(discrete_distribution),
+                           sizeof(rocrand_discrete_distribution_st),
+                           stream);
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_ALLOCATION_FAILED;
     }
-    error = hipMemcpy(*discrete_distribution,
-                      &h_dis,
-                      sizeof(rocrand_discrete_distribution_st),
-                      hipMemcpyDefault);
+    error = hipMemcpyAsync(*discrete_distribution,
+                           &h_dis,
+                           sizeof(rocrand_discrete_distribution_st),
+                           hipMemcpyDefault,
+                           stream);
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_INTERNAL_ERROR;
@@ -1954,7 +1956,8 @@ rocrand_status ROCRANDAPI
     rocrand_create_discrete_distribution(const double*                  probabilities,
                                          unsigned int                   size,
                                          unsigned int                   offset,
-                                         rocrand_discrete_distribution* discrete_distribution)
+                                         rocrand_discrete_distribution* discrete_distribution,
+                                         hipStream_t                    stream /* = 0 */)
 {
     if(discrete_distribution == NULL)
     {
@@ -1982,16 +1985,18 @@ rocrand_status ROCRANDAPI
     }
 
     hipError_t error;
-    error = hipMalloc(reinterpret_cast<void**>(discrete_distribution),
-                      sizeof(rocrand_discrete_distribution_st));
+    error = hipMallocAsync(reinterpret_cast<void**>(discrete_distribution),
+                           sizeof(rocrand_discrete_distribution_st),
+                           stream);
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_ALLOCATION_FAILED;
     }
-    error = hipMemcpy(*discrete_distribution,
-                      &h_dis,
-                      sizeof(rocrand_discrete_distribution_st),
-                      hipMemcpyDefault);
+    error = hipMemcpyAsync(*discrete_distribution,
+                           &h_dis,
+                           sizeof(rocrand_discrete_distribution_st),
+                           hipMemcpyDefault,
+                           stream);
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_INTERNAL_ERROR;
@@ -2001,7 +2006,7 @@ rocrand_status ROCRANDAPI
 }
 
 rocrand_status ROCRANDAPI
-    rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution)
+    rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution, hipStream_t stream /* = 0 */)
 {
     if(discrete_distribution == NULL)
     {
@@ -2011,10 +2016,11 @@ rocrand_status ROCRANDAPI
     rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
 
     hipError_t error;
-    error = hipMemcpy(&h_dis,
-                      discrete_distribution,
-                      sizeof(rocrand_discrete_distribution_st),
-                      hipMemcpyDefault);
+    error = hipMemcpyAsync(&h_dis,
+                           discrete_distribution,
+                           sizeof(rocrand_discrete_distribution_st),
+                           hipMemcpyDefault,
+                           stream);
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_INTERNAL_ERROR;
@@ -2029,7 +2035,7 @@ rocrand_status ROCRANDAPI
         return status;
     }
 
-    error = hipFree(discrete_distribution);
+    error = hipFreeAsync(discrete_distribution, stream);
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_INTERNAL_ERROR;

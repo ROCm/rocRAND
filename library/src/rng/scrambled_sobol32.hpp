@@ -161,31 +161,35 @@ public:
     {
         // Allocate direction vectors
         hipError_t error;
-        error = hipMalloc(reinterpret_cast<void**>(&m_direction_vectors),
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL32_N);
+        error = hipMallocAsync(reinterpret_cast<void**>(&m_direction_vectors),
+                               sizeof(unsigned int) * SCRAMBLED_SOBOL32_N,
+                               m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
-        error = hipMemcpy(m_direction_vectors,
-                          rocrand_h_scrambled_sobol32_direction_vectors,
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL32_N,
-                          hipMemcpyHostToDevice);
+        error = hipMemcpyAsync(m_direction_vectors,
+                               rocrand_h_scrambled_sobol32_direction_vectors,
+                               sizeof(unsigned int) * SCRAMBLED_SOBOL32_N,
+                               hipMemcpyHostToDevice,
+                               m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_INTERNAL_ERROR;
         }
         // Allocate scramble constants
-        error = hipMalloc(reinterpret_cast<void**>(&m_scramble_constants),
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM);
+        error = hipMallocAsync(reinterpret_cast<void**>(&m_scramble_constants),
+                               sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
+                               m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
-        error = hipMemcpy(m_scramble_constants,
-                          h_scrambled_sobol32_constants,
-                          sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
-                          hipMemcpyHostToDevice);
+        error = hipMemcpyAsync(m_scramble_constants,
+                               h_scrambled_sobol32_constants,
+                               sizeof(unsigned int) * SCRAMBLED_SOBOL_DIM,
+                               hipMemcpyHostToDevice,
+                               m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_INTERNAL_ERROR;
@@ -202,8 +206,8 @@ public:
 
     ~rocrand_scrambled_sobol32()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_direction_vectors));
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_scramble_constants));
+        ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_direction_vectors, m_stream));
+        ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_scramble_constants, m_stream));
     }
 
     void reset()

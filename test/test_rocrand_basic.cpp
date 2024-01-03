@@ -26,8 +26,10 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
 class rocrand_basic_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
+class rocrand_basic_initialize_tests : public ::testing::TestWithParam<std::tuple<rocrand_rng_type, bool>> { };
 
 TEST(rocrand_basic_tests, rocrand_get_version_test)
 {
@@ -67,22 +69,56 @@ TEST_P(rocrand_basic_tests, rocrand_set_stream_test)
     ROCRAND_CHECK(rocrand_destroy_generator(g));
 }
 
-TEST_P(rocrand_basic_tests, rocrand_initialize_generator_test)
+TEST_P(rocrand_basic_initialize_tests, rocrand_initialize_generator_test)
 {
-    const rocrand_rng_type rng_type = GetParam();
+    const rocrand_rng_type rng_type = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     rocrand_generator g = NULL;
     ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
+
+    hipStream_t stream;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+
+    if (use_graphs)
+    {
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        ROCRAND_CHECK(rocrand_set_stream(g, stream));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     ROCRAND_CHECK(rocrand_initialize_generator(g));
+
     ROCRAND_CHECK(rocrand_destroy_generator(g));
 
     ROCRAND_CHECK(rocrand_create_generator(&g, rng_type));
+
+    if (use_graphs)
+        ROCRAND_CHECK(rocrand_set_stream(g, stream));
+
     ROCRAND_CHECK(rocrand_initialize_generator(g));
     ROCRAND_CHECK(rocrand_initialize_generator(g));
     ROCRAND_CHECK(rocrand_initialize_generator(g));
+
     ROCRAND_CHECK(rocrand_destroy_generator(g));
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_basic_tests,
                         rocrand_basic_tests,
                         ::testing::ValuesIn(rng_types));
+
+INSTANTIATE_TEST_SUITE_P(rocrand_basic_initialize_tests,
+                         rocrand_basic_initialize_tests,
+                         ::testing::Combine(
+                            ::testing::ValuesIn(rng_types),
+                            ::testing::Bool()));

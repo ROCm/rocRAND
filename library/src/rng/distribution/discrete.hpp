@@ -53,22 +53,24 @@ public:
     static constexpr unsigned int output_width = 1;
 
     // rocrand_discrete_distribution_st is a struct 
-    rocrand_discrete_distribution_base()  // cppcheck-suppress uninitDerivedMemberVar
+    rocrand_discrete_distribution_base(hipStream_t stream = 0)  // cppcheck-suppress uninitDerivedMemberVar
     {
         size = 0;
         probability = NULL;
         alias = NULL;
         cdf = NULL;
+        m_stream = stream;
     }
 
     rocrand_discrete_distribution_base(const double * probabilities,
                                        unsigned int size,
-                                       unsigned int offset)
+                                       unsigned int offset,
+                                       hipStream_t stream = 0 /* default stream */)
         : rocrand_discrete_distribution_base()
     {
         std::vector<double> p(probabilities, probabilities + size);
 
-        init(p, size, offset);
+        init(p, size, offset, stream);
     }
 
     __host__ __device__
@@ -98,15 +100,15 @@ public:
         {
             if (probability != NULL)
             {
-                hipFree(probability);
+                hipFreeAsync(probability, m_stream);
             }
             if (alias != NULL)
             {
-                hipFree(alias);
+                hipFreeAsync(alias, m_stream);
             }
             if (cdf != NULL)
             {
-                hipFree(cdf);
+                hipFreeAsync(cdf, m_stream);
             }
         }
         probability = NULL;
@@ -137,10 +139,12 @@ protected:
 
     void init(std::vector<double> p,
               const unsigned int size,
-              const unsigned int offset)
+              const unsigned int offset,
+              hipStream_t stream)
     {
         this->size = size;
         this->offset = offset;
+        this->m_stream = stream;
 
         deallocate();
         allocate();
@@ -174,12 +178,12 @@ protected:
             hipError_t error;
             if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&probability), sizeof(double) * size);
+                error = hipMallocAsync(reinterpret_cast<void**>(&probability), sizeof(double) * size, m_stream);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
-                error = hipMalloc(reinterpret_cast<void**>(&alias), sizeof(unsigned int) * size);
+                error = hipMallocAsync(reinterpret_cast<void**>(&alias), sizeof(unsigned int) * size, m_stream);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -187,7 +191,7 @@ protected:
             }
             if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&cdf), sizeof(double) * size);
+                error = hipMallocAsync(reinterpret_cast<void**>(&cdf), sizeof(double) * size, m_stream);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -266,12 +270,12 @@ protected:
         else
         {
             hipError_t error;
-            error = hipMemcpy(probability, h_probability.data(), sizeof(double) * size, hipMemcpyDefault);
+            error = hipMemcpyAsync(probability, h_probability.data(), sizeof(double) * size, hipMemcpyDefault, m_stream);
             if (error != hipSuccess)
             {
                 throw ROCRAND_STATUS_INTERNAL_ERROR;
             }
-            error = hipMemcpy(alias, h_alias.data(), sizeof(unsigned int) * size, hipMemcpyDefault);
+            error = hipMemcpyAsync(alias, h_alias.data(), sizeof(unsigned int) * size, hipMemcpyDefault, m_stream);
             if (error != hipSuccess)
             {
                 throw ROCRAND_STATUS_INTERNAL_ERROR;
@@ -297,13 +301,16 @@ protected:
         else
         {
             hipError_t error;
-            error = hipMemcpy(cdf, h_cdf.data(), sizeof(double) * size, hipMemcpyDefault);
+            error = hipMemcpyAsync(cdf, h_cdf.data(), sizeof(double) * size, hipMemcpyDefault, m_stream);
             if (error != hipSuccess)
             {
                 throw ROCRAND_STATUS_INTERNAL_ERROR;
             }
         }
     }
+
+protected:
+    hipStream_t m_stream;
 };
 
 #endif // ROCRAND_RNG_DISTRIBUTION_DISCRETE_H_
