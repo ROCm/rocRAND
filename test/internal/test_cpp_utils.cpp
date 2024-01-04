@@ -183,5 +183,5 @@ TEST(rocrand_cpp_utils_tests, threedim_iterator_check_stl)
     // since there is no guarantee that the algorithm would call every required member function
     //
     // A better solution will be checking against the std::random_access_iterator_concept in C++20
-    std::is_heap(cpp_utils::threedim_iterator(), cpp_utils::threedim_iterator());
+    (void)std::is_heap(cpp_utils::threedim_iterator(), cpp_utils::threedim_iterator());
 }

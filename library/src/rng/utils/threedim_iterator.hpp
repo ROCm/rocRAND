@@ -44,7 +44,7 @@ public:
     /// \brief Constructs a new instance of `threedim_iterator`.
     /// \param dimensions The extents of the 3D grid which specifies how the linear indices are transformed.
     /// \param index The starting linear index.
-    explicit threedim_iterator(const dim3 dimensions = dim3(), const size_t index = 0)
+    threedim_iterator(const dim3 dimensions = dim3(), const size_t index = 0)
         : m_dimensions(dimensions), m_index(index)
     {
         assert(m_dimensions.x != 0);
@@ -114,7 +114,7 @@ public:
     [[nodiscard]] threedim_iterator operator++(int)
     {
         const auto tmp = *this;
-        this->     operator++();
+        this->operator++();
         return tmp;
     }
 
@@ -144,7 +144,7 @@ public:
     [[nodiscard]] threedim_iterator operator--(int)
     {
         const auto tmp = *this;
-        this->     operator--();
+        this->operator--();
         return tmp;
     }
 
