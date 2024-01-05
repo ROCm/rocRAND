@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,7 @@
 #include <rocrand/rocrand.h>
 
 #include <rng/generator_type.hpp>
-#include <rng/mrg31k3p.hpp>
-#include <rng/mrg32k3a.hpp>
+#include <rng/mrg.hpp>
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"

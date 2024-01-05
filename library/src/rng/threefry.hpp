@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
+#include "system.hpp"
 #include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand.h>
@@ -74,14 +75,18 @@ struct threefry_device_engine : public BaseType
     // m_state from base class
 };
 
-template<class ConfigProvider, bool IsDynamic, class Engine, class T, class Distribution>
-ROCRAND_KERNEL
-    __launch_bounds__((get_block_size<ConfigProvider, T>(IsDynamic))) void generate_kernel(
-        Engine engine, T* data, const size_t n, Distribution distribution)
+template<class Engine, class T, class Distribution>
+__host__ __device__ void generate_threefry(dim3         block_idx,
+                                           dim3         thread_idx,
+                                           dim3         grid_dim,
+                                           dim3         block_dim,
+                                           Engine       engine,
+                                           T*           data,
+                                           const size_t n,
+                                           Distribution distribution)
 {
     using engine_scalar_type = typename Engine::scalar_type;
 
-    constexpr unsigned int block_size   = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
     constexpr unsigned int vector_dim   = Engine::vector_dim;
@@ -93,8 +98,8 @@ ROCRAND_KERNEL
 
     using vec_type = aligned_vec_type<T, output_per_thread * output_width>;
 
-    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
-    const unsigned int stride    = gridDim.x * block_size;
+    const unsigned int thread_id = block_idx.x * block_dim.x + thread_idx.x;
+    const unsigned int stride    = grid_dim.x * block_dim.x;
 
     engine_scalar_type input[input_width];
     T                  output[output_per_thread][output_width];
@@ -106,7 +111,8 @@ ROCRAND_KERNEL
     const unsigned int tail_size = (n - head_size) % full_output_width;
     const size_t       vec_n     = (n - head_size) / full_output_width;
 
-    const unsigned int engine_offset = vector_dim * thread_id + (thread_id == 0 ? 0 : head_size);
+    const unsigned int engine_offset
+        = vector_dim * thread_id + (thread_id == 0 ? 0 : head_size / output_width * input_width);
     engine.discard(engine_offset);
 
     // If data is not aligned by sizeof(vec_type)
@@ -186,13 +192,14 @@ ROCRAND_KERNEL
 
 } // end namespace rocrand_host::detail
 
-template<class Engine, class ConfigProvider>
+template<class System, class Engine, class ConfigProvider>
 class rocrand_threefry_template : public rocrand_generator_impl_base
 {
 public:
     using base_type   = rocrand_generator_impl_base;
     using engine_type = Engine;
     using scalar_type = typename engine_type::scalar_type;
+    using system_type = System;
 
     rocrand_threefry_template(unsigned long long seed   = 0,
                               unsigned long long offset = 0,
@@ -291,21 +298,28 @@ public:
                 return ROCRAND_STATUS_INTERNAL_ERROR;
             }
 
-            rocrand_host::detail::dynamic_dispatch(
+            status = rocrand_host::detail::dynamic_dispatch(
                 m_order,
                 [&, this](auto is_dynamic)
                 {
-                    rocrand_host::detail::generate_kernel<ConfigProvider, is_dynamic>
-                        <<<dim3(config.blocks), dim3(config.threads), 0, m_stream>>>(m_engine,
-                                                                                     data,
-                                                                                     data_size,
-                                                                                     distribution);
+                    return system_type::template launch<
+                        rocrand_host::detail::generate_threefry<engine_type, T, Distribution>,
+                        ConfigProvider,
+                        T,
+                        is_dynamic>(dim3(config.blocks),
+                                    dim3(config.threads),
+                                    0,
+                                    m_stream,
+                                    m_engine,
+                                    data,
+                                    data_size,
+                                    distribution);
                 });
 
             // Check kernel status
-            if(hipGetLastError() != hipSuccess)
+            if(status != ROCRAND_STATUS_SUCCESS)
             {
-                return ROCRAND_STATUS_LAUNCH_FAILURE;
+                return status;
             }
 
             // Generating data_size values will use this many distributions
@@ -374,7 +388,8 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<> m_poisson;
+    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
+        m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
@@ -391,18 +406,42 @@ constexpr inline unsigned int
     = 2;
 
 using rocrand_threefry2x32_20 = rocrand_threefry_template<
+    rocrand_system_device,
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
+
+using rocrand_threefry2x32_20_host = rocrand_threefry_template<
+    rocrand_system_host,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
 
 using rocrand_threefry2x64_20 = rocrand_threefry_template<
+    rocrand_system_device,
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20>>;
+
+using rocrand_threefry2x64_20_host = rocrand_threefry_template<
+    rocrand_system_host,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20>>;
 
 using rocrand_threefry4x32_20 = rocrand_threefry_template<
+    rocrand_system_device,
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20>>;
+
+using rocrand_threefry4x32_20_host = rocrand_threefry_template<
+    rocrand_system_host,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20>>;
 
 using rocrand_threefry4x64_20 = rocrand_threefry_template<
+    rocrand_system_device,
+    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
+    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20>>;
+
+using rocrand_threefry4x64_20_host = rocrand_threefry_template<
+    rocrand_system_host,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20>>;
 

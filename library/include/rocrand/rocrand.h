@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -171,8 +171,19 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
  * on a device.
  *
  * Values for \p rng_type are:
- * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_PSEUDO_XORWOW
  * - ROCRAND_RNG_PSEUDO_MRG31K3P
+ * - ROCRAND_RNG_PSEUDO_MRG32K3A
+ * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_PSEUDO_LFSR113
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
+ * - ROCRAND_RNG_QUASI_SOBOL32
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
+ * - ROCRAND_RNG_QUASI_SOBOL64
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
  *
  * \param generator - Pointer to generator
  * \param rng_type - Type of generator to create
