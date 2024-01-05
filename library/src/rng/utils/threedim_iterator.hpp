@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -114,7 +114,7 @@ public:
     [[nodiscard]] threedim_iterator operator++(int)
     {
         const auto tmp = *this;
-        this->operator++();
+        this->     operator++();
         return tmp;
     }
 
@@ -144,7 +144,7 @@ public:
     [[nodiscard]] threedim_iterator operator--(int)
     {
         const auto tmp = *this;
-        this->operator--();
+        this->     operator--();
         return tmp;
     }
 
