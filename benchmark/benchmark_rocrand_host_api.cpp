@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -176,8 +176,15 @@ int main(int argc, char* argv[])
     benchmark::AddCustomContext("offset", std::to_string(offset));
     benchmark::AddCustomContext("benchmark_host", std::to_string(benchmark_host));
 
-    std::vector<rng_type_t> benchmarked_engine_types{ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+    std::vector<rng_type_t> benchmarked_engine_types{ROCRAND_RNG_PSEUDO_LFSR113,
                                                      ROCRAND_RNG_PSEUDO_MRG31K3P,
+                                                     ROCRAND_RNG_PSEUDO_MRG32K3A,
+                                                     ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+                                                     ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
+                                                     ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
+                                                     ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,
+                                                     ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,
+                                                     ROCRAND_RNG_PSEUDO_XORWOW,
                                                      ROCRAND_RNG_QUASI_SOBOL32,
                                                      ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
                                                      ROCRAND_RNG_QUASI_SOBOL64,
@@ -187,13 +194,6 @@ int main(int argc, char* argv[])
     {
         benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MTGP32);
         benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MT19937);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_XORWOW);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_MRG32K3A);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_LFSR113);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY2_32_20);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY2_64_20);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY4_32_20);
-        benchmarked_engine_types.push_back(ROCRAND_RNG_PSEUDO_THREEFRY4_64_20);
     }
 
     const std::map<rocrand_ordering, std::string> ordering_name_map{

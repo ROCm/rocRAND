@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,14 +40,11 @@
 // mt19937 needs to be included, as access to threads_per_generator is needed
 #include "rng/mt19937.hpp"
 
-template<class ConfigProvider>
+template<class System, class ConfigProvider>
 class rocrand_lfsr113_template;
 
-template<class System, class ConfigProvider>
-class rocrand_mrg31k3p_template;
-
-template<class ConfigProvider>
-class rocrand_mrg32k3a_template;
+template<class System, class Engine, class ConfigProvider>
+class rocrand_mrg_template;
 
 template<class ConfigProvider>
 class rocrand_mtgp32_template;
@@ -55,15 +52,17 @@ class rocrand_mtgp32_template;
 template<class System, class ConfigProvider>
 class rocrand_philox4x32_10_template;
 
-template<class Engine, class ConfigProvider>
+template<class System, class Engine, class ConfigProvider>
 class rocrand_threefry_template;
 
-template<class ConfigProvider>
+template<class System, class ConfigProvider>
 class rocrand_xorwow_template;
 
 // Further forward declarations
 namespace rocrand_device
 {
+class mrg31k3p_engine;
+class mrg32k3a_engine;
 class threefry2x32_20_engine;
 class threefry2x64_20_engine;
 class threefry4x32_20_engine;
@@ -84,14 +83,15 @@ namespace benchmark_tuning
 // both host and device systems
 
 template<class ConfigProvider>
-using rocrand_lfsr113_template = ::rocrand_lfsr113_template<ConfigProvider>;
+using rocrand_lfsr113_template = ::rocrand_lfsr113_template<rocrand_system_device, ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mrg31k3p_template
-    = ::rocrand_mrg31k3p_template<rocrand_system_device, ConfigProvider>;
+using rocrand_mrg31k3p_template = ::
+    rocrand_mrg_template<rocrand_system_device, rocrand_device::mrg31k3p_engine, ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mrg32k3a_template = ::rocrand_mrg32k3a_template<ConfigProvider>;
+using rocrand_mrg32k3a_template = ::
+    rocrand_mrg_template<rocrand_system_device, rocrand_device::mrg32k3a_engine, ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_mtgp32_template = ::rocrand_mtgp32_template<ConfigProvider>;
@@ -105,26 +105,30 @@ using rocrand_philox4x32_10_template
 
 template<class ConfigProvider>
 using rocrand_threefry2x32_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_threefry2x64_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_threefry4x32_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_threefry4x64_20_template = ::rocrand_threefry_template<
+    rocrand_system_device,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_xorwow_template = ::rocrand_xorwow_template<ConfigProvider>;
+using rocrand_xorwow_template = ::rocrand_xorwow_template<rocrand_system_device, ConfigProvider>;
 
 template<>
 struct output_type_supported<unsigned long long, rocrand_lfsr113_template> : public std::false_type

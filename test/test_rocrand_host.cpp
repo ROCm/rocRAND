@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,45 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <iomanip>
+#include <random>
 #include <vector>
 
 #define ROCRAND_CHECK(state) ASSERT_EQ(state, ROCRAND_STATUS_SUCCESS)
+
+namespace
+{
 
 constexpr const unsigned long long seeds[]            = {0, 0xAAAAAAAAAAAULL};
 constexpr const size_t             seeds_count        = sizeof(seeds) / sizeof(seeds[0]);
 constexpr const size_t             random_seeds_count = 2;
 
+std::vector<unsigned long long> get_seeds()
+{
+    std::vector<unsigned long long> ret(seeds_count + random_seeds_count);
+    std::copy_n(seeds, seeds_count, ret.begin());
+    std::default_random_engine rng(std::random_device{}());
+    std::generate(ret.begin() + seeds_count, ret.end(), [&] { return rng(); });
+    return ret;
+}
+
 constexpr rocrand_rng_type host_rng_types[] = {
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
     ROCRAND_RNG_PSEUDO_MRG31K3P,
+    ROCRAND_RNG_PSEUDO_MRG32K3A,
+    ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
+    ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
+    ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,
+    ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,
+    ROCRAND_RNG_PSEUDO_XORWOW,
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64,
     ROCRAND_RNG_QUASI_SOBOL32,
     ROCRAND_RNG_QUASI_SOBOL64,
 };
+
+} // namespace
 
 class rocrand_generate_host_test : public ::testing::TestWithParam<rocrand_rng_type>
 {};
@@ -80,7 +102,9 @@ TEST_P(rocrand_generate_host_test, int_test)
 }
 
 template<typename Type, typename F>
-void test_int_parity(rocrand_rng_type rng_type, F generate)
+void test_int_parity(rocrand_rng_type                       rng_type,
+                     F                                      generate,
+                     const std::vector<unsigned long long>& seeds = get_seeds())
 {
     rocrand_generator device_generator, host_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
@@ -92,9 +116,8 @@ void test_int_parity(rocrand_rng_type rng_type, F generate)
     Type* output;
     HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
-    for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
+    for(const unsigned long long seed : seeds)
     {
-        const auto seed = i < seeds_count ? seeds[i] : rand();
         SCOPED_TRACE(testing::Message() << "with seed = " << seed);
         ROCRAND_CHECK(rocrand_set_seed(host_generator, seed));
         ROCRAND_CHECK(rocrand_set_seed(device_generator, seed));
@@ -131,7 +154,9 @@ TEST_P(rocrand_generate_host_test, int_parity_test)
 }
 
 template<typename Type, typename F>
-void test_uniform_parity(rocrand_rng_type rng_type, F generate)
+void test_uniform_parity(rocrand_rng_type                       rng_type,
+                         F                                      generate,
+                         const std::vector<unsigned long long>& seeds = get_seeds())
 {
     rocrand_generator device_generator, host_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
@@ -143,9 +168,8 @@ void test_uniform_parity(rocrand_rng_type rng_type, F generate)
     Type* output;
     HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
-    for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
+    for(const unsigned long long seed : seeds)
     {
-        const auto seed = i < seeds_count ? seeds[i] : rand();
         SCOPED_TRACE(testing::Message() << "with seed = " << seed);
         ROCRAND_CHECK(rocrand_set_seed(host_generator, seed));
         ROCRAND_CHECK(rocrand_set_seed(device_generator, seed));
@@ -182,7 +206,10 @@ TEST_P(rocrand_generate_host_test, uniform_double_parity_test)
 }
 
 template<typename Type, typename F>
-void test_normal_parity(rocrand_rng_type rng_type, F generate, double eps)
+void test_normal_parity(rocrand_rng_type                       rng_type,
+                        F                                      generate,
+                        double                                 eps,
+                        const std::vector<unsigned long long>& seeds = get_seeds())
 {
     Type mean   = static_cast<Type>(-12.0);
     Type stddev = static_cast<Type>(2.4);
@@ -197,9 +224,8 @@ void test_normal_parity(rocrand_rng_type rng_type, F generate, double eps)
     Type* output;
     HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
-    for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
+    for(const unsigned long long seed : seeds)
     {
-        const auto seed = i < seeds_count ? seeds[i] : rand();
         SCOPED_TRACE(testing::Message() << "with seed = " << seed);
         ROCRAND_CHECK(rocrand_set_seed(host_generator, seed));
         ROCRAND_CHECK(rocrand_set_seed(device_generator, seed));
@@ -269,9 +295,8 @@ TEST_P(rocrand_generate_host_test, poisson_parity_test)
     Type* output;
     HIP_CHECK(hipMallocHelper(&output, host_results.size() * sizeof(Type)));
 
-    for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
+    for(const unsigned long long seed : get_seeds())
     {
-        const auto seed = i < seeds_count ? seeds[i] : rand();
         SCOPED_TRACE(testing::Message() << "with seed = " << seed);
         ROCRAND_CHECK(rocrand_set_seed(host_generator, seed));
         ROCRAND_CHECK(rocrand_set_seed(device_generator, seed));
@@ -294,6 +319,13 @@ TEST_P(rocrand_generate_host_test, poisson_parity_test)
     ROCRAND_CHECK(rocrand_destroy_generator(host_generator));
     ROCRAND_CHECK(rocrand_destroy_generator(device_generator));
     HIP_CHECK(hipFree(output));
+}
+
+// Since it is extremely expensive to initialize the LFSR113
+// engine vector, only a single test is performed
+TEST(rocrand_generate_host_test, lfsr113_int_parity)
+{
+    test_int_parity<unsigned int>(ROCRAND_RNG_PSEUDO_LFSR113, rocrand_generate, {seeds[0]});
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_host_test,
