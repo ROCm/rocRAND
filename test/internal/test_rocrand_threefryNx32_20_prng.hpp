@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -74,6 +74,37 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, type)
     EXPECT_TRUE(std::is_trivially_destructible<engine_type>::value);
 }
 
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, init_test)
+{
+    auto g = TestFixture::get_generator(); // offset = 0
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1337);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1048576);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1 << 24);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1 << 28);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset((1ULL << 36) + 1234567ULL);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+}
+
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, uniform_uint_test)
 {
     const size_t  size = 1313;
@@ -81,7 +112,7 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, uniform_uint_test)
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * (size + 1)));
 
     auto g = TestFixture::get_generator();
-    ROCRAND_CHECK(g.generate(data + 1, size));
+    ROCRAND_CHECK(g.generate_uniform(data + 1, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data[size];
@@ -99,29 +130,182 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, uniform_uint_test)
     HIP_CHECK(hipFree(data));
 }
 
-TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, uniform_float_test)
+template<class Generator, class T>
+void uniform_floating_point_test()
 {
     const size_t size = 1313;
-    float*       data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
-    auto g = TestFixture::get_generator();
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    Generator g;
+    ROCRAND_CHECK(g.generate_uniform(data, size));
 
-    float host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
 
     double sum = 0;
     for(size_t i = 0; i < size; i++)
     {
-        ASSERT_GT(host_data[i], 0.0f);
-        ASSERT_LE(host_data[i], 1.0f);
+        ASSERT_GT(host_data[i], static_cast<T>(0.0));
+        ASSERT_LE(host_data[i], static_cast<T>(1.0));
         sum += host_data[i];
     }
-    const float mean = sum / size;
-    ASSERT_NEAR(mean, 0.5f, 0.05f);
+    const double mean = sum / size;
+    ASSERT_NEAR(mean, 0.5, 0.05);
+
+    HIP_CHECK(hipFree(data));
+}
+
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, uniform_float_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    uniform_floating_point_test<generator_t, float>();
+}
+
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, uniform_double_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    uniform_floating_point_test<generator_t, double>();
+}
+
+template<class Generator, class T>
+void normal_floating_point_test()
+{
+    const size_t size = 1313;
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
+
+    Generator g;
+    ROCRAND_CHECK(g.generate_normal(data, size, static_cast<T>(2.0), static_cast<T>(5.0)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        mean += host_data[i];
+    }
+    mean = mean / size;
+
+    double stddev = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        stddev += std::pow(host_data[i] - mean, 2);
+    }
+    stddev = std::sqrt(stddev / size);
+
+    EXPECT_NEAR(2.0, mean, 0.4); // 20%
+    EXPECT_NEAR(5.0, stddev, 1.0); // 20%
+
+    HIP_CHECK(hipFree(data));
+}
+
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, normal_float_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    normal_floating_point_test<generator_t, float>();
+}
+
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, normal_double_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    normal_floating_point_test<generator_t, double>();
+}
+
+template<class Generator, class T>
+void log_normal_floating_point_test()
+{
+    const size_t size = 131313;
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
+
+    T normal_mean   = static_cast<T>(3.0);
+    T normal_stddev = static_cast<T>(1.5);
+    T normal_var    = normal_stddev * normal_stddev;
+
+    T log_normal_mean   = std::exp(normal_mean + normal_var / 2.0);
+    T log_normal_stddev = std::sqrt(std::exp(normal_var) - 1.0) * log_normal_mean;
+
+    Generator g;
+    ROCRAND_CHECK(g.generate_log_normal(data, size, normal_mean, normal_stddev));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        mean += host_data[i];
+    }
+    mean = mean / size;
+
+    double stddev = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        stddev += std::pow(host_data[i] - mean, 2);
+    }
+    stddev = std::sqrt(stddev / size);
+
+    EXPECT_NEAR(log_normal_mean, mean, log_normal_mean * 0.2); // 20%
+    EXPECT_NEAR(log_normal_stddev, stddev, log_normal_stddev * 0.2); // 20%
+
+    HIP_CHECK(hipFree(data));
+}
+
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, log_normal_float_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    log_normal_floating_point_test<generator_t, float>();
+}
+
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, log_normal_double_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    log_normal_floating_point_test<generator_t, double>();
+}
+
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, poisson_test)
+{
+    const size_t  size = 1313;
+    unsigned int* data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+
+    auto g = TestFixture::get_generator();
+    ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    unsigned int host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        mean += host_data[i];
+    }
+    mean = mean / size;
+
+    double var = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        double x = host_data[i] - mean;
+        var += x * x;
+    }
+    var = var / size;
+
+    EXPECT_NEAR(mean, 5.5, std::max(1.0, 5.5 * 1e-2));
+    EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
 
     HIP_CHECK(hipFree(data));
 }
@@ -209,8 +393,6 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, same_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
-// Checks if generators with the same seed and in the same state generate
-// the same numbers
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, different_seed_test)
 {
     const unsigned long long seed0 = 0xdeadbeefdeadbeefULL;
@@ -259,7 +441,7 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, different_seed_test)
 
 // Check that subsequent generations of different sizes produce one
 // sequence without gaps, no matter how many values are generated per call.
-template<typename GeneratorT, typename T, typename GenerateFunc>
+template<typename T, typename Generator, typename GenerateFunc>
 void continuity_test(GenerateFunc     generate_func,
                      rocrand_ordering ordering,
                      unsigned int     divisor = 1)
@@ -282,9 +464,9 @@ void continuity_test(GenerateFunc     generate_func,
     HIP_CHECK(hipMalloc(&data0, sizeof(T) * size0));
     HIP_CHECK(hipMalloc(&data1, sizeof(T) * size1));
 
-    GeneratorT g0;
+    Generator g0;
     g0.set_order(ordering);
-    GeneratorT g1;
+    Generator g1;
     g1.set_order(ordering);
 
     std::vector<T> host_data0(size0);
@@ -314,61 +496,59 @@ void continuity_test(GenerateFunc     generate_func,
     HIP_CHECK(hipFree(data1));
 }
 
-TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_uniform_char_test)
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_uniform_uint_test)
 {
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t = typename TestFixture::generator_t;
+    typedef unsigned int output_t;
 
-    rocrand_ordering      ordering = TestFixture::ordering;
-    typedef unsigned char output_t;
-    continuity_test<generator_t, output_t>(
-        [](generator_t& g, output_t* data, size_t s) { g.generate(data, s); },
+    continuity_test<output_t, generator_t>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
         uniform_distribution<output_t, unsigned int>::output_width);
 }
 
-TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_uniform_uint_test)
+TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_uniform_char_test)
 {
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t = typename TestFixture::generator_t;
+    typedef unsigned char output_t;
 
-    rocrand_ordering     ordering = TestFixture::ordering;
-    typedef unsigned int output_t;
-    continuity_test<generator_t, output_t>(
-        [](generator_t& g, output_t* data, size_t s) { g.generate(data, s); },
+    continuity_test<output_t, generator_t>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
         uniform_distribution<output_t, unsigned int>::output_width);
 }
 
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_uniform_float_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
-    rocrand_ordering ordering = TestFixture::ordering;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     typedef float    output_t;
-    continuity_test<generator_t, output_t>(
-        [](generator_t& g, output_t* data, size_t s) { g.generate(data, s); },
-        ordering,
-        uniform_distribution<output_t, unsigned int>::output_width);
+
+    continuity_test<output_t, generator_t>([](generator_t& g, output_t* data, size_t s)
+                                           { g.generate_uniform(data, s); },
+                                           ordering);
 }
 
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_uniform_double_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
-    rocrand_ordering ordering = TestFixture::ordering;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     typedef double   output_t;
-    continuity_test<generator_t, output_t>(
-        [](generator_t& g, output_t* data, size_t s) { g.generate(data, s); },
-        ordering,
-        uniform_distribution<output_t, unsigned int>::output_width);
+
+    continuity_test<output_t, generator_t>([](generator_t& g, output_t* data, size_t s)
+                                           { g.generate_uniform(data, s); },
+                                           ordering);
 }
 
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_normal_float_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
-    rocrand_ordering ordering = TestFixture::ordering;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     typedef float    output_t;
-    continuity_test<generator_t, output_t>(
+
+    continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_normal(data, s, 0.f, 1.f); },
         ordering,
         normal_distribution<output_t, unsigned int>::output_width);
@@ -376,11 +556,11 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_normal_float_test)
 
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_normal_double_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
-    rocrand_ordering ordering = TestFixture::ordering;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     typedef double   output_t;
-    continuity_test<generator_t, output_t>(
+
+    continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_normal(data, s, 0., 1.); },
         ordering,
         normal_distribution<output_t, unsigned int>::output_width);
@@ -388,11 +568,11 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_normal_double_test)
 
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_log_normal_float_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
-    rocrand_ordering ordering = TestFixture::ordering;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     typedef float    output_t;
-    continuity_test<generator_t, output_t>(
+
+    continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_log_normal(data, s, 0.f, 1.f); },
         ordering,
         normal_distribution<output_t, unsigned int>::output_width);
@@ -400,11 +580,11 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_log_normal_float_tes
 
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_log_normal_double_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
-    rocrand_ordering ordering = TestFixture::ordering;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     typedef double   output_t;
-    continuity_test<generator_t, output_t>(
+
+    continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_log_normal(data, s, 0., 1.); },
         ordering,
         normal_distribution<output_t, unsigned int>::output_width);
@@ -412,11 +592,11 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_log_normal_double_te
 
 TYPED_TEST_P(rocrand_threefryNx32_20_prng_tests, continuity_poisson_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
-    rocrand_ordering     ordering = TestFixture::ordering;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+    using generator_t                   = typename TestFixture::generator_t;
     typedef unsigned int output_t;
-    continuity_test<generator_t, output_t>([](generator_t& g, output_t* data, size_t s)
+
+    continuity_test<output_t, generator_t>([](generator_t& g, output_t* data, size_t s)
                                            { g.generate_poisson(data, s, 100.); },
                                            ordering,
                                            1);
@@ -440,7 +620,7 @@ struct rocrand_threefryNx32_20_prng_offset_tests : public ::testing::Test
     }
 };
 
-template<class OutputT, class GeneratorT, rocrand_ordering Ordering>
+template<class Output, class Generator, rocrand_ordering Ordering>
 struct rocrand_threefryNx32_20_prng_offset_tests_params
 {
     using output_t                                    = Output;
@@ -495,13 +675,20 @@ TYPED_TEST_P(rocrand_threefryNx32_20_prng_offset_tests, offsets_test)
 
 REGISTER_TYPED_TEST_SUITE_P(rocrand_threefryNx32_20_prng_tests,
                             type,
+                            init_test,
                             uniform_uint_test,
                             uniform_float_test,
+                            uniform_double_test,
+                            normal_float_test,
+                            normal_double_test,
+                            log_normal_float_test,
+                            log_normal_double_test,
+                            poisson_test,
                             state_progress_test,
                             same_seed_test,
                             different_seed_test,
-                            continuity_uniform_char_test,
                             continuity_uniform_uint_test,
+                            continuity_uniform_char_test,
                             continuity_uniform_float_test,
                             continuity_uniform_double_test,
                             continuity_normal_float_test,
