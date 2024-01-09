@@ -56,14 +56,45 @@ struct rocrand_mt19937_prng_tests : public ::testing::Test
     }
 };
 
-template<class GeneratorType, rocrand_ordering Ordering>
+template<class Generator, rocrand_ordering Ordering>
 struct rocrand_mt19937_prng_tests_params
 {
-    using generator_t                                 = GeneratorType;
+    using generator_t                                 = Generator;
     static inline constexpr rocrand_ordering ordering = Ordering;
 };
 
 TYPED_TEST_SUITE_P(rocrand_mt19937_prng_tests);
+
+TYPED_TEST_P(rocrand_mt19937_prng_tests, init_test)
+{
+    auto g = TestFixture::get_generator(); // offset = 0
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1337);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1048576);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1 << 24);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset(1 << 28);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset((1ULL << 36) + 1234567ULL);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+}
 
 TYPED_TEST_P(rocrand_mt19937_prng_tests, uniform_uint_test)
 {
@@ -71,8 +102,8 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, uniform_uint_test)
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
-    rocrand_mt19937 g = TestFixture::get_generator();
-    ROCRAND_CHECK(g.generate(data, size));
+    auto g = TestFixture::get_generator();
+    ROCRAND_CHECK(g.generate_uniform(data, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data[size];
@@ -90,65 +121,149 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, uniform_uint_test)
     HIP_CHECK(hipFree(data));
 }
 
-TYPED_TEST_P(rocrand_mt19937_prng_tests, uniform_float_test)
+template<class Generator, class T>
+void uniform_floating_point_test()
 {
     const size_t size = 1313;
-    float*       data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
-    rocrand_mt19937 g = TestFixture::get_generator();
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    Generator g;
+    ROCRAND_CHECK(g.generate_uniform(data, size));
 
-    float host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
 
     double sum = 0;
     for(size_t i = 0; i < size; i++)
     {
-        ASSERT_GT(host_data[i], 0.0f);
-        ASSERT_LE(host_data[i], 1.0f);
+        ASSERT_GT(host_data[i], static_cast<T>(0.0));
+        ASSERT_LE(host_data[i], static_cast<T>(1.0));
         sum += host_data[i];
     }
-    const float mean = sum / size;
-    ASSERT_NEAR(mean, 0.5f, 0.05f);
+    const double mean = sum / size;
+    ASSERT_NEAR(mean, 0.5, 0.05);
+
+    HIP_CHECK(hipFree(data));
+}
+
+TYPED_TEST_P(rocrand_mt19937_prng_tests, uniform_float_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    uniform_floating_point_test<generator_t, float>();
+}
+
+TYPED_TEST_P(rocrand_mt19937_prng_tests, uniform_double_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    uniform_floating_point_test<generator_t, double>();
+}
+
+template<class Generator, class T>
+void normal_floating_point_test()
+{
+    const size_t size = 1313;
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
+
+    Generator g;
+    ROCRAND_CHECK(g.generate_normal(data, size, static_cast<T>(2.0), static_cast<T>(5.0)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        mean += host_data[i];
+    }
+    mean = mean / size;
+
+    double stddev = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        stddev += std::pow(host_data[i] - mean, 2);
+    }
+    stddev = std::sqrt(stddev / size);
+
+    EXPECT_NEAR(2.0, mean, 0.4); // 20%
+    EXPECT_NEAR(5.0, stddev, 1.0); // 20%
 
     HIP_CHECK(hipFree(data));
 }
 
 TYPED_TEST_P(rocrand_mt19937_prng_tests, normal_float_test)
 {
-    const size_t size = 1313;
-    float*       data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
+    using generator_t = typename TestFixture::generator_t;
 
-    rocrand_mt19937 g = TestFixture::get_generator();
-    ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
+    normal_floating_point_test<generator_t, float>();
+}
+
+TYPED_TEST_P(rocrand_mt19937_prng_tests, normal_double_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    normal_floating_point_test<generator_t, double>();
+}
+
+template<class Generator, class T>
+void log_normal_floating_point_test()
+{
+    const size_t size = 131313;
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
+
+    T normal_mean   = static_cast<T>(3.0);
+    T normal_stddev = static_cast<T>(1.5);
+    T normal_var    = normal_stddev * normal_stddev;
+
+    T log_normal_mean   = std::exp(normal_mean + normal_var / 2.0);
+    T log_normal_stddev = std::sqrt(std::exp(normal_var) - 1.0) * log_normal_mean;
+
+    Generator g;
+    ROCRAND_CHECK(g.generate_log_normal(data, size, normal_mean, normal_stddev));
     HIP_CHECK(hipDeviceSynchronize());
 
-    float host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
-    float mean = 0.0f;
+    double mean = 0.0;
     for(size_t i = 0; i < size; i++)
     {
         mean += host_data[i];
     }
-    mean /= size;
+    mean = mean / size;
 
-    float std = 0.0f;
+    double stddev = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
-        std += std::pow(host_data[i] - mean, 2);
+        stddev += std::pow(host_data[i] - mean, 2);
     }
-    std = sqrt(std / size);
+    stddev = std::sqrt(stddev / size);
 
-    EXPECT_NEAR(2.0f, mean, 0.4f); // 20%
-    EXPECT_NEAR(5.0f, std, 1.0f); // 20%
+    EXPECT_NEAR(log_normal_mean, mean, log_normal_mean * 0.2); // 20%
+    EXPECT_NEAR(log_normal_stddev, stddev, log_normal_stddev * 0.2); // 20%
 
     HIP_CHECK(hipFree(data));
+}
+
+TYPED_TEST_P(rocrand_mt19937_prng_tests, log_normal_float_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    log_normal_floating_point_test<generator_t, float>();
+}
+
+TYPED_TEST_P(rocrand_mt19937_prng_tests, log_normal_double_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    log_normal_floating_point_test<generator_t, double>();
 }
 
 TYPED_TEST_P(rocrand_mt19937_prng_tests, poisson_test)
@@ -157,7 +272,7 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, poisson_test)
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
-    rocrand_mt19937 g = TestFixture::get_generator();
+    auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -196,7 +311,7 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, state_progress_test)
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generator
-    rocrand_mt19937 g0 = TestFixture::get_generator();
+    auto g0 = TestFixture::get_generator();
 
     // Generate using g0 and copy to host
     ROCRAND_CHECK(g0.generate(data, size));
@@ -239,7 +354,7 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, same_seed_test)
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
-    rocrand_mt19937 g0 = TestFixture::get_generator(), g1 = TestFixture::get_generator();
+    auto g0 = TestFixture::get_generator(), g1 = TestFixture::get_generator();
     // Set same seeds
     g0.set_seed(seed);
     g1.set_seed(seed);
@@ -270,8 +385,6 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, same_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
-// Checks if generators with the same seed and in the same state generate
-// the same numbers
 TYPED_TEST_P(rocrand_mt19937_prng_tests, different_seed_test)
 {
     const unsigned long long seed0 = 5ULL;
@@ -283,7 +396,7 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, different_seed_test)
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
     // Generators
-    rocrand_mt19937 g0 = TestFixture::get_generator(), g1 = TestFixture::get_generator();
+    auto g0 = TestFixture::get_generator(), g1 = TestFixture::get_generator();
     // Set different seeds
     g0.set_seed(seed0);
     g1.set_seed(seed1);
@@ -981,7 +1094,7 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, jump_ahead_test)
 
 // Check that subsequent generations of different sizes produce one
 // sequence without gaps, no matter how many values are generated per call.
-template<typename T, typename GeneratorType, class ConfigProvider, typename GenerateFunc>
+template<typename T, typename Generator, class ConfigProvider, typename GenerateFunc>
 void continuity_test(GenerateFunc     generate_func,
                      rocrand_ordering ordering,
                      unsigned int     divisor = 1)
@@ -1032,11 +1145,11 @@ void continuity_test(GenerateFunc     generate_func,
     const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
     const size_t size2 = std::min(size0, size1);
 
-    GeneratorType g0;
+    Generator g0;
     g0.set_order(ordering);
-    GeneratorType g1;
+    Generator g1;
     g1.set_order(ordering);
-    GeneratorType g2;
+    Generator g2;
     g2.set_order(ordering);
 
     std::vector<T> host_data0(size0);
@@ -1099,8 +1212,10 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_uint_test)
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<unsigned int, generator_t, ConfigProvider>(
-        [](generator_t& g, unsigned int* data, size_t s) { g.generate(data, s); },
+    typedef unsigned int output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering);
 }
 
@@ -1109,8 +1224,10 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_char_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<unsigned char, generator_t, ConfigProvider>(
-        [](generator_t& g, unsigned char* data, size_t s) { g.generate(data, s); },
+    typedef unsigned char output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
         4);
 }
@@ -1120,8 +1237,10 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_short_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<unsigned short, generator_t, ConfigProvider>(
-        [](generator_t& g, unsigned short* data, size_t s) { g.generate(data, s); },
+    typedef unsigned short output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
         2);
 }
@@ -1131,8 +1250,10 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_float_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<float, generator_t, ConfigProvider>(
-        [](rocrand_mt19937& g, float* data, size_t s) { g.generate_uniform(data, s); },
+    typedef float output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](rocrand_mt19937& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering);
 }
 
@@ -1141,10 +1262,12 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_half_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<__half, generator_t, ConfigProvider>([](generator_t& g, __half* data, size_t s)
-                                                         { g.generate_uniform(data, s); },
-                                                         ordering,
-                                                         2);
+    typedef __half output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
+        ordering,
+        2);
 }
 
 TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_double_test)
@@ -1152,9 +1275,11 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_double_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<double, generator_t, ConfigProvider>([](generator_t& g, double* data, size_t s)
-                                                         { g.generate_uniform(data, s); },
-                                                         ordering);
+    typedef double output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
+        ordering);
 }
 
 TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_normal_float_test)
@@ -1162,10 +1287,12 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_normal_float_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<float, generator_t, ConfigProvider>([](generator_t& g, float* data, size_t s)
-                                                        { g.generate_normal(data, s, 0.0f, 1.0f); },
-                                                        ordering,
-                                                        2);
+    typedef float output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_normal(data, s, 0.0f, 1.0f); },
+        ordering,
+        2);
 }
 
 TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_normal_double_test)
@@ -1173,10 +1300,12 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_normal_double_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<double, generator_t, ConfigProvider>([](generator_t& g, double* data, size_t s)
-                                                         { g.generate_normal(data, s, 0.0, 1.0); },
-                                                         ordering,
-                                                         2);
+    typedef double output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_normal(data, s, 0.0, 1.0); },
+        ordering,
+        2);
 }
 
 TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_log_normal_float_test)
@@ -1184,8 +1313,11 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_log_normal_float_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<float, generator_t, ConfigProvider>(
-        [](generator_t& g, float* data, size_t s) { g.generate_log_normal(data, s, 0.0f, 1.0f); },
+    typedef float output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s)
+        { g.generate_log_normal(data, s, 0.0f, 1.0f); },
         ordering,
         2);
 }
@@ -1195,8 +1327,10 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_log_normal_double_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<double, generator_t, ConfigProvider>(
-        [](generator_t& g, double* data, size_t s) { g.generate_log_normal(data, s, 0.0, 1.0); },
+    typedef double output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_log_normal(data, s, 0.0, 1.0); },
         ordering,
         2);
 }
@@ -1206,13 +1340,15 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, continuity_poisson_test)
     constexpr rocrand_ordering ordering = TestFixture::ordering;
     using generator_t                   = typename TestFixture::generator_t;
     using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    continuity_test<unsigned int, generator_t, ConfigProvider>(
-        [](generator_t& g, unsigned int* data, size_t s) { g.generate_poisson(data, s, 100.0); },
+    typedef unsigned int output_t;
+
+    continuity_test<output_t, generator_t, ConfigProvider>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_poisson(data, s, 100.0); },
         ordering);
 }
 
 // Check that that heads and tails are generated correctly for misaligned pointers or sizes.
-template<typename T, typename GeneratorType, class ConfigProvider, typename GenerateFunc>
+template<typename T, typename Generator, class ConfigProvider, typename GenerateFunc>
 void head_and_tail_test(GenerateFunc generate_func, rocrand_ordering ordering, unsigned int divisor)
 {
     rocrand_host::detail::generator_config config;
@@ -1233,7 +1369,7 @@ void head_and_tail_test(GenerateFunc generate_func, rocrand_ordering ordering, u
 
     const T canary = std::numeric_limits<T>::max();
 
-    GeneratorType g;
+    Generator g;
     g.set_order(ordering);
 
     std::vector<T> host_data(max_size_with_canary);
@@ -1333,7 +1469,7 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, head_and_tail_log_normal_double_test)
 // Check if changing distribution sets m_start_input correctly
 template<typename T0,
          typename T1,
-         typename GeneratorType,
+         typename Generator,
          class ConfigProvider,
          typename GenerateFunc0,
          typename GenerateFunc1>
@@ -1358,13 +1494,13 @@ void change_distribution_test(GenerateFunc0    generate_func0,
     HIP_CHECK(hipMalloc(&data10, sizeof(T1) * size1));
     HIP_CHECK(hipMalloc(&data11, sizeof(T1) * (start1 + size1)));
 
-    GeneratorType g0;
+    Generator g0;
     // Generate the first distribution
     generate_func0(g0, data0, size0);
     // Change distribution to the second
     generate_func1(g0, data10, size1);
 
-    GeneratorType g1;
+    Generator g1;
     // Generate the second distribution considering that first `start1` values correspond to
     // `size0` values of the first distribution and some discarded values
     generate_func1(g1, data11, start1 + size1);
@@ -1507,9 +1643,14 @@ TYPED_TEST_P(rocrand_mt19937_prng_tests, change_distribution3_test)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(rocrand_mt19937_prng_tests,
+                            init_test,
                             uniform_uint_test,
                             uniform_float_test,
+                            uniform_double_test,
                             normal_float_test,
+                            normal_double_test,
+                            log_normal_float_test,
+                            log_normal_double_test,
                             poisson_test,
                             state_progress_test,
                             same_seed_test,
