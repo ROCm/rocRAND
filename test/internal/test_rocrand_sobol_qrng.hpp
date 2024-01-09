@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,8 +42,19 @@ template<class Params>
 struct rocrand_sobol_qrng_tests : public ::testing::Test
 {
     using generator_t = typename Params::generator_t;
+    static inline constexpr rocrand_ordering ordering = Params::ordering;
     using constant_t  = typename generator_t::constant_type;
     using engine_t    = typename generator_t::engine_type;
+
+    auto get_generator() const
+    {
+        generator_t g;
+        if(g.set_order(ordering) != ROCRAND_STATUS_SUCCESS)
+        {
+            throw std::runtime_error("Could not set ordering for generator");
+        }
+        return g;
+    }
 
     rocrand_status get_engine(engine_t& engine, unsigned long long int offset)
     {
@@ -125,56 +136,56 @@ private:
 
 TYPED_TEST_SUITE_P(rocrand_sobol_qrng_tests);
 
-template<class Generator>
+template<class Generator, rocrand_ordering Ordering>
 struct rocrand_sobol_qrng_tests_params
 {
     using generator_t = Generator;
+    static inline constexpr rocrand_ordering ordering = Ordering;
 };
 
-TYPED_TEST_P(rocrand_sobol_qrng_tests, uniform_uint_test)
+TYPED_TEST_P(rocrand_sobol_qrng_tests, init_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    auto g = TestFixture::get_generator(); // offset = 0
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
 
-    const size_t  size = 1313;
-    unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+    g.set_offset(1);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
 
-    generator_t g;
-    ROCRAND_CHECK(g.generate(data, size));
+    g.set_offset(1337);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
 
-    unsigned int host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+    g.set_offset(1048576);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
 
-    unsigned long long sum = 0;
-    for(size_t i = 0; i < size; i++)
-    {
-        sum += host_data[i];
-    }
-    const unsigned int mean = sum / size;
-    ASSERT_NEAR(mean, UINT_MAX / 2, UINT_MAX / 20);
+    g.set_offset(1 << 24);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
 
-    HIP_CHECK(hipFree(data));
+    g.set_offset(1 << 28);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    g.set_offset((1ULL << 36) + 1234567ULL);
+    ROCRAND_CHECK(g.init());
+    HIP_CHECK(hipDeviceSynchronize());
 }
 
-TYPED_TEST_P(rocrand_sobol_qrng_tests, uniform_uint64_test)
+template<class Generator, class T>
+void uniform_integer_test(T max)
 {
-    using generator_t = typename TestFixture::generator_t;
-    using constant_t  = typename generator_t::constant_type;
+    const size_t size = 1313;
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(T) * size));
 
-    if constexpr(!std::is_same_v<constant_t, unsigned long long int>)
-    {
-        return;
-    }
+    Generator g;
+    ROCRAND_CHECK(g.generate_uniform(data, size));
 
-    constexpr size_t size = 1313;
-    constant_t*      data;
-    HIP_CHECK(hipMalloc(&data, sizeof(constant_t) * size));
-
-    generator_t g;
-    ROCRAND_CHECK(g.generate(data, size));
-
-    constant_t host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(constant_t) * size, hipMemcpyDeviceToHost));
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(T) * size, hipMemcpyDeviceToHost));
 
     double sum = 0;
     for(size_t i = 0; i < size; i++)
@@ -183,10 +194,36 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, uniform_uint64_test)
     }
     const double mean = sum / size;
     ASSERT_NEAR(mean,
-                static_cast<double>(UINT64_MAX) / 2.0,
-                static_cast<double>(UINT64_MAX) / 20.0);
+                static_cast<double>(max) / static_cast<double>(2),
+                static_cast<double>(max) / static_cast<double>(20));
 
     HIP_CHECK(hipFree(data));
+}
+
+TYPED_TEST_P(rocrand_sobol_qrng_tests, uniform_uint_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+    using constant_t  = typename TestFixture::constant_t;
+
+    if constexpr(!std::is_same_v<constant_t, unsigned int>)
+    {
+        return;
+    }
+
+    uniform_integer_test<generator_t, constant_t>(UINT_MAX);
+}
+
+TYPED_TEST_P(rocrand_sobol_qrng_tests, uniform_uint64_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+    using constant_t  = typename TestFixture::constant_t;
+
+    if constexpr(!std::is_same_v<constant_t, unsigned long long int>)
+    {
+        return;
+    }
+
+    uniform_integer_test<generator_t, constant_t>(UINT64_MAX);
 }
 
 template<class Generator, class T>
@@ -197,7 +234,7 @@ void uniform_floating_point_test()
     HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
     Generator g;
-    ROCRAND_CHECK(g.generate(data, size));
+    ROCRAND_CHECK(g.generate_uniform(data, size));
 
     T host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
@@ -238,9 +275,11 @@ void normal_floating_point_test()
 
     Generator g;
     ROCRAND_CHECK(g.generate_normal(data, size, static_cast<T>(2.0), static_cast<T>(5.0)));
+    HIP_CHECK(hipDeviceSynchronize());
 
     T host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
 
     double mean = 0.0;
     for(size_t i = 0; i < size; i++)
@@ -249,15 +288,15 @@ void normal_floating_point_test()
     }
     mean = mean / size;
 
-    double std = 0.0f;
+    double stddev = 0.0f;
     for(size_t i = 0; i < size; i++)
     {
-        std += std::pow(host_data[i] - mean, 2);
+        stddev += std::pow(host_data[i] - mean, 2);
     }
-    std = sqrt(std / size);
+    stddev = std::sqrt(stddev / size);
 
     EXPECT_NEAR(2.0, mean, 0.4); // 20%
-    EXPECT_NEAR(5.0, std, 1.0); // 20%
+    EXPECT_NEAR(5.0, stddev, 1.0); // 20%
 
     HIP_CHECK(hipFree(data));
 }
@@ -276,15 +315,69 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, normal_double_test)
     normal_floating_point_test<generator_t, double>();
 }
 
-TYPED_TEST_P(rocrand_sobol_qrng_tests, poisson_test)
+template<class Generator, class T>
+void log_normal_floating_point_test()
+{
+    const size_t size = 131313;
+    T*           data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
+
+    T normal_mean   = static_cast<T>(3.0);
+    T normal_stddev = static_cast<T>(1.5);
+    T normal_var    = normal_stddev * normal_stddev;
+
+    T log_normal_mean   = std::exp(normal_mean + normal_var / 2.0);
+    T log_normal_stddev = std::sqrt(std::exp(normal_var) - 1.0) * log_normal_mean;
+
+    Generator g;
+    ROCRAND_CHECK(g.generate_log_normal(data, size, normal_mean, normal_stddev));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    T host_data[size];
+    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    double mean = 0.0;
+    for(size_t i = 0; i < size; i++)
+    {
+        mean += host_data[i];
+    }
+    mean = mean / size;
+
+    double stddev = 0.0f;
+    for(size_t i = 0; i < size; i++)
+    {
+        stddev += std::pow(host_data[i] - mean, 2);
+    }
+    stddev = std::sqrt(stddev / size);
+
+    EXPECT_NEAR(log_normal_mean, mean, log_normal_mean * 0.2); // 20%
+    EXPECT_NEAR(log_normal_stddev, stddev, log_normal_stddev * 0.2); // 20%
+
+    HIP_CHECK(hipFree(data));
+}
+
+TYPED_TEST_P(rocrand_sobol_qrng_tests, log_normal_float_test)
 {
     using generator_t = typename TestFixture::generator_t;
 
+    log_normal_floating_point_test<generator_t, float>();
+}
+
+TYPED_TEST_P(rocrand_sobol_qrng_tests, log_normal_double_test)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    log_normal_floating_point_test<generator_t, double>();
+}
+
+TYPED_TEST_P(rocrand_sobol_qrng_tests, poisson_test)
+{
     const size_t  size = 1313;
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
 
-    generator_t g;
+    auto g = TestFixture::get_generator();
     ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -315,13 +408,11 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, poisson_test)
 
 TYPED_TEST_P(rocrand_sobol_qrng_tests, dimensions_test)
 {
-    using generator_t = typename TestFixture::generator_t;
-
     const size_t size = 12345;
     float*       data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
 
-    generator_t g;
+    auto g = TestFixture::get_generator();
 
     ROCRAND_CHECK(g.generate(data, size));
 
@@ -570,12 +661,15 @@ TYPED_TEST_P(rocrand_sobol_qrng_tests, continuity_test)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(rocrand_sobol_qrng_tests,
-                            uniform_uint64_test,
-                            uniform_double_test,
+                            init_test,
                             uniform_uint_test,
-                            normal_double_test,
+                            uniform_uint64_test,
                             uniform_float_test,
+                            uniform_double_test,
                             normal_float_test,
+                            normal_double_test,
+                            log_normal_float_test,
+                            log_normal_double_test,
                             poisson_test,
                             dimensions_test,
                             state_progress_test,
