@@ -1,23 +1,35 @@
-==================
-rocRAND User Guide
-==================
+.. meta::
+  :description: rocRAND documentation and API reference library
+  :keywords: rocRAND, ROCm, API, documentation
 
-Overview
-========
+.. _rocrand-docs-home:
 
-The rocRAND project provides functions that generate pseudo-random and quasi-random numbers.
+********************************************************************
+rocRAND documentation
+********************************************************************
 
-The rocRAND library is implemented in the `HIP <https://github.com/ROCm-Developer-Tools/HIP>`_
-programming language and optimised for AMD's latest discrete GPUs. It is designed to run on top
-of AMD's Radeon Open Compute `ROCm <https://rocm.github.io/>`_ runtime, but it also works on
-CUDA enabled GPUs.
-Additionally, the project includes a wrapper library called hipRAND which allows users to easily port
-CUDA applications that use cuRAND library to the `HIP <https://github.com/ROCm-Developer-Tools/HIP>`_
-layer. In `ROCm <https://rocm.github.io/>`_ environment hipRAND uses rocRAND, however in CUDA
-environment cuRAND is used instead.
+Welcome to the rocRAND docs home page! To learn more, see :ref:`what-is-rocrand`
 
-Indices and tables
-------------------
+Our documentation is structured as follows:
 
-* :ref:`genindex`
-* :ref:`search`
+:::::{grid} 1 1 2 2
+:gutter: 1
+
+:::{grid-item-card} :ref:`API reference <api-reference>`
+
+  * :ref:`cpp-api`
+  * :ref:`python-api`
+  * :doc:`API library <../doxygen/html/index>`
+
+:::{grid-item-card} Tutorials
+
+  * :ref:`install-linux-quick`
+  * :ref:`install-linux`
+
+:::::
+
+Contributing to this documentation
+=======================================================
+
+"We welcome collaboration! If you’d like to contribute to our documentation, you can find instructions on our `Contribute to ROCm docs <https://rocm.docs.amd.com/en/latest/contribute/index.html>`_ page. Known issues are listed on `GitHub <https://github.com/RadeonOpenCompute/ROCm/labels/Verified%20Issue>`_.
+Licensing information for all ROCm components is listed on our `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_ page."
