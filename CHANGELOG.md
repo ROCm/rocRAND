@@ -2,7 +2,7 @@
 
 Full documentation for rocRAND is available at [https://rocrand.readthedocs.io/en/latest/](https://rocrand.readthedocs.io/en/latest/)
 
-## (Unreleased) rocRAND-x.x.x for ROCm 6.0.0
+## rocRAND-3.0.0 for ROCm 6.0.0
 ### Changed
 - Generator classes from `rocrand.hpp` are no longer copyable, in previous versions these copies
 would copy internal references to the generators and would lead to double free or memory leak errors.
