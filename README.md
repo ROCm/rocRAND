@@ -32,6 +32,11 @@ Documentation for rocRAND is available at
 
 To build documentation locally, use the following code:
 
+
+Requires: [doxygen](https://www.doxygen.nl/)
+
+Run the steps below to build documentation locally.
+
 ```sh
 # Go to the docs directory
 cd docs
