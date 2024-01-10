@@ -33,6 +33,7 @@ include:
       - /deps-docs.yaml
       - /deps-rocm.yaml
       - /deps-nvcc.yaml
+      - /deps-windows.yaml
       - /gpus-rocm.yaml
       - /gpus-nvcc.yaml
       - /rules.yaml
@@ -555,43 +556,31 @@ test:nvcc-parity:
     - !reference [".nvcc:cmake-minimum", before_script]
 
 test:windows:
-  tags:
-    - windows
-    - shell
-    - rx6900
   stage: test
   extends:
     - .rules:test
+    - .gpus:rocm-windows
+    - .deps:rocm-windows
+    - .deps:visual-studio-devshell
   needs: []
-  variables:
-    VS_VERSION: 2022
-    ROCM_PATH: "C:/PROGRA~1/AMD/ROCm/5.7"
-  before_script:
-    - | # Find VS installation
-      $VS_PATH = (
-        & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property InstallationPath
-        | Select-String -Pattern $VS_VERSION
-      )[0]
-    - | # Find DevShell.dll
-      $VS_DEV_SHELL = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -path "$VS_PATH" -find "**\Tools\Microsoft.VisualStudio.DevShell.dll"
-    - Import-Module "$VS_DEV_SHELL"
-    - Enter-VsDevShell -InstallPath "$VS_PATH" -SkipAutomaticLocation -DevCmdArguments '/arch=x64 /host_arch=x64 /no_logo'
   script:
+    # *>&1 redirects all streams to standard output
+    # otherwise the runner won't capture e.g. the compiler errors
     # Configure rocRAND
     - cmake
       -S "$CI_PROJECT_DIR"
       -B "$CI_PROJECT_DIR/build"
       -G Ninja
-      -D AMDGPU_TARGETS=gfx1030
+      -D AMDGPU_TARGETS=$GPU_TARGET
       -D BUILD_BENCHMARK=ON
       -D BUILD_FORTRAN_WRAPPER=OFF
       -D BUILD_SHARED_LIBS=ON
       -D BUILD_TEST=ON
       -D CMAKE_BUILD_TYPE=Release
-      -D CMAKE_C_COMPILER="$ROCM_PATH/bin/clang.exe"
-      -D CMAKE_CXX_COMPILER="$ROCM_PATH/bin/clang++.exe"
-      -D CMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/build/install"
-      -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake"
+      -D CMAKE_C_COMPILER:FILEPATH="$ROCM_PATH/bin/clang.exe"
+      -D CMAKE_CXX_COMPILER:FILEPATH="$ROCM_PATH/bin/clang++.exe"
+      -D CMAKE_INSTALL_PREFIX:PATH="$CI_PROJECT_DIR/build/install"
+      -D CMAKE_PREFIX_PATH:PATH="$ROCM_PATH/lib/cmake"
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D DISABLE_WERROR=OFF *>&1
     # Building
