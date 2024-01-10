@@ -566,11 +566,6 @@ test:windows:
   variables:
     VS_VERSION: 2022
     ROCM_PATH: "C:/PROGRA~1/AMD/ROCm/5.7"
-    # Must define CMake variables as environment variables,
-    # otherwise modules grabbed via FetchContent won't work
-    CXX: "C:/PROGRA~1/AMD/ROCm/5.7/bin/clang++.exe"
-    CC: "C:/PROGRA~1/AMD/ROCm/5.7/bin/clang.exe"
-    CMAKE_BUILD_TYPE: Release
   before_script:
     - | # Find VS installation
       $VS_PATH = (
@@ -588,12 +583,13 @@ test:windows:
       -B "$CI_PROJECT_DIR/build"
       -G Ninja
       -D AMDGPU_TARGETS=gfx1030
-      -D BUILD_BENCHMARK=OFF
-      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
+      -D BUILD_BENCHMARK=ON
       -D BUILD_FORTRAN_WRAPPER=OFF
       -D BUILD_SHARED_LIBS=ON
       -D BUILD_TEST=ON
-      -D CMAKE_CXX_FLAGS="--rocm-path=$ROCM_PATH"
+      -D CMAKE_BUILD_TYPE=Release
+      -D CMAKE_C_COMPILER="$ROCM_PATH/bin/clang.exe"
+      -D CMAKE_CXX_COMPILER="$ROCM_PATH/bin/clang++.exe"
       -D CMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/build/install"
       -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake"
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
@@ -609,7 +605,8 @@ test:windows:
       -S "$CI_PROJECT_DIR/test/package/"
       -B "$CI_PROJECT_DIR/build_install_test"
       -G Ninja
-      -D CMAKE_CXX_FLAGS="--rocm-path=$ROCM_PATH"
+      -D CMAKE_BUILD_TYPE=Release
+      -D CMAKE_CXX_COMPILER="$ROCM_PATH/bin/clang++.exe"
       -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
     # Build package test
     - cmake --build "$CI_PROJECT_DIR/build_install_test"

@@ -87,7 +87,11 @@ if(HIP_COMPILER STREQUAL "nvcc")
     target_include_directories(test_rocrand_parity_rocrand PRIVATE ${CUDA_INCLUDE_DIRS})
     target_link_libraries(test_rocrand_parity_rocrand PRIVATE ${CUDA_LIBRARIES})
 else()
-    target_link_libraries(test_rocrand_parity_rocrand PRIVATE hip::device)
+    target_link_libraries(test_rocrand_parity_rocrand PRIVATE hip::host)
+    # HIP on Windows: xhip is required with clang++ to get __half defined
+    if (WIN32)
+        target_compile_options(test_rocrand_parity_rocrand PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
+    endif()
 endif()
 
 # Compile the files that invoke each API separately, to avoid symbol namespacing errors.
