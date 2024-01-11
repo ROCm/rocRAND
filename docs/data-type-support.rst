@@ -6,9 +6,9 @@ Host API
 
 Generator types
 ---------------
- .. list-table:: Supported generators
+ .. list-table:: Supported generators on the host
     :header-rows: 1
-    :name: supported-generators
+    :name: host-supported-generators
 
     *
       - Generator
@@ -75,7 +75,7 @@ Generator types
       - ✅
       - ✅
 
-Only Sobol64, Scrambled Sobol64, ThreeFry 2x64-20 and ThreeFry 4x64-20 support generation of 64 bit :code:`unsigned long long` integers.
+Only Sobol64, Scrambled Sobol64, ThreeFry 2x64-20 and ThreeFry 4x64-20 support generation of 64 bit :code:`unsigned long long int` integers, the other generators generate 32 bit :code:`unsigned int` integers.
 
 Seed types
 ----------
@@ -85,12 +85,12 @@ All generators can be seeded with :code:`unsigned long long`, however LFSR113 ca
 Output types
 ------------
 
-The generators produce random numbers chosen from a given distribution. The following distributions and corresponding output types are supported for the host API:
+The generators produce pseudo-random numbers chosen from a given distribution. The following distributions and corresponding output types are supported for the host API:
 
 Uniform distribution
 """"""""""""""""""""
 
- .. list-table:: Supported types for uniform distributions
+ .. list-table:: Supported types for uniform distributions on the host
     :header-rows: 1
     :name: host-types-uniform-distribution
 
@@ -100,50 +100,49 @@ Uniform distribution
       - rocRAND support
       - cuRAND support
     *
-      - unsigned char
+      - :code:`unsigned char`
       - 8 bit
       - ✅
       - ❌
     *
-      - unsigned short
+      - :code:`unsigned short`
       - 16 bit
       - ✅
       - ❌
     *
-      - unsigned int
+      - :code:`unsigned int`
       - 32 bit
       - ✅
       - ✅
     *
-      - unsigned long long
+      - :code:`unsigned long long`
       - 64 bit [#]_
       - ✅
       - ✅
     *
-      - half
+      - :code:`half`
       - 16 bit
       - ✅
       - ❌
     *
-      - float
+      - :code:`float`
       - 32 bit
       - ✅
       - ✅
     *
-      - double
+      - :code:`double`
       - 64 bit
       - ✅
       - ✅
 
 Uniform distributions of integral types return a number between 0 and 2^(size in bits) - 1, whereas floating-point types return a number between 0.0 and 1.0, excluding 1.0.
-Only Sobol64, Scrambled Sobol64, ThreeFry 2x64-20 and ThreeFry 4x64-20 support generation of 64 bit `unsigned long long` integers.
 
 Poisson distribution
 """""""""""""""""""""
 
- .. list-table:: Supported types for the poisson distribution
+ .. list-table:: Supported types for the poisson distribution on the host
     :header-rows: 1
-    :name: host-types-normal-distribution
+    :name: host-types-poisson-distribution
 
     *
       - Type
@@ -151,7 +150,7 @@ Poisson distribution
       - rocRAND support
       - cuRAND support
     *
-      - unsigned int
+      - :code:`unsigned int`
       - 32 bit
       - ✅
       - ✅
@@ -159,7 +158,7 @@ Poisson distribution
 Normal distribution
 """""""""""""""""""""
 
- .. list-table:: Supported types for normal distributions
+ .. list-table:: Supported types for normal distributions on the host
     :header-rows: 1
     :name: host-types-normal-distribution
 
@@ -169,25 +168,25 @@ Normal distribution
       - rocRAND support
       - cuRAND support
     *
-      - half
+      - :code:`half`
       - 16 bit
       - ✅
       - ❌
     *
-      - float
+      - :code:`float`
       - 32 bit
       - ✅
       - ✅
     *
-      - double
+      - :code:`double`
       - 64 bit
       - ✅
       - ✅
 
 Log-normal distributions
-"""""""""""""""""""""
+""""""""""""""""""""""""
 
- .. list-table:: Supported types for log-normal distributions
+ .. list-table:: Supported types for log-normal distributions on the host
     :header-rows: 1
     :name: host-types-log-normal-distribution
 
@@ -197,17 +196,17 @@ Log-normal distributions
       - rocRAND support
       - cuRAND support
     *
-      - half
+      - :code:`half`
       - 16 bit
       - ✅
       - ❌
     *
-      - float
+      - :code:`float`
       - 32 bit
       - ✅
       - ✅
     *
-      - double
+      - :code:`double`
       - 64 bit
       - ✅
       - ✅
@@ -217,15 +216,14 @@ Device API
 
 Generator types
 ---------------
- .. list-table:: Supported generators
+ .. list-table:: Supported generators on the device
     :header-rows: 1
-    :name: supported-generators
+    :name: device-supported-generators
 
     *
       - Generator
       - rocRAND support
       - cuRAND support
-      - native size
     *
       - XORWOW
       - ✅
@@ -295,13 +293,13 @@ All generators can be seeded with :code:`unsigned long long`, however LFSR113 ca
 Output types
 ------------
 
-The generators produce random numbers chosen from a given distribution. The following distributions and corresponding output types are supported for the device API, however not all generators support all types:
+The generators produce pseudo-random numbers chosen from a given distribution. The following distributions and corresponding output types are supported for the device API, however not all generators support all types:
 
 
 Uniform distribution
 """"""""""""""""""""
 
- .. list-table:: Supported types for uniform distributions
+ .. list-table:: Supported types for uniform distributions on the device
     :header-rows: 1
     :name: device-types-uniform-distribution
 
@@ -311,42 +309,42 @@ Uniform distribution
       - supported rocRAND generators
       - cuRAND support
     *
-      - unsigned int
+      - :code:`unsigned int`
       - ✅
       - all native 32-bit generators
       - ✅
     *
-      - unsigned long long int
+      - :code:`unsigned long long int`
       - ✅
       - all native 64-bit generators
       - ✅
     *
-      - float
+      - :code:`float`
       - ✅
       - all generators
       - ✅
     *
-      - float2
+      - :code:`float2`
       - ✅
       - Philox 4x32-10
       - ❌
     *
-      - float4
+      - :code:`float4`
       - ✅
       - Philox 4x32-10
       - ✅
     *
-      - double
+      - :code:`double`
       - ✅
       - all generators
       - ✅
     *
-      - double2
+      - :code:`double2`
       - ✅
       - Philox 4x32-10
       - ✅
     *
-      - double4
+      - :code:`double4`
       - ✅
       - Philox 4x32-10
       - ❌
@@ -355,7 +353,7 @@ Uniform distribution
 Normal distribution
 """"""""""""""""""""
 
- .. list-table:: Supported types for normal distributions
+ .. list-table:: Supported types for normal distributions on the device
     :header-rows: 1
     :name: device-types-normal-distribution
 
@@ -365,46 +363,40 @@ Normal distribution
       - supported rocRAND generators
       - cuRAND support
     *
-      - float
+      - :code:`float`
       - ✅
       - all generators
       - ✅
     *
-      - double
+      - :code:`float2`
       - ✅
-      - all generators
-      - ✅
-    *
-      - float2
-      - ✅
-      - Philox 4x32-10, mrg31k3p, mrg32k3a, xorwow, lfsr113, all threefry generators
-      NOT: mtgp32, sobol32, scrambled sobol32, sobol64, scrambled sobol64
-      TODO: why do these generators not support float2 or double2?
-      TODO: Why is `half` not supported?
-      -> There are functions for both in the detail namespace, but they are not used anywhere afaik
-        -> they are used in the cpp wrapper? Or what the hell is happening?
+      - Philox 4x32-10, MRG31K3P, MRG32K3A, XORWOW, LFSR113, all ThreeFry generators
       - ✅
     *
-      - float4
+      - :code:`float4`
       - ✅
       - Philox 4x32-10
       - ✅
     *
-      - double2
+      - :code:`double`
       - ✅
-      - Philox 4x32-10, mrg31k3p, mrg32k3a, xorwow, lfsr113, all threefry generators
-      NOT: mtgp32, sobol32, scrambled sobol32, sobol64, scrambled sobol64
+      - all generators
       - ✅
     *
-      - double4
+      - :code:`double2`
+      - ✅
+      - Philox 4x32-10, MRG31K3P, MRG32K3A, XORWOW, LFSR113, all ThreeFry generators
+      - ✅
+    *
+      - :code:`double4`
       - ✅
       - Philox 4x32-10
       - ❌
 
 Log-normal distributions
-"""""""""""""""""""""
+""""""""""""""""""""""""
 
- .. list-table:: Supported types for log-normal distributions
+ .. list-table:: Supported types for log-normal distributions on the device
     :header-rows: 1
     :name: device-types-log-normal-distribution
 
@@ -414,50 +406,40 @@ Log-normal distributions
       - supported rocRAND generators
       - cuRAND support
     *
-      - half
-      - all generators
-      - ❌
-      - ❌
-    *
-      - float
+      - :code:`float`
+      - ✅
       - all generators
       - ✅
+    *
+      - :code:`float2`
+      - ✅
+      - Philox 4x32-10, MRG31K3P, MRG32K3A, XORWOW, LFSR113, all ThreeFry generators
       - ✅
     *
-      - double
-      - all generators
+      - :code:`float4`
       - ✅
-      - ✅
-    *
-      - float2
-      - Philox 4x32-10, mrg31k3p, mrg32k3a, xorwow, lfsr113, all threefry generators
-      NOT: mtgp32, sobol32, scrambled sobol32, sobol64, scrambled sobol64
-      - ✅
-      - ✅
-    *
-      - double2
-      - philox 4x32-10, mrg31k3p, mrg32k3a, xorwow, lfsr113, all threefry generators
-      NOT: mtgp32, sobol32, scrambled sobol32, sobol64, scrambled sobol64
-      TODO: why not the other generators?
-      TODO: Why no half?
-      -> see normal distribution's todo
-      - ✅
-      - ✅
-    *
-      - float4
       - Philox 4x32-10
       - ✅
+    *
+      - :code:`double`
+      - ✅
+      - all generators
       - ✅
     *
-      - double4
-      - Philox 4x32-10
+      - :code:`double2`
       - ✅
+      - Philox 4x32-10, MRG31K3P, MRG32K3A, XORWOW, LFSR113, all ThreeFry generators
+      - ✅
+    *
+      - :code:`double4`
+      - ✅
+      - Philox 4x32-10
       - ❌
 
 Poisson distributions
 """""""""""""""""""""
 
- .. list-table:: Supported types for poisson distributions
+ .. list-table:: Supported types for poisson distributions on the device
     :header-rows: 1
     :name: device-types-poisson-distribution
 
@@ -467,25 +449,25 @@ Poisson distributions
       - supported rocRAND generators
       - cuRAND support
     *
-      - unsigned int
-      - Philox 4x32-10, mrg31k3p, mrg32k3a, xorwow, mtgp32, sobol32, scrambled sobol32, lfsr113, all ThreeFry generators
+      - :code:`unsigned int`
       - ✅
-      - ✅
-    *
-      - unsigned long long
-      - sobol64, scrambled sobol64
-      - ✅
+      - Philox 4x32-10, MRG31k3p, MRG32K3A, XORWOW, MTGP32, Sobol32, Scrambled Sobol32, LFSR113, all ThreeFry generators
       - ✅
     *
-      - uint4
-      - philox 4x32-10
+      - :code:`unsigned long long int`
       - ✅
-      - ✅ philox 4x32-10
+      - Sobol64, Scrambled sobol64
+      - ❌
+    *
+      - :code:`uint4`
+      - ✅
+      - Philox 4x32-10
+      - ✅
 
 Discrete distributions
 """"""""""""""""""""""
 
- .. list-table:: Supported types for discrete distributions
+ .. list-table:: Supported types for discrete distributions on the device
     :header-rows: 1
     :name: device-types-discrete-distribution
 
@@ -495,14 +477,14 @@ Discrete distributions
       - supported rocRAND generators
       - cuRAND support
     *
-      - unsigned int
+      - :code:`unsigned int`
+      - ✅
       - all generators
       - ✅
-      - ✅
     *
-      - uint4
-      - Philox 4x32-10
+      - :code:`uint4`
       - ✅
+      - Philox 4x32-10
       - ✅ - only Philox - 4x32-10
 
 .. rubric:: Footnotes

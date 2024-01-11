@@ -32,11 +32,6 @@ Documentation for rocRAND is available at
 
 To build documentation locally, use the following code:
 
-
-Requires: [doxygen](https://www.doxygen.nl/)
-
-Run the steps below to build documentation locally.
-
 ```sh
 # Go to the docs directory
 cd docs
@@ -79,6 +74,7 @@ Optional:
 * Fortran compiler (required only for Fortran wrapper)
   * `gfortran` is recommended
 * Python 3.5+ (required only for Python wrapper)
+* [doxygen](https://www.doxygen.nl/) to build the documentation
 
 If some dependencies are missing, the CMake script automatically downloads, builds, and installs them.
 Setting the `DEPENDENCIES_FORCE_DOWNLOAD` option to `ON` forces the script to download all
