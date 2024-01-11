@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,37 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "test_rocrand_prng.hpp"
 #include "test_rocrand_threefryNx64_20_prng.hpp"
 #include <rocrand/rocrand.h>
 
+#include <rng/threefry.hpp>
+
 // Generator API tests
-using test_rocrand_threefry4x64_20_prng_tests_types
-    = ::testing::Types<rocrand_threefryNx64_20_prng_tests_params<rocrand_threefry4x64_20,
-                                                                 ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-                       rocrand_threefryNx64_20_prng_tests_params<rocrand_threefry4x64_20,
+using rocrand_threefry4x64_20_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<rocrand_threefry4x64_20, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<rocrand_threefry4x64_20, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-                                                                 ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
-using test_rocrand_threefry4x64_20_prng_offset_tests_types = ::testing::Types<
-    rocrand_threefryNx64_20_prng_offset_tests_params<unsigned long long,
-                                                     rocrand_threefry4x64_20,
-                                                     ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    rocrand_threefryNx64_20_prng_offset_tests_params<unsigned long long,
-                                                     rocrand_threefry4x64_20,
-                                                     ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
-    rocrand_threefryNx64_20_prng_offset_tests_params<float,
-                                                     rocrand_threefry4x64_20,
-                                                     ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    rocrand_threefryNx64_20_prng_offset_tests_params<float,
-                                                     rocrand_threefry4x64_20,
-                                                     ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+                               generator_prng_tests,
+                               rocrand_threefry4x64_20_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefryNx64_20_prng_tests,
-                               rocrand_threefryNx64_20_prng_tests,
-                               test_rocrand_threefry4x64_20_prng_tests_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+                               generator_prng_continuity_tests,
+                               rocrand_threefry4x64_20_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefryNx64_20_prng_offset_tests,
-                               rocrand_threefryNx64_20_prng_offset_tests,
-                               test_rocrand_threefry4x64_20_prng_offset_tests_types);
+// threefry4x64_20-specific generator API tests
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+                               threefryNx64_20_generator_prng_tests,
+                               rocrand_threefry4x64_20_generator_prng_tests_types);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+                               threefryNx64_20_generator_prng_continuity_tests,
+                               rocrand_threefry4x64_20_generator_prng_tests_types);
 
 // Engine API tests
 class rocrand_threefry4x64_engine_type_test : public rocrand_threefry4x64_20::engine_type
