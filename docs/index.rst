@@ -17,14 +17,14 @@ Our documentation is structured as follows:
 
 .. grid-item-card:: :ref:`API reference <api-reference>`
 
-  * :ref:`cpp-api`
-  * :ref:`python-api`
-  * :doc:`API library <../doxygen/html/index>`
+  * :ref:`C/C++ <cpp-api>`
+  * :ref:`Python <python-api>`
+  * :doc:`API library <doxygen/html/index>`
 
 .. grid-item-card:: Tutorials
 
-  * :ref:`installing`
-  * :ref:`programmers-guide`
+  * :ref:`Installation <installing>`
+  * :ref:`Programmer's guide <programmers-guide>`
 
 Contributing to this documentation
 =======================================================
