@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,27 @@ inline void add_common_benchmark_curand_info()
     benchmark::AddCustomContext("curand_version", std::to_string(version));
 
     add_common_benchmark_info();
+}
+
+inline std::string engine_name(const curandRngType rng_type)
+{
+    // The returned names have to be able to reproduce the curandRngType by prepending
+    // `CUCRAND_RNG_{PSEUDO|QUASI}_` to the name written in all capital letters. The scripts in
+    // scripts/config-tuning/ rely on this.
+    // clang-format off
+    switch(rng_type)
+    {
+        case CURAND_RNG_PSEUDO_XORWOW:           return "xorwow";
+        case CURAND_RNG_PSEUDO_MRG32K3A:         return "mrg32k3a";
+        case CURAND_RNG_PSEUDO_MTGP32:           return "mtgp32";
+        case CURAND_RNG_PSEUDO_PHILOX4_32_10:    return "philox4_32_10";
+        case CURAND_RNG_PSEUDO_MT19937:          return "mt19937";
+        case CURAND_RNG_QUASI_SOBOL32:           return "sobol32";
+        case CURAND_RNG_QUASI_SCRAMBLED_SOBOL32: return "scrambled_sobol32";
+        case CURAND_RNG_QUASI_SOBOL64:           return "sobol64";
+        case CURAND_RNG_QUASI_SCRAMBLED_SOBOL64: return "scrambled_sobol64";
+    }
+    // clang-format on
 }
 
 #endif // ROCRAND_BENCHMARK_CURAND_UTILS_HPP_
