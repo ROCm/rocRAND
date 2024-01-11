@@ -21,10 +21,14 @@ Our documentation is structured as follows:
   * :ref:`python-api`
   * :doc:`API library <../doxygen/html/index>`
 
+:::
+
 :::{grid-item-card} Tutorials
 
-  * :ref:`install-linux-quick`
-  * :ref:`install-linux`
+  * :ref:`installing`
+  * :ref:`programmers-guide`
+
+:::
 
 :::::
 

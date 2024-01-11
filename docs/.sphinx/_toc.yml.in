@@ -9,7 +9,9 @@ subtrees:
   - file: what-is-rocrand
   - file: installing
   - file: programmers-guide
-  subtrees:
+  - file: doxygen/html/index
+
+  - caption: API reference
   - entries:
     - file: cpp-api
     - file: python-api
