@@ -9,8 +9,7 @@ subtrees:
   - file: what-is-rocrand
   - file: installing
   - file: programmers-guide
-  - title: API reference
-  subtrees:
+  subtrees: API reference
   - entries:
     - file: cpp-api
     - file: python-api
