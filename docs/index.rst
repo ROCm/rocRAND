@@ -12,7 +12,7 @@ Welcome to the rocRAND docs home page! To learn more, see :ref:`what-is-rocrand`
 
 Our documentation is structured as follows:
 
-.. grid:: 1 1 2 2
+.. grid:: 2
 .. gutter:: 1
 
 .. grid-item-card:: :ref:`API reference <api-reference>`
