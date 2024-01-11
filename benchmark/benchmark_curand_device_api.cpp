@@ -784,7 +784,7 @@ void add_benchmarks(const benchmark_context&                      ctx,
     constexpr bool is_64_bits = std::is_same<Engine, curandStateSobol64_t>::value
                                 || std::is_same<Engine, curandStateScrambledSobol64_t>::value;
 
-    const std::string& name = engine_name(engine_type);
+    const std::string name = engine_name(engine_type);
 
     if(is_64_bits)
     {
