@@ -6,7 +6,6 @@ defaults:
 root: index
 subtrees:
 - entries:
-  - file: what-is-rocrand
   - file: installing
   - file: programmers-guide
   - file: doxygen/html/index
