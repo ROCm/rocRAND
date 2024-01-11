@@ -12,25 +12,19 @@ Welcome to the rocRAND docs home page! To learn more, see :ref:`what-is-rocrand`
 
 Our documentation is structured as follows:
 
-:::::{grid} 1 1 2 2
-:gutter: 1
+.. grid:: 1 1 2 2
+.. gutter:: 1
 
-:::{grid-item-card} :ref:`API reference <api-reference>`
+.. grid-item-card:: :ref:`API reference <api-reference>`
 
   * :ref:`cpp-api`
   * :ref:`python-api`
   * :doc:`API library <../doxygen/html/index>`
 
-:::
-
-:::{grid-item-card} Tutorials
+.. grid-item-card:: Tutorials
 
   * :ref:`installing`
   * :ref:`programmers-guide`
-
-:::
-
-:::::
 
 Contributing to this documentation
 =======================================================
