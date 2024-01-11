@@ -10,8 +10,9 @@ subtrees:
   - file: installing
   - file: programmers-guide
   - file: doxygen/html/index
-
-  - caption: API reference
-  - entries:
-    - file: cpp-api
-    - file: python-api
+  - file:
+    title: API reference
+    subtrees:
+    - entries:
+      - file: cpp-api
+      - file: python-api
