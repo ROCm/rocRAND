@@ -68,6 +68,9 @@ inline std::string engine_name(const curandRngType rng_type)
         case CURAND_RNG_QUASI_SCRAMBLED_SOBOL32: return "scrambled_sobol32";
         case CURAND_RNG_QUASI_SOBOL64:           return "sobol64";
         case CURAND_RNG_QUASI_SCRAMBLED_SOBOL64: return "scrambled_sobol64";
+        case CURAND_RNG_TEST:                    return "test";
+        case CURAND_RNG_PSEUDO_DEFAULT:          return "pseudo_default";
+        case CURAND_RNG_QUASI_DEFAULT:           return "quasi_default";
     }
     // clang-format on
 }

@@ -75,6 +75,8 @@ inline std::string engine_name(const rocrand_rng_type rng_type)
         case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32: return "scrambled_sobol32";
         case ROCRAND_RNG_QUASI_SOBOL64:           return "sobol64";
         case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64: return "scrambled_sobol64";
+        case ROCRAND_RNG_PSEUDO_DEFAULT:          return "pseudo_default";
+        case ROCRAND_RNG_QUASI_DEFAULT:           return "quasi_default";
     }
     // clang-format on
 }
