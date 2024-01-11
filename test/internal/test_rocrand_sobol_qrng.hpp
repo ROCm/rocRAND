@@ -333,8 +333,8 @@ void log_normal_floating_point_test()
     ROCRAND_CHECK(g.generate_log_normal(data, size, normal_mean, normal_stddev));
     HIP_CHECK(hipDeviceSynchronize());
 
-    T host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(*host_data) * size, hipMemcpyDeviceToHost));
+    std::vector<T> host_data(size);
+    HIP_CHECK(hipMemcpy(host_data.data(), data, sizeof(T) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
     double mean = 0.0;
