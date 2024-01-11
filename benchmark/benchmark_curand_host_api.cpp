@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -177,26 +177,26 @@ int main(int argc, char* argv[])
     benchmark::AddCustomContext("dimensions", std::to_string(dimensions));
     benchmark::AddCustomContext("benchmark_host", std::to_string(benchmark_host));
 
-    const std::map<rng_type_t, std::string> engine_type_map{
-        {         CURAND_RNG_PSEUDO_MT19937,           "mt19937"},
-        {          CURAND_RNG_PSEUDO_MTGP32,            "mtgp32"},
-        {        CURAND_RNG_PSEUDO_MRG32K3A,          "mrg32k3a"},
-        {   CURAND_RNG_PSEUDO_PHILOX4_32_10,            "philox"},
-        {CURAND_RNG_QUASI_SCRAMBLED_SOBOL32, "scrambled_sobol32"},
-        {CURAND_RNG_QUASI_SCRAMBLED_SOBOL64, "scrambled_sobol64"},
-        {          CURAND_RNG_QUASI_SOBOL32,           "sobol32"},
-        {          CURAND_RNG_QUASI_SOBOL64,           "sobol64"},
-        {          CURAND_RNG_PSEUDO_XORWOW,            "xorwow"},
+    const std::vector<rng_type_t> engine_types{
+        CURAND_RNG_PSEUDO_MT19937,
+        CURAND_RNG_PSEUDO_MTGP32,
+        CURAND_RNG_PSEUDO_MRG32K3A,
+        CURAND_RNG_PSEUDO_PHILOX4_32_10,
+        CURAND_RNG_QUASI_SCRAMBLED_SOBOL32,
+        CURAND_RNG_QUASI_SCRAMBLED_SOBOL64,
+        CURAND_RNG_QUASI_SOBOL32,
+        CURAND_RNG_QUASI_SOBOL64,
+        CURAND_RNG_PSEUDO_XORWOW,
     };
 
     const std::string                            benchmark_name_prefix = "device_generate";
     std::vector<benchmark::internal::Benchmark*> benchmarks            = {};
 
     // Add benchmarks
-    for(std::pair<rng_type_t, std::string> engine : engine_type_map)
+    for(const rng_type_t engine_type : engine_types)
     {
-        const rng_type_t  engine_type           = engine.first;
-        const std::string benchmark_name_engine = benchmark_name_prefix + "<" + engine.second + ",";
+        const std::string benchmark_name_engine
+            = benchmark_name_prefix + "<" + engine_name(engine_type) + ",";
 
         if(engine_type != CURAND_RNG_QUASI_SOBOL64
            && engine_type != CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
