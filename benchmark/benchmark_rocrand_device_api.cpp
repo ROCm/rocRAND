@@ -905,9 +905,7 @@ void add_benchmark(const benchmark_context&                      context,
     static_assert(std::is_trivially_copyable<Generator>::value
                       && std::is_trivially_destructible<Generator>::value,
                   "Generator gets copied to device at kernel launch.");
-    generator();
-    const std::string benchmark_name
-        = "device_kernel<" + name + "," + generator.name() + ">";
+    const std::string benchmark_name = "device_kernel<" + name + "," + generator.name() + ">";
     benchmarks.emplace_back(benchmark::RegisterBenchmark(benchmark_name.c_str(),
                                                          &run_benchmark<Engine, Generator>,
                                                          stream,
