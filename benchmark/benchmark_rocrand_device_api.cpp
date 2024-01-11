@@ -924,7 +924,7 @@ void add_benchmarks(const benchmark_context&                      ctx,
                                 || std::is_same<Engine, rocrand_state_threefry2x64_20>::value
                                 || std::is_same<Engine, rocrand_state_threefry4x64_20>::value;
 
-    const std::string& name = engine_name(engine_type);
+    const std::string name = engine_name(engine_type);
 
     if(is_64_bits)
     {
