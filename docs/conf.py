@@ -21,7 +21,7 @@ shutil.copy2('../library/src/fortran/README.md', './fortran_README.md')
 external_projects_current_project = "rocrand"
 
 docs_core = ROCmDocs("rocRAND Documentation")
-docs_core.run_doxygen()
+docs_core.run_doxygen(doxygen_root=".doxygen", doxygen_path=".doxygen/xml")
 docs_core.setup()
 
 for sphinx_var in ROCmDocs.SPHINX_VARS:
