@@ -1,8 +1,5 @@
 # Anywhere {branch} is used, the branch name will be substituted.
 # These comments will also be removed.
-defaults:
-  numbered: False
-  maxdepth: 7
 root: index
 subtrees:
   - entries:
@@ -11,7 +8,7 @@ subtrees:
     - file: .doxygen/html/index
     - file: fortran_README
     - file: what-is-rocrand
-- caption: API reference
-  entries:
-    - file: cpp-api
-    - file: python-api
+  - caption: API reference
+    entries:
+      - file: cpp-api
+      - file: python-api
