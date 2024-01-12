@@ -10,8 +10,10 @@ subtrees:
   - file: programmers-guide
   - file: doxygen/html/index
   - file: what-is-rocrand
-    title: API reference
+  - file: ../library/src/fortran/README
+    /** title: API reference
     subtrees:
     - entries:
       - file: cpp-api
       - file: python-api
+    */
