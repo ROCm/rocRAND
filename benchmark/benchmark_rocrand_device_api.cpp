@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -899,14 +899,13 @@ template<typename Engine, typename Generator>
 void add_benchmark(const benchmark_context&                      context,
                    const hipStream_t                             stream,
                    std::vector<benchmark::internal::Benchmark*>& benchmarks,
-                   const std::string&                            engine_name,
+                   const std::string&                            name,
                    Generator                                     generator)
 {
     static_assert(std::is_trivially_copyable<Generator>::value
                       && std::is_trivially_destructible<Generator>::value,
                   "Generator gets copied to device at kernel launch.");
-    const std::string benchmark_name
-        = "device_kernel<" + engine_name + "," + generator.name() + ">";
+    const std::string benchmark_name = "device_kernel<" + name + "," + generator.name() + ">";
     benchmarks.emplace_back(benchmark::RegisterBenchmark(benchmark_name.c_str(),
                                                          &run_benchmark<Engine, Generator>,
                                                          stream,
@@ -918,12 +917,14 @@ template<typename Engine>
 void add_benchmarks(const benchmark_context&                      ctx,
                     const hipStream_t                             stream,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
-                    const std::string&                            name)
+                    const rocrand_rng_type                        engine_type)
 {
     constexpr bool is_64_bits = std::is_same<Engine, rocrand_state_scrambled_sobol64>::value
                                 || std::is_same<Engine, rocrand_state_sobol64>::value
                                 || std::is_same<Engine, rocrand_state_threefry2x64_20>::value
                                 || std::is_same<Engine, rocrand_state_threefry4x64_20>::value;
+
+    const std::string name = engine_name(engine_type);
 
     if(is_64_bits)
     {
@@ -1001,20 +1002,41 @@ int main(int argc, char* argv[])
     std::vector<benchmark::internal::Benchmark*> benchmarks = {};
 
     // MT19937 has no kernel implementation
-    add_benchmarks<rocrand_state_lfsr113>(ctx, stream, benchmarks, "lfsr113");
-    add_benchmarks<rocrand_state_mrg31k3p>(ctx, stream, benchmarks, "mrg31k3p");
-    add_benchmarks<rocrand_state_mrg32k3a>(ctx, stream, benchmarks, "mrg32k3a");
-    add_benchmarks<rocrand_state_mtgp32>(ctx, stream, benchmarks, "mtgp32");
-    add_benchmarks<rocrand_state_philox4x32_10>(ctx, stream, benchmarks, "philox4x32_10");
-    add_benchmarks<rocrand_state_scrambled_sobol32>(ctx, stream, benchmarks, "scrambled_sobol32");
-    add_benchmarks<rocrand_state_scrambled_sobol64>(ctx, stream, benchmarks, "scrambled_sobol64");
-    add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, "sobol32");
-    add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, "sobol64");
-    add_benchmarks<rocrand_state_threefry2x32_20>(ctx, stream, benchmarks, "threefry2x32_20");
-    add_benchmarks<rocrand_state_threefry4x32_20>(ctx, stream, benchmarks, "threefry4x32_20");
-    add_benchmarks<rocrand_state_threefry2x64_20>(ctx, stream, benchmarks, "threefry2x64_20");
-    add_benchmarks<rocrand_state_threefry4x64_20>(ctx, stream, benchmarks, "threefry4x64_20");
-    add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, "xorwow");
+    add_benchmarks<rocrand_state_lfsr113>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_LFSR113);
+    add_benchmarks<rocrand_state_mrg31k3p>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_MRG31K3P);
+    add_benchmarks<rocrand_state_mrg32k3a>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_MRG32K3A);
+    add_benchmarks<rocrand_state_mtgp32>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_MTGP32);
+    add_benchmarks<rocrand_state_philox4x32_10>(ctx,
+                                                stream,
+                                                benchmarks,
+                                                ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
+    add_benchmarks<rocrand_state_scrambled_sobol32>(ctx,
+                                                    stream,
+                                                    benchmarks,
+                                                    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32);
+    add_benchmarks<rocrand_state_scrambled_sobol64>(ctx,
+                                                    stream,
+                                                    benchmarks,
+                                                    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64);
+    add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, ROCRAND_RNG_QUASI_SOBOL32);
+    add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, ROCRAND_RNG_QUASI_SOBOL64);
+    add_benchmarks<rocrand_state_threefry2x32_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY2_32_20);
+    add_benchmarks<rocrand_state_threefry4x32_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY4_32_20);
+    add_benchmarks<rocrand_state_threefry2x64_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY2_64_20);
+    add_benchmarks<rocrand_state_threefry4x64_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY4_64_20);
+    add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_XORWOW);
 
     // Use manual timing
     for(auto& b : benchmarks)

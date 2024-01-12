@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -779,10 +779,12 @@ template<typename Engine>
 void add_benchmarks(const benchmark_context&                      ctx,
                     const cudaStream_t                            stream,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
-                    const std::string&                            name)
+                    const curandRngType                           engine_type)
 {
     constexpr bool is_64_bits = std::is_same<Engine, curandStateSobol64_t>::value
                                 || std::is_same<Engine, curandStateScrambledSobol64_t>::value;
+
+    const std::string name = engine_name(engine_type);
 
     if(is_64_bits)
     {
@@ -857,14 +859,23 @@ int main(int argc, char* argv[])
 
     std::vector<benchmark::internal::Benchmark*> benchmarks = {};
 
-    add_benchmarks<curandStateMRG32k3a_t>(ctx, stream, benchmarks, "mrg32k3a");
-    add_benchmarks<curandStateMtgp32_t>(ctx, stream, benchmarks, "mtgp32");
-    add_benchmarks<curandStatePhilox4_32_10_t>(ctx, stream, benchmarks, "philox4x32_10");
-    add_benchmarks<curandStateScrambledSobol32_t>(ctx, stream, benchmarks, "scrambled_sobol32");
-    add_benchmarks<curandStateScrambledSobol64_t>(ctx, stream, benchmarks, "scrambled_sobol64");
-    add_benchmarks<curandStateSobol32_t>(ctx, stream, benchmarks, "sobol32");
-    add_benchmarks<curandStateSobol64_t>(ctx, stream, benchmarks, "sobol64");
-    add_benchmarks<curandStateXORWOW_t>(ctx, stream, benchmarks, "xorwow");
+    add_benchmarks<curandStateMRG32k3a_t>(ctx, stream, benchmarks, CURAND_RNG_PSEUDO_MRG32K3A);
+    add_benchmarks<curandStateMtgp32_t>(ctx, stream, benchmarks, CURAND_RNG_PSEUDO_MTGP32);
+    add_benchmarks<curandStatePhilox4_32_10_t>(ctx,
+                                               stream,
+                                               benchmarks,
+                                               CURAND_RNG_PSEUDO_PHILOX4_32_10);
+    add_benchmarks<curandStateScrambledSobol32_t>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  CURAND_RNG_QUASI_SCRAMBLED_SOBOL32);
+    add_benchmarks<curandStateScrambledSobol64_t>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  CURAND_RNG_QUASI_SCRAMBLED_SOBOL64);
+    add_benchmarks<curandStateSobol32_t>(ctx, stream, benchmarks, CURAND_RNG_QUASI_SOBOL32);
+    add_benchmarks<curandStateSobol64_t>(ctx, stream, benchmarks, CURAND_RNG_QUASI_SOBOL64);
+    add_benchmarks<curandStateXORWOW_t>(ctx, stream, benchmarks, CURAND_RNG_PSEUDO_XORWOW);
 
     // Use manual timing
     for(auto& b : benchmarks)
