@@ -16,7 +16,7 @@ docs_dir_path = pathlib.Path(__file__).parent
 python_dir_path = docs_dir_path.parent / 'python' / 'rocrand'
 sys.path.append(str(python_dir_path))
 
-shutil.copy2('../library/src/fortran/README.md', './fortran_README.md')
+shutil.copy2('../library/src/fortran/README.md', './fortran-README.md')
 
 external_projects_current_project = "rocrand"
 

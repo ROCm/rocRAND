@@ -1,4 +1,4 @@
-# rocRAND Fortran
+# Fortran API Reference
 
 This library provides a pure Fortran interface for the rocRAND API.
 
