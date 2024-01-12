@@ -11,11 +11,9 @@ subtrees:
   - file: .doxygen/html/index
   - file: ../../library/src/fortran/README
   - file: what-is-rocrand
-  .. toctree::
-  :caption: API reference
-    subtrees:
-      - entries:
-        - file: cpp-api
-        - file: python-api
+  - caption: API reference
+    - entries:
+      - file: cpp-api
+      - file: python-api
 
   
