@@ -8,7 +8,7 @@ subtrees:
 - entries:
   - file: installing
   - file: programmers-guide
-  - file: doxygen/html/index
+  - file: .doxygen/html/index
   - file: what-is-rocrand
   - file: ../../library/src/fortran/README
   
