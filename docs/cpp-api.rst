@@ -1,7 +1,7 @@
 .. meta::
-  :description: rocFFT documentation and API reference library
-  :keywords: rocFFT, ROCm, API, documentation
-  
+  :description: rocRAND documentation and API reference library
+  :keywords: rocRAND, ROCm, API, documentation
+
 .. _cpp-api:
 
 ===================

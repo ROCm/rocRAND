@@ -10,5 +10,5 @@ subtrees:
   - file: programmers-guide
   - file: doxygen/html/index
   - file: what-is-rocrand
-  - file: ../library/src/fortran/README
+  - file: ../../library/src/fortran/README
   
