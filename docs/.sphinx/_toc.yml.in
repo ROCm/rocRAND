@@ -2,7 +2,7 @@
 # These comments will also be removed.
 defaults:
   numbered: False
-  maxdepth: 5
+  maxdepth: 7
 root: index
 subtrees:
 - entries:
