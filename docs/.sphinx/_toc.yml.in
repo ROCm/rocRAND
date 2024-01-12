@@ -9,10 +9,9 @@ subtrees:
     - file: installing
     - file: programmers-guide
     - file: .doxygen/html/index
-    - file: ../../library/src/fortran/README
+    - file: fortran_README
     - file: what-is-rocrand
 - caption: API reference
   entries:
     - file: cpp-api
     - file: python-api
-

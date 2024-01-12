@@ -4,15 +4,19 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-from rocm_docs import ROCmDocs
 import pathlib
+import shutil
 import sys
+
+from rocm_docs import ROCmDocs
 
 # We need to add the location of the rocrand Python module to the PATH
 # in order to build the documentation of that module
 docs_dir_path = pathlib.Path(__file__).parent
 python_dir_path = docs_dir_path.parent / 'python' / 'rocrand'
 sys.path.append(str(python_dir_path))
+
+shutil.copy2('../library/src/fortran/README.md', './fortran_README.md')
 
 external_projects_current_project = "rocrand"
 
