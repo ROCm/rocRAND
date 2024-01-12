@@ -16,9 +16,10 @@ Our documentation is structured as follows:
 
 .. grid-item-card:: :ref:`API reference <api-reference>`
 
-  * :ref:`C/C++ <cpp-api>`
+  * :ref:`cpp-api`
   * :ref:`Python <python-api>`
-  * :doc:`API library <doxygen/html/index>`
+  * :doc:`API library </doxygen/html/index>`
+  
 
 .. grid-item-card:: Tutorials
 

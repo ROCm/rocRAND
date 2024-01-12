@@ -1,3 +1,9 @@
+.. meta::
+  :description: rocFFT documentation and API reference library
+  :keywords: rocFFT, ROCm, API, documentation
+  
+.. _cpp-api:
+
 ===================
 C/C++ API Reference
 ===================
