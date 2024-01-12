@@ -1,3 +1,9 @@
+.. meta::
+  :description: rocRAND documentation and API reference library
+  :keywords: rocRAND, ROCm, API, documentation
+  
+.. _python-api:
+
 ====================
 Python API Reference
 ====================
