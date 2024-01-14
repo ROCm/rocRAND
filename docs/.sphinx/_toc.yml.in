@@ -5,10 +5,11 @@ subtrees:
   - entries:
     - file: installing
     - file: programmers-guide
-    - file: .doxygen/html/index
-    - file: fortran_README
+    - file: fortran-README
     - file: what-is-rocrand
   - caption: API reference
     entries:
       - file: cpp-api
       - file: python-api
+      - file: .doxygen/html/index
+
