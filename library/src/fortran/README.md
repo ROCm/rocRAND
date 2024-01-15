@@ -1,4 +1,4 @@
-# Fortran API Reference
+# Fortran API reference
 
 This library provides a pure Fortran interface for the rocRAND API.
 
@@ -6,7 +6,7 @@ This interface is intended to target only Host API functions, and provides a 1:1
 the C Host API functions in rocRAND. For documentation of these functions, please
 refer to the C Host API functions documentation.
 
-## Build and Install
+## Build and install
 
 The Fortran interface is installed as part of the rocRAND package. Simply add the build
 option `-DBUILD_FORTRAN_WRAPPER=ON` when configuring cmake, as below:
@@ -15,7 +15,7 @@ option `-DBUILD_FORTRAN_WRAPPER=ON` when configuring cmake, as below:
 cmake -DBUILD_FORTRAN_WRAPPER=ON ../.
 ```
 
-## Running Unit Tests
+## Running unit tests
 
 ```
 # Go to rocRAND build directory

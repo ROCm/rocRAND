@@ -5,7 +5,7 @@
 .. _programmers-guide:
 
 ==================
-Programmer's Guide
+Programmer's guide
 ==================
 
 Generator types

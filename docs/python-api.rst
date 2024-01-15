@@ -5,7 +5,7 @@
 .. _python-api:
 
 ====================
-Python API Reference
+Python API reference
 ====================
 
 This chapter describes the rocRAND Python module API.

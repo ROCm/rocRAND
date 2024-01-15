@@ -18,7 +18,7 @@ Our documentation is structured as follows:
 
     * :ref:`cpp-api`
     * :ref:`python-api`
-    * :ref:`fortran-README`
+    * :ref:`fortran-api-reference`
     * :doc:`API library <.doxygen/html/index>`
 
   .. grid-item-card:: Tutorials

@@ -13,7 +13,7 @@ Introduction
 
 This chapter describes how to obtain rocRAND. There are two main methods: the easiest way is to install the prebuilt packages from the ROCm repositories. Alternatively, this chapter also describes how to build rocRAND from source.
 
-Prebuilt Packages
+Prebuilt packages
 -----------------
 
 Installing the prebuilt rocRAND packages requires a ROCm-enabled platform. See the `ROCm documentation <https://docs.amd.com/>`_ for more information. After installing ROCm or enabling the ROCm repositories, rocRAND can be obtained using the system package manager.
@@ -32,17 +32,17 @@ For SLES::
 
 This will install rocRAND into the ``/opt/rocm`` directory.
 
-Building rocRAND From Source
+Building rocRAND from source
 ----------------------------
 
-Obtaining Sources
+Obtaining sources
 ^^^^^^^^^^^^^^^^^
 
 The rocRAND sources are available from the `rocRAND GitHub Repository <https://github.com/ROCmSoftwarePlatform/rocRAND>`_. Use the branch that matches the system-installed version of ROCm. For example on a system that has ROCm 5.3 installed, use the following command to obtain rocRAND sources::
 
     git checkout -b rocm-5.3 https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
-Building The Library
+Building the library
 ^^^^^^^^^^^^^^^^^^^^
 
 After obtaining the sources, rocRAND can be built using the installation script::
@@ -52,7 +52,7 @@ After obtaining the sources, rocRAND can be built using the installation script:
 
 This automatically builds all required dependencies, excluding HIP and Git, and installs the project to ``/opt/rocm`` if everything went well. See ``./install --help`` for further information.
 
-Building With CMake
+Building with CMake
 ^^^^^^^^^^^^^^^^^^^
 
 For a more elaborate installation process, rocRAND can be built manually using CMake. This enables certain configuration options that are not exposed to the ``./install`` script. In general, rocRAND can be built using CMake by configuring as follows::
@@ -79,7 +79,7 @@ The following configuration options are available, in addition to the built-in C
 
 To install rocRAND with a non-standard installation location of ROCm, pass ``-DCMAKE_PREFIX_PATH=</path/to/opt/rocm/>`` or set the environment variable ``ROCM_PATH`` to ``path/to/opt/rocm``.
 
-Building the Python API Wrapper
+Building the Python API wrapper
 -------------------------------
 
 Requirements
