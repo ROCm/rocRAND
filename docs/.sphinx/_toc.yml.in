@@ -6,10 +6,13 @@ subtrees:
     - file: installing
     - file: programmers-guide
     - file: what-is-rocrand
-  - caption: API reference
-    entries:
-      - file: cpp-api
-      - file: python-api
-      - file: fortran-api-reference
-      - file: .doxygen/html/index
+    - file: genindex
+      title: API reference
+      subtrees:
+        - entries:
+          - file: cpp-api
+          - file: python-api
+          - file: fortran-api-reference
+          - file: .doxygen/html/index
+  
 
