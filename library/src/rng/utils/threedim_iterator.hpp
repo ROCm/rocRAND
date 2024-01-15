@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,9 +42,12 @@ public:
     using pointer           = dim3*;
 
     /// \brief Constructs a new instance of `threedim_iterator`.
+    threedim_iterator() : m_dimensions(dim3()), m_index(0) {}
+
+    /// \brief Constructs a new instance of `threedim_iterator`.
     /// \param dimensions The extents of the 3D grid which specifies how the linear indices are transformed.
     /// \param index The starting linear index.
-    explicit threedim_iterator(const dim3 dimensions = dim3(), const size_t index = 0)
+    explicit threedim_iterator(const dim3 dimensions, const size_t index = 0)
         : m_dimensions(dimensions), m_index(index)
     {
         assert(m_dimensions.x != 0);

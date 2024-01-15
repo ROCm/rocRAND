@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -88,6 +88,10 @@ if(HIP_COMPILER STREQUAL "nvcc")
     target_link_libraries(test_rocrand_parity_rocrand PRIVATE ${CUDA_LIBRARIES})
 else()
     target_link_libraries(test_rocrand_parity_rocrand PRIVATE hip::host)
+    # HIP on Windows: xhip is required with clang++ to get __half defined
+    if (WIN32)
+        target_compile_options(test_rocrand_parity_rocrand PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
+    endif()
 endif()
 
 # Compile the files that invoke each API separately, to avoid symbol namespacing errors.

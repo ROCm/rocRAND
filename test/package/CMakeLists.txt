@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -114,6 +114,10 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
         target_link_libraries(${test_name} PRIVATE ${CUDA_LIBRARIES})
     else()
         target_link_libraries(${test_name} PRIVATE hip::host)
+        # HIP on Windows: xhip is required with clang++ to get __half defined
+        if (WIN32)
+            target_compile_options(${test_name} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
+        endif()
     endif()
     add_relative_test(${test_name} ${test_name})
     if (WIN32 AND NOT DEFINED DLLS_COPIED)

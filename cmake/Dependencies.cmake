@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -60,12 +60,18 @@ if(BUILD_TEST)
   if(NOT TARGET GTest::GTest AND NOT TARGET GTest::gtest)
     message(STATUS "GTest not found or force download GTest on. Downloading and building GTest.")
     set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/gtest CACHE PATH "")
+    if(DEFINED CMAKE_CXX_COMPILER)
+      set(CXX_COMPILER_OPTION "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+    endif()
+    if(DEFINED CMAKE_C_COMPILER)
+      set(C_COMPILER_OPTION "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+    endif()
     download_project(
       PROJ                googletest
       GIT_REPOSITORY      https://github.com/google/googletest.git
       GIT_TAG             release-1.11.0
       INSTALL_DIR         ${GTEST_ROOT}
-      CMAKE_ARGS          -DBUILD_GTEST=ON -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+      CMAKE_ARGS          -DBUILD_GTEST=ON -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${CXX_COMPILER_OPTION} ${C_COMPILER_OPTION} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
       LOG_DOWNLOAD        TRUE
       LOG_CONFIGURE       TRUE
       LOG_BUILD           TRUE
@@ -91,21 +97,15 @@ if(BUILD_BENCHMARK)
       message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
     endif()
     set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/googlebenchmark CACHE PATH "")
-    if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-    # hip-clang cannot compile googlebenchmark for some reason
-      if(WIN32)
-        set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=cl")
-      else()
-        set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
-      endif()
+    if(DEFINED CMAKE_CXX_COMPILER)
+      set(CXX_COMPILER_OPTION "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
     endif()
-
     download_project(
       PROJ           googlebenchmark
       GIT_REPOSITORY https://github.com/google/benchmark.git
       GIT_TAG        v1.6.1
       INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
-      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_CXX_STANDARD=14 ${COMPILER_OVERRIDE}
+      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_CXX_STANDARD=14 ${CXX_COMPILER_OPTION}
       LOG_DOWNLOAD   TRUE
       LOG_CONFIGURE  TRUE
       LOG_BUILD      TRUE
