@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ include:
       - /deps-docs.yaml
       - /deps-rocm.yaml
       - /deps-nvcc.yaml
+      - /deps-windows.yaml
       - /gpus-rocm.yaml
       - /gpus-nvcc.yaml
       - /rules.yaml
@@ -295,6 +296,7 @@ benchmark:benchmark-tuning:
     - .rocm:cmake-latest
     - .gpus:rocm
   stage: benchmark
+  needs: []
   variables:
     BENCHMARK_TUNING_MIN_GRID_SIZE: 32768
     BENCHMARK_TUNING_THREAD_OPTIONS: "128, 256, 512"
@@ -552,3 +554,52 @@ test:nvcc-parity:
     - build:nvcc-cmake-minimum
   before_script:
     - !reference [".nvcc:cmake-minimum", before_script]
+
+test:windows:
+  stage: test
+  extends:
+    - .rules:test
+    - .gpus:rocm-windows
+    - .deps:rocm-windows
+    - .deps:visual-studio-devshell
+  needs: []
+  script:
+    # *>&1 redirects all streams to standard output
+    # otherwise the runner won't capture e.g. the compiler errors
+    # Configure rocRAND
+    - cmake
+      -S "$CI_PROJECT_DIR"
+      -B "$CI_PROJECT_DIR/build"
+      -G Ninja
+      -D AMDGPU_TARGETS=$GPU_TARGET
+      -D BUILD_BENCHMARK=ON
+      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_SHARED_LIBS=ON
+      -D BUILD_TEST=ON
+      -D CMAKE_BUILD_TYPE=Release
+      -D CMAKE_C_COMPILER:FILEPATH="$ROCM_PATH/bin/clang.exe"
+      -D CMAKE_CXX_COMPILER:FILEPATH="$ROCM_PATH/bin/clang++.exe"
+      -D CMAKE_INSTALL_PREFIX:PATH="$CI_PROJECT_DIR/build/install"
+      -D CMAKE_PREFIX_PATH:PATH="$ROCM_PATH/lib/cmake"
+      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
+      -D DISABLE_WERROR=OFF *>&1
+    # Building
+    - cmake --build "$CI_PROJECT_DIR/build" *>&1
+    # Running test suite
+    - ctest --test-dir "$CI_PROJECT_DIR/build" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1
+    # Installing
+    - cmake --build "$CI_PROJECT_DIR/build" --target install *>&1
+    # Configure package test
+    - cmake
+      -S "$CI_PROJECT_DIR/test/package/"
+      -B "$CI_PROJECT_DIR/build_install_test"
+      -G Ninja
+      -D CMAKE_BUILD_TYPE=Release
+      -D CMAKE_CXX_COMPILER="$ROCM_PATH/bin/clang++.exe"
+      -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
+    # Build package test
+    - cmake --build "$CI_PROJECT_DIR/build_install_test"
+    # Copy rocRAND.dll to the package test build directory
+    - cmake -E copy "$CI_PROJECT_DIR/build/install/bin/rocRAND.dll" "$CI_PROJECT_DIR/build_install_test" *>&1
+    # Run package test
+    - ctest --test-dir "$CI_PROJECT_DIR/build_install_test" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1

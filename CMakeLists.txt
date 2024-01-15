@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,24 +21,6 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
-
-# Install prefix
-if (WIN32)
-  SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
-  SET( INSTALL_PREFIX "C:/hipSDK" )
-  SET( CPACK_SET_DESTDIR FALSE )
-  SET( CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK" )
-  SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
-  set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
-else()
-  set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
-
-  #Adding CMAKE_PREFIX_PATH
-  list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH} )
-  if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
-      set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-  endif()
-endif()
 
 # Build options
 include(CMakeDependentOption)
@@ -205,13 +187,16 @@ set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 if(WIN32)
     set(CPACK_SOURCE_GENERATOR "ZIP")
     set(CPACK_GENERATOR "ZIP")
-    set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE)
-    set(INSTALL_PREFIX "C:/hipSDK")
+    set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path")
+    set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     set(CPACK_SET_DESTDIR OFF)
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
     set(CPACK_PACKAGING_INSTALL_PREFIX "")
     set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 else()
+    set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
+    #Adding CMAKE_PREFIX_PATH
+    list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH} )
     if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
         set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
