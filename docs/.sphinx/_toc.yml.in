@@ -6,7 +6,7 @@ subtrees:
     - file: installing
     - file: programmers-guide
     - file: what-is-rocrand
-    - file: genindex
+    - url: `genindex`
       title: API reference
       subtrees:
         - entries:
