@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,17 +43,6 @@ int main(int argc, char const* argv[])
                   << std::endl;
         return -1;
     }
-    const std::string vector_file(argv[1]);
-    uint32_t SOBOL_DIM = 20000;
-    uint32_t SOBOL32_N = SOBOL_DIM * 32;
-    struct sobol_set * inputs = new struct sobol_set[SOBOL_DIM];
-    uint32_t * directions_32 = new uint32_t[SOBOL32_N]();
-    bool read = read_sobol_set(inputs, SOBOL_DIM, vector_file);
-
-    if (read)
-    {
-        init_direction_vectors<uint32_t>(inputs, directions_32, 32, SOBOL_DIM);
-
     const std::filesystem::path vector_file(argv[1]);
 
     std::vector<rocrand_tools::sobol_set> inputs(rocrand_tools::SOBOL_DIM);
