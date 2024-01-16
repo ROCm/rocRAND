@@ -34,7 +34,7 @@ namespace rocrand_host::detail
 template<class T>
 struct generator_config_selector<ROCRAND_RNG_PSEUDO_XORWOW, T>
 {
-    __host__ __device__ constexpr unsigned int get_threads(const target_arch arch) const
+    __host__ __device__ static constexpr unsigned int get_threads(const target_arch arch)
     {
         switch(arch)
         {
@@ -43,11 +43,11 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_XORWOW, T>
             case target_arch::gfx900: return 256;
             case target_arch::gfx906: return 256;
             case target_arch::gfx908: return 256;
-            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>{}.threads;
+            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>::threads;
         }
     }
 
-    __host__ __device__ constexpr unsigned int get_blocks(const target_arch arch) const
+    __host__ __device__ static constexpr unsigned int get_blocks(const target_arch arch)
     {
         switch(arch)
         {
@@ -56,7 +56,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_XORWOW, T>
             case target_arch::gfx900: return 512;
             case target_arch::gfx906: return 448;
             case target_arch::gfx908: return 960;
-            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>{}.blocks;
+            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>::blocks;
         }
     }
 };

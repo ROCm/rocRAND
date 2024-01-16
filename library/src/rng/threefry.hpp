@@ -292,7 +292,7 @@ public:
 
             rocrand_host::detail::generator_config config;
             const hipError_t                       error
-                = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
+                = ConfigProvider::template host_config<T>(m_stream, m_order, config);
             if(error != hipSuccess)
             {
                 return ROCRAND_STATUS_INTERNAL_ERROR;
