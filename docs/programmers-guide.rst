@@ -74,7 +74,7 @@ ThreeFry
 Sobol
     The (scrambled) 32- and 64-bit sobol quasi-random number generators generated the result from :math:`d` dimensions by flattening them into the output. The result at offset :math:`n` in memory is generated from offset :math:`n\;\mathrm{mod}\; d` in dimension :math:`\lfloor n / d \rfloor`, where :math:`d` is the generator's number of dimensions.
 
-cuRAND Compatibility
+cuRAND compatibility
 --------------------
 
 The following table shows which rocRAND generators produce the exact same sequence as the equivalent cuRAND generator when using legacy ordering, given the same seed, number of dimensions, and offset.
