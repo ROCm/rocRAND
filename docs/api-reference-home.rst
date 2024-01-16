@@ -8,9 +8,9 @@
 rocRAND API reference
 ===================
 
-rocRAND APIs are available in:
+rocRAND APIs are available in the following programming languages:
 
-* :ref:`cpp-api`
-* :ref:`python-api`
+* :ref:`C/C++<cpp-api>`
+* :ref:`Python<python-api>`
 
 Here is the :ref:`genindex` for all rocRAND APIs.
