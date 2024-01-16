@@ -18,9 +18,3 @@ Additionally, the project includes a wrapper library called hipRAND which allows
 CUDA applications that use cuRAND library to the `HIP <https://github.com/ROCm-Developer-Tools/HIP>`_
 layer. In `ROCm <https://rocm.github.io/>`_ environment hipRAND uses rocRAND, however in CUDA
 environment cuRAND is used instead.
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`search`
