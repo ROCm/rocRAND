@@ -37,6 +37,7 @@ Documentation for rocRAND is available at
   split to multiple compilation units.
 
 ### Deprecations
+
 * Deprecated the following typedefs. Please use the unified `state_type` alias instead.
   * `rocrand_device::threefry2x32_20_engine::threefry2x32_20_state`
   * `rocrand_device::threefry2x64_20_engine::threefry2x64_20_state`
@@ -44,8 +45,9 @@ Documentation for rocRAND is available at
   * `rocrand_device::threefry4x64_20_engine::threefry4x64_20_state`
 
 ### Removals
-- Removed references to and workarounds for deprecated hcc.
-- Support for HIP-CPU
+
+* Removed references to and workarounds for deprecated hcc.
+* Support for HIP-CPU
 
 ## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
 
