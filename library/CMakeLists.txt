@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -152,6 +152,7 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(
     src/rocrand-fortran-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake
+    INSTALL_DESTINATION ${CONFIG_PACKAGE_INSTALL_DIR}
 )
 
 if(HIP_COMPILER STREQUAL "nvcc")
