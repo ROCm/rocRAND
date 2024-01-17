@@ -3,10 +3,12 @@
 
 /// \cond ROCRAND_DOCS_MACRO
 #ifndef ROCRANDAPI
+    #if defined(ROCRAND_STATIC_BUILD)
+        #define ROCRANDAPI
     // device symbols are not marked with ROCRANDAPI (they are not exported)
     // but clang warns on host symbols if they are marked with dllexport/dllimport
     // during device compilation.
-    #if defined(__HIP_DEVICE_COMPILE__)
+    #elif defined(__HIP_DEVICE_COMPILE__)
         #define ROCRANDAPI
     #elif defined(_WIN32)
         #ifdef rocrand_EXPORTS

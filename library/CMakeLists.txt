@@ -98,6 +98,10 @@ set_target_properties(rocrand PROPERTIES
   VISIBILITY_INLINES_HIDDEN ON
 )
 
+if (NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(rocrand PUBLIC ROCRAND_STATIC_BUILD)
+endif()
+
 if (HIP_COMPILER STREQUAL "nvcc")
     set_target_properties(rocrand PROPERTIES CUDA_VISIBILITY_PRESET hidden)
 endif()
