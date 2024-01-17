@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,6 +58,8 @@ function(add_test_target test_src is_internal)
   # nvcc/CUDA
   if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${test_name} PROPERTIES LANGUAGE CUDA)
+    # instantiation of tests in test_rocrand_cpp_wrapper.cpp exceeds the default template recursion depth
+    target_compile_options(${test_name} PRIVATE "--ftemplate-depth=500")
     if(is_internal)
       set_source_files_properties(${test_name} PROPERTIES CUDA_STANDARD 17)
       if(${CMAKE_VERSION} VERSION_LESS "3.18")
