@@ -29,12 +29,16 @@ Documentation for rocRAND is available at
   which can be specific to devices and distributions. It is implemented for:
   * XORWOW, MRG32K3A, MTGP32, Philox 4x32-10, MRG31K3P, LFSR113, and ThreeFry
 * For the NVIDIA platform compilation using clang as the host compiler is now supported.
+* C++ wrapper:
+  * `lfsr113_engine` now also supports being constructed with a seed of type `unsigned long long`, not only `uint4`.
+  * added optional order parameter to constructor of `mt19937_engine`
 
 ### Changes
 
 * Building rocRAND now requires a C++17 capable compiler, as the internal library sources now require it. However consuming rocRAND is still possible from C++11 as public headers don't make use of the new features.
 * Building rocRAND should be faster on machines with multiple CPU cores as the library has been
   split to multiple compilation units.
+* C++ wrapper: the `min()` and `max()` member functions of the generators and distributions are now `static constexpr`.
 
 ### Deprecations
 
