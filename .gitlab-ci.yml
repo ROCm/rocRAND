@@ -557,14 +557,14 @@ test:nvcc-parity:
   before_script:
     - !reference [".nvcc:cmake-minimum", before_script]
 
-test:windows:
-  stage: test
+.build:windows:
   extends:
     - .rules:test
     - .gpus:rocm-windows
     - .deps:rocm-windows
     - .deps:visual-studio-devshell
-  needs: []
+  variables:
+    BUILD_SHARED_LIBS: "ON"
   script:
     # *>&1 redirects all streams to standard output
     # otherwise the runner won't capture e.g. the compiler errors
@@ -576,7 +576,7 @@ test:windows:
       -D AMDGPU_TARGETS=$GPU_TARGET
       -D BUILD_BENCHMARK=ON
       -D BUILD_FORTRAN_WRAPPER=OFF
-      -D BUILD_SHARED_LIBS=ON
+      -D BUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
       -D BUILD_TEST=ON
       -D CMAKE_BUILD_TYPE=Release
       -D CMAKE_C_COMPILER:FILEPATH="$ROCM_PATH/bin/clang.exe"
@@ -587,6 +587,20 @@ test:windows:
       -D DISABLE_WERROR=OFF *>&1
     # Building
     - cmake --build "$CI_PROJECT_DIR/build" *>&1
+
+build:windows-static:
+  stage: build
+  needs: []
+  extends: .build:windows
+  variables:
+    BUILD_SHARED_LIBS: "OFF"
+
+test:windows:
+  stage: test
+  needs: []
+  extends: .build:windows
+  script:
+    - !reference [".build:windows", script]
     # Running test suite
     - ctest --test-dir "$CI_PROJECT_DIR/build" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1
     # Installing
