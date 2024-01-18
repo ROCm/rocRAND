@@ -52,7 +52,7 @@ python3 -m http.server
 * CMake (3.16 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
-  * [ROCm](https://rocm.github.io/install.html) (1.7 or later)
+  * [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) (1.7 or later)
   * [HIP-clang](https://github.com/ROCm/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
     set as C++ compiler on ROCm platform.
 * For CUDA platforms:
