@@ -21,8 +21,10 @@
 #ifndef ROCRAND_RNG_MRG_H_
 #define ROCRAND_RNG_MRG_H_
 
+#include "config/mrg31k3p_config.hpp"
+#include "config/mrg32k3a_config.hpp"
+
 #include "common.hpp"
-#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"

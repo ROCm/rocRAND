@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCRAND_RNG_CONFIG_XORWOW_CONFIG_HPP_
-#define ROCRAND_RNG_CONFIG_XORWOW_CONFIG_HPP_
+#ifndef ROCRAND_RNG_CONFIG_THREEFRY4_64_20_CONFIG_HPP_
+#define ROCRAND_RNG_CONFIG_THREEFRY4_64_20_CONFIG_HPP_
 
 #include "config_defaults.hpp"
 #include <rocrand/rocrand.h>
@@ -32,16 +32,17 @@ namespace rocrand_host::detail
 {
 
 template<class T>
-struct generator_config_selector<ROCRAND_RNG_PSEUDO_XORWOW, T>
+struct generator_config_selector<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20, T>
 {
     __host__ __device__ static constexpr unsigned int get_threads(const target_arch arch)
     {
         switch(arch)
         {
-            case target_arch::gfx1030: return 128;
-            case target_arch::gfx906: return 256;
-            case target_arch::gfx908: return 256;
-            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>::threads;
+            case target_arch::gfx1030: return 1024;
+            case target_arch::gfx906: return 128;
+            case target_arch::gfx908: return 128;
+            default:
+                return generator_config_defaults<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20, T>::threads;
         }
     }
 
@@ -49,14 +50,15 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_XORWOW, T>
     {
         switch(arch)
         {
-            case target_arch::gfx1030: return 360;
-            case target_arch::gfx906: return 560;
-            case target_arch::gfx908: return 600;
-            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_XORWOW, T>::blocks;
+            case target_arch::gfx1030: return 2304;
+            case target_arch::gfx906: return 1792;
+            case target_arch::gfx908: return 1920;
+            default:
+                return generator_config_defaults<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20, T>::blocks;
         }
     }
 };
 
 } // end namespace rocrand_host::detail
 
-#endif // ROCRAND_RNG_CONFIG_XORWOW_HPP_
+#endif // ROCRAND_RNG_CONFIG_THREEFRY4_64_20_HPP_

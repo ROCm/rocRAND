@@ -21,8 +21,12 @@
 #ifndef ROCRAND_RNG_THREEFRY_H_
 #define ROCRAND_RNG_THREEFRY_H_
 
+#include "config/threefry2_32_20_config.hpp"
+#include "config/threefry2_64_20_config.hpp"
+#include "config/threefry4_32_20_config.hpp"
+#include "config/threefry4_64_20_config.hpp"
+
 #include "common.hpp"
-#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
