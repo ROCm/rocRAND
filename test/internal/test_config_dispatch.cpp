@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -58,8 +58,8 @@ struct generator_config_defaults<dummy_rng_type, half>
 } // end namespace rocrand_host::detail
 
 template<class T,
-         unsigned int BlockSize = rocrand_host::detail::default_config_provider<dummy_rng_type>{}
-                                      .template device_config<T>(true)
+         unsigned int BlockSize = rocrand_host::detail::default_config_provider<
+                                      dummy_rng_type>::template device_config<T>(true)
                                       .threads>
 __global__ __launch_bounds__(BlockSize) void write_config(unsigned int* block_size,
                                                           unsigned int* grid_size)
@@ -186,13 +186,13 @@ TEST(rocrand_config_dispatch_tests, default_config_provider)
     static constexpr rocrand_ordering ordering       = ROCRAND_ORDERING_PSEUDO_DEFAULT;
 
     rocrand_host::detail::generator_config config{};
-    ASSERT_EQ(config_provider{}.host_config<unsigned int>(default_stream, ordering, config),
+    ASSERT_EQ(config_provider::host_config<unsigned int>(default_stream, ordering, config),
               hipSuccess);
     ASSERT_EQ(config.blocks, 1);
     ASSERT_EQ(config.threads, 256);
 
     config = {};
-    ASSERT_EQ(config_provider{}.host_config<double>(default_stream, ordering, config), hipSuccess);
+    ASSERT_EQ(config_provider::host_config<double>(default_stream, ordering, config), hipSuccess);
     ASSERT_EQ(config.blocks, 2);
     ASSERT_EQ(config.threads, 512);
 
@@ -239,16 +239,16 @@ namespace rocrand_host::detail
 template<>
 struct generator_config_selector<dummy_rng_type, unsigned short>
 {
-    __host__ __device__ constexpr unsigned int get_threads(const target_arch arch) const
+    __host__ __device__ static constexpr unsigned int get_threads(const target_arch arch)
     {
         if(arch == target_arch::gfx906)
             return 64;
-        return generator_config_defaults<dummy_rng_type, unsigned short>{}.threads;
+        return generator_config_defaults<dummy_rng_type, unsigned short>::threads;
     }
 
-    __host__ __device__ constexpr unsigned int get_blocks(const target_arch /*arch*/) const
+    __host__ __device__ static constexpr unsigned int get_blocks(const target_arch /*arch*/)
     {
-        return generator_config_defaults<dummy_rng_type, unsigned short>{}.blocks;
+        return generator_config_defaults<dummy_rng_type, unsigned short>::blocks;
     }
 };
 

@@ -26,8 +26,9 @@
 
 #include <rocrand/rocrand.h>
 
+#include "config/lfsr113_config.hpp"
+
 #include "common.hpp"
-#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"

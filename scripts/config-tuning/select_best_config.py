@@ -1,6 +1,8 @@
 #!/usr/bin/env -S python3
 
-import json5 as json
+from datetime import datetime
+import json
+import json5
 import os
 import re
 import pandas
@@ -23,7 +25,7 @@ def load_default_configs_json(in_dir: str) -> dict:
     """
 
     with open(os.path.join(in_dir, "config_defaults.json")) as f:
-        json_data = json.load(f)
+        json_data = json5.load(f)
 
     return json_data
 
@@ -45,7 +47,7 @@ def load_benchmark_result_json(path: str) -> DataFrame:
         raw_json_data = json.load(f)
     benchmark_data = DataFrame(raw_json_data['benchmarks'])
 
-    gb_per_s_series = benchmark_data['bytes_per_second'] / 1024 / 1024 / 1024
+    gb_per_s_series = benchmark_data['bytes_per_second'] / 1000 / 1000 / 1000
     gb_per_s_series.name = 'gb_per_s'
 
     # Extract the groups of the regex match to a DataFrame
@@ -115,7 +117,7 @@ def get_best_config_for_arch(benchmark_data: DataFrame, default_configs: dict):
                 other_configs = config_goodness[(config_goodness['normalized_perf'] > 1.0) &
                                                 (config_goodness['normalized_perf'] != best_perf)]
                 if len(other_configs.index) == 0:
-                    print("\nNo other configs available that provide an average speedup over the default config!")
+                    print("\nNo other configs available that provide an average speedup over the default config!\n")
                 # check other configs that have an average speedup for regressions
                 found_config_without_regressions = False
                 for config, row in other_configs.iterrows():
@@ -123,27 +125,27 @@ def get_best_config_for_arch(benchmark_data: DataFrame, default_configs: dict):
                     cur_detailed_perf = arch_df[(arch_df['block_size'] == block_size) &
                                                 (arch_df['grid_size']  == grid_size)]
                     if (cur_detailed_perf['normalized_perf'] > 1.0).all():
-                        print("\nNext best config that provides an average speedup over the default config without regressions:")
+                        print("Next best config that provides an average speedup over the default config without regressions:")
                         print("Average speedup: ", row['normalized_perf'])
                         print(cur_detailed_perf.to_string())
+                        print("\n")
                         found_config_without_regressions = True
                         break
                 if not found_config_without_regressions:
-                    print("No other config provides a speedup over the default config without any regressions for certain distributions!")
+                    print("No other config provides a speedup over the default config without any regressions for certain distributions!\n")
 
             best_config_for_generator[arch] = {
                 'block_size': best_block_size, 'grid_size': best_grid_size}
-            generator_df.loc[generator_df['generator'] == gen] = arch_df
-        benchmark_data = generator_df
+            generator_df.loc[(generator_df['generator'] == gen) & (generator_df['arch'] == arch)] = arch_df
         best_configs[gen] = best_config_for_generator
-    return best_configs, benchmark_data
+    return best_configs
 
 
 def plot_benchmark_data_for_all_arches(benchmark_data: DataFrame, out_path: str):
     """
     Plots comparative figures of the benchmark results for each architecture.
     """
-    def plot_benchmark_results(benchmark_data: DataFrame, arch: str, out_path: str):
+    def plot_benchmark_results(benchmark_data: DataFrame, arch: str, gen: str, out_path: str):
         def draw_heatmap(*args, **kwargs):
             data: DataFrame = kwargs.pop('data')
             d = data.pivot_table(
@@ -154,11 +156,12 @@ def plot_benchmark_data_for_all_arches(benchmark_data: DataFrame, out_path: str)
         grid.map_dataframe(draw_heatmap, 'grid_size_', 'block_size_', 'gb_per_s',
                            cbar=False, square=True, annot=True, fmt='.2f', cmap='coolwarm', linewidth=1)
         fig = plt.gcf()
-        fig.suptitle(f'rocRAND benchmarks ({arch}, GiB/s)')
+        fig.suptitle(f'rocRAND benchmarks ({gen} on {arch}, GB/s)')
         num_grid_sizes = benchmark_data['grid_size'].unique().astype(
             bool).sum()
         fig.set_size_inches(16/6*num_grid_sizes, 18)
         fig.savefig(out_path)
+        plt.close()
 
     benchmark_data['block_size_'] = benchmark_data['block_size'].astype(str).str.pad(
         4, 'left', ' ')
@@ -169,8 +172,10 @@ def plot_benchmark_data_for_all_arches(benchmark_data: DataFrame, out_path: str)
     base_path, full_filename = os.path.split(out_path)
     filename, ext = os.path.splitext(full_filename)
     for arch in benchmark_data['arch'].unique():
-        plot_benchmark_results(benchmark_data[
-            benchmark_data['arch'] == arch], arch, os.path.join(base_path, f'{filename}_{arch}{ext}'))
+        arch_benchmark_data = benchmark_data[benchmark_data['arch'] == arch]
+        for gen in arch_benchmark_data['generator'].unique():
+            gen_benchmark_data = arch_benchmark_data[arch_benchmark_data['generator'] == gen]
+            plot_benchmark_results(gen_benchmark_data, arch, gen, os.path.join(base_path, f'{filename}_{arch}_{gen}{ext}'))
 
 
 def generate_config_files(out_dir: str, best_data: dict):
@@ -179,17 +184,18 @@ def generate_config_files(out_dir: str, best_data: dict):
             return 'quasi'
         return 'pseudo'
 
+    year = datetime.now().year
     algorithm_template = env.get_template("config_template")
     for generator, best_configs in best_data.items():
         with open(os.path.join(out_dir,  f"{generator}_config.hpp"), "w") as text_file:
             text_file.write(algorithm_template.render(
-                generator=generator, generator_type=generator_type(generator), configs=best_configs))
+                generator=generator, generator_type=generator_type(generator), configs=best_configs, year=year))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('json', nargs='+')
-    parser.add_argument('--plot-out')
+    parser.add_argument('--plot-out', help="Output directory for plots. Plots will only be generated, when this argument is provided. Generating these can take quite some while.")
     parser.add_argument('--out-dir')
     parser.add_argument('--default-config-dir',
                         default=os.path.dirname(os.path.realpath(__file__)),
@@ -198,8 +204,8 @@ if __name__ == '__main__':
 
     default_configs = load_default_configs_json(args.default_config_dir)
     benchmark = pandas.concat(
-        [load_benchmark_result_json(j) for j in args.json])
-    [best_configs, benchmark] = get_best_config_for_arch(benchmark, default_configs)
+        [load_benchmark_result_json(j) for j in args.json], ignore_index=True)
+    best_configs = get_best_config_for_arch(benchmark, default_configs)
     if args.plot_out:
         plot_benchmark_data_for_all_arches(benchmark, args.plot_out)
     if args.out_dir:
