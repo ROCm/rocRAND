@@ -7,6 +7,7 @@
 import pathlib
 import shutil
 import sys
+import re
 
 from rocm_docs import ROCmDocs
 
