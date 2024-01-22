@@ -21,8 +21,12 @@
 #ifndef ROCRAND_RNG_THREEFRY_H_
 #define ROCRAND_RNG_THREEFRY_H_
 
+#include "config/threefry2_32_20_config.hpp"
+#include "config/threefry2_64_20_config.hpp"
+#include "config/threefry4_32_20_config.hpp"
+#include "config/threefry4_64_20_config.hpp"
+
 #include "common.hpp"
-#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
@@ -292,7 +296,7 @@ public:
 
             rocrand_host::detail::generator_config config;
             const hipError_t                       error
-                = ConfigProvider{}.template host_config<T>(m_stream, m_order, config);
+                = ConfigProvider::template host_config<T>(m_stream, m_order, config);
             if(error != hipSuccess)
             {
                 return ROCRAND_STATUS_INTERNAL_ERROR;

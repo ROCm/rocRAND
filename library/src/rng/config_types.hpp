@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -241,14 +241,14 @@ struct generator_config_defaults
 template<rocrand_rng_type GeneratorType, class T>
 struct generator_config_selector
 {
-    __host__ __device__ constexpr unsigned int get_threads(const target_arch /*arch*/) const
+    __host__ __device__ static constexpr unsigned int get_threads(const target_arch /*arch*/)
     {
-        return generator_config_defaults<GeneratorType, T>{}.threads;
+        return generator_config_defaults<GeneratorType, T>::threads;
     }
 
-    __host__ __device__ constexpr unsigned int get_blocks(const target_arch /*arch*/) const
+    __host__ __device__ static constexpr unsigned int get_blocks(const target_arch /*arch*/)
     {
-        return generator_config_defaults<GeneratorType, T>{}.blocks;
+        return generator_config_defaults<GeneratorType, T>::blocks;
     }
 };
 
@@ -319,13 +319,13 @@ hipError_t get_generator_config(const hipStream_t      stream,
         {
             return error;
         }
-        config.threads = generator_config_selector<GeneratorType, T>{}.get_threads(current_arch);
-        config.blocks  = generator_config_selector<GeneratorType, T>{}.get_blocks(current_arch);
+        config.threads = generator_config_selector<GeneratorType, T>::get_threads(current_arch);
+        config.blocks  = generator_config_selector<GeneratorType, T>::get_blocks(current_arch);
     }
     else
     {
-        config.threads = generator_config_defaults<GeneratorType, T>{}.threads;
-        config.blocks  = generator_config_defaults<GeneratorType, T>{}.blocks;
+        config.threads = generator_config_defaults<GeneratorType, T>::threads;
+        config.blocks  = generator_config_defaults<GeneratorType, T>::blocks;
     }
     return hipSuccess;
 }
@@ -339,9 +339,9 @@ hipError_t get_generator_config(const hipStream_t      stream,
 template<rocrand_rng_type GeneratorType, class T>
 __device__ constexpr generator_config get_generator_config_device(bool dynamic_config)
 {
-    return generator_config{generator_config_selector<GeneratorType, T>{}.get_threads(
+    return generator_config{generator_config_selector<GeneratorType, T>::get_threads(
                                 dynamic_config ? get_device_arch() : target_arch::unknown),
-                            generator_config_selector<GeneratorType, T>{}.get_blocks(
+                            generator_config_selector<GeneratorType, T>::get_blocks(
                                 dynamic_config ? get_device_arch() : target_arch::unknown)};
 }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -53,18 +53,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROCRAND_RNG_PHILOX4X32_10_H_
 #define ROCRAND_RNG_PHILOX4X32_10_H_
 
-#include <algorithm>
-#include <hip/hip_runtime.h>
-
-#include <rocrand/rocrand.h>
+#include "config/philox4_32_10_config.hpp"
 
 #include "common.hpp"
-#include "config/config_defaults.hpp"
 #include "config_types.hpp"
 #include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+
+#include <rocrand/rocrand.h>
+
+#include <hip/hip_runtime.h>
+
+#include <algorithm>
 
 namespace rocrand_host::detail
 {

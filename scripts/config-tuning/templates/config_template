@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) {{ year }} Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ namespace rocrand_host::detail
 template<class T>
 struct generator_config_selector<{{ generator_id }}, T>
 {
-    __host__ __device__ constexpr unsigned int get_threads(const target_arch arch) const
+    __host__ __device__ static constexpr unsigned int get_threads(const target_arch arch)
     {
         switch(arch)
         {
@@ -43,11 +43,11 @@ struct generator_config_selector<{{ generator_id }}, T>
             case target_arch::{{ arch }}: return {{ entry['block_size'] }};
             {% endfor %}
             default:
-                return generator_config_defaults<{{ generator_id }}, T>{}.threads;
+                return generator_config_defaults<{{ generator_id }}, T>::threads;
         }
     }
 
-    __host__ __device__ constexpr unsigned int get_blocks(const target_arch arch) const
+    __host__ __device__ static constexpr unsigned int get_blocks(const target_arch arch)
     {
         switch(arch)
         {
@@ -55,12 +55,11 @@ struct generator_config_selector<{{ generator_id }}, T>
             case target_arch::{{ arch }}: return {{ entry['grid_size'] }};
             {% endfor %}
             default:
-                return generator_config_defaults<{{ generator_id }}, T>{}.blocks;
+                return generator_config_defaults<{{ generator_id }}, T>::blocks;
         }
     }
 };
 
 } // end namespace rocrand_host::detail
-
 
 #endif // ROCRAND_RNG_CONFIG_{{ generator|upper }}_HPP_
