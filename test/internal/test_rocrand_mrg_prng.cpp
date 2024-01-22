@@ -161,13 +161,14 @@ TEST(rocrand_mrg_generator_prng_tests, mad_u64_u32_test)
 }
 
 template<class Generator, class T>
-void uniform_floating_point_range_test()
+void uniform_floating_point_range_test(rocrand_ordering ordering)
 {
     const size_t size = 1 << 26;
     T*           data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
     Generator g;
+    g.set_order(ordering);
     ROCRAND_CHECK(g.generate_uniform(data, size));
 
     T* host_data = new T[size];
@@ -185,16 +186,18 @@ void uniform_floating_point_range_test()
 
 TYPED_TEST(rocrand_mrg_generator_prng_tests, uniform_float_range_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    uniform_floating_point_range_test<generator_t, float>();
+    uniform_floating_point_range_test<generator_t, float>(ordering);
 }
 
 TYPED_TEST(rocrand_mrg_generator_prng_tests, uniform_double_range_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    uniform_floating_point_range_test<generator_t, double>();
+    uniform_floating_point_range_test<generator_t, double>(ordering);
 }
 
 TYPED_TEST(rocrand_mrg_generator_prng_tests, different_seed_test)

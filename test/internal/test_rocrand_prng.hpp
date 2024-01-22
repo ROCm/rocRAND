@@ -127,13 +127,14 @@ TYPED_TEST_P(generator_prng_tests, uniform_uint_test)
 }
 
 template<class Generator, class T>
-void uniform_floating_point_test()
+void uniform_floating_point_test(rocrand_ordering ordering)
 {
     const size_t size = 1313;
     T*           data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
     Generator g;
+    g.set_order(ordering);
     ROCRAND_CHECK(g.generate_uniform(data, size));
 
     T host_data[size];
@@ -154,26 +155,29 @@ void uniform_floating_point_test()
 
 TYPED_TEST_P(generator_prng_tests, uniform_float_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    uniform_floating_point_test<generator_t, float>();
+    uniform_floating_point_test<generator_t, float>(ordering);
 }
 
 TYPED_TEST_P(generator_prng_tests, uniform_double_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    uniform_floating_point_test<generator_t, double>();
+    uniform_floating_point_test<generator_t, double>(ordering);
 }
 
 template<class Generator, class T>
-void normal_floating_point_test()
+void normal_floating_point_test(rocrand_ordering ordering)
 {
     const size_t size = 1313;
     T*           data;
     HIP_CHECK(hipMallocHelper(&data, sizeof(*data) * size));
 
     Generator g;
+    g.set_order(ordering);
     ROCRAND_CHECK(g.generate_normal(data, size, static_cast<T>(2.0), static_cast<T>(5.0)));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -203,20 +207,22 @@ void normal_floating_point_test()
 
 TYPED_TEST_P(generator_prng_tests, normal_float_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    normal_floating_point_test<generator_t, float>();
+    normal_floating_point_test<generator_t, float>(ordering);
 }
 
 TYPED_TEST_P(generator_prng_tests, normal_double_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    normal_floating_point_test<generator_t, double>();
+    normal_floating_point_test<generator_t, double>(ordering);
 }
 
 template<class Generator, class T>
-void log_normal_floating_point_test()
+void log_normal_floating_point_test(rocrand_ordering ordering)
 {
     const size_t size = 131313;
     T*           data;
@@ -230,6 +236,7 @@ void log_normal_floating_point_test()
     T log_normal_stddev = std::sqrt(std::exp(normal_var) - 1.0) * log_normal_mean;
 
     Generator g;
+    g.set_order(ordering);
     ROCRAND_CHECK(g.generate_log_normal(data, size, normal_mean, normal_stddev));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -259,16 +266,18 @@ void log_normal_floating_point_test()
 
 TYPED_TEST_P(generator_prng_tests, log_normal_float_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    log_normal_floating_point_test<generator_t, float>();
+    log_normal_floating_point_test<generator_t, float>(ordering);
 }
 
 TYPED_TEST_P(generator_prng_tests, log_normal_double_test)
 {
-    using generator_t = typename TestFixture::generator_t;
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
 
-    log_normal_floating_point_test<generator_t, double>();
+    log_normal_floating_point_test<generator_t, double>(ordering);
 }
 
 TYPED_TEST_P(generator_prng_tests, poisson_test)
