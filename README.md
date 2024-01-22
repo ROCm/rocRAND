@@ -2,12 +2,12 @@
 
 The rocRAND project provides functions that generate pseudorandom and quasirandom numbers.
 
-The rocRAND library is implemented in the [HIP](https://github.com/ROCm-Developer-Tools/HIP)
+The rocRAND library is implemented in the [HIP](https://github.com/ROCm/HIP)
 programming language and optimized for AMD's latest discrete GPUs. It is designed to run on top
 of AMD's [ROCm](https://rocm.docs.amd.com) runtime, but it also works on CUDA-enabled GPUs.
 
 Prior to ROCm version 5.0, this project included the
-[hipRAND](https://github.com/ROCmSoftwarePlatform/hipRAND.git) wrapper. As of version 5.0, it was
+[hipRAND](https://github.com/ROCm/hipRAND.git) wrapper. As of version 5.0, it was
 split into a separate library. As of version 6.0, hipRAND can no longer be built from rocRAND.
 
 ## Supported random number generators
@@ -37,7 +37,7 @@ To build documentation locally, use the following code:
 cd docs
 
 # Install Python dependencies
-python3 -m pip install -r .sphinx/requirements.txt
+python3 -m pip install -r sphinx/requirements.txt
 
 # Build the documentation
 python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
@@ -52,14 +52,14 @@ python3 -m http.server
 * CMake (3.16 or later)
 * C++ compiler with C++11 support
 * For AMD platforms:
-  * [ROCm](https://rocm.github.io/install.html) (1.7 or later)
-  * [HIP-clang](https://github.com/ROCm-Developer-Tools/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
+  * [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) (1.7 or later)
+  * [HIP-clang](https://github.com/ROCm/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
     set as C++ compiler on ROCm platform.
 * For CUDA platforms:
-  * [HIP](https://github.com/ROCm-Developer-Tools/HIP)
+  * [HIP](https://github.com/ROCm/HIP)
   * Latest CUDA SDK
 * For CPU runs (experimental):
-  * [HIP-CPU](https://github.com/ROCm-Developer-Tools/HIP-CPU)
+  * [HIP-CPU](https://github.com/ROCm/HIP-CPU)
 * Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
 * Strawberry Perl (HIP on Windows only)
@@ -82,7 +82,7 @@ dependencies, rather than using the system-installed libraries.
 ## Build and install
 
 ```shell
-git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
+git clone https://github.com/ROCm/rocRAND.git
 
 # Go to rocRAND directory, create and go to build directory
 cd rocRAND; mkdir build; cd build
@@ -126,7 +126,7 @@ We've added initial support for HIP on Windows, which you can install using the 
 script:
 
 ```shell
-git clone https://github.com/ROCmSoftwarePlatform/rocRAND.git
+git clone https://github.com/ROCm/rocRAND.git
 cd rocRAND
 
 # the -i option will install rocPRIM to C:\hipSDK by default
@@ -245,7 +245,7 @@ cd rocRAND; cd build
 ## Support
 
 Bugs and feature requests can be reported through the
-[issue tracker](https://github.com/ROCmSoftwarePlatform/rocRAND/issues).
+[issue tracker](https://github.com/ROCm/rocRAND/issues).
 
 ## Contributions and license
 
