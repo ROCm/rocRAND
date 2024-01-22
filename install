@@ -146,7 +146,8 @@ fi
 # before 'cmake' or setting cmake option 'CMAKE_CXX_COMPILER' to path to the HIPCC compiler.
 #
 
-compiler="hipcc"
+compiler="amdclang++"
+cmake_common_options="${cmake_common_options} --toolchain=toolchain-linux.cmake"
 
 cmake_executable="cmake"
 
