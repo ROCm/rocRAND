@@ -103,7 +103,7 @@ __global__ __launch_bounds__(1) void mad_u64_u32_kernel(const unsigned int*     
     r[7] = mad_u64_u32(23, 45, 67ULL);
 }
 
-TYPED_TEST(rocrand_mrg_generator_prng_tests, mad_u64_u32_test)
+TEST(rocrand_mrg_generator_prng_tests, mad_u64_u32_test)
 {
     const size_t size = 8;
 
