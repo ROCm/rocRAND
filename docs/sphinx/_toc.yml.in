@@ -12,4 +12,4 @@ subtrees:
       - entries:
         - file: cpp-api
         - file: python-api
-        - file: .doxygen/html/index
+        - file: doxygen/html/index
