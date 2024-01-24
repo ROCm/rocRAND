@@ -4,6 +4,7 @@ root: index
 subtrees:
   - entries:
     - file: installing
+    - file: data-type-support
     - file: programmers_guide
     - file: cpp_api
     - file: python_api

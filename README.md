@@ -74,6 +74,7 @@ Optional:
 * Fortran compiler (required only for Fortran wrapper)
   * `gfortran` is recommended
 * Python 3.5+ (required only for Python wrapper)
+* [doxygen](https://www.doxygen.nl/) to build the documentation
 
 If some dependencies are missing, the CMake script automatically downloads, builds, and installs them.
 Setting the `DEPENDENCIES_FORCE_DOWNLOAD` option to `ON` forces the script to download all
