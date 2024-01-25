@@ -174,7 +174,9 @@ struct config_filter<rocrand_mtgp32_template, T>
 {
     static constexpr bool is_enabled(rocrand_host::detail::generator_config config)
     {
-        return config.blocks <= 512;
+        // The current implementation of MTGP32 requires a fixed block size,
+        // and the grid size is also limited.
+        return config.blocks <= 512 && config.threads == 256;
     }
 };
 

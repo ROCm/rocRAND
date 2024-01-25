@@ -281,7 +281,14 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
-        if(!rocrand_host::detail::is_ordering_pseudo(order))
+        static constexpr std::array supported_orderings{
+            ROCRAND_ORDERING_PSEUDO_DEFAULT,
+            ROCRAND_ORDERING_PSEUDO_DYNAMIC,
+            ROCRAND_ORDERING_PSEUDO_BEST,
+            ROCRAND_ORDERING_PSEUDO_LEGACY,
+        };
+        if(std::find(supported_orderings.begin(), supported_orderings.end(), order)
+           == supported_orderings.end())
         {
             return ROCRAND_STATUS_OUT_OF_RANGE;
         }
