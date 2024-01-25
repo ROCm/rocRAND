@@ -457,26 +457,29 @@ void different_seed(rocrand_ordering ordering)
     different_seed_impl<Generator>(ordering, Seed0, Seed1);
 }
 
+// mtgp32 uses a different seed
 template<>
 void different_seed<rocrand_mtgp32>(rocrand_ordering ordering)
 {
     different_seed_impl<rocrand_mtgp32>(ordering, 5ULL, 10ULL);
 }
 
+// mt19937 uses a different seed
 template<>
 void different_seed<rocrand_mt19937>(rocrand_ordering ordering)
 {
     different_seed_impl<rocrand_mt19937>(ordering, 5ULL, 10ULL);
 }
 
+// lsfr113 uses it's particular implementation
+template<>
+void different_seed<rocrand_lfsr113>(rocrand_ordering /*ordering*/)
+{
+    GTEST_SKIP() << "LFSR113 runs a custom implementation of different_seed test!";
+}
+
 TYPED_TEST_P(generator_prng_tests, different_seed_test)
 {
-    // lsfr113 uses it's particular implementation
-    if(std::is_same_v<typename TestFixture::generator_t, rocrand_lfsr113>)
-    {
-        GTEST_SKIP();
-    }
-
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
 
