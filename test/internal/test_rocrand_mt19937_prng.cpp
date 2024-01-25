@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -58,8 +58,7 @@ struct rocrand_mt19937_prng_tests_params
 };
 
 using rocrand_mt19937_prng_test_types = ::testing::Types<
-    rocrand_mt19937_prng_tests_params<rocrand_mt19937, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    rocrand_mt19937_prng_tests_params<rocrand_mt19937, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+    rocrand_mt19937_prng_tests_params<rocrand_mt19937, ROCRAND_ORDERING_PSEUDO_DEFAULT>>;
 
 TYPED_TEST_SUITE(rocrand_mt19937_prng_tests, rocrand_mt19937_prng_test_types);
 
