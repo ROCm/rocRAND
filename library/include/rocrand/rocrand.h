@@ -672,11 +672,14 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  * \param generator - Random number generator
  * \param order - New ordering of results
  *
- * The ordering choices for pseudorandom sequences are
- * ROCRAND_ORDERING_PSEUDO_DEFAULT and
- * ROCRAND_ORDERING_PSEUDO_LEGACY.
- * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT, which is equal to
- * ROCRAND_ORDERING_PSEUDO_LEGACY for now.
+ * The ordering choices for pseudorandom sequences are the following.
+ * Note that not all generators support all orderings. For details, see
+ * the Programmer's Guide in the documentation.
+ * - ROCRAND_ORDERING_PSEUDO_DEFAULT
+ * - ROCRAND_ORDERING_PSEUDO_LEGACY
+ * - ROCRAND_ORDERING_PSEUDO_BEST
+ * - ROCRAND_ORDERING_PSEUDO_SEEDED
+ * - ROCRAND_ORDERING_PSEUDO_DYNAMIC
  *
  * For quasirandom sequences there is only one ordering, ROCRAND_ORDERING_QUASI_DEFAULT.
  *
