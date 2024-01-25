@@ -298,6 +298,9 @@ benchmark:benchmark-tuning:
   stage: benchmark
   needs: []
   timeout: 12h
+  variables:
+    BENCHMARK_TUNING_MIN_GRID_SIZE: 32768
+    BENCHMARK_TUNING_THREAD_OPTIONS: "64, 128, 256, 512, 1024"
   script:
     # Build the appropriate benchmarks
     - export BENCHMARK_TUNING_BLOCK_OPTIONS=`$CI_PROJECT_DIR/scripts/config-tuning/get_tuned_grid_sizes.py`
