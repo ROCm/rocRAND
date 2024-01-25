@@ -12,4 +12,5 @@ subtrees:
       - entries:
         - file: cpp-api
         - file: python-api
+        - file: curand-compatibility
         - file: doxygen/html/index

@@ -18,12 +18,16 @@ Our documentation is structured as follows:
 
     * :ref:`cpp-api`
     * :ref:`python-api`
+    * :ref:`curand-compatibility`
     * :doc:`API library <doxygen/html/index>`
 
-  .. grid-item-card:: Tutorials
+  .. grid-item-card:: Conceptual
+
+    * :ref:`programmers-guide`
+
+  .. grid-item-card:: Tutorial
 
     * :ref:`installing`
-    * :ref:`programmers-guide`
 
 Contributing to this documentation
 =======================================================
