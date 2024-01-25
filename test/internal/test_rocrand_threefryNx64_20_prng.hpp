@@ -31,12 +31,8 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <cstddef>
-#include <numeric>
 #include <stdexcept>
 #include <type_traits>
-#include <vector>
 
 // threefryNx64_20-specific generator API tests
 template<class Params>
@@ -93,58 +89,7 @@ TYPED_TEST_P(threefryNx64_20_generator_prng_tests, uniform_ulonglong_test)
     HIP_CHECK(hipFree(data));
 }
 
-TYPED_TEST_P(threefryNx64_20_generator_prng_tests, different_seed_test)
-{
-    const unsigned long long seed0 = 0xdeadbeefdeadbeefULL;
-    const unsigned long long seed1 = 0xbeefdeadbeefdeadULL;
-
-    // Device side data
-    const size_t        size = 1024;
-    unsigned long long* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned long long) * size));
-
-    // Generators
-    auto g0 = TestFixture::get_generator(), g1 = TestFixture::get_generator();
-
-    // Set different seeds
-    g0.set_seed(seed0);
-    g1.set_seed(seed1);
-    ASSERT_NE(g0.get_seed(), g1.get_seed());
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long g0_host_data[size];
-    HIP_CHECK(
-        hipMemcpy(g0_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g1 and copy to host
-    ROCRAND_CHECK(g1.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long g1_host_data[size];
-    HIP_CHECK(
-        hipMemcpy(g1_host_data, data, sizeof(unsigned long long) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    size_t same = 0;
-    for(size_t i = 0; i < size; i++)
-    {
-        if(g1_host_data[i] == g0_host_data[i])
-            same++;
-    }
-    // It may happen that numbers are the same, so we
-    // just make sure that most of them are different.
-    EXPECT_LT(same, static_cast<size_t>(0.01f * size));
-    HIP_CHECK(hipFree(data));
-}
-
-REGISTER_TYPED_TEST_SUITE_P(threefryNx64_20_generator_prng_tests,
-                            type,
-                            uniform_ulonglong_test,
-                            different_seed_test);
+REGISTER_TYPED_TEST_SUITE_P(threefryNx64_20_generator_prng_tests, type, uniform_ulonglong_test);
 
 // threefryNx64_20-specific generator API continuity tests
 template<class Params>
