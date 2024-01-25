@@ -823,9 +823,6 @@ INPUT                  = ../mainpage.dox \
                          ../rocrandhost.dox \
                          ../rocranddevice.dox \
                          ../rocrandhostcpp.dox \
-                         ../hiprandhost.dox \
-                         ../hipranddevice.dox \
-                         ../hiprandhostcpp.dox \
                          ../../library/include/rocrand
 
 # This tag can be used to specify the character encoding of the source files
