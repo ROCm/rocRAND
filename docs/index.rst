@@ -13,6 +13,7 @@ Welcome to the rocRAND docs home page! To learn more, see :ref:`what-is-rocrand`
 Our documentation is structured as follows:
 
 .. grid:: 2
+  .. gutter:: 1
 
   .. grid-item-card:: API reference
 
@@ -23,8 +24,7 @@ Our documentation is structured as follows:
 
   .. grid-item-card:: Conceptual
 
-    * :ref:`programmers-guide`
-    
+    * :ref:`programmers-guide`    
 
   .. grid-item-card:: Tutorial
 
