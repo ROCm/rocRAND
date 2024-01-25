@@ -28,13 +28,16 @@
 #include <rng/distribution/normal.hpp>
 #include <rng/distribution/poisson.hpp>
 #include <rng/distribution/uniform.hpp>
+#include <rng/lfsr113.hpp>
 #include <rng/mt19937.hpp>
+#include <rng/mtgp32.hpp>
 
 #include <hip/hip_runtime.h>
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <numeric>
 #include <stdexcept>
@@ -397,6 +400,89 @@ TYPED_TEST_P(generator_prng_tests, same_seed_test)
     HIP_CHECK(hipFree(data));
 }
 
+template<class Generator>
+void different_seed_impl(rocrand_ordering         ordering,
+                         const unsigned long long seed0,
+                         const unsigned long long seed1)
+{
+    // Device side data
+    const size_t  size = 1024;
+    unsigned int* data;
+    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
+
+    // Generators
+    Generator g0, g1;
+    g0.set_order(ordering);
+    g1.set_order(ordering);
+
+    // Set different seeds
+    g0.set_seed(seed0);
+    g1.set_seed(seed1);
+    ASSERT_NE(g0.get_seed(), g1.get_seed());
+
+    // Generate using g0 and copy to host
+    ROCRAND_CHECK(g0.generate(data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    unsigned int g0_host_data[size];
+    HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // Generate using g1 and copy to host
+    ROCRAND_CHECK(g1.generate(data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    unsigned int g1_host_data[size];
+    HIP_CHECK(hipMemcpy(g1_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    size_t same = 0;
+    for(size_t i = 0; i < size; i++)
+    {
+        if(g1_host_data[i] == g0_host_data[i])
+            same++;
+    }
+    // It may happen that numbers are the same, so we
+    // just make sure that most of them are different.
+    EXPECT_LT(same, static_cast<size_t>(0.01f * size));
+
+    HIP_CHECK(hipFree(data));
+}
+
+template<class Generator,
+         const unsigned long long Seed0 = 0xdeadbeefdeadbeefULL,
+         const unsigned long long Seed1 = 0xbeefdeadbeefdeadULL>
+void different_seed(rocrand_ordering ordering)
+{
+    different_seed_impl<Generator>(ordering, Seed0, Seed1);
+}
+
+template<>
+void different_seed<rocrand_mtgp32>(rocrand_ordering ordering)
+{
+    different_seed_impl<rocrand_mtgp32>(ordering, 5ULL, 10ULL);
+}
+
+template<>
+void different_seed<rocrand_mt19937>(rocrand_ordering ordering)
+{
+    different_seed_impl<rocrand_mt19937>(ordering, 5ULL, 10ULL);
+}
+
+TYPED_TEST_P(generator_prng_tests, different_seed_test)
+{
+    // lsfr113 uses it's particular implementation
+    if(std::is_same_v<typename TestFixture::generator_t, rocrand_lfsr113>)
+    {
+        GTEST_SKIP();
+    }
+
+    using generator_t                   = typename TestFixture::generator_t;
+    constexpr rocrand_ordering ordering = TestFixture::ordering;
+
+    different_seed<generator_t>(ordering);
+}
+
 //
 // Generator host API continuity tests
 //
@@ -415,7 +501,7 @@ TYPED_TEST_SUITE_P(generator_prng_continuity_tests);
 template<typename T,
          typename Generator,
          typename GenerateFunc,
-         std::enable_if_t<!std::is_same<Generator, rocrand_mt19937>::value, bool> = false>
+         std::enable_if_t<!std::is_same_v<Generator, rocrand_mt19937>, bool> = false>
 void continuity_test(GenerateFunc     generate_func,
                      rocrand_ordering ordering,
                      unsigned int     divisor = 1)
@@ -664,7 +750,8 @@ REGISTER_TYPED_TEST_SUITE_P(generator_prng_tests,
                             log_normal_double_test,
                             poisson_test,
                             state_progress_test,
-                            same_seed_test);
+                            same_seed_test,
+                            different_seed_test);
 
 REGISTER_TYPED_TEST_SUITE_P(generator_prng_continuity_tests,
                             continuity_uniform_uint_test,
