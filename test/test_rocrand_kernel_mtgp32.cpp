@@ -111,9 +111,17 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
     const size_t size_rounded_up = r == 0 ? size : size + (blockDim.x - r);
     while(index < size_rounded_up)
     {
-        auto value = rocrand_normal(&state);
         if(index < size)
-            output[index] = value;
+        {
+            if (index % 2 == 0)
+            {
+                output[index] = rocrand_normal2(&state).x;
+            }
+            else
+            {
+                output[index] = rocrand_normal(&state);
+            } 
+        }
         // Next position
         index += stride;
     }
@@ -142,9 +150,17 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
     const size_t size_rounded_up = r == 0 ? size : size + (blockDim.x - r);
     while(index < size_rounded_up)
     {
-        auto value = rocrand_log_normal(&state, 1.6f, 0.25f);
         if(index < size)
-            output[index] = value;
+        {
+            if (index % 2 == 0)
+            {
+                output[index] = rocrand_log_normal2(&state, 1.6f, 0.25f).x;
+            }
+            else
+            {
+                output[index] = rocrand_log_normal(&state, 1.6f, 0.25f);
+            }
+        }
         // Next position
         index += stride;
     }
