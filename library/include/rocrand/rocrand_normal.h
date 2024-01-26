@@ -882,6 +882,28 @@ float rocrand_normal(rocrand_state_mtgp32 * state)
 }
 
 /**
+ * \brief Returns two normally distributed \p float values.
+ *
+ * Generates and returns two normally distributed \p float values using MTGP32
+ * generator in \p state, and increments position of the generator by two.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p float values as \p float2
+ */
+FQUALIFIERS
+float2 rocrand_normal2(rocrand_state_mtgp32 * state)
+{
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    return rocrand_device::detail::normal_distribution2(state1, state2);
+}
+
+/**
  * \brief Returns a normally distributed \p double value.
  *
  * Generates and returns a normally distributed \p double value using MTGP32
@@ -897,6 +919,33 @@ FQUALIFIERS
 double rocrand_normal_double(rocrand_state_mtgp32 * state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
+}
+
+/**
+ * \brief Returns two normally distributed \p double values.
+ *
+ * Generates and returns two normally distributed \p double values using MTGP32
+ * generator in \p state, and increments position of the generator by four.
+ * Used normal distribution has mean value equal to 0.0f, and standard deviation
+ * equal to 1.0f.
+ * The function uses the Box-Muller transform method to generate two normally
+ * distributed values, and returns both of them.
+ *
+ * \param state - Pointer to a state to use
+ *
+ * \return Two normally distributed \p double value as \p double2
+ */
+FQUALIFIERS
+double2 rocrand_normal_double2(rocrand_state_mtgp32 * state)
+{
+    auto state1 = rocrand(state);
+    auto state2 = rocrand(state);
+    auto state3 = rocrand(state);
+    auto state4 = rocrand(state);
+
+    return rocrand_device::detail::normal_distribution_double2(
+        uint4 { state1, state2, state3, state4 }
+    );
 }
 
 /**
