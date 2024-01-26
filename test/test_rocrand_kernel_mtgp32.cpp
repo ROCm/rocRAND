@@ -113,14 +113,14 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
     {
         if(index < size)
         {
-            if (index % 2 == 0)
+            if(index % 2 == 0)
             {
                 output[index] = rocrand_normal2(&state).x;
             }
             else
             {
                 output[index] = rocrand_normal(&state);
-            } 
+            }
         }
         // Next position
         index += stride;
@@ -152,7 +152,7 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
     {
         if(index < size)
         {
-            if (index % 2 == 0)
+            if(index % 2 == 0)
             {
                 output[index] = rocrand_log_normal2(&state, 1.6f, 0.25f).x;
             }
