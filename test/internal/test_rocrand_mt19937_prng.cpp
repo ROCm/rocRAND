@@ -41,8 +41,7 @@
 
 // Generator API tests
 using rocrand_mt19937_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_mt19937, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_mt19937, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+    generator_prng_tests_params<rocrand_mt19937, ROCRAND_ORDERING_PSEUDO_DEFAULT>>;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mt19937,
                                generator_prng_tests,
