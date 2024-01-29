@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,8 +43,6 @@
 #include "rocrand/rocrand_xorwow.h"
 
 #include "rocrand/rocrand_discrete_types.h"
-#include "rocrand/rocrand_normal.h"
-#include "rocrand/rocrand_uniform.h"
 
 // Alias method
 //

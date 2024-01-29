@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,23 @@
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
 
-#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_scrambled_sobol32.h>
+#include <rocrand/rocrand_scrambled_sobol64.h>
+#include <rocrand/rocrand_sobol32.h>
+#include <rocrand/rocrand_sobol64.h>
+
 #include <rocrand/rocrand_scrambled_sobol32_constants.h>
 #include <rocrand/rocrand_scrambled_sobol32_precomputed.h>
 #include <rocrand/rocrand_scrambled_sobol64_constants.h>
 #include <rocrand/rocrand_scrambled_sobol64_precomputed.h>
 #include <rocrand/rocrand_sobol32_precomputed.h>
 #include <rocrand/rocrand_sobol64_precomputed.h>
+
+#include <rocrand/rocrand.h>
 
 #include <hip/hip_runtime.h>
 

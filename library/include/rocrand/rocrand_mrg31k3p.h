@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ public:
         unsigned int x1[3];
         unsigned int x2[3];
 
-#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -141,7 +141,7 @@ public:
 
     FQUALIFIERS void restart(const unsigned long long subsequence, const unsigned long long offset)
     {
-#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         m_state.boxmuller_float_state  = 0;
         m_state.boxmuller_double_state = 0;
 #endif
@@ -312,7 +312,7 @@ protected:
     // State
     mrg31k3p_state m_state;
 
-#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
     friend struct detail::engine_boxmuller_helper<mrg31k3p_engine>;
 #endif
 }; // mrg31k3p_engine class

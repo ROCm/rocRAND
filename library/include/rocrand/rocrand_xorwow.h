@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -78,7 +78,7 @@ public:
         // Weyl sequence value
         unsigned int d;
 
-        #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -88,7 +88,7 @@ public:
         unsigned int boxmuller_double_state; // is there a double in boxmuller_double
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
-        #endif
+    #endif
 
         // Xorshift values (160 bits)
         unsigned int x[5];
@@ -130,10 +130,10 @@ public:
         discard_subsequence(subsequence);
         discard(offset);
 
-        #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
-        #endif
+    #endif
     }
 
     /// Advances the internal state to skip \p offset numbers.
@@ -222,7 +222,7 @@ protected:
     // State
     xorwow_state m_state;
 
-    #ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
     friend struct detail::engine_boxmuller_helper<xorwow_engine>;
     #endif
 

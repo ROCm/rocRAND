@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -100,7 +100,7 @@ public:
         uint2 key;
         unsigned int substate;
 
-        #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -110,7 +110,7 @@ public:
         unsigned int boxmuller_double_state; // is there a double in boxmuller_double
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
-        #endif
+    #endif
     };
 
     FQUALIFIERS
@@ -173,10 +173,10 @@ public:
         m_state.counter = {0, 0, 0, 0};
         m_state.result  = {0, 0, 0, 0};
         m_state.substate = 0;
-        #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
-        #endif
+    #endif
         this->discard_subsequence_impl(subsequence);
         this->discard_impl(offset);
         m_state.result = this->ten_rounds(m_state.counter, m_state.key);
@@ -339,7 +339,7 @@ protected:
     // State
     philox4x32_10_state m_state;
 
-    #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
     friend struct detail::engine_boxmuller_helper<philox4x32_10_engine>;
     #endif
 

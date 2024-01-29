@@ -28,13 +28,16 @@
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
 #include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_threefry2x32_20.h>
+#include <rocrand/rocrand_threefry2x64_20.h>
+#include <rocrand/rocrand_threefry4x32_20.h>
+#include <rocrand/rocrand_threefry4x64_20.h>
 
 #include <hip/hip_runtime.h>
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,13 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 #define ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_
 
-#include <math.h>
+#include "../common.hpp"
+
+#include <rocrand/rocrand_uniform.h>
+
 #include <hip/hip_runtime.h>
 
-#include "device_distributions.hpp"
-
+#include <math.h>
 
 // Universal
 

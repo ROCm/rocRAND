@@ -21,19 +21,20 @@
 #ifndef ROCRAND_RNG_XORWOW_H_
 #define ROCRAND_RNG_XORWOW_H_
 
-#include <algorithm>
-#include <hip/hip_runtime.h>
-
-#include <rocrand/rocrand.h>
-
 #include "config/xorwow_config.hpp"
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_xorwow.h>
+
+#include <hip/hip_runtime.h>
+
+#include <algorithm>
 
 namespace rocrand_host::detail
 {
