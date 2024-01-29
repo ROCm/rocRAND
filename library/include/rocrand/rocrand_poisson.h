@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -230,7 +230,7 @@ FQUALIFIERS Result_Type poisson_distribution_inv(State& state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_philox4x32_10 * state, double lambda)
 {
@@ -267,7 +267,7 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
             state,
             lambda)};
 }
-#endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using MRG31k3p generator.
@@ -280,14 +280,14 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_mrg31k3p* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution<rocrand_state_mrg31k3p*, unsigned int>(
         state,
         lambda);
 }
-#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using MRG32k3a generator.
@@ -300,7 +300,7 @@ FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_mrg31k3p* state, double l
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
 {
@@ -308,7 +308,7 @@ unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
         state,
         lambda);
 }
-#endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using XORWOW generator.
@@ -321,7 +321,7 @@ unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-#ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
 {
@@ -329,7 +329,7 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
         state,
         lambda);
 }
-#endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns a Poisson-distributed <tt>unsigned int</tt> using MTGP32 generator.

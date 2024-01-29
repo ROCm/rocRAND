@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,7 @@
  *
  * \return Log-normally distributed \p float value
  */
-#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
 {
@@ -82,7 +82,7 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
@@ -152,7 +152,7 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
  *
  * \return Log-normally distributed \p double value
  */
-#ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mean, double stddev)
 {
@@ -166,7 +166,7 @@ double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mea
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
-#endif // ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.
@@ -232,7 +232,7 @@ double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double m
  *
  * \return Log-normally distributed \p float value
  */
-#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS float rocrand_log_normal(rocrand_state_mrg31k3p* state, float mean, float stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg31k3p> bm_helper;
@@ -250,7 +250,7 @@ FQUALIFIERS float rocrand_log_normal(rocrand_state_mrg31k3p* state, float mean, 
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
@@ -291,7 +291,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_mrg31k3p* state, float mean
  *
  * \return Log-normally distributed \p double value
  */
-#ifndef ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS double
     rocrand_log_normal_double(rocrand_state_mrg31k3p* state, double mean, double stddev)
 {
@@ -311,7 +311,7 @@ FQUALIFIERS double
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
-#endif // ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.
@@ -355,7 +355,7 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_mrg31k3p* state,
  *
  * \return Log-normally distributed \p float value
  */
-#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stddev)
 {
@@ -374,7 +374,7 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
@@ -419,7 +419,7 @@ float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float std
  *
  * \return Log-normally distributed \p double value
  */
-#ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, double stddev)
 {
@@ -439,7 +439,7 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
     bm_helper::save_double(state, r.y);
     return exp(mean + r.x * stddev);
 }
-#endif // ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.
@@ -485,7 +485,7 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
  *
  * \return Log-normally distributed \p float value
  */
-#ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
 {
@@ -503,7 +503,7 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
     bm_helper::save_float(state, r.y);
     return expf(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p float values.
@@ -547,7 +547,7 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
  *
  * \return Log-normally distributed \p double value
  */
-#ifndef ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+#ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
 FQUALIFIERS
 double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, double stddev)
 {
@@ -569,7 +569,7 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
     bm_helper::save_double(state, r.y);
     return exp(mean + (stddev * r.x));
 }
-#endif // ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
+#endif // ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 /**
  * \brief Returns two log-normally distributed \p double values.

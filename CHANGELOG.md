@@ -39,6 +39,7 @@ Documentation for rocRAND is available at
 * Building rocRAND should be faster on machines with multiple CPU cores as the library has been
   split to multiple compilation units.
 * C++ wrapper: the `min()` and `max()` member functions of the generators and distributions are now `static constexpr`.
+* Rename and unify the existing ROCRAND_DETAIL_.*_BM_NOT_IN_STATE to ROCRAND_DETAIL_BM_NOT_IN_STATE
 
 ### Deprecations
 
@@ -47,6 +48,8 @@ Documentation for rocRAND is available at
   * `rocrand_device::threefry2x64_20_engine::threefry2x64_20_state`
   * `rocrand_device::threefry4x32_20_engine::threefry4x32_20_state`
   * `rocrand_device::threefry4x64_20_engine::threefry4x64_20_state`
+* Deprecated internal header: src/rng/distribution/distributions.hpp
+* Deprecated internal header: src/rng/device_engines.hpp
 
 ### Removals
 

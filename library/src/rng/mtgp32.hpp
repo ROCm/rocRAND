@@ -55,22 +55,20 @@
 #ifndef ROCRAND_RNG_MTGP32_H_
 #define ROCRAND_RNG_MTGP32_H_
 
-#include <algorithm>
-#include <hip/hip_runtime.h>
-
-// common.hpp MUST be included prior to the device engines
-// to correctly define FQUALIFIERS
 #include "common.hpp"
-
-#include <rocrand/rocrand.h>
-#include <rocrand/rocrand_mtgp32_11213.h>
-
 #include "config/config_defaults.hpp"
 #include "config/mtgp32_config.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
+
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_mtgp32.h>
+#include <rocrand/rocrand_mtgp32_11213.h>
+
+#include <hip/hip_runtime.h>
+
+#include <algorithm>
 
 namespace rocrand_host::detail
 {

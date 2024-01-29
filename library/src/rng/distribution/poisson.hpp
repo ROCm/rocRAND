@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,13 +21,14 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_POISSON_H_
 #define ROCRAND_RNG_DISTRIBUTION_POISSON_H_
 
-#include <climits>
-#include <algorithm>
-#include <vector>
+#include "discrete.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_uniform.h>
 
-#include "discrete.hpp"
+#include <algorithm>
+#include <climits>
+#include <vector>
 
 template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class rocrand_poisson_distribution : public rocrand_discrete_distribution_base<Method, IsHostSide>

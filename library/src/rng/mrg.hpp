@@ -26,10 +26,13 @@
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_mrg31k3p.h>
+#include <rocrand/rocrand_mrg32k3a.h>
 
 #include <hip/hip_runtime.h>
 
