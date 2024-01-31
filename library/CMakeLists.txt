@@ -145,11 +145,15 @@ rocm_install(
 )
 
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
-configure_file(
+set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+set(CONFIG_PACKAGE_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/rocrand)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
     src/rocrand-fortran-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake
+    INSTALL_DESTINATION ${CONFIG_PACKAGE_INSTALL_DIR}
 )
-
 
 if(USE_HIP_CPU)
     rocm_export_targets(
