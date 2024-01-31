@@ -5,12 +5,12 @@
 
 if (DEFINED ENV{ROCM_PATH})
   set(rocm_bin "$ENV{ROCM_PATH}/bin")
+  set(llvm_bin "$ENV{ROCM_PATH}/llvm/bin")
 else()
   set(rocm_bin "/opt/rocm/bin")
+  set(llvm_bin "/opt/rocm/llvm/bin")
 endif()
 
 
-# set(CMAKE_CXX_COMPILER "hipcc")
-# set(CMAKE_C_COMPILER "hipcc")
-set(CMAKE_CXX_COMPILER "${rocm_bin}/amdclang++")
-set(CMAKE_C_COMPILER "${rocm_bin}/amdclang")
+set(CMAKE_CXX_COMPILER "${llvm_bin}/clang++")
+set(CMAKE_C_COMPILER "${llvm_bin}/clang")
