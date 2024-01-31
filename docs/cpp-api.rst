@@ -1,17 +1,23 @@
+.. meta::
+  :description: rocRAND documentation and API reference library
+  :keywords: rocRAND, ROCm, API, documentation
+
+.. _cpp-api:
+
 ===================
-C/C++ API Reference
+C/C++ API reference
 ===================
 
 This chapter describes the rocRAND C and C++ API.
 
-Device Functions
+Device functions
 ================
 .. doxygengroup:: rocranddevice
 
-C Host API
+C host API
 ==========
 .. doxygengroup:: rocrandhost
 
-C++ Host API Wrapper
+C++ host API wrapper
 ====================
 .. doxygengroup:: rocrandhostcpp

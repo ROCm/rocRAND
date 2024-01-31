@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = rocRAND
+PROJECT_NAME           = "API library"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -2164,7 +2164,7 @@ TAGFILES               =
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
 
-GENERATE_TAGFILE       = hipRAND.tag
+GENERATE_TAGFILE       = html/tagfile.xml
 
 # If the ALLEXTERNALS tag is set to YES, all external class will be listed in
 # the class index. If set to NO, only the inherited external classes will be
@@ -2380,7 +2380,7 @@ DIRECTORY_GRAPH        = YES
 # The default value is: png.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_IMAGE_FORMAT       = png
+DOT_IMAGE_FORMAT       = svg
 
 # If DOT_IMAGE_FORMAT is set to svg, then this option can be set to YES to
 # enable generation of interactive SVG images that allow zooming and panning.
@@ -2392,7 +2392,7 @@ DOT_IMAGE_FORMAT       = png
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-INTERACTIVE_SVG        = NO
+INTERACTIVE_SVG        = YES
 
 # The DOT_PATH tag can be used to specify the path where the dot tool can be
 # found. If left blank, it is assumed the dot tool can be found in the path.

@@ -5,8 +5,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import pathlib
-import re
+import shutil
 import sys
+import re
 
 from rocm_docs import ROCmDocs
 
@@ -22,6 +23,7 @@ with open('../CMakeLists.txt', encoding='utf-8') as f:
         raise ValueError("VERSION not found!")
     version_number = match[1]
 left_nav_title = f"rocRAND {version_number} Documentation"
+shutil.copy2('../library/src/fortran/README.md', './fortran-api-reference.md')
 
 # for PDF output on Read the Docs
 project = "rocRAND Documentation"
@@ -31,9 +33,11 @@ version = version_number
 release = version_number
 
 external_toc_path = "./sphinx/_toc.yml"
+external_projects_current_project = "rocrand"
 
 docs_core = ROCmDocs(left_nav_title)
 docs_core.run_doxygen(doxygen_root="doxygen", doxygen_path="doxygen/xml")
+docs_core.enable_api_reference()
 docs_core.setup()
 
 external_projects_current_project = "rocrand"
