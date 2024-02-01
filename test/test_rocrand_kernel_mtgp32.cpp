@@ -103,7 +103,7 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
     unsigned int       stride    = gridDim.x * blockDim.x;
 
     __shared__ GeneratorState state;
-    if (thread_id == 0)
+    if(thread_id == 0)
         state = states[state_id];
     __syncthreads();
 
@@ -113,13 +113,13 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
     {
         if(index < size)
         {
-            if(index % 2 == 0)
+            if(state_id % 2 == 0)
             {
-                output[index] = rocrand_normal2(&state).x;
+                output[index] = rocrand_normal_double2(&state).x;
             }
             else
             {
-                output[index] = rocrand_normal(&state);
+                output[index] = rocrand_normal_double(&state);
             }
         }
         // Next position
@@ -127,7 +127,7 @@ void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t
     }
 
     // Save engine with its state
-    if(thread_id == 0)
+    if (thread_id == 0)
         states[state_id] = state;
 }
 
@@ -151,7 +151,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_normal
     {
         if(index < size)
         {
-            if(index % 2 == 0)
+            if(state_id % 2 == 0)
             {
                 output[index] = rocrand_normal_double2(&state).x;
             }
@@ -190,7 +190,7 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
     {
         if(index < size)
         {
-            if(index % 2 == 0)
+            if(state_id % 2 == 0)
             {
                 output[index] = rocrand_log_normal2(&state, 1.6f, 0.25f).x;
             }
@@ -228,7 +228,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_log_no
     {
         if(index < size)
         {
-            if(index % 2 == 0)
+            if(state_id % 2 == 0)
             {
                 output[index] = rocrand_log_normal_double2(&state, 1.6f, 0.25f).x;
             }
