@@ -5,12 +5,19 @@
 
 if (DEFINED ENV{ROCM_PATH})
   set(rocm_bin "$ENV{ROCM_PATH}/bin")
-  set(llvm_bin "$ENV{ROCM_PATH}/llvm/bin")
 else()
+  set(ROCM_PATH "/opt/rocm" CACHE PATH "Path to the ROCm installation.")
   set(rocm_bin "/opt/rocm/bin")
-  set(llvm_bin "/opt/rocm/llvm/bin")
 endif()
 
+if (NOT DEFINED ENV{CXX})
+  set(CMAKE_CXX_COMPILER "${rocm_bin}/amdclang++")
+else()
+  set(CMAKE_CXX_COMPILER "$ENV{CXX}")
+endif()
 
-set(CMAKE_CXX_COMPILER "${llvm_bin}/clang++")
-set(CMAKE_C_COMPILER "${llvm_bin}/clang")
+if (NOT DEFINED ENV{CC})
+  set(CMAKE_C_COMPILER "${rocm_bin}/amdclang")
+else()
+  set(CMAKE_C_COMPILER "$ENV{CC}")
+endif()
