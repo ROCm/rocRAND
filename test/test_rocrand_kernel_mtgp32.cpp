@@ -18,12 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
-#include <vector>
 #include <cmath>
+#include <numeric>
 #include <type_traits>
+#include <vector>
 
 #include <hip/hip_runtime.h>
 
@@ -34,10 +35,9 @@
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
-template <class GeneratorState>
-__global__
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t size)
+template<class GeneratorState>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_kernel(
+    GeneratorState* states, unsigned int* output, const size_t size)
 {
     const unsigned int state_id = blockIdx.x;
     unsigned int       index    = blockIdx.x * blockDim.x + threadIdx.x;
@@ -61,10 +61,9 @@ void rocrand_kernel(GeneratorState * states, unsigned int * output, const size_t
     rocrand_mtgp32_block_copy(&state, &states[state_id]);
 }
 
-template <class GeneratorState>
-__global__
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_t size)
+template<class GeneratorState>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_uniform_kernel(
+    GeneratorState* states, float* output, const size_t size)
 {
     const unsigned int state_id  = blockIdx.x;
     const unsigned int thread_id = threadIdx.x;
@@ -72,7 +71,7 @@ void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_
     unsigned int       stride    = gridDim.x * blockDim.x;
 
     __shared__ GeneratorState state;
-    if (thread_id == 0)
+    if(thread_id == 0)
         state = states[state_id];
     __syncthreads();
 
@@ -88,14 +87,13 @@ void rocrand_uniform_kernel(GeneratorState * states, float * output, const size_
     }
 
     // Save engine with its state
-    if (thread_id == 0)
+    if(thread_id == 0)
         states[state_id] = state;
 }
 
-template <class GeneratorState>
-__global__
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-void rocrand_normal_kernel(GeneratorState * states, float * output, const size_t size)
+template<class GeneratorState>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_normal_kernel(
+    GeneratorState* states, float* output, const size_t size)
 {
     const unsigned int state_id  = blockIdx.x;
     const unsigned int thread_id = threadIdx.x;
@@ -165,14 +163,13 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_normal
     }
 
     // Save engine with its state
-    if (thread_id == 0)
+    if(thread_id == 0)
         states[state_id] = state;
 }
 
-template <class GeneratorState>
-__global__
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-void rocrand_log_normal_kernel(GeneratorState * states, float * output, const size_t size)
+template<class GeneratorState>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_log_normal_kernel(
+    GeneratorState* states, float* output, const size_t size)
 {
     const unsigned int state_id  = blockIdx.x;
     const unsigned int thread_id = threadIdx.x;
@@ -180,7 +177,7 @@ void rocrand_log_normal_kernel(GeneratorState * states, float * output, const si
     unsigned int       stride    = gridDim.x * blockDim.x;
 
     __shared__ GeneratorState state;
-    if (thread_id == 0)
+    if(thread_id == 0)
         state = states[state_id];
     __syncthreads();
 
@@ -242,14 +239,13 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_log_no
     }
 
     // Save engine with its state
-    if (thread_id == 0)
+    if(thread_id == 0)
         states[state_id] = state;
 }
 
-template <class GeneratorState>
-__global__
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, const size_t size, double lambda)
+template<class GeneratorState>
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void rocrand_poisson_kernel(
+    GeneratorState* states, unsigned int* output, const size_t size, double lambda)
 {
     const unsigned int state_id  = blockIdx.x;
     const unsigned int thread_id = threadIdx.x;
@@ -257,7 +253,7 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
     unsigned int       stride    = gridDim.x * blockDim.x;
 
     __shared__ GeneratorState state;
-    if (thread_id == 0)
+    if(thread_id == 0)
         state = states[state_id];
     __syncthreads();
 
@@ -273,7 +269,7 @@ void rocrand_poisson_kernel(GeneratorState * states, unsigned int * output, cons
     }
 
     // Save engine with its state
-    if (thread_id == 0)
+    if(thread_id == 0)
         states[state_id] = state;
 }
 
@@ -290,31 +286,23 @@ TEST(rocrand_kernel_mtgp32, rocrand)
 {
     typedef rocrand_state_mtgp32 state_type;
 
-    state_type * states;
+    state_type* states;
     hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
-    const size_t output_size = 8192;
-    unsigned int * output;
+    const size_t  output_size = 8192;
+    unsigned int* output;
     HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(rocrand_kernel<state_type>),
-        dim3(8), dim3(256), 0, 0,
-        states, output, output_size
-    );
+    rocrand_kernel<state_type><<<dim3(8), dim3(256), 0, 0>>>(states, output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_host.data(),
+                        output,
+                        output_size * sizeof(unsigned int),
+                        hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
@@ -332,31 +320,21 @@ TEST(rocrand_kernel_mtgp32, rocrand_uniform)
 {
     typedef rocrand_state_mtgp32 state_type;
 
-    state_type * states;
+    state_type* states;
     hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
-    float * output;
+    float*       output;
     HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
-        dim3(8), dim3(256), 0, 0,
-        states, output, output_size
-    );
+    rocrand_uniform_kernel<state_type><<<dim3(8), dim3(256), 0, 0>>>(states, output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(float),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output_host.data(), output, output_size * sizeof(float), hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
@@ -374,41 +352,26 @@ TEST(rocrand_kernel_mtgp32, rocrand_normal)
 {
     typedef rocrand_state_mtgp32 state_type;
 
-    state_type * states;
+    state_type* states;
     hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
-    float * output;
+    float*       output;
     HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(rocrand_normal_kernel<state_type>),
-        dim3(8), dim3(256), 0, 0,
-        states, output, output_size
-    );
+    rocrand_normal_kernel<state_type><<<dim3(8), dim3(256), 0, 0>>>(states, output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(float),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output_host.data(), output, output_size * sizeof(float), hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
 
-    double mean = 0;
-    for(auto v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
+    double mean = std::accumulate(output_host.begin(), output_host.end(), 0.0) / output_size;
     EXPECT_NEAR(mean, 0.0, 0.2);
 
     double stddev = 0;
@@ -433,15 +396,8 @@ TEST(rocrand_kernel_mtgp32, rocrand_normal_double)
     double*      output;
     HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_normal_double_kernel<state_type>),
-                       dim3(8),
-                       dim3(256),
-                       0,
-                       0,
-                       states,
-                       output,
-                       output_size);
+    rocrand_normal_double_kernel<state_type>
+        <<<dim3(8), dim3(256), 0, 0>>>(states, output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<double> output_host(output_size);
@@ -451,12 +407,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_normal_double)
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
 
-    double mean = 0;
-    for(auto v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
+    double mean = std::accumulate(output_host.begin(), output_host.end(), 0.0) / output_size;
     EXPECT_NEAR(mean, 0.0, 0.2);
 
     double stddev = 0;
@@ -472,41 +423,27 @@ TEST(rocrand_kernel_mtgp32, rocrand_log_normal)
 {
     typedef rocrand_state_mtgp32 state_type;
 
-    state_type * states;
+    state_type* states;
     hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
     const size_t output_size = 8192;
-    float * output;
+    float*       output;
     HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(rocrand_log_normal_kernel<state_type>),
-        dim3(8), dim3(256), 0, 0,
-        states, output, output_size
-    );
+    rocrand_log_normal_kernel<state_type>
+        <<<dim3(8), dim3(256), 0, 0>>>(states, output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<float> output_host(output_size);
     HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(float),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output_host.data(), output, output_size * sizeof(float), hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
 
-    double mean = 0;
-    for(auto v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
+    double mean = std::accumulate(output_host.begin(), output_host.end(), 0.0) / output_size;
 
     double stddev = 0;
     for(auto v : output_host)
@@ -535,15 +472,8 @@ TEST(rocrand_kernel_mtgp32, rocrand_log_normal_double)
     double*      output;
     HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_log_normal_double_kernel<state_type>),
-                       dim3(8),
-                       dim3(256),
-                       0,
-                       0,
-                       states,
-                       output,
-                       output_size);
+    rocrand_log_normal_double_kernel<state_type>
+        <<<dim3(8), dim3(256), 0, 0>>>(states, output, output_size);
     HIP_CHECK(hipGetLastError());
 
     std::vector<double> output_host(output_size);
@@ -553,12 +483,7 @@ TEST(rocrand_kernel_mtgp32, rocrand_log_normal_double)
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
 
-    double mean = 0;
-    for(auto v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
+    double mean = std::accumulate(output_host.begin(), output_host.end(), 0.0) / output_size;
 
     double stddev = 0;
     for(auto v : output_host)
@@ -568,13 +493,14 @@ TEST(rocrand_kernel_mtgp32, rocrand_log_normal_double)
     stddev = std::sqrt(stddev / output_size);
 
     double logmean = std::log(mean * mean / std::sqrt(stddev + mean * mean));
-    double logstd = std::sqrt(std::log(1.0f + stddev/(mean * mean)));
+    double logstd  = std::sqrt(std::log(1.0f + stddev / (mean * mean)));
 
     EXPECT_NEAR(1.6, logmean, 1.6 * 0.2);
     EXPECT_NEAR(0.25, logstd, 0.25 * 0.2);
 }
 
-class rocrand_kernel_mtgp32_poisson : public ::testing::TestWithParam<double> { };
+class rocrand_kernel_mtgp32_poisson : public ::testing::TestWithParam<double>
+{};
 
 TEST_P(rocrand_kernel_mtgp32_poisson, rocrand_poisson)
 {
@@ -582,41 +508,29 @@ TEST_P(rocrand_kernel_mtgp32_poisson, rocrand_poisson)
 
     const double lambda = GetParam();
 
-    state_type * states;
+    state_type* states;
     hipMallocHelper(&states, sizeof(state_type) * 8);
 
     ROCRAND_CHECK(rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, 8, 0));
 
-    const size_t output_size = 8192;
-    unsigned int * output;
+    const size_t  output_size = 8192;
+    unsigned int* output;
     HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
-        dim3(8), dim3(256), 0, 0,
-        states, output, output_size, lambda
-    );
+    rocrand_poisson_kernel<state_type>
+        <<<dim3(8), dim3(256), 0, 0>>>(states, output, output_size, lambda);
     HIP_CHECK(hipGetLastError());
 
     std::vector<unsigned int> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_host.data(),
+                        output,
+                        output_size * sizeof(unsigned int),
+                        hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(states));
 
-    double mean = 0;
-    for(auto v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
+    double mean = std::accumulate(output_host.begin(), output_host.end(), 0.0) / output_size;
 
     double variance = 0;
     for(auto v : output_host)
@@ -629,8 +543,8 @@ TEST_P(rocrand_kernel_mtgp32_poisson, rocrand_poisson)
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
 }
 
-const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
+const double lambdas[] = {1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0};
 
 INSTANTIATE_TEST_SUITE_P(rocrand_kernel_mtgp32_poisson,
-                        rocrand_kernel_mtgp32_poisson,
-                        ::testing::ValuesIn(lambdas));
+                         rocrand_kernel_mtgp32_poisson,
+                         ::testing::ValuesIn(lambdas));

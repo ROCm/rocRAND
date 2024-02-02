@@ -32,6 +32,11 @@ Documentation for rocRAND is available at
 * C++ wrapper:
   * `lfsr113_engine` now also supports being constructed with a seed of type `unsigned long long`, not only `uint4`.
   * added optional order parameter to constructor of `mt19937_engine`
+* Added the following functions for the `ROCRAND_RNG_PSEUDO_MTGP32` generator:
+  * `rocrand_normal2`
+  * `rocrand_normal_double2`
+  * `rocrand_log_normal2`
+  * `rocrand_log_normal_double2`
 
 ### Changes
 
