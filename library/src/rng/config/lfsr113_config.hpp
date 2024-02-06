@@ -51,7 +51,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_LFSR113, T>
         {
             case target_arch::gfx1030: return 360;
             case target_arch::gfx906: return 560;
-            case target_arch::gfx908: return 960;
+            case target_arch::gfx908: return 1024;
             default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_LFSR113, T>::blocks;
         }
     }
