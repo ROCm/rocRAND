@@ -40,10 +40,9 @@ INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
                                generator_prng_tests,
                                rocrand_lfsr113_generator_prng_tests_types);
 
-// TODO: Uncomment when continuity tests are fixed for lfsr113.
-// INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
-//                                generator_prng_continuity_tests,
-//                                rocrand_lfsr113_generator_prng_tests_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
+                               generator_prng_continuity_tests,
+                               rocrand_lfsr113_generator_prng_tests_types);
 
 // lfsr113-specific generator API tests
 template<class Params>
