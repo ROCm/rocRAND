@@ -38,7 +38,8 @@ INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mtgp32,
                                generator_prng_tests,
                                rocrand_mtgp32_generator_prng_tests_types);
 
-// TODO: Uncomment when continuity tests are fixed for mtgp32.
+// Continuity cannot be implemented for MTGP32, as 'offset' is not supported for this
+// generator. Therefore, continuity tests fail.
 // INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mtgp32,
 //                                generator_prng_continuity_tests,
 //                                rocrand_mtgp32_generator_prng_tests_types);
