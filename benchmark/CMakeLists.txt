@@ -44,6 +44,7 @@ function(add_rocrand_benchmark benchmark_src legacy)
       )
       target_link_libraries(${BENCHMARK_TARGET} ${CUDA_curand_LIBRARY})
     else()
+      set_source_files_properties(${benchmark_src} PROPERTIES LANGUAGE ${ROCRAND_LANG})
       target_link_libraries(${BENCHMARK_TARGET} hip::device)
     endif()
   endif()
@@ -96,7 +97,7 @@ function(add_rocrand_benchmark benchmark_src legacy)
     # for now adding in all .dll as dependency chain is not cmake based on win32
     file( GLOB third_party_dlls
     LIST_DIRECTORIES ON
-    CONFIGURE_DEPENDS 
+    CONFIGURE_DEPENDS
     ${HIP_DIR}/bin/*.dll
     ${CMAKE_SOURCE_DIR}/rtest.*
     )
@@ -121,4 +122,3 @@ if(BUILD_LEGACY_BENCHMARK)
     add_rocrand_benchmark("benchmark_curand_kernel.cpp"   ON)
   endif()
 endif()
-

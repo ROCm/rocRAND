@@ -35,6 +35,11 @@ function(add_rocrand_link_test TEST_SOURCES)
             LANGUAGE CUDA
             CUDA_STANDARD 14
         )
+    else()
+        set_source_files_properties(${test_name}
+            PROPERTIES
+            LANGUAGE ${ROCRAND_LANG}
+        )
     endif()
     target_include_directories(${TEST_TARGET}
         PUBLIC

@@ -57,10 +57,29 @@ list(APPEND CMAKE_MODULE_PATH
     $ENV{ROCM_PATH}/llvm
 )
 
+# Detect if already using HIP language
+get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+if(HIP IN_LIST ENABLED_LANGUAGES OR TRUE)
+  # do stuff
+  set(ROCRAND_LANG HIP)
+  if (DEFINED CACHE{CMAKE_CXX_COMPILER} AND (CMAKE_CXX_COMPILER MATCHES ".*hipcc$" OR CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+"))
+    # if the user's set the CXX compiler but not the HIP compiler, copy the value.
+    set(CMAKE_HIP_COMPILER "${CMAKE_CXX_COMPILER}" CACHE PATH "The path to the HIP compiler.")
+  endif()
+  # if the user's set the HIP compiler but not the CXX compiler, copy the value.
+  set(CMAKE_CXX_COMPILER "${CMAKE_HIP_COMPILER}" CACHE PATH "The path to the CXX compiler.")
+else()
+  set(ROCRAND_LANG CXX)
+endif()
+
 #
 # rocRAND project
 #
-project(rocRAND CXX)
+project(rocRAND ${ROCRAND_LANG})
+# If using the HIP language, enable CXX language as well
+if (ROCRAND_LANG STREQUAL HIP)
+  enable_language(CXX)
+endif()
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -80,9 +99,9 @@ include(CMakeDependentOption)
 include(cmake/Dependencies.cmake)
 
 # Detect compiler support for target ID
-if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-    OUTPUT_VARIABLE CXX_OUTPUT
+if( CMAKE_${ROCRAND_LANG}_COMPILER MATCHES ".*/hipcc$" )
+    execute_process(COMMAND ${CMAKE_${ROCRAND_LANG}_COMPILER} "--help"
+    OUTPUT_VARIABLE ${ROCRAND_LANG}_OUTPUT
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_STRIP_TRAILING_WHITESPACE)
     string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
@@ -118,17 +137,17 @@ endif()
 # Build option to disable -Werror
 option(DISABLE_WERROR "Disable building with Werror" ON)
 
-# Build CXX flags
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# Build CXX/HIP flags
+set(CMAKE_${ROCRAND_LANG}_STANDARD 11)
+set(CMAKE_${ROCRAND_LANG}_STANDARD_REQUIRED ON)
+set(CMAKE_${ROCRAND_LANG}_EXTENSIONS OFF)
 if(DISABLE_WERROR)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    set(CMAKE_${ROCRAND_LANG}_FLAGS "${CMAKE_${ROCRAND_LANG}_FLAGS} -Wall -Wextra")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+    set(CMAKE_${ROCRAND_LANG}_FLAGS "${CMAKE_${ROCRAND_LANG}_FLAGS} -Wall -Wextra -Werror")
 endif()
 if(CODE_COVERAGE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    set(CMAKE_${ROCRAND_LANG}_FLAGS "${CMAKE_${ROCRAND_LANG}_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
 endif()
 
 # HIP on Windows: xhip is required with clang++ to get __half defined
@@ -141,7 +160,7 @@ if(BUILD_LEGACY_BENCHMARK)
   message(DEPRECATION "Building the legacy benchmarks will be removed in a future release. Consider using the new benchmark suite.")
 endif()
 if(BUILD_ADDRESS_SANITIZER AND BUILD_SHARED_LIBS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
+  set(CMAKE_${ROCRAND_LANG}_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
   add_link_options(-fuse-ld=lld)
 endif()
