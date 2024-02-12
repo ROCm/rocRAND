@@ -29,20 +29,38 @@ using rocrand_threefry4x64_20_generator_prng_tests_types = ::testing::Types<
     generator_prng_tests_params<rocrand_threefry4x64_20, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
     generator_prng_tests_params<rocrand_threefry4x64_20, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+using rocrand_threefry4x64_20_generator_prng_offset_tests_types
+    = ::testing::Types<generator_prng_offset_tests_params<unsigned int,
+                                                          rocrand_threefry4x64_20,
+                                                          ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+                       generator_prng_offset_tests_params<unsigned int,
+                                                          rocrand_threefry4x64_20,
+                                                          ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
+                       generator_prng_offset_tests_params<float,
+                                                          rocrand_threefry4x64_20,
+                                                          ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+                       generator_prng_offset_tests_params<float,
+                                                          rocrand_threefry4x64_20,
+                                                          ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x64_20,
                                generator_prng_tests,
                                rocrand_threefry4x64_20_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x64_20,
                                generator_prng_continuity_tests,
                                rocrand_threefry4x64_20_generator_prng_tests_types);
 
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x64_20,
+                               generator_prng_offset_tests,
+                               rocrand_threefry4x64_20_generator_prng_offset_tests_types);
+
 // threefry4x64_20-specific generator API tests
-INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x64_20,
                                threefryNx64_20_generator_prng_tests,
                                rocrand_threefry4x64_20_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x64_20,
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x64_20,
                                threefryNx64_20_generator_prng_continuity_tests,
                                rocrand_threefry4x64_20_generator_prng_tests_types);
 
