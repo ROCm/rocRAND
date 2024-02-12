@@ -61,6 +61,9 @@ Documentation for rocRAND is available at
 * Removed references to and workarounds for deprecated hcc.
 * Support for HIP-CPU
 
+### Known issues
+- SOBOL64 and SCRAMBLED_SOBOL64 generate poisson-distributed `unsigned long long int` numbers instead of `unsigned int`. This will be fixed in the next major release.
+
 ## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
 
 ### Additions
