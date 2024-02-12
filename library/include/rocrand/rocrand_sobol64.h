@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -232,16 +232,16 @@ void rocrand_init(const unsigned long long int * vectors,
 }
 
 /**
- * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * \brief Returns uniformly distributed random <tt>unsigned long long int</tt> value
  * from [0; 2^64 - 1] range.
  *
- * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * Generates and returns uniformly distributed random <tt>unsigned long long int</tt>
  * value from [0; 2^64 - 1] range using sobol64 generator in \p state.
  * State is incremented by one position.
  *
  * \param state - Pointer to a state to use
  *
- * \return Quasirandom value (64-bit) as an <tt>unsigned int</tt>
+ * \return Quasirandom value (64-bit) as an <tt>unsigned long long int</tt>
  */
 FQUALIFIERS
 unsigned long long int rocrand(rocrand_state_sobol64 * state)
