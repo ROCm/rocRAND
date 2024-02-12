@@ -30,10 +30,10 @@ using rocrand_threefry4x64_20_generator_prng_tests_types = ::testing::Types<
     generator_prng_tests_params<rocrand_threefry4x64_20, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
 using rocrand_threefry4x64_20_generator_prng_offset_tests_types
-    = ::testing::Types<generator_prng_offset_tests_params<unsigned int,
+    = ::testing::Types<generator_prng_offset_tests_params<unsigned long long,
                                                           rocrand_threefry4x64_20,
                                                           ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-                       generator_prng_offset_tests_params<unsigned int,
+                       generator_prng_offset_tests_params<unsigned long long,
                                                           rocrand_threefry4x64_20,
                                                           ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
                        generator_prng_offset_tests_params<float,
