@@ -8,7 +8,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     project.paths.build_command = './install -c'
     String buildTypeArg = debug ? '-DCMAKE_BUILD_TYPE=Debug' : '-DCMAKE_BUILD_TYPE=Release'
     String buildTypeDir = debug ? 'debug' : 'release'
-    String buildStatic = staticLibrary ? '-DBUILD_STATIC_LIBS=ON' : '-DBUILD_SHARED=OFF'
+    String buildStatic = staticLibrary ? '-DBUILD_SHARED_LIBS=OFF' : '-DBUILD_SHARED_LIBS=ON'
     String codeCovFlag = codeCoverage ? '-DCODE_COVERAGE=ON' : ''
     String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
     //Set CI node's gfx arch as target if PR, otherwise use default targets of the library
@@ -93,4 +93,3 @@ def runCodeCovTestCommand(platform, project, jobName)
 }
 
 return this
-
