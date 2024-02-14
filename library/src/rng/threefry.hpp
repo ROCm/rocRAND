@@ -427,8 +427,9 @@ using rocrand_threefry2x32_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry2x32_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
 
@@ -437,8 +438,9 @@ using rocrand_threefry2x64_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry2x64_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20>>;
 
@@ -447,8 +449,9 @@ using rocrand_threefry4x32_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry4x32_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20>>;
 
@@ -457,8 +460,9 @@ using rocrand_threefry4x64_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry4x64_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20>>;
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,9 @@
 
 #include <stdint.h>
 
+/// \tparam UseHostFunc If true, launching will enqueue the kernel in the stream. Otherwise,
+///   execute the kernel synchronously.
+template<bool UseHostFunc>
 struct rocrand_system_host
 {
     static constexpr bool is_device()
@@ -95,10 +98,10 @@ struct rocrand_system_host
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
-    static rocrand_status launch(dim3         num_blocks,
-                                 dim3         num_threads,
-                                 unsigned int shared_bytes,
-                                 hipStream_t  stream,
+    static rocrand_status launch(dim3                         num_blocks,
+                                 dim3                         num_threads,
+                                 unsigned int                 shared_bytes,
+                                 [[maybe_unused]] hipStream_t stream,
                                  Args... args)
     {
         (void)IsDynamic; // Not relevant on host launches
@@ -144,15 +147,22 @@ struct rocrand_system_host
         auto* kernel_args
             = new KernelArgsType{num_blocks, num_threads, std::tuple<Args...>(args...)};
 
-        hipError_t status = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
-
-        if(status != hipSuccess)
+        if constexpr(UseHostFunc)
         {
-            // At this point, if the callback has not been invoked, there will be a memory
-            // leak. It is unclear whether hipLaunchHostFunc can return an error after the
-            // callback has already been invoked, but in such case there would be a double
-            // free (crash) instead of a memory leak, so we will just leak it.
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            hipError_t status = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
+
+            if(status != hipSuccess)
+            {
+                // At this point, if the callback has not been invoked, there will be a memory
+                // leak. It is unclear whether hipLaunchHostFunc can return an error after the
+                // callback has already been invoked, but in such case there would be a double
+                // free (crash) instead of a memory leak, so we will just leak it.
+                return ROCRAND_STATUS_LAUNCH_FAILURE;
+            }
+        }
+        else
+        {
+            kernel_callback(kernel_args);
         }
 
         return ROCRAND_STATUS_SUCCESS;

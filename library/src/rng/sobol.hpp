@@ -677,13 +677,19 @@ private:
     }
 };
 
-using rocrand_sobol32                = rocrand_sobol_template<rocrand_system_device, false, false>;
-using rocrand_sobol64                = rocrand_sobol_template<rocrand_system_device, true, false>;
-using rocrand_scrambled_sobol32      = rocrand_sobol_template<rocrand_system_device, false, true>;
-using rocrand_scrambled_sobol64      = rocrand_sobol_template<rocrand_system_device, true, true>;
-using rocrand_sobol32_host           = rocrand_sobol_template<rocrand_system_host, false, false>;
-using rocrand_sobol64_host           = rocrand_sobol_template<rocrand_system_host, true, false>;
-using rocrand_scrambled_sobol32_host = rocrand_sobol_template<rocrand_system_host, false, true>;
-using rocrand_scrambled_sobol64_host = rocrand_sobol_template<rocrand_system_host, true, true>;
+using rocrand_sobol32           = rocrand_sobol_template<rocrand_system_device, false, false>;
+using rocrand_sobol64           = rocrand_sobol_template<rocrand_system_device, true, false>;
+using rocrand_scrambled_sobol32 = rocrand_sobol_template<rocrand_system_device, false, true>;
+using rocrand_scrambled_sobol64 = rocrand_sobol_template<rocrand_system_device, true, true>;
+template<bool UseHostFunc>
+using rocrand_sobol32_host = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, false, false>;
+template<bool UseHostFunc>
+using rocrand_sobol64_host = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, true, false>;
+template<bool UseHostFunc>
+using rocrand_scrambled_sobol32_host
+    = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, false, true>;
+template<bool UseHostFunc>
+using rocrand_scrambled_sobol64_host
+    = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, true, true>;
 
 #endif // ROCRAND_RNG_SOBOL_H_

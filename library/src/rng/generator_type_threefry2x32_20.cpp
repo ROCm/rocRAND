@@ -23,4 +23,5 @@
 #include "threefry.hpp"
 
 template struct rocrand_generator_type<rocrand_threefry2x32_20>;
-template struct rocrand_generator_type<rocrand_threefry2x32_20_host>;
+template struct rocrand_generator_type<rocrand_threefry2x32_20_host<false>>;
+template struct rocrand_generator_type<rocrand_threefry2x32_20_host<true>>;

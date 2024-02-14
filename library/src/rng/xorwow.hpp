@@ -443,8 +443,9 @@ using rocrand_xorwow = rocrand_xorwow_template<
     rocrand_system_device,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
 
+template<bool UseHostFunc>
 using rocrand_xorwow_host = rocrand_xorwow_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
 
 #endif // ROCRAND_RNG_XORWOW_H_
