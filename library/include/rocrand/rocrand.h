@@ -164,11 +164,11 @@ rocrand_status ROCRANDAPI
 rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_type);
 
 /**
- * \brief Creates a new random number generator.
+ * \brief Creates a new host random number generator.
  *
  * Creates a new pseudo random number generator of type \p rng_type
  * and returns it in \p generator. This generator is executed on the host rather than
- * on a device.
+ * on a device, and it is enqueued on the stream associated with the generator.
  *
  * Values for \p rng_type are:
  * - ROCRAND_RNG_PSEUDO_XORWOW
@@ -198,6 +198,14 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
  */
 rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* generator,
                                                         rocrand_rng_type   rng_type);
+
+/**
+ * \brief Creates a new host random number generator, similar to `rocrand_create_generator_host`.
+ *   The exception is that, instead of enqueuing the host function in the stream,
+ *   execution happens synchronously with respect to the calling thread and the stream is ignored.
+ */
+rocrand_status ROCRANDAPI rocrand_create_generator_host_blocking(rocrand_generator* generator,
+                                                                 rocrand_rng_type   rng_type);
 
 /**
  * \brief Destroys random number generator.

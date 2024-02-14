@@ -23,4 +23,5 @@
 #include "mrg.hpp"
 
 template struct rocrand_generator_type<rocrand_mrg32k3a>;
-template struct rocrand_generator_type<rocrand_mrg32k3a_host>;
+template struct rocrand_generator_type<rocrand_mrg32k3a_host<false>>;
+template struct rocrand_generator_type<rocrand_mrg32k3a_host<true>>;

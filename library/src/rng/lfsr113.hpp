@@ -466,8 +466,9 @@ using rocrand_lfsr113 = rocrand_lfsr113_template<
     rocrand_system_device,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
 
+template<bool UseHostFunc>
 using rocrand_lfsr113_host = rocrand_lfsr113_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
 
 #endif // ROCRAND_RNG_LFSR113_H_

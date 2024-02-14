@@ -401,8 +401,9 @@ using rocrand_philox4x32_10 = rocrand_philox4x32_10_template<
     rocrand_system_device,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
 
+template<bool UseHostFunc>
 using rocrand_philox4x32_10_host = rocrand_philox4x32_10_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
 
 #endif // ROCRAND_RNG_PHILOX4X32_10_H_

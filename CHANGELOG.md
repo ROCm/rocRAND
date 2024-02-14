@@ -3,6 +3,12 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
+## (Unreleased) rocRAND-x.x.x for ROCm x.x.x
+
+### Additions
+
+* Added `rocrand_create_generator_host_blocking` which dispatches without stream semantics.
+
 ## (Unreleased) rocRAND-3.1.0 for ROCm 6.2.0
 
 ### Additions

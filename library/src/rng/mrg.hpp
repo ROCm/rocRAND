@@ -456,8 +456,9 @@ using rocrand_mrg31k3p = rocrand_mrg_template<
     rocrand_device::mrg31k3p_engine,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
 
+template<bool UseHostFunc>
 using rocrand_mrg31k3p_host = rocrand_mrg_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_device::mrg31k3p_engine,
     rocrand_host::detail::static_default_config_provider_t<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
 
@@ -466,8 +467,9 @@ using rocrand_mrg32k3a = rocrand_mrg_template<
     rocrand_device::mrg32k3a_engine,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
 
+template<bool UseHostFunc>
 using rocrand_mrg32k3a_host = rocrand_mrg_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_device::mrg32k3a_engine,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
 
