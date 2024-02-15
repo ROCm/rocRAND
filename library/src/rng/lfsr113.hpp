@@ -282,6 +282,10 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
