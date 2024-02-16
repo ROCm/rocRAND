@@ -738,10 +738,9 @@ TYPED_TEST(mt19937_generator_engine_tests, subsequence_test)
     // dummy config provider, kernel just needs to verify the amount of generators for the actual call
     using ConfigProvider = default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
 
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(
-
-            jump_ahead_kernel<generator_t::jump_ahead_thread_count, ConfigProvider, true>),
+    rocrand_status status = rocrand_system_device::template launch<
+        rocrand_host::detail::jump_ahead_mt19937<ConfigProvider, true>,
+        rocrand_host::detail::static_block_size_config_provider<generator_t::jump_ahead_thread_count>>(
         dim3(generator_count),
         dim3(generator_t::jump_ahead_thread_count),
         0,
@@ -1149,21 +1148,21 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
     unsigned int* d_engines1{};
     HIP_CHECK(hipMalloc(&d_engines1, generator_count * n * sizeof(unsigned int)));
 
-    dynamic_dispatch(ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                     [&](auto is_dynamic)
-                     {
-                         hipLaunchKernelGGL(
-                             HIP_KERNEL_NAME(jump_ahead_kernel<generator_t::jump_ahead_thread_count,
-                                                               ConfigProvider,
-                                                               is_dynamic>),
-                             dim3(generator_count),
-                             dim3(generator_t::jump_ahead_thread_count),
-                             0,
-                             0,
-                             d_engines1,
-                             seed,
-                             d_mt19937_jump);
-                     });
+    rocrand_host::detail::dynamic_dispatch(
+        ROCRAND_ORDERING_PSEUDO_DEFAULT,
+        [&](auto is_dynamic)
+        {
+            rocrand_status status = rocrand_system_device::template launch<
+                rocrand_host::detail::jump_ahead_mt19937<ConfigProvider, is_dynamic>,
+                rocrand_host::detail::static_block_size_config_provider<generator_t::jump_ahead_thread_count>>(
+                dim3(generator_count),
+                dim3(generator_t::jump_ahead_thread_count),
+                0,
+                0,
+                d_engines1,
+                seed,
+                d_mt19937_jump);
+        });
 
     std::vector<unsigned int> h_engines1(generator_count * n);
     HIP_CHECK(hipMemcpy(h_engines1.data(),

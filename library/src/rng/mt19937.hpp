@@ -57,6 +57,7 @@
 #include "generator_type.hpp"
 #include "mt19937_octo_engine.hpp"
 #include "utils/cpp_utils.hpp"
+#include "system.hpp"
 
 #include "config/config_defaults.hpp"
 #include "config_types.hpp"
@@ -79,11 +80,14 @@ __forceinline__ __device__ unsigned int wrap_n(unsigned int i)
 
 // Config is not actually used for kernel launch here, but is needed to check the number of generators
 // As this kernel is not dependent on any type just use void for the config, as mt19937 is not tuned for types independently, so all configs are the same for different types.
-template<unsigned int jump_ahead_thread_count, class ConfigProvider, bool IsDynamic>
-ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel(
-    unsigned int* __restrict__ engines,
-    unsigned long long seed,
-    const unsigned int* __restrict__ jump)
+template<class ConfigProvider, bool IsDynamic>
+__host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
+                                                   dim3 thread_idx,
+                                                   dim3 /*grid_dim*/,
+                                                   dim3 block_dim,
+                                                   unsigned int* __restrict__ engines,
+                                                   unsigned long long seed,
+                                                   const unsigned int* __restrict__ jump)
 {
     constexpr generator_config config = ConfigProvider::template device_config<void>(IsDynamic);
     constexpr unsigned int     GeneratorCount
@@ -92,16 +96,16 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
                       && mt19937_jumps_radixes == 2,
                   "Not enough rocrand_h_mt19937_jump values to initialize all generators");
 
-    constexpr unsigned int block_size       = jump_ahead_thread_count;
-    constexpr unsigned int items_per_thread = (mt19937_constants::n + block_size - 1) / block_size;
-    constexpr unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
+    const unsigned int block_size       = block_dim.x;
+    const unsigned int items_per_thread = (mt19937_constants::n + block_size - 1) / block_size;
+    const unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
 
     __shared__ unsigned int temp[mt19937_constants::n];
     unsigned int            state[items_per_thread];
 
     // Initialize state 0 (engine_id = 0) used as a base for all engines.
     // It uses a recurrence relation so one thread calculates all n values.
-    if(threadIdx.x == 0)
+    if(thread_idx.x == 0)
     {
         const unsigned int seedu = (seed >> 32) ^ seed;
         temp[0]                  = seedu;
@@ -114,14 +118,14 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
 
     for(unsigned int i = 0; i < items_per_thread; i++)
     {
-        if(i < items_per_thread - 1 || threadIdx.x < tail_n) // Check only for the last iteration
+        if(i < items_per_thread - 1 || thread_idx.x < tail_n) // Check only for the last iteration
         {
-            state[i] = temp[i * block_size + threadIdx.x];
+            state[i] = temp[i * block_size + thread_idx.x];
         }
     }
     __syncthreads();
 
-    const unsigned int engine_id = blockIdx.x;
+    const unsigned int engine_id = block_idx.x;
 
     // Jump ahead by engine_id * 2 ^ 1000 using precomputed polynomials for jumps of
     // i * 2 ^ 1000 and mt19937_jumps_radix * i * 2 ^ 1000 values
@@ -139,7 +143,7 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
         // Compute jumping ahead with standard Horner method
 
         unsigned int ptr = 0;
-        for(unsigned int i = threadIdx.x; i < mt19937_constants::n; i += block_size)
+        for(unsigned int i = thread_idx.x; i < mt19937_constants::n; i += block_size)
         {
             temp[i] = 0;
         }
@@ -150,7 +154,7 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
         for(int pfi = mt19937_constants::mexp - 1; pfi >= 0; pfi--)
         {
             // Generate next state
-            if(threadIdx.x == 0)
+            if(thread_idx.x == 0)
             {
                 unsigned int t0 = temp[ptr];
                 unsigned int t1 = temp[wrap_n(ptr + 1)];
@@ -167,9 +171,9 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
                 // Add state to temp
                 for(unsigned int i = 0; i < items_per_thread; i++)
                 {
-                    if(i < items_per_thread - 1 || threadIdx.x < tail_n)
+                    if(i < items_per_thread - 1 || thread_idx.x < tail_n)
                     {
-                        temp[wrap_n(ptr + i * block_size + threadIdx.x)] ^= state[i];
+                        temp[wrap_n(ptr + i * block_size + thread_idx.x)] ^= state[i];
                     }
                 }
                 __syncthreads();
@@ -179,9 +183,9 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
         // Jump of the next power of 2 will be applied to the current state
         for(unsigned int i = 0; i < items_per_thread; i++)
         {
-            if(i < items_per_thread - 1 || threadIdx.x < tail_n)
+            if(i < items_per_thread - 1 || thread_idx.x < tail_n)
             {
-                state[i] = temp[wrap_n(ptr + i * block_size + threadIdx.x)];
+                state[i] = temp[wrap_n(ptr + i * block_size + thread_idx.x)];
             }
         }
         __syncthreads();
@@ -190,9 +194,9 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
     // Save state
     for(unsigned int i = 0; i < items_per_thread; i++)
     {
-        if(i < items_per_thread - 1 || threadIdx.x < tail_n)
+        if(i < items_per_thread - 1 || thread_idx.x < tail_n)
         {
-            engines[engine_id * mt19937_constants::n + i * block_size + threadIdx.x] = state[i];
+            engines[engine_id * mt19937_constants::n + i * block_size + thread_idx.x] = state[i];
         }
     }
 }
@@ -200,9 +204,12 @@ ROCRAND_KERNEL __launch_bounds__(jump_ahead_thread_count) void jump_ahead_kernel
 // This kernel is not explicitly tuned, but uses the same configs as the generate-kernels.
 // As this kernel is not dependent on any type just use void for the config, as mt19937 is not tuned for types independently, so all configs are the same for different types.
 template<class ConfigProvider, bool IsDynamic>
-ROCRAND_KERNEL
-    __launch_bounds__((get_block_size<ConfigProvider, void>(IsDynamic))) void init_engines_kernel(
-        unsigned int* __restrict__ octo_engines, const unsigned int* __restrict__ engines)
+__host__ __device__ inline void init_engines_mt19937(dim3 block_idx,
+                                                     dim3 thread_idx,
+                                                     dim3 /*grid_dim*/,
+                                                     dim3 /*block_dim*/,
+                                                     unsigned int* __restrict__ octo_engines,
+                                                     const unsigned int* __restrict__ engines)
 {
     constexpr generator_config config     = ConfigProvider::template device_config<void>(IsDynamic);
     constexpr unsigned int     block_size = config.threads;
@@ -213,7 +220,7 @@ ROCRAND_KERNEL
     static_assert(block_size % threads_per_generator == 0,
                   "All eight threads of the generator must be in the same block");
 
-    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
+    const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
     // every eight octo engines gather from the same engine
     mt19937_octo_engine_accessor<stride> accessor(octo_engines);
     mt19937_octo_engine engine;
@@ -223,16 +230,19 @@ ROCRAND_KERNEL
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class VecT, class Distribution>
-ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
-    IsDynamic))) void generate_short_kernel(unsigned int* __restrict__ engines,
-                                            const unsigned int start_input,
-                                            T* __restrict__ data,
-                                            const size_t size,
-                                            VecT* __restrict__ vec_data,
-                                            const size_t       vec_size,
-                                            const unsigned int head_size,
-                                            const unsigned int tail_size,
-                                            Distribution       distribution)
+__host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
+                                                       dim3 thread_idx,
+                                                       dim3 /*grid_dim*/,
+                                                       dim3 /*block_dim*/,
+                                                       unsigned int* __restrict__ engines,
+                                                       const unsigned int start_input,
+                                                       T* __restrict__ data,
+                                                       const size_t size,
+                                                       VecT* __restrict__ vec_data,
+                                                       const size_t       vec_size,
+                                                       const unsigned int head_size,
+                                                       const unsigned int tail_size,
+                                                       Distribution       distribution)
 {
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
     constexpr unsigned int     block_size = config.threads;
@@ -245,7 +255,7 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
-    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
+    const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
 
     unsigned int input[input_width];
     T            output[output_width];
@@ -309,16 +319,19 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class VecT, class Distribution>
-ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
-    IsDynamic))) void generate_long_kernel(unsigned int* __restrict__ engines,
-                                           const unsigned int start_input,
-                                           T* __restrict__ data,
-                                           const size_t size,
-                                           VecT* __restrict__ vec_data,
-                                           const size_t       vec_size,
-                                           const unsigned int head_size,
-                                           const unsigned int tail_size,
-                                           Distribution       distribution)
+__host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
+                                                      dim3 thread_idx,
+                                                      dim3 /*grid_dim*/,
+                                                      dim3 block_dim,
+                                                      unsigned int* __restrict__ engines,
+                                                      const unsigned int start_input,
+                                                      T* __restrict__ data,
+                                                      const size_t size,
+                                                      VecT* __restrict__ vec_data,
+                                                      const size_t       vec_size,
+                                                      const unsigned int head_size,
+                                                      const unsigned int tail_size,
+                                                      Distribution       distribution)
 {
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
     constexpr unsigned int     block_size = config.threads;
@@ -335,16 +348,16 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
     constexpr unsigned int stride           = block_size * grid_size;
     constexpr unsigned int full_stride      = stride * inputs_per_state;
 
-    const unsigned int thread_id = blockIdx.x * block_size + threadIdx.x;
+    const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
 
     unsigned int input[input_width];
     T            output[output_width];
 
     // Workaround: since load() and store() use the same indices, the compiler decides to keep
-    // computed addresses alive wasting 78 * 2 VGPRs. blockDim.x equals to block_size but it is
+    // computed addresses alive wasting 78 * 2 VGPRs. block_dim.x equals to block_size but it is
     // a runtime value so save() will compute new addresses.
     mt19937_octo_engine_accessor<stride> accessor(engines);
-    mt19937_octo_engine engine = accessor.load(blockIdx.x * blockDim.x + threadIdx.x);
+    mt19937_octo_engine engine = accessor.load(block_idx.x * block_dim.x + thread_idx.x);
 
     size_t base_index = 0;
 
@@ -453,12 +466,15 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
     accessor.save(thread_id, engine);
 }
 
-template<class ConfigProvider>
-class mt19937_generator_template : public generator_impl_base
+} // end namespace rocrand_host::detail
+
+template<class System, class ConfigProvider>
+class rocrand_mt19937_template : public rocrand_generator_impl_base
 {
 public:
-    using base_type        = generator_impl_base;
+    using base_type        = rocrand_generator_impl_base;
     using octo_engine_type = mt19937_octo_engine;
+    using system_type      = System;
 
     static constexpr inline unsigned int threads_per_generator
         = octo_engine_type::threads_per_generator;
@@ -514,7 +530,8 @@ public:
     {
         if(m_engines != nullptr)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+            system_type::free(m_engines);
+            m_engines = nullptr;
         }
     }
 
@@ -583,29 +600,36 @@ public:
 
         if(m_engines != nullptr)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+            system_type::free(m_engines);
         }
         // Allocate device random number engines
-        err = hipMalloc(reinterpret_cast<void**>(&m_engines),
-                        m_generator_count * mt19937_constants::n * sizeof(unsigned int));
-        if(err != hipSuccess)
+        rocrand_status status = system_type::alloc(
+            &m_engines,
+            m_generator_count * rocrand_host::detail::mt19937_constants::n * sizeof(unsigned int));
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            return status;
         }
 
         unsigned int* d_engines{};
-        err = hipMalloc(&d_engines,
-                        m_generator_count * mt19937_constants::n * sizeof(unsigned int));
-        if(err != hipSuccess)
+        status = system_type::alloc(&d_engines,
+                                    m_generator_count * rocrand_host::detail::mt19937_constants::n
+                                        * sizeof(unsigned int));
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
+            return status;
         }
 
         unsigned int* d_mt19937_jump{};
+        status = system_type::alloc(&d_mt19937_jump, sizeof(rocrand_h_mt19937_jump));
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
         err = hipMalloc(&d_mt19937_jump, sizeof(rocrand_h_mt19937_jump));
         if(err != hipSuccess)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
+            system_type::free(d_engines);
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
@@ -615,8 +639,8 @@ public:
                         hipMemcpyHostToDevice);
         if(err != hipSuccess)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_mt19937_jump));
+            system_type::free(d_engines);
+            system_type::free(d_mt19937_jump);
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
@@ -624,59 +648,59 @@ public:
             m_order,
             [&, this](auto is_dynamic)
             {
-                hipLaunchKernelGGL(
-                    HIP_KERNEL_NAME(
-                        jump_ahead_kernel<jump_ahead_thread_count, ConfigProvider, is_dynamic>),
-                    dim3(m_generator_count),
-                    dim3(jump_ahead_thread_count),
-                    0,
-                    m_stream,
-                    d_engines,
-                    m_seed,
-                    d_mt19937_jump);
+                status = system_type::template launch<
+                    rocrand_host::detail::jump_ahead_mt19937<ConfigProvider, is_dynamic>,
+                    rocrand_host::detail::static_block_size_config_provider<
+                        jump_ahead_thread_count>>(dim3(m_generator_count),
+                                                  dim3(jump_ahead_thread_count),
+                                                  0,
+                                                  m_stream,
+                                                  d_engines,
+                                                  m_seed,
+                                                  d_mt19937_jump);
             });
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
 
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_mt19937_jump));
+            system_type::free(d_engines);
+            system_type::free(d_mt19937_jump);
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
 
-        err = hipFree(d_mt19937_jump);
-        if(err != hipSuccess)
-        {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
-            return ROCRAND_STATUS_INTERNAL_ERROR;
-        }
+        system_type::free(d_mt19937_jump);
 
         // This kernel is not actually tuned for ordering, but config is needed for device-side compile time check of the generator count
-        dynamic_dispatch(m_order,
-                         [&, this](auto is_dynamic)
-                         {
-                             hipLaunchKernelGGL(
-                                 HIP_KERNEL_NAME(init_engines_kernel<ConfigProvider, is_dynamic>),
-                                 dim3(config.blocks),
-                                 dim3(config.threads),
-                                 0,
-                                 m_stream,
-                                 m_engines,
-                                 d_engines);
-                         });
+        rocrand_host::detail::dynamic_dispatch(
+            m_order,
+            [&, this](auto is_dynamic)
+            {
+                status = system_type::template launch<
+                    rocrand_host::detail::init_engines_mt19937<ConfigProvider, is_dynamic>>(
+                    dim3(config.blocks),
+                    dim3(config.threads),
+                    0,
+                    m_stream,
+                    m_engines,
+                    d_engines);
+            });
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
 
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
+            system_type::free(d_engines);
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
 
-        err = hipFree(d_engines);
-        if(err != hipSuccess)
-        {
-            return ROCRAND_STATUS_INTERNAL_ERROR;
-        }
+        system_type::free(d_engines);
 
         m_engines_initialized = true;
         m_start_input         = 0;
@@ -745,15 +769,19 @@ public:
 
         if(m_start_input > 0 && m_start_input + vec_size + extra <= full_stride)
         {
-            // Engines have enough values, generated by the previous generate_long_kernel call.
+            // Engines have enough values, generated by the previous generate_long_mt19937 call.
             // This kernel does not load and store engines but loads values directly from global
             // memory.
             dynamic_dispatch(
                 m_order,
                 [&, this](auto is_dynamic)
                 {
-                    hipLaunchKernelGGL(
-                        HIP_KERNEL_NAME(generate_short_kernel<ConfigProvider, is_dynamic>),
+                    status = system_type::template launch<
+                        rocrand_host::detail::generate_short_mt19937<ConfigProvider,
+                                                                     is_dynamic,
+                                                                     T,
+                                                                     vec_type,
+                                                                     Distribution>>(
                         dim3(config.blocks),
                         dim3(config.threads),
                         0,
@@ -768,6 +796,10 @@ public:
                         tail_size,
                         distribution);
                 });
+            if(status != ROCRAND_STATUS_SUCCESS)
+            {
+                return status;
+            }
         }
         else
         {
@@ -776,8 +808,12 @@ public:
                 m_order,
                 [&, this](auto is_dynamic)
                 {
-                    hipLaunchKernelGGL(
-                        HIP_KERNEL_NAME(generate_long_kernel<ConfigProvider, is_dynamic>),
+                    status = system_type::template launch<
+                        rocrand_host::detail::generate_long_mt19937<ConfigProvider,
+                                                                    is_dynamic,
+                                                                    T,
+                                                                    vec_type,
+                                                                    Distribution>>(
                         dim3(config.blocks),
                         dim3(config.threads),
                         0,
@@ -792,6 +828,10 @@ public:
                         tail_size,
                         distribution);
                 });
+            if(status != ROCRAND_STATUS_SUCCESS)
+            {
+                return status;
+            }
         }
 
         // check kernel status
@@ -876,8 +916,9 @@ private:
     unsigned int m_generator_count = 0;
 };
 
-using mt19937_generator
-    = mt19937_generator_template<default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
+using rocrand_mt19937 = rocrand_mt19937_template<
+    rocrand_system_device,
+    default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
 
 } // namespace rocrand_impl::host
 
