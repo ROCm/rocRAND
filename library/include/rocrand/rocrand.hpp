@@ -3733,8 +3733,8 @@ typedef xorwow default_random_engine;
 /// int main()
 /// {
 ///     const size_t size = 8192;
-///     unsigned int * output;
-///     hipMalloc(&output, size * sizeof(unsigned int));
+///     float * output;
+///     hipMalloc(&output, size * sizeof(float));
 ///
 ///     rocrand_cpp::random_device rd;
 ///     rocrand_cpp::mtgp32 engine(rd()); // seed engine with a real random value, if available
