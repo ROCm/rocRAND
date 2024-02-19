@@ -43,6 +43,8 @@ extern template struct rocrand_generator_type<rocrand_mrg32k3a_host<false>>;
 extern template struct rocrand_generator_type<rocrand_mrg32k3a_host<true>>;
 extern template struct rocrand_generator_type<rocrand_mt19937>;
 extern template struct rocrand_generator_type<rocrand_mtgp32>;
+extern template struct rocrand_generator_type<rocrand_mtgp32_host<false>>;
+extern template struct rocrand_generator_type<rocrand_mtgp32_host<true>>;
 extern template struct rocrand_generator_type<rocrand_philox4x32_10>;
 extern template struct rocrand_generator_type<rocrand_philox4x32_10_host<false>>;
 extern template struct rocrand_generator_type<rocrand_philox4x32_10_host<true>>;
