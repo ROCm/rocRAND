@@ -739,7 +739,7 @@ TYPED_TEST(mt19937_generator_engine_tests, subsequence_test)
     using ConfigProvider = default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
 
     rocrand_status status = rocrand_system_device::template launch<
-        rocrand_host::detail::jump_ahead_mt19937<ConfigProvider, true>,
+        rocrand_host::detail::jump_ahead_mt19937<ConfigProvider, false>,
         rocrand_host::detail::static_block_size_config_provider<generator_t::jump_ahead_thread_count>>(
         dim3(generator_count),
         dim3(generator_t::jump_ahead_thread_count),
