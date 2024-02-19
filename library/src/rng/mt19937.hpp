@@ -80,11 +80,11 @@ __forceinline__ __device__ unsigned int wrap_n(unsigned int i)
 
 // Config is not actually used for kernel launch here, but is needed to check the number of generators
 // As this kernel is not dependent on any type just use void for the config, as mt19937 is not tuned for types independently, so all configs are the same for different types.
-template<class ConfigProvider, bool IsDynamic>
+template<unsigned int jump_ahead_thread_count, class ConfigProvider, bool IsDynamic>
 __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                                                    dim3 thread_idx,
                                                    dim3 /*grid_dim*/,
-                                                   dim3 block_dim,
+                                                   dim3 /*block_dim*/,
                                                    unsigned int* __restrict__ engines,
                                                    unsigned long long seed,
                                                    const unsigned int* __restrict__ jump)
@@ -96,9 +96,9 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                       && mt19937_jumps_radixes == 2,
                   "Not enough rocrand_h_mt19937_jump values to initialize all generators");
 
-    const unsigned int block_size       = block_dim.x;
-    const unsigned int items_per_thread = (mt19937_constants::n + block_size - 1) / block_size;
-    const unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
+    constexpr unsigned int block_size       = jump_ahead_thread_count;
+    constexpr unsigned int items_per_thread = (mt19937_constants::n + block_size - 1) / block_size;
+    constexpr unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
 
     __shared__ unsigned int temp[mt19937_constants::n];
     unsigned int            state[items_per_thread];
@@ -649,7 +649,7 @@ public:
             [&, this](auto is_dynamic)
             {
                 status = system_type::template launch<
-                    rocrand_host::detail::jump_ahead_mt19937<ConfigProvider, is_dynamic>,
+                    rocrand_host::detail::jump_ahead_mt19937<jump_ahead_thread_count, ConfigProvider, is_dynamic>,
                     rocrand_host::detail::static_block_size_config_provider<
                         jump_ahead_thread_count>>(dim3(m_generator_count),
                                                   dim3(jump_ahead_thread_count),
