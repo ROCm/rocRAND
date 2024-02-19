@@ -46,7 +46,7 @@ class rocrand_lfsr113_template;
 template<class System, class Engine, class ConfigProvider>
 class rocrand_mrg_template;
 
-template<class ConfigProvider>
+template<class System, class ConfigProvider>
 class rocrand_mtgp32_template;
 
 template<class System, class ConfigProvider>
@@ -94,7 +94,7 @@ using rocrand_mrg32k3a_template = ::
     rocrand_mrg_template<rocrand_system_device, rocrand_device::mrg32k3a_engine, ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mtgp32_template = ::rocrand_mtgp32_template<ConfigProvider>;
+using rocrand_mtgp32_template = ::rocrand_mtgp32_template<rocrand_system_device, ConfigProvider>;
 
 template<class ConfigProvider>
 using rocrand_mt19937_template = ::rocrand_mt19937_template<ConfigProvider>;

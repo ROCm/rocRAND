@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,3 +23,5 @@
 #include "mtgp32.hpp"
 
 template struct rocrand_generator_type<rocrand_mtgp32>;
+template struct rocrand_generator_type<rocrand_mtgp32_host<false>>;
+template struct rocrand_generator_type<rocrand_mtgp32_host<true>>;
