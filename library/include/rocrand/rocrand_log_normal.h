@@ -21,10 +21,6 @@
 #ifndef ROCRAND_LOG_NORMAL_H_
 #define ROCRAND_LOG_NORMAL_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
-
 /** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
@@ -65,8 +61,8 @@
  * \return Log-normally distributed \p float value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_philox4x32_10* state, float mean, float stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_philox4x32_10> bm_helper;
 
@@ -98,8 +94,9 @@ float rocrand_log_normal(rocrand_state_philox4x32_10 * state, float mean, float 
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_philox4x32_10* state,
+                                                               float                        mean,
+                                                               float                        stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -125,8 +122,9 @@ float2 rocrand_log_normal2(rocrand_state_philox4x32_10 * state, float mean, floa
  *
  * \return Four log-normally distributed \p float value as \p float4
  */
-FQUALIFIERS
-float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float4 rocrand_log_normal4(rocrand_state_philox4x32_10* state,
+                                                               float                        mean,
+                                                               float                        stddev)
 {
     float4 r = rocrand_device::detail::normal_distribution4(rocrand4(state));
     return float4 {
@@ -153,8 +151,8 @@ float4 rocrand_log_normal4(rocrand_state_philox4x32_10 * state, float mean, floa
  * \return Log-normally distributed \p double value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_philox4x32_10* state, double mean, double stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_philox4x32_10> bm_helper;
 
@@ -182,8 +180,8 @@ double rocrand_log_normal_double(rocrand_state_philox4x32_10 * state, double mea
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS
-double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double2
+    rocrand_log_normal_double2(rocrand_state_philox4x32_10* state, double mean, double stddev)
 {
     double2 r = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
     return double2 {
@@ -206,8 +204,8 @@ double2 rocrand_log_normal_double2(rocrand_state_philox4x32_10 * state, double m
  *
  * \return Four log-normally distributed \p double values as \p double4
  */
-FQUALIFIERS
-double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double4
+    rocrand_log_normal_double4(rocrand_state_philox4x32_10* state, double mean, double stddev)
 {
     double2 r1, r2;
     r1 = rocrand_log_normal_double2(state, mean, stddev);
@@ -233,7 +231,8 @@ double4 rocrand_log_normal_double4(rocrand_state_philox4x32_10 * state, double m
  * \return Log-normally distributed \p float value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS float rocrand_log_normal(rocrand_state_mrg31k3p* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_mrg31k3p* state, float mean, float stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg31k3p> bm_helper;
 
@@ -266,7 +265,9 @@ FQUALIFIERS float rocrand_log_normal(rocrand_state_mrg31k3p* state, float mean, 
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_mrg31k3p* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_mrg31k3p* state,
+                                                               float                   mean,
+                                                               float                   stddev)
 {
     auto state1 = state->next();
     auto state2 = state->next();
@@ -292,7 +293,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_mrg31k3p* state, float mean
  * \return Log-normally distributed \p double value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS double
+__forceinline__ __device__ __host__ double
     rocrand_log_normal_double(rocrand_state_mrg31k3p* state, double mean, double stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg31k3p> bm_helper;
@@ -327,9 +328,8 @@ FQUALIFIERS double
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_mrg31k3p* state,
-                                               double                  mean,
-                                               double                  stddev)
+__forceinline__ __device__ __host__ double2
+    rocrand_log_normal_double2(rocrand_state_mrg31k3p* state, double mean, double stddev)
 {
     auto state1 = state->next();
     auto state2 = state->next();
@@ -356,8 +356,8 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_mrg31k3p* state,
  * \return Log-normally distributed \p float value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_mrg32k3a* state, float mean, float stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg32k3a> bm_helper;
 
@@ -390,8 +390,9 @@ float rocrand_log_normal(rocrand_state_mrg32k3a * state, float mean, float stdde
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_mrg32k3a* state,
+                                                               float                   mean,
+                                                               float                   stddev)
 {
     auto state1 = state->next();
     auto state2 = state->next();
@@ -420,8 +421,8 @@ float2 rocrand_log_normal2(rocrand_state_mrg32k3a * state, float mean, float std
  * \return Log-normally distributed \p double value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_mrg32k3a* state, double mean, double stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_mrg32k3a> bm_helper;
 
@@ -455,8 +456,8 @@ double rocrand_log_normal_double(rocrand_state_mrg32k3a * state, double mean, do
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS
-double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double2
+    rocrand_log_normal_double2(rocrand_state_mrg32k3a* state, double mean, double stddev)
 {
     auto state1 = state->next();
     auto state2 = state->next();
@@ -486,8 +487,8 @@ double2 rocrand_log_normal_double2(rocrand_state_mrg32k3a * state, double mean, 
  * \return Log-normally distributed \p float value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_xorwow* state, float mean, float stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow> bm_helper;
 
@@ -519,8 +520,9 @@ float rocrand_log_normal(rocrand_state_xorwow * state, float mean, float stddev)
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_xorwow* state,
+                                                               float                 mean,
+                                                               float                 stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -548,8 +550,8 @@ float2 rocrand_log_normal2(rocrand_state_xorwow * state, float mean, float stdde
  * \return Log-normally distributed \p double value
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_xorwow* state, double mean, double stddev)
 {
     typedef rocrand_device::detail::engine_boxmuller_helper<rocrand_state_xorwow> bm_helper;
 
@@ -585,8 +587,9 @@ double rocrand_log_normal_double(rocrand_state_xorwow * state, double mean, doub
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS
-double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double2 rocrand_log_normal_double2(rocrand_state_xorwow* state,
+                                                                       double                mean,
+                                                                       double                stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -614,8 +617,8 @@ double2 rocrand_log_normal_double2(rocrand_state_xorwow * state, double mean, do
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_mtgp32 * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_mtgp32* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
     return expf(mean + (stddev * r));
@@ -635,7 +638,9 @@ float rocrand_log_normal(rocrand_state_mtgp32 * state, float mean, float stddev)
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_mtgp32* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_mtgp32* state,
+                                                               float                 mean,
+                                                               float                 stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -656,8 +661,8 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_mtgp32* state, float mean, 
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_mtgp32 * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_mtgp32* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
@@ -677,9 +682,9 @@ double rocrand_log_normal_double(rocrand_state_mtgp32 * state, double mean, doub
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_mtgp32* state,
-                                               double                mean,
-                                               double                stddev)
+__forceinline__ __device__ __host__ double2 rocrand_log_normal_double2(rocrand_state_mtgp32* state,
+                                                                       double                mean,
+                                                                       double                stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -703,8 +708,8 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_mtgp32* state,
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_sobol32 * state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_sobol32* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
     return expf(mean + (stddev * r));
@@ -722,8 +727,8 @@ float rocrand_log_normal(rocrand_state_sobol32 * state, float mean, float stddev
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_sobol32 * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_sobol32* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
@@ -741,8 +746,8 @@ double rocrand_log_normal_double(rocrand_state_sobol32 * state, double mean, dou
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_scrambled_sobol32* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_scrambled_sobol32* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
     return expf(mean + (stddev * r));
@@ -760,8 +765,8 @@ float rocrand_log_normal(rocrand_state_scrambled_sobol32* state, float mean, flo
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_scrambled_sobol32* state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_scrambled_sobol32* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
@@ -779,8 +784,8 @@ double rocrand_log_normal_double(rocrand_state_scrambled_sobol32* state, double 
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_sobol64* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_sobol64* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
     return expf(mean + (stddev * r));
@@ -798,8 +803,8 @@ float rocrand_log_normal(rocrand_state_sobol64* state, float mean, float stddev)
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_sobol64 * state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_sobol64* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
@@ -817,8 +822,8 @@ double rocrand_log_normal_double(rocrand_state_sobol64 * state, double mean, dou
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_scrambled_sobol64* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_scrambled_sobol64* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
     return expf(mean + (stddev * r));
@@ -836,8 +841,8 @@ float rocrand_log_normal(rocrand_state_scrambled_sobol64* state, float mean, flo
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_scrambled_sobol64* state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_scrambled_sobol64* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
@@ -855,8 +860,8 @@ double rocrand_log_normal_double(rocrand_state_scrambled_sobol64* state, double 
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS
-float rocrand_log_normal(rocrand_state_lfsr113* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float
+    rocrand_log_normal(rocrand_state_lfsr113* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
     return expf(mean + (stddev * r));
@@ -876,8 +881,9 @@ float rocrand_log_normal(rocrand_state_lfsr113* state, float mean, float stddev)
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS
-float2 rocrand_log_normal2(rocrand_state_lfsr113* state, float mean, float stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_lfsr113* state,
+                                                               float                  mean,
+                                                               float                  stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -898,8 +904,8 @@ float2 rocrand_log_normal2(rocrand_state_lfsr113* state, float mean, float stdde
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS
-double rocrand_log_normal_double(rocrand_state_lfsr113* state, double mean, double stddev)
+__forceinline__ __device__ __host__ double
+    rocrand_log_normal_double(rocrand_state_lfsr113* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
     return exp(mean + (stddev * r));
@@ -919,8 +925,9 @@ double rocrand_log_normal_double(rocrand_state_lfsr113* state, double mean, doub
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS
-double2 rocrand_log_normal_double2(rocrand_state_lfsr113* state, double mean, double stddev)
+__forceinline__ __device__ __host__ double2 rocrand_log_normal_double2(rocrand_state_lfsr113* state,
+                                                                       double                 mean,
+                                                                       double stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -944,7 +951,7 @@ double2 rocrand_log_normal_double2(rocrand_state_lfsr113* state, double mean, do
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS float
+__forceinline__ __device__ __host__ float
     rocrand_log_normal(rocrand_state_threefry2x32_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
@@ -965,9 +972,9 @@ FQUALIFIERS float
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry2x32_20* state,
-                                       float                          mean,
-                                       float                          stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_threefry2x32_20* state,
+                                                               float                          mean,
+                                                               float stddev)
 {
     float2 r = rocrand_device::detail::normal_distribution2(rocrand2(state));
     return float2{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y))};
@@ -985,7 +992,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry2x32_20* state,
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS double
+__forceinline__ __device__ __host__ double
     rocrand_log_normal_double(rocrand_state_threefry2x32_20* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
@@ -1006,9 +1013,8 @@ FQUALIFIERS double
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry2x32_20* state,
-                                               double                         mean,
-                                               double                         stddev)
+__forceinline__ __device__ __host__ double2
+    rocrand_log_normal_double2(rocrand_state_threefry2x32_20* state, double mean, double stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -1032,7 +1038,7 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry2x32_20* st
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS float
+__forceinline__ __device__ __host__ float
     rocrand_log_normal(rocrand_state_threefry2x64_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
@@ -1053,9 +1059,9 @@ FQUALIFIERS float
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry2x64_20* state,
-                                       float                          mean,
-                                       float                          stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_threefry2x64_20* state,
+                                                               float                          mean,
+                                                               float stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -1076,7 +1082,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry2x64_20* state,
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS double
+__forceinline__ __device__ __host__ double
     rocrand_log_normal_double(rocrand_state_threefry2x64_20* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
@@ -1097,9 +1103,8 @@ FQUALIFIERS double
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry2x64_20* state,
-                                               double                         mean,
-                                               double                         stddev)
+__forceinline__ __device__ __host__ double2
+    rocrand_log_normal_double2(rocrand_state_threefry2x64_20* state, double mean, double stddev)
 {
     double2 r = rocrand_device::detail::normal_distribution_double2(rocrand2(state));
     return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
@@ -1117,7 +1122,7 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry2x64_20* st
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS float
+__forceinline__ __device__ __host__ float
     rocrand_log_normal(rocrand_state_threefry4x32_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
@@ -1138,9 +1143,9 @@ FQUALIFIERS float
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry4x32_20* state,
-                                       float                          mean,
-                                       float                          stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_threefry4x32_20* state,
+                                                               float                          mean,
+                                                               float stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -1161,7 +1166,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry4x32_20* state,
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS double
+__forceinline__ __device__ __host__ double
     rocrand_log_normal_double(rocrand_state_threefry4x32_20* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
@@ -1182,9 +1187,8 @@ FQUALIFIERS double
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry4x32_20* state,
-                                               double                         mean,
-                                               double                         stddev)
+__forceinline__ __device__ __host__ double2
+    rocrand_log_normal_double2(rocrand_state_threefry4x32_20* state, double mean, double stddev)
 {
     double2 r = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
     return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
@@ -1202,7 +1206,7 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry4x32_20* st
  *
  * \return Log-normally distributed \p float value
  */
-FQUALIFIERS float
+__forceinline__ __device__ __host__ float
     rocrand_log_normal(rocrand_state_threefry4x64_20* state, double mean, double stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
@@ -1223,9 +1227,9 @@ FQUALIFIERS float
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry4x64_20* state,
-                                       float                          mean,
-                                       float                          stddev)
+__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_threefry4x64_20* state,
+                                                               float                          mean,
+                                                               float stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -1246,7 +1250,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry4x64_20* state,
  *
  * \return Log-normally distributed \p double value
  */
-FQUALIFIERS double
+__forceinline__ __device__ __host__ double
     rocrand_log_normal_double(rocrand_state_threefry4x64_20* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
@@ -1267,9 +1271,8 @@ FQUALIFIERS double
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry4x64_20* state,
-                                               double                         mean,
-                                               double                         stddev)
+__forceinline__ __device__ __host__ double2
+    rocrand_log_normal_double2(rocrand_state_threefry4x64_20* state, double mean, double stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);

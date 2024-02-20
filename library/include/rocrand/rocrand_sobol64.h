@@ -21,10 +21,6 @@
 #ifndef ROCRAND_SOBOL64_H_
 #define ROCRAND_SOBOL64_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS_
-
 #include "rocrand/rocrand_common.h"
 
 namespace rocrand_device {
@@ -36,13 +32,11 @@ struct sobol64_state
     unsigned long long int i;
     unsigned long long int vectors[64];
 
-    FQUALIFIERS
-    sobol64_state() : d(), i(), vectors() { }
+    __forceinline__ __device__ __host__ sobol64_state() : d(), i(), vectors() {}
 
-    FQUALIFIERS
-    sobol64_state(const unsigned long long int d,
-                  const unsigned long long int i,
-                  const unsigned long long int * vectors)
+    __forceinline__ __device__ __host__ sobol64_state(const unsigned long long int  d,
+                                                      const unsigned long long int  i,
+                                                      const unsigned long long int* vectors)
         : d(d), i(i)
     {
         for(int k = 0; k < 64; k++)
@@ -59,14 +53,13 @@ struct sobol64_state<true>
     unsigned long long int i;
     const unsigned long long int * vectors;
 
-    FQUALIFIERS
-    sobol64_state() : d(), i(), vectors() { }
+    __forceinline__ __device__ __host__ sobol64_state() : d(), i(), vectors() {}
 
-    FQUALIFIERS
-    sobol64_state(const unsigned long long int d,
-                  const unsigned long long int i,
-                  const unsigned long long int * vectors)
-        : d(d), i(i), vectors(vectors) { }
+    __forceinline__ __device__ __host__ sobol64_state(const unsigned long long int  d,
+                                                      const unsigned long long int  i,
+                                                      const unsigned long long int* vectors)
+        : d(d), i(i), vectors(vectors)
+    {}
 };
 
 template<bool UseSharedVectors>
@@ -76,65 +69,57 @@ public:
 
     typedef struct sobol64_state<UseSharedVectors> sobol64_state;
 
-    FQUALIFIERS
-    sobol64_engine() { }
+    __forceinline__ __device__ __host__ sobol64_engine() {}
 
-    FQUALIFIERS
-    sobol64_engine(const unsigned long long int* vectors, const unsigned long long int offset)
+    __forceinline__ __device__ __host__ sobol64_engine(const unsigned long long int* vectors,
+                                                       const unsigned long long int  offset)
         : m_state(0, 0, vectors)
     {
         discard_state(offset);
     }
 
     /// Advances the internal state to skip \p offset numbers.
-    FQUALIFIERS
-    void discard(unsigned long long int offset)
+    __forceinline__ __device__ __host__ void discard(unsigned long long int offset)
     {
         discard_state(offset);
     }
 
-    FQUALIFIERS
-    void discard()
+    __forceinline__ __device__ __host__ void discard()
     {
         discard_state();
     }
 
     /// Advances the internal state by stride times, where stride is power of 2
-    FQUALIFIERS
-    void discard_stride(unsigned long long int stride)
+    __forceinline__ __device__ __host__ void discard_stride(unsigned long long int stride)
     {
         discard_state_power2(stride);
     }
 
-    FQUALIFIERS
-    unsigned long long int operator()()
+    __forceinline__ __device__ __host__ unsigned long long int operator()()
     {
         return this->next();
     }
 
-    FQUALIFIERS
-    unsigned long long int next()
+    __forceinline__ __device__ __host__ unsigned long long int next()
     {
         unsigned long long int p = m_state.d;
         discard_state();
         return p;
     }
 
-    FQUALIFIERS
-    unsigned long long int current() const
+    __forceinline__ __device__ __host__ unsigned long long int current() const
     {
         return m_state.d;
     }
 
-    FQUALIFIERS static constexpr bool uses_shared_vectors()
+    __forceinline__ __device__ __host__ static constexpr bool uses_shared_vectors()
     {
         return UseSharedVectors;
     }
 
 protected:
     // Advances the internal state by offset times.
-    FQUALIFIERS
-    void discard_state(unsigned long long int offset)
+    __forceinline__ __device__ __host__ void discard_state(unsigned long long int offset)
     {
         m_state.i += offset;
         const unsigned long long int g = m_state.i ^ (m_state.i >> 1ull);
@@ -146,15 +131,13 @@ protected:
     }
 
     // Advances the internal state to the next state
-    FQUALIFIERS
-    void discard_state()
+    __forceinline__ __device__ __host__ void discard_state()
     {
         m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i)];
         m_state.i++;
     }
 
-    FQUALIFIERS
-    void discard_state_power2(unsigned long long int stride)
+    __forceinline__ __device__ __host__ void discard_state_power2(unsigned long long int stride)
     {
         // Leap frog
         //
@@ -176,8 +159,7 @@ protected:
     // Returns the index of the rightmost zero bit in the binary expansion of
     // x (Gray code of the current element's index)
     // NOTE changing unsigned long long int to unit64_t will cause compile failure on device
-    FQUALIFIERS
-    unsigned int rightmost_zero_bit(unsigned long long int x)
+    __forceinline__ __device__ __host__ unsigned int rightmost_zero_bit(unsigned long long int x)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
         unsigned int z = __ffsll(~x);
@@ -223,10 +205,9 @@ typedef rocrand_device::sobol64_engine<false> rocrand_state_sobol64;
  * \param offset - Absolute offset into sequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const unsigned long long int * vectors,
-                  const unsigned int offset,
-                  rocrand_state_sobol64 * state)
+__forceinline__ __device__ __host__ void rocrand_init(const unsigned long long int* vectors,
+                                                      const unsigned int            offset,
+                                                      rocrand_state_sobol64*        state)
 {
     *state = rocrand_state_sobol64(vectors, offset);
 }
@@ -243,8 +224,7 @@ void rocrand_init(const unsigned long long int * vectors,
  *
  * \return Quasirandom value (64-bit) as an <tt>unsigned long long int</tt>
  */
-FQUALIFIERS
-unsigned long long int rocrand(rocrand_state_sobol64 * state)
+__forceinline__ __device__ __host__ unsigned long long int rocrand(rocrand_state_sobol64* state)
 {
     return state->next();
 }
@@ -257,8 +237,8 @@ unsigned long long int rocrand(rocrand_state_sobol64 * state)
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead(unsigned long long int offset, rocrand_state_sobol64* state)
+__forceinline__ __device__ __host__ void skipahead(unsigned long long int offset,
+                                                   rocrand_state_sobol64* state)
 {
     return state->discard(offset);
 }

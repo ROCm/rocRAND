@@ -21,10 +21,6 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_DEVICE_DISTRIBUTIONS_H_
 #define ROCRAND_RNG_DISTRIBUTION_DEVICE_DISTRIBUTIONS_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
 #include "../device_engines.hpp"
 
 #include <rocrand/rocrand_uniform.h>

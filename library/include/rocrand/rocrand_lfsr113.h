@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +20,6 @@
 
 #ifndef ROCRAND_LFSR113_H_
 #define ROCRAND_LFSR113_H_
-
-#ifndef FQUALIFIERS
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
 
 #include "rocrand/rocrand_common.h"
 
@@ -61,12 +57,12 @@ public:
     /// seed value \p seed, goes to \p subsequence -th subsequence
     ///
     /// A subsequence is 2^55 numbers long.
-    FQUALIFIERS
-    lfsr113_engine(const uint4        seed        = {ROCRAND_LFSR113_DEFAULT_SEED_X,
-                                                     ROCRAND_LFSR113_DEFAULT_SEED_Y,
-                                                     ROCRAND_LFSR113_DEFAULT_SEED_Z,
-                                                     ROCRAND_LFSR113_DEFAULT_SEED_W},
-                   const unsigned int subsequence = 0)
+    __forceinline__ __device__ __host__ lfsr113_engine(const uint4 seed
+                                                       = {ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                          ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                          ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                          ROCRAND_LFSR113_DEFAULT_SEED_W},
+                                                       const unsigned int subsequence = 0)
     {
         this->seed(seed, subsequence);
     }
@@ -75,8 +71,8 @@ public:
     /// seed value \p seed_value, skips \p subsequence subsequences.
     ///
     /// A subsequence is 2^55 numbers long.
-    FQUALIFIERS
-    void seed(uint4 seed_value, const unsigned long long subsequence)
+    __forceinline__ __device__ __host__ void seed(uint4                    seed_value,
+                                                  const unsigned long long subsequence)
     {
         m_state.subsequence = seed_value;
 
@@ -85,16 +81,14 @@ public:
     }
 
     /// Advances the internal state to skip one number.
-    FQUALIFIERS
-    void discard()
+    __forceinline__ __device__ __host__ void discard()
     {
         discard_state();
     }
 
     /// Advances the internal state to skip \p subsequence subsequences.
     /// A subsequence is 2^55 numbers long.
-    FQUALIFIERS
-    void discard_subsequence(unsigned int subsequence)
+    __forceinline__ __device__ __host__ void discard_subsequence(unsigned int subsequence)
     {
         for(unsigned int i = 0; i < subsequence; i++)
         {
@@ -102,14 +96,12 @@ public:
         }
     }
 
-    FQUALIFIERS
-    unsigned int operator()()
+    __forceinline__ __device__ __host__ unsigned int operator()()
     {
         return next();
     }
 
-    FQUALIFIERS
-    unsigned int next()
+    __forceinline__ __device__ __host__ unsigned int next()
     {
         unsigned int b;
 
@@ -130,8 +122,7 @@ public:
 
 protected:
     /// Resets the state to the start of the current subsequence.
-    FQUALIFIERS
-    void reset_start_subsequence()
+    __forceinline__ __device__ __host__ void reset_start_subsequence()
     {
         m_state.z.x = m_state.subsequence.x;
         m_state.z.y = m_state.subsequence.y;
@@ -140,8 +131,7 @@ protected:
     }
 
     /// Advances the subsequence by one and sets the state to the start of that subsequence.
-    FQUALIFIERS
-    void reset_next_subsequence()
+    __forceinline__ __device__ __host__ void reset_next_subsequence()
     {
         /* The following operations make the jump ahead with
     	2 ^ 55 iterations for every component of the generator.
@@ -199,8 +189,7 @@ protected:
     }
 
     // Advances the internal state to the next state.
-    FQUALIFIERS
-    void discard_state()
+    __forceinline__ __device__ __host__ void discard_state()
     {
         this->next();
     }
@@ -231,8 +220,8 @@ typedef rocrand_device::lfsr113_engine rocrand_state_lfsr113;
  * \param subsequence - Subsequence to start at
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const uint4 seed, const unsigned int subsequence, rocrand_state_lfsr113* state)
+__forceinline__ __device__ __host__ void
+    rocrand_init(const uint4 seed, const unsigned int subsequence, rocrand_state_lfsr113* state)
 {
     *state = rocrand_state_lfsr113(seed, subsequence);
 }
@@ -249,8 +238,7 @@ void rocrand_init(const uint4 seed, const unsigned int subsequence, rocrand_stat
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand(rocrand_state_lfsr113* state)
+__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_lfsr113* state)
 {
     return state->next();
 }

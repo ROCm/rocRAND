@@ -26,10 +26,6 @@
     #define ROCRAND_DETAIL_BM_NOT_IN_STATE
 #endif
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
 #if !defined(USE_DEVICE_DISPATCH) && !defined(_WIN32) && defined(__HIP_PLATFORM_AMD__)
     #define USE_DEVICE_DISPATCH
 #endif

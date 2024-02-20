@@ -21,10 +21,6 @@
 #ifndef ROCRAND_DISCRETE_H_
 #define ROCRAND_DISCRETE_H_
 
-#ifndef FQUALIFIERS
-    #define FQUALIFIERS __forceinline__ __device__ __host__
-#endif // FQUALIFIERS
-
 #include <math.h>
 
 #include "rocrand/rocrand_lfsr113.h"
@@ -55,11 +51,12 @@
 namespace rocrand_device {
 namespace detail {
 
-FQUALIFIERS unsigned int discrete_alias(const double       x,
-                                        const unsigned int size,
-                                        const unsigned int offset,
-                                        const unsigned int* __restrict__ alias,
-                                        const double* __restrict__ probability)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_alias(const double       x,
+                   const unsigned int size,
+                   const unsigned int offset,
+                   const unsigned int* __restrict__ alias,
+                   const double* __restrict__ probability)
 {
     // Calculate value using Alias table
 
@@ -71,13 +68,14 @@ FQUALIFIERS unsigned int discrete_alias(const double       x,
     return offset + (y < probability[i] ? i : alias[i]);
 }
 
-FQUALIFIERS unsigned int discrete_alias(const double x, const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_alias(const double x, const rocrand_discrete_distribution_st& dis)
 {
     return discrete_alias(x, dis.size, dis.offset, dis.alias, dis.probability);
 }
 
-FQUALIFIERS
-unsigned int discrete_alias(const unsigned int r, const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_alias(const unsigned int r, const rocrand_discrete_distribution_st& dis)
 {
     constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
     const double x = r * inv_double_32;
@@ -85,26 +83,26 @@ unsigned int discrete_alias(const unsigned int r, const rocrand_discrete_distrib
 }
 
 // To prevent ambiguity compile error when compiler is facing the type "unsigned long"!!!
-FQUALIFIERS unsigned int discrete_alias(const unsigned long                     r,
-                                        const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_alias(const unsigned long r, const rocrand_discrete_distribution_st& dis)
 {
     constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
     const double x = r * inv_double_32;
     return discrete_alias(x, dis);
 }
 
-FQUALIFIERS unsigned int discrete_alias(const unsigned long long int            r,
-                                        const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_alias(const unsigned long long int r, const rocrand_discrete_distribution_st& dis)
 {
     constexpr double inv_double_64 = ROCRAND_2POW64_INV_DOUBLE;
     const double x = r * inv_double_64;
     return discrete_alias(x, dis);
 }
 
-FQUALIFIERS unsigned int discrete_cdf(const double       x,
-                                      const unsigned int size,
-                                      const unsigned int offset,
-                                      const double* __restrict__ cdf)
+__forceinline__ __device__ __host__ unsigned int discrete_cdf(const double       x,
+                                                              const unsigned int size,
+                                                              const unsigned int offset,
+                                                              const double* __restrict__ cdf)
 {
     // Calculate value using binary search in CDF
 
@@ -128,13 +126,14 @@ FQUALIFIERS unsigned int discrete_cdf(const double       x,
     return offset + min;
 }
 
-FQUALIFIERS unsigned int discrete_cdf(const double x, const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_cdf(const double x, const rocrand_discrete_distribution_st& dis)
 {
     return discrete_cdf(x, dis.size, dis.offset, dis.cdf);
 }
 
-FQUALIFIERS
-unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_cdf(const unsigned int r, const rocrand_discrete_distribution_st& dis)
 {
     constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
     const double x = r * inv_double_32;
@@ -142,16 +141,16 @@ unsigned int discrete_cdf(const unsigned int r, const rocrand_discrete_distribut
 }
 
 // To prevent ambiguity compile error when compiler is facing the type "unsigned long"!!!
-FQUALIFIERS unsigned int discrete_cdf(const unsigned long                     r,
-                                      const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_cdf(const unsigned long r, const rocrand_discrete_distribution_st& dis)
 {
     constexpr double inv_double_32 = ROCRAND_2POW32_INV_DOUBLE;
     const double x = r * inv_double_32;
     return discrete_cdf(x, dis);
 }
 
-FQUALIFIERS unsigned int discrete_cdf(const unsigned long long int            r,
-                                      const rocrand_discrete_distribution_st& dis)
+__forceinline__ __device__ __host__ unsigned int
+    discrete_cdf(const unsigned long long int r, const rocrand_discrete_distribution_st& dis)
 {
     constexpr double inv_double_64 = ROCRAND_2POW64_INV_DOUBLE;
     const double x = r * inv_double_64;
@@ -178,8 +177,9 @@ FQUALIFIERS unsigned int discrete_cdf(const unsigned long long int            r,
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_philox4x32_10 * state, const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_philox4x32_10*        state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -196,8 +196,8 @@ unsigned int rocrand_discrete(rocrand_state_philox4x32_10 * state, const rocrand
  *
  * \return Four <tt>unsigned int</tt> values distributed according to \p discrete_distribution as \p uint4
  */
-FQUALIFIERS
-uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ uint4 rocrand_discrete4(
+    rocrand_state_philox4x32_10* state, const rocrand_discrete_distribution discrete_distribution)
 {
     const uint4 u4 = rocrand4(state);
     return uint4 {
@@ -220,8 +220,9 @@ uint4 rocrand_discrete4(rocrand_state_philox4x32_10 * state, const rocrand_discr
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_mrg31k3p*             state,
-                                          const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_mrg31k3p*             state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -238,8 +239,9 @@ FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_mrg31k3p*             st
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_mrg32k3a*             state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -256,8 +258,9 @@ unsigned int rocrand_discrete(rocrand_state_mrg32k3a * state, const rocrand_disc
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_xorwow*               state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -274,8 +277,9 @@ unsigned int rocrand_discrete(rocrand_state_xorwow * state, const rocrand_discre
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_mtgp32 * state, const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_mtgp32*               state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -292,8 +296,9 @@ unsigned int rocrand_discrete(rocrand_state_mtgp32 * state, const rocrand_discre
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_sobol32*              state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -310,9 +315,9 @@ unsigned int rocrand_discrete(rocrand_state_sobol32 * state, const rocrand_discr
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_scrambled_sobol32*    state,
-                              const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_scrambled_sobol32*    state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -329,8 +334,9 @@ unsigned int rocrand_discrete(rocrand_state_scrambled_sobol32*    state,
  *
  * \return <tt>unsigned long long int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_sobol64*              state,
-                                          const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_sobol64*              state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -347,8 +353,9 @@ FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_sobol64*              st
  *
  * \return <tt>unsigned long long int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_scrambled_sobol64*    state,
-                                          const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_scrambled_sobol64*    state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -365,9 +372,9 @@ FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_scrambled_sobol64*    st
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS
-unsigned int rocrand_discrete(rocrand_state_lfsr113*              state,
-                              const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_lfsr113*              state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -384,8 +391,9 @@ unsigned int rocrand_discrete(rocrand_state_lfsr113*              state,
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry2x32_20*      state,
-                                          const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_threefry2x32_20*      state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -402,8 +410,9 @@ FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry2x32_20*      st
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry2x64_20*      state,
-                                          const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_threefry2x64_20*      state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -420,8 +429,9 @@ FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry2x64_20*      st
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry4x32_20*      state,
-                                          const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_threefry4x32_20*      state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -438,8 +448,9 @@ FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry4x32_20*      st
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-FQUALIFIERS unsigned int rocrand_discrete(rocrand_state_threefry4x64_20*      state,
-                                          const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_discrete(rocrand_state_threefry4x64_20*      state,
+                     const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }

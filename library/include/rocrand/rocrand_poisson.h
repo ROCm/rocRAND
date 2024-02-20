@@ -21,10 +21,6 @@
 #ifndef ROCRAND_POISSON_H_
 #define ROCRAND_POISSON_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
-
 /** \rocrand_internal \addtogroup rocranddevice
  *
  *  @{
@@ -57,7 +53,8 @@ constexpr double lambda_threshold_small = 64.0;
 constexpr double lambda_threshold_huge  = 4000.0;
 
 template<class State, typename Result_Type = unsigned int>
-FQUALIFIERS Result_Type poisson_distribution_small(State& state, double lambda)
+__forceinline__ __device__ __host__ Result_Type poisson_distribution_small(State& state,
+                                                                           double lambda)
 {
     // Knuth's method
 
@@ -75,8 +72,7 @@ FQUALIFIERS Result_Type poisson_distribution_small(State& state, double lambda)
     return k - 1;
 }
 
-FQUALIFIERS
-double lgamma_approx(const double x)
+__forceinline__ __device__ __host__ double lgamma_approx(const double x)
 {
     // Lanczos approximation (g = 7, n = 9)
 
@@ -109,7 +105,8 @@ double lgamma_approx(const double x)
 }
 
 template<class State, typename Result_Type = unsigned int>
-FQUALIFIERS Result_Type poisson_distribution_large(State& state, double lambda)
+__forceinline__ __device__ __host__ Result_Type poisson_distribution_large(State& state,
+                                                                           double lambda)
 {
     // Rejection method PA, A. C. Atkinson
 
@@ -141,7 +138,8 @@ FQUALIFIERS Result_Type poisson_distribution_large(State& state, double lambda)
 }
 
 template<class State, typename Result_Type = unsigned int>
-FQUALIFIERS Result_Type poisson_distribution_huge(State& state, double lambda)
+__forceinline__ __device__ __host__ Result_Type poisson_distribution_huge(State& state,
+                                                                          double lambda)
 {
     // Approximate Poisson distribution with normal distribution
 
@@ -150,7 +148,7 @@ FQUALIFIERS Result_Type poisson_distribution_huge(State& state, double lambda)
 }
 
 template<class State, typename Result_Type = unsigned int>
-FQUALIFIERS Result_Type poisson_distribution(State& state, double lambda)
+__forceinline__ __device__ __host__ Result_Type poisson_distribution(State& state, double lambda)
 {
     if (lambda < lambda_threshold_small)
     {
@@ -167,7 +165,8 @@ FQUALIFIERS Result_Type poisson_distribution(State& state, double lambda)
 }
 
 template<class State, typename Result_Type = unsigned int>
-FQUALIFIERS Result_Type poisson_distribution_itr(State& state, double lambda)
+__forceinline__ __device__ __host__ Result_Type poisson_distribution_itr(State& state,
+                                                                         double lambda)
 {
     // Algorithm ITR
     // George S. Fishman
@@ -204,7 +203,8 @@ FQUALIFIERS Result_Type poisson_distribution_itr(State& state, double lambda)
 }
 
 template<class State, typename Result_Type = unsigned int>
-FQUALIFIERS Result_Type poisson_distribution_inv(State& state, double lambda)
+__forceinline__ __device__ __host__ Result_Type poisson_distribution_inv(State& state,
+                                                                         double lambda)
 {
     if (lambda < 1000.0)
     {
@@ -231,8 +231,8 @@ FQUALIFIERS Result_Type poisson_distribution_inv(State& state, double lambda)
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_philox4x32_10 * state, double lambda)
+__forceinline__ __device__ __host__ unsigned int rocrand_poisson(rocrand_state_philox4x32_10* state,
+                                                                 double lambda)
 {
     return rocrand_device::detail::poisson_distribution<rocrand_state_philox4x32_10*, unsigned int>(
         state,
@@ -250,8 +250,8 @@ unsigned int rocrand_poisson(rocrand_state_philox4x32_10 * state, double lambda)
  *
  * \return Four Poisson-distributed <tt>unsigned int</tt> values as \p uint4
  */
-FQUALIFIERS
-uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
+__forceinline__ __device__ __host__ uint4 rocrand_poisson4(rocrand_state_philox4x32_10* state,
+                                                           double                       lambda)
 {
     return uint4{
         rocrand_device::detail::poisson_distribution<rocrand_state_philox4x32_10*, unsigned int>(
@@ -281,7 +281,8 @@ uint4 rocrand_poisson4(rocrand_state_philox4x32_10 * state, double lambda)
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_mrg31k3p* state, double lambda)
+__forceinline__ __device__ __host__ unsigned int rocrand_poisson(rocrand_state_mrg31k3p* state,
+                                                                 double                  lambda)
 {
     return rocrand_device::detail::poisson_distribution<rocrand_state_mrg31k3p*, unsigned int>(
         state,
@@ -301,8 +302,8 @@ FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_mrg31k3p* state, double l
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
+__forceinline__ __device__ __host__ unsigned int rocrand_poisson(rocrand_state_mrg32k3a* state,
+                                                                 double                  lambda)
 {
     return rocrand_device::detail::poisson_distribution<rocrand_state_mrg32k3a*, unsigned int>(
         state,
@@ -322,8 +323,8 @@ unsigned int rocrand_poisson(rocrand_state_mrg32k3a * state, double lambda)
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
 #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
-FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
+__forceinline__ __device__ __host__ unsigned int rocrand_poisson(rocrand_state_xorwow* state,
+                                                                 double                lambda)
 {
     return rocrand_device::detail::poisson_distribution<rocrand_state_xorwow*, unsigned int>(
         state,
@@ -342,8 +343,8 @@ unsigned int rocrand_poisson(rocrand_state_xorwow * state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
+__forceinline__ __device__ __host__ unsigned int rocrand_poisson(rocrand_state_mtgp32* state,
+                                                                 double                lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv<rocrand_state_mtgp32*, unsigned int>(
         state,
@@ -361,8 +362,8 @@ unsigned int rocrand_poisson(rocrand_state_mtgp32 * state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
+__forceinline__ __device__ __host__ unsigned int rocrand_poisson(rocrand_state_sobol32* state,
+                                                                 double                 lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv<rocrand_state_sobol32*, unsigned int>(
         state,
@@ -380,8 +381,8 @@ unsigned int rocrand_poisson(rocrand_state_sobol32 * state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_scrambled_sobol32* state, double lambda)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_poisson(rocrand_state_scrambled_sobol32* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv<rocrand_state_scrambled_sobol32*,
                                                             unsigned int>(state, lambda);
@@ -398,8 +399,8 @@ unsigned int rocrand_poisson(rocrand_state_scrambled_sobol32* state, double lamb
  *
  * \return Poisson-distributed <tt>unsigned long long int</tt>
  */
-FQUALIFIERS
-unsigned long long int rocrand_poisson(rocrand_state_sobol64* state, double lambda)
+__forceinline__ __device__ __host__ unsigned long long int
+    rocrand_poisson(rocrand_state_sobol64* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv<rocrand_state_sobol64*,
                                                             unsigned long long int>(state, lambda);
@@ -416,8 +417,8 @@ unsigned long long int rocrand_poisson(rocrand_state_sobol64* state, double lamb
  *
  * \return Poisson-distributed <tt>unsigned long long int</tt>
  */
-FQUALIFIERS
-unsigned long long int rocrand_poisson(rocrand_state_scrambled_sobol64* state, double lambda)
+__forceinline__ __device__ __host__ unsigned long long int
+    rocrand_poisson(rocrand_state_scrambled_sobol64* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv<rocrand_state_scrambled_sobol64*,
                                                             unsigned long long int>(state, lambda);
@@ -434,8 +435,8 @@ unsigned long long int rocrand_poisson(rocrand_state_scrambled_sobol64* state, d
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand_poisson(rocrand_state_lfsr113* state, double lambda)
+__forceinline__ __device__ __host__ unsigned int rocrand_poisson(rocrand_state_lfsr113* state,
+                                                                 double                 lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv<rocrand_state_lfsr113*, unsigned int>(
         state,
@@ -453,7 +454,8 @@ unsigned int rocrand_poisson(rocrand_state_lfsr113* state, double lambda)
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_threefry2x32_20* state, double lambda)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_poisson(rocrand_state_threefry2x32_20* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
@@ -469,7 +471,8 @@ FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_threefry2x32_20* state, d
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_threefry2x64_20* state, double lambda)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_poisson(rocrand_state_threefry2x64_20* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
@@ -485,7 +488,8 @@ FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_threefry2x64_20* state, d
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_threefry4x32_20* state, double lambda)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_poisson(rocrand_state_threefry4x32_20* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }
@@ -501,7 +505,8 @@ FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_threefry4x32_20* state, d
  *
  * \return Poisson-distributed <tt>unsigned int</tt>
  */
-FQUALIFIERS unsigned int rocrand_poisson(rocrand_state_threefry4x64_20* state, double lambda)
+__forceinline__ __device__ __host__ unsigned int
+    rocrand_poisson(rocrand_state_threefry4x64_20* state, double lambda)
 {
     return rocrand_device::detail::poisson_distribution_inv(state, lambda);
 }

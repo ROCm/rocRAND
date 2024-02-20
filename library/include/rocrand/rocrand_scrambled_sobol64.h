@@ -21,10 +21,6 @@
 #ifndef ROCRAND_SCRAMBLED_SOBOL64_H_
 #define ROCRAND_SCRAMBLED_SOBOL64_H_
 
-#ifndef FQUALIFIERS
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS_
-
 #include "rocrand/rocrand_common.h"
 #include "rocrand/rocrand_sobol64.h"
 
@@ -35,59 +31,52 @@ template<bool UseSharedVectors>
 class scrambled_sobol64_engine
 {
 public:
-    FQUALIFIERS
-    scrambled_sobol64_engine() : scramble_constant() {}
+    __forceinline__ __device__ __host__ scrambled_sobol64_engine() : scramble_constant() {}
 
-    FQUALIFIERS
-    scrambled_sobol64_engine(const unsigned long long int* vectors,
-                             const unsigned long long int  scramble_constant,
-                             const unsigned int            offset)
+    __forceinline__ __device__ __host__
+        scrambled_sobol64_engine(const unsigned long long int* vectors,
+                                 const unsigned long long int  scramble_constant,
+                                 const unsigned int            offset)
         : m_engine(vectors, 0), scramble_constant(scramble_constant)
     {
         discard(offset);
     }
 
     /// Advances the internal state to skip \p offset numbers.
-    FQUALIFIERS
-    void discard(unsigned long long int offset)
+    __forceinline__ __device__ __host__ void discard(unsigned long long int offset)
     {
         m_engine.discard(offset);
     }
 
-    FQUALIFIERS
-    void discard()
+    __forceinline__ __device__ __host__ void discard()
     {
         m_engine.discard();
     }
 
     /// Advances the internal state by stride times, where stride is power of 2
-    FQUALIFIERS
-    void discard_stride(unsigned long long int stride)
+    __forceinline__ __device__ __host__ void discard_stride(unsigned long long int stride)
     {
         m_engine.discard_stride(stride);
     }
 
-    FQUALIFIERS
-    unsigned long long int operator()()
+    __forceinline__ __device__ __host__ unsigned long long int operator()()
     {
         return this->next();
     }
 
-    FQUALIFIERS
-    unsigned long long int next()
+    __forceinline__ __device__ __host__ unsigned long long int next()
     {
         unsigned long long int p = m_engine.next();
         return p ^ scramble_constant;
     }
 
-    FQUALIFIERS
-    unsigned long long int current()
+    __forceinline__ __device__ __host__ unsigned long long int current()
     {
         unsigned long long int p = m_engine.current();
         return p ^ scramble_constant;
     }
 
-    FQUALIFIERS static constexpr bool uses_shared_vectors()
+    __forceinline__ __device__ __host__ static constexpr bool uses_shared_vectors()
     {
         return UseSharedVectors;
     }
@@ -122,11 +111,11 @@ typedef rocrand_device::scrambled_sobol64_engine<false> rocrand_state_scrambled_
  * \param offset - Absolute offset into sequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const unsigned long long int*    vectors,
-                  const unsigned long long int     scramble_constant,
-                  const unsigned int               offset,
-                  rocrand_state_scrambled_sobol64* state)
+__forceinline__ __device__ __host__ void
+    rocrand_init(const unsigned long long int*    vectors,
+                 const unsigned long long int     scramble_constant,
+                 const unsigned int               offset,
+                 rocrand_state_scrambled_sobol64* state)
 {
     *state = rocrand_state_scrambled_sobol64(vectors, scramble_constant, offset);
 }
@@ -143,8 +132,8 @@ void rocrand_init(const unsigned long long int*    vectors,
  *
  * \return Quasirandom value (64-bit) as an <tt>unsigned long long int</tt>
  */
-FQUALIFIERS
-unsigned long long int rocrand(rocrand_state_scrambled_sobol64* state)
+__forceinline__ __device__ __host__ unsigned long long int
+    rocrand(rocrand_state_scrambled_sobol64* state)
 {
     return state->next();
 }
@@ -157,8 +146,8 @@ unsigned long long int rocrand(rocrand_state_scrambled_sobol64* state)
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead(unsigned long long offset, rocrand_state_scrambled_sobol64* state)
+__forceinline__ __device__ __host__ void skipahead(unsigned long long               offset,
+                                                   rocrand_state_scrambled_sobol64* state)
 {
     return state->discard(offset);
 }
