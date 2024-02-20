@@ -21,10 +21,6 @@
 #ifndef ROCRAND_RNG_DEVICE_ENGINES_H_
 #define ROCRAND_RNG_DEVICE_ENGINES_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
 #include <rocrand/rocrand_kernel.h>
 
 #include <rocrand/rocrand_common.h>
