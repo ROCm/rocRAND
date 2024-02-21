@@ -30,6 +30,7 @@
 #define LFSR113_JUMP_MATRICES 32
 #define LFSR113_JUMP_LOG2 2
 
+// clang-format off
 static const __device__ unsigned int d_lfsr113_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE] = {
     {
         0, 0, 0, 0, 524288, 0, 0, 0, 1048576, 0, 0, 0, 2097152, 0, 0, 0, 
@@ -1121,6 +1122,8 @@ static const __device__ unsigned int d_lfsr113_jump_matrices[LFSR113_JUMP_MATRIC
     },
 };
 
+// clang-format on
+// clang-format off
 static const unsigned int h_lfsr113_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE] = {
     {
         0, 0, 0, 0, 524288, 0, 0, 0, 1048576, 0, 0, 0, 2097152, 0, 0, 0, 
@@ -2212,6 +2215,8 @@ static const unsigned int h_lfsr113_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113
     },
 };
 
+// clang-format on
+// clang-format off
 static const __device__ unsigned int d_lfsr113_sequence_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE] = {
     {
         0, 0, 0, 0, 2928597988, 0, 0, 0, 1562228680, 0, 0, 0, 3124457360, 0, 0, 0, 
@@ -3303,6 +3308,8 @@ static const __device__ unsigned int d_lfsr113_sequence_jump_matrices[LFSR113_JU
     },
 };
 
+// clang-format on
+// clang-format off
 static const unsigned int h_lfsr113_sequence_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE] = {
     {
         0, 0, 0, 0, 2928597988, 0, 0, 0, 1562228680, 0, 0, 0, 3124457360, 0, 0, 0, 
@@ -4394,5 +4401,6 @@ static const unsigned int h_lfsr113_sequence_jump_matrices[LFSR113_JUMP_MATRICES
     },
 };
 
+// clang-format on
 
 #endif // ROCRAND_LFSR113_PRECOMPUTED_H_
