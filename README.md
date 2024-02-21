@@ -1,7 +1,6 @@
 # rocRAND
 
 The rocRAND project provides functions that generate pseudorandom and quasirandom numbers.
-
 The rocRAND library is implemented in the [HIP](https://github.com/ROCm/HIP)
 programming language and optimized for AMD's latest discrete GPUs. It is designed to run on top
 of AMD's [ROCm](https://rocm.docs.amd.com) runtime, but it also works on CUDA-enabled GPUs.
