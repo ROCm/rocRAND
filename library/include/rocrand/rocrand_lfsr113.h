@@ -22,6 +22,7 @@
 #define ROCRAND_LFSR113_H_
 
 #include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_lfsr113_precomputed.h"
 
 /** \rocrand_internal \addtogroup rocranddevice
  *
@@ -43,6 +44,26 @@
 
 namespace rocrand_device
 {
+namespace detail
+{
+
+__forceinline__ __device__ __host__ void mul_mat_vec_inplace(const unsigned int* m, uint4* z)
+{
+    unsigned int v[4]         = {z->x, z->y, z->z, z->w};
+    unsigned int r[LFSR113_N] = {0};
+    for(int ij = 0; ij < LFSR113_N * LFSR113_M; ij++)
+    {
+        const int          i = ij / LFSR113_M;
+        const int          j = ij % LFSR113_M;
+        const unsigned int b = (v[i] & (1U << j)) ? 0xffffffff : 0x0;
+        for(int k = 0; k < LFSR113_N; k++)
+        {
+            r[k] ^= b & m[i * LFSR113_M * LFSR113_N + j * LFSR113_N + k];
+        }
+    }
+    copy_vec_ui4(z, r);
+}
+} // end namespace detail
 
 class lfsr113_engine
 {
@@ -54,7 +75,8 @@ public:
     };
 
     /// Initializes the internal state of the PRNG using
-    /// seed value \p seed, goes to \p subsequence -th subsequence
+    /// seed value \p seed, goes to \p subsequence -th subsequence,
+    /// and skips \p offset random numbers.
     ///
     /// A subsequence is 2^55 numbers long.
     __forceinline__ __device__ __host__ lfsr113_engine(const uint4 seed
@@ -62,22 +84,26 @@ public:
                                                           ROCRAND_LFSR113_DEFAULT_SEED_Y,
                                                           ROCRAND_LFSR113_DEFAULT_SEED_Z,
                                                           ROCRAND_LFSR113_DEFAULT_SEED_W},
-                                                       const unsigned int subsequence = 0)
+                                                       const unsigned int       subsequence = 0,
+                                                       const unsigned long long offset      = 0)
     {
-        this->seed(seed, subsequence);
+        this->seed(seed, subsequence, offset);
     }
 
     /// Reinitializes the internal state of the PRNG using new
-    /// seed value \p seed_value, skips \p subsequence subsequences.
+    /// seed value \p seed_value, skips \p subsequence subsequences
+    /// and skips \p offset random numbers.
     ///
     /// A subsequence is 2^55 numbers long.
     __forceinline__ __device__ __host__ void seed(uint4                    seed_value,
-                                                  const unsigned long long subsequence)
+                                                  const unsigned long long subsequence,
+                                                  const unsigned long long offset)
     {
         m_state.subsequence = seed_value;
 
         reset_start_subsequence();
         discard_subsequence(subsequence);
+        discard(offset);
     }
 
     /// Advances the internal state to skip one number.
@@ -86,14 +112,26 @@ public:
         discard_state();
     }
 
+    /// Advances the internal state to skip \p offset numbers.
+    __forceinline__ __device__ __host__ void discard(unsigned long long offset)
+    {
+#ifdef __HIP_DEVICE_COMPILE__
+        jump(offset, d_lfsr113_jump_matrices);
+#else
+        jump(offset, h_lfsr113_jump_matrices);
+#endif
+    }
+
     /// Advances the internal state to skip \p subsequence subsequences.
     /// A subsequence is 2^55 numbers long.
     __forceinline__ __device__ __host__ void discard_subsequence(unsigned int subsequence)
     {
-        for(unsigned int i = 0; i < subsequence; i++)
-        {
-            reset_next_subsequence();
-        }
+// Discard n * 2^55 samples
+#ifdef __HIP_DEVICE_COMPILE__
+        jump(subsequence, d_lfsr113_sequence_jump_matrices);
+#else
+        jump(subsequence, h_lfsr113_sequence_jump_matrices);
+#endif
     }
 
     __forceinline__ __device__ __host__ unsigned int operator()()
@@ -194,6 +232,36 @@ protected:
         this->next();
     }
 
+    __forceinline__ __device__ __host__ void
+        jump(unsigned long long v,
+             const unsigned int (&jump_matrices)[LFSR113_JUMP_MATRICES][LFSR113_SIZE])
+    {
+        // x~(n + v) = (A^v mod m)x~n mod m
+        // The matrix (A^v mod m) can be precomputed for selected values of v.
+        //
+        // For LFSR113_JUMP_LOG2 = 2
+        // lfsr113_jump_matrices contains precomputed matrices:
+        //   A^1, A^4, A^16...
+        //
+        // For LFSR113_JUMP_LOG2 = 2 and LFSR113_SEQUENCE_JUMP_LOG2 = 55
+        // lfsr113_sequence_jump_matrices contains precomputed matrices:
+        //   A^(1 * 2^55), A^(4 * 2^55), A^(16 * 2^55)...
+        //
+        // Intermediate powers can be calculated as multiplication of the powers above.
+
+        unsigned int mi = 0;
+        while(v > 0)
+        {
+            const unsigned int is = static_cast<unsigned int>(v) & ((1 << LFSR113_JUMP_LOG2) - 1);
+            for(unsigned int i = 0; i < is; i++)
+            {
+                detail::mul_mat_vec_inplace(jump_matrices[mi], &m_state.z);
+            }
+            mi++;
+            v >>= LFSR113_JUMP_LOG2;
+        }
+    }
+
 protected:
     lfsr113_state m_state;
 
@@ -227,6 +295,25 @@ __forceinline__ __device__ __host__ void
 }
 
 /**
+ * \brief Initializes LFSR113 state.
+ *
+ * Initializes the LFSR113 generator \p state with the given
+ * \p seed, \p subsequence, and \p offset.
+ *
+ * \param seed - Value to use as a seed
+ * \param subsequence - Subsequence to start at
+ * \param offset - Absolute offset into subsequence
+ * \param state - Pointer to state to initialize
+ */
+__forceinline__ __device__ __host__ void rocrand_init(const uint4              seed,
+                                                      const unsigned int       subsequence,
+                                                      const unsigned long long offset,
+                                                      rocrand_state_lfsr113*   state)
+{
+    *state = rocrand_state_lfsr113(seed, subsequence, offset);
+}
+
+/**
  * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
  * from [0; 2^32 - 1] range.
  *
@@ -241,6 +328,50 @@ __forceinline__ __device__ __host__ void
 __forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_lfsr113* state)
 {
     return state->next();
+}
+
+/**
+ * \brief Updates LFSR113 state to skip ahead by \p offset elements.
+ *
+ * Updates the LFSR113 state in \p state to skip ahead by \p offset elements.
+ *
+ * \param offset - Number of elements to skip
+ * \param state - Pointer to state to update
+ */
+__forceinline__ __device__ __host__ void skipahead(unsigned long long     offset,
+                                                   rocrand_state_lfsr113* state)
+{
+    return state->discard(offset);
+}
+
+/**
+ * \brief Updates LFSR113 state to skip ahead by \p subsequence subsequences.
+ *
+ * Updates the LFSR113 \p state to skip ahead by \p subsequence subsequences.
+ * Each subsequence is 2^55 numbers long.
+ *
+ * \param subsequence - Number of subsequences to skip
+ * \param state - Pointer to state to update
+ */
+__forceinline__ __device__ __host__ void skipahead_subsequence(unsigned int           subsequence,
+                                                               rocrand_state_lfsr113* state)
+{
+    return state->discard_subsequence(subsequence);
+}
+
+/**
+ * \brief Updates LFSR113 state to skip ahead by \p sequence sequences.
+ *
+ * Updates the LFSR113 \p state to skip ahead by \p sequence sequences.
+ * For LFSR113 each sequence is 2^55 numbers long (equal to the size of a subsequence).
+ *
+ * \param sequence - Number of sequences to skip
+ * \param state - Pointer to state to update
+ */
+__forceinline__ __device__ __host__ void skipahead_sequence(unsigned int           sequence,
+                                                            rocrand_state_lfsr113* state)
+{
+    return state->discard_subsequence(sequence);
 }
 
 /** @} */ // end of group rocranddevice
