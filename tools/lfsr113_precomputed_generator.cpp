@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "utils_matrix_exponentiation.hpp"
+
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <string>
 
@@ -38,80 +39,6 @@ static unsigned int sequence_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE];
 
 // Define uint4 so we don't need <hip/hip_runtime>.
 typedef unsigned int uint4 __attribute__((vector_size(16)));
-
-void copy_mat(unsigned int* dst, const unsigned int* src)
-{
-    for(int i = 0; i < LFSR113_SIZE; i++)
-    {
-        dst[i] = src[i];
-    }
-}
-
-void copy_vec(unsigned int* dst, const unsigned int* src)
-{
-    for(int i = 0; i < LFSR113_N; i++)
-    {
-        dst[i] = src[i];
-    }
-}
-
-void mul_mat_vec_inplace(const unsigned int* m, unsigned int* v)
-{
-    unsigned int r[LFSR113_N] = {0};
-    for(int i = 0; i < LFSR113_N; i++)
-    {
-        for(int j = 0; j < LFSR113_M; j++)
-        {
-            if(v[i] & (1U << j))
-            {
-                for(int k = 0; k < LFSR113_N; k++)
-                {
-                    r[k] ^= m[LFSR113_N * (i * LFSR113_M + j) + k];
-                }
-            }
-        }
-    }
-    copy_vec(v, r);
-}
-
-void mul_mat_mat_inplace(unsigned int* a, const unsigned int* b)
-{
-    for(int i = 0; i < LFSR113_N * LFSR113_M; i++)
-    {
-        mul_mat_vec_inplace(b, a + i * LFSR113_N);
-    }
-}
-
-void mat_pow(unsigned int* a, const unsigned int* b, const unsigned long long power)
-{
-    // Identity matrix
-    for(int i = 0; i < LFSR113_N; i++)
-    {
-        for(int j = 0; j < LFSR113_M; j++)
-        {
-            for(int k = 0; k < LFSR113_N; k++)
-            {
-                a[(i * LFSR113_M + j) * LFSR113_N + k] = ((i == k) ? (1 << j) : 0);
-            }
-        }
-    }
-
-    // Exponentiation by squaring
-    unsigned int y[LFSR113_SIZE];
-    copy_mat(y, b);
-    for(unsigned long long p = power; p > 0; p >>= 1)
-    {
-        if(p & 1)
-        {
-            mul_mat_mat_inplace(a, y);
-        }
-
-        // Square the matrix
-        unsigned int t[LFSR113_SIZE];
-        copy_mat(t, y);
-        mul_mat_mat_inplace(y, t);
-    }
-}
 
 struct rocrand_lfsr113_state
 {
@@ -165,14 +92,14 @@ void generate_matrices()
     {
         unsigned int a[LFSR113_SIZE];
         unsigned int b[LFSR113_SIZE];
-        copy_mat(a, one_step);
+        copy_mat<LFSR113_SIZE>(a, one_step);
 
-        copy_mat(jump_matrices[0], a);
+        copy_mat<LFSR113_SIZE>(jump_matrices[0], a);
         for(int k = 1; k < LFSR113_JUMP_MATRICES; k++)
         {
-            copy_mat(b, a);
-            mat_pow(a, b, (1 << LFSR113_JUMP_LOG2));
-            copy_mat(jump_matrices[k], a);
+            copy_mat<LFSR113_SIZE>(b, a);
+            mat_pow<LFSR113_SIZE, LFSR113_N, LFSR113_M>(a, b, (1 << LFSR113_JUMP_LOG2));
+            copy_mat<LFSR113_SIZE>(jump_matrices[k], a);
         }
     }
 
@@ -180,43 +107,24 @@ void generate_matrices()
     {
         unsigned int a[LFSR113_SIZE];
         unsigned int b[LFSR113_SIZE];
-        copy_mat(a, one_step);
+        copy_mat<LFSR113_SIZE>(a, one_step);
 
         // For 55: A^(2^27)
-        mat_pow(b, a, 1ULL << (LFSR113_SEQUENCE_JUMP_LOG2 / 2));
+        mat_pow<LFSR113_SIZE, LFSR113_N, LFSR113_M>(b, a, 1ULL << (LFSR113_SEQUENCE_JUMP_LOG2 / 2));
         // For 55: (A^(2^27))^(2^28) = A^(2^55)
-        mat_pow(a, b, 1ULL << (LFSR113_SEQUENCE_JUMP_LOG2 - LFSR113_SEQUENCE_JUMP_LOG2 / 2));
+        mat_pow<LFSR113_SIZE, LFSR113_N, LFSR113_M>(
+            a,
+            b,
+            1ULL << (LFSR113_SEQUENCE_JUMP_LOG2 - LFSR113_SEQUENCE_JUMP_LOG2 / 2));
 
-        copy_mat(sequence_jump_matrices[0], a);
+        copy_mat<LFSR113_SIZE>(sequence_jump_matrices[0], a);
         for(int k = 1; k < LFSR113_JUMP_MATRICES; k++)
         {
-            copy_mat(b, a);
-            mat_pow(a, b, (1 << LFSR113_JUMP_LOG2));
-            copy_mat(sequence_jump_matrices[k], a);
+            copy_mat<LFSR113_SIZE>(b, a);
+            mat_pow<LFSR113_SIZE, LFSR113_N, LFSR113_M>(a, b, (1 << LFSR113_JUMP_LOG2));
+            copy_mat<LFSR113_SIZE>(sequence_jump_matrices[k], a);
         }
     }
-}
-
-void write_matrices(std::ofstream& fout, const std::string name, unsigned int* a, bool is_device)
-{
-    fout << "static const " << (is_device ? "__device__ " : "") << "unsigned int " << name
-         << "[LFSR113_JUMP_MATRICES][LFSR113_SIZE] = {" << std::endl;
-    for(int k = 0; k < LFSR113_JUMP_MATRICES; k++)
-    {
-        fout << "    {" << std::endl;
-        for(int i = 0; i < LFSR113_M; i++)
-        {
-            fout << "        ";
-            for(int j = 0; j < LFSR113_N * LFSR113_N; j++)
-            {
-                fout << a[k * LFSR113_SIZE + i * LFSR113_N * LFSR113_N + j] << ", ";
-            }
-            fout << std::endl;
-        }
-        fout << "    }," << std::endl;
-    }
-    fout << "};" << std::endl;
-    fout << std::endl;
 }
 
 int main(int argc, char const* argv[])
@@ -268,23 +176,31 @@ int main(int argc, char const* argv[])
     fout << "#define LFSR113_JUMP_LOG2 " << LFSR113_JUMP_LOG2 << std::endl;
     fout << std::endl;
 
-    write_matrices(fout,
-                   "d_lfsr113_jump_matrices",
-                   static_cast<unsigned int*>(&jump_matrices[0][0]),
-                   true);
-    write_matrices(fout,
-                   "h_lfsr113_jump_matrices",
-                   static_cast<unsigned int*>(&jump_matrices[0][0]),
-                   false);
+    write_matrices<LFSR113_JUMP_MATRICES, LFSR113_SIZE, LFSR113_N, LFSR113_M>(
+        fout,
+        "d_lfsr113_jump_matrices",
+        "lfsr113",
+        static_cast<unsigned int*>(&jump_matrices[0][0]),
+        true);
+    write_matrices<LFSR113_JUMP_MATRICES, LFSR113_SIZE, LFSR113_N, LFSR113_M>(
+        fout,
+        "h_lfsr113_jump_matrices",
+        "lfsr113",
+        static_cast<unsigned int*>(&jump_matrices[0][0]),
+        false);
 
-    write_matrices(fout,
-                   "d_lfsr113_sequence_jump_matrices",
-                   static_cast<unsigned int*>(&sequence_jump_matrices[0][0]),
-                   true);
-    write_matrices(fout,
-                   "h_lfsr113_sequence_jump_matrices",
-                   static_cast<unsigned int*>(&sequence_jump_matrices[0][0]),
-                   false);
+    write_matrices<LFSR113_JUMP_MATRICES, LFSR113_SIZE, LFSR113_N, LFSR113_M>(
+        fout,
+        "d_lfsr113_sequence_jump_matrices",
+        "lfsr113",
+        static_cast<unsigned int*>(&sequence_jump_matrices[0][0]),
+        true);
+    write_matrices<LFSR113_JUMP_MATRICES, LFSR113_SIZE, LFSR113_N, LFSR113_M>(
+        fout,
+        "h_lfsr113_sequence_jump_matrices",
+        "lfsr113",
+        static_cast<unsigned int*>(&sequence_jump_matrices[0][0]),
+        false);
 
     fout << R"(
 #endif // ROCRAND_LFSR113_PRECOMPUTED_H_
