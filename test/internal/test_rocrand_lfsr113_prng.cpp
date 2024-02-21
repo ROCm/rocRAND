@@ -184,3 +184,74 @@ TYPED_TEST(rocrand_lfsr113_generator_prng_tests, different_seed_uint4_test)
         HIP_CHECK(hipFree(data));
     }
 }
+
+// Engine API tests
+struct rocrand_lfsr113_engine_api_tests : public rocrand_lfsr113::engine_type
+{};
+
+TEST(rocrand_lfsr113_engine_api_tests, discard_test)
+{
+    using generator_t = rocrand_lfsr113;
+    using engine_t    = typename generator_t::engine_type;
+
+    const uint4 seed = {1234567U, 12345678U, 123456789U, 1234567890U};
+    engine_t    engine1(seed, 0, 678U);
+    engine_t    engine2(seed, 0, 677U);
+
+    // Check next() function
+    (void)engine2.next();
+
+    EXPECT_EQ(engine1(), engine2());
+
+    // Check discard() function
+    (void)engine1.next();
+    engine2.discard();
+
+    EXPECT_EQ(engine1(), engine2());
+
+    // Check discard(offset) function
+    const unsigned int offsets[]
+        = {1U, 4U, 37U, 583U, 7452U, 21032U, 35678U, 66778U, 10313475U, 82120230U};
+
+    for(auto offset : offsets)
+    {
+        for(unsigned int i = 0; i < offset; i++)
+        {
+            (void)engine1.next();
+        }
+        engine2.discard(offset);
+
+        EXPECT_EQ(engine1(), engine2());
+    }
+}
+
+TEST(rocrand_lfsr113_engine_api_tests, discard_sequence_test)
+{
+    using generator_t = rocrand_lfsr113;
+    using engine_t    = typename generator_t::engine_type;
+
+    const uint4 seed = {1234567U, 12345678U, 123456789U, 1234567890U};
+    engine_t    engine1(seed, 0, 444U);
+    engine_t    engine2(seed, 123U, 444U);
+
+    engine1.discard_subsequence(123U);
+
+    EXPECT_EQ(engine1(), engine2());
+
+    engine1.discard(5356446450U);
+    engine1.discard_subsequence(123U);
+    engine1.discard(30000000006U);
+
+    engine2.discard_subsequence(3U);
+    engine2.discard(35356446456U);
+    engine2.discard_subsequence(120U);
+
+    EXPECT_EQ(engine1(), engine2());
+
+    engine1.discard_subsequence(3456000U);
+    engine1.discard_subsequence(1000005U);
+
+    engine2.discard_subsequence(4456005U);
+
+    EXPECT_EQ(engine1(), engine2());
+}
