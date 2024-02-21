@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -85,6 +85,13 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 
         distribution(input, output);
 
+#if defined(__gfx90a__)
+        // Workaround: The compiler hoists s_waitcnt vmcnt(..) out of the loops.
+        // For some reason this optimization decreases performance of uniform distributions
+        // on MI200. MI100 and MI300 are not affected.
+        // Here we add s_waitcnt vmcnt(0)
+        __builtin_amdgcn_s_waitcnt(/*vmcnt*/ 0 | (/*exp_cnt*/ 0x7 << 4) | (/*lgkmcnt*/ 0xf << 8));
+#endif
         vec_data[index] = *reinterpret_cast<vec_type*>(output);
         index += stride;
     }
