@@ -624,20 +624,15 @@ public:
         status = system_type::alloc(&d_mt19937_jump, sizeof(rocrand_h_mt19937_jump));
         if(status != ROCRAND_STATUS_SUCCESS)
         {
+            system_type::free(d_engines);
             return status;
         }
-        err = hipMalloc(&d_mt19937_jump, sizeof(rocrand_h_mt19937_jump));
-        if(err != hipSuccess)
-        {
-            system_type::free(d_engines);
-            return ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
 
-        err = hipMemcpy(d_mt19937_jump,
-                        rocrand_h_mt19937_jump,
+        status = system_type::memcpy(d_mt19937_jump,
+                        (rocrand_h_mt19937_jump),
                         sizeof(rocrand_h_mt19937_jump),
                         hipMemcpyHostToDevice);
-        if(err != hipSuccess)
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
             system_type::free(d_engines);
             system_type::free(d_mt19937_jump);
@@ -661,15 +656,9 @@ public:
             });
         if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return status;
-        }
-
-        err = hipStreamSynchronize(m_stream);
-        if(err != hipSuccess)
-        {
             system_type::free(d_engines);
             system_type::free(d_mt19937_jump);
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            return status;
         }
 
         system_type::free(d_mt19937_jump);
@@ -690,14 +679,8 @@ public:
             });
         if(status != ROCRAND_STATUS_SUCCESS)
         {
-            return status;
-        }
-
-        err = hipStreamSynchronize(m_stream);
-        if(err != hipSuccess)
-        {
             system_type::free(d_engines);
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            return status;
         }
 
         system_type::free(d_engines);
@@ -832,12 +815,6 @@ public:
             {
                 return status;
             }
-        }
-
-        // check kernel status
-        if(hipGetLastError() != hipSuccess)
-        {
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
 
         m_start_input      = (m_start_input + vec_size + extra) % full_stride;

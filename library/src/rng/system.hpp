@@ -42,6 +42,7 @@
     #define ROCRAND_USE_PARALLEL_STL
     #include <execution>
 #endif
+#include <cstring>
 #include <new>
 
 #include <stdint.h>
@@ -74,6 +75,12 @@ struct host_system
     static void free(T* ptr)
     {
         delete[] ptr;
+    }
+
+    static rocrand_status memcpy(void * dst, const void * src, size_t size, hipMemcpyKind /*kind*/)
+    {
+        std::memcpy(dst, src, size);
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     template<typename... UserArgs>
@@ -206,6 +213,16 @@ struct device_system
     static void free(T* ptr)
     {
         ROCRAND_HIP_FATAL_ASSERT(hipFree(ptr));
+    }
+
+    static rocrand_status memcpy(void * dst, const void * src, size_t size, hipMemcpyKind kind)
+    {
+        hipError_t error = hipMemcpy(dst, src, size, kind);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     template<auto Kernel,
