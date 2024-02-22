@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,7 @@ class TestCtorPRNG(TestRNGBase):
         PRNG(self.rngtype, seed=2345678, offset=7654)
 
 make_test(TestCtorPRNG, "DEFAULT",         rngtype=PRNG.DEFAULT)
+make_test(TestCtorPRNG, "LFSR113",         rngtype=PRNG.LFSR113)
 make_test(TestCtorPRNG, "XORWOW",          rngtype=PRNG.XORWOW)
 make_test(TestCtorPRNG, "MRG31K3P",        rngtype=PRNG.MRG31K3P)
 make_test(TestCtorPRNG, "MRG32K3A",        rngtype=PRNG.MRG32K3A)
@@ -79,17 +80,6 @@ class TestCtorPRNGMT(TestRNGBase):
 
 make_test(TestCtorPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
 make_test(TestCtorPRNGMT, "MT19937", rngtype=PRNG.MT19937)
-
-class TestCtorPRNGLFSR113(TestRNGBase):
-    rngtype = PRNG.LFSR113
-
-    def test_ctor(self):
-        PRNG(self.rngtype)
-        PRNG(self.rngtype, seed=123456)
-        with self.assertRaises(RocRandError):
-            PRNG(self.rngtype, offset=987654)
-        with self.assertRaises(RocRandError):
-            PRNG(self.rngtype, seed=2345678, offset=7654)
 
 class TestCtorQRNG(TestRNGBase):
     def test_ctor(self):
@@ -127,6 +117,7 @@ class TestParamsPRNG(TestRNGBase):
         self.assertEqual(self.rng.offset, 2323423)
 
 make_test(TestParamsPRNG, "DEFAULT",         rngtype=PRNG.DEFAULT)
+make_test(TestParamsPRNG, "LFSR113",         rngtype=PRNG.LFSR113)
 make_test(TestParamsPRNG, "XORWOW",          rngtype=PRNG.XORWOW)
 make_test(TestParamsPRNG, "MRG31K3P",        rngtype=PRNG.MRG31K3P)
 make_test(TestParamsPRNG, "MRG32K3A",        rngtype=PRNG.MRG32K3A)
@@ -158,28 +149,6 @@ class TestParamsPRNGMT(TestRNGBase):
 
 make_test(TestParamsPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
 make_test(TestParamsPRNGMT, "MT19937", rngtype=PRNG.MT19937)
-
-class TestParamsPRNGLFSR113(TestRNGBase):
-    rngtype = PRNG.LFSR113
-
-    def setUp(self):
-        super(TestParamsPRNGLFSR113, self).setUp()
-        self.rng = PRNG(self.rngtype)
-
-    def tearDown(self):
-        del self.rng
-
-    def test_seed(self):
-        self.assertIsNone(self.rng.seed)
-        self.rng.seed = 0
-        self.assertEqual(self.rng.seed, 0)
-        self.rng.seed = 54654634456365
-        self.assertEqual(self.rng.seed, 54654634456365)
-
-    def test_offset(self):
-        self.assertEqual(self.rng.offset, 0)
-        with self.assertRaises(RocRandError):
-            self.rng.offset = 2323423
 
 class TestParamsQRNG(TestRNGBase):
     def setUp(self):
