@@ -36,6 +36,16 @@ using rocrand_lfsr113_generator_prng_tests_types = ::testing::Types<
     generator_prng_tests_params<rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
     generator_prng_tests_params<rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
+using rocrand_lfsr113_generator_prng_offset_tests_types = ::testing::Types<
+    generator_prng_offset_tests_params<unsigned int,
+                                       rocrand_lfsr113,
+                                       ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<unsigned int,
+                                       rocrand_lfsr113,
+                                       ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
+    generator_prng_offset_tests_params<float, rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<float, rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+
 INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
                                generator_prng_tests,
                                rocrand_lfsr113_generator_prng_tests_types);
@@ -43,6 +53,10 @@ INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
 INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
                                generator_prng_continuity_tests,
                                rocrand_lfsr113_generator_prng_tests_types);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
+                               generator_prng_offset_tests,
+                               rocrand_lfsr113_generator_prng_offset_tests_types);
 
 // lfsr113-specific generator API tests
 template<class Params>
