@@ -88,7 +88,8 @@ void generate_matrices()
         }
     }
 
-    // Matrices for jumps within the same sequence (offset). Only 2^0 (one_step) to 2^31 powers needed.
+    // Matrices for jumps within the same sequence (offset). The powers from 2^0 (one_step) to 2^64
+    // are required, so we need 32 iterations of exponentiations to 2^LFSR113_JUMP_LOG2.
     {
         unsigned int a[LFSR113_SIZE];
         unsigned int b[LFSR113_SIZE];
@@ -103,7 +104,8 @@ void generate_matrices()
         }
     }
 
-    // Matrices for jumps within sequences. From 2^0 (one_step) to 2^55 powers needed.
+    // Matrices for jumps within sequences. The powers from (2^0)*(2^55) (one_step) to (2^64)*(2^55)
+    // are required, so we need 32 iterations of exponentiations to 2^LFSR113_JUMP_LOG2.
     {
         unsigned int a[LFSR113_SIZE];
         unsigned int b[LFSR113_SIZE];
