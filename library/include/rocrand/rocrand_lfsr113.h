@@ -101,7 +101,7 @@ public:
     /// A subsequence is 2^55 numbers long.
     __forceinline__ __device__ __host__ void seed(uint4                    seed_value,
                                                   const unsigned long long subsequence,
-                                                  const unsigned long long offset)
+                                                  const unsigned long long offset = 0)
     {
         m_state.subsequence = seed_value;
 
