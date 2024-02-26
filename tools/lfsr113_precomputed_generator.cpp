@@ -92,14 +92,14 @@ void generate_matrices()
     {
         unsigned int a[LFSR113_SIZE];
         unsigned int b[LFSR113_SIZE];
-        copy_mat<LFSR113_SIZE>(a, one_step);
+        copy_arr<LFSR113_SIZE>(a, one_step);
 
-        copy_mat<LFSR113_SIZE>(jump_matrices[0], a);
+        copy_arr<LFSR113_SIZE>(jump_matrices[0], a);
         for(int k = 1; k < LFSR113_JUMP_MATRICES; k++)
         {
-            copy_mat<LFSR113_SIZE>(b, a);
+            copy_arr<LFSR113_SIZE>(b, a);
             mat_pow<LFSR113_SIZE, LFSR113_N, LFSR113_M>(a, b, (1 << LFSR113_JUMP_LOG2));
-            copy_mat<LFSR113_SIZE>(jump_matrices[k], a);
+            copy_arr<LFSR113_SIZE>(jump_matrices[k], a);
         }
     }
 
@@ -107,7 +107,7 @@ void generate_matrices()
     {
         unsigned int a[LFSR113_SIZE];
         unsigned int b[LFSR113_SIZE];
-        copy_mat<LFSR113_SIZE>(a, one_step);
+        copy_arr<LFSR113_SIZE>(a, one_step);
 
         // For 55: A^(2^27)
         mat_pow<LFSR113_SIZE, LFSR113_N, LFSR113_M>(b, a, 1ULL << (LFSR113_SEQUENCE_JUMP_LOG2 / 2));
@@ -117,12 +117,12 @@ void generate_matrices()
             b,
             1ULL << (LFSR113_SEQUENCE_JUMP_LOG2 - LFSR113_SEQUENCE_JUMP_LOG2 / 2));
 
-        copy_mat<LFSR113_SIZE>(sequence_jump_matrices[0], a);
+        copy_arr<LFSR113_SIZE>(sequence_jump_matrices[0], a);
         for(int k = 1; k < LFSR113_JUMP_MATRICES; k++)
         {
-            copy_mat<LFSR113_SIZE>(b, a);
+            copy_arr<LFSR113_SIZE>(b, a);
             mat_pow<LFSR113_SIZE, LFSR113_N, LFSR113_M>(a, b, (1 << LFSR113_JUMP_LOG2));
-            copy_mat<LFSR113_SIZE>(sequence_jump_matrices[k], a);
+            copy_arr<LFSR113_SIZE>(sequence_jump_matrices[k], a);
         }
     }
 }
