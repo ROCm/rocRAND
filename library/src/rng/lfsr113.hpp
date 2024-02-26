@@ -317,7 +317,6 @@ public:
         }
 
         m_start_engine_id = m_offset % m_engines_size;
-        ;
 
         if(m_engines != nullptr)
         {

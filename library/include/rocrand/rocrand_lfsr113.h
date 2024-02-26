@@ -61,7 +61,11 @@ __forceinline__ __device__ __host__ void mul_mat_vec_inplace(const unsigned int*
             r[k] ^= b & m[i * LFSR113_M * LFSR113_N + j * LFSR113_N + k];
         }
     }
-    copy_vec_ui4(z, r);
+    // Copy result into z
+    z->x = r[0];
+    z->y = r[1];
+    z->z = r[2];
+    z->w = r[3];
 }
 } // end namespace detail
 
@@ -166,64 +170,6 @@ protected:
         m_state.z.y = m_state.subsequence.y;
         m_state.z.z = m_state.subsequence.z;
         m_state.z.w = m_state.subsequence.w;
-    }
-
-    /// Advances the subsequence by one and sets the state to the start of that subsequence.
-    __forceinline__ __device__ __host__ void reset_next_subsequence()
-    {
-        /* The following operations make the jump ahead with
-    	2 ^ 55 iterations for every component of the generator.
-    	The internal state after the jump, however, is slightly different
-    	from 2 ^ 55 iterations since it ignores the state in
-    	which are found the first bits of each components,
-    	since they are ignored in the recurrence.The state becomes
-    	identical to what one would with normal iterations
-    	after a call nextValue().*/
-        int z, b;
-
-        z = m_state.subsequence.x & 0xFFFFFFFE;
-        b = (z << 6) ^ z;
-
-        z = (z) ^ (z << 3) ^ (z << 4) ^ (z << 6) ^ (z << 7) ^ (z << 8) ^ (z << 10) ^ (z << 11)
-            ^ (z << 13) ^ (z << 14) ^ (z << 16) ^ (z << 17) ^ (z << 18) ^ (z << 22) ^ (z << 24)
-            ^ (z << 25) ^ (z << 26) ^ (z << 28) ^ (z << 30);
-
-        z ^= ((b >> 1) & 0x7FFFFFFF) ^ ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 5) & 0x07FFFFFF)
-             ^ ((b >> 6) & 0x03FFFFFF) ^ ((b >> 7) & 0x01FFFFFF) ^ ((b >> 9) & 0x007FFFFF)
-             ^ ((b >> 13) & 0x0007FFFF) ^ ((b >> 14) & 0x0003FFFF) ^ ((b >> 15) & 0x0001FFFF)
-             ^ ((b >> 17) & 0x00007FFF) ^ ((b >> 18) & 0x00003FFF) ^ ((b >> 20) & 0x00000FFF)
-             ^ ((b >> 21) & 0x000007FF) ^ ((b >> 23) & 0x000001FF) ^ ((b >> 24) & 0x000000FF)
-             ^ ((b >> 25) & 0x0000007F) ^ ((b >> 26) & 0x0000003F) ^ ((b >> 27) & 0x0000001F)
-             ^ ((b >> 30) & 0x00000003);
-        m_state.subsequence.x = z;
-
-        z = m_state.subsequence.y & 0xFFFFFFF8;
-        b = z ^ (z << 1);
-        b ^= (b << 2);
-        b ^= (b << 4);
-        b ^= (b << 8);
-
-        b <<= 8;
-        b ^= (z << 22) ^ (z << 25) ^ (z << 27);
-        if((z & 0x80000000) != 0)
-            b ^= 0xABFFF000;
-        if((z & 0x40000000) != 0)
-            b ^= 0x55FFF800;
-        z = b ^ ((z >> 7) & 0x01FFFFFF) ^ ((z >> 20) & 0x00000FFF) ^ ((z >> 21) & 0x000007FF);
-        m_state.subsequence.y = z;
-
-        z = m_state.subsequence.z & 0xFFFFFFF0;
-        b = (z << 13) ^ z;
-        z = ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 17) & 0x00007FFF) ^ (z << 10) ^ (z << 11) ^ (z << 25);
-        m_state.subsequence.z = z;
-
-        z = m_state.subsequence.w & 0xFFFFFF80;
-        b = (z << 3) ^ z;
-        z = (z << 14) ^ (z << 16) ^ (z << 20) ^ ((b >> 5) & 0x07FFFFFF) ^ ((b >> 9) & 0x007FFFFF)
-            ^ ((b >> 11) & 0x001FFFFF);
-        m_state.subsequence.w = z;
-
-        reset_start_subsequence();
     }
 
     // Advances the internal state to the next state.
