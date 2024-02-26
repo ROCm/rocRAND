@@ -73,7 +73,7 @@ void generate_matrices()
             rocrand_lfsr113_state state;
             const unsigned int    b = 1U << j;
 
-            for(int k = 0; k < LFSR113_M; ++k)
+            for(int k = 0; k < LFSR113_N; ++k)
             {
                 state.z[k] = (i == k ? b : 0);
             }
@@ -81,7 +81,7 @@ void generate_matrices()
 
             state.discard();
 
-            for(int k = 0; k < LFSR113_M; ++k)
+            for(int k = 0; k < LFSR113_N; ++k)
             {
                 one_step[(i * LFSR113_M + j) * LFSR113_N + k] = state.z[k];
             }
