@@ -27,8 +27,9 @@
 #include <iostream>
 #include <string>
 
+/// @brief Copies array \p src of size \p SIZE into \p src.
 template<int SIZE>
-void copy_mat(unsigned int* dst, const unsigned int* src)
+void copy_arr(unsigned int* dst, const unsigned int* src)
 {
     for(int i = 0; i < SIZE; i++)
     {
@@ -36,15 +37,9 @@ void copy_mat(unsigned int* dst, const unsigned int* src)
     }
 }
 
-template<int N>
-void copy_vec(unsigned int* dst, const unsigned int* src)
-{
-    for(int i = 0; i < N; i++)
-    {
-        dst[i] = src[i];
-    }
-}
-
+/// @brief Given an NxMxN matrix \p m and a vector \p v of size N, it performs an exclusive OR
+/// among the N-sized vectors m[i][j] for which it holds that v[i] & (1U << j) != 0
+/// and stores the result into \p v.
 template<int N, int M>
 void mul_mat_vec_inplace(const unsigned int* m, unsigned int* v)
 {
@@ -62,9 +57,10 @@ void mul_mat_vec_inplace(const unsigned int* m, unsigned int* v)
             }
         }
     }
-    copy_vec<N>(v, r);
+    copy_arr<N>(v, r);
 }
 
+/// @brief Multiplies NxMxN matrices \p b and \p a and stores the result in \p a.
 template<int N, int M>
 void mul_mat_mat_inplace(unsigned int* a, const unsigned int* b)
 {
@@ -74,6 +70,7 @@ void mul_mat_mat_inplace(unsigned int* a, const unsigned int* b)
     }
 }
 
+/// @brief Computes exponentiation of matrix \p b to \p power by squaring and stores result into \p a.
 template<int SIZE, int N, int M>
 void mat_pow(unsigned int* a, const unsigned int* b, const unsigned long long power)
 {
@@ -91,7 +88,7 @@ void mat_pow(unsigned int* a, const unsigned int* b, const unsigned long long po
 
     // Exponentiation by squaring
     unsigned int y[SIZE];
-    copy_mat<SIZE>(y, b);
+    copy_arr<SIZE>(y, b);
     for(unsigned long long p = power; p > 0; p >>= 1)
     {
         if(p & 1)
@@ -101,11 +98,14 @@ void mat_pow(unsigned int* a, const unsigned int* b, const unsigned long long po
 
         // Square the matrix
         unsigned int t[SIZE];
-        copy_mat<SIZE>(t, y);
+        copy_arr<SIZE>(t, y);
         mul_mat_mat_inplace<N, M>(y, t);
     }
 }
 
+/// @brief Writes the C++ code of the declaration (with variable name \p name) and initialization
+/// of a precomputed state matrix \p a for a generator named \p generator to a given output
+/// stream \p fout.
 template<int JUMP_MATRICES, int SIZE, int N, int M>
 void write_matrices(std::ofstream&    fout,
                     const std::string name,

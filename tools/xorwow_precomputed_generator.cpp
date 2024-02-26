@@ -85,21 +85,21 @@ void generate_matrices()
     {
         unsigned int a[XORWOW_SIZE];
         unsigned int b[XORWOW_SIZE];
-        copy_mat<XORWOW_SIZE>(a, one_step);
+        copy_arr<XORWOW_SIZE>(a, one_step);
 
-        copy_mat<XORWOW_SIZE>(jump_matrices[0], a);
+        copy_arr<XORWOW_SIZE>(jump_matrices[0], a);
         for (int k = 1; k < XORWOW_JUMP_MATRICES; k++)
         {
-            copy_mat<XORWOW_SIZE>(b, a);
+            copy_arr<XORWOW_SIZE>(b, a);
             mat_pow<XORWOW_SIZE, XORWOW_N, XORWOW_M>(a, b, (1 << XORWOW_JUMP_LOG2));
-            copy_mat<XORWOW_SIZE>(jump_matrices[k], a);
+            copy_arr<XORWOW_SIZE>(jump_matrices[k], a);
         }
     }
 
     {
         unsigned int a[XORWOW_SIZE];
         unsigned int b[XORWOW_SIZE];
-        copy_mat<XORWOW_SIZE>(a, one_step);
+        copy_arr<XORWOW_SIZE>(a, one_step);
 
         // For 67: A^(2^33)
         mat_pow<XORWOW_SIZE, XORWOW_N, XORWOW_M>(b, a, 1ULL << (XORWOW_SEQUENCE_JUMP_LOG2 / 2));
@@ -109,12 +109,12 @@ void generate_matrices()
             b,
             1ULL << (XORWOW_SEQUENCE_JUMP_LOG2 - XORWOW_SEQUENCE_JUMP_LOG2 / 2));
 
-        copy_mat<XORWOW_SIZE>(sequence_jump_matrices[0], a);
+        copy_arr<XORWOW_SIZE>(sequence_jump_matrices[0], a);
         for (int k = 1; k < XORWOW_JUMP_MATRICES; k++)
         {
-            copy_mat<XORWOW_SIZE>(b, a);
+            copy_arr<XORWOW_SIZE>(b, a);
             mat_pow<XORWOW_SIZE, XORWOW_N, XORWOW_M>(a, b, (1 << XORWOW_JUMP_LOG2));
-            copy_mat<XORWOW_SIZE>(sequence_jump_matrices[k], a);
+            copy_arr<XORWOW_SIZE>(sequence_jump_matrices[k], a);
         }
     }
 }
