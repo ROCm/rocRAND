@@ -277,7 +277,7 @@ __forceinline__ __device__ __host__ unsigned int
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
+__forceinline__ __device__ unsigned int
     rocrand_discrete(rocrand_state_mtgp32*               state,
                      const rocrand_discrete_distribution discrete_distribution)
 {

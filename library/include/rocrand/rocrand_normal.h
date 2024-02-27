@@ -849,7 +849,7 @@ __forceinline__ __device__ __host__ double2 rocrand_normal_double2(rocrand_state
  *
  * \return Normally distributed \p float value
  */
-__forceinline__ __device__ __host__ float rocrand_normal(rocrand_state_mtgp32* state)
+__forceinline__ __device__ float rocrand_normal(rocrand_state_mtgp32* state)
 {
     return rocrand_device::detail::normal_distribution(rocrand(state));
 }
@@ -868,7 +868,7 @@ __forceinline__ __device__ __host__ float rocrand_normal(rocrand_state_mtgp32* s
  *
  * \return Two normally distributed \p float values as \p float2
  */
-__forceinline__ __device__ __host__ float2 rocrand_normal2(rocrand_state_mtgp32* state)
+__forceinline__ __device__ float2 rocrand_normal2(rocrand_state_mtgp32* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -887,7 +887,7 @@ __forceinline__ __device__ __host__ float2 rocrand_normal2(rocrand_state_mtgp32*
  *
  * \return Normally distributed \p double value
  */
-__forceinline__ __device__ __host__ double rocrand_normal_double(rocrand_state_mtgp32* state)
+__forceinline__ __device__ double rocrand_normal_double(rocrand_state_mtgp32* state)
 {
     return rocrand_device::detail::normal_distribution_double(rocrand(state));
 }
@@ -906,7 +906,7 @@ __forceinline__ __device__ __host__ double rocrand_normal_double(rocrand_state_m
  *
  * \return Two normally distributed \p double value as \p double2
  */
-__forceinline__ __device__ __host__ double2 rocrand_normal_double2(rocrand_state_mtgp32* state)
+__forceinline__ __device__ double2 rocrand_normal_double2(rocrand_state_mtgp32* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);

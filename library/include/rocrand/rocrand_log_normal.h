@@ -617,7 +617,7 @@ __forceinline__ __device__ __host__ double2 rocrand_log_normal_double2(rocrand_s
  *
  * \return Log-normally distributed \p float value
  */
-__forceinline__ __device__ __host__ float
+__forceinline__ __device__ float
     rocrand_log_normal(rocrand_state_mtgp32* state, float mean, float stddev)
 {
     float r = rocrand_device::detail::normal_distribution(rocrand(state));
@@ -638,9 +638,9 @@ __forceinline__ __device__ __host__ float
  *
  * \return Two log-normally distributed \p float value as \p float2
  */
-__forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_mtgp32* state,
-                                                               float                 mean,
-                                                               float                 stddev)
+__forceinline__ __device__ float2 rocrand_log_normal2(rocrand_state_mtgp32* state,
+                                                      float                 mean,
+                                                      float                 stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -661,7 +661,7 @@ __forceinline__ __device__ __host__ float2 rocrand_log_normal2(rocrand_state_mtg
  *
  * \return Log-normally distributed \p double value
  */
-__forceinline__ __device__ __host__ double
+__forceinline__ __device__ double
     rocrand_log_normal_double(rocrand_state_mtgp32* state, double mean, double stddev)
 {
     double r = rocrand_device::detail::normal_distribution_double(rocrand(state));
@@ -682,9 +682,9 @@ __forceinline__ __device__ __host__ double
  *
  * \return Two log-normally distributed \p double values as \p double2
  */
-__forceinline__ __device__ __host__ double2 rocrand_log_normal_double2(rocrand_state_mtgp32* state,
-                                                                       double                mean,
-                                                                       double                stddev)
+__forceinline__ __device__ double2 rocrand_log_normal_double2(rocrand_state_mtgp32* state,
+                                                              double                mean,
+                                                              double                stddev)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
