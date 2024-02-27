@@ -20,6 +20,8 @@
 
 #include "utils_matrix_exponentiation.hpp"
 
+#include <hip/hip_runtime.h>
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -34,12 +36,6 @@ const int LFSR113_JUMP_LOG2     = 2;
 
 const int LFSR113_SEQUENCE_JUMP_LOG2 = 55;
 
-static unsigned int jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE];
-static unsigned int sequence_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE];
-
-// Define uint4 so we don't need <hip/hip_runtime>.
-typedef unsigned int uint4 __attribute__((vector_size(16)));
-
 struct rocrand_lfsr113_state
 {
     uint4 z;
@@ -49,17 +45,17 @@ struct rocrand_lfsr113_state
     {
         unsigned int b;
 
-        b    = (((z[0] << 6) ^ z[0]) >> 13);
-        z[0] = (((z[0] & 4294967294U) << 18) ^ b);
+        b   = (((z.x << 6) ^ z.x) >> 13);
+        z.x = (((z.x & 4294967294U) << 18) ^ b);
 
-        b    = (((z[1] << 2) ^ z[1]) >> 27);
-        z[1] = (((z[1] & 4294967288U) << 2) ^ b);
+        b   = (((z.y << 2) ^ z.y) >> 27);
+        z.y = (((z.y & 4294967288U) << 2) ^ b);
 
-        b    = (((z[2] << 13) ^ z[2]) >> 21);
-        z[2] = (((z[2] & 4294967280U) << 7) ^ b);
+        b   = (((z.z << 13) ^ z.z) >> 21);
+        z.z = (((z.z & 4294967280U) << 7) ^ b);
 
-        b    = (((z[3] << 3) ^ z[3]) >> 12);
-        z[3] = (((z[3] & 4294967168U) << 13) ^ b);
+        b   = (((z.w << 3) ^ z.w) >> 12);
+        z.w = (((z.w & 4294967168U) << 13) ^ b);
     }
 };
 
@@ -73,18 +69,18 @@ void generate_matrices()
             rocrand_lfsr113_state state;
             const unsigned int    b = 1U << j;
 
-            for(int k = 0; k < LFSR113_N; ++k)
-            {
-                state.z[k] = (i == k ? b : 0);
-            }
+            state.z.x         = (i == 0 ? b : 0);
+            state.z.y         = (i == 1 ? b : 0);
+            state.z.z         = (i == 2 ? b : 0);
+            state.z.w         = (i == 3 ? b : 0);
             state.subsequence = uint4{0, 0, 0, 0};
 
             state.discard();
 
-            for(int k = 0; k < LFSR113_N; ++k)
-            {
-                one_step[(i * LFSR113_M + j) * LFSR113_N + k] = state.z[k];
-            }
+            one_step[(i * LFSR113_M + j) * LFSR113_N + 0] = state.z.x;
+            one_step[(i * LFSR113_M + j) * LFSR113_N + 1] = state.z.y;
+            one_step[(i * LFSR113_M + j) * LFSR113_N + 2] = state.z.z;
+            one_step[(i * LFSR113_M + j) * LFSR113_N + 3] = state.z.w;
         }
     }
 
