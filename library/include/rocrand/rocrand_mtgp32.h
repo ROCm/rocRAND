@@ -306,7 +306,7 @@ private:
 protected:
     /// \brief Generate the next value for thread `thread_idx` and modify state in the process,
     ///   do not update offset.
-    FQUALIFIERS unsigned int next_thread(unsigned int thread_idx)
+    __forceinline__ __device__ __host__ unsigned int next_thread(unsigned int thread_idx)
     {
         const unsigned int r
             = para_rec(m_state.status[(thread_idx + m_state.offset) & MTGP_MASK],
@@ -529,7 +529,7 @@ __forceinline__ __device__ unsigned int rocrand(rocrand_state_mtgp32* state)
  *
  */
 __forceinline__ __device__ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* src,
-                                                                   rocrand_state_mtgp32* dest)
+                                                          rocrand_state_mtgp32* dest)
 {
     dest->copy(src);
 }
@@ -541,7 +541,7 @@ __forceinline__ __device__ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* 
  * \param params - Pointer to new parameters
  */
 __forceinline__ __device__ void rocrand_mtgp32_set_params(rocrand_state_mtgp32* state,
-                                                                   mtgp32_params*        params)
+                                                          mtgp32_params*        params)
 {
     state->set_params(params);
 }
