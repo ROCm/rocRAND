@@ -460,7 +460,7 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_mtgp32* state)
+__forceinline__ __device__ float rocrand_uniform(rocrand_state_mtgp32* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -480,7 +480,7 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_mtgp32* 
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_mtgp32* state)
+__forceinline__ __device__ double rocrand_uniform_double(rocrand_state_mtgp32* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
