@@ -492,7 +492,7 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_p
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_mtgp32* state)
+__forceinline__ __device__ unsigned int rocrand(rocrand_state_mtgp32* state)
 {
     return state->next();
 }
@@ -528,7 +528,7 @@ __forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_mtgp32* s
  * \param dest - Pointer to a state to copy to
  *
  */
-__forceinline__ __device__ __host__ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* src,
+__forceinline__ __device__ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* src,
                                                                    rocrand_state_mtgp32* dest)
 {
     dest->copy(src);
@@ -540,7 +540,7 @@ __forceinline__ __device__ __host__ void rocrand_mtgp32_block_copy(rocrand_state
  * \param state - Pointer to a MTGP32 state
  * \param params - Pointer to new parameters
  */
-__forceinline__ __device__ __host__ void rocrand_mtgp32_set_params(rocrand_state_mtgp32* state,
+__forceinline__ __device__ void rocrand_mtgp32_set_params(rocrand_state_mtgp32* state,
                                                                    mtgp32_params*        params)
 {
     state->set_params(params);
