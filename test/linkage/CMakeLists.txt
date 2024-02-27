@@ -54,17 +54,6 @@ function(add_rocrand_link_test TEST_SOURCES)
     target_link_libraries(${TEST_TARGET}
         rocrand
     )
-    if(USE_HIP_CPU)
-        target_link_libraries(${TEST_TARGET}
-            Threads::Threads
-            hip_cpu_rt::hip_cpu_rt
-        )
-        if(STL_DEPENDS_ON_TBB)
-        target_link_libraries(${TEST_TARGET}
-            TBB::tbb
-        )
-        endif()
-    endif()
     if(HIP_COMPILER STREQUAL "clang")
         target_link_libraries(${TEST_TARGET} hip::device)
     endif()

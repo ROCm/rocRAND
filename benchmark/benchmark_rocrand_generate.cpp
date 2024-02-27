@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -75,7 +75,7 @@ void run_benchmark(const cli::Parser& parser,
     const std::string format = parser.get<std::string>("format");
 
     T * data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
+    HIP_CHECK(hipMalloc(&data, size * sizeof(T)));
 
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
@@ -472,10 +472,8 @@ int main(int argc, char *argv[])
             rng_type = ROCRAND_RNG_PSEUDO_MTGP32;
         else if(engine == "lfsr113")
             rng_type = ROCRAND_RNG_PSEUDO_LFSR113;
-#ifndef USE_HIP_CPU
         else if(engine == "mt19937")
             rng_type = ROCRAND_RNG_PSEUDO_MT19937;
-#endif
         else
         {
             std::cout << "Wrong engine name" << std::endl;

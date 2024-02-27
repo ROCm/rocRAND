@@ -179,7 +179,7 @@ public:
     FQUALIFIERS
     void copy(const mtgp32_engine * m_engine)
     {
-#if defined(__HIP_DEVICE_COMPILE__) || defined(USE_HIP_CPU)
+#if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int thread_id = threadIdx.x;
         for(int i = thread_id; i < MTGP_STATE; i += blockDim.x)
             m_state.status[i] = m_engine->m_state.status[i];
@@ -237,7 +237,7 @@ public:
     FQUALIFIERS
     unsigned int next()
     {
-#if defined(__HIP_DEVICE_COMPILE__) || defined(USE_HIP_CPU)
+#if defined(__HIP_DEVICE_COMPILE__)
         unsigned int t   = threadIdx.x;
         unsigned int d   = blockDim.x;
         int pos = pos_tbl;
@@ -263,7 +263,7 @@ public:
     FQUALIFIERS
     unsigned int next_single()
     {
-#if defined(__HIP_DEVICE_COMPILE__) || defined(USE_HIP_CPU)
+#if defined(__HIP_DEVICE_COMPILE__)
         unsigned int t   = threadIdx.x;
         unsigned int d   = blockDim.x;
         int pos = pos_tbl;
@@ -394,10 +394,11 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
         }
     }
 
-    hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
+    const hipError_t error
+        = hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
     free(h_state);
 
-    if (hipGetLastError() != hipSuccess)
+    if(error != hipSuccess)
         return ROCRAND_STATUS_ALLOCATION_FAILED;
 
     return ROCRAND_STATUS_SUCCESS;

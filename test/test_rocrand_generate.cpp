@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,7 @@ TEST_P(rocrand_generate_tests, int_test)
 
     const size_t size = 12563;
     unsigned int * data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -81,7 +81,7 @@ TEST_P(rocrand_generate_tests, char_test)
 
     const size_t size = 12563;
     unsigned char * data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned char)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned char)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -119,7 +119,7 @@ TEST_P(rocrand_generate_tests, short_test)
 
     const size_t size = 12563;
     unsigned short * data;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned short)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned short)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
@@ -171,8 +171,7 @@ TEST_P(rocrand_generate_long_long_tests, long_long_test)
 
     const size_t            size = 12563;
     unsigned long long int* data;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(unsigned long long int)));
+    HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned long long int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
