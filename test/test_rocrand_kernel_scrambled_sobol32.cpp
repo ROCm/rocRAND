@@ -20,6 +20,7 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
 #include <rocrand/rocrand_log_normal.h>
 #include <rocrand/rocrand_normal.h>
@@ -166,6 +167,7 @@ template<typename ResultType, class Distribution, typename... Args>
 void call_rocrand_kernel(std::vector<ResultType>& output_host,
                          const unsigned int       dimensions,
                          const size_t             size_per_dimension,
+                         const bool               use_graphs,
                          Args... args)
 {
     // output_size has to be a multiple of the dimensions for sobol
@@ -180,17 +182,30 @@ void call_rocrand_kernel(std::vector<ResultType>& output_host,
     unsigned int* m_scramble_constants;
     load_scrambled_sobol32_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_init_kernel<Distribution>),
                        dim3(8, dimensions),
                        dim3(32),
                        0,
-                       0,
+                       stream,
                        output,
                        m_vector,
                        m_scramble_constants,
                        size_per_dimension,
                        args...);
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     //std::vector<ResultType> output_host(output_size);
     HIP_CHECK(hipMemcpy(output_host.data(),
@@ -201,7 +216,15 @@ void call_rocrand_kernel(std::vector<ResultType>& output_host,
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(m_vector));
     HIP_CHECK(hipFree(m_scramble_constants));
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
+
+class rocrand_kernel_scrambled_sobol32 : public ::testing::TestWithParam<bool> { };
 
 TEST(rocrand_kernel_scrambled_sobol32, rocrand_state_scrambled_sobol32_type)
 {
@@ -212,17 +235,18 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_state_scrambled_sobol32_type)
     EXPECT_TRUE(std::is_trivially_destructible<state_type>::value);
 }
 
-TEST(rocrand_kernel_scrambled_sobol32, rocrand)
+TEST_P(rocrand_kernel_scrambled_sobol32, rocrand)
 {
     using ResultType   = unsigned int;
     using Distribution = rocrand_f;
+    const bool use_graphs = GetParam();
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
     constexpr size_t       size_per_dimension = 8192;
     constexpr unsigned int dimensions         = 8;
 
     std::vector<ResultType> output_host;
-    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
+    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension, use_graphs);
 
     double mean = 0;
     for(ResultType v : output_host)
@@ -233,17 +257,18 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand)
     EXPECT_NEAR(mean, 0.5, 0.1);
 }
 
-TEST(rocrand_kernel_scrambled_sobol32, rocrand_uniform)
+TEST_P(rocrand_kernel_scrambled_sobol32, rocrand_uniform)
 {
     using ResultType   = float;
     using Distribution = rocrand_uniform_f;
+    const bool use_graphs = GetParam();
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
     constexpr size_t       size_per_dimension = 8192;
     constexpr unsigned int dimensions         = 8;
 
     std::vector<ResultType> output_host;
-    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
+    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension, use_graphs);
 
     double mean = 0;
     for(ResultType v : output_host)
@@ -254,17 +279,18 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_uniform)
     EXPECT_NEAR(mean, 0.5, 0.1);
 }
 
-TEST(rocrand_kernel_scrambled_sobol32, rocrand_uniform_double)
+TEST_P(rocrand_kernel_scrambled_sobol32, rocrand_uniform_double)
 {
     using ResultType   = double;
     using Distribution = rocrand_uniform_double_f;
+    const bool use_graphs = GetParam();
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
     constexpr size_t       size_per_dimension = 8192;
     constexpr unsigned int dimensions         = 8;
 
     std::vector<ResultType> output_host;
-    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
+    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension, use_graphs);
 
     double mean = 0;
     for(ResultType v : output_host)
@@ -275,17 +301,18 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_uniform_double)
     EXPECT_NEAR(mean, 0.5, 0.1);
 }
 
-TEST(rocrand_kernel_scrambled_sobol32, rocrand_normal)
+TEST_P(rocrand_kernel_scrambled_sobol32, rocrand_normal)
 {
     using ResultType   = float;
     using Distribution = rocrand_normal_f;
+    const bool use_graphs = GetParam();
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
     constexpr size_t       size_per_dimension = 8192;
     constexpr unsigned int dimensions         = 8;
 
     std::vector<ResultType> output_host;
-    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
+    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension, use_graphs);
 
     double mean = 0;
     for(ResultType v : output_host)
@@ -304,17 +331,18 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_normal)
     EXPECT_NEAR(stddev, 1.0, 0.2);
 }
 
-TEST(rocrand_kernel_scrambled_sobol32, rocrand_normal_double)
+TEST_P(rocrand_kernel_scrambled_sobol32, rocrand_normal_double)
 {
     using ResultType   = double;
     using Distribution = rocrand_normal_double_f;
+    const bool use_graphs = GetParam();
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
     constexpr size_t       size_per_dimension = 8192;
     constexpr unsigned int dimensions         = 8;
 
     std::vector<ResultType> output_host;
-    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension);
+    call_rocrand_kernel<ResultType, Distribution>(output_host, dimensions, size_per_dimension, use_graphs);
 
     double mean = 0;
     for(ResultType v : output_host)
@@ -333,10 +361,11 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_normal_double)
     EXPECT_NEAR(stddev, 1.0, 0.2);
 }
 
-TEST(rocrand_kernel_scrambled_sobol32, rocrand_log_normal)
+TEST_P(rocrand_kernel_scrambled_sobol32, rocrand_log_normal)
 {
     using ResultType   = float;
     using Distribution = rocrand_log_normal_f;
+    const bool use_graphs = GetParam();
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
     constexpr size_t       size_per_dimension = 8192;
@@ -349,6 +378,7 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_log_normal)
     call_rocrand_kernel<ResultType, Distribution>(output_host,
                                                   dimensions,
                                                   size_per_dimension,
+                                                  use_graphs,
                                                   ExpectedMean,
                                                   ExpectedStd);
 
@@ -373,10 +403,11 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_log_normal)
     EXPECT_NEAR(ExpectedStd, logstd, ExpectedStd * 0.2);
 }
 
-TEST(rocrand_kernel_scrambled_sobol32, rocrand_log_normal_double)
+TEST_P(rocrand_kernel_scrambled_sobol32, rocrand_log_normal_double)
 {
     using ResultType   = double;
     using Distribution = rocrand_log_normal_double_f;
+    const bool use_graphs = GetParam();
 
     // amount of generated numbers has to be a multiple of the dimensions for sobol, so size is given per dimension
     constexpr size_t       size_per_dimension = 8192;
@@ -389,6 +420,7 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_log_normal_double)
     call_rocrand_kernel<ResultType, Distribution>(output_host,
                                                   dimensions,
                                                   size_per_dimension,
+                                                  use_graphs,
                                                   ExpectedMean,
                                                   ExpectedStd);
 
@@ -413,12 +445,17 @@ TEST(rocrand_kernel_scrambled_sobol32, rocrand_log_normal_double)
     EXPECT_NEAR(ExpectedStd, logstd, ExpectedStd * 0.2);
 }
 
-class rocrand_kernel_scrambled_sobol32_poisson : public ::testing::TestWithParam<double>
+INSTANTIATE_TEST_SUITE_P(rocrand_kernel_scrambled_sobol32,
+                         rocrand_kernel_scrambled_sobol32,
+                        ::testing::Bool());
+
+class rocrand_kernel_scrambled_sobol32_poisson : public ::testing::TestWithParam<std::tuple<double, bool>>
 {};
 
 TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_poisson)
 {
-    const double lambda = GetParam();
+    const double lambda = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     using ResultType = unsigned int;
 
@@ -436,17 +473,32 @@ TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_poisson)
     unsigned int* m_scramble_constants;
     load_scrambled_sobol32_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
 
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_init_kernel<rocrand_poisson_f>),
                        dim3(8, dimensions),
                        dim3(32),
                        0,
-                       0,
+                       stream,
                        output,
                        m_vector,
                        m_scramble_constants,
                        size_per_dimension,
                        lambda);
     HIP_CHECK(hipGetLastError());
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipStreamSynchronize(stream));
 
     std::vector<ResultType> output_host(output_size);
     HIP_CHECK(hipMemcpy(output_host.data(),
@@ -474,10 +526,18 @@ TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_poisson)
 
     EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 const double lambdas[] = {1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0};
 
 INSTANTIATE_TEST_SUITE_P(rocrand_kernel_scrambled_sobol32_poisson,
                          rocrand_kernel_scrambled_sobol32_poisson,
-                         ::testing::ValuesIn(lambdas));
+                         ::testing::Combine(
+                            ::testing::ValuesIn(lambdas),
+                            ::testing::Bool()));

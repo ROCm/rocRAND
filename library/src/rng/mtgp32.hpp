@@ -196,7 +196,7 @@ public:
     {
         // Allocate device random number engines
         hipError_t error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
+            = hipMallocAsync(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size, m_stream);
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -213,7 +213,7 @@ public:
 
     ~rocrand_mtgp32()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_engines, m_stream));
     }
 
     void reset()
@@ -253,7 +253,7 @@ public:
         if (m_engines_size > mtgpdc_params_11213_num)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
 
-        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
+        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed, m_stream);
         if(status != ROCRAND_STATUS_SUCCESS)
             return ROCRAND_STATUS_ALLOCATION_FAILED;
 

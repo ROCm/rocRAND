@@ -799,13 +799,6 @@ public:
     rocrand_mt19937(unsigned long long seed = 0, hipStream_t stream = 0)
         : base_type(seed, 0, stream), m_engines_initialized(false), m_engines(NULL)
     {
-        // Allocate device random number engines
-        auto error = hipMalloc(reinterpret_cast<void**>(&m_engines),
-                               generator_count * rocrand_host::detail::n * sizeof(unsigned int));
-        if(error != hipSuccess)
-        {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
-        }
     }
 
     rocrand_mt19937(const rocrand_mt19937&) = delete;
@@ -818,7 +811,8 @@ public:
 
     ~rocrand_mt19937()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        if (m_engines)
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(m_engines, m_stream));
     }
 
     void reset()
@@ -848,30 +842,46 @@ public:
             return ROCRAND_STATUS_SUCCESS;
         }
 
+        // m_engines does not need to be re-allocated on every init() call - it can exist for the lifetime of the generator.
+        // We allocate it here rather than in the constructor because it is possible for the user to call rocrand_set_stream 
+        // between construction and the call to this init function.
+        if (!m_engines)
+        {
+            // Allocate device random number engines
+            auto error = hipMallocAsync(reinterpret_cast<void**>(&m_engines),
+                                        generator_count * rocrand_host::detail::n * sizeof(unsigned int), m_stream);
+            if (error != hipSuccess)
+                throw ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
+
         unsigned int* d_engines{};
-        err = hipMalloc(reinterpret_cast<void**>(&d_engines),
-                        generator_count * rocrand_host::detail::n * sizeof(unsigned int));
+        err = hipMallocAsync(reinterpret_cast<void**>(&d_engines),
+                             generator_count * rocrand_host::detail::n * sizeof(unsigned int),
+                             m_stream);
         if(err != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
         unsigned int* d_mt19937_jump{};
-        err = hipMalloc(reinterpret_cast<void**>(&d_mt19937_jump), sizeof(rocrand_h_mt19937_jump));
+        err = hipMallocAsync(reinterpret_cast<void**>(&d_mt19937_jump), 
+                             sizeof(rocrand_h_mt19937_jump), 
+                             m_stream);
         if(err != hipSuccess)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(d_engines, m_stream));
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
-        err = hipMemcpy(d_mt19937_jump,
-                        rocrand_h_mt19937_jump,
-                        sizeof(rocrand_h_mt19937_jump),
-                        hipMemcpyHostToDevice);
+        err = hipMemcpyAsync(d_mt19937_jump,
+                             rocrand_h_mt19937_jump,
+                             sizeof(rocrand_h_mt19937_jump),
+                             hipMemcpyHostToDevice,
+                             m_stream);
         if(err != hipSuccess)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_mt19937_jump));
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(d_engines, m_stream));
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(d_mt19937_jump, m_stream));
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
@@ -884,18 +894,17 @@ public:
                            m_seed,
                            d_mt19937_jump);
 
-        err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
         {
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_engines));
-            ROCRAND_HIP_FATAL_ASSERT(hipFree(d_mt19937_jump));
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(d_engines, m_stream));
+            ROCRAND_HIP_FATAL_ASSERT(hipFreeAsync(d_mt19937_jump, m_stream));
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
 
-        err = hipFree(d_mt19937_jump);
+        err = hipFreeAsync(d_mt19937_jump, m_stream);
         if(err != hipSuccess)
         {
-            hipFree(d_engines);
+            hipFreeAsync(d_engines, m_stream);
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
@@ -907,14 +916,13 @@ public:
                            octo_engine_type::accessor(m_engines),
                            d_engines);
 
-        err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
         {
-            hipFree(d_engines);
+            hipFreeAsync(d_engines, m_stream);
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
 
-        err = hipFree(d_engines);
+        err = hipFreeAsync(d_engines, m_stream);
         if(err != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;

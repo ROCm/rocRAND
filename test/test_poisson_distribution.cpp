@@ -28,6 +28,8 @@
 #include <rng/generators.hpp>
 #include <rng/distribution/poisson.hpp>
 
+#include "test_utils_hipgraphs.hpp"
+
 template<typename T>
 double get_mean(std::vector<T> values)
 {
@@ -51,46 +53,80 @@ double get_variance(std::vector<T> values, double mean)
     return variance / values.size();
 }
 
-class poisson_distribution_tests : public ::testing::TestWithParam<double> { };
+class poisson_distribution_tests : public ::testing::TestWithParam<std::tuple<double, bool>> { };
 
 TEST_P(poisson_distribution_tests, mean_var)
 {
-    const double lambda = GetParam();
+    const double lambda = std::get<0>(GetParam());
+    const double use_graphs = std::get<1>(GetParam());
 
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis;
-    dis.set_lambda(lambda);
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
     std::vector<unsigned int> values(samples_count);
 
-    for (size_t si = 0; si < samples_count; si++)
+    // This anonymous block ensures that:
+    // - distributions are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the distribution destructor is captured inside the graph
     {
-        const unsigned int v = dis(gen());
-        values[si] = v;
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis(stream);
+        dis.set_lambda(lambda);
+
+        for (size_t si = 0; si < samples_count; si++)
+        {
+            const unsigned int v = dis(gen());
+            values[si] = v;
+        }
+
+        dis.deallocate();
     }
 
-    dis.deallocate();
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     const double mean = get_mean(values);
     const double variance = get_variance(values, mean);
 
     EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-2));
     EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-2));
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TEST_P(poisson_distribution_tests, histogram_compare)
 {
-    const double lambda = GetParam();
+    const double lambda = std::get<0>(GetParam());
+    const double use_graphs = std::get<1>(GetParam());
 
     std::random_device rd;
     std::mt19937 gen(rd());
     std::poisson_distribution<unsigned int> host_dis(lambda);
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis;
-    dis.set_lambda(lambda);
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
     const size_t bin_size = static_cast<size_t>(std::max(2.0, sqrt(lambda)));
@@ -98,27 +134,41 @@ TEST_P(poisson_distribution_tests, histogram_compare)
     std::vector<unsigned int> historgram0(bins_count);
     std::vector<unsigned int> historgram1(bins_count);
 
-    for (size_t si = 0; si < samples_count; si++)
+    // This anonymous block ensures that:
+    // - distributions are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the distribution destructor is captured inside the graph
     {
-        const unsigned int v = host_dis(gen);
-        const size_t bin = v / bin_size;
-        if (bin < bins_count)
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis(stream);
+        dis.set_lambda(lambda);
+
+        for (size_t si = 0; si < samples_count; si++)
         {
-            historgram0[bin]++;
+            const unsigned int v = host_dis(gen);
+            const size_t bin = v / bin_size;
+            if (bin < bins_count)
+            {
+                historgram0[bin]++;
+            }
         }
+
+        for (size_t si = 0; si < samples_count; si++)
+        {
+            const unsigned int v = dis(gen());
+            const size_t bin = v / bin_size;
+            if (bin < bins_count)
+            {
+                historgram1[bin]++;
+            }
+        }
+
+        dis.deallocate();
     }
 
-    for (size_t si = 0; si < samples_count; si++)
-    {
-        const unsigned int v = dis(gen());
-        const size_t bin = v / bin_size;
-        if (bin < bins_count)
-        {
-            historgram1[bin]++;
-        }
-    }
-
-    dis.deallocate();
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     // Very loose comparison
     for (size_t bi = 0; bi < bins_count; bi++)
@@ -127,10 +177,18 @@ TEST_P(poisson_distribution_tests, histogram_compare)
         const unsigned int h1 = historgram1[bi];
         EXPECT_NEAR(h0, h1, std::max(samples_count * 1e-3, std::max(h0, h1) * 1e-1));
     }
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
 
 INSTANTIATE_TEST_SUITE_P(poisson_distribution_tests,
                         poisson_distribution_tests,
-                        ::testing::ValuesIn(lambdas));
+                        ::testing::Combine(
+                            ::testing::ValuesIn(lambdas),
+                            ::testing::Bool()));

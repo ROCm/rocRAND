@@ -36,11 +36,11 @@ public:
 
     typedef rocrand_discrete_distribution_base<Method, IsHostSide> base;
 
-    rocrand_poisson_distribution()
-        : base() { }
+    rocrand_poisson_distribution(hipStream_t stream = 0)
+        : base(stream) { }
 
-    explicit rocrand_poisson_distribution(double lambda)
-        : rocrand_poisson_distribution()
+    explicit rocrand_poisson_distribution(double lambda, hipStream_t stream = 0)
+        : rocrand_poisson_distribution(stream)
     {
         set_lambda(lambda);
     }
@@ -53,7 +53,7 @@ public:
 
         calculate_probabilities(p, capacity, lambda);
 
-        this->init(p, this->size, this->offset);
+        this->init(p, this->size, this->offset, this->m_stream);
     }
 
 protected:
@@ -144,7 +144,6 @@ public:
     }
 
 private:
-
     double lambda;
 };
 

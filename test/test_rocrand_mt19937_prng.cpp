@@ -31,16 +31,44 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
-TEST(rocrand_mt19937_prng_tests, uniform_uint_test)
+#include <iostream>
+
+class rocrand_mt19937_prng_tests : public testing::TestWithParam<bool> { };
+
+TEST_P(rocrand_mt19937_prng_tests, uniform_uint_test)
 {
+    const bool use_graphs = GetParam();
     const size_t  size = 1313;
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    rocrand_mt19937 g;
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_mt19937 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
@@ -55,17 +83,45 @@ TEST(rocrand_mt19937_prng_tests, uniform_uint_test)
     ASSERT_NEAR(mean, UINT_MAX / 2, UINT_MAX / 20);
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_mt19937_prng_tests, uniform_float_test)
+TEST_P(rocrand_mt19937_prng_tests, uniform_float_test)
 {
+    const bool use_graphs = GetParam();
     const size_t size = 1313;
     float*       data;
     hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
 
-    rocrand_mt19937 g;
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_mt19937 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     float host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
@@ -82,17 +138,45 @@ TEST(rocrand_mt19937_prng_tests, uniform_float_test)
     ASSERT_NEAR(mean, 0.5f, 0.05f);
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_mt19937_prng_tests, normal_float_test)
+TEST_P(rocrand_mt19937_prng_tests, normal_float_test)
 {
+    const bool use_graphs = GetParam();
     const size_t size = 1313;
     float*       data;
     hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(float) * size);
 
-    rocrand_mt19937 g;
-    ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_mt19937 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate_normal(data, size, 2.0f, 5.0f));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     float host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
@@ -116,17 +200,45 @@ TEST(rocrand_mt19937_prng_tests, normal_float_test)
     EXPECT_NEAR(5.0f, std, 1.0f); // 20%
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_mt19937_prng_tests, poisson_test)
+TEST_P(rocrand_mt19937_prng_tests, poisson_test)
 {
+    const bool use_graphs = GetParam();
     const size_t  size = 1313;
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    rocrand_mt19937 g;
-    ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_mt19937 g;
+        ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+        ROCRAND_CHECK(g.generate_poisson(data, size, 5.5));
+    }
+    
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        hipStreamSynchronize(stream);
 
     unsigned int host_data[size];
     HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
@@ -151,33 +263,70 @@ TEST(rocrand_mt19937_prng_tests, poisson_test)
     EXPECT_NEAR(var, 5.5, std::max(1.0, 5.5 * 1e-2));
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 // Check if the numbers generated by first generate() call are different from
 // the numbers generated by the 2nd call (same generator)
-TEST(rocrand_mt19937_prng_tests, state_progress_test)
+TEST_P(rocrand_mt19937_prng_tests, state_progress_test)
 {
+    const bool use_graphs = GetParam();
+
     // Device data
     const size_t  size = 1025;
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    // Generator
-    rocrand_mt19937 g0;
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     unsigned int host_data1[size];
-    HIP_CHECK(hipMemcpy(host_data1, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
     unsigned int host_data2[size];
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        // Generator
+        rocrand_mt19937 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+
+        // Generate using g0 and copy to host
+        ROCRAND_CHECK(g0.generate(data, size));
+
+        if (use_graphs)
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+        
+        HIP_CHECK(hipMemcpy(host_data1, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        if (use_graphs)
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+
+        // Generate using g0 and copy to host
+        ROCRAND_CHECK(g0.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
+
     HIP_CHECK(hipMemcpy(host_data2, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -192,12 +341,18 @@ TEST(rocrand_mt19937_prng_tests, state_progress_test)
     EXPECT_LT(same, static_cast<size_t>(0.01f * size));
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 // Checks if generators with the same seed and in the same state
 // generate the same numbers
-TEST(rocrand_mt19937_prng_tests, same_seed_test)
+TEST_P(rocrand_mt19937_prng_tests, same_seed_test)
 {
+    const bool use_graphs = GetParam();
     const unsigned long long seed = 5ULL;
 
     // Device side data
@@ -205,25 +360,59 @@ TEST(rocrand_mt19937_prng_tests, same_seed_test)
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    // Generators
-    rocrand_mt19937 g0, g1;
-    // Set same seeds
-    g0.set_seed(seed);
-    g1.set_seed(seed);
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     unsigned int g0_host_data[size];
-    HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g1 and copy to host
-    ROCRAND_CHECK(g1.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
     unsigned int g1_host_data[size];
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        // Generators
+        rocrand_mt19937 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+        rocrand_mt19937 g1;
+        ROCRAND_CHECK(rocrand_set_stream(&g1, stream));
+
+        // Set same seeds
+        g0.set_seed(seed);
+        g1.set_seed(seed);
+
+        // Generate using g0 and copy to host
+        ROCRAND_CHECK(g0.generate(data, size));
+
+        if (use_graphs)
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        if (use_graphs)
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+
+        // Generate using g1 and copy to host
+        ROCRAND_CHECK(g1.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
+
+    
     HIP_CHECK(hipMemcpy(g1_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -235,12 +424,18 @@ TEST(rocrand_mt19937_prng_tests, same_seed_test)
     }
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 // Checks if generators with the same seed and in the same state generate
 // the same numbers
-TEST(rocrand_mt19937_prng_tests, different_seed_test)
+TEST_P(rocrand_mt19937_prng_tests, different_seed_test)
 {
+    const bool use_graphs = GetParam();
     const unsigned long long seed0 = 5ULL;
     const unsigned long long seed1 = 10ULL;
 
@@ -249,26 +444,59 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     unsigned int* data;
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), sizeof(unsigned int) * size));
 
-    // Generators
-    rocrand_mt19937 g0, g1;
-    // Set different seeds
-    g0.set_seed(seed0);
-    g1.set_seed(seed1);
-    ASSERT_NE(g0.get_seed(), g1.get_seed());
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     unsigned int g0_host_data[size];
-    HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g1 and copy to host
-    ROCRAND_CHECK(g1.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
     unsigned int g1_host_data[size];
+
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        // Generators
+        rocrand_mt19937 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+        rocrand_mt19937 g1;
+        ROCRAND_CHECK(rocrand_set_stream(&g1, stream));
+
+        // Set different seeds
+        g0.set_seed(seed0);
+        g1.set_seed(seed1);
+        ASSERT_NE(g0.get_seed(), g1.get_seed());
+
+        // Generate using g0 and copy to host
+        ROCRAND_CHECK(g0.generate(data, size));
+
+        if (use_graphs)
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        if (use_graphs)
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+
+        // Generate using g1 and copy to host
+        ROCRAND_CHECK(g1.generate(data, size));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
+
     HIP_CHECK(hipMemcpy(g1_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -283,6 +511,11 @@ TEST(rocrand_mt19937_prng_tests, different_seed_test)
     EXPECT_LT(same, static_cast<size_t>(0.01f * size));
 
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 static constexpr unsigned int n = 624;
@@ -343,7 +576,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
     engines[thread_id] = engine;
 }
 
-TEST(rocrand_mt19937_prng_tests, subsequence_test)
+TEST(rocrand_mt19937_prng_kernel_tests, subsequence_test)
 {
     using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
     constexpr unsigned int           threads_per_generator = 8U;
@@ -847,7 +1080,7 @@ struct mt19937_engine
     }
 };
 
-TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
+TEST(rocrand_mt19937_prng_engine_tests, jump_ahead_test)
 {
     // Compare states of all engines
     // * computed consecutively on host using Sliding window algorithm
@@ -922,7 +1155,7 @@ TEST(rocrand_mt19937_prng_tests, jump_ahead_test)
 // Check that subsequent generations of different sizes produce one
 // sequence without gaps, no matter how many values are generated per call.
 template<typename T, typename GenerateFunc>
-void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
+void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1, bool use_graphs = false)
 {
     const size_t stride = n * generator_count * divisor;
     // Large sizes are used for triggering all code paths in the kernels (generating of middle,
@@ -963,42 +1196,66 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
     const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
     const size_t size2 = std::min(size0, size1);
 
-    rocrand_mt19937 g0;
-    rocrand_mt19937 g1;
-    rocrand_mt19937 g2;
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     std::vector<T> host_data0(size0);
     std::vector<T> host_data1(size1);
     std::vector<T> host_data2(size2);
 
-    size_t current0 = 0;
-    for(size_t s : sizes0)
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
     {
-        T* data0;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data0), sizeof(T) * s));
-        HIP_CHECK(hipMemset(data0, -1, sizeof(T) * s));
-        generate_func(g0, data0, s);
-        HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
-        current0 += s;
-        HIP_CHECK(hipFree(data0));
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_mt19937 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+        rocrand_mt19937 g1;
+        ROCRAND_CHECK(rocrand_set_stream(&g1, stream));
+        rocrand_mt19937 g2;
+        ROCRAND_CHECK(rocrand_set_stream(&g2, stream));
+
+        size_t current0 = 0;
+        for(size_t s : sizes0)
+        {
+            T* data0;
+            HIP_CHECK(hipMallocAsync(reinterpret_cast<void**>(&data0), sizeof(T) * s, stream));
+            HIP_CHECK(hipMemsetAsync(data0, -1, sizeof(T) * s, stream));
+            generate_func(g0, data0, s);
+            HIP_CHECK(hipMemcpyAsync(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault, stream));
+            current0 += s;
+            HIP_CHECK(hipFreeAsync(data0, stream));
+        }
+        size_t current1 = 0;
+        for(size_t s : sizes1)
+        {
+            T* data1;
+            HIP_CHECK(hipMallocAsync(reinterpret_cast<void**>(&data1), sizeof(T) * s, stream));
+            HIP_CHECK(hipMemsetAsync(data1, -1, sizeof(T) * s, stream));
+            generate_func(g1, data1, s);
+            HIP_CHECK(hipMemcpyAsync(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault, stream));
+            current1 += s;
+            HIP_CHECK(hipFreeAsync(data1, stream));
+        }
+        T* data2;
+        HIP_CHECK(hipMallocAsync(reinterpret_cast<void**>(&data2), sizeof(T) * size2, stream));
+        HIP_CHECK(hipMemsetAsync(data2, -1, sizeof(T) * size2, stream));
+        generate_func(g2, data2, size2);
+        HIP_CHECK(hipMemcpyAsync(host_data2.data(), data2, sizeof(T) * size2, hipMemcpyDefault, stream));
+        HIP_CHECK(hipFreeAsync(data2, stream));
     }
-    size_t current1 = 0;
-    for(size_t s : sizes1)
-    {
-        T* data1;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data1), sizeof(T) * s));
-        HIP_CHECK(hipMemset(data1, -1, sizeof(T) * s));
-        generate_func(g1, data1, s);
-        HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
-        current1 += s;
-        HIP_CHECK(hipFree(data1));
-    }
-    T* data2;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data2), sizeof(T) * size2));
-    HIP_CHECK(hipMemset(data2, -1, sizeof(T) * size2));
-    generate_func(g2, data2, size2);
-    HIP_CHECK(hipMemcpy(host_data2.data(), data2, sizeof(T) * size2, hipMemcpyDefault));
-    HIP_CHECK(hipFree(data2));
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    // if (use_graphs)
+    //     HIP_CHECK(hipStreamSynchronize(stream));
 
     size_t incorrect = 0;
     for(size_t i = 0; i < size2; i++)
@@ -1020,85 +1277,107 @@ void continuity_test(GenerateFunc generate_func, unsigned int divisor = 1)
         }
     }
     ASSERT_EQ(incorrect, 0);
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_uniform_uint_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_uint_test)
 {
     continuity_test<unsigned int>([](rocrand_mt19937& g, unsigned int* data, size_t s)
-                                  { g.generate(data, s); });
+                                  { ROCRAND_CHECK(g.generate(data, s)); },
+                                  1,
+                                  GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_uniform_char_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_char_test)
 {
     continuity_test<unsigned char>([](rocrand_mt19937& g, unsigned char* data, size_t s)
-                                   { g.generate(data, s); },
-                                   4);
+                                   { ROCRAND_CHECK(g.generate(data, s)); },
+                                   4,
+                                   GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_uniform_short_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_short_test)
 {
     continuity_test<unsigned short>([](rocrand_mt19937& g, unsigned short* data, size_t s)
-                                    { g.generate(data, s); },
-                                    2);
+                                    { ROCRAND_CHECK(g.generate(data, s)); },
+                                    2,
+                                    GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_uniform_float_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_float_test)
 {
     continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
-                           { g.generate_uniform(data, s); });
+                           { ROCRAND_CHECK(g.generate_uniform(data, s)); },
+                           1,
+                           GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_uniform_half_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_half_test)
 {
     continuity_test<__half>([](rocrand_mt19937& g, __half* data, size_t s)
-                            { g.generate_uniform(data, s); },
-                            2);
+                            { ROCRAND_CHECK(g.generate_uniform(data, s)); },
+                            2,
+                            GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_uniform_double_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_uniform_double_test)
 {
     continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
-                            { g.generate_uniform(data, s); });
+                            { ROCRAND_CHECK(g.generate_uniform(data, s)); },
+                            1,
+                            GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_normal_float_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_normal_float_test)
 {
     continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
-                           { g.generate_normal(data, s, 0.0f, 1.0f); },
-                           2);
+                           { ROCRAND_CHECK(g.generate_normal(data, s, 0.0f, 1.0f)); },
+                           2,
+                           GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_normal_double_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_normal_double_test)
 {
     continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
-                            { g.generate_normal(data, s, 0.0, 1.0); },
-                            2);
+                            { ROCRAND_CHECK(g.generate_normal(data, s, 0.0, 1.0)); },
+                            2,
+                            GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_log_normal_float_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_log_normal_float_test)
 {
     continuity_test<float>([](rocrand_mt19937& g, float* data, size_t s)
-                           { g.generate_log_normal(data, s, 0.0f, 1.0f); },
-                           2);
+                           { ROCRAND_CHECK(g.generate_log_normal(data, s, 0.0f, 1.0f)); },
+                           2,
+                           GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_log_normal_double_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_log_normal_double_test)
 {
     continuity_test<double>([](rocrand_mt19937& g, double* data, size_t s)
-                            { g.generate_log_normal(data, s, 0.0, 1.0); },
-                            2);
+                            { ROCRAND_CHECK(g.generate_log_normal(data, s, 0.0, 1.0)); },
+                            2,
+                            GetParam());
 }
 
-TEST(rocrand_mt19937_prng_tests, continuity_poisson_test)
+TEST_P(rocrand_mt19937_prng_tests, continuity_poisson_test)
 {
     continuity_test<unsigned int>([](rocrand_mt19937& g, unsigned int* data, size_t s)
-                                  { g.generate_poisson(data, s, 100.0); });
+                                  { ROCRAND_CHECK(g.generate_poisson(data, s, 100.0)); },
+                                  1,
+                                  GetParam());
 }
 
 // Check that that heads and tails are generated correctly for misaligned pointers or sizes.
 template<typename T, typename GenerateFunc>
 void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
 {
+    const bool use_graphs = rocrand_mt19937_prng_tests::GetParam();
     const size_t stride = n * generator_count * divisor;
     // Large sizes are used for triggering all code paths in the kernels.
     std::vector<size_t>
@@ -1110,11 +1389,18 @@ void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
 
     const T canary = std::numeric_limits<T>::max();
 
-    rocrand_mt19937 g;
-
     std::vector<T> host_data(max_size_with_canary);
     T*             data;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), sizeof(T) * max_size_with_canary));
+
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t offset : {0, 1, 2, 3})
     {
@@ -1128,7 +1414,23 @@ void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
             HIP_CHECK(
                 hipMemcpy(data, host_data.data(), sizeof(T) * s_with_canary, hipMemcpyDefault));
 
-            generate_func(g, data + canary_size + offset, s);
+            // This anonymous block ensures that:
+            // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+            // - the call to the generator destructor is captured inside the graph
+            {
+                if (use_graphs)
+                    graph = test_utils::createGraphHelper(stream);
+
+                rocrand_mt19937 g;
+                ROCRAND_CHECK(rocrand_set_stream(&g, stream));
+                generate_func(g, data + canary_size + offset, s);
+            }
+
+            if (use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
 
             HIP_CHECK(
                 hipMemcpy(host_data.data(), data, sizeof(T) * s_with_canary, hipMemcpyDefault));
@@ -1158,30 +1460,32 @@ void head_and_tail_test(GenerateFunc generate_func, unsigned int divisor)
         }
     }
     HIP_CHECK(hipFree(data));
+    if (use_graphs)
+        HIP_CHECK(hipStreamDestroy(stream));
 }
 
-TEST(rocrand_mt19937_prng_tests, head_and_tail_normal_float_test)
+TEST_P(rocrand_mt19937_prng_tests, head_and_tail_normal_float_test)
 {
     head_and_tail_test<float>([](rocrand_mt19937& g, float* data, size_t s)
                               { g.generate_normal(data, s, 0.0f, 1.0f); },
                               2);
 }
 
-TEST(rocrand_mt19937_prng_tests, head_and_tail_normal_double_test)
+TEST_P(rocrand_mt19937_prng_tests, head_and_tail_normal_double_test)
 {
     head_and_tail_test<double>([](rocrand_mt19937& g, double* data, size_t s)
                                { g.generate_normal(data, s, 0.0, 1.0); },
                                2);
 }
 
-TEST(rocrand_mt19937_prng_tests, head_and_tail_log_normal_float_test)
+TEST_P(rocrand_mt19937_prng_tests, head_and_tail_log_normal_float_test)
 {
     head_and_tail_test<float>([](rocrand_mt19937& g, float* data, size_t s)
                               { g.generate_log_normal(data, s, 0.0f, 1.0f); },
                               2);
 }
 
-TEST(rocrand_mt19937_prng_tests, head_and_tail_log_normal_double_test)
+TEST_P(rocrand_mt19937_prng_tests, head_and_tail_log_normal_double_test)
 {
     head_and_tail_test<double>([](rocrand_mt19937& g, double* data, size_t s)
                                { g.generate_log_normal(data, s, 0.0, 1.0); },
@@ -1197,6 +1501,7 @@ void change_distribution_test(GenerateFunc0 generate_func0,
 {
     SCOPED_TRACE(testing::Message() << "size0 = " << size0 << " start1 = " << start1);
 
+    const bool use_graphs = rocrand_mt19937_prng_tests::GetParam();
     const size_t size1 = threads_per_generator * generator_count * 3;
 
     T0* data0;
@@ -1206,16 +1511,38 @@ void change_distribution_test(GenerateFunc0 generate_func0,
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data10), sizeof(T1) * size1));
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data11), sizeof(T1) * (start1 + size1)));
 
-    rocrand_mt19937 g0;
-    // Generate the first distribution
-    generate_func0(g0, data0, size0);
-    // Change distribution to the second
-    generate_func1(g0, data10, size1);
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
+    if (use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create a non-blocking one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
-    rocrand_mt19937 g1;
-    // Generate the second distribution considering that first `start1` values correspond to
-    // `size0` values of the first distribution and some discarded values
-    generate_func1(g1, data11, start1 + size1);
+    // This anonymous block ensures that:
+    // - generators are destroyed before the stream because their destructors may call hipFreeAsync
+    // - the call to the generator destructor is captured inside the graph
+    {
+        if (use_graphs)
+            graph = test_utils::createGraphHelper(stream);
+
+        rocrand_mt19937 g0;
+        ROCRAND_CHECK(rocrand_set_stream(&g0, stream));
+
+        // Generate the first distribution
+        generate_func0(g0, data0, size0);
+        // Change distribution to the second
+        generate_func1(g0, data10, size1);
+
+        rocrand_mt19937 g1(0, stream);
+        ROCRAND_CHECK(rocrand_set_stream(&g1, stream));
+        // Generate the second distribution considering that first `start1` values correspond to
+        // `size0` values of the first distribution and some discarded values
+        generate_func1(g1, data11, start1 + size1);
+    }
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
 
     std::vector<T1> host_data10(size1);
     std::vector<T1> host_data11(size1);
@@ -1231,11 +1558,16 @@ void change_distribution_test(GenerateFunc0 generate_func0,
     HIP_CHECK(hipFree(data0));
     HIP_CHECK(hipFree(data10));
     HIP_CHECK(hipFree(data11));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 const size_t s = threads_per_generator * generator_count;
 
-TEST(rocrand_mt19937_prng_tests, change_distribution0_test)
+TEST_P(rocrand_mt19937_prng_tests, change_distribution0_test)
 {
     // Larger type (normal float) to smaller type (uniform uint)
     std::vector<std::pair<size_t, size_t>> test_cases{
@@ -1249,13 +1581,13 @@ TEST(rocrand_mt19937_prng_tests, change_distribution0_test)
         change_distribution_test<float, unsigned int>(
             [](rocrand_mt19937& g, float* data, size_t s)
             { g.generate_normal(data, s, 0.0f, 1.0f); },
-            [](rocrand_mt19937& g, unsigned int* data, size_t s) { g.generate(data, s); },
+            [](rocrand_mt19937& g, unsigned int* data, size_t s) { ROCRAND_CHECK(g.generate(data, s)); },
             test_case.first,
             test_case.second);
     }
 }
 
-TEST(rocrand_mt19937_prng_tests, change_distribution1_test)
+TEST_P(rocrand_mt19937_prng_tests, change_distribution1_test)
 {
     // Smaller type (uniform float) to larger type (normal double)
     std::vector<std::pair<size_t, size_t>> test_cases{
@@ -1276,7 +1608,7 @@ TEST(rocrand_mt19937_prng_tests, change_distribution1_test)
     }
 }
 
-TEST(rocrand_mt19937_prng_tests, change_distribution2_test)
+TEST_P(rocrand_mt19937_prng_tests, change_distribution2_test)
 {
     // Smaller type (uniform double) to larger type (normal double)
     std::vector<std::pair<size_t, size_t>> test_cases{
@@ -1296,7 +1628,7 @@ TEST(rocrand_mt19937_prng_tests, change_distribution2_test)
     }
 }
 
-TEST(rocrand_mt19937_prng_tests, change_distribution3_test)
+TEST_P(rocrand_mt19937_prng_tests, change_distribution3_test)
 {
     // Larger type (normal double) to smaller type (uniform ushort)
     std::vector<std::pair<size_t, size_t>> test_cases{
@@ -1310,8 +1642,12 @@ TEST(rocrand_mt19937_prng_tests, change_distribution3_test)
         change_distribution_test<double, unsigned short>(
             [](rocrand_mt19937& g, double* data, size_t s)
             { g.generate_normal(data, s, 0.0, 1.0); },
-            [](rocrand_mt19937& g, unsigned short* data, size_t s) { g.generate(data, s); },
+            [](rocrand_mt19937& g, unsigned short* data, size_t s) { ROCRAND_CHECK(g.generate(data, s)); },
             test_case.first,
             test_case.second);
     }
 }
+
+INSTANTIATE_TEST_SUITE_P(rocrand_mt19937_prng_tests,
+                         rocrand_mt19937_prng_tests,
+                         testing::Bool());

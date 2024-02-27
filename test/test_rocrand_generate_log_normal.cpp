@@ -26,20 +26,14 @@
 
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_utils_hipgraphs.hpp"
 
-class rocrand_generate_log_normal_tests : public ::testing::TestWithParam<rocrand_rng_type> { };
+class rocrand_generate_log_normal_tests : public ::testing::TestWithParam<std::tuple<rocrand_rng_type, bool>> { };
 
 TEST_P(rocrand_generate_log_normal_tests, float_test)
 {
-    const rocrand_rng_type rng_type = GetParam();
-
-    rocrand_generator generator;
-    ROCRAND_CHECK(
-        rocrand_create_generator(
-            &generator,
-            rng_type
-        )
-    );
+    const rocrand_rng_type rng_type = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     const size_t size = 12563;
     float mean = 5.0f;
@@ -48,38 +42,78 @@ TEST_P(rocrand_generate_log_normal_tests, float_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
-    // Any sizes
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal(generator, data, 1, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
 
-    // Any alignment
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal(generator, data+1, 2, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+    // This anonymous block ensures that generators are destroyed before the stream
+    // (because their destructors may call hipFreeAsync)
+    { 
+        rocrand_generator generator;
+        ROCRAND_CHECK(
+            rocrand_create_generator(
+                &generator,
+                rng_type
+            )
+        );
 
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal(generator, data, size, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+        if (use_graphs)
+        {
+            HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+            ROCRAND_CHECK(::rocrand_set_stream(generator, stream));
+            graph = test_utils::createGraphHelper(stream);
+        }
+
+        // Any sizes
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal(generator, data, 1, mean, stddev)
+        );
+
+        if (use_graphs)
+        {
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+        }
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        // Any alignment
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal(generator, data+1, 2, mean, stddev)
+        );
+
+        if (use_graphs)
+        {
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+        }
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal(generator, data, size, mean, stddev)
+        );
+
+        ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TEST_P(rocrand_generate_log_normal_tests, double_test)
 {
-    const rocrand_rng_type rng_type = GetParam();
-
-    rocrand_generator generator;
-    ROCRAND_CHECK(
-        rocrand_create_generator(
-            &generator,
-            rng_type
-        )
-    );
+    const rocrand_rng_type rng_type = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     const size_t size = 12563;
     double mean = 5.0;
@@ -88,38 +122,77 @@ TEST_P(rocrand_generate_log_normal_tests, double_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
-    // Any sizes
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal_double(generator, data, 1, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
 
-    // Any alignment
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal_double(generator, data+1, 2, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+    // This anonymous block ensures that generators are destroyed before the stream
+    // (because their destructors may call hipFreeAsync)
+    { 
+        rocrand_generator generator;
+        ROCRAND_CHECK(
+            rocrand_create_generator(
+                &generator,
+                rng_type
+            )
+        );
 
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal_double(generator, data, size, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+        if (use_graphs)
+        {
+            HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+            ROCRAND_CHECK(::rocrand_set_stream(generator, stream));
+            graph = test_utils::createGraphHelper(stream);
+        }
+
+        // Any sizes
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal_double(generator, data, 1, mean, stddev)
+        );
+        if (use_graphs)
+        {
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+        }
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        // Any alignment
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal_double(generator, data+1, 2, mean, stddev)
+        );
+        if (use_graphs)
+        {
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+        }
+        else
+        HIP_CHECK(hipDeviceSynchronize());
+
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal_double(generator, data, size, mean, stddev)
+        );
+
+        ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TEST_P(rocrand_generate_log_normal_tests, half_test)
 {
-    const rocrand_rng_type rng_type = GetParam();
-
-    rocrand_generator generator;
-    ROCRAND_CHECK(
-        rocrand_create_generator(
-            &generator,
-            rng_type
-        )
-    );
+    const rocrand_rng_type rng_type = std::get<0>(GetParam());
+    const bool use_graphs = std::get<1>(GetParam());
 
     const size_t size = 12563;
     half         mean   = __float2half(5.0f);
@@ -128,25 +201,72 @@ TEST_P(rocrand_generate_log_normal_tests, half_test)
     HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&data), size * sizeof(half)));
     HIP_CHECK(hipDeviceSynchronize());
 
-    // Any sizes
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal_half(generator, data, 1, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+    hipStream_t stream = 0;
+    hipGraph_t graph;
+    hipGraphExec_t graph_instance;
 
-    // Any alignment
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal_half(generator, data+1, 2, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+    // This anonymous block ensures that generators are destroyed before the stream
+    // (because their destructors may call hipFreeAsync)
+    { 
+        rocrand_generator generator;
+        ROCRAND_CHECK(
+            rocrand_create_generator(
+                &generator,
+                rng_type
+            )
+        );
 
-    ROCRAND_CHECK(
-        rocrand_generate_log_normal_half(generator, data, size, mean, stddev)
-    );
-    HIP_CHECK(hipDeviceSynchronize());
+        if (use_graphs)
+        {
+            HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+            ROCRAND_CHECK(::rocrand_set_stream(generator, stream));
+            graph = test_utils::createGraphHelper(stream);
+        }
+
+        // Any sizes
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal_half(generator, data, 1, mean, stddev)
+        );
+
+        if (use_graphs)
+        {
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+        }
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        // Any alignment
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal_half(generator, data+1, 2, mean, stddev)
+        );
+
+        if (use_graphs)
+        {
+            graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            test_utils::resetGraphHelper(graph, graph_instance, stream);
+        }
+        else
+            HIP_CHECK(hipDeviceSynchronize());
+
+        ROCRAND_CHECK(
+            rocrand_generate_log_normal_half(generator, data, size, mean, stddev)
+        );
+
+        ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    }
+
+    if (use_graphs)
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    else
+        HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
-    ROCRAND_CHECK(rocrand_destroy_generator(generator));
+    if (use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TEST(rocrand_generate_log_normal_tests, neg_test)
@@ -161,8 +281,11 @@ TEST(rocrand_generate_log_normal_tests, neg_test)
         rocrand_generate_log_normal(generator, (float *) data, size, mean, stddev),
         ROCRAND_STATUS_NOT_CREATED
     );
+    HIP_CHECK(hipDeviceSynchronize());
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_log_normal_tests,
                         rocrand_generate_log_normal_tests,
-                        ::testing::ValuesIn(rng_types));
+                        ::testing::Combine(
+                            ::testing::ValuesIn(rng_types),
+                            ::testing::Bool()));
