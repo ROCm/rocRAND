@@ -22,14 +22,14 @@
 #define ROCRAND_COMMON_H_
 
 #define ROCRAND_2POW16_INV (1.5258789e-05f)
-#define ROCRAND_2POW16_INV_2PI (1.5258789e-05f * 6.2831855f)
+#define ROCRAND_2POW16_INV_2PI (9.58738e-05f)
 #define ROCRAND_2POW32_INV (2.3283064e-10f)
 #define ROCRAND_2POW32_INV_DOUBLE (2.3283064365386963e-10)
 #define ROCRAND_2POW64_INV (5.4210109e-20f)
 #define ROCRAND_2POW64_INV_DOUBLE (5.4210108624275221700372640043497e-20)
-#define ROCRAND_2POW32_INV_2PI (2.3283064e-10f * 6.2831855f)
+#define ROCRAND_2POW32_INV_2PI (1.46291807e-09f)
 #define ROCRAND_2POW53_INV_DOUBLE (1.1102230246251565e-16)
-#define ROCRAND_PI  (3.1415926f)
+#define ROCRAND_PI (3.141592653f)
 #define ROCRAND_PI_DOUBLE  (3.1415926535897932)
 #define ROCRAND_2PI (6.2831855f)
 #define ROCRAND_SQRT2 (1.4142135f)
@@ -47,6 +47,48 @@
     && (defined(__HIP_PLATFORM_AMD__) \
         || (defined(__HIP_PLATFORM_NVCC__) && (__CUDA_ARCH__ >= 530)))
     #define ROCRAND_HALF_MATH_SUPPORTED
+#endif
+
+//  Copyright 2001 John Maddock.
+//  Copyright 2017 Peter Dimov.
+//
+//  Distributed under the Boost Software License, Version 1.0.
+//
+//  See http://www.boost.org/LICENSE_1_0.txt
+//
+//  BOOST_STRINGIZE(X)
+#define ROCRAND_STRINGIZE(X) ROCRAND_DO_STRINGIZE(X)
+#define ROCRAND_DO_STRINGIZE(X) #X
+
+//  Copyright 2017 Peter Dimov.
+//
+//  Distributed under the Boost Software License, Version 1.0.
+//
+//  See http://www.boost.org/LICENSE_1_0.txt
+//
+//  BOOST_PRAGMA_MESSAGE("message")
+//
+//  Expands to the equivalent of #pragma message("message")
+#if defined(__INTEL_COMPILER)
+    #define ROCRAND_PRAGMA_MESSAGE(x) \
+        __pragma(message(__FILE__ "(" ROCRAND_STRINGIZE(__LINE__) "): note: " x))
+#elif defined(__GNUC__)
+    #define ROCRAND_PRAGMA_MESSAGE(x) _Pragma(ROCRAND_STRINGIZE(message(x)))
+#elif defined(_MSC_VER)
+    #define ROCRAND_PRAGMA_MESSAGE(x) \
+        __pragma(message(__FILE__ "(" ROCRAND_STRINGIZE(__LINE__) "): note: " x))
+#else
+    #define ROCRAND_PRAGMA_MESSAGE(x)
+#endif
+
+#if __cplusplus >= 201402L
+    #define ROCRAND_DEPRECATED(msg) [[deprecated(msg)]]
+#elif defined(_MSC_VER) && !defined(__clang__)
+    #define ROCRAND_DEPRECATED(msg) __declspec(deprecated(msg))
+#elif defined(__clang__) || defined(__GNUC__)
+    #define ROCRAND_DEPRECATED(msg) __attribute__((deprecated(msg)))
+#else
+    #define ROCRAND_DEPRECATED(msg)
 #endif
 
 namespace rocrand_device {

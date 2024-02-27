@@ -116,17 +116,31 @@ public:
 
     rocrand_poisson_distribution<Method, IsHostSide> dis;
 
-    poisson_distribution_manager()
-        : lambda(0.0)
-    { }
+    poisson_distribution_manager() = default;
 
     poisson_distribution_manager(const poisson_distribution_manager&) = delete;
 
-    poisson_distribution_manager(poisson_distribution_manager&&) = delete;
+    poisson_distribution_manager(poisson_distribution_manager&& other)
+        : dis(other.dis), lambda(other.lambda)
+    {
+        // For now, we didn't make rocrand_poisson_distribution move-only
+        // We copied the pointers of dis. Prevent deallocation by the destructor of other
+        other.dis = {};
+    }
 
     poisson_distribution_manager& operator=(const poisson_distribution_manager&) = delete;
 
-    poisson_distribution_manager& operator=(poisson_distribution_manager&&) = delete;
+    poisson_distribution_manager& operator=(poisson_distribution_manager&& other)
+    {
+        dis    = other.dis;
+        lambda = other.lambda;
+
+        // For now, we didn't make rocrand_poisson_distribution move-only
+        // We copied the pointers of dis. Prevent deallocation by the destructor of other
+        other.dis = {};
+
+        return *this;
+    }
 
     ~poisson_distribution_manager()
     {
@@ -144,23 +158,22 @@ public:
     }
 
 private:
-
-    double lambda;
+    double lambda = 0.0;
 };
 
 // Mrg32k3a and Mrg31k3p
 
-template<typename state_type>
+template<typename state_type, bool IsHostSide = false>
 struct mrg_engine_poisson_distribution
 {
+    using distribution_type
+        = rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, IsHostSide>;
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis;
+    distribution_type dis;
 
-    explicit mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
-        : dis(dis)
-    { }
+    mrg_engine_poisson_distribution(distribution_type dis) : dis(dis) {}
 
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const

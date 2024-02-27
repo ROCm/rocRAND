@@ -67,7 +67,7 @@ For a more elaborate installation process, rocRAND can be built manually using C
     # Install
     [sudo] make install
 
-To build for the ROCm platform,``<compiler>`` should be set to ``hipcc``. When building for CUDA or HIP-CPU, ``<compiler>`` should be set to the host compiler. If building for CUDA, then the location of ``nvcc`` may need to be passed explicitly using ``-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`` if it is not on the path. Additionally, the directory where FindHIP.cmake is installed needs to be passed explicitly using ``-DCMAKE_MODULE_PATH``. By default, this file is installed in ``/opt/rocm/hip/cmake``.
+To build for the ROCm platform,``<compiler>`` should be set to ``hipcc``. When building for CUDA ``<compiler>`` should be set to the host compiler. If building for CUDA, then the location of ``nvcc`` may need to be passed explicitly using ``-DCMAKE_CUDA_COMPILER=<path-to-nvcc>`` if it is not on the path. Additionally, the directory where FindHIP.cmake is installed needs to be passed explicitly using ``-DCMAKE_MODULE_PATH``. By default, this file is installed in ``/opt/rocm/hip/cmake``.
 
 The following configuration options are available, in addition to the built-in CMake options:
 
@@ -75,7 +75,6 @@ The following configuration options are available, in addition to the built-in C
 * ``BUILD_TEST`` controls whether to build the rocRAND tests. Defaults to ``OFF``.
 * ``BUILD_BENCHMARK`` controls whether to build the rocRAND benchmarks. Defaults to ``OFF``.
 * ``BUILD_ADDRESS_SANITIZER`` controls whether to build with address sanitization enabled. Defaults to ``OFF``.
-* ``USE_HIP_CPU`` is an experimental option that controls whether to build for HIP-CPU. Defaults to ``OFF``.
 
 To install rocRAND with a non-standard installation location of ROCm, pass ``-DCMAKE_PREFIX_PATH=</path/to/opt/rocm/>`` or set the environment variable ``ROCM_PATH`` to ``path/to/opt/rocm``.
 

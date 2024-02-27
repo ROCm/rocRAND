@@ -147,15 +147,13 @@ void load_scrambled_sobol32_constants_to_gpu(const unsigned int dimensions,
                                                   ROCRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6));
     ROCRAND_CHECK(rocrand_get_scramble_constants32(&h_constants));
 
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(direction_vectors),
-                              sizeof(unsigned int) * dimensions * 32));
+    HIP_CHECK(hipMallocHelper(direction_vectors, sizeof(unsigned int) * dimensions * 32));
     HIP_CHECK(hipMemcpy(*direction_vectors,
                         h_directions,
                         sizeof(unsigned int) * dimensions * 32,
                         hipMemcpyHostToDevice));
 
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(scramble_constants),
-                              sizeof(unsigned int) * dimensions));
+    HIP_CHECK(hipMallocHelper(scramble_constants, sizeof(unsigned int) * dimensions));
     HIP_CHECK(hipMemcpy(*scramble_constants,
                         h_constants,
                         sizeof(unsigned int) * dimensions,
@@ -173,7 +171,7 @@ void call_rocrand_kernel(std::vector<ResultType>& output_host,
     output_host.resize(output_size);
 
     ResultType* output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(ResultType)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(ResultType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int* m_vector;
@@ -428,8 +426,7 @@ TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_poisson)
     constexpr size_t output_size = dimensions * size_per_dimension;
 
     ResultType* output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int* m_vector;

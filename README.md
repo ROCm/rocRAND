@@ -49,7 +49,11 @@ python3 -m http.server
 ## Requirements
 
 * CMake (3.16 or later)
-* C++ compiler with C++11 support
+* C++ compiler with C++17 support to build the library.
+  * Recommended to use at least gcc 9
+  * clang uses the development headers and libraries from gcc, so a recent version of it must still
+    be installed when compiling with clang
+* C++ compiler with C++11 support to consume the library.
 * For AMD platforms:
   * [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) (1.7 or later)
   * [HIP-clang](https://github.com/ROCm/HIP/blob/master/INSTALL.md#hip-clang) compiler, which must be
@@ -57,8 +61,6 @@ python3 -m http.server
 * For CUDA platforms:
   * [HIP](https://github.com/ROCm/HIP)
   * Latest CUDA SDK
-* For CPU runs (experimental):
-  * [HIP-CPU](https://github.com/ROCm/HIP-CPU)
 * Python 3.6 or higher (HIP on Windows only, only required for install script)
 * Visual Studio 2019 with clang support (HIP on Windows only)
 * Strawberry Perl (HIP on Windows only)
@@ -106,9 +108,6 @@ cd rocRAND; mkdir build; cd build
 cmake -DBUILD_BENCHMARK=ON ../. -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_MODULE_PATH=/opt/rocm/hip/cmake # or cmake-gui ../.
 # or
 [CXX=g++] cmake -DBUILD_BENCHMARK=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_MODULE_PATH=/opt/rocm/hip/cmake ../. # or cmake-gui ../.
-
-# To configure rocRAND for HIP-CPU (experimental), the USE_HIP_CPU flag is required
-[CXX=g++] cmake -DUSE_HIP_CPU=ON -DBUILD_BENCHMARK=ON -DCMAKE_PREFIX_PATH=/opt/rocm ../. # or cmake-gui ../.
 
 # Build
 make -j4
@@ -188,7 +187,7 @@ cd rocRAND; cd build
 
 # To run benchmark for device kernel functions:
 # The benchmarks are registered with Google Benchmark as `device_kernel<engine,distribution>`, where
-# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
+# engine -> xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113,
 #           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
 #           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
 # distribution -> uniform-uint or uniform-ullong, uniform-float, uniform-double, normal-float, normal-double,
@@ -219,22 +218,6 @@ when `BUILD_BENCHMARK` is set.
 
 Legacy benchmarks are deprecated and will be removed in a future version once all benchmarks have
 been migrated to the new framework.
-
-## Running statistical tests
-
-```shell
-# Go to rocRAND build directory
-cd rocRAND; cd build
-
-# To run Pearson Chi-squared and Anderson-Darling tests, which verify
-# that distribution of random number agrees with the requested distribution:
-# engine -> all, xorwow, mrg31k3p, mrg32k3a, mtgp32, philox, lfsr113, mt19937,
-#           threefry2x32, threefry2x64, threefry4x32, threefry4x64,
-#           sobol32, scrambled_sobol32, sobol64, scrambled_sobol64
-# distribution -> all, uniform-float, uniform-double, normal-float, normal-double,
-#                 log-normal-float, log-normal-double, poisson
-./test/stat_test_rocrand_generate --engine <engine> --dis <distribution>
-```
 
 ## Wrappers
 

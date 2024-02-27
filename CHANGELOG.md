@@ -3,7 +3,63 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-## rocRAND-3.0.0 for ROCm 6.0.0
+## (Unreleased) rocRAND-3.1.0 for ROCm 6.2.0
+
+### Additions
+
+* Added `rocrand_create_generator_host`
+  * The following generators are supported:
+    * `ROCRAND_RNG_PSEUDO_MRG31K3P`
+    * `ROCRAND_RNG_PSEUDO_MRG32K3A`
+    * `ROCRAND_RNG_PSEUDO_PHILOX4_32_10`
+    * `ROCRAND_RNG_PSEUDO_THREEFRY2_32_20`
+    * `ROCRAND_RNG_PSEUDO_THREEFRY2_64_20`
+    * `ROCRAND_RNG_PSEUDO_THREEFRY4_32_20`
+    * `ROCRAND_RNG_PSEUDO_THREEFRY4_64_20`
+    * `ROCRAND_RNG_PSEUDO_XORWOW`
+    * `ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32`
+    * `ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64`
+    * `ROCRAND_RNG_QUASI_SOBOL32`
+    * `ROCRAND_RNG_QUASI_SOBOL64`
+  * The host-side generators support multi-core processing. On Linux, this requires the TBB (Thread Building Blocks) development package to be installed on the system when building rocRAND (`libtbb-dev` on Ubuntu and derivatives).
+    * If TBB is not found when configuring rocRAND, the configuration is still successful, and the host generators are executed on a single CPU thread.
+* Added the option to create a host generator to the Python wrapper
+* Added the option to create a host generator to the Fortran wrapper
+* Added dynamic ordering. This ordering is free to rearrange the produced numbers, 
+  which can be specific to devices and distributions. It is implemented for:
+  * XORWOW, MRG32K3A, MTGP32, Philox 4x32-10, MRG31K3P, LFSR113, and ThreeFry
+* For the NVIDIA platform compilation using clang as the host compiler is now supported.
+* C++ wrapper:
+  * `lfsr113_engine` now also supports being constructed with a seed of type `unsigned long long`, not only `uint4`.
+  * added optional order parameter to constructor of `mt19937_engine`
+
+### Changes
+
+* Building rocRAND now requires a C++17 capable compiler, as the internal library sources now require it. However consuming rocRAND is still possible from C++11 as public headers don't make use of the new features.
+* Building rocRAND should be faster on machines with multiple CPU cores as the library has been
+  split to multiple compilation units.
+* C++ wrapper: the `min()` and `max()` member functions of the generators and distributions are now `static constexpr`.
+
+### Deprecations
+
+* Deprecated the following typedefs. Please use the unified `state_type` alias instead.
+  * `rocrand_device::threefry2x32_20_engine::threefry2x32_20_state`
+  * `rocrand_device::threefry2x64_20_engine::threefry2x64_20_state`
+  * `rocrand_device::threefry4x32_20_engine::threefry4x32_20_state`
+  * `rocrand_device::threefry4x64_20_engine::threefry4x64_20_state`
+
+### Removals
+
+* Removed references to and workarounds for deprecated hcc.
+* Support for HIP-CPU
+
+## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
+
+### Additions
+
+* Added `rocrand_create_generator_host` with initial support for `ROCRAND_RNG_PSEUDO_PHILOX4_32_10` and `ROCRAND_RNG_PSEUDO_MRG31K3P`.
+* Added the option to create a host generator to the Python wrapper
+* Added the option to create a host generator to the Fortran wrapper
 
 ### Changes
 
@@ -33,6 +89,8 @@ Documentation for rocRAND is available at
   * Added the missing `order` setter method for `threefry4x64`
   * Fixed the default ordering parameter for `lfsr113`
 * Build error when using Clang++ directly resulting from unsupported `amdgpu-target` references
+* Added hip::device as dependency to benchmark_rocrand_tuning to make it compile with amdclang++.
+* Minor entropy waste in 64-bits Threefry function producing two log-normally-distributed doubles.
 
 ## rocRAND-2.10.17 for ROCm 5.5.0
 
