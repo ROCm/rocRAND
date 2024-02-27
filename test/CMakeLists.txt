@@ -69,6 +69,11 @@ foreach(test_src ${rocRAND_TEST_SRCS})
           CUDA_STANDARD 14
       )
       set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+    else()
+      set_source_files_properties(${test_name}
+        PROPERTIES
+          LANGUAGE ${ROCRAND_LANG}
+      )
     endif()
     target_include_directories(${test_name}
         PUBLIC

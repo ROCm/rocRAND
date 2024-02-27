@@ -70,7 +70,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
     enable_language(CUDA)
     set(LANG CUDA)
 else()
-    set(LANG CXX)
+    set(LANG ${ROCRAND_LANG})
 endif()
 
 set(CMAKE_${LANG}_STANDARD 14)
@@ -114,6 +114,7 @@ else()
             roc::rocrand
             "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
     )
+    set_source_files_properties(parity_rocrand.cpp PROPERTIES LANGUAGE ${LANG})
 endif()
 
 # Compile the files that invoke each API separately, to avoid symbol namespacing errors.

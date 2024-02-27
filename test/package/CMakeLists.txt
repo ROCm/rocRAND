@@ -59,7 +59,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
     enable_language(CUDA)
     set(LANG CUDA)
 else()
-    set(LANG CXX)
+    set(LANG ${ROCRAND_LANG})
 endif()
 
 set(CMAKE_${LANG}_STANDARD 11)
@@ -113,7 +113,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
                 hip_cpu_rt::hip_cpu_rt
         )
     elseif(HIP_COMPILER STREQUAL "nvcc")
-        target_link_libraries(${test_name} 
+        target_link_libraries(${test_name}
             PRIVATE
                 roc::rocrand
         )
@@ -130,6 +130,7 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
                 roc::rocrand
                 "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
         )
+        set_source_files_properties(${test_src} PROPERTIES LANGUAGE ${LANG})
     endif()
     add_relative_test(${test_name} ${test_name})
     if (WIN32 AND NOT DEFINED DLLS_COPIED)
@@ -145,5 +146,5 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
       foreach( file_i ${third_party_dlls})
         add_custom_command( TARGET ${test_name} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/test/package )
       endforeach( file_i )
-    endif() 
+    endif()
 endforeach()

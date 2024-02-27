@@ -76,6 +76,9 @@ if(NOT USE_HIP_CPU)
         )
         set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
     else()
+        set_source_files_properties(${rocRAND_SRCS}
+            PROPERTIES LANGUAGE ${ROCRAND_LANG}
+        )
         target_link_libraries(rocrand PRIVATE hip::device)
     endif()
 else()
@@ -191,7 +194,7 @@ if (WIN32)
     install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
     if (BUILD_TEST)
 	    add_custom_command(
-		    TARGET rocrand 
+		    TARGET rocrand
 		    POST_BUILD
 		    COMMAND ${CMAKE_COMMAND} -E copy
 			    $<TARGET_FILE:rocrand>
@@ -200,13 +203,13 @@ if (WIN32)
     endif()
     if (BUILD_BENCHMARK)
 	    add_custom_command(
-		    TARGET rocrand 
+		    TARGET rocrand
 		    POST_BUILD
 		    COMMAND ${CMAKE_COMMAND} -E copy
 			    $<TARGET_FILE:rocrand>
 			    ${PROJECT_BINARY_DIR}/benchmark/$<TARGET_FILE_NAME:rocrand>
 	    )
-    endif()	
+    endif()
 endif()
 
 # Fortran wrappers for rocRAND
