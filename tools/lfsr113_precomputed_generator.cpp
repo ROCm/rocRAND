@@ -59,7 +59,8 @@ struct rocrand_lfsr113_state
     }
 };
 
-void generate_matrices()
+void generate_matrices(unsigned int (&jump_matrices)[LFSR113_JUMP_MATRICES][LFSR113_SIZE],
+                       unsigned int (&sequence_jump_matrices)[LFSR113_JUMP_MATRICES][LFSR113_SIZE])
 {
     unsigned int one_step[LFSR113_SIZE];
     for(int i = 0; i < LFSR113_N; ++i)
@@ -135,7 +136,10 @@ int main(int argc, char const* argv[])
                   << std::endl;
         return -1;
     }
-    generate_matrices();
+
+    unsigned int jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE];
+    unsigned int sequence_jump_matrices[LFSR113_JUMP_MATRICES][LFSR113_SIZE];
+    generate_matrices(jump_matrices, sequence_jump_matrices);
 
     const std::string file_path(argv[1]);
     std::ofstream     fout(file_path, std::ios_base::out | std::ios_base::trunc);
