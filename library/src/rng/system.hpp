@@ -160,6 +160,7 @@ struct host_system
         if constexpr(UseHostFunc)
         {
             hipError_t status = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
+            hipStreamSynchronize(stream);
 
             if(status != hipSuccess)
             {

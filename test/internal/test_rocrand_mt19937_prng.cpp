@@ -543,7 +543,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
     const unsigned int     thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int           engine_id = thread_id / mt19937_octo_engine::threads_per_generator;
     mt19937_octo_engine    engine    = octo_engines[thread_id];
-    engine.gather(&engines[engine_id * n]);
+    engine.gather(&engines[engine_id * n], threadIdx);
 
     engine.gen_next_n();
     if(engine_id == 0)

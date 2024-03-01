@@ -136,14 +136,14 @@ struct mt19937_octo_engine
     static constexpr inline unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
-    __forceinline__ __device__ void gather(const unsigned int engine[mt19937_constants::n])
+    __forceinline__ __device__ void gather(const unsigned int engine[mt19937_constants::n], dim3 thread_idx)
     {
         constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
         constexpr unsigned int offsets[off_cnt]
             = {1, 57, 114, 171, 227, 284, 341, 398, 454, 511, 568};
 
-        const unsigned int tid = threadIdx.x & 7U;
+        const unsigned int tid = thread_idx.x & 7U;
 
         // initialize the elements that follow a regular pattern
         for(unsigned int i = 0; i < off_cnt; i++)
@@ -222,6 +222,7 @@ struct mt19937_octo_engine
     /// Eights threads collaborate in computing the n next values.
     __forceinline__ __device__ void gen_next_n()
     {
+#if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int tid = threadIdx.x & 7U;
 
         // compute eleven vectors that follow a regular pattern and compute
@@ -365,6 +366,13 @@ struct mt19937_octo_engine
         // needs [568, 623], [0, 0]', and [341, 396]'
         const unsigned int v000 = shuffle(m_state.mt[i000_0], 0);
         comp_vector(tid, i568, i341, v000);
+#else
+        static constexpr unsigned int n = 1U + items_per_thread * 11U;
+        for (unsigned int i = 0; i < n; ++i)
+        {
+            m_state.mt[i] = comp(m_state.mt[i], m_state.mt[(i + 1) % n], m_state.mt[(i + mt19937_constants::m) % n]);
+        }
+#endif
     }
 
     /// Return \p i state value without tempering

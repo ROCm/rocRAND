@@ -73,7 +73,7 @@ namespace rocrand_impl::host
 {
 
 /// Computes i % n, i must be in range [0, 2 * n)
-__forceinline__ __device__ unsigned int wrap_n(unsigned int i)
+__forceinline__ __device__ __host__ unsigned int wrap_n(unsigned int i)
 {
     return i - (i < mt19937_constants::n ? 0 : mt19937_constants::n);
 }
@@ -84,7 +84,7 @@ template<unsigned int jump_ahead_thread_count, class ConfigProvider, bool IsDyna
 __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                                                    dim3 thread_idx,
                                                    dim3 /*grid_dim*/,
-                                                   dim3 /*block_dim*/,
+                                                   dim3 block_dim,
                                                    unsigned int* __restrict__ engines,
                                                    unsigned long long seed,
                                                    const unsigned int* __restrict__ jump)
@@ -100,12 +100,17 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
     constexpr unsigned int items_per_thread = (mt19937_constants::n + block_size - 1) / block_size;
     constexpr unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
 
-    __shared__ unsigned int temp[mt19937_constants::n];
+#if defined(__HIP_DEVICE_COMPILE__)
+    __shared__
+#endif
+        unsigned int temp[mt19937_constants::n];
     unsigned int            state[items_per_thread];
 
     // Initialize state 0 (engine_id = 0) used as a base for all engines.
     // It uses a recurrence relation so one thread calculates all n values.
+#if defined(__HIP_DEVICE_COMPILE__)
     if(thread_idx.x == 0)
+#endif
     {
         const unsigned int seedu = (seed >> 32) ^ seed;
         temp[0]                  = seedu;
@@ -114,7 +119,10 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
             temp[i] = 1812433253 * (temp[i - 1] ^ (temp[i - 1] >> 30)) + i;
         }
     }
+
+#if defined(__HIP_DEVICE_COMPILE__)
     __syncthreads();
+#endif
 
     for(unsigned int i = 0; i < items_per_thread; i++)
     {
@@ -123,7 +131,10 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
             state[i] = temp[i * block_size + thread_idx.x];
         }
     }
+
+#if defined(__HIP_DEVICE_COMPILE__)
     __syncthreads();
+#endif
 
     const unsigned int engine_id = block_idx.x;
 
@@ -143,18 +154,26 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         // Compute jumping ahead with standard Horner method
 
         unsigned int ptr = 0;
+#if defined(__HIP_DEVICE_COMPILE__)
         for(unsigned int i = thread_idx.x; i < mt19937_constants::n; i += block_size)
+#else
+        for(unsigned int i = 0; i < mt19937_constants::n; ++i)
+#endif
         {
             temp[i] = 0;
         }
+#if defined(__HIP_DEVICE_COMPILE__)
         __syncthreads();
+#endif
 
         const unsigned int* pf
             = jump + (r * (mt19937_jumps_radix - 1) + radix - 1) * mt19937_p_size;
         for(int pfi = mt19937_constants::mexp - 1; pfi >= 0; pfi--)
         {
             // Generate next state
+#if defined(__HIP_DEVICE_COMPILE__)
             if(thread_idx.x == 0)
+#endif
             {
                 unsigned int t0 = temp[ptr];
                 unsigned int t1 = temp[wrap_n(ptr + 1)];
@@ -163,7 +182,9 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                     = (t0 & mt19937_constants::upper_mask) | (t1 & mt19937_constants::lower_mask);
                 temp[ptr] = tm ^ (y >> 1) ^ ((y & 0x1U) ? mt19937_constants::matrix_a : 0);
             }
+#if defined(__HIP_DEVICE_COMPILE__)
             __syncthreads();
+#endif
             ptr = wrap_n(ptr + 1);
 
             if((pf[pfi / 32] >> (pfi % 32)) & 1)
@@ -171,12 +192,21 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                 // Add state to temp
                 for(unsigned int i = 0; i < items_per_thread; i++)
                 {
-                    if(i < items_per_thread - 1 || thread_idx.x < tail_n)
+#if defined(__HIP_DEVICE_COMPILE__)
+                    unsigned int& j = thread_idx.x;
+#else
+                    for (unsigned int j = 0; j < block_dim.x; ++j)
+#endif
                     {
-                        temp[wrap_n(ptr + i * block_size + thread_idx.x)] ^= state[i];
+                        if(i < items_per_thread - 1 || j < tail_n)
+                        {
+                            temp[wrap_n(ptr + i * block_size + j)] ^= state[i];
+                        }
                     }
                 }
+#if defined(__HIP_DEVICE_COMPILE__)
                 __syncthreads();
+#endif
             }
         }
 
@@ -188,7 +218,9 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                 state[i] = temp[wrap_n(ptr + i * block_size + thread_idx.x)];
             }
         }
+#if defined(__HIP_DEVICE_COMPILE__)
         __syncthreads();
+#endif
     }
 
     // Save state
@@ -225,7 +257,7 @@ __host__ __device__ inline void init_engines_mt19937(dim3 block_idx,
     mt19937_octo_engine_accessor<stride> accessor(octo_engines);
     mt19937_octo_engine engine;
     engine.gather(
-        &engines[thread_id / mt19937_octo_engine::threads_per_generator * mt19937_constants::n]);
+        &engines[thread_id / mt19937_octo_engine::threads_per_generator * mt19937_constants::n], thread_idx);
     accessor.save(thread_id, engine);
 }
 
@@ -894,8 +926,11 @@ private:
 };
 
 using rocrand_mt19937 = rocrand_mt19937_template<
-    rocrand_system_device,
+    rocrand_system_host,
     default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
+// using rocrand_mt19937_host = rocrand_mt19937_template<
+//     rocrand_system_host,
+//     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
 
 } // namespace rocrand_impl::host
 
