@@ -20,7 +20,6 @@
 
 #include "utils.hpp"
 
-#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <ios>

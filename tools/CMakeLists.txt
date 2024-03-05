@@ -22,11 +22,29 @@
 
 set(CMAKE_CXX_STANDARD 17)
 
+include(CheckCXXSourceCompiles)
+
+set(HAVE_STD_FILESYSTEM_TEST [[
+  #include <filesystem>
+
+  int main()
+  {
+  std::filesystem::path p{"/"};
+  return 0;
+  }
+  ]])
+check_cxx_source_compiles("${HAVE_STD_FILESYSTEM_TEST}" HAVE_STD_FILESYSTEM)
+
 add_custom_target(tools)
 
 function(rocrand_add_tool TARGET_NAME)
     add_executable(${TARGET_NAME} ${ARGN})
     add_dependencies(tools ${TARGET_NAME})
+    if(NOT HAVE_STD_FILESYSTEM)
+      # if filesystem library is not available in the standard library,
+      # link to the separate library instead
+      target_link_options( ${TARGET_NAME} PRIVATE -lstdc++fs )
+    endif()
 endfunction()
 
 rocrand_add_tool(bin2typed bin2typed.cpp)
