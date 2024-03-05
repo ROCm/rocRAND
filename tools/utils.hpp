@@ -21,7 +21,16 @@
 #ifndef ROCRAND_TOOLS_UTILS_HPP_
 #define ROCRAND_TOOLS_UTILS_HPP_
 
+#if __has_include(<filesystem>)
 #include <filesystem>
+#else
+#include <experimental/filesystem>
+namespace std
+{
+    namespace filesystem = experimental::filesystem;
+}
+#endif
+
 #include <fstream>
 #include <string_view>
 
