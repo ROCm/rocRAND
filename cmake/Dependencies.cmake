@@ -97,15 +97,21 @@ if(BUILD_BENCHMARK)
       message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
     endif()
     set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/googlebenchmark CACHE PATH "")
-    if(DEFINED CMAKE_CXX_COMPILER)
-      set(CXX_COMPILER_OPTION "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+    if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+    # hip-clang cannot compile googlebenchmark for some reason
+      if(WIN32)
+        set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=cl")
+      else()
+        set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
+      endif()
     endif()
+
     download_project(
       PROJ           googlebenchmark
       GIT_REPOSITORY https://github.com/google/benchmark.git
       GIT_TAG        v1.6.1
       INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
-      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_CXX_STANDARD=14 ${CXX_COMPILER_OPTION}
+      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_CXX_STANDARD=14 ${COMPILER_OVERRIDE}
       LOG_DOWNLOAD   TRUE
       LOG_CONFIGURE  TRUE
       LOG_BUILD      TRUE
