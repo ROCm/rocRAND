@@ -38,6 +38,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20, T>
     {
         switch(arch)
         {
+            case target_arch::gfx1102: return 1024;
             case target_arch::gfx1030: return 1024;
             case target_arch::gfx906: return 256;
             case target_arch::gfx908: return 256;
@@ -50,6 +51,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20, T>
     {
         switch(arch)
         {
+            case target_arch::gfx1102: return 128;
             case target_arch::gfx1030: return 2304;
             case target_arch::gfx906: return 896;
             case target_arch::gfx908: return 1200;

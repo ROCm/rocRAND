@@ -10,6 +10,7 @@ Documentation for rocRAND is available at
 * Added `rocrand_create_generator_host_blocking` which dispatches without stream semantics.
 * Added host-side generator for `ROCRAND_RNG_PSEUDO_MTGP32`.
 * Added offset and skipahead functionality to LFSR113 generator.
+* Added dynamic ordering for architecture `gfx1102`.
 
 ## (Unreleased) rocRAND-3.1.0 for ROCm 6.2.0
 
