@@ -38,7 +38,8 @@
 #include <hip/hip_runtime.h>
 
 #include <algorithm>
-#ifdef ROCRAND_PARALLEL_STL
+#if defined(ROCRAND_PARALLEL_STL) && __has_include(<execution>)
+#define ROCRAND_USE_PARALLEL_STL
     #include <execution>
 #endif
 #include <new>
@@ -130,7 +131,7 @@ struct rocrand_system_host
             };
 
             std::for_each(
-#ifdef ROCRAND_PARALLEL_STL
+#ifdef ROCRAND_USE_PARALLEL_STL
                 std::execution::par_unseq,
 #endif
                 cpp_utils::threedim_iterator::begin(num_blocks),
