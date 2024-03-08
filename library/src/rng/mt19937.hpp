@@ -89,6 +89,13 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                                                    unsigned long long seed,
                                                    const unsigned int* __restrict__ jump)
 {
+#if !defined(__HIP_DEVICE_COMPILE__)
+    if (thread_idx.x > 0)
+    {
+        return;
+    }
+#endif
+
     constexpr generator_config config = ConfigProvider::template device_config<void>(IsDynamic);
     constexpr unsigned int     GeneratorCount
         = config.threads * config.blocks / mt19937_octo_engine::threads_per_generator;
@@ -104,7 +111,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
     __shared__
 #endif
         unsigned int temp[mt19937_constants::n];
-    unsigned int            state[items_per_thread];
+    unsigned int     state[items_per_thread];
 
     // Initialize state 0 (engine_id = 0) used as a base for all engines.
     // It uses a recurrence relation so one thread calculates all n values.
@@ -126,9 +133,16 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
 
     for(unsigned int i = 0; i < items_per_thread; i++)
     {
-        if(i < items_per_thread - 1 || thread_idx.x < tail_n) // Check only for the last iteration
+#if defined(__HIP_DEVICE_COMPILE__)
+        unsigned int& j = thread_idx.x;
+#else
+        for (unsigned int j = 0; j < block_dim.x; ++j)
+#endif
         {
-            state[i] = temp[i * block_size + thread_idx.x];
+            if(i < items_per_thread - 1 || j < tail_n) // Check only for the last iteration
+            {
+                state[i] = temp[i * block_size + j];
+            }
         }
     }
 
@@ -226,9 +240,16 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
     // Save state
     for(unsigned int i = 0; i < items_per_thread; i++)
     {
-        if(i < items_per_thread - 1 || thread_idx.x < tail_n)
+#if defined(__HIP_DEVICE_COMPILE__)
+        unsigned int& j = thread_idx.x;
+#else
+        for (unsigned int j = 0; j < block_dim.x; ++j)
+#endif
         {
-            engines[engine_id * mt19937_constants::n + i * block_size + thread_idx.x] = state[i];
+            if(i < items_per_thread - 1 || j < tail_n)
+            {
+                engines[engine_id * mt19937_constants::n + i * block_size + j] = state[i];
+            }
         }
     }
 }
