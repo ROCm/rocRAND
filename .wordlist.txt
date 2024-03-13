@@ -14,6 +14,7 @@ RocRandError
 SVG
 Sobol
 ThreeFry
+Threefry
 XORWOW
 autoclass
 autoexception
@@ -21,9 +22,11 @@ autofunction
 benchmarked
 currentmodule
 doxygengroup
+enum
 poisson
 reproducibility
 rocranddevice
 rocrandhost
 rocrandhostcpp
 sanitization
+sobol
