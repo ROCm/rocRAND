@@ -11,6 +11,10 @@ UseCRLF: false
 # Other languages JavaScript, Proto
 
 ---
+Language: Json
+DisableFormat: true
+
+---
 Language: Cpp
 
 # http://releases.llvm.org/6.0.1/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code
@@ -41,7 +45,7 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
-AttributeMacros: ['HIPRANDAPI', 'QUALIFIERS', 'FQUALIFIERS']
+AttributeMacros: ['QUALIFIERS', 'FQUALIFIERS']
 BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: Both
@@ -54,13 +58,11 @@ BraceWrapping:
     AfterClass: true
     AfterControlStatement: Always
     AfterEnum: true
+    AfterExternBlock: false
     AfterFunction: true
     AfterNamespace: true
     AfterStruct: true
     AfterUnion: true
-    BeforeCatch: true
-    BeforeElse: true
-    AfterExternBlock: false
     BeforeCatch: true
     BeforeElse: true
     BeforeLambdaBody: true

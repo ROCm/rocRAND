@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 
 #include <rocrand/rocrand.h>
 
+#include "../common.hpp"
 #include "device_distributions.hpp"
 
 // Alias method
@@ -52,9 +53,11 @@ public:
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
-    rocrand_discrete_distribution_base()
+    // rocrand_discrete_distribution_st is a struct 
+    rocrand_discrete_distribution_base()  // cppcheck-suppress uninitDerivedMemberVar
     {
         size = 0;
+        offset      = 0;
         probability = NULL;
         alias = NULL;
         cdf = NULL;
@@ -75,7 +78,7 @@ public:
 
     void deallocate()
     {
-        // Explicit deallocation is used because on HCC the object is copied
+        // Explicit deallocation is used because the object is copied
         // multiple times inside hipLaunchKernelGGL, and destructor is called
         // for all copies (we can't use c++ smart pointers for device pointers)
         if (IsHostSide)
@@ -97,15 +100,15 @@ public:
         {
             if (probability != NULL)
             {
-                hipFree(probability);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(probability));
             }
             if (alias != NULL)
             {
-                hipFree(alias);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(alias));
             }
             if (cdf != NULL)
             {
-                hipFree(cdf);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(cdf));
             }
         }
         probability = NULL;
@@ -173,12 +176,12 @@ protected:
             hipError_t error;
             if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&probability), sizeof(double) * size);
+                error = hipMalloc(&probability, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
-                error = hipMalloc(reinterpret_cast<void**>(&alias), sizeof(unsigned int) * size);
+                error = hipMalloc(&alias, sizeof(unsigned int) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -186,7 +189,7 @@ protected:
             }
             if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&cdf), sizeof(double) * size);
+                error = hipMalloc(&cdf, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -195,7 +198,7 @@ protected:
         }
     }
 
-    void normalize(std::vector<double>& p)
+    void normalize(std::vector<double>& p) const
     {
         double sum = 0.0;
         for (unsigned int i = 0; i < size; i++)

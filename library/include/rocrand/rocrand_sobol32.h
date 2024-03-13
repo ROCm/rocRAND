@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ struct sobol32_state
     unsigned int vectors[32];
 
     FQUALIFIERS
-    sobol32_state() { }
+    sobol32_state() : d(), i(), vectors() { }
 
     FQUALIFIERS
     sobol32_state(const unsigned int d,
@@ -60,7 +60,7 @@ struct sobol32_state<true>
     const unsigned int * vectors;
 
     FQUALIFIERS
-    sobol32_state() { }
+    sobol32_state() : d(), i(), vectors() { }
 
     FQUALIFIERS
     sobol32_state(const unsigned int d,
@@ -122,9 +122,14 @@ public:
     }
 
     FQUALIFIERS
-    unsigned int current()
+    unsigned int current() const
     {
         return m_state.d;
+    }
+
+    FQUALIFIERS static constexpr bool uses_shared_vectors()
+    {
+        return UseSharedVectors;
     }
 
 protected:
@@ -137,7 +142,7 @@ protected:
         m_state.d = 0;
         for(int i = 0; i < 32; i++)
         {
-            m_state.d ^= (g & (1 << i) ? m_state.vectors[i] : 0);
+            m_state.d ^= (g & (1U << i) ? m_state.vectors[i] : 0);
         }
     }
 

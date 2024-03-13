@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 # Find HIP package and verify that correct C++ compiler was selected for available
-# platfrom. On ROCm platform host and device code is compiled by the same compiler:
-# hcc. On CUDA host can be compiled by any C++ compiler while device code is compiled
+# platform. On ROCm platform host and device code is compiled by the same compiler.
+# On CUDA host can be compiled by any C++ compiler while device code is compiled
 # by nvcc compiler (CMake's CUDA package handles this).
 
 # A function for automatic detection of the lowest CC of the installed NV GPUs
@@ -87,10 +87,6 @@ else()
     set(CUDA_curand_LIBRARY CUDA::curand)
 endif()
 
-
-# Suppressing warnings
-set(HIP_NVCC_FLAGS " ${HIP_NVCC_FLAGS} -Wno-deprecated-gpu-targets -Xcompiler -Wno-return-type -Wno-deprecated-declarations ")
-
 # Use NVGPU_TARGETS to set CUDA architectures (compute capabilities)
 # For example: -DNVGPU_TARGETS="50;61;62"
 set(DEFAULT_NVGPU_TARGETS "")
@@ -102,26 +98,33 @@ endif()
 set(NVGPU_TARGETS "${DEFAULT_NVGPU_TARGETS}"
     CACHE STRING "List of NVIDIA GPU targets (compute capabilities), for example \"35;50\""
 )
-# Generate compiler flags based on targeted CUDA architectures
-foreach(CUDA_ARCH ${NVGPU_TARGETS})
-    list(APPEND HIP_NVCC_FLAGS "--generate-code arch=compute_${CUDA_ARCH},code=sm_${CUDA_ARCH} ")
-    list(APPEND HIP_NVCC_FLAGS "--generate-code arch=compute_${CUDA_ARCH},code=compute_${CUDA_ARCH} ")
-endforeach()
 
-execute_process(
-    COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
-    OUTPUT_VARIABLE HIP_CPP_CONFIG_FLAGS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE
-)
+if (NOT _ROCRAND_HIP_NVCC_FLAGS_SET)
+    execute_process(
+        COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
+        OUTPUT_VARIABLE HIP_CPP_CONFIG_FLAGS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_STRIP_TRAILING_WHITESPACE
+    )
 
-# Update list parameter
-string(REPLACE ";" " " HIP_NVCC_FLAGS ${HIP_NVCC_FLAGS})
+    # Suppressing warnings
+    list(APPEND HIP_NVCC_FLAGS "-Wno-deprecated-gpu-targets" "-Xcompiler" "-Wno-return-type" "-Wno-deprecated-declarations")
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${HIP_CPP_CONFIG_FLAGS} ${HIP_NVCC_FLAGS}"
-    CACHE STRING "Cuda compile flags" FORCE)
+    # Generate compiler flags based on targeted CUDA architectures
+    foreach(CUDA_ARCH ${NVGPU_TARGETS})
+        list(APPEND HIP_NVCC_FLAGS "--generate-code" "arch=compute_${CUDA_ARCH},code=sm_${CUDA_ARCH}")
+        list(APPEND HIP_NVCC_FLAGS "--generate-code" "arch=compute_${CUDA_ARCH},code=compute_${CUDA_ARCH}")
+    endforeach()
 
-# Ignore warnings about #pragma unroll
-# and about deprecated CUDA function(s) used in hip/nvcc_detail/hip_runtime_api.h
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CPP_CONFIG_FLAGS_STRIP} -Wno-unknown-pragmas -Wno-deprecated-declarations"
-    CACHE STRING "compile flags" FORCE)
+    # Update list parameter
+    list(JOIN HIP_NVCC_FLAGS " " HIP_NVCC_FLAGS)
+
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${HIP_CPP_CONFIG_FLAGS} ${HIP_NVCC_FLAGS}"
+        CACHE STRING "Cuda compile flags" FORCE)
+
+    # Ignore warnings about #pragma unroll
+    # and about deprecated CUDA function(s) used in hip/nvcc_detail/hip_runtime_api.h
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CPP_CONFIG_FLAGS_STRIP} -Wno-unknown-pragmas -Wno-deprecated-declarations"
+        CACHE STRING "compile flags" FORCE)
+    set(_ROCRAND_HIP_NVCC_FLAGS_SET ON CACHE INTERNAL "")
+endif()

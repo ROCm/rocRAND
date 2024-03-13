@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
  */
 
 #include "rocrand/rocrand_discrete_types.h"
-#include "rocrand/rocrand_hip_cpu.h"
 
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
@@ -47,6 +46,7 @@ typedef struct rocrand_generator_base_type * rocrand_generator;
 typedef __half half;
 /// \endcond
 
+/// The default maximum number of threads per block
 #define ROCRAND_DEFAULT_MAX_BLOCK_SIZE 256
 
 #if defined(__cplusplus)
@@ -109,9 +109,21 @@ typedef enum rocrand_ordering
     ROCRAND_ORDERING_PSEUDO_DEFAULT = 101, ///< Default ordering for pseudorandom results
     ROCRAND_ORDERING_PSEUDO_SEEDED  = 102, ///< Fast lower quality pseudorandom results
     ROCRAND_ORDERING_PSEUDO_LEGACY  = 103, ///< Legacy ordering for pseudorandom results
-    ROCRAND_ORDERING_PSEUDO_DYNAMIC = 104, ///< Adjust to the device executing the generator
-    ROCRAND_ORDERING_QUASI_DEFAULT  = 201 ///< n-dimensional ordering for quasirandom results
+    ROCRAND_ORDERING_PSEUDO_DYNAMIC
+    = 104, ///< Adjust to the device executing the generator. The global memory usage may be higher than with the other orderings.
+    ROCRAND_ORDERING_QUASI_DEFAULT = 201 ///< n-dimensional ordering for quasirandom results
 } rocrand_ordering;
+
+/**
+ * \brief rocRAND vector set
+ */
+typedef enum rocrand_direction_vector_set
+{
+    ROCRAND_DIRECTION_VECTORS_32_JOEKUO6           = 101,
+    ROCRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6 = 102,
+    ROCRAND_DIRECTION_VECTORS_64_JOEKUO6           = 103,
+    ROCRAND_SCRAMBLED_DIRECTION_VECTORS_64_JOEKUO6 = 104,
+} rocrand_direction_vector_set;
 
 // Host API function
 
@@ -150,6 +162,42 @@ typedef enum rocrand_ordering
  */
 rocrand_status ROCRANDAPI
 rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_type);
+
+/**
+ * \brief Creates a new random number generator.
+ *
+ * Creates a new pseudo random number generator of type \p rng_type
+ * and returns it in \p generator. This generator is executed on the host rather than
+ * on a device.
+ *
+ * Values for \p rng_type are:
+ * - ROCRAND_RNG_PSEUDO_XORWOW
+ * - ROCRAND_RNG_PSEUDO_MRG31K3P
+ * - ROCRAND_RNG_PSEUDO_MRG32K3A
+ * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_PSEUDO_LFSR113
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
+ * - ROCRAND_RNG_QUASI_SOBOL32
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
+ * - ROCRAND_RNG_QUASI_SOBOL64
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
+ *
+ * \param generator - Pointer to generator
+ * \param rng_type - Type of generator to create
+ *
+ * \return
+ * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
+ * - ROCRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
+ *   dynamically linked library version \n
+ * - ROCRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
+ * - ROCRAND_STATUS_SUCCESS if generator was created successfully \n
+ *
+ */
+rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* generator,
+                                                        rocrand_rng_type   rng_type);
 
 /**
  * \brief Destroys random number generator.
@@ -624,11 +672,14 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  * \param generator - Random number generator
  * \param order - New ordering of results
  *
- * The ordering choices for pseudorandom sequences are
- * ROCRAND_ORDERING_PSEUDO_DEFAULT and
- * ROCRAND_ORDERING_PSEUDO_LEGACY.
- * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT, which is equal to
- * ROCRAND_ORDERING_PSEUDO_LEGACY for now.
+ * The ordering choices for pseudorandom sequences are the following.
+ * Note that not all generators support all orderings. For details, see
+ * the Programmer's Guide in the documentation.
+ * - ROCRAND_ORDERING_PSEUDO_DEFAULT
+ * - ROCRAND_ORDERING_PSEUDO_LEGACY
+ * - ROCRAND_ORDERING_PSEUDO_BEST
+ * - ROCRAND_ORDERING_PSEUDO_SEEDED
+ * - ROCRAND_ORDERING_PSEUDO_DYNAMIC
  *
  * For quasirandom sequences there is only one ordering, ROCRAND_ORDERING_QUASI_DEFAULT.
  *
@@ -733,6 +784,54 @@ rocrand_create_discrete_distribution(const double * probabilities,
  */
 rocrand_status ROCRANDAPI
 rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution);
+
+/**
+ * \brief Get the vector for 32-bit (scrambled-)sobol generation.
+ *
+ * \param vectors - location where to write the vector pointer to
+ *
+ * \param set - which direction vector set to use
+ *
+ * \return
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p set was invalid for this method \n
+ * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n
+ */
+rocrand_status ROCRANDAPI rocrand_get_direction_vectors32(const unsigned int**         vectors,
+                                                          rocrand_direction_vector_set set);
+
+/**
+ * \brief Get the vector for 64-bit (scrambled-)sobol generation.
+ *
+ * \param vectors - location where to write the vector pointer to
+ *
+ * \param set - which direction vector set to use
+ *
+ * \return
+ * - ROCRAND_STATUS_OUT_OF_RANGE if \p set was invalid for this method \n
+ * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n
+ */
+rocrand_status ROCRANDAPI rocrand_get_direction_vectors64(const unsigned long long**   vectors,
+                                                          rocrand_direction_vector_set set);
+
+/**
+ * \brief Get the scramble constants for 32-bit scrambled sobol generation.
+ *
+ * \param constants - location where to write the constants pointer to
+ *
+ * \return
+ * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n
+ */
+rocrand_status ROCRANDAPI rocrand_get_scramble_constants32(const unsigned int** constants);
+
+/**
+ * \brief Get the scramble constants for 64-bit scrambled sobol generation.
+ *
+ * \param constants - location where to write the constants pointer to
+ *
+ * \return
+ * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n
+ */
+rocrand_status ROCRANDAPI rocrand_get_scramble_constants64(const unsigned long long** constants);
 
 #if defined(__cplusplus)
 }

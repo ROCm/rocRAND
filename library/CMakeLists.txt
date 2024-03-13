@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,27 @@
 # SOFTWARE.
 
 # rocRAND library
+# C++17 is used internally
+set(CMAKE_CXX_STANDARD 17)
 # Get sources
-file(GLOB tmp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-set(rocRAND_SRCS ${tmp})
+set(rocRAND_HIP_SRCS
+    "src/rng/generator_type_lfsr113.cpp"
+    "src/rng/generator_type_mrg31k3p.cpp"
+    "src/rng/generator_type_mrg32k3a.cpp"
+    "src/rng/generator_type_mt19937.cpp"
+    "src/rng/generator_type_mtgp32.cpp"
+    "src/rng/generator_type_philox4x32_10.cpp"
+    "src/rng/generator_type_scrambled_sobol32.cpp"
+    "src/rng/generator_type_scrambled_sobol64.cpp"
+    "src/rng/generator_type_sobol32.cpp"
+    "src/rng/generator_type_sobol64.cpp"
+    "src/rng/generator_type_threefry2x32_20.cpp"
+    "src/rng/generator_type_threefry2x64_20.cpp"
+    "src/rng/generator_type_threefry4x32_20.cpp"
+    "src/rng/generator_type_threefry4x64_20.cpp"
+    "src/rng/generator_type_xorwow.cpp"
+    "src/rocrand_mt19937_precomputed.cpp"
+    "src/rocrand.cpp")
 
 # When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
 # turns on inline asm in rocRAND (for both compiled library and device functions).
@@ -56,79 +74,65 @@ if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
     )
 endif()
 
-add_library(rocrand ${rocRAND_SRCS})
+add_library(rocrand ${rocRAND_HIP_SRCS})
 add_library(roc::rocrand ALIAS rocrand)
+
+set(SOBOL_PRECOMPUTED_SOURCES
+    "src/rocrand_scrambled_sobol32_precomputed"
+    "src/rocrand_scrambled_sobol64_precomputed"
+    "src/rocrand_sobol32_precomputed"
+    "src/rocrand_sobol64_precomputed")
+
+if (ROCRAND_HAVE_ASM_INCBIN)
+    enable_language(ASM)
+    list(TRANSFORM SOBOL_PRECOMPUTED_SOURCES APPEND ".S")
+    set_source_files_properties(${SOBOL_PRECOMPUTED_SOURCES} PROPERTIES
+                                INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src) 
+else()
+    list(TRANSFORM SOBOL_PRECOMPUTED_SOURCES APPEND ".cpp")
+endif()
+target_sources(rocrand PRIVATE ${SOBOL_PRECOMPUTED_SOURCES})
+
+set_target_properties(rocrand PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
+
+if (NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(rocrand PUBLIC ROCRAND_STATIC_BUILD)
+endif()
+
+if (HIP_COMPILER STREQUAL "nvcc")
+    set_target_properties(rocrand PROPERTIES CUDA_VISIBILITY_PRESET hidden)
+endif()
 
 # Add interface include directory so that other CMake applications can maintain previous behaviour.
 # This will be removed with upcoming packaging changes.
 target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
 
 # Build library
-if(NOT USE_HIP_CPU)
-    if(HIP_COMPILER STREQUAL "nvcc")
-        set_source_files_properties(${rocRAND_SRCS}
-            PROPERTIES LANGUAGE CUDA
-        )
-        set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-    else()
-        target_link_libraries(rocrand PRIVATE hip::device)
-        if(NOT WIN32)
-            foreach(amdgpu_target ${AMDGPU_TARGETS})
-                target_link_libraries(rocrand PRIVATE --amdgpu-target=${amdgpu_target})
-            endforeach()
-        endif()
+if(HIP_COMPILER STREQUAL "nvcc")
+    set_source_files_properties(${rocRAND_HIP_SRCS}
+        PROPERTIES LANGUAGE CUDA CUDA_STANDARD 17)
+    if(${CMAKE_VERSION} VERSION_LESS "3.18")
+        set_source_files_properties(${rocRAND_HIP_SRCS} PROPERTIES COMPILE_OPTIONS "-std=c++17")
     endif()
+    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 else()
-    # Check hipRuntimeGetVersion() function availability
-    file(WRITE "${PROJECT_BINARY_DIR}/hip_cpu_test/test_runtime_get_version.cpp"
-        [[
-            #include <hip/hip_runtime.h>
-            int main()
-            {
-                int runtime_version;
-                hipRuntimeGetVersion(&runtime_version);
-            }
-        ]]
-    )
-    # Check HIP min() function availability
-    file(WRITE "${PROJECT_BINARY_DIR}/hip_cpu_test/test_hip_math.cpp"
-        [[
-            #include <hip/hip_runtime.h>
-            int main()
-            {
-                return min(2, 3);
-            }
-        ]]
-    )
-    try_compile(HAVE_HIP_RUNTIME_GET_VERSION
-        "${PROJECT_BINARY_DIR}/hip_cpu_test"
-        "${PROJECT_BINARY_DIR}/hip_cpu_test/test_runtime_get_version.cpp"
-        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${PROJECT_BINARY_DIR}/deps/hip-cpu/include"
-        CXX_STANDARD 17
-        LINK_LIBRARIES Threads::Threads
-    )
-    try_compile(HAVE_HIP_MATH
-        "${PROJECT_BINARY_DIR}/hip_cpu_test"
-        "${PROJECT_BINARY_DIR}/hip_cpu_test/test_hip_math.cpp"
-        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${PROJECT_BINARY_DIR}/deps/hip-cpu/include"
-        CXX_STANDARD 17
-        LINK_LIBRARIES Threads::Threads
-    )
-    target_link_libraries(rocrand
-        Threads::Threads
-        hip_cpu_rt::hip_cpu_rt
-    )
-    if(STL_DEPENDS_ON_TBB)
-        target_link_libraries(rocrand TBB::tbb)
-    endif()
+    target_link_libraries(rocrand PRIVATE hip::device)
 endif()
 
-# Configure a header file for min() and hipRuntimeGetVersion() functions
-configure_file(
-    "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_hip_cpu.h.in"
-    "${PROJECT_BINARY_DIR}/library/include/rocrand/rocrand_hip_cpu.h"
-    @ONLY
-)
+if(NOT WIN32)
+    find_package(TBB QUIET)
+    if(NOT TARGET TBB::tbb)
+        message(WARNING "TBB is not found. Building without parallel STL support")
+    else()
+        target_link_libraries(rocrand PRIVATE TBB::tbb)
+
+        # Older libstdc++ headers require TBB to be installed to be able to #include <execution>
+        target_compile_definitions(rocrand PRIVATE ROCRAND_PARALLEL_STL)
+    endif()
+endif()
 
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
@@ -145,22 +149,17 @@ rocm_install(
 )
 
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")
-configure_file(
+set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+set(CONFIG_PACKAGE_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/rocrand)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
     src/rocrand-fortran-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake
+    INSTALL_DESTINATION ${CONFIG_PACKAGE_INSTALL_DIR}
 )
 
-
-if(USE_HIP_CPU)
-    rocm_export_targets(
-        TARGETS roc::rocrand
-        NAMESPACE roc::
-        DEPENDS PACKAGE Threads
-        DEPENDS PACKAGE hip_cpu_rt
-        DEPENDS PACKAGE TBB
-        INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/rocrand-fortran-config.cmake"
-    )
-elseif(HIP_COMPILER STREQUAL "nvcc")
+if(HIP_COMPILER STREQUAL "nvcc")
     rocm_export_targets(
         TARGETS roc::rocrand
         NAMESPACE roc::
@@ -205,7 +204,7 @@ if (WIN32)
     endif()	
 endif()
 
-# Fortran wrappers for hipRAND and rocRAND
+# Fortran wrappers for rocRAND
 if(BUILD_FORTRAN_WRAPPER)
     add_subdirectory(src/fortran)
 endif()

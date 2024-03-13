@@ -1,12 +1,12 @@
-# rocRAND Fortran
+# Fortran API reference
 
-This library provides a pure Fortran interface for the rocRAND/hipRAND API.
+This library provides a pure Fortran interface for the rocRAND API.
 
 This interface is intended to target only Host API functions, and provides a 1:1 mapping to
-the C Host API functions in rocRAND and hipRAND. For documentation of these functions, please
+the C Host API functions in rocRAND. For documentation of these functions, please
 refer to the C Host API functions documentation.
 
-## Build and Install
+## Build and install
 
 The Fortran interface is installed as part of the rocRAND package. Simply add the build
 option `-DBUILD_FORTRAN_WRAPPER=ON` when configuring cmake, as below:
@@ -15,7 +15,7 @@ option `-DBUILD_FORTRAN_WRAPPER=ON` when configuring cmake, as below:
 cmake -DBUILD_FORTRAN_WRAPPER=ON ../.
 ```
 
-## Running Unit Tests
+## Running unit tests
 
 ```
 # Go to rocRAND build directory
@@ -23,7 +23,6 @@ cd rocRAND; cd build
 
 # To run unit tests for Fortran interface
 ./test/test_rocrand_fortran_wrapper
-./test/test_hiprand_fortran_wrapper
 ```
 
 ## Usage
@@ -51,14 +50,7 @@ For rocRAND Fortran interface:
 ```
 gfortran <input-file>.f90 hip_m.f90 rocrand_m.f90  -lrocrand_fortran -lrocrand
 # If compiling on a NVCC platform, link CUDA libraries (-lcuda -lcudart)
-# If compiling on an AMD platform, link HIP library (-L${HIP_ROOT_DIR}/lib -lhip_hcc)
-```
-
-For hipRAND Fortran interface:
-```
-gfortran <input-file>.f90 hip_m.f90 hiprand_m.f90  -lhiprand_fortran -lhiprand
-# If compiling on a NVCC platform, link CUDA and CURAND libraries (-lcuda -lcudart -lcurand)
-# If compiling on an AMD platform, link HIP and rocRAND library (-lrocrand -L${HIP_ROOT_DIR}/lib -lhip_hcc)
+# If compiling on an AMD platform, link HIP library (-L${HIP_ROOT_DIR}/lib)
 ```
 
 Note: `${HIP_ROOT_DIR}` points to the directory where HIP was installed.

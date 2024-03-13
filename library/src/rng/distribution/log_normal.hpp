@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,19 @@
 #include <hip/hip_runtime.h>
 
 #include "device_distributions.hpp"
+#include "rocrand/rocrand.h"
 
+inline constexpr unsigned int log_normal_distribution_max_input_width_default = 4;
+
+template<rocrand_rng_type, class T>
+inline constexpr unsigned int log_normal_distribution_max_input_width
+    = log_normal_distribution_max_input_width_default;
 
 // Universal
 
-template<class Output, class Input = unsigned int, unsigned int MaxInputWidth = 4>
+template<class Output,
+         class Input                = unsigned int,
+         unsigned int MaxInputWidth = log_normal_distribution_max_input_width_default>
 struct log_normal_distribution;
 
 template<>
@@ -256,8 +264,8 @@ struct mrg_engine_log_normal_distribution<__half, state_type>
     const __half2 mean;
     const __half2 stddev;
 
-    __host__ __device__ mrg_engine_log_normal_distribution(__half mean, __half stddev)
-        : mean(mean, mean), stddev(stddev, stddev)
+    __host__ __device__ mrg_engine_log_normal_distribution(__half mean, __half stddev) // cppcheck-suppress uninitMemberVar
+        : mean(mean, mean), stddev(stddev, stddev) 
     {}
 
     __host__ __device__

@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL 
     if(NOT hip_FOUND)
         find_package(HIP REQUIRED)
     endif()
-    if((HIP_COMPILER STREQUAL "hcc") OR (HIP_COMPILER STREQUAL "clang"))
+    if((HIP_COMPILER STREQUAL "clang"))
        # TODO: The HIP package on NVIDIA platform is incorrect at few versions
        set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
     endif()
@@ -36,18 +36,11 @@ else()
 endif()
 
 if(HIP_COMPILER STREQUAL "nvcc")
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        include(SetupNVCC)
-    else()
-        message(WARNING "On CUDA platform 'g++' is recommended C++ compiler.")
-    endif()
-elseif(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-    if(NOT (CMAKE_CXX_COMPILER MATCHES ".*/hcc$" OR CMAKE_CXX_COMPILER MATCHES ".*/hipcc$"))
-        message(FATAL_ERROR "On ROCm platform 'hcc' or 'clang' must be used as C++ compiler.")
-    elseif(NOT CXX_VERSION_STRING MATCHES "clang")
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/hcc)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
+    include(SetupNVCC)
+elseif(HIP_COMPILER STREQUAL "clang")
+    if(NOT (CMAKE_CXX_COMPILER MATCHES ".*hipcc$" OR CMAKE_CXX_COMPILER MATCHES ".*clang\\+\\+"))
+        message(FATAL_ERROR "On ROCm platform 'hipcc' or HIP-aware Clang must be used as C++ compiler.")
     endif()
 else()
-    message(FATAL_ERROR "HIP_COMPILER must be 'hcc' or 'clang' (AMD ROCm platform) or `nvcc` (NVIDIA CUDA platform).")
+    message(FATAL_ERROR "HIP_COMPILER must be `clang` (AMD ROCm platform)")
 endif()

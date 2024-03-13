@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,8 @@
     #include <string>
     #include <type_traits>
 
+    #include <cassert>
+
 namespace rocrand_cpp {
 
 /// \rocrand_internal \addtogroup rocrandhostcpp
@@ -53,13 +55,9 @@ public:
     /// Constructs new error object from error code \p error.
     ///
     /// \param error - error code
-    error(error_type error) noexcept
+    explicit error(error_type error) noexcept
         : m_error(error),
           m_error_string(to_string(error))
-    {
-    }
-
-    ~error() noexcept
     {
     }
 
@@ -76,7 +74,7 @@ public:
     }
 
     /// Returns a C-string description of the error.
-    const char* what() const noexcept
+    const char* what() const noexcept override
     {
         return m_error_string.c_str();
     }
@@ -154,6 +152,7 @@ class uniform_int_distribution
                   "types are supported in uniform_int_distribution");
 
 public:
+    /// See description for IntType template parameter.
     typedef IntType result_type;
 
     /// Default constructor
@@ -162,18 +161,18 @@ public:
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
     /// Returns the smallest possible value that can be generated.
-    IntType min() const
+    static constexpr IntType min()
     {
         return 0;
     }
 
     /// Returns the largest possible value that can be generated.
-    IntType max() const
+    static constexpr IntType max()
     {
         return std::numeric_limits<IntType>::max();
     }
@@ -204,39 +203,39 @@ public:
     }
 
     /// Returns \c true if the distribution is the same as \p other.
-    bool operator==(const uniform_int_distribution<IntType>& other)
+    bool operator==(const uniform_int_distribution<IntType>& other) const
     {
         (void) other;
         return true;
     }
 
     /// Returns \c true if the distribution is different from \p other.
-    bool operator!=(const uniform_int_distribution<IntType>& other)
+    bool operator!=(const uniform_int_distribution<IntType>& other) const
     {
         return !(*this == other);
     }
 
 private:
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned char * output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned char * output, size_t size)
     {
         return rocrand_generate_char(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned short * output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned short * output, size_t size)
     {
         return rocrand_generate_short(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned int * output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned int * output, size_t size)
     {
         return rocrand_generate(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, unsigned long long int* output, size_t size)
+    static rocrand_status generate(Generator& g, unsigned long long int* output, size_t size)
     {
         return rocrand_generate_long_long(g.m_generator, output, size);
     }
@@ -247,6 +246,7 @@ private:
 /// \brief Produces random floating-point values uniformly distributed on the interval (0, 1].
 ///
 /// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
+
 template<class RealType = float>
 class uniform_real_distribution
 {
@@ -258,6 +258,7 @@ class uniform_real_distribution
     );
 
 public:
+    /// See description for RealType template parameter.
     typedef RealType result_type;
 
     /// Default constructor
@@ -266,22 +267,18 @@ public:
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
     /// Returns the smallest possible value that can be generated.
-    RealType min() const
+    static constexpr RealType min()
     {
-        if(std::is_same<float, RealType>::value)
-        {
-            return static_cast<RealType>(ROCRAND_2POW32_INV);
-        }
         return static_cast<RealType>(ROCRAND_2POW32_INV_DOUBLE);
     }
 
     /// Returns the largest possible value that can be generated.
-    RealType max() const
+    static constexpr RealType max()
     {
         return 1.0;
     }
@@ -312,33 +309,33 @@ public:
     }
 
     /// Returns \c true if the distribution is the same as \p other.
-    bool operator==(const uniform_real_distribution<RealType>& other)
+    bool operator==(const uniform_real_distribution<RealType>& other) const
     {
         (void) other;
         return true;
     }
 
     /// Returns \c true if the distribution is different from \p other.
-    bool operator!=(const uniform_real_distribution<RealType>& other)
+    bool operator!=(const uniform_real_distribution<RealType>& other) const
     {
         return !(*this == other);
     }
 
 private:
     template<class Generator>
-    rocrand_status generate(Generator& g, float * output, size_t size)
+    static rocrand_status generate(Generator& g, float * output, size_t size)
     {
         return rocrand_generate_uniform(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, double * output, size_t size)
+    static rocrand_status generate(Generator& g, double * output, size_t size)
     {
         return rocrand_generate_uniform_double(g.m_generator, output, size);
     }
 
     template<class Generator>
-    rocrand_status generate(Generator& g, half * output, size_t size)
+    static rocrand_status generate(Generator& g, half * output, size_t size)
     {
         return rocrand_generate_uniform_half(g.m_generator, output, size);
     }
@@ -360,6 +357,7 @@ class normal_distribution
     );
 
 public:
+    /// See description for RealType template parameter.
     typedef RealType result_type;
 
     /// \class param_type
@@ -367,17 +365,27 @@ public:
     class param_type
     {
     public:
+        /// Alias for convenience
         using distribution_type = normal_distribution<RealType>;
+
+        /// \brief Constructs a \p param_type object with the
+        /// given distribution parameters.
+        /// \param mean - mean
+        /// \param stddev - standard deviation
         param_type(RealType mean = 0.0, RealType stddev = 1.0)
             : m_mean(mean), m_stddev(stddev)
         {
         }
 
+        /// Copy constructor
         param_type(const param_type& params) = default;
+
+        /// Copy assignment operator
+        param_type& operator=(const param_type& params) = default;
 
         /// \brief Returns the deviation distribution parameter.
         ///
-        /// The default value is 1.0.
+        /// The default value is 0.0.
         RealType mean() const
         {
             return m_mean;
@@ -392,13 +400,13 @@ public:
         }
 
         /// Returns \c true if the param_type is the same as \p other.
-        bool operator==(const param_type& other)
+        bool operator==(const param_type& other) const
         {
             return m_mean == other.m_mean && m_stddev == other.m_stddev;
         }
 
         /// Returns \c true if the param_type is different from \p other.
-        bool operator!=(const param_type& other)
+        bool operator!=(const param_type& other) const
         {
             return !(*this == other);
         }
@@ -417,13 +425,13 @@ public:
 
     /// \brief Constructs a new distribution object.
     /// \param params - Distribution parameters
-    normal_distribution(const param_type& params)
+    explicit normal_distribution(const param_type& params)
         : m_params(params)
     {
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
@@ -444,13 +452,13 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated.
-    RealType min() const
+    static constexpr RealType min()
     {
         return std::numeric_limits<RealType>::lowest();
     }
 
     /// Returns the largest possible value that can be generated.
-    RealType max() const
+    static constexpr RealType max()
     {
         return std::numeric_limits<RealType>::max();
     }
@@ -496,7 +504,7 @@ public:
     /// \brief Returns \c true if the distribution is the same as \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator==(const normal_distribution<RealType>& other)
+    bool operator==(const normal_distribution<RealType>& other) const 
     {
         return this->m_params == other.m_params;
     }
@@ -504,7 +512,7 @@ public:
     /// \brief Returns \c true if the distribution is different from \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator!=(const normal_distribution<RealType>& other)
+    bool operator!=(const normal_distribution<RealType>& other) const
     {
         return !(*this == other);
     }
@@ -553,6 +561,7 @@ class lognormal_distribution
     );
 
 public:
+    /// See description for RealType template parameter.
     typedef RealType result_type;
 
     /// \class param_type
@@ -560,13 +569,23 @@ public:
     class param_type
     {
     public:
+        /// Alias for convenience
         using distribution_type = lognormal_distribution<RealType>;
+
+        /// \brief Constructs a \p param_type object with the
+        /// given distribution parameters.
+        /// \param m - mean
+        /// \param s - standard deviation
         param_type(RealType m = 0.0, RealType s = 1.0)
             : m_mean(m), m_stddev(s)
         {
         }
 
+        /// Copy constructor
         param_type(const param_type& params) = default;
+
+        /// Copy assignment operator
+        param_type& operator=(const param_type& params) = default;
 
         /// \brief Returns the deviation distribution parameter.
         ///
@@ -585,13 +604,13 @@ public:
         }
 
         /// Returns \c true if the param_type is the same as \p other.
-        bool operator==(const param_type& other)
+        bool operator==(const param_type& other) const
         {
             return m_mean == other.m_mean && m_stddev == other.m_stddev;
         }
 
         /// Returns \c true if the param_type is different from \p other.
-        bool operator!=(const param_type& other)
+        bool operator!=(const param_type& other) const
         {
             return !(*this == other);
         }
@@ -610,13 +629,13 @@ public:
 
     /// \brief Constructs a new distribution object.
     /// \param params - Distribution parameters
-    lognormal_distribution(const param_type& params)
+    explicit lognormal_distribution(const param_type& params)
         : m_params(params)
     {
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
@@ -649,13 +668,13 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated.
-    RealType min() const
+    static constexpr RealType min()
     {
         return 0;
     }
 
     /// Returns the largest possible value that can be generated.
-    RealType max() const
+    static RealType max()
     {
         return std::numeric_limits<RealType>::max();
     }
@@ -690,7 +709,7 @@ public:
     /// \brief Returns \c true if the distribution is the same as \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator==(const lognormal_distribution<RealType>& other)
+    bool operator==(const lognormal_distribution<RealType>& other) const
     {
         return this->m_params == other.m_params;
     }
@@ -698,7 +717,7 @@ public:
     /// \brief Returns \c true if the distribution is different from \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator!=(const lognormal_distribution<RealType>& other)
+    bool operator!=(const lognormal_distribution<RealType>& other) const
     {
         return !(*this == other);
     }
@@ -745,6 +764,7 @@ class poisson_distribution
     );
 
 public:
+    /// See description for IntType template parameter.
     typedef IntType result_type;
 
     /// \class param_type
@@ -752,13 +772,22 @@ public:
     class param_type
     {
     public:
+        /// Alias for convenience.
         using distribution_type = poisson_distribution<IntType>;
+
+        /// \brief Constructs a \p param_type object with the
+        /// given mean.
+        /// \param mean - mean to use for the distribution
         param_type(double mean = 1.0)
             : m_mean(mean)
         {
         }
 
+        /// Copy constructor
         param_type(const param_type& params) = default;
+
+        /// Copy assignment operator
+        param_type& operator=(const param_type& params) = default;
 
         /// \brief Returns the mean distribution parameter.
         ///
@@ -770,13 +799,13 @@ public:
         }
 
         /// Returns \c true if the param_type is the same as \p other.
-        bool operator==(const param_type& other)
+        bool operator==(const param_type& other) const
         {
             return m_mean == other.m_mean;
         }
 
         /// Returns \c true if the param_type is different from \p other.
-        bool operator!=(const param_type& other)
+        bool operator!=(const param_type& other) const
         {
             return !(*this == other);
         }
@@ -794,13 +823,13 @@ public:
 
     /// \brief Constructs a new distribution object.
     /// \param params - Distribution parameters
-    poisson_distribution(const param_type& params)
+    explicit poisson_distribution(const param_type& params)
         : m_params(params)
     {
     }
 
     /// Resets distribution's internal state if there is any.
-    void reset()
+    static void reset()
     {
     }
 
@@ -814,19 +843,19 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated.
-    IntType min() const
+    static constexpr IntType min()
     {
         return 0;
     }
 
     /// Returns the largest possible value that can be generated.
-    IntType max() const
+    static constexpr IntType max()
     {
         return std::numeric_limits<IntType>::max();
     }
 
     /// Returns the distribution parameter object
-    param_type param() const
+    param_type param()
     {
         return m_params;
     }
@@ -851,7 +880,7 @@ public:
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p IntType type.
-    /// * If generator \p g is a quasi-random number generator (`hiprand_cpp::sobol32_engine`),
+    /// * If generator \p g is a quasi-random number generator (`rocrand_cpp::sobol32_engine`),
     /// then \p size must be a multiple of that generator's dimension.
     ///
     /// See also: rocrand_generate_poisson()
@@ -866,7 +895,7 @@ public:
     /// \brief Returns \c true if the distribution is the same as \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator==(const poisson_distribution<IntType>& other)
+    bool operator==(const poisson_distribution<IntType>& other) const
     {
         return this->m_params == other.m_params;
     }
@@ -874,7 +903,7 @@ public:
     /// \brief Returns \c true if the distribution is different from \p other.
     ///
     /// Two distribution are equal, if their parameters are equal.
-    bool operator!=(const poisson_distribution<IntType>& other)
+    bool operator!=(const poisson_distribution<IntType>& other) const
     {
         return !(*this == other);
     }
@@ -953,7 +982,7 @@ public:
     /// bound to the lifetime of the engine.
     ///
     /// \param generator - rocRAND generator
-    philox4x32_10_engine(rocrand_generator& generator)
+    explicit philox4x32_10_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -963,13 +992,46 @@ public:
         generator = NULL;
     }
 
+    philox4x32_10_engine(const philox4x32_10_engine&) = delete;
+
+    philox4x32_10_engine& operator=(const philox4x32_10_engine&) = delete;
+
+    /// \brief Move construct from an other engine, moving the state over.
+    ///
+    /// \param rhs the engine to move-from
+    ///
+    /// - The moved-from engine is safe to assign to or destroy, but otherwise cannot be used.
+    /// - This engine will continue the sequence generated by `rhs`.
+    philox4x32_10_engine(philox4x32_10_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \brief Move assign from an other engine, moving the state over.
+    ///
+    /// \param rhs the engine to move-from
+    ///
+    /// - The moved-from engine is safe to assign to or destroy, but otherwise cannot be used.
+    /// - This engine will continue the sequence generated by `rhs`.
+    philox4x32_10_engine& operator=(philox4x32_10_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// Destructs the engine.
     ///
     /// See also: rocrand_destroy_generator()
     ~philox4x32_10_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
+            throw rocrand_cpp::error(status);
     }
 
     /// \brief Sets the random number engine's \p hipStream for kernel launches.
@@ -1053,13 +1115,13 @@ public:
     }
 
     /// Returns the smallest possible value that can be generated by the engine.
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// Returns the largest possible value that can be generated by the engine.
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -1141,7 +1203,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    xorwow_engine(rocrand_generator& generator)
+    explicit xorwow_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -1151,11 +1213,34 @@ public:
         generator = NULL;
     }
 
+    xorwow_engine(const xorwow_engine&) = delete;
+
+    xorwow_engine& operator=(const xorwow_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    xorwow_engine(xorwow_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    xorwow_engine& operator=(xorwow_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~xorwow_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
@@ -1197,13 +1282,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -1286,7 +1371,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mrg31k3p_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit mrg31k3p_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -1295,11 +1380,33 @@ public:
         generator = NULL;
     }
 
+    mrg31k3p_engine(const mrg31k3p_engine&) = delete;
+
+    mrg31k3p_engine& operator=(const mrg31k3p_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    mrg31k3p_engine(mrg31k3p_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    mrg31k3p_engine& operator=(mrg31k3p_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~mrg31k3p_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -1346,13 +1453,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 1;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -1435,7 +1542,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mrg32k3a_engine(rocrand_generator& generator)
+    explicit mrg32k3a_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -1445,11 +1552,34 @@ public:
         generator = NULL;
     }
 
+    mrg32k3a_engine(const mrg32k3a_engine&) = delete;
+
+    mrg32k3a_engine& operator=(const mrg32k3a_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    mrg32k3a_engine(mrg32k3a_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    mrg32k3a_engine& operator=(mrg32k3a_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~mrg32k3a_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
@@ -1491,13 +1621,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 1;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -1560,8 +1690,9 @@ public:
     /// MTGP32 engine does not accept offset.
     ///
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
+    /// \param order_value - ordering value from the rocrand_ordering enum
     ///
-    /// See also: hiprandCreateGenerator()
+    /// See also: rocrand_create_generator()
     mtgp32_engine(seed_type  seed_value  = DefaultSeed,
                   order_type order_value = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
@@ -1581,7 +1712,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mtgp32_engine(rocrand_generator& generator)
+    explicit mtgp32_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -1591,11 +1722,34 @@ public:
         generator = NULL;
     }
 
+    mtgp32_engine(const mtgp32_engine&) = delete;
+
+    mtgp32_engine& operator=(const mtgp32_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    mtgp32_engine(mtgp32_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    mtgp32_engine& operator=(mtgp32_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~mtgp32_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
@@ -1630,13 +1784,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -1702,9 +1856,29 @@ public:
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
     /// \param order_value - ordering of the sequences generated by the engine, see also order()
     ///
-    /// See also: hiprandCreateGenerator()
+    /// See also: rocrand_create_generator()
     lfsr113_engine(seed_type  seed_value = {DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW},
-                   order_type order_value = ROCRAND_ORDERING_QUASI_DEFAULT)
+                   order_type order_value = ROCRAND_ORDERING_PSEUDO_DEFAULT)
+    {
+        rocrand_status status;
+        status = rocrand_create_generator(&m_generator, this->type());
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+        try
+        {
+            this->order(order_value);
+            this->seed(seed_value);
+        }
+        catch(...)
+        {
+            (void)rocrand_destroy_generator(m_generator);
+            throw;
+        }
+    }
+
+    /// \copydoc lfsr113_engine::lfsr113_engine(seed_type,order_type)
+    lfsr113_engine(unsigned long long seed_value,
+                   order_type         order_value = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -1723,7 +1897,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    lfsr113_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit lfsr113_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -1732,11 +1906,33 @@ public:
         generator = NULL;
     }
 
+    lfsr113_engine(const lfsr113_engine&) = delete;
+
+    lfsr113_engine& operator=(const lfsr113_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    lfsr113_engine(lfsr113_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    lfsr113_engine& operator=(lfsr113_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~lfsr113_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -1783,13 +1979,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -1842,6 +2038,8 @@ class mt19937_engine
 public:
     /// \copydoc philox4x32_10_engine::result_type
     typedef unsigned int result_type;
+    /// \copydoc philox4x32_10_engine::order_type
+    typedef rocrand_ordering order_type;
     /// \copydoc philox4x32_10_engine::seed_type
     typedef unsigned long long seed_type;
     /// \copydoc philox4x32_10_engine::default_seed
@@ -1849,8 +2047,14 @@ public:
 
     /// \brief Constructs the pseudo-random number engine.
     ///
+    /// MT19937 does not accept offset.
+    ///
     /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
-    mt19937_engine(seed_type seed_value = DefaultSeed)
+    /// \param order_value - ordering of the sequences generated by the engine, see also order()
+    ///
+    /// See also: rocrand_create_generator()
+    mt19937_engine(seed_type  seed_value  = DefaultSeed,
+                   order_type order_value = ROCRAND_ORDERING_PSEUDO_DEFAULT)
     {
         rocrand_status status;
         status = rocrand_create_generator(&m_generator, this->type());
@@ -1858,6 +2062,7 @@ public:
             throw rocrand_cpp::error(status);
         try
         {
+            this->order(order_value);
             this->seed(seed_value);
         }
         catch(...)
@@ -1868,7 +2073,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    mt19937_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit mt19937_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -1879,17 +2084,31 @@ public:
 
     mt19937_engine(const mt19937_engine&) = delete;
 
-    mt19937_engine(mt19937_engine&&) = delete;
-
     mt19937_engine& operator=(const mt19937_engine&) = delete;
 
-    mt19937_engine& operator=(mt19937_engine&&) = delete;
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    mt19937_engine(mt19937_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    mt19937_engine& operator=(mt19937_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
 
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~mt19937_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -1897,6 +2116,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -1920,13 +2147,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -2017,7 +2244,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    sobol32_engine(rocrand_generator& generator)
+    explicit sobol32_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -2027,11 +2254,34 @@ public:
         generator = NULL;
     }
 
+    sobol32_engine(const sobol32_engine&) = delete;
+
+    sobol32_engine& operator=(const sobol32_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    sobol32_engine(sobol32_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    sobol32_engine& operator=(sobol32_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~sobol32_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
@@ -2097,13 +2347,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -2168,6 +2418,7 @@ public:
     ///
     /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
     /// \param offset_value - number of internal states that should be skipped, see also offset()
+    /// \param order_value - ordering value from the rocrand_ordering enum
     ///
     /// See also: rocrand_create_generator()
     scrambled_sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
@@ -2195,7 +2446,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    scrambled_sobol32_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit scrambled_sobol32_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2204,11 +2455,33 @@ public:
         generator = NULL;
     }
 
+    scrambled_sobol32_engine(const scrambled_sobol32_engine&) = delete;
+
+    scrambled_sobol32_engine& operator=(const scrambled_sobol32_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    scrambled_sobol32_engine(scrambled_sobol32_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    scrambled_sobol32_engine& operator=(scrambled_sobol32_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~scrambled_sobol32_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -2279,13 +2552,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -2377,7 +2650,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    sobol64_engine(rocrand_generator& generator)
+    explicit sobol64_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
         if(generator == NULL)
@@ -2387,11 +2660,34 @@ public:
         generator = NULL;
     }
 
+    sobol64_engine(const sobol64_engine&) = delete;
+
+    sobol64_engine& operator=(const sobol64_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    sobol64_engine(sobol64_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    sobol64_engine& operator=(sobol64_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~sobol64_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS) throw rocrand_cpp::error(status);
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
+            throw rocrand_cpp::error(status);
     }
 
     /// \copydoc philox4x32_10_engine::stream()
@@ -2457,13 +2753,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<result_type>::max();
     }
@@ -2556,7 +2852,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    scrambled_sobol64_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit scrambled_sobol64_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2565,11 +2861,33 @@ public:
         generator = NULL;
     }
 
+    scrambled_sobol64_engine(const scrambled_sobol64_engine&) = delete;
+
+    scrambled_sobol64_engine& operator=(const scrambled_sobol64_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    scrambled_sobol64_engine(scrambled_sobol64_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    scrambled_sobol64_engine& operator=(scrambled_sobol64_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~scrambled_sobol64_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -2640,13 +2958,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<result_type>::max();
     }
@@ -2729,7 +3047,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry2x32_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry2x32_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2738,11 +3056,33 @@ public:
         generator = NULL;
     }
 
+    threefry2x32_20_engine(const threefry2x32_20_engine&) = delete;
+
+    threefry2x32_20_engine& operator=(const threefry2x32_20_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    threefry2x32_20_engine(threefry2x32_20_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    threefry2x32_20_engine& operator=(threefry2x32_20_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~threefry2x32_20_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -2789,13 +3129,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -2878,7 +3218,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry2x64_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry2x64_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -2887,11 +3227,33 @@ public:
         generator = NULL;
     }
 
+    threefry2x64_20_engine(const threefry2x64_20_engine&) = delete;
+
+    threefry2x64_20_engine& operator=(const threefry2x64_20_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    threefry2x64_20_engine(threefry2x64_20_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    threefry2x64_20_engine& operator=(threefry2x64_20_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~threefry2x64_20_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -2938,13 +3300,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -3027,7 +3389,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry4x32_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry4x32_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -3036,11 +3398,33 @@ public:
         generator = NULL;
     }
 
+    threefry4x32_20_engine(const threefry4x32_20_engine&) = delete;
+
+    threefry4x32_20_engine& operator=(const threefry4x32_20_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    threefry4x32_20_engine(threefry4x32_20_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    threefry4x32_20_engine& operator=(threefry4x32_20_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~threefry4x32_20_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -3087,13 +3471,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -3176,7 +3560,7 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::philox4x32_10_engine(rocrand_generator&)
-    threefry4x64_20_engine(rocrand_generator& generator) : m_generator(generator)
+    explicit threefry4x64_20_engine(rocrand_generator& generator) : m_generator(generator)
     {
         if(generator == NULL)
         {
@@ -3185,11 +3569,33 @@ public:
         generator = NULL;
     }
 
+    threefry4x64_20_engine(const threefry4x64_20_engine&) = delete;
+
+    threefry4x64_20_engine& operator=(const threefry4x64_20_engine&) = delete;
+
+    /// \copydoc philox4x32_10_engine::philox4x32_10_engine(philox4x32_10_engine&&)
+    threefry4x64_20_engine(threefry4x64_20_engine&& rhs) noexcept : m_generator(rhs.m_generator)
+    {
+        rhs.m_generator = nullptr;
+    }
+
+    /// \copydoc philox4x32_10_engine::operator=(philox4x32_10_engine&&)
+    threefry4x64_20_engine& operator=(threefry4x64_20_engine&& rhs) noexcept
+    {
+        rocrand_status status = rocrand_destroy_generator(m_generator);
+        assert(status == ROCRAND_STATUS_SUCCESS || status == ROCRAND_STATUS_NOT_CREATED);
+        (void)status;
+
+        m_generator     = rhs.m_generator;
+        rhs.m_generator = nullptr;
+        return *this;
+    }
+
     /// \copydoc philox4x32_10_engine::~philox4x32_10_engine()
     ~threefry4x64_20_engine() noexcept(false)
     {
         rocrand_status status = rocrand_destroy_generator(m_generator);
-        if(status != ROCRAND_STATUS_SUCCESS)
+        if(status != ROCRAND_STATUS_SUCCESS && status != ROCRAND_STATUS_NOT_CREATED)
             throw rocrand_cpp::error(status);
     }
 
@@ -3197,6 +3603,14 @@ public:
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
+        if(status != ROCRAND_STATUS_SUCCESS)
+            throw rocrand_cpp::error(status);
+    }
+
+    /// \copydoc philox4x32_10_engine::order()
+    void order(order_type value)
+    {
+        rocrand_status status = rocrand_set_ordering(this->m_generator, value);
         if(status != ROCRAND_STATUS_SUCCESS)
             throw rocrand_cpp::error(status);
     }
@@ -3228,13 +3642,13 @@ public:
     }
 
     /// \copydoc philox4x32_10_engine::min()
-    result_type min() const
+    static constexpr result_type min()
     {
         return 0;
     }
 
     /// \copydoc philox4x32_10_engine::max()
-    result_type max() const
+    static constexpr result_type max()
     {
         return std::numeric_limits<unsigned int>::max();
     }
@@ -3278,9 +3692,9 @@ typedef philox4x32_10_engine<> philox4x32_10;
 /// \typedef xorwow
 /// \brief Typedef of \p rocrand_cpp::xorwow_engine PRNG engine with default seed (#ROCRAND_XORWOW_DEFAULT_SEED).
 typedef xorwow_engine<> xorwow;
-/// \typedef mrg31k3a
+/// \typedef mrg31k3p
 /// \brief Typedef of \p rocrand_cpp::mrg31k3p_engine PRNG engine with default seed (#ROCRAND_MRG31K3P_DEFAULT_SEED).
-typedef mrg31k3p_engine<> mrg31k3a;
+typedef mrg31k3p_engine<> mrg31k3p;
 /// \typedef mrg32k3a
 /// \brief Typedef of \p rocrand_cpp::mrg32k3a_engine PRNG engine with default seed (#ROCRAND_MRG32K3A_DEFAULT_SEED).
 typedef mrg32k3a_engine<> mrg32k3a;
@@ -3341,8 +3755,8 @@ typedef xorwow default_random_engine;
 /// int main()
 /// {
 ///     const size_t size = 8192;
-///     unsigned int * output;
-///     hipMalloc(&output, size * sizeof(unsigned int));
+///     float * output;
+///     hipMalloc(&output, size * sizeof(float));
 ///
 ///     rocrand_cpp::random_device rd;
 ///     rocrand_cpp::mtgp32 engine(rd()); // seed engine with a real random value, if available

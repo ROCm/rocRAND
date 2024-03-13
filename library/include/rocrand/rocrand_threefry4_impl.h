@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -68,52 +68,50 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #define THREEFRY4x64_DEFAULT_ROUNDS 20
 #endif
 
-/* These are the R_256 constants from the Threefish reference sources
-   with names changed to R_64x4... */
-static constexpr __device__ int THREEFRY_ROTATION_64_4[8][2] = {
-    {14, 16},
-    {52, 57},
-    {23, 40},
-    { 5, 37},
-    {25, 33},
-    {46, 12},
-    {58, 22},
-    {32, 32}
-};
-
-/* Output from skein_rot_search: (srs-B128-X5000.out)
-// Random seed = 1. BlockSize = 64 bits. sampleCnt =  1024. rounds =  8, minHW_or=28
-// Start: Mon Aug 24 22:41:36 2009
-// ...
-// rMin = 0.472. #0A4B[*33] [CRC=DD1ECE0F. hw_OR=31. cnt=16384. blkSize= 128].format    */
-static constexpr __device__ int THREEFRY_ROTATION_32_4[8][2] = {
-    {10, 26},
-    {11, 21},
-    {13, 27},
-    {23,  5},
-    { 6, 20},
-    {17, 11},
-    {25, 10},
-    {18, 20}
-};
-
 namespace rocrand_device
 {
 
 template<class value>
-FQUALIFIERS int threefry_rotation_array(int indexX, int indexY);
+FQUALIFIERS int threefry_rotation_array(int indexX, int indexY) = delete;
 
 template<>
 FQUALIFIERS int threefry_rotation_array<unsigned int>(int indexX, int indexY)
 {
+    // Output from skein_rot_search: (srs-B128-X5000.out)
+    // Random seed = 1. BlockSize = 64 bits. sampleCnt =  1024. rounds =  8, minHW_or=28
+    // Start: Mon Aug 24 22:41:36 2009
+    // ...
+    // rMin = 0.472. #0A4B[*33] [CRC=DD1ECE0F. hw_OR=31. cnt=16384. blkSize= 128].format
+    static constexpr int THREEFRY_ROTATION_32_4[8][2] = {
+        {10, 26},
+        {11, 21},
+        {13, 27},
+        {23,  5},
+        { 6, 20},
+        {17, 11},
+        {25, 10},
+        {18, 20}
+    };
     return THREEFRY_ROTATION_32_4[indexX][indexY];
-};
+}
 
 template<>
 FQUALIFIERS int threefry_rotation_array<unsigned long long>(int indexX, int indexY)
 {
+    // These are the R_256 constants from the Threefish reference sources
+    // with names changed to R_64x4... */
+    static constexpr int THREEFRY_ROTATION_64_4[8][2] = {
+        {14, 16},
+        {52, 57},
+        {23, 40},
+        { 5, 37},
+        {25, 33},
+        {46, 12},
+        {58, 22},
+        {32, 32}
+    };
     return THREEFRY_ROTATION_64_4[indexX][indexY];
-};
+}
 
 template<typename state_value, typename value, unsigned int Nrounds>
 class threefry_engine4_base
@@ -126,6 +124,8 @@ public:
         state_value  result;
         unsigned int substate;
     };
+    using state_type        = threefry_state_4;
+    using state_vector_type = state_value;
 
     /// Advances the internal state to skip \p offset numbers.
     FQUALIFIERS void discard(unsigned long long offset)
@@ -152,7 +152,7 @@ public:
 
     FQUALIFIERS value next()
     {
-#if defined(__HIP_PLATFORM_HCC__) || defined(__HIP_PLATFORM_AMD__)
+#if defined(__HIP_PLATFORM_AMD__)
         value ret = m_state.result.data[m_state.substate];
 #else
         value ret = (&m_state.result.x)[m_state.substate];
@@ -177,7 +177,7 @@ public:
     }
 
 protected:
-    FQUALIFIERS state_value threefry_rounds(state_value counter, state_value key)
+    FQUALIFIERS static state_value threefry_rounds(state_value counter, state_value key)
     {
         state_value X;
         value       ks[4 + 1];

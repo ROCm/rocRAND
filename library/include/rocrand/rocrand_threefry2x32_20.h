@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -65,6 +65,7 @@ namespace rocrand_device
 class threefry2x32_20_engine : public threefry_engine2_base<uint2, unsigned int, 20>
 {
 public:
+    ROCRAND_DEPRECATED("Alias \"threefry2x32_20_state\" is deprecated. Use \"state_type\" instead.")
     typedef threefry_engine2_base<uint2, unsigned int, 20>::threefry_state_2 threefry2x32_20_state;
 
     /// Initializes the internal state of the PRNG using
