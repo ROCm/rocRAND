@@ -48,7 +48,7 @@ Multiples of the number of multiprocessors of the GPU at hand are good candidate
 Running the tuning benchmarks
 =============================
 
-When the `benchmark_rocrand_tuning` target is built, the benchmarks can be run and the results can be collected for further processing. Since the benchmarks run for a longer time period, it is crucial that the GPU in use is thermally stable, i.e. the cooling must be adequate enough to keep the GPU at the preset clock rates without throttling. Additionally, make sure that no other workload is dispatched on the GPU concurrently. Otherwise the resulting dynamic ordering configs might not be the optimal ones. The full benchmark suite can be run with the following command: ::
+When the `benchmark_rocrand_tuning` target is built, the benchmarks can be run and the results can be collected for further processing. Since the benchmarks run for a longer time period, it is crucial that the GPU in use is thermally stable, i.e. the cooling must be adequate enough to keep the GPU at the preset clock rates without throttling. Additionally, make sure that no other workload is dispatched on the GPU concurrently. Otherwise the resulting dynamic ordering configurations might not be the optimal ones. The full benchmark suite can be run with the following command: ::
 
     $ cd ./build/benchmark/tuning
     $ ./benchmark_rocrand_tuning --benchmark_out_format=json --benchmark_out=rocrand_tuning_gfx908.json
@@ -60,7 +60,7 @@ This executes the benchmarks and saves the benchmark results into the JSON file 
 Processing the benchmark results
 ================================
 
-Once the benchmark results in JSON format from all architectures are present, the best configs are selected using the `rocRAND/scripts/config-tuning/select_best_config.py` script. Make sure that the prerequisite libraries are installed, by running ``pip install -r rocRAND/scripts/config-tuning/requirements.txt``.
+Once the benchmark results in JSON format from all architectures are present, the best configurations are selected using the `rocRAND/scripts/config-tuning/select_best_config.py` script. Make sure that the prerequisite libraries are installed, by running ``pip install -r rocRAND/scripts/config-tuning/requirements.txt``.
 
 Each rocRAND generator is capable of generating a multitude of output types and distributions. However, a single configuration is selected for each GPU architecture, which applies uniformly to all types and distributions. It is possible that the configuration that performs the best for one distribution is not the fastest for another. `select_best_config.py` selects the configuration that performs best **on average**. If, under the selected configuration, any type/distribution performs worse than ``ROCRAND_ORDERING_PSEUDO_DEFAULT``, a warning is printed to the standard output. The eventual decision about applying the configuration or not have to be made by the library's maintainers.
 
