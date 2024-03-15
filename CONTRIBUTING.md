@@ -40,7 +40,7 @@ In order for change to be accepted:
 - it must pass all of the automated checks
 - it must undergo a code review
 
-The GitHub "Issues" tab may also used to discuss ideas surrounding particular features or changes before raising pull requests.
+The GitHub "Issues" tab may also be used to discuss ideas surrounding particular features or changes, before raising pull requests.
 
 ## Code Structure ##
 
