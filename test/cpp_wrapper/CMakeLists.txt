@@ -73,23 +73,5 @@ foreach(test_src ${rocrand_pkg_TEST_SRCS})
     add_executable(${test_name} "${test_src}")
     target_link_libraries(${test_name} PRIVATE roc::rocrand GTest::gtest GTest::gtest_main)
     target_link_libraries(${test_name} PRIVATE hip::host)
-    # HIP on Windows: xhip is required with clang++ to get __half defined
-    if (WIN32)
-        target_compile_options(${test_name} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
-    endif()
     add_relative_test(${test_name} ${test_name})
-    if (WIN32 AND NOT DEFINED DLLS_COPIED)
-      set(DLLS_COPIED "YES")
-      set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
-      # for now adding in all .dll as dependency chain is not cmake based on win32
-      file( GLOB third_party_dlls
-      LIST_DIRECTORIES ON
-      CONFIGURE_DEPENDS
-      ${HIP_DIR}/bin/*.dll
-      ${CMAKE_SOURCE_DIR}/rtest.*
-      )
-      foreach( file_i ${third_party_dlls})
-        add_custom_command( TARGET ${test_name} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/test/package )
-      endforeach( file_i )
-    endif() 
 endforeach()
