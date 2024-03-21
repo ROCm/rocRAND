@@ -219,6 +219,35 @@ struct mt19937_octo_engine
         m_state.mt[idx_i + j] = comp(m_state.mt[idx_i + j], last_dep, m_state.mt[idx_m + j]);
     }
 
+    static void comp_vector(unsigned int idx_i,
+                            unsigned int idx_m,
+                            unsigned int last_dep_tid_7,
+                            mt19937_octo_engine thread_engines[8])
+    {
+        // communicate the dependency for the last value
+        unsigned int last_deps[8];
+        for (int i = 0; i < 8; ++i)
+        {
+            last_deps[i] = thread_engines[(i + 1) % 8].m_state.mt[idx_i];
+        }
+
+        for (int i = 0; i < 8; ++i)
+        {
+            // thread 7 needs a special value that does not fit the pattern
+            unsigned int last_dep = i == 7 ? last_dep_tid_7 : last_deps[i];
+
+            unsigned int j;
+            for(j = 0; j < items_per_thread - 1; j++)
+            {
+                // compute (i + ipt * i + j)': needs (i + ipt * i + 1 + j) % n and (i + ipt * i + m + j) % n
+                thread_engines[i].m_state.mt[idx_i + j]
+                    = comp(thread_engines[i].m_state.mt[idx_i + j], thread_engines[i].m_state.mt[idx_i + j + 1], thread_engines[i].m_state.mt[idx_m + j]);
+            }
+            // compute the last value using the communicated dependency
+            thread_engines[i].m_state.mt[idx_i + j] = comp(thread_engines[i].m_state.mt[idx_i + j], last_dep, thread_engines[i].m_state.mt[idx_m + j]);
+        }
+    }
+
     /// Eights threads collaborate in computing the n next values.
     __forceinline__ __device__ void gen_next_n()
     {
@@ -366,13 +395,140 @@ struct mt19937_octo_engine
         // needs [568, 623], [0, 0]', and [341, 396]'
         const unsigned int v000 = shuffle(m_state.mt[i000_0], 0);
         comp_vector(tid, i568, i341, v000);
-#else
-        static constexpr unsigned int n = 1U + items_per_thread * 11U;
-        for (unsigned int i = 0; i < n; ++i)
-        {
-            m_state.mt[i] = comp(m_state.mt[i], m_state.mt[(i + 1) % n], m_state.mt[(i + mt19937_constants::m) % n]);
-        }
+
 #endif
+    }
+
+    static void gen_next_n(mt19937_octo_engine thread_engines[8])
+    {
+        const unsigned int tid = threadIdx.x & 7U;
+
+        // compute eleven vectors that follow a regular pattern and compute
+        // eight special values for a total of n new elements.
+        // ' indicates new value
+
+        // compute   0': needs   1 and 397
+        const unsigned int v397 = thread_engines[5].m_state.mt[i397_5];
+        thread_engines[0].m_state.mt[i000_0] = comp(thread_engines[0].m_state.mt[i000_0], thread_engines[0].m_state.mt[i001], v397);
+
+        // compute [  1 + i * ipt,   1 + ipt * (i + 1))' = [  1,  56]':
+        // needs [  1,  57] and [398, 453]
+        const unsigned int v057 = thread_engines[0].m_state.mt[i057];
+        comp_vector(i001, i398, v057, thread_engines);
+
+        // compute [ 57 + i * ipt,  57 + ipt * (i + 1))' = [ 57, 112]':
+        // needs [ 57, 113] and [454, 509]
+        const unsigned int v113 = thread_engines[1].m_state.mt[i113_1];
+        comp_vector(i057, i454, v113, thread_engines);
+
+        // compute 113': needs 114 and 510
+        const unsigned int v114 = thread_engines[0].m_state.mt[i114];
+        const unsigned int v510 = thread_engines[6].m_state.mt[i510_6];
+        thread_engines[1].m_state.mt[i113_1] = comp(thread_engines[1].m_state.mt[i113_1], v114, v510);
+
+        // compute [114 + i * ipt, 114 + ipt * (i + 1))' = [114, 169]':
+        // needs [114, 170] and [511, 566]
+        const unsigned int v170 = thread_engines[2].m_state.mt[i170_2];
+        comp_vector(i114, i511, v170, thread_engines);
+
+        // compute 170': needs 171 and 567
+        const unsigned int v171 = thread_engines[0].m_state.mt[i171];
+        const unsigned int v567 = thread_engines[7].m_state.mt[i567_7];
+        thread_engines[2].m_state.mt[i170_2] = comp(thread_engines[2].m_state.mt[i170_2], v171, v567);
+
+        // compute [171 + i * ipt, 171 + ipt * (i + 1))' = [171, 226]':
+        // needs [171, 227] and [568, 623]
+        const unsigned int v227 = thread_engines[0].m_state.mt[i227];
+        comp_vector(i171, i568, v227, thread_engines);
+
+        // compute [227 + i * ipt, 227 + ipt * (i + 1))' = [227, 282]':
+        // needs [227, 283] and [  0,  55]'
+        const unsigned int v283 = thread_engines[3].m_state.mt[i283_3];
+        // comp_vector(tid, i227, s_000, v283);
+        // written out below, since value 0 does not fit the regular pattern
+        {
+            unsigned int last_deps[8];
+            unsigned int first_deps[8];
+
+            for (int i = 0; i < 8; ++i)
+            {
+                last_deps[i] = thread_engines[(i + 1) % 8].m_state.mt[i227];
+                first_deps[i] = thread_engines[(i - 1) % 8].m_state.mt[i001 + items_per_thread - 1];
+            }
+
+            for (int i = 0; i < 8; ++i)
+            {
+                // communicate the dependency for the first and last value
+                unsigned int last_dep = i == 7 ? v283 : last_dep;
+                unsigned int first_dep = i == 0 ? thread_engines[0].m_state.mt[i000_0] : first_dep;
+
+                // extract the first and last iterations from the loop
+                unsigned int j       = 0;
+                thread_engines[i].m_state.mt[i227 + j] = comp(thread_engines[i].m_state.mt[i227 + j], thread_engines[i].m_state.mt[i227 + j + 1], first_dep);
+                for(j = 1; j < items_per_thread - 1; j++)
+                {
+                    thread_engines[i].m_state.mt[i227 + j] = comp(thread_engines[i].m_state.mt[i227 + j],
+                                                thread_engines[i].m_state.mt[i227 + j + 1],
+                                                thread_engines[i].m_state.mt[i001 + j - 1]);
+                }
+                thread_engines[i].m_state.mt[i227 + j] = comp(thread_engines[i].m_state.mt[i227 + j], last_dep, thread_engines[i].m_state.mt[i001 + j - 1]);
+            }
+        }
+
+        // compute 283': needs 284 and  56'
+        const unsigned int v284 = thread_engines[0].m_state.mt[i284];
+        const unsigned int v056 = thread_engines[7].m_state.mt[i001 + 6]; // 1 + 7 * 7 + 6 = 56
+        thread_engines[3].m_state.mt[i283_3] = comp(thread_engines[3].m_state.mt[i283_3], v284, v056);
+
+        // compute [284 + i * ipt, 284 + ipt * (i + 1))' = [284, 339]':
+        // needs [284, 340] and [ 57, 112]'
+        const unsigned int v340 = thread_engines[4].m_state.mt[i340_4];
+        comp_vector(i284, i057, v340, thread_engines);
+
+        // compute 340': needs 341 and 113'
+        const unsigned int v113_ = thread_engines[1].m_state.mt[i113_1];
+        const unsigned int v341  = thread_engines[0].m_state.mt[i341];
+        thread_engines[4].m_state.mt[i340_4] = comp(thread_engines[4].m_state.mt[i340_4], v341, v113_);
+
+        // compute [341 + i * ipt, 341 + ipt * (i + 1))' = [341, 396]':
+        // needs [341, 397] and [114, 169]'
+        const unsigned int v397_ = thread_engines[5].m_state.mt[i397_5];
+        comp_vector(i341, i114, v397_, thread_engines);
+
+        // compute 397': needs 398 and 170'
+        const unsigned int v398  = thread_engines[0].m_state.mt[i398];
+        const unsigned int v170_ = thread_engines[2].m_state.mt[i170_2];
+        thread_engines[5].m_state.mt[i397_5] = comp(thread_engines[5].m_state.mt[i397_5], v398, v170_);
+
+        // compute [398 + i * ipt, 398 + ipt * (i + 1))' = [398, 453]':
+        // needs [398, 454] and [171, 226]'
+        const unsigned int v454 = thread_engines[0].m_state.mt[i454];
+        comp_vector(i398, i171, v454, thread_engines);
+
+        // compute [454 + i * ipt, 454 + ipt * (i + 1))' = [454, 509]':
+        // needs [454, 510] and [227, 282]'
+        const unsigned int v510_ = thread_engines[6].m_state.mt[i510_6];
+        comp_vector(i454, i227, v510_, thread_engines);
+
+        // compute 510': needs 511 and 283'
+        const unsigned int v511  = thread_engines[0].m_state.mt[i511];
+        const unsigned int v283_ = thread_engines[3].m_state.mt[i283_3];
+        thread_engines[6].m_state.mt[i510_6] = comp(thread_engines[6].m_state.mt[i510_6], v511, v283_);
+
+        // compute [511 + i * ipt, 511 + ipt * (i + 1))' = [511, 566]':
+        // needs [511, 567] and [284, 339]'
+        const unsigned int v567_ = thread_engines[7].m_state.mt[i567_7];
+        comp_vector(i511, i284, v567_, thread_engines);
+
+        // compute 567': needs 568 and 340'
+        const unsigned int v568 = thread_engines[0].m_state.mt[i568];
+        const unsigned int i340 = thread_engines[4].m_state.mt[i340_4];
+        thread_engines[7].m_state.mt[i567_7] = comp(thread_engines[7].m_state.mt[i567_7], v568, i340);
+
+        // compute [568 + i * ipt, 568 + ipt * (i + 1))' = [568, 623]':
+        // needs [568, 623], [0, 0]', and [341, 396]'
+        const unsigned int v000 = thread_engines[0].m_state.mt[i000_0];
+        comp_vector(i568, i341, v000, thread_engines);
     }
 
     /// Return \p i state value without tempering

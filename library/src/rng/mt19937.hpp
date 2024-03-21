@@ -386,6 +386,12 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
                                                       const unsigned int tail_size,
                                                       Distribution       distribution)
 {
+#if !defined(__HIP_DEVICE_COMPILE__)
+    if (thread_idx.x % 8 != 0)
+    {
+        return;
+    }
+#endif
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
     constexpr unsigned int     block_size = config.threads;
     constexpr unsigned int     grid_size  = config.blocks;
@@ -403,14 +409,29 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
 
     const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
 
+#if defined(__HIP_DEVICE_COMPILE__)
     unsigned int input[input_width];
     T            output[output_width];
+#else
+    unsigned int inputs[8][input_width];
+    T            outputs[8][output_width];
+#endif
 
     // Workaround: since load() and store() use the same indices, the compiler decides to keep
     // computed addresses alive wasting 78 * 2 VGPRs. block_dim.x equals to block_size but it is
     // a runtime value so save() will compute new addresses.
     mt19937_octo_engine_accessor<stride> accessor(engines);
+
+#if defined(__HIP_DEVICE_COMPILE__)
     mt19937_octo_engine engine = accessor.load(block_idx.x * block_dim.x + thread_idx.x);
+#else
+    mt19937_octo_engine thread_engines[8];
+#pragma unroll
+    for (size_t i = 0; i < 8; ++i)
+    {
+        thread_engines[i] = accessor.load(block_idx.x * block_dim.x + thread_idx.x + i);
+    }
+#endif
 
     size_t base_index = 0;
 
@@ -418,6 +439,14 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     // the end sequence, but not yet used.
     if(start_input > 0)
     {
+#if !defined(__HIP_DEVICE_COMPILE__)
+#pragma unroll
+        for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
+        {
+            auto& input = inputs[warp_lane];
+            auto& output = outputs[warp_lane];
+            mt19937_octo_engine& engine = thread_engines[warp_lane];
+#endif
 #pragma unroll
         for(unsigned int j = 0; j < inputs_per_state; j++)
         {
@@ -436,6 +465,9 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
                 vec_data[thread_index]    = *reinterpret_cast<VecT*>(output);
             }
         }
+#if !defined(__HIP_DEVICE_COMPILE__)
+        }
+#endif
         base_index = full_stride - start_input;
     }
 
@@ -443,7 +475,20 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     // in a fast unrolled loop.
     for(; base_index + full_stride <= vec_size; base_index += full_stride)
     {
-        engine.gen_next_n();
+// #if defined(__HIP_DEVICE_COMPILE__)
+//         engine.gen_next_n();
+// #else
+//         mt19937_octo_engine::gen_next_n(thread_engines);
+// #endif
+
+#if !defined(__HIP_DEVICE_COMPILE__)
+#pragma unroll
+        for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
+        {
+            auto& input = inputs[warp_lane];
+            auto& output = outputs[warp_lane];
+            mt19937_octo_engine& engine = thread_engines[warp_lane];
+#endif
 #pragma unroll
         for(unsigned int j = 0; j < inputs_per_state; j++)
         {
@@ -458,6 +503,9 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
             const size_t thread_index = base_index + j * stride + thread_id;
             vec_data[thread_index]    = *reinterpret_cast<VecT*>(output);
         }
+#if !defined(__HIP_DEVICE_COMPILE__)
+        }
+#endif
     }
 
     // Generate one extra VecT if data is not aligned by sizeof(VecT) or
@@ -468,7 +516,20 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     if(base_index < vec_size + extra)
     {
         bool is_extra_thread = false;
-        engine.gen_next_n();
+// #if defined(__HIP_DEVICE_COMPILE__)
+//         engine.gen_next_n();
+// #else
+//         mt19937_octo_engine::gen_next_n(thread_engines);
+// #endif
+
+#if !defined(__HIP_DEVICE_COMPILE__)
+#pragma unroll
+        for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
+        {
+            auto& input = inputs[warp_lane];
+            auto& output = outputs[warp_lane];
+            mt19937_octo_engine& engine = thread_engines[warp_lane];
+#endif
 #pragma unroll
         for(unsigned int j = 0; j < inputs_per_state; j++)
         {
@@ -513,10 +574,20 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
                 }
             }
         }
+#if !defined(__HIP_DEVICE_COMPILE__)
+        }
+#endif
     }
 
     // save state
+#if defined(__HIP_DEVICE_COMPILE__)
     accessor.save(thread_id, engine);
+#else
+    for (size_t i = 0; i < 8; ++i)
+    {
+        accessor.save(block_idx.x * block_dim.x + thread_idx.x + i, thread_engines[i]);
+    }
+#endif
 }
 
 } // end namespace rocrand_host::detail
@@ -947,11 +1018,11 @@ private:
 };
 
 using rocrand_mt19937 = rocrand_mt19937_template<
+    rocrand_system_device,
+    default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
+using rocrand_mt19937_host = rocrand_mt19937_template<
     rocrand_system_host,
     default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
-// using rocrand_mt19937_host = rocrand_mt19937_template<
-//     rocrand_system_host,
-//     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
 
 } // namespace rocrand_impl::host
 
