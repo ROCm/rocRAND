@@ -101,6 +101,13 @@ __host__ __device__ void generate_xorwow(dim3 block_idx,
         }
         distribution(input, output);
 
+#if defined(__gfx90a__)
+        // Workaround: The compiler hoists s_waitcnt vmcnt(..) out of the loops.
+        // For some reason this optimization decreases performance of uniform distributions
+        // on MI200. MI100 and MI300 are not affected.
+        // Here we add s_waitcnt vmcnt(0)
+        __builtin_amdgcn_s_waitcnt(/*vmcnt*/ 0 | (/*exp_cnt*/ 0x7 << 4) | (/*lgkmcnt*/ 0xf << 8));
+#endif
         vec_data[index] = *reinterpret_cast<vec_type*>(output);
         // Next position
         index += num_engines;
@@ -120,14 +127,6 @@ __host__ __device__ void generate_xorwow(dim3 block_idx,
             }
             distribution(input, output);
 
-#if defined(__gfx90a__)
-            // Workaround: The compiler hoists s_waitcnt vmcnt(..) out of the loops.
-            // For some reason this optimization decreases performance of uniform distributions
-            // on MI200. MI100 and MI300 are not affected.
-            // Here we add s_waitcnt vmcnt(0)
-            __builtin_amdgcn_s_waitcnt(/*vmcnt*/ 0 | (/*exp_cnt*/ 0x7 << 4)
-                                       | (/*lgkmcnt*/ 0xf << 8));
-#endif
             vec_data[index] = *reinterpret_cast<vec_type*>(output);
             // Next position
             index += num_engines;
