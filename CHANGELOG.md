@@ -49,6 +49,7 @@ Documentation for rocRAND is available at
   split to multiple compilation units.
 * C++ wrapper: the `min()` and `max()` member functions of the generators and distributions are now `static constexpr`.
 * Rename and unify the existing ROCRAND_DETAIL_.*_BM_NOT_IN_STATE to ROCRAND_DETAIL_BM_NOT_IN_STATE
+* Static & dynamic library: moved all internal symbols to namespaces to avoid potential symbol name collisions when linking.
 
 ### Deprecations
 
