@@ -3,15 +3,6 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-## (Unreleased) rocRAND-x.x.x for ROCm x.x.x
-
-### Additions
-
-* Added `rocrand_create_generator_host_blocking` which dispatches without stream semantics.
-* Added host-side generator for `ROCRAND_RNG_PSEUDO_MTGP32`.
-* Added offset and skipahead functionality to LFSR113 generator.
-* Added dynamic ordering for architecture `gfx1102`.
-
 ## (Unreleased) rocRAND-3.1.0 for ROCm 6.2.0
 
 ### Additions
@@ -46,6 +37,10 @@ Documentation for rocRAND is available at
   * `rocrand_normal_double2`
   * `rocrand_log_normal2`
   * `rocrand_log_normal_double2`
+* Added `rocrand_create_generator_host_blocking` which dispatches without stream semantics.
+* Added host-side generator for `ROCRAND_RNG_PSEUDO_MTGP32`.
+* Added offset and skipahead functionality to LFSR113 generator.
+* Added dynamic ordering for architecture `gfx1102`.
 
 ### Changes
 
