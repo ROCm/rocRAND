@@ -22,6 +22,11 @@
 
 #include "mtgp32.hpp"
 
-template struct rocrand_generator_type<rocrand_mtgp32>;
-template struct rocrand_generator_type<rocrand_mtgp32_host<false>>;
-template struct rocrand_generator_type<rocrand_mtgp32_host<true>>;
+namespace rocrand_impl::host
+{
+
+template struct generator_type<mtgp32_generator>;
+template struct generator_type<mtgp32_generator_host<false>>;
+template struct generator_type<mtgp32_generator_host<true>>;
+
+} // namespace rocrand_impl::host

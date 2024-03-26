@@ -31,46 +31,47 @@
 
 #include <stdexcept>
 
+using rocrand_impl::host::mrg31k3p_generator;
+using rocrand_impl::host::mrg32k3a_generator;
+
 // Generator API tests
-using rocrand_mrg_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_mrg31k3p, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_mrg31k3p, ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
-    generator_prng_tests_params<rocrand_mrg32k3a, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_mrg32k3a, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+using mrg_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<mrg31k3p_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<mrg31k3p_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
+    generator_prng_tests_params<mrg32k3a_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<mrg32k3a_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-using rocrand_mrg_generator_prng_offset_tests_types = ::testing::Types<
+using mrg_generator_prng_offset_tests_types = ::testing::Types<
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_mrg31k3p,
+                                       mrg31k3p_generator,
                                        ROCRAND_ORDERING_PSEUDO_DEFAULT>,
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_mrg31k3p,
+                                       mrg31k3p_generator,
                                        ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_mrg32k3a,
+                                       mrg32k3a_generator,
                                        ROCRAND_ORDERING_PSEUDO_DEFAULT>,
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_mrg32k3a,
+                                       mrg32k3a_generator,
                                        ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
-    generator_prng_offset_tests_params<float, rocrand_mrg31k3p, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_offset_tests_params<float, rocrand_mrg31k3p, ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
-    generator_prng_offset_tests_params<float, rocrand_mrg32k3a, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_offset_tests_params<float, rocrand_mrg32k3a, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+    generator_prng_offset_tests_params<float, mrg31k3p_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<float, mrg31k3p_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
+    generator_prng_offset_tests_params<float, mrg32k3a_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<float, mrg32k3a_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mrg,
-                               generator_prng_tests,
-                               rocrand_mrg_generator_prng_tests_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mrg, generator_prng_tests, mrg_generator_prng_tests_types);
 
 INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mrg,
                                generator_prng_continuity_tests,
-                               rocrand_mrg_generator_prng_tests_types);
+                               mrg_generator_prng_tests_types);
 
 INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mrg,
                                generator_prng_offset_tests,
-                               rocrand_mrg_generator_prng_offset_tests_types);
+                               mrg_generator_prng_offset_tests_types);
 
 // mrg-specific generator API tests
 template<class Params>
-struct rocrand_mrg_generator_prng_tests : public ::testing::Test
+struct mrg_generator_prng_tests : public ::testing::Test
 {
     using generator_t                                 = typename Params::generator_t;
     static inline constexpr rocrand_ordering ordering = Params::ordering;
@@ -86,7 +87,7 @@ struct rocrand_mrg_generator_prng_tests : public ::testing::Test
     }
 };
 
-TYPED_TEST_SUITE(rocrand_mrg_generator_prng_tests, rocrand_mrg_generator_prng_tests_types);
+TYPED_TEST_SUITE(mrg_generator_prng_tests, mrg_generator_prng_tests_types);
 
 using rocrand_device::detail::mad_u64_u32;
 
@@ -105,7 +106,7 @@ __global__ __launch_bounds__(1) void mad_u64_u32_kernel(const unsigned int*     
     r[7] = mad_u64_u32(23, 45, 67ULL);
 }
 
-TEST(rocrand_mrg_generator_prng_tests, mad_u64_u32_test)
+TEST(mrg_generator_prng_tests, mad_u64_u32_test)
 {
     const size_t size = 8;
 
@@ -186,7 +187,7 @@ void uniform_floating_point_range_test(rocrand_ordering ordering)
     delete[] host_data;
 }
 
-TYPED_TEST(rocrand_mrg_generator_prng_tests, uniform_float_range_test)
+TYPED_TEST(mrg_generator_prng_tests, uniform_float_range_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
@@ -194,7 +195,7 @@ TYPED_TEST(rocrand_mrg_generator_prng_tests, uniform_float_range_test)
     uniform_floating_point_range_test<generator_t, float>(ordering);
 }
 
-TYPED_TEST(rocrand_mrg_generator_prng_tests, uniform_double_range_test)
+TYPED_TEST(mrg_generator_prng_tests, uniform_double_range_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
@@ -204,16 +205,16 @@ TYPED_TEST(rocrand_mrg_generator_prng_tests, uniform_double_range_test)
 
 // Engine API tests
 template<class Generator>
-struct rocrand_mrg_prng_engine_tests : public ::testing::Test
+struct mrg_prng_engine_tests : public ::testing::Test
 {
     using mrg_type = Generator;
 };
 
-using rocrand_mrg_prng_engine_tests_types = ::testing::Types<rocrand_mrg31k3p, rocrand_mrg32k3a>;
+using mrg_prng_engine_tests_types = ::testing::Types<mrg31k3p_generator, mrg32k3a_generator>;
 
-TYPED_TEST_SUITE(rocrand_mrg_prng_engine_tests, rocrand_mrg_prng_engine_tests_types);
+TYPED_TEST_SUITE(mrg_prng_engine_tests, mrg_prng_engine_tests_types);
 
-TYPED_TEST(rocrand_mrg_prng_engine_tests, discard_test)
+TYPED_TEST(mrg_prng_engine_tests, discard_test)
 {
     typedef typename TestFixture::mrg_type mrg_type;
     const unsigned long long               seed = 12345ULL;
@@ -247,7 +248,7 @@ TYPED_TEST(rocrand_mrg_prng_engine_tests, discard_test)
     }
 }
 
-TYPED_TEST(rocrand_mrg_prng_engine_tests, discard_sequence_test)
+TYPED_TEST(mrg_prng_engine_tests, discard_sequence_test)
 {
     typedef typename TestFixture::mrg_type mrg_type;
     const unsigned long long               seed = 23456ULL;
@@ -274,7 +275,7 @@ TYPED_TEST(rocrand_mrg_prng_engine_tests, discard_sequence_test)
     EXPECT_EQ(engine1(), engine2());
 }
 
-TYPED_TEST(rocrand_mrg_prng_engine_tests, discard_subsequence_test)
+TYPED_TEST(mrg_prng_engine_tests, discard_subsequence_test)
 {
     typedef typename TestFixture::mrg_type mrg_type;
     const unsigned long long               seed = 23456ULL;

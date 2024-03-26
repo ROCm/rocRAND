@@ -38,11 +38,16 @@
 #include <cstdio>
 #include <cstdlib>
 
+namespace rocrand_impl
+{
+
 template<class T, unsigned int N>
 struct alignas(sizeof(T) * N) aligned_vec_type
 {
     T data[N];
 };
+
+} // namespace rocrand_impl
 
 /**
  * \brief Check for a HIP error and exit the program if encountered.

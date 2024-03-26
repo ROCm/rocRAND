@@ -55,7 +55,7 @@
 
 #include <hip/hip_runtime.h>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 namespace mt19937_constants
 {
@@ -435,6 +435,6 @@ private:
     unsigned int* engines;
 };
 
-} // end namespace rocrand_host::detail
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_MT19937_OCTO_ENGINE_H_

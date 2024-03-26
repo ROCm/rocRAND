@@ -459,21 +459,21 @@ void different_seed(rocrand_ordering ordering)
 
 // mtgp32 uses a different seed
 template<>
-void different_seed<rocrand_mtgp32>(rocrand_ordering ordering)
+void different_seed<rocrand_impl::host::mtgp32_generator>(rocrand_ordering ordering)
 {
-    different_seed_impl<rocrand_mtgp32>(ordering, 5ULL, 10ULL);
+    different_seed_impl<rocrand_impl::host::mtgp32_generator>(ordering, 5ULL, 10ULL);
 }
 
 // mt19937 uses a different seed
 template<>
-void different_seed<rocrand_mt19937>(rocrand_ordering ordering)
+void different_seed<rocrand_impl::host::mt19937_generator>(rocrand_ordering ordering)
 {
-    different_seed_impl<rocrand_mt19937>(ordering, 5ULL, 10ULL);
+    different_seed_impl<rocrand_impl::host::mt19937_generator>(ordering, 5ULL, 10ULL);
 }
 
 // lsfr113 uses it's particular implementation
 template<>
-void different_seed<rocrand_lfsr113>(rocrand_ordering /*ordering*/)
+void different_seed<rocrand_impl::host::lfsr113_generator>(rocrand_ordering /*ordering*/)
 {
     GTEST_SKIP() << "LFSR113 runs a custom implementation of different_seed test!";
 }
@@ -504,7 +504,8 @@ TYPED_TEST_SUITE_P(generator_prng_continuity_tests);
 template<typename T,
          typename Generator,
          typename GenerateFunc,
-         std::enable_if_t<!std::is_same_v<Generator, rocrand_mt19937>, bool> = false>
+         std::enable_if_t<!std::is_same_v<Generator, rocrand_impl::host::mt19937_generator>, bool>
+         = false>
 void continuity_test(GenerateFunc     generate_func,
                      rocrand_ordering ordering,
                      unsigned int     divisor = 1)
@@ -568,7 +569,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_uniform_uint_test)
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
-        uniform_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::uniform_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_uniform_char_test)
@@ -580,7 +581,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_uniform_char_test)
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
-        uniform_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::uniform_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_uniform_float_test)
@@ -592,7 +593,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_uniform_float_test)
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
-        uniform_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::uniform_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_uniform_double_test)
@@ -604,7 +605,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_uniform_double_test)
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
-        uniform_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::uniform_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_normal_float_test)
@@ -616,7 +617,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_normal_float_test)
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_normal(data, s, 0.0f, 1.0f); },
         ordering,
-        normal_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::normal_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_normal_double_test)
@@ -628,7 +629,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_normal_double_test)
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_normal(data, s, 0.0, 1.0); },
         ordering,
-        normal_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::normal_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_log_normal_float_test)
@@ -641,7 +642,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_log_normal_float_test)
         [](generator_t& g, output_t* data, size_t s)
         { g.generate_log_normal(data, s, 0.0f, 1.0f); },
         ordering,
-        normal_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::normal_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_log_normal_double_test)
@@ -653,7 +654,7 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_log_normal_double_test)
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_log_normal(data, s, 0.0, 1.0); },
         ordering,
-        normal_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::normal_distribution<output_t, unsigned long long int>::output_width);
 }
 
 TYPED_TEST_P(generator_prng_continuity_tests, continuity_poisson_test)
@@ -662,10 +663,10 @@ TYPED_TEST_P(generator_prng_continuity_tests, continuity_poisson_test)
     using generator_t                   = typename TestFixture::generator_t;
     typedef unsigned int output_t;
 
-    continuity_test<output_t, generator_t>([](generator_t& g, output_t* data, size_t s)
-                                           { g.generate_poisson(data, s, 100.0); },
-                                           ordering,
-                                           rocrand_poisson_distribution<>::output_width);
+    continuity_test<output_t, generator_t>(
+        [](generator_t& g, output_t* data, size_t s) { g.generate_poisson(data, s, 100.0); },
+        ordering,
+        rocrand_impl::host::poisson_distribution<>::output_width);
 }
 
 template<class Params>

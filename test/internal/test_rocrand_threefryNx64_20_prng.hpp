@@ -110,7 +110,7 @@ TYPED_TEST_P(threefryNx64_20_generator_prng_continuity_tests, continuity_uniform
     continuity_test<output_t, generator_t>(
         [](generator_t& g, output_t* data, size_t s) { g.generate_uniform(data, s); },
         ordering,
-        uniform_distribution<output_t, unsigned long long int>::output_width);
+        rocrand_impl::host::uniform_distribution<output_t, unsigned long long int>::output_width);
 }
 
 REGISTER_TYPED_TEST_SUITE_P(threefryNx64_20_generator_prng_continuity_tests,

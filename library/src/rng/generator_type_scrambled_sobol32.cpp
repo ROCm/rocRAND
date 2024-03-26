@@ -22,6 +22,11 @@
 
 #include "sobol.hpp"
 
-template struct rocrand_generator_type<rocrand_scrambled_sobol32>;
-template struct rocrand_generator_type<rocrand_scrambled_sobol32_host<false>>;
-template struct rocrand_generator_type<rocrand_scrambled_sobol32_host<true>>;
+namespace rocrand_impl::host
+{
+
+template struct generator_type<scrambled_sobol32_generator>;
+template struct generator_type<scrambled_sobol32_generator_host<false>>;
+template struct generator_type<scrambled_sobol32_generator_host<true>>;
+
+} // namespace rocrand_impl::host

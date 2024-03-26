@@ -32,48 +32,53 @@
 #include "threefry.hpp"
 #include "xorwow.hpp"
 
-extern template struct rocrand_generator_type<rocrand_lfsr113>;
-extern template struct rocrand_generator_type<rocrand_lfsr113_host<false>>;
-extern template struct rocrand_generator_type<rocrand_lfsr113_host<true>>;
-extern template struct rocrand_generator_type<rocrand_mrg31k3p>;
-extern template struct rocrand_generator_type<rocrand_mrg31k3p_host<false>>;
-extern template struct rocrand_generator_type<rocrand_mrg31k3p_host<true>>;
-extern template struct rocrand_generator_type<rocrand_mrg32k3a>;
-extern template struct rocrand_generator_type<rocrand_mrg32k3a_host<false>>;
-extern template struct rocrand_generator_type<rocrand_mrg32k3a_host<true>>;
-extern template struct rocrand_generator_type<rocrand_mt19937>;
-extern template struct rocrand_generator_type<rocrand_mtgp32>;
-extern template struct rocrand_generator_type<rocrand_mtgp32_host<false>>;
-extern template struct rocrand_generator_type<rocrand_mtgp32_host<true>>;
-extern template struct rocrand_generator_type<rocrand_philox4x32_10>;
-extern template struct rocrand_generator_type<rocrand_philox4x32_10_host<false>>;
-extern template struct rocrand_generator_type<rocrand_philox4x32_10_host<true>>;
-extern template struct rocrand_generator_type<rocrand_scrambled_sobol32_host<false>>;
-extern template struct rocrand_generator_type<rocrand_scrambled_sobol32_host<true>>;
-extern template struct rocrand_generator_type<rocrand_scrambled_sobol32>;
-extern template struct rocrand_generator_type<rocrand_scrambled_sobol64_host<false>>;
-extern template struct rocrand_generator_type<rocrand_scrambled_sobol64_host<true>>;
-extern template struct rocrand_generator_type<rocrand_scrambled_sobol64>;
-extern template struct rocrand_generator_type<rocrand_sobol32_host<false>>;
-extern template struct rocrand_generator_type<rocrand_sobol32_host<true>>;
-extern template struct rocrand_generator_type<rocrand_sobol32>;
-extern template struct rocrand_generator_type<rocrand_sobol64_host<false>>;
-extern template struct rocrand_generator_type<rocrand_sobol64_host<true>>;
-extern template struct rocrand_generator_type<rocrand_sobol64>;
-extern template struct rocrand_generator_type<rocrand_threefry2x32_20>;
-extern template struct rocrand_generator_type<rocrand_threefry2x32_20_host<false>>;
-extern template struct rocrand_generator_type<rocrand_threefry2x32_20_host<true>>;
-extern template struct rocrand_generator_type<rocrand_threefry2x64_20>;
-extern template struct rocrand_generator_type<rocrand_threefry2x64_20_host<false>>;
-extern template struct rocrand_generator_type<rocrand_threefry2x64_20_host<true>>;
-extern template struct rocrand_generator_type<rocrand_threefry4x32_20>;
-extern template struct rocrand_generator_type<rocrand_threefry4x32_20_host<false>>;
-extern template struct rocrand_generator_type<rocrand_threefry4x32_20_host<true>>;
-extern template struct rocrand_generator_type<rocrand_threefry4x64_20>;
-extern template struct rocrand_generator_type<rocrand_threefry4x64_20_host<false>>;
-extern template struct rocrand_generator_type<rocrand_threefry4x64_20_host<true>>;
-extern template struct rocrand_generator_type<rocrand_xorwow>;
-extern template struct rocrand_generator_type<rocrand_xorwow_host<false>>;
-extern template struct rocrand_generator_type<rocrand_xorwow_host<true>>;
+namespace rocrand_impl::host
+{
+
+extern template struct generator_type<lfsr113_generator>;
+extern template struct generator_type<lfsr113_generator_host<false>>;
+extern template struct generator_type<lfsr113_generator_host<true>>;
+extern template struct generator_type<mrg31k3p_generator>;
+extern template struct generator_type<mrg31k3p_generator_host<false>>;
+extern template struct generator_type<mrg31k3p_generator_host<true>>;
+extern template struct generator_type<mrg32k3a_generator>;
+extern template struct generator_type<mrg32k3a_generator_host<false>>;
+extern template struct generator_type<mrg32k3a_generator_host<true>>;
+extern template struct generator_type<mt19937_generator>;
+extern template struct generator_type<mtgp32_generator>;
+extern template struct generator_type<mtgp32_generator_host<false>>;
+extern template struct generator_type<mtgp32_generator_host<true>>;
+extern template struct generator_type<philox4x32_10_generator>;
+extern template struct generator_type<philox4x32_10_generator_host<false>>;
+extern template struct generator_type<philox4x32_10_generator_host<true>>;
+extern template struct generator_type<scrambled_sobol32_generator_host<false>>;
+extern template struct generator_type<scrambled_sobol32_generator_host<true>>;
+extern template struct generator_type<scrambled_sobol32_generator>;
+extern template struct generator_type<scrambled_sobol64_generator_host<false>>;
+extern template struct generator_type<scrambled_sobol64_generator_host<true>>;
+extern template struct generator_type<scrambled_sobol64_generator>;
+extern template struct generator_type<sobol32_generator_host<false>>;
+extern template struct generator_type<sobol32_generator_host<true>>;
+extern template struct generator_type<sobol32_generator>;
+extern template struct generator_type<sobol64_generator_host<false>>;
+extern template struct generator_type<sobol64_generator_host<true>>;
+extern template struct generator_type<sobol64_generator>;
+extern template struct generator_type<threefry2x32_20_generator>;
+extern template struct generator_type<threefry2x32_20_generator_host<false>>;
+extern template struct generator_type<threefry2x32_20_generator_host<true>>;
+extern template struct generator_type<threefry2x64_20_generator>;
+extern template struct generator_type<threefry2x64_20_generator_host<false>>;
+extern template struct generator_type<threefry2x64_20_generator_host<true>>;
+extern template struct generator_type<threefry4x32_20_generator>;
+extern template struct generator_type<threefry4x32_20_generator_host<false>>;
+extern template struct generator_type<threefry4x32_20_generator_host<true>>;
+extern template struct generator_type<threefry4x64_20_generator>;
+extern template struct generator_type<threefry4x64_20_generator_host<false>>;
+extern template struct generator_type<threefry4x64_20_generator_host<true>>;
+extern template struct generator_type<xorwow_generator>;
+extern template struct generator_type<xorwow_generator_host<false>>;
+extern template struct generator_type<xorwow_generator_host<true>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_GENERATOR_TYPES_H_

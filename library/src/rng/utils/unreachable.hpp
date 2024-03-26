@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,12 +45,15 @@
     #define ROCRAND_BUILTIN_TRAP std::abort();
 #endif
 
+namespace rocrand_impl
+{
+
 [[noreturn]]
 #if defined(__CUDACC__) || defined(__HIP__)
 __host__ __device__
 #endif
     inline static void
-    rocrand_unreachable_internal(const char* msg, const char* file, unsigned line)
+    unreachable_internal(const char* msg, const char* file, unsigned line)
 {
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
     (void)msg;
@@ -67,10 +70,12 @@ __host__ __device__
 #endif
 }
 
+} // namespace rocrand_impl
+
 #if !defined(NDEBUG)
-    #define ROCRAND_UNREACHABLE(msg) rocrand_unreachable_internal(msg, __FILE__, __LINE__)
+    #define ROCRAND_UNREACHABLE(msg) ::rocrand_impl::unreachable_internal(msg, __FILE__, __LINE__)
 #elif !defined(ROCRAND_BUILTIN_UNREACHABLE)
-    #define ROCRAND_UNREACHABLE(msg) rocrand_unreachable_internal(msg, __FILE__, __LINE__)
+    #define ROCRAND_UNREACHABLE(msg) ::rocrand_impl::unreachable_internal(msg, __FILE__, __LINE__)
 #else
     #define ROCRAND_UNREACHABLE(msg)     \
         do                               \

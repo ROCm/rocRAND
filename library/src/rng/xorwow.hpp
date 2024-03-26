@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 typedef ::rocrand_device::xorwow_engine xorwow_device_engine;
@@ -162,26 +162,24 @@ __host__ __device__ void generate_xorwow(dim3 block_idx,
     engines[engine_id] = engine;
 }
 
-} // end namespace rocrand_host::detail
-
 template<class System, class ConfigProvider>
-class rocrand_xorwow_template : public rocrand_generator_impl_base
+class xorwow_generator_template : public generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_impl_base;
-    using engine_type = ::rocrand_host::detail::xorwow_device_engine;
+    using base_type   = generator_impl_base;
+    using engine_type = xorwow_device_engine;
     using system_type = System;
 
-    rocrand_xorwow_template(unsigned long long seed   = 0,
-                            unsigned long long offset = 0,
-                            rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                            hipStream_t        stream = 0)
+    xorwow_generator_template(unsigned long long seed   = 0,
+                              unsigned long long offset = 0,
+                              rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                              hipStream_t        stream = 0)
         : base_type(order, offset, stream), m_seed(seed)
     {}
 
-    rocrand_xorwow_template(const rocrand_xorwow_template&) = delete;
+    xorwow_generator_template(const xorwow_generator_template&) = delete;
 
-    rocrand_xorwow_template(rocrand_xorwow_template&& other)
+    xorwow_generator_template(xorwow_generator_template&& other)
         : base_type(other)
         , m_engines_initialized(other.m_engines_initialized)
         , m_engines(other.m_engines)
@@ -194,9 +192,9 @@ public:
         other.m_engines             = nullptr;
     }
 
-    rocrand_xorwow_template& operator=(const rocrand_xorwow_template&) = delete;
+    xorwow_generator_template& operator=(const xorwow_generator_template&) = delete;
 
-    rocrand_xorwow_template& operator=(rocrand_xorwow_template&& other)
+    xorwow_generator_template& operator=(xorwow_generator_template&& other)
     {
         *static_cast<base_type*>(this) = other;
         m_engines_initialized          = other.m_engines_initialized;
@@ -212,7 +210,7 @@ public:
         return *this;
     }
 
-    ~rocrand_xorwow_template()
+    ~xorwow_generator_template()
     {
         if(m_engines != nullptr)
         {
@@ -274,9 +272,7 @@ public:
         }
 
         hipError_t error
-            = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(m_stream,
-                                                                               m_order,
-                                                                               m_engines_size);
+            = get_least_common_grid_size<ConfigProvider>(m_stream, m_order, m_engines_size);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
@@ -297,9 +293,8 @@ public:
         constexpr unsigned int init_threads = ROCRAND_DEFAULT_MAX_BLOCK_SIZE;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
 
-        status = system_type::template launch<
-            rocrand_host::detail::init_xorwow_engines,
-            rocrand_host::detail::static_block_size_config_provider<init_threads>>(
+        status = system_type::template launch<init_xorwow_engines,
+                                              static_block_size_config_provider<init_threads>>(
             dim3(init_blocks),
             dim3(init_threads),
             0,
@@ -328,32 +323,32 @@ public:
             return status;
         }
 
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        status = rocrand_host::detail::dynamic_dispatch(
-            m_order,
-            [&, this](auto is_dynamic)
-            {
-                return system_type::template launch<
-                    rocrand_host::detail::
-                        generate_xorwow<ConfigProvider, is_dynamic, T, Distribution>,
-                    ConfigProvider,
-                    T,
-                    is_dynamic>(dim3(config.blocks),
-                                dim3(config.threads),
-                                0,
-                                m_stream,
-                                m_engines,
-                                m_start_engine_id,
-                                data,
-                                data_size,
-                                distribution);
-            });
+        status
+            = dynamic_dispatch(m_order,
+                               [&, this](auto is_dynamic)
+                               {
+                                   return system_type::template launch<
+
+                                       generate_xorwow<ConfigProvider, is_dynamic, T, Distribution>,
+                                       ConfigProvider,
+                                       T,
+                                       is_dynamic>(dim3(config.blocks),
+                                                   dim3(config.threads),
+                                                   0,
+                                                   m_stream,
+                                                   m_engines,
+                                                   m_start_engine_id,
+                                                   data,
+                                                   data_size,
+                                                   distribution);
+                               });
 
         // Check kernel status
         if(status != ROCRAND_STATUS_SUCCESS)
@@ -432,20 +427,21 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
-        m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
 };
 
-using rocrand_xorwow = rocrand_xorwow_template<
-    rocrand_system_device,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
+using xorwow_generator
+    = xorwow_generator_template<system::device_system,
+                                default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
 
 template<bool UseHostFunc>
-using rocrand_xorwow_host = rocrand_xorwow_template<
-    rocrand_system_host<UseHostFunc>,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
+using xorwow_generator_host
+    = xorwow_generator_template<system::host_system<UseHostFunc>,
+                                default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_XORWOW_H_

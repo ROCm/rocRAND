@@ -22,6 +22,11 @@
 
 #include "threefry.hpp"
 
-template struct rocrand_generator_type<rocrand_threefry4x64_20>;
-template struct rocrand_generator_type<rocrand_threefry4x64_20_host<false>>;
-template struct rocrand_generator_type<rocrand_threefry4x64_20_host<true>>;
+namespace rocrand_impl::host
+{
+
+template struct generator_type<threefry4x64_20_generator>;
+template struct generator_type<threefry4x64_20_generator_host<false>>;
+template struct generator_type<threefry4x64_20_generator_host<true>>;
+
+} // namespace rocrand_impl::host

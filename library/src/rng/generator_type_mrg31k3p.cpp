@@ -22,6 +22,11 @@
 
 #include "mrg.hpp"
 
-template struct rocrand_generator_type<rocrand_mrg31k3p>;
-template struct rocrand_generator_type<rocrand_mrg31k3p_host<false>>;
-template struct rocrand_generator_type<rocrand_mrg31k3p_host<true>>;
+namespace rocrand_impl::host
+{
+
+template struct generator_type<mrg31k3p_generator>;
+template struct generator_type<mrg31k3p_generator_host<false>>;
+template struct generator_type<mrg31k3p_generator_host<true>>;
+
+} // namespace rocrand_impl::host

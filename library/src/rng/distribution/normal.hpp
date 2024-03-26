@@ -30,6 +30,9 @@
 
 #include <math.h>
 
+namespace rocrand_impl::host
+{
+
 inline constexpr unsigned int normal_distribution_max_input_width_default = 4;
 
 template<rocrand_rng_type, class T>
@@ -378,5 +381,7 @@ struct sobol_normal_distribution<__half>
         #endif
     }
 };
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_DISTRIBUTION_NORMAL_H_

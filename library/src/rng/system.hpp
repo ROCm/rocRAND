@@ -46,10 +46,13 @@
 
 #include <stdint.h>
 
+namespace rocrand_impl::system
+{
+
 /// \tparam UseHostFunc If true, launching will enqueue the kernel in the stream. Otherwise,
 ///   execute the kernel synchronously.
 template<bool UseHostFunc>
-struct rocrand_system_host
+struct host_system
 {
     static constexpr bool is_device()
     {
@@ -93,8 +96,8 @@ struct rocrand_system_host
     }
 
     template<auto Kernel,
-             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
-                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename ConfigProvider
+             = host::static_block_size_config_provider<ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
@@ -173,15 +176,15 @@ namespace detail
 {
 
 template<auto Kernel, typename ConfigProvider, typename T, bool IsDynamic, typename... Args>
-__global__ __launch_bounds__((rocrand_host::detail::get_block_size<ConfigProvider, T>(
-    IsDynamic))) void kernel_wrapper(Args... args)
+__global__ __launch_bounds__(
+    (host::get_block_size<ConfigProvider, T>(IsDynamic))) void kernel_wrapper(Args... args)
 {
     Kernel(blockIdx, threadIdx, gridDim, blockDim, args...);
 }
 
 } // namespace detail
 
-struct rocrand_system_device
+struct device_system
 {
     static constexpr bool is_device()
     {
@@ -206,8 +209,8 @@ struct rocrand_system_device
     }
 
     template<auto Kernel,
-             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
-                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename ConfigProvider
+             = host::static_block_size_config_provider<ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
@@ -244,5 +247,7 @@ struct syncthreads<false>
 {
     void operator()() {}
 };
+
+} // namespace rocrand_impl::system
 
 #endif

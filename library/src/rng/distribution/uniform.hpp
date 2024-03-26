@@ -31,6 +31,9 @@
 
 // Universal
 
+namespace rocrand_impl::host
+{
+
 template<class Output, class Input = unsigned int>
 struct uniform_distribution;
 
@@ -429,5 +432,7 @@ struct sobol_uniform_distribution<__half>
         return rocrand_device::detail::uniform_distribution_half(static_cast<unsigned short>(v >> bit_shift));
     }
 };
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_DISTRIBUTION_UNIFORM_H_

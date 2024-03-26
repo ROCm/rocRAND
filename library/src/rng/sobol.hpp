@@ -48,7 +48,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 template<unsigned int OutputPerThread,
@@ -100,7 +100,7 @@ __host__ __device__ void generate_sobol(dim3               block_idx,
                 shared_vectors[thread_idx.x]
                     = direction_vectors[dimension * vector_size + thread_idx.x];
             }
-            syncthreads<true>{}();
+            system::syncthreads<true>{}();
             return shared_vectors;
         }
         else
@@ -424,24 +424,20 @@ private:
     }
 };
 
-} // end namespace rocrand_host::detail
-
 template<class System, bool Is64, bool Scrambled>
-class rocrand_sobol_template : public rocrand_generator_impl_base
+class sobol_generator_template : public generator_impl_base
 {
 public:
     static constexpr inline bool is_scrambled = Scrambled;
     using system_type                         = System;
-    using base_type                           = rocrand_generator_impl_base;
-    using engine_type
-        = ::rocrand_host::detail::sobol_device_engine_t<Is64, Scrambled, system_type::is_device()>;
+    using base_type                           = generator_impl_base;
+    using engine_type       = sobol_device_engine_t<Is64, Scrambled, system_type::is_device()>;
     using constant_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
-    using constant_accessor
-        = rocrand_host::detail::sobol_constant_accessor<system_type, Is64, Scrambled>;
+    using constant_accessor = sobol_constant_accessor<system_type, Is64, Scrambled>;
 
-    rocrand_sobol_template(unsigned long long offset = 0,
-                           rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
-                           hipStream_t        stream = 0)
+    sobol_generator_template(unsigned long long offset = 0,
+                             rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
+                             hipStream_t        stream = 0)
         : base_type(order, offset, stream)
     {
         rocrand_status status = get_constants().get_direction_vectors(&m_direction_vectors);
@@ -499,7 +495,7 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
-        if(!rocrand_host::detail::is_ordering_quasi(order))
+        if(!is_ordering_quasi(order))
         {
             return ROCRAND_STATUS_OUT_OF_RANGE;
         }
@@ -578,26 +574,24 @@ public:
         const uint32_t blocks_x = next_power2((blocks + m_dimensions - 1) / m_dimensions);
         const uint32_t blocks_y = m_dimensions;
 
-        using block_size_provider
-            = rocrand_host::detail::static_block_size_config_provider<threads>;
+        using block_size_provider = static_block_size_config_provider<threads>;
 
-        status
-            = system_type::template launch<rocrand_host::detail::generate_sobol<output_per_thread,
-                                                                                Scrambled,
-                                                                                engine_type,
-                                                                                constant_type,
-                                                                                T,
-                                                                                Distribution>,
-                                           block_size_provider>(dim3(blocks_x, blocks_y),
-                                                                dim3(threads),
-                                                                shared_mem_bytes,
-                                                                m_stream,
-                                                                data,
-                                                                size,
-                                                                m_direction_vectors,
-                                                                m_scramble_constants,
-                                                                m_current_offset,
-                                                                distribution);
+        status = system_type::template launch<generate_sobol<output_per_thread,
+                                                             Scrambled,
+                                                             engine_type,
+                                                             constant_type,
+                                                             T,
+                                                             Distribution>,
+                                              block_size_provider>(dim3(blocks_x, blocks_y),
+                                                                   dim3(threads),
+                                                                   shared_mem_bytes,
+                                                                   m_stream,
+                                                                   data,
+                                                                   size,
+                                                                   m_direction_vectors,
+                                                                   m_scramble_constants,
+                                                                   m_current_offset,
+                                                                   distribution);
         // Check kernel status
         if(status != ROCRAND_STATUS_SUCCESS)
         {
@@ -662,7 +656,7 @@ private:
     const constant_type* m_scramble_constants = nullptr;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_CDF, !system_type::is_device()> m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_CDF, !system_type::is_device()> m_poisson;
 
     // m_offset from base_type
 
@@ -677,19 +671,23 @@ private:
     }
 };
 
-using rocrand_sobol32           = rocrand_sobol_template<rocrand_system_device, false, false>;
-using rocrand_sobol64           = rocrand_sobol_template<rocrand_system_device, true, false>;
-using rocrand_scrambled_sobol32 = rocrand_sobol_template<rocrand_system_device, false, true>;
-using rocrand_scrambled_sobol64 = rocrand_sobol_template<rocrand_system_device, true, true>;
+using sobol32_generator           = sobol_generator_template<system::device_system, false, false>;
+using sobol64_generator           = sobol_generator_template<system::device_system, true, false>;
+using scrambled_sobol32_generator = sobol_generator_template<system::device_system, false, true>;
+using scrambled_sobol64_generator = sobol_generator_template<system::device_system, true, true>;
 template<bool UseHostFunc>
-using rocrand_sobol32_host = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, false, false>;
+using sobol32_generator_host
+    = sobol_generator_template<system::host_system<UseHostFunc>, false, false>;
 template<bool UseHostFunc>
-using rocrand_sobol64_host = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, true, false>;
+using sobol64_generator_host
+    = sobol_generator_template<system::host_system<UseHostFunc>, true, false>;
 template<bool UseHostFunc>
-using rocrand_scrambled_sobol32_host
-    = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, false, true>;
+using scrambled_sobol32_generator_host
+    = sobol_generator_template<system::host_system<UseHostFunc>, false, true>;
 template<bool UseHostFunc>
-using rocrand_scrambled_sobol64_host
-    = rocrand_sobol_template<rocrand_system_host<UseHostFunc>, true, true>;
+using scrambled_sobol64_generator_host
+    = sobol_generator_template<system::host_system<UseHostFunc>, true, true>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_SOBOL_H_

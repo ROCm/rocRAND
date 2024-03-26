@@ -27,42 +27,44 @@
 
 #include <gtest/gtest.h>
 
-// Generator API tests
-using rocrand_xorwow_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_xorwow, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_xorwow, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+using rocrand_impl::host::xorwow_generator;
 
-using rocrand_xorwow_generator_prng_offset_tests_types = ::testing::Types<
+// Generator API tests
+using xorwow_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<xorwow_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<xorwow_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+
+using xorwow_generator_prng_offset_tests_types = ::testing::Types<
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_xorwow,
+                                       xorwow_generator,
                                        ROCRAND_ORDERING_PSEUDO_DEFAULT>,
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_xorwow,
+                                       xorwow_generator,
                                        ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
-    generator_prng_offset_tests_params<float, rocrand_xorwow, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_offset_tests_params<float, rocrand_xorwow, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+    generator_prng_offset_tests_params<float, xorwow_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<float, xorwow_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_xorwow,
+INSTANTIATE_TYPED_TEST_SUITE_P(xorwow_generator,
                                generator_prng_tests,
-                               rocrand_xorwow_generator_prng_tests_types);
+                               xorwow_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_xorwow,
+INSTANTIATE_TYPED_TEST_SUITE_P(xorwow_generator,
                                generator_prng_continuity_tests,
-                               rocrand_xorwow_generator_prng_tests_types);
+                               xorwow_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_xorwow,
+INSTANTIATE_TYPED_TEST_SUITE_P(xorwow_generator,
                                generator_prng_offset_tests,
-                               rocrand_xorwow_generator_prng_offset_tests_types);
+                               xorwow_generator_prng_offset_tests_types);
 
 // Engine API tests
-class rocrand_xorwow_engine_type_test : public rocrand_xorwow::engine_type
+class xorwow_engine_type_test : public xorwow_generator::engine_type
 {};
 
-TEST(rocrand_xorwow_engine_type_test, discard_test)
+TEST(xorwow_engine_type_test, discard_test)
 {
     const unsigned long long    seed = 1234567890123ULL;
-    rocrand_xorwow::engine_type engine1(seed, 0, 678ULL);
-    rocrand_xorwow::engine_type engine2(seed, 0, 677ULL);
+    xorwow_generator::engine_type engine1(seed, 0, 678ULL);
+    xorwow_generator::engine_type engine2(seed, 0, 677ULL);
 
     (void)engine2.next();
 
@@ -91,11 +93,11 @@ TEST(rocrand_xorwow_engine_type_test, discard_test)
     }
 }
 
-TEST(rocrand_xorwow_engine_type_test, discard_sequence_test)
+TEST(xorwow_engine_type_test, discard_sequence_test)
 {
     const unsigned long long    seed = ~1234567890123ULL;
-    rocrand_xorwow::engine_type engine1(seed, 0, 444ULL);
-    rocrand_xorwow::engine_type engine2(seed, 123ULL, 444ULL);
+    xorwow_generator::engine_type engine1(seed, 0, 444ULL);
+    xorwow_generator::engine_type engine2(seed, 123ULL, 444ULL);
 
     engine1.discard_subsequence(123ULL);
 
