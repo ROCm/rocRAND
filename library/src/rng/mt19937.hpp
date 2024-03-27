@@ -71,7 +71,7 @@ namespace rocrand_host::detail
 {
 
 /// Computes i % n, i must be in range [0, 2 * n)
-MT_FQUALIFIERS unsigned int wrap_n(unsigned int i)
+__forceinline__ __device__ unsigned int wrap_n(unsigned int i)
 {
     return i - (i < mt19937_constants::n ? 0 : mt19937_constants::n);
 }

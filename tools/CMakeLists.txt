@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,12 @@ function(rocrand_add_tool TARGET_NAME)
 endfunction()
 
 rocrand_add_tool(bin2typed bin2typed.cpp)
+if(HIP_COMPILER STREQUAL "nvcc")
+    message(STATUS "Target lfsr113_precomputed_generator cannot be built for CUDA")
+else()
+    rocrand_add_tool(lfsr113_precomputed_generator lfsr113_precomputed_generator.cpp)
+    target_link_libraries(lfsr113_precomputed_generator hip::device)
+endif()
 rocrand_add_tool(mrg31k3p_precomputed_generator mrg31k3p_precomputed_generator.cpp)
 rocrand_add_tool(mrg32k3a_precomputed_generator mrg32k3a_precomputed_generator.cpp)
 rocrand_add_tool(mt19937_precomputed_generator mt19937_precomputed_generator.cpp)

@@ -57,12 +57,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_philox4x32_10.h>
 
 #include <hip/hip_runtime.h>
 
@@ -253,6 +253,10 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
@@ -397,8 +401,9 @@ using rocrand_philox4x32_10 = rocrand_philox4x32_10_template<
     rocrand_system_device,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
 
+template<bool UseHostFunc>
 using rocrand_philox4x32_10_host = rocrand_philox4x32_10_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
 
 #endif // ROCRAND_RNG_PHILOX4X32_10_H_

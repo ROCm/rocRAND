@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,11 @@
 #ifndef ROCRAND_RNG_DEVICE_ENGINES_H_
 #define ROCRAND_RNG_DEVICE_ENGINES_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__ __host__
-#endif
-
-#define ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
-#define ROCRAND_DETAIL_MRG31K3P_BM_NOT_IN_STATE
-#define ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
-#define ROCRAND_DETAIL_XORWOW_BM_NOT_IN_STATE
-
 #include <rocrand/rocrand_kernel.h>
+
+#include <rocrand/rocrand_common.h>
+
+ROCRAND_PRAGMA_MESSAGE("Internal device_engines.hpp header has been deprecated. Please include the "
+                       "necessary headers directly.")
 
 #endif // ROCRAND_RNG_DEVICE_ENGINES_H_

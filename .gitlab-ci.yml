@@ -482,6 +482,24 @@ test:nvcc-package:
   needs:
     - build:nvcc-cmake-minimum
 
+test:cpp-wrapper:
+  stage: test
+  extends:
+    - .rocm:cmake-minimum
+    - .rules:test
+  needs:
+    - build:rocm-cmake-minimum
+  script:
+    - cd $CI_PROJECT_DIR/build
+    - $SUDO_CMD dpkg -i rocrand*.deb
+    - cmake
+      -S $CI_PROJECT_DIR/test/cpp_wrapper/
+      -B $CI_PROJECT_DIR/build_cpp_wrapper_test
+    - cmake --build $CI_PROJECT_DIR/build_cpp_wrapper_test
+    - cd $CI_PROJECT_DIR/build_cpp_wrapper_test
+    - ctest --output-on-failure
+    - $SUDO_CMD dpkg -r rocrand-benchmarks rocrand-clients rocrand-dev rocrand-tests rocrand
+
 .test:install:
   stage: test
   extends:

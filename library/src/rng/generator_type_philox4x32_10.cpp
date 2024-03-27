@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,4 +23,5 @@
 #include "philox4x32_10.hpp"
 
 template struct rocrand_generator_type<rocrand_philox4x32_10>;
-template struct rocrand_generator_type<rocrand_philox4x32_10_host>;
+template struct rocrand_generator_type<rocrand_philox4x32_10_host<false>>;
+template struct rocrand_generator_type<rocrand_philox4x32_10_host<true>>;

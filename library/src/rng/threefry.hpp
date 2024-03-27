@@ -28,13 +28,16 @@
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
 #include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_threefry2x32_20.h>
+#include <rocrand/rocrand_threefry2x64_20.h>
+#include <rocrand/rocrand_threefry4x32_20.h>
+#include <rocrand/rocrand_threefry4x64_20.h>
 
 #include <hip/hip_runtime.h>
 
@@ -257,6 +260,10 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
@@ -420,8 +427,9 @@ using rocrand_threefry2x32_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry2x32_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_32_20>>;
 
@@ -430,8 +438,9 @@ using rocrand_threefry2x64_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry2x64_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY2_64_20>>;
 
@@ -440,8 +449,9 @@ using rocrand_threefry4x32_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry4x32_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_32_20>>;
 
@@ -450,8 +460,9 @@ using rocrand_threefry4x64_20 = rocrand_threefry_template<
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20>>;
 
+template<bool UseHostFunc>
 using rocrand_threefry4x64_20_host = rocrand_threefry_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_THREEFRY4_64_20>>;
 

@@ -26,10 +26,13 @@
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_mrg31k3p.h>
+#include <rocrand/rocrand_mrg32k3a.h>
 
 #include <hip/hip_runtime.h>
 
@@ -243,6 +246,10 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
@@ -449,8 +456,9 @@ using rocrand_mrg31k3p = rocrand_mrg_template<
     rocrand_device::mrg31k3p_engine,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
 
+template<bool UseHostFunc>
 using rocrand_mrg31k3p_host = rocrand_mrg_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_device::mrg31k3p_engine,
     rocrand_host::detail::static_default_config_provider_t<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
 
@@ -459,8 +467,9 @@ using rocrand_mrg32k3a = rocrand_mrg_template<
     rocrand_device::mrg32k3a_engine,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
 
+template<bool UseHostFunc>
 using rocrand_mrg32k3a_host = rocrand_mrg_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_device::mrg32k3a_engine,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
 

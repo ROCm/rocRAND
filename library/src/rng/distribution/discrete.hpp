@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +21,14 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_DISCRETE_H_
 #define ROCRAND_RNG_DISTRIBUTION_DISCRETE_H_
 
-#include <climits>
-#include <algorithm>
-#include <vector>
+#include "../common.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_discrete.h>
 
-#include "../common.hpp"
-#include "device_distributions.hpp"
+#include <algorithm>
+#include <climits>
+#include <vector>
 
 // Alias method
 //

@@ -38,6 +38,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>
     {
         switch(arch)
         {
+            case target_arch::gfx1102: return 1024;
             case target_arch::gfx1030: return 1024;
             case target_arch::gfx906: return 64;
             case target_arch::gfx908: return 512;
@@ -49,6 +50,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>
     {
         switch(arch)
         {
+            case target_arch::gfx1102: return 128;
             case target_arch::gfx1030: return 2304;
             case target_arch::gfx906: return 896;
             case target_arch::gfx908: return 3840;

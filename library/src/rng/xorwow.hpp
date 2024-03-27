@@ -21,19 +21,20 @@
 #ifndef ROCRAND_RNG_XORWOW_H_
 #define ROCRAND_RNG_XORWOW_H_
 
-#include <algorithm>
-#include <hip/hip_runtime.h>
-
-#include <rocrand/rocrand.h>
-
 #include "config/xorwow_config.hpp"
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_xorwow.h>
+
+#include <hip/hip_runtime.h>
+
+#include <algorithm>
 
 namespace rocrand_host::detail
 {
@@ -244,6 +245,10 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
@@ -438,8 +443,9 @@ using rocrand_xorwow = rocrand_xorwow_template<
     rocrand_system_device,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
 
+template<bool UseHostFunc>
 using rocrand_xorwow_host = rocrand_xorwow_template<
-    rocrand_system_host,
+    rocrand_system_host<UseHostFunc>,
     rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_XORWOW>>;
 
 #endif // ROCRAND_RNG_XORWOW_H_
