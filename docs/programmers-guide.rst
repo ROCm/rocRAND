@@ -163,7 +163,7 @@ The following table shows which rocRAND generators produce the exact same sequen
     :widths: auto
 
     =================  =====================
-    Generator          Compatibile
+    Generator          Compatible
     =================  =====================
     XORWOW             No
     MRG32K3A           No
