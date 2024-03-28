@@ -80,6 +80,8 @@ rocrand_status create_generator_host(rocrand_generator* generator, rocrand_rng_t
                 *generator = new generator_type<mtgp32_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_MT19937:
+                *generator = new rocrand_generator_type<rocrand_mt19937_host<UseHostFunc>>();
+                break;
             default:
                 return ROCRAND_STATUS_TYPE_ERROR;
         }

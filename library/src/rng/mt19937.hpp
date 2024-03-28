@@ -108,10 +108,13 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
     constexpr unsigned int tail_n = mt19937_constants::n - (items_per_thread - 1) * block_size;
 
 #if defined(__HIP_DEVICE_COMPILE__)
-    __shared__
+    __shared__ unsigned int temp[mt19937_constants::n];
+    unsigned int            state[items_per_thread];
+
+#else
+    unsigned int temp[mt19937_constants::n];
+    unsigned int states[block_size][items_per_thread];
 #endif
-        unsigned int temp[mt19937_constants::n];
-    unsigned int     state[items_per_thread];
 
     // Initialize state 0 (engine_id = 0) used as a base for all engines.
     // It uses a recurrence relation so one thread calculates all n values.
@@ -137,13 +140,16 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         unsigned int& j = thread_idx.x;
 #else
         for (unsigned int j = 0; j < block_dim.x; ++j)
-#endif
         {
+            auto& state = states[j];
+#endif
             if(i < items_per_thread - 1 || j < tail_n) // Check only for the last iteration
             {
                 state[i] = temp[i * block_size + j];
             }
+#if !defined(__HIP_DEVICE_COMPILE__)
         }
+#endif
     }
 
 #if defined(__HIP_DEVICE_COMPILE__)
@@ -210,13 +216,16 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                     unsigned int& j = thread_idx.x;
 #else
                     for (unsigned int j = 0; j < block_dim.x; ++j)
-#endif
                     {
+                        auto& state = states[j];
+#endif
                         if(i < items_per_thread - 1 || j < tail_n)
                         {
                             temp[wrap_n(ptr + i * block_size + j)] ^= state[i];
                         }
+#if !defined(__HIP_DEVICE_COMPILE__)
                     }
+#endif
                 }
 #if defined(__HIP_DEVICE_COMPILE__)
                 __syncthreads();
@@ -225,14 +234,23 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         }
 
         // Jump of the next power of 2 will be applied to the current state
-        for(unsigned int i = 0; i < items_per_thread; i++)
-        {
-            if(i < items_per_thread - 1 || thread_idx.x < tail_n)
-            {
-                state[i] = temp[wrap_n(ptr + i * block_size + thread_idx.x)];
-            }
-        }
 #if defined(__HIP_DEVICE_COMPILE__)
+        unsigned int& j = thread_idx.x;
+#else
+        for (unsigned int j = 0; j < block_dim.x; ++j)
+        {
+            auto& state = states[j];
+#endif
+            for(unsigned int i = 0; i < items_per_thread; i++)
+            {
+                if(i < items_per_thread - 1 || j < tail_n)
+                {
+                    state[i] = temp[wrap_n(ptr + i * block_size + j)];
+                }
+            }
+#if !defined(__HIP_DEVICE_COMPILE__)
+        }
+#else
         __syncthreads();
 #endif
     }
@@ -244,13 +262,16 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         unsigned int& j = thread_idx.x;
 #else
         for (unsigned int j = 0; j < block_dim.x; ++j)
-#endif
         {
+            auto& state = states[j];
+#endif
             if(i < items_per_thread - 1 || j < tail_n)
             {
                 engines[engine_id * mt19937_constants::n + i * block_size + j] = state[i];
             }
+#if !defined(__HIP_DEVICE_COMPILE__)
         }
+#endif
     }
 }
 
@@ -297,6 +318,12 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
                                                        const unsigned int tail_size,
                                                        Distribution       distribution)
 {
+#if !defined(__HIP_DEVICE_COMPILE__)
+    if (thread_idx.x % 8 != 0)
+    {
+        return;
+    }
+#endif
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
     constexpr unsigned int     block_size = config.threads;
     constexpr unsigned int     grid_size  = config.blocks;
@@ -308,10 +335,17 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
+#if defined(__HIP_DEVICE_COMPILE__)
     const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
+#endif
 
+#if defined(__HIP_DEVICE_COMPILE__)
     unsigned int input[input_width];
     T            output[output_width];
+#else
+    unsigned int inputs[8][input_width];
+    T            outputs[8][output_width];
+#endif
 
     // Generate one extra VecT if data is not aligned by sizeof(VecT) or
     // size % output_width != 0
@@ -326,6 +360,15 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
     const unsigned int j_end   = (start_input + vec_size + extra + stride - 1) / stride;
     for(unsigned int j = j_start; j < j_end; j++)
     {
+#if !defined(__HIP_DEVICE_COMPILE__)
+#pragma unroll
+        for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
+        {
+            auto& input = inputs[warp_lane];
+            auto& output = outputs[warp_lane];
+            const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
+#endif
+
         if(j * stride + thread_id >= start_input
            && j * stride + thread_id - start_input < vec_size + extra)
         {
@@ -349,10 +392,19 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
                 vec_data[thread_index] = *reinterpret_cast<VecT*>(output);
             }
         }
+#if !defined(__HIP_DEVICE_COMPILE__)
+        }
+#endif
     }
 
     if constexpr(output_width > 1)
     {
+#if !defined(__HIP_DEVICE_COMPILE__)
+#pragma unroll
+        for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
+        {
+            auto& output = outputs[warp_lane];
+#endif
         // Save head and tail, output was generated earlier
         if(is_extra_thread)
         {
@@ -368,6 +420,9 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
                 }
             }
         }
+#if !defined(__HIP_DEVICE_COMPILE__)
+        }
+#endif
     }
 }
 
@@ -407,9 +462,8 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     constexpr unsigned int stride           = block_size * grid_size;
     constexpr unsigned int full_stride      = stride * inputs_per_state;
 
-    const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
-
 #if defined(__HIP_DEVICE_COMPILE__)
+    const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
     unsigned int input[input_width];
     T            output[output_width];
 #else
@@ -446,6 +500,7 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
             auto& input = inputs[warp_lane];
             auto& output = outputs[warp_lane];
             mt19937_octo_engine& engine = thread_engines[warp_lane];
+            const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
 #endif
 #pragma unroll
         for(unsigned int j = 0; j < inputs_per_state; j++)
@@ -488,6 +543,7 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
             auto& input = inputs[warp_lane];
             auto& output = outputs[warp_lane];
             mt19937_octo_engine& engine = thread_engines[warp_lane];
+            const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
 #endif
 #pragma unroll
         for(unsigned int j = 0; j < inputs_per_state; j++)
@@ -529,6 +585,7 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
             auto& input = inputs[warp_lane];
             auto& output = outputs[warp_lane];
             mt19937_octo_engine& engine = thread_engines[warp_lane];
+            const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
 #endif
 #pragma unroll
         for(unsigned int j = 0; j < inputs_per_state; j++)
@@ -753,7 +810,7 @@ public:
         }
 
         status = system_type::memcpy(d_mt19937_jump,
-                        (rocrand_h_mt19937_jump),
+                        rocrand_h_mt19937_jump,
                         sizeof(rocrand_h_mt19937_jump),
                         hipMemcpyHostToDevice);
         if(status != ROCRAND_STATUS_SUCCESS)

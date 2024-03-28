@@ -251,7 +251,6 @@ struct mt19937_octo_engine
     /// Eights threads collaborate in computing the n next values.
     __forceinline__ __device__ void gen_next_n()
     {
-#if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int tid = threadIdx.x & 7U;
 
         // compute eleven vectors that follow a regular pattern and compute
@@ -395,14 +394,10 @@ struct mt19937_octo_engine
         // needs [568, 623], [0, 0]', and [341, 396]'
         const unsigned int v000 = shuffle(m_state.mt[i000_0], 0);
         comp_vector(tid, i568, i341, v000);
-
-#endif
     }
 
     static void gen_next_n(mt19937_octo_engine thread_engines[8])
     {
-        const unsigned int tid = threadIdx.x & 7U;
-
         // compute eleven vectors that follow a regular pattern and compute
         // eight special values for a total of n new elements.
         // ' indicates new value
