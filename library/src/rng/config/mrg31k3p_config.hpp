@@ -39,10 +39,15 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_MRG31K3P, T>
         switch(arch)
         {
             case target_arch::gfx1102: return 128;
+            case target_arch::gfx1101: return 128;
+            case target_arch::gfx1100: return 128;
             case target_arch::gfx1030: return 256;
-            case target_arch::gfx906: return 256;
+            case target_arch::gfx942: return 512;
+            case target_arch::gfx90a: return 512;
             case target_arch::gfx908: return 1024;
-            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_MRG31K3P, T>::threads;
+            case target_arch::gfx906: return 256;
+            default:
+                return generator_config_defaults<ROCRAND_RNG_PSEUDO_MRG31K3P, T>::threads;
         }
     }
 
@@ -51,10 +56,15 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_MRG31K3P, T>
         switch(arch)
         {
             case target_arch::gfx1102: return 256;
+            case target_arch::gfx1101: return 512;
+            case target_arch::gfx1100: return 2048;
             case target_arch::gfx1030: return 1152;
-            case target_arch::gfx906: return 1792;
+            case target_arch::gfx942: return 2048;
+            case target_arch::gfx90a: return 2048;
             case target_arch::gfx908: return 600;
-            default: return generator_config_defaults<ROCRAND_RNG_PSEUDO_MRG31K3P, T>::blocks;
+            case target_arch::gfx906: return 1792;
+            default:
+                return generator_config_defaults<ROCRAND_RNG_PSEUDO_MRG31K3P, T>::blocks;
         }
     }
 };
