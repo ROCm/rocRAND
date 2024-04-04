@@ -136,7 +136,8 @@ struct mt19937_octo_engine
     static constexpr inline unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
-    __forceinline__ __device__ void gather(const unsigned int engine[mt19937_constants::n], dim3 thread_idx)
+    __forceinline__ __device__ void gather(const unsigned int engine[mt19937_constants::n],
+                                           dim3               thread_idx)
     {
         constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
@@ -182,7 +183,7 @@ struct mt19937_octo_engine
         return __shfl_up(val, 1, 8);
     }
     /// Calculates value of index \p i using values <tt>i</tt>, <tt>(i + 1) % n</tt>, and <tt>(i + m) % n</tt>.
-    static __forceinline__ __device__ unsigned int
+    static __forceinline__ __device__ __host__ unsigned int
         comp(unsigned int mt_i, unsigned int mt_i_1, unsigned int mt_i_m)
     {
         const unsigned int y
@@ -219,19 +220,19 @@ struct mt19937_octo_engine
         m_state.mt[idx_i + j] = comp(m_state.mt[idx_i + j], last_dep, m_state.mt[idx_m + j]);
     }
 
-    static void comp_vector(unsigned int idx_i,
-                            unsigned int idx_m,
-                            unsigned int last_dep_tid_7,
+    static void comp_vector(unsigned int        idx_i,
+                            unsigned int        idx_m,
+                            unsigned int        last_dep_tid_7,
                             mt19937_octo_engine thread_engines[8])
     {
         // communicate the dependency for the last value
         unsigned int last_deps[8];
-        for (int i = 0; i < 8; ++i)
+        for(int i = 0; i < 8; ++i)
         {
             last_deps[i] = thread_engines[(i + 1) % 8].m_state.mt[idx_i];
         }
 
-        for (int i = 0; i < 8; ++i)
+        for(int i = 0; i < 8; ++i)
         {
             // thread 7 needs a special value that does not fit the pattern
             unsigned int last_dep = i == 7 ? last_dep_tid_7 : last_deps[i];
@@ -241,10 +242,14 @@ struct mt19937_octo_engine
             {
                 // compute (i + ipt * i + j)': needs (i + ipt * i + 1 + j) % n and (i + ipt * i + m + j) % n
                 thread_engines[i].m_state.mt[idx_i + j]
-                    = comp(thread_engines[i].m_state.mt[idx_i + j], thread_engines[i].m_state.mt[idx_i + j + 1], thread_engines[i].m_state.mt[idx_m + j]);
+                    = comp(thread_engines[i].m_state.mt[idx_i + j],
+                           thread_engines[i].m_state.mt[idx_i + j + 1],
+                           thread_engines[i].m_state.mt[idx_m + j]);
             }
             // compute the last value using the communicated dependency
-            thread_engines[i].m_state.mt[idx_i + j] = comp(thread_engines[i].m_state.mt[idx_i + j], last_dep, thread_engines[i].m_state.mt[idx_m + j]);
+            thread_engines[i].m_state.mt[idx_i + j] = comp(thread_engines[i].m_state.mt[idx_i + j],
+                                                           last_dep,
+                                                           thread_engines[i].m_state.mt[idx_m + j]);
         }
     }
 
@@ -404,7 +409,8 @@ struct mt19937_octo_engine
 
         // compute   0': needs   1 and 397
         const unsigned int v397 = thread_engines[5].m_state.mt[i397_5];
-        thread_engines[0].m_state.mt[i000_0] = comp(thread_engines[0].m_state.mt[i000_0], thread_engines[0].m_state.mt[i001], v397);
+        thread_engines[0].m_state.mt[i000_0]
+            = comp(thread_engines[0].m_state.mt[i000_0], thread_engines[0].m_state.mt[i001], v397);
 
         // compute [  1 + i * ipt,   1 + ipt * (i + 1))' = [  1,  56]':
         // needs [  1,  57] and [398, 453]
@@ -419,7 +425,8 @@ struct mt19937_octo_engine
         // compute 113': needs 114 and 510
         const unsigned int v114 = thread_engines[0].m_state.mt[i114];
         const unsigned int v510 = thread_engines[6].m_state.mt[i510_6];
-        thread_engines[1].m_state.mt[i113_1] = comp(thread_engines[1].m_state.mt[i113_1], v114, v510);
+        thread_engines[1].m_state.mt[i113_1]
+            = comp(thread_engines[1].m_state.mt[i113_1], v114, v510);
 
         // compute [114 + i * ipt, 114 + ipt * (i + 1))' = [114, 169]':
         // needs [114, 170] and [511, 566]
@@ -429,7 +436,8 @@ struct mt19937_octo_engine
         // compute 170': needs 171 and 567
         const unsigned int v171 = thread_engines[0].m_state.mt[i171];
         const unsigned int v567 = thread_engines[7].m_state.mt[i567_7];
-        thread_engines[2].m_state.mt[i170_2] = comp(thread_engines[2].m_state.mt[i170_2], v171, v567);
+        thread_engines[2].m_state.mt[i170_2]
+            = comp(thread_engines[2].m_state.mt[i170_2], v171, v567);
 
         // compute [171 + i * ipt, 171 + ipt * (i + 1))' = [171, 226]':
         // needs [171, 227] and [568, 623]
@@ -445,35 +453,43 @@ struct mt19937_octo_engine
             unsigned int last_deps[8];
             unsigned int first_deps[8];
 
-            for (int i = 0; i < 8; ++i)
+            for(int i = 0; i < 8; ++i)
             {
-                last_deps[i] = thread_engines[(i + 1) % 8].m_state.mt[i227];
+                last_deps[i]  = thread_engines[(i + 1) % 8].m_state.mt[i227];
                 first_deps[i] = thread_engines[(i - 1) % 8].m_state.mt[i001 + items_per_thread - 1];
             }
 
-            for (int i = 0; i < 8; ++i)
+            for(int i = 0; i < 8; ++i)
             {
                 // communicate the dependency for the first and last value
-                unsigned int last_dep = i == 7 ? v283 : last_dep;
-                unsigned int first_dep = i == 0 ? thread_engines[0].m_state.mt[i000_0] : first_dep;
+                unsigned int last_dep  = i == 7 ? v283 : last_deps[i];
+                unsigned int first_dep = i == 0 ? thread_engines[0].m_state.mt[i000_0] : first_deps[i];
 
                 // extract the first and last iterations from the loop
-                unsigned int j       = 0;
-                thread_engines[i].m_state.mt[i227 + j] = comp(thread_engines[i].m_state.mt[i227 + j], thread_engines[i].m_state.mt[i227 + j + 1], first_dep);
+                unsigned int j = 0;
+                thread_engines[i].m_state.mt[i227 + j]
+                    = comp(thread_engines[i].m_state.mt[i227 + j],
+                           thread_engines[i].m_state.mt[i227 + j + 1],
+                           first_dep);
                 for(j = 1; j < items_per_thread - 1; j++)
                 {
-                    thread_engines[i].m_state.mt[i227 + j] = comp(thread_engines[i].m_state.mt[i227 + j],
-                                                thread_engines[i].m_state.mt[i227 + j + 1],
-                                                thread_engines[i].m_state.mt[i001 + j - 1]);
+                    thread_engines[i].m_state.mt[i227 + j]
+                        = comp(thread_engines[i].m_state.mt[i227 + j],
+                               thread_engines[i].m_state.mt[i227 + j + 1],
+                               thread_engines[i].m_state.mt[i001 + j - 1]);
                 }
-                thread_engines[i].m_state.mt[i227 + j] = comp(thread_engines[i].m_state.mt[i227 + j], last_dep, thread_engines[i].m_state.mt[i001 + j - 1]);
+                thread_engines[i].m_state.mt[i227 + j]
+                    = comp(thread_engines[i].m_state.mt[i227 + j],
+                           last_dep,
+                           thread_engines[i].m_state.mt[i001 + j - 1]);
             }
         }
 
         // compute 283': needs 284 and  56'
         const unsigned int v284 = thread_engines[0].m_state.mt[i284];
         const unsigned int v056 = thread_engines[7].m_state.mt[i001 + 6]; // 1 + 7 * 7 + 6 = 56
-        thread_engines[3].m_state.mt[i283_3] = comp(thread_engines[3].m_state.mt[i283_3], v284, v056);
+        thread_engines[3].m_state.mt[i283_3]
+            = comp(thread_engines[3].m_state.mt[i283_3], v284, v056);
 
         // compute [284 + i * ipt, 284 + ipt * (i + 1))' = [284, 339]':
         // needs [284, 340] and [ 57, 112]'
@@ -483,7 +499,8 @@ struct mt19937_octo_engine
         // compute 340': needs 341 and 113'
         const unsigned int v113_ = thread_engines[1].m_state.mt[i113_1];
         const unsigned int v341  = thread_engines[0].m_state.mt[i341];
-        thread_engines[4].m_state.mt[i340_4] = comp(thread_engines[4].m_state.mt[i340_4], v341, v113_);
+        thread_engines[4].m_state.mt[i340_4]
+            = comp(thread_engines[4].m_state.mt[i340_4], v341, v113_);
 
         // compute [341 + i * ipt, 341 + ipt * (i + 1))' = [341, 396]':
         // needs [341, 397] and [114, 169]'
@@ -493,7 +510,8 @@ struct mt19937_octo_engine
         // compute 397': needs 398 and 170'
         const unsigned int v398  = thread_engines[0].m_state.mt[i398];
         const unsigned int v170_ = thread_engines[2].m_state.mt[i170_2];
-        thread_engines[5].m_state.mt[i397_5] = comp(thread_engines[5].m_state.mt[i397_5], v398, v170_);
+        thread_engines[5].m_state.mt[i397_5]
+            = comp(thread_engines[5].m_state.mt[i397_5], v398, v170_);
 
         // compute [398 + i * ipt, 398 + ipt * (i + 1))' = [398, 453]':
         // needs [398, 454] and [171, 226]'
@@ -508,7 +526,8 @@ struct mt19937_octo_engine
         // compute 510': needs 511 and 283'
         const unsigned int v511  = thread_engines[0].m_state.mt[i511];
         const unsigned int v283_ = thread_engines[3].m_state.mt[i283_3];
-        thread_engines[6].m_state.mt[i510_6] = comp(thread_engines[6].m_state.mt[i510_6], v511, v283_);
+        thread_engines[6].m_state.mt[i510_6]
+            = comp(thread_engines[6].m_state.mt[i510_6], v511, v283_);
 
         // compute [511 + i * ipt, 511 + ipt * (i + 1))' = [511, 566]':
         // needs [511, 567] and [284, 339]'
@@ -518,7 +537,8 @@ struct mt19937_octo_engine
         // compute 567': needs 568 and 340'
         const unsigned int v568 = thread_engines[0].m_state.mt[i568];
         const unsigned int i340 = thread_engines[4].m_state.mt[i340_4];
-        thread_engines[7].m_state.mt[i567_7] = comp(thread_engines[7].m_state.mt[i567_7], v568, i340);
+        thread_engines[7].m_state.mt[i567_7]
+            = comp(thread_engines[7].m_state.mt[i567_7], v568, i340);
 
         // compute [568 + i * ipt, 568 + ipt * (i + 1))' = [568, 623]':
         // needs [568, 623], [0, 0]', and [341, 396]'

@@ -107,7 +107,7 @@ using mtgp32_generator_template
                                                     ConfigProvider>;
 
 template<class ConfigProvider>
-using mt19937_generator_template = rocrand_impl::host::mt19937_generator_template<ConfigProvider>;
+using mt19937_generator_template = rocrand_impl::host::mt19937_generator_template<rocrand_system_device, ConfigProvider>;
 
 template<class ConfigProvider>
 using philox4x32_10_generator_template

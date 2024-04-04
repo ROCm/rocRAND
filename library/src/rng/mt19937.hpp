@@ -84,13 +84,13 @@ template<unsigned int jump_ahead_thread_count, class ConfigProvider, bool IsDyna
 __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                                                    dim3 thread_idx,
                                                    dim3 /*grid_dim*/,
-                                                   dim3 block_dim,
+                                                   [[maybe_unused]] dim3 block_dim,
                                                    unsigned int* __restrict__ engines,
                                                    unsigned long long seed,
                                                    const unsigned int* __restrict__ jump)
 {
 #if !defined(__HIP_DEVICE_COMPILE__)
-    if (thread_idx.x > 0)
+    if(thread_idx.x > 0)
     {
         return;
     }
@@ -134,12 +134,13 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
     __syncthreads();
 #endif
 
+    // clang-format off
     for(unsigned int i = 0; i < items_per_thread; i++)
     {
 #if defined(__HIP_DEVICE_COMPILE__)
         unsigned int& j = thread_idx.x;
 #else
-        for (unsigned int j = 0; j < block_dim.x; ++j)
+        for(unsigned int j = 0; j < block_dim.x; ++j)
         {
             auto& state = states[j];
 #endif
@@ -151,6 +152,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         }
 #endif
     }
+    // clang-format on
 
 #if defined(__HIP_DEVICE_COMPILE__)
     __syncthreads();
@@ -162,6 +164,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
     // i * 2 ^ 1000 and mt19937_jumps_radix * i * 2 ^ 1000 values
     // where i is in range [1; mt19937_jumps_radix).
     unsigned int e = engine_id;
+    // clang-format off
     for(unsigned int r = 0; r < mt19937_jumps_radixes; r++)
     {
         const unsigned int radix = e % mt19937_jumps_radix;
@@ -215,7 +218,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
 #if defined(__HIP_DEVICE_COMPILE__)
                     unsigned int& j = thread_idx.x;
 #else
-                    for (unsigned int j = 0; j < block_dim.x; ++j)
+                    for(unsigned int j = 0; j < block_dim.x; ++j)
                     {
                         auto& state = states[j];
 #endif
@@ -237,7 +240,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
 #if defined(__HIP_DEVICE_COMPILE__)
         unsigned int& j = thread_idx.x;
 #else
-        for (unsigned int j = 0; j < block_dim.x; ++j)
+        for(unsigned int j = 0; j < block_dim.x; ++j)
         {
             auto& state = states[j];
 #endif
@@ -261,7 +264,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
 #if defined(__HIP_DEVICE_COMPILE__)
         unsigned int& j = thread_idx.x;
 #else
-        for (unsigned int j = 0; j < block_dim.x; ++j)
+        for(unsigned int j = 0; j < block_dim.x; ++j)
         {
             auto& state = states[j];
 #endif
@@ -273,6 +276,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         }
 #endif
     }
+    // clang-format on
 }
 
 // This kernel is not explicitly tuned, but uses the same configs as the generate-kernels.
@@ -299,7 +303,8 @@ __host__ __device__ inline void init_engines_mt19937(dim3 block_idx,
     mt19937_octo_engine_accessor<stride> accessor(octo_engines);
     mt19937_octo_engine engine;
     engine.gather(
-        &engines[thread_id / mt19937_octo_engine::threads_per_generator * mt19937_constants::n], thread_idx);
+        &engines[thread_id / mt19937_octo_engine::threads_per_generator * mt19937_constants::n],
+        thread_idx);
     accessor.save(thread_id, engine);
 }
 
@@ -319,9 +324,9 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
                                                        Distribution       distribution)
 {
 #if !defined(__HIP_DEVICE_COMPILE__)
-    if (thread_idx.x % 8 != 0)
+    if(thread_idx.x % 8 != 0)
     {
-        return;
+            return;
     }
 #endif
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
@@ -343,8 +348,8 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
     unsigned int input[input_width];
     T            output[output_width];
 #else
-    unsigned int inputs[8][input_width];
-    T            outputs[8][output_width];
+    unsigned int        inputs[8][input_width];
+    T                   outputs[8][output_width];
 #endif
 
     // Generate one extra VecT if data is not aligned by sizeof(VecT) or
@@ -358,40 +363,41 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
     // it is beneficial to calculate what iterations will actually write data.
     const unsigned int j_start = start_input / stride;
     const unsigned int j_end   = (start_input + vec_size + extra + stride - 1) / stride;
+    // clang-format off
     for(unsigned int j = j_start; j < j_end; j++)
     {
 #if !defined(__HIP_DEVICE_COMPILE__)
-#pragma unroll
+    #pragma unroll
         for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
         {
-            auto& input = inputs[warp_lane];
-            auto& output = outputs[warp_lane];
+            auto&              input     = inputs[warp_lane];
+            auto&              output    = outputs[warp_lane];
             const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
 #endif
 
-        if(j * stride + thread_id >= start_input
-           && j * stride + thread_id - start_input < vec_size + extra)
-        {
-            mt19937_octo_engine_accessor<stride> accessor(engines);
+            if(j * stride + thread_id >= start_input
+               && j * stride + thread_id - start_input < vec_size + extra)
+            {
+                mt19937_octo_engine_accessor<stride> accessor(engines);
 #pragma unroll
-            for(unsigned int i = 0; i < input_width; i++)
-            {
-                input[i] = mt19937_octo_engine::temper(
-                    accessor.load_value(thread_id, j * input_width + i));
+                for(unsigned int i = 0; i < input_width; i++)
+                {
+                    input[i] = mt19937_octo_engine::temper(
+                        accessor.load_value(thread_id, j * input_width + i));
+                }
+
+                distribution(input, output);
+
+                const size_t thread_index = j * stride + thread_id - start_input;
+
+                // Mark an extra thread that will write head and tail
+                is_extra_thread = thread_index == vec_size + extra - 1;
+
+                if(thread_index < vec_size)
+                {
+                    vec_data[thread_index] = *reinterpret_cast<VecT*>(output);
+                }
             }
-
-            distribution(input, output);
-
-            const size_t thread_index = j * stride + thread_id - start_input;
-
-            // Mark an extra thread that will write head and tail
-            is_extra_thread = thread_index == vec_size + extra - 1;
-
-            if(thread_index < vec_size)
-            {
-                vec_data[thread_index] = *reinterpret_cast<VecT*>(output);
-            }
-        }
 #if !defined(__HIP_DEVICE_COMPILE__)
         }
 #endif
@@ -400,30 +406,31 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
     if constexpr(output_width > 1)
     {
 #if !defined(__HIP_DEVICE_COMPILE__)
-#pragma unroll
+    #pragma unroll
         for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
         {
             auto& output = outputs[warp_lane];
 #endif
-        // Save head and tail, output was generated earlier
-        if(is_extra_thread)
-        {
-            for(unsigned int o = 0; o < output_width; o++)
+            // Save head and tail, output was generated earlier
+            if(is_extra_thread)
             {
-                if(o < head_size)
+                for(unsigned int o = 0; o < output_width; o++)
                 {
-                    data[o] = output[o];
-                }
-                if(o > output_width - tail_size - 1)
-                {
-                    data[size + (output_width - tail_size - 1) - o] = output[o];
+                    if(o < head_size)
+                    {
+                        data[o] = output[o];
+                    }
+                    if(o > output_width - tail_size - 1)
+                    {
+                        data[size + (output_width - tail_size - 1) - o] = output[o];
+                    }
                 }
             }
-        }
 #if !defined(__HIP_DEVICE_COMPILE__)
         }
 #endif
     }
+    // clang-format on
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class VecT, class Distribution>
@@ -442,9 +449,9 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
                                                       Distribution       distribution)
 {
 #if !defined(__HIP_DEVICE_COMPILE__)
-    if (thread_idx.x % 8 != 0)
+    if(thread_idx.x % 8 != 0)
     {
-        return;
+            return;
     }
 #endif
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
@@ -467,8 +474,8 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     unsigned int input[input_width];
     T            output[output_width];
 #else
-    unsigned int inputs[8][input_width];
-    T            outputs[8][output_width];
+    unsigned int        inputs[8][input_width];
+    T                   outputs[8][output_width];
 #endif
 
     // Workaround: since load() and store() use the same indices, the compiler decides to keep
@@ -480,10 +487,10 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     mt19937_octo_engine engine = accessor.load(block_idx.x * block_dim.x + thread_idx.x);
 #else
     mt19937_octo_engine thread_engines[8];
-#pragma unroll
-    for (size_t i = 0; i < 8; ++i)
+    #pragma unroll
+    for(size_t i = 0; i < 8; ++i)
     {
-        thread_engines[i] = accessor.load(block_idx.x * block_dim.x + thread_idx.x + i);
+                    thread_engines[i] = accessor.load(block_idx.x * block_dim.x + thread_idx.x + i);
     }
 #endif
 
@@ -491,22 +498,59 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
 
     // Start sequence: at least some engines have values, generated by the previous call for
     // the end sequence, but not yet used.
+    // clang-format off
     if(start_input > 0)
     {
 #if !defined(__HIP_DEVICE_COMPILE__)
 #pragma unroll
         for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
         {
-            auto& input = inputs[warp_lane];
-            auto& output = outputs[warp_lane];
-            mt19937_octo_engine& engine = thread_engines[warp_lane];
-            const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
+            auto&                input     = inputs[warp_lane];
+            auto&                output    = outputs[warp_lane];
+            mt19937_octo_engine& engine    = thread_engines[warp_lane];
+            const unsigned int   thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
 #endif
 #pragma unroll
-        for(unsigned int j = 0; j < inputs_per_state; j++)
+            for(unsigned int j = 0; j < inputs_per_state; j++)
+            {
+                // Skip used values
+                if(j * stride + thread_id >= start_input)
+                {
+#pragma unroll
+                    for(unsigned int i = 0; i < input_width; i++)
+                    {
+                        input[i] = mt19937_octo_engine::temper(engine.get(j * input_width + i));
+                    }
+
+                    distribution(input, output);
+
+                    const size_t thread_index = j * stride + thread_id - start_input;
+                    vec_data[thread_index]    = *reinterpret_cast<VecT*>(output);
+                }
+            }
+#if !defined(__HIP_DEVICE_COMPILE__)
+        }
+#endif
+        base_index = full_stride - start_input;
+    }
+    // clang-format on
+
+    // Middle sequence: all engines write n * stride values together and use them all
+    // in a fast unrolled loop.
+    // clang-format off
+    for(; base_index + full_stride <= vec_size; base_index += full_stride)
+    {
+#if !defined(__HIP_DEVICE_COMPILE__)
+#pragma unroll
+        for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
         {
-            // Skip used values
-            if(j * stride + thread_id >= start_input)
+            auto&                input     = inputs[warp_lane];
+            auto&                output    = outputs[warp_lane];
+            mt19937_octo_engine& engine    = thread_engines[warp_lane];
+            const unsigned int   thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
+#endif
+#pragma unroll
+            for(unsigned int j = 0; j < inputs_per_state; j++)
             {
 #pragma unroll
                 for(unsigned int i = 0; i < input_width; i++)
@@ -516,53 +560,14 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
 
                 distribution(input, output);
 
-                const size_t thread_index = j * stride + thread_id - start_input;
+                const size_t thread_index = base_index + j * stride + thread_id;
                 vec_data[thread_index]    = *reinterpret_cast<VecT*>(output);
             }
-        }
-#if !defined(__HIP_DEVICE_COMPILE__)
-        }
-#endif
-        base_index = full_stride - start_input;
-    }
-
-    // Middle sequence: all engines write n * stride values together and use them all
-    // in a fast unrolled loop.
-    for(; base_index + full_stride <= vec_size; base_index += full_stride)
-    {
-// #if defined(__HIP_DEVICE_COMPILE__)
-//         engine.gen_next_n();
-// #else
-//         mt19937_octo_engine::gen_next_n(thread_engines);
-// #endif
-
-#if !defined(__HIP_DEVICE_COMPILE__)
-#pragma unroll
-        for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
-        {
-            auto& input = inputs[warp_lane];
-            auto& output = outputs[warp_lane];
-            mt19937_octo_engine& engine = thread_engines[warp_lane];
-            const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
-#endif
-#pragma unroll
-        for(unsigned int j = 0; j < inputs_per_state; j++)
-        {
-#pragma unroll
-            for(unsigned int i = 0; i < input_width; i++)
-            {
-                input[i] = mt19937_octo_engine::temper(engine.get(j * input_width + i));
-            }
-
-            distribution(input, output);
-
-            const size_t thread_index = base_index + j * stride + thread_id;
-            vec_data[thread_index]    = *reinterpret_cast<VecT*>(output);
-        }
 #if !defined(__HIP_DEVICE_COMPILE__)
         }
 #endif
     }
+    // clang-format on
 
     // Generate one extra VecT if data is not aligned by sizeof(VecT) or
     // size % output_width != 0
@@ -572,75 +577,77 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     if(base_index < vec_size + extra)
     {
         bool is_extra_thread = false;
-// #if defined(__HIP_DEVICE_COMPILE__)
-//         engine.gen_next_n();
-// #else
-//         mt19937_octo_engine::gen_next_n(thread_engines);
-// #endif
+        // #if defined(__HIP_DEVICE_COMPILE__)
+        //         engine.gen_next_n();
+        // #else
+        //         mt19937_octo_engine::gen_next_n(thread_engines);
+        // #endif
 
+        // clang-format off
 #if !defined(__HIP_DEVICE_COMPILE__)
 #pragma unroll
         for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
         {
-            auto& input = inputs[warp_lane];
-            auto& output = outputs[warp_lane];
-            mt19937_octo_engine& engine = thread_engines[warp_lane];
-            const unsigned int thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
+            auto&                input     = inputs[warp_lane];
+            auto&                output    = outputs[warp_lane];
+            mt19937_octo_engine& engine    = thread_engines[warp_lane];
+            const unsigned int   thread_id = block_idx.x * block_size + thread_idx.x + warp_lane;
 #endif
 #pragma unroll
-        for(unsigned int j = 0; j < inputs_per_state; j++)
-        {
+            for(unsigned int j = 0; j < inputs_per_state; j++)
+            {
 #pragma unroll
-            for(unsigned int i = 0; i < input_width; i++)
-            {
-                input[i] = mt19937_octo_engine::temper(engine.get(j * input_width + i));
-            }
-
-            distribution(input, output);
-
-            const size_t thread_index = base_index + j * stride + thread_id;
-
-            // Mark an extra thread that will write head and tail
-            is_extra_thread = thread_index == vec_size + extra - 1;
-
-            if(thread_index < vec_size)
-            {
-                vec_data[thread_index] = *reinterpret_cast<VecT*>(output);
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        if constexpr(output_width > 1)
-        {
-            // Save head and tail, output was generated earlier
-            if(is_extra_thread)
-            {
-                for(unsigned int o = 0; o < output_width; o++)
+                for(unsigned int i = 0; i < input_width; i++)
                 {
-                    if(o < head_size)
+                    input[i] = mt19937_octo_engine::temper(engine.get(j * input_width + i));
+                }
+
+                distribution(input, output);
+
+                const size_t thread_index = base_index + j * stride + thread_id;
+
+                // Mark an extra thread that will write head and tail
+                is_extra_thread = thread_index == vec_size + extra - 1;
+
+                if(thread_index < vec_size)
+                {
+                    vec_data[thread_index] = *reinterpret_cast<VecT*>(output);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if constexpr(output_width > 1)
+            {
+                // Save head and tail, output was generated earlier
+                if(is_extra_thread)
+                {
+                    for(unsigned int o = 0; o < output_width; o++)
                     {
-                        data[o] = output[o];
-                    }
-                    if(o > output_width - tail_size - 1)
-                    {
-                        data[size + (output_width - tail_size - 1) - o] = output[o];
+                        if(o < head_size)
+                        {
+                            data[o] = output[o];
+                        }
+                        if(o > output_width - tail_size - 1)
+                        {
+                            data[size + (output_width - tail_size - 1) - o] = output[o];
+                        }
                     }
                 }
             }
-        }
 #if !defined(__HIP_DEVICE_COMPILE__)
         }
 #endif
+        // clang-format on
     }
 
     // save state
 #if defined(__HIP_DEVICE_COMPILE__)
     accessor.save(thread_id, engine);
 #else
-    for (size_t i = 0; i < 8; ++i)
+    for(size_t i = 0; i < 8; ++i)
     {
         accessor.save(block_idx.x * block_dim.x + thread_idx.x + i, thread_engines[i]);
     }
@@ -810,9 +817,9 @@ public:
         }
 
         status = system_type::memcpy(d_mt19937_jump,
-                        rocrand_h_mt19937_jump,
-                        sizeof(rocrand_h_mt19937_jump),
-                        hipMemcpyHostToDevice);
+                                     rocrand_h_mt19937_jump,
+                                     sizeof(rocrand_h_mt19937_jump),
+                                     hipMemcpyHostToDevice);
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             system_type::free(d_engines);
@@ -825,7 +832,8 @@ public:
             [&, this](auto is_dynamic)
             {
                 status = system_type::template launch<
-                    rocrand_host::detail::jump_ahead_mt19937<jump_ahead_thread_count, ConfigProvider, is_dynamic>,
+                    rocrand_host::detail::
+                        jump_ahead_mt19937<jump_ahead_thread_count, ConfigProvider, is_dynamic>,
                     rocrand_host::detail::static_block_size_config_provider<
                         jump_ahead_thread_count>>(dim3(m_generator_count),
                                                   dim3(jump_ahead_thread_count),

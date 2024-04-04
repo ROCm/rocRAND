@@ -739,15 +739,22 @@ TYPED_TEST(mt19937_generator_engine_tests, subsequence_test)
     using ConfigProvider = default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
 
     rocrand_status status = rocrand_system_device::template launch<
-        rocrand_host::detail::jump_ahead_mt19937<generator_t::jump_ahead_thread_count, ConfigProvider, false>,
-        rocrand_host::detail::static_block_size_config_provider<generator_t::jump_ahead_thread_count>>(
-        dim3(generator_count),
-        dim3(generator_t::jump_ahead_thread_count),
-        0,
-        0,
-        d_engines,
-        seed,
-        d_mt19937_jump);
+        rocrand_host::detail::
+            jump_ahead_mt19937<generator_t::jump_ahead_thread_count, ConfigProvider, false>,
+        rocrand_host::detail::static_block_size_config_provider<
+            generator_t::jump_ahead_thread_count>>(dim3(generator_count),
+                                                   dim3(generator_t::jump_ahead_thread_count),
+                                                   0,
+                                                   0,
+                                                   d_engines,
+                                                   seed,
+                                                   d_mt19937_jump);
+    if(status != ROCRAND_STATUS_SUCCESS)
+    {
+        std::cout << "rocRAND error code: " << status << " while calling: jump_ahead_mt19937"
+            << std::endl;
+        exit(status);
+    }
 
     octo_engine_type* d_octo_engines{};
     HIP_CHECK(hipMalloc(&d_octo_engines,
@@ -1153,8 +1160,11 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
         [&](auto is_dynamic)
         {
             rocrand_status status = rocrand_system_device::template launch<
-                rocrand_host::detail::jump_ahead_mt19937<generator_t::jump_ahead_thread_count, ConfigProvider, is_dynamic>,
-                rocrand_host::detail::static_block_size_config_provider<generator_t::jump_ahead_thread_count>>(
+                rocrand_host::detail::jump_ahead_mt19937<generator_t::jump_ahead_thread_count,
+                                                         ConfigProvider,
+                                                         is_dynamic>,
+                rocrand_host::detail::static_block_size_config_provider<
+                    generator_t::jump_ahead_thread_count>>(
                 dim3(generator_count),
                 dim3(generator_t::jump_ahead_thread_count),
                 0,
@@ -1162,6 +1172,12 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
                 d_engines1,
                 seed,
                 d_mt19937_jump);
+            if(status != ROCRAND_STATUS_SUCCESS)
+            {
+                std::cout << "rocRAND error code: " << status << " while calling: jump_ahead_mt19937"
+                    << std::endl;
+                exit(status);
+            }
         });
 
     std::vector<unsigned int> h_engines1(generator_count * n);

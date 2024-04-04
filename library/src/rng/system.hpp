@@ -77,7 +77,7 @@ struct host_system
         delete[] ptr;
     }
 
-    static rocrand_status memcpy(void * dst, const void * src, size_t size, hipMemcpyKind /*kind*/)
+    static rocrand_status memcpy(void* dst, const void* src, size_t size, hipMemcpyKind /*kind*/)
     {
         std::memcpy(dst, src, size);
         return ROCRAND_STATUS_SUCCESS;
@@ -159,10 +159,10 @@ struct host_system
 
         if constexpr(UseHostFunc)
         {
-            hipError_t status = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
-            hipStreamSynchronize(stream);
+            hipError_t status      = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
+            hipError_t sync_status = hipStreamSynchronize(stream);
 
-            if(status != hipSuccess)
+            if(status != hipSuccess || sync_status != hipSuccess)
             {
                 // At this point, if the callback has not been invoked, there will be a memory
                 // leak. It is unclear whether hipLaunchHostFunc can return an error after the
@@ -216,7 +216,7 @@ struct device_system
         ROCRAND_HIP_FATAL_ASSERT(hipFree(ptr));
     }
 
-    static rocrand_status memcpy(void * dst, const void * src, size_t size, hipMemcpyKind kind)
+    static rocrand_status memcpy(void* dst, const void* src, size_t size, hipMemcpyKind kind)
     {
         hipError_t error = hipMemcpy(dst, src, size, kind);
         if(error != hipSuccess)
