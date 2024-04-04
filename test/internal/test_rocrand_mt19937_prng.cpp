@@ -39,21 +39,23 @@
 #include <utility>
 #include <vector>
 
+using namespace rocrand_impl::host;
+
 // Generator API tests
-using rocrand_mt19937_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_mt19937, ROCRAND_ORDERING_PSEUDO_DEFAULT>>;
+using mt19937_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<mt19937_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mt19937,
+INSTANTIATE_TYPED_TEST_SUITE_P(mt19937_generator,
                                generator_prng_tests,
-                               rocrand_mt19937_generator_prng_tests_types);
+                               mt19937_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mt19937,
+INSTANTIATE_TYPED_TEST_SUITE_P(mt19937_generator,
                                generator_prng_continuity_tests,
-                               rocrand_mt19937_generator_prng_tests_types);
+                               mt19937_generator_prng_tests_types);
 
 // mt19937-specific generator API tests
 template<class Params>
-struct rocrand_mt19937_generator_prng_tests : public ::testing::Test
+struct mt19937_generator_prng_tests : public ::testing::Test
 {
     using generator_t                                 = typename Params::generator_t;
     static inline constexpr rocrand_ordering ordering = Params::ordering;
@@ -69,21 +71,19 @@ struct rocrand_mt19937_generator_prng_tests : public ::testing::Test
     }
 };
 
-TYPED_TEST_SUITE(rocrand_mt19937_generator_prng_tests, rocrand_mt19937_generator_prng_tests_types);
-
-using mt19937_octo_engine = rocrand_host::detail::mt19937_octo_engine;
+TYPED_TEST_SUITE(mt19937_generator_prng_tests, mt19937_generator_prng_tests_types);
 
 // Check that that heads and tails are generated correctly for misaligned pointers or sizes.
 template<typename T, typename Generator, class ConfigProvider, typename GenerateFunc>
 void head_and_tail_test(GenerateFunc generate_func, rocrand_ordering ordering, unsigned int divisor)
 {
-    rocrand_host::detail::generator_config config;
+    generator_config config;
     HIP_CHECK(ConfigProvider::template host_config<T>(0, ordering, config));
 
     const unsigned int generator_count
         = config.threads * config.blocks / mt19937_octo_engine::threads_per_generator;
 
-    const size_t stride = rocrand_host::detail::mt19937_constants::n * generator_count * divisor;
+    const size_t stride = mt19937_constants::n * generator_count * divisor;
 
     // Large sizes are used for triggering all code paths in the kernels.
     std::vector<size_t>
@@ -146,47 +146,47 @@ void head_and_tail_test(GenerateFunc generate_func, rocrand_ordering ordering, u
     HIP_CHECK(hipFree(data));
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, head_and_tail_normal_float_test)
+TYPED_TEST(mt19937_generator_prng_tests, head_and_tail_normal_float_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
     head_and_tail_test<float, generator_t, ConfigProvider>(
-        [](rocrand_mt19937& g, float* data, size_t s) { g.generate_normal(data, s, 0.0f, 1.0f); },
+        [](mt19937_generator& g, float* data, size_t s) { g.generate_normal(data, s, 0.0f, 1.0f); },
         ordering,
         2);
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, head_and_tail_normal_double_test)
+TYPED_TEST(mt19937_generator_prng_tests, head_and_tail_normal_double_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
     head_and_tail_test<double, generator_t, ConfigProvider>(
-        [](rocrand_mt19937& g, double* data, size_t s) { g.generate_normal(data, s, 0.0, 1.0); },
+        [](mt19937_generator& g, double* data, size_t s) { g.generate_normal(data, s, 0.0, 1.0); },
         ordering,
         2);
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, head_and_tail_log_normal_float_test)
+TYPED_TEST(mt19937_generator_prng_tests, head_and_tail_log_normal_float_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
     head_and_tail_test<float, generator_t, ConfigProvider>(
-        [](rocrand_mt19937& g, float* data, size_t s)
+        [](mt19937_generator& g, float* data, size_t s)
         { g.generate_log_normal(data, s, 0.0f, 1.0f); },
         ordering,
         2);
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, head_and_tail_log_normal_double_test)
+TYPED_TEST(mt19937_generator_prng_tests, head_and_tail_log_normal_double_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
     head_and_tail_test<double, generator_t, ConfigProvider>(
-        [](rocrand_mt19937& g, double* data, size_t s)
+        [](mt19937_generator& g, double* data, size_t s)
         { g.generate_log_normal(data, s, 0.0, 1.0); },
         ordering,
         2);
@@ -207,7 +207,7 @@ void change_distribution_test(GenerateFunc0    generate_func0,
 {
     SCOPED_TRACE(testing::Message() << "size0 = " << size0 << " start1 = " << start1);
 
-    rocrand_host::detail::generator_config config;
+    generator_config config;
     // Configs for mt19937 are independent of type, so just use T0
     HIP_CHECK(ConfigProvider::template host_config<T0>(0, ordering, config));
 
@@ -247,12 +247,12 @@ void change_distribution_test(GenerateFunc0    generate_func0,
     HIP_CHECK(hipFree(data11));
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution0_test)
+TYPED_TEST(mt19937_generator_prng_tests, change_distribution0_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    rocrand_host::detail::generator_config config;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
+    generator_config config;
     // Configs for mt19937 are independent, just use void
     HIP_CHECK(ConfigProvider::template host_config<void>(0, ordering, config));
 
@@ -268,21 +268,21 @@ TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution0_test)
     for(auto test_case : test_cases)
     {
         change_distribution_test<float, unsigned int, generator_t, ConfigProvider>(
-            [](rocrand_mt19937& g, float* data, size_t s)
+            [](mt19937_generator& g, float* data, size_t s)
             { g.generate_normal(data, s, 0.0f, 1.0f); },
-            [](rocrand_mt19937& g, unsigned int* data, size_t s) { g.generate(data, s); },
+            [](mt19937_generator& g, unsigned int* data, size_t s) { g.generate(data, s); },
             test_case.first,
             test_case.second,
             ordering);
     }
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution1_test)
+TYPED_TEST(mt19937_generator_prng_tests, change_distribution1_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    rocrand_host::detail::generator_config config;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
+    generator_config config;
     // Configs for mt19937 are independent, just use void
     HIP_CHECK(ConfigProvider::template host_config<void>(0, ordering, config));
 
@@ -299,8 +299,8 @@ TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution1_test)
     for(auto test_case : test_cases)
     {
         change_distribution_test<float, double, generator_t, ConfigProvider>(
-            [](rocrand_mt19937& g, float* data, size_t s) { g.generate_uniform(data, s); },
-            [](rocrand_mt19937& g, double* data, size_t s)
+            [](mt19937_generator& g, float* data, size_t s) { g.generate_uniform(data, s); },
+            [](mt19937_generator& g, double* data, size_t s)
             { g.generate_normal(data, s, 0.0, 1.0); },
             test_case.first,
             test_case.second,
@@ -308,12 +308,12 @@ TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution1_test)
     }
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution2_test)
+TYPED_TEST(mt19937_generator_prng_tests, change_distribution2_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    rocrand_host::detail::generator_config config;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
+    generator_config config;
     // Configs for mt19937 are independent, just use void
     HIP_CHECK(ConfigProvider::template host_config<void>(0, ordering, config));
 
@@ -329,8 +329,8 @@ TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution2_test)
     for(auto test_case : test_cases)
     {
         change_distribution_test<double, double, generator_t, ConfigProvider>(
-            [](rocrand_mt19937& g, double* data, size_t s) { g.generate_uniform(data, s); },
-            [](rocrand_mt19937& g, double* data, size_t s)
+            [](mt19937_generator& g, double* data, size_t s) { g.generate_uniform(data, s); },
+            [](mt19937_generator& g, double* data, size_t s)
             { g.generate_normal(data, s, 0.0, 1.0); },
             test_case.first,
             test_case.second,
@@ -338,12 +338,12 @@ TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution2_test)
     }
 }
 
-TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution3_test)
+TYPED_TEST(mt19937_generator_prng_tests, change_distribution3_test)
 {
     using generator_t                   = typename TestFixture::generator_t;
     constexpr rocrand_ordering ordering = TestFixture::ordering;
-    using ConfigProvider = rocrand_host::detail::default_config_provider<generator_t::type()>;
-    rocrand_host::detail::generator_config config;
+    using ConfigProvider                = default_config_provider<generator_t::type()>;
+    generator_config config;
     // Configs for mt19937 are independent, just use void
     HIP_CHECK(ConfigProvider::template host_config<void>(0, ordering, config));
 
@@ -359,9 +359,9 @@ TYPED_TEST(rocrand_mt19937_generator_prng_tests, change_distribution3_test)
     for(auto test_case : test_cases)
     {
         change_distribution_test<double, unsigned short, generator_t, ConfigProvider>(
-            [](rocrand_mt19937& g, double* data, size_t s)
+            [](mt19937_generator& g, double* data, size_t s)
             { g.generate_normal(data, s, 0.0, 1.0); },
-            [](rocrand_mt19937& g, unsigned short* data, size_t s) { g.generate(data, s); },
+            [](mt19937_generator& g, unsigned short* data, size_t s) { g.generate(data, s); },
             test_case.first,
             test_case.second,
             ordering);
@@ -376,28 +376,27 @@ struct mt19937_generator_prng_continuity_tests : public ::testing::Test
     static inline constexpr rocrand_ordering ordering = Params::ordering;
 };
 
-TYPED_TEST_SUITE(mt19937_generator_prng_continuity_tests,
-                 rocrand_mt19937_generator_prng_tests_types);
+TYPED_TEST_SUITE(mt19937_generator_prng_continuity_tests, mt19937_generator_prng_tests_types);
 
 // Check that subsequent generations of different sizes produce one
 // sequence without gaps, no matter how many values are generated per call.
 template<typename T,
          typename Generator,
          typename GenerateFunc,
-         std::enable_if_t<std::is_same<Generator, rocrand_mt19937>::value, bool> = true>
+         std::enable_if_t<std::is_same<Generator, mt19937_generator>::value, bool> = true>
 void continuity_test(GenerateFunc     generate_func,
                      rocrand_ordering ordering,
                      unsigned int     divisor = 1)
 {
-    using ConfigProvider = rocrand_host::detail::default_config_provider<rocrand_mt19937::type()>;
+    using ConfigProvider = default_config_provider<mt19937_generator::type()>;
 
-    rocrand_host::detail::generator_config config;
+    generator_config config;
     HIP_CHECK(ConfigProvider::template host_config<T>(0, ordering, config));
 
     const unsigned int generator_count
         = config.threads * config.blocks / mt19937_octo_engine::threads_per_generator;
 
-    const size_t stride = rocrand_host::detail::mt19937_constants::n * generator_count * divisor;
+    const size_t stride = mt19937_constants::n * generator_count * divisor;
 
     // Large sizes are used for triggering all code paths in the kernels (generating of middle,
     // start and end sequences).
@@ -437,11 +436,11 @@ void continuity_test(GenerateFunc     generate_func,
     const size_t size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
     const size_t size2 = std::min(size0, size1);
 
-    rocrand_mt19937 g0;
+    mt19937_generator g0;
     g0.set_order(ordering);
-    rocrand_mt19937 g1;
+    mt19937_generator g1;
     g1.set_order(ordering);
-    rocrand_mt19937 g2;
+    mt19937_generator g2;
     g2.set_order(ordering);
 
     std::vector<T> host_data0(size0);
@@ -527,20 +526,20 @@ TYPED_TEST(mt19937_generator_prng_continuity_tests, continuity_uniform_half_test
 
 // Engine API tests
 template<class Generator>
-struct rocrand_mt19937_engine_tests : public ::testing::Test
+struct mt19937_generator_engine_tests : public ::testing::Test
 {
     using generator_t = Generator;
 };
 
-using rocrand_mt19937_engine_tests_types = ::testing::Types<rocrand_mt19937>;
+using mt19937_generator_engine_tests_types = ::testing::Types<mt19937_generator>;
 
-TYPED_TEST_SUITE(rocrand_mt19937_engine_tests, rocrand_mt19937_engine_tests_types);
+TYPED_TEST_SUITE(mt19937_generator_engine_tests, mt19937_generator_engine_tests_types);
 
 /// Initialize the octo engines for both generators. Skip \p subsequence_size for the first generator.
 __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
     mt19937_octo_engine* octo_engines, const unsigned int* engines, unsigned int subsequence_size)
 {
-    constexpr unsigned int n         = rocrand_host::detail::mt19937_constants::n;
+    constexpr unsigned int n         = mt19937_constants::n;
     const unsigned int     thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int           engine_id = thread_id / mt19937_octo_engine::threads_per_generator;
     mt19937_octo_engine    engine    = octo_engines[thread_id];
@@ -565,7 +564,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
     unsigned int         elements_per_generator,
     unsigned int         subsequence_size)
 {
-    constexpr unsigned int n                     = rocrand_host::detail::mt19937_constants::n;
+    constexpr unsigned int n                     = mt19937_constants::n;
     constexpr unsigned int threads_per_generator = mt19937_octo_engine::threads_per_generator;
     const unsigned int     local_thread_id       = threadIdx.x & 7U;
     const unsigned int     thread_id             = blockIdx.x * blockDim.x + threadIdx.x;
@@ -591,7 +590,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kerne
     engines[thread_id] = engine;
 }
 
-TYPED_TEST(rocrand_mt19937_engine_tests, subsequence_test)
+TYPED_TEST(mt19937_generator_engine_tests, subsequence_test)
 {
     using generator_t                                 = typename TestFixture::generator_t;
     using octo_engine_type                            = mt19937_octo_engine;
@@ -604,7 +603,7 @@ TYPED_TEST(rocrand_mt19937_engine_tests, subsequence_test)
     static_assert(subsequence_size % threads_per_generator == 0,
                   "size of subsequence must be multiple of eight");
     constexpr unsigned int generator_count = 2U;
-    constexpr unsigned int state_size      = rocrand_host::detail::mt19937_constants::n;
+    constexpr unsigned int state_size      = mt19937_constants::n;
 
     // Constants to skip subsequence_size states.
     // Generated with tools/mt19937_precomputed_generator.cpp
@@ -737,13 +736,12 @@ TYPED_TEST(rocrand_mt19937_engine_tests, subsequence_test)
     HIP_CHECK(hipMalloc(&d_engines, generator_count * state_size * sizeof(unsigned int)));
 
     // dummy config provider, kernel just needs to verify the amount of generators for the actual call
-    using ConfigProvider
-        = rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
+    using ConfigProvider = default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
-            rocrand_host::detail::
-                jump_ahead_kernel<generator_t::jump_ahead_thread_count, ConfigProvider, true>),
+
+            jump_ahead_kernel<generator_t::jump_ahead_thread_count, ConfigProvider, true>),
         dim3(generator_count),
         dim3(generator_t::jump_ahead_thread_count),
         0,
@@ -854,20 +852,17 @@ TYPED_TEST(rocrand_mt19937_engine_tests, subsequence_test)
 
 struct mt19937_engine
 {
-    static constexpr inline unsigned int m    = rocrand_host::detail::mt19937_constants::m;
-    static constexpr inline unsigned int mexp = rocrand_host::detail::mt19937_constants::mexp;
-    static constexpr inline unsigned int matrix_a
-        = rocrand_host::detail::mt19937_constants::matrix_a;
-    static constexpr inline unsigned int upper_mask
-        = rocrand_host::detail::mt19937_constants::upper_mask;
-    static constexpr inline unsigned int lower_mask
-        = rocrand_host::detail::mt19937_constants::lower_mask;
+    static constexpr inline unsigned int m          = mt19937_constants::m;
+    static constexpr inline unsigned int mexp       = mt19937_constants::mexp;
+    static constexpr inline unsigned int matrix_a   = mt19937_constants::matrix_a;
+    static constexpr inline unsigned int upper_mask = mt19937_constants::upper_mask;
+    static constexpr inline unsigned int lower_mask = mt19937_constants::lower_mask;
 
     // Jumping constants.
     static constexpr inline unsigned int qq = 7;
     static constexpr inline unsigned int ll = 1U << qq;
 
-    static constexpr inline unsigned int n = rocrand_host::detail::mt19937_constants::n;
+    static constexpr inline unsigned int n = mt19937_constants::n;
 
     struct mt19937_state
     {
@@ -1107,7 +1102,7 @@ struct mt19937_engine
     }
 };
 
-TYPED_TEST(rocrand_mt19937_engine_tests, jump_ahead_test)
+TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
 {
     // Compare states of all engines
     // * computed consecutively on host using Sliding window algorithm
@@ -1119,12 +1114,11 @@ TYPED_TEST(rocrand_mt19937_engine_tests, jump_ahead_test)
     using generator_t = typename TestFixture::generator_t;
 
     const unsigned long long seed = 12345678;
-    constexpr unsigned int   n    = rocrand_host::detail::mt19937_constants::n;
+    constexpr unsigned int   n    = mt19937_constants::n;
 
     // Test for default config
-    using ConfigProvider
-        = rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
-    rocrand_host::detail::generator_config config;
+    using ConfigProvider = default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
+    generator_config config;
     HIP_CHECK(
         ConfigProvider::host_config<unsigned int>(0, ROCRAND_ORDERING_PSEUDO_DEFAULT, config));
 
@@ -1155,23 +1149,21 @@ TYPED_TEST(rocrand_mt19937_engine_tests, jump_ahead_test)
     unsigned int* d_engines1{};
     HIP_CHECK(hipMalloc(&d_engines1, generator_count * n * sizeof(unsigned int)));
 
-    rocrand_host::detail::dynamic_dispatch(
-        ROCRAND_ORDERING_PSEUDO_DEFAULT,
-        [&](auto is_dynamic)
-        {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(
-                    rocrand_host::detail::jump_ahead_kernel<generator_t::jump_ahead_thread_count,
-                                                            ConfigProvider,
-                                                            is_dynamic>),
-                dim3(generator_count),
-                dim3(generator_t::jump_ahead_thread_count),
-                0,
-                0,
-                d_engines1,
-                seed,
-                d_mt19937_jump);
-        });
+    dynamic_dispatch(ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                     [&](auto is_dynamic)
+                     {
+                         hipLaunchKernelGGL(
+                             HIP_KERNEL_NAME(jump_ahead_kernel<generator_t::jump_ahead_thread_count,
+                                                               ConfigProvider,
+                                                               is_dynamic>),
+                             dim3(generator_count),
+                             dim3(generator_t::jump_ahead_thread_count),
+                             0,
+                             0,
+                             d_engines1,
+                             seed,
+                             d_mt19937_jump);
+                     });
 
     std::vector<unsigned int> h_engines1(generator_count * n);
     HIP_CHECK(hipMemcpy(h_engines1.data(),

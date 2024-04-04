@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 typedef ::rocrand_device::lfsr113_engine lfsr113_device_engine;
@@ -160,29 +160,27 @@ __host__ __device__ void generate_lfsr113(dim3 block_idx,
     engines[engine_id] = engine;
 }
 
-} // namespace rocrand_host::detail
-
 template<class System, class ConfigProvider>
-class rocrand_lfsr113_template : public rocrand_generator_impl_base
+class lfsr113_generator_template : public generator_impl_base
 {
 public:
     using system_type = System;
-    using base_type   = rocrand_generator_impl_base;
-    using engine_type = ::rocrand_host::detail::lfsr113_device_engine;
+    using base_type   = generator_impl_base;
+    using engine_type = lfsr113_device_engine;
 
-    rocrand_lfsr113_template(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
-                                                          ROCRAND_LFSR113_DEFAULT_SEED_Y,
-                                                          ROCRAND_LFSR113_DEFAULT_SEED_Z,
-                                                          ROCRAND_LFSR113_DEFAULT_SEED_W},
-                             unsigned long long offset = 0,
-                             rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                             hipStream_t        stream = 0)
+    lfsr113_generator_template(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_W},
+                               unsigned long long offset = 0,
+                               rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                               hipStream_t        stream = 0)
         : base_type(order, offset, stream), m_seed(seeds)
     {}
 
-    rocrand_lfsr113_template(const rocrand_lfsr113_template&) = delete;
+    lfsr113_generator_template(const lfsr113_generator_template&) = delete;
 
-    rocrand_lfsr113_template(rocrand_lfsr113_template&& other)
+    lfsr113_generator_template(lfsr113_generator_template&& other)
         : base_type(other)
         , m_engines_initialized(other.m_engines_initialized)
         , m_engines(other.m_engines)
@@ -195,9 +193,9 @@ public:
         other.m_engines             = nullptr;
     }
 
-    rocrand_lfsr113_template& operator=(const rocrand_lfsr113_template&) = delete;
+    lfsr113_generator_template& operator=(const lfsr113_generator_template&) = delete;
 
-    rocrand_lfsr113_template& operator=(rocrand_lfsr113_template&& other)
+    lfsr113_generator_template& operator=(lfsr113_generator_template&& other)
     {
         *static_cast<base_type*>(this) = std::move(other);
         m_engines_initialized          = other.m_engines_initialized;
@@ -213,7 +211,7 @@ public:
         return *this;
     }
 
-    ~rocrand_lfsr113_template()
+    ~lfsr113_generator_template()
     {
         if(m_engines != nullptr)
         {
@@ -308,9 +306,7 @@ public:
         }
 
         hipError_t error
-            = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(m_stream,
-                                                                               m_order,
-                                                                               m_engines_size);
+            = get_least_common_grid_size<ConfigProvider>(m_stream, m_order, m_engines_size);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
@@ -331,9 +327,8 @@ public:
         constexpr unsigned int init_threads = 256;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
 
-        status = system_type::template launch<
-            rocrand_host::detail::init_lfsr113_engines,
-            rocrand_host::detail::static_block_size_config_provider<init_threads>>(
+        status = system_type::template launch<init_lfsr113_engines,
+                                              static_block_size_config_provider<init_threads>>(
             dim3(init_blocks),
             dim3(init_threads),
             0,
@@ -361,18 +356,17 @@ public:
             return status;
         }
 
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
             return ROCRAND_STATUS_INTERNAL_ERROR;
 
-        status = rocrand_host::detail::dynamic_dispatch(
+        status = dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)
             {
                 return system_type::template launch<
-                    rocrand_host::detail::
-                        generate_lfsr113<ConfigProvider, is_dynamic, T, Distribution>,
+                    generate_lfsr113<ConfigProvider, is_dynamic, T, Distribution>,
                     ConfigProvider,
                     T,
                     is_dynamic>(dim3(config.blocks),
@@ -459,20 +453,21 @@ private:
     uint4        m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
-        m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
 };
 
-using rocrand_lfsr113 = rocrand_lfsr113_template<
-    rocrand_system_device,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+using lfsr113_generator
+    = lfsr113_generator_template<system::device_system,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
 
 template<bool UseHostFunc>
-using rocrand_lfsr113_host = rocrand_lfsr113_template<
-    rocrand_system_host<UseHostFunc>,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+using lfsr113_generator_host
+    = lfsr113_generator_template<system::host_system<UseHostFunc>,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_LFSR113_H_

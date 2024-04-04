@@ -67,7 +67,7 @@
 
 #include <utility>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 /// Computes i % n, i must be in range [0, 2 * n)
@@ -452,14 +452,12 @@ ROCRAND_KERNEL __launch_bounds__((get_block_size<ConfigProvider, T>(
     accessor.save(thread_id, engine);
 }
 
-} // end namespace rocrand_host::detail
-
 template<class ConfigProvider>
-class rocrand_mt19937_template : public rocrand_generator_impl_base
+class mt19937_generator_template : public generator_impl_base
 {
 public:
-    using base_type        = rocrand_generator_impl_base;
-    using octo_engine_type = ::rocrand_host::detail::mt19937_octo_engine;
+    using base_type        = generator_impl_base;
+    using octo_engine_type = mt19937_octo_engine;
 
     static constexpr inline unsigned int threads_per_generator
         = octo_engine_type::threads_per_generator;
@@ -467,24 +465,23 @@ public:
     /// Number of threads per block for jump_ahead_kernel. Can be tweaked for performance.
     static constexpr inline unsigned int jump_ahead_thread_count = 128;
 
-    rocrand_mt19937_template(unsigned long long seed   = 0,
-                             rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                             hipStream_t        stream = 0)
+    mt19937_generator_template(unsigned long long seed   = 0,
+                               rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                               hipStream_t        stream = 0)
         : base_type(order, 0, stream), m_seed(seed)
     {
         // Allocate device random number engines
         auto error = hipMalloc(&m_engines,
-                               m_generator_count * rocrand_host::detail::mt19937_constants::n
-                                   * sizeof(unsigned int));
+                               m_generator_count * mt19937_constants::n * sizeof(unsigned int));
         if(error != hipSuccess)
         {
             throw ROCRAND_STATUS_ALLOCATION_FAILED;
         }
     }
 
-    rocrand_mt19937_template(const rocrand_mt19937_template&) = delete;
+    mt19937_generator_template(const mt19937_generator_template&) = delete;
 
-    rocrand_mt19937_template(rocrand_mt19937_template&& other)
+    mt19937_generator_template(mt19937_generator_template&& other)
         : base_type(other)
         , m_engines_initialized(std::exchange(other.m_engines_initialized, false))
         , m_engines(std::exchange(other.m_engines, nullptr))
@@ -495,9 +492,9 @@ public:
         , m_generator_count(other.m_generator_count)
     {}
 
-    rocrand_mt19937_template& operator=(const rocrand_mt19937_template&) = delete;
+    mt19937_generator_template& operator=(const mt19937_generator_template&) = delete;
 
-    rocrand_mt19937_template& operator=(rocrand_mt19937_template&& other)
+    mt19937_generator_template& operator=(mt19937_generator_template&& other)
     {
         *static_cast<base_type*>(this) = other;
 
@@ -512,7 +509,7 @@ public:
         return *this;
     }
 
-    ~rocrand_mt19937_template()
+    ~mt19937_generator_template()
     {
         if(m_engines != nullptr)
         {
@@ -575,7 +572,7 @@ public:
 
         // TODO: make a version for generators that don't support per-type specialization of the configs and use that one
         // For now: just use the void config, assuming that all configs are the same
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         hipError_t err = ConfigProvider::template host_config<void>(m_stream, m_order, config);
         if(err != hipSuccess)
         {
@@ -589,8 +586,7 @@ public:
         }
         // Allocate device random number engines
         err = hipMalloc(reinterpret_cast<void**>(&m_engines),
-                        m_generator_count * rocrand_host::detail::mt19937_constants::n
-                            * sizeof(unsigned int));
+                        m_generator_count * mt19937_constants::n * sizeof(unsigned int));
         if(err != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -598,8 +594,7 @@ public:
 
         unsigned int* d_engines{};
         err = hipMalloc(&d_engines,
-                        m_generator_count * rocrand_host::detail::mt19937_constants::n
-                            * sizeof(unsigned int));
+                        m_generator_count * mt19937_constants::n * sizeof(unsigned int));
         if(err != hipSuccess)
         {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -624,14 +619,13 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        rocrand_host::detail::dynamic_dispatch(
+        dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)
             {
                 hipLaunchKernelGGL(
-                    HIP_KERNEL_NAME(rocrand_host::detail::jump_ahead_kernel<jump_ahead_thread_count,
-                                                                            ConfigProvider,
-                                                                            is_dynamic>),
+                    HIP_KERNEL_NAME(
+                        jump_ahead_kernel<jump_ahead_thread_count, ConfigProvider, is_dynamic>),
                     dim3(m_generator_count),
                     dim3(jump_ahead_thread_count),
                     0,
@@ -657,20 +651,18 @@ public:
         }
 
         // This kernel is not actually tuned for ordering, but config is needed for device-side compile time check of the generator count
-        rocrand_host::detail::dynamic_dispatch(
-            m_order,
-            [&, this](auto is_dynamic)
-            {
-                hipLaunchKernelGGL(
-                    HIP_KERNEL_NAME(
-                        rocrand_host::detail::init_engines_kernel<ConfigProvider, is_dynamic>),
-                    dim3(config.blocks),
-                    dim3(config.threads),
-                    0,
-                    m_stream,
-                    m_engines,
-                    d_engines);
-            });
+        dynamic_dispatch(m_order,
+                         [&, this](auto is_dynamic)
+                         {
+                             hipLaunchKernelGGL(
+                                 HIP_KERNEL_NAME(init_engines_kernel<ConfigProvider, is_dynamic>),
+                                 dim3(config.blocks),
+                                 dim3(config.threads),
+                                 0,
+                                 m_stream,
+                                 m_engines,
+                                 d_engines);
+                         });
 
         err = hipStreamSynchronize(m_stream);
         if(err != hipSuccess)
@@ -704,11 +696,11 @@ public:
         constexpr unsigned int input_width  = Distribution::input_width;
         constexpr unsigned int output_width = Distribution::output_width;
         constexpr unsigned int inputs_per_state
-            = (rocrand_host::detail::mt19937_constants::n / threads_per_generator) / input_width;
+            = (mt19937_constants::n / threads_per_generator) / input_width;
         const unsigned int stride      = threads_per_generator * m_generator_count;
         const unsigned int full_stride = stride * inputs_per_state;
 
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         hipError_t err = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(err != hipSuccess)
         {
@@ -755,13 +747,12 @@ public:
             // Engines have enough values, generated by the previous generate_long_kernel call.
             // This kernel does not load and store engines but loads values directly from global
             // memory.
-            rocrand_host::detail::dynamic_dispatch(
+            dynamic_dispatch(
                 m_order,
                 [&, this](auto is_dynamic)
                 {
                     hipLaunchKernelGGL(
-                        HIP_KERNEL_NAME(rocrand_host::detail::generate_short_kernel<ConfigProvider,
-                                                                                    is_dynamic>),
+                        HIP_KERNEL_NAME(generate_short_kernel<ConfigProvider, is_dynamic>),
                         dim3(config.blocks),
                         dim3(config.threads),
                         0,
@@ -780,13 +771,12 @@ public:
         else
         {
             // There are not enough generated values or no values at all
-            rocrand_host::detail::dynamic_dispatch(
+            dynamic_dispatch(
                 m_order,
                 [&, this](auto is_dynamic)
                 {
                     hipLaunchKernelGGL(
-                        HIP_KERNEL_NAME(
-                            rocrand_host::detail::generate_long_kernel<ConfigProvider, is_dynamic>),
+                        HIP_KERNEL_NAME(generate_long_kernel<ConfigProvider, is_dynamic>),
                         dim3(config.blocks),
                         dim3(config.threads),
                         0,
@@ -885,7 +875,9 @@ private:
     unsigned int m_generator_count = 0;
 };
 
-using rocrand_mt19937 = rocrand_mt19937_template<
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
+using mt19937_generator
+    = mt19937_generator_template<default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_MT19937_H_

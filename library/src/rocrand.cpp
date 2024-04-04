@@ -29,54 +29,55 @@
 template<bool UseHostFunc>
 rocrand_status create_generator_host(rocrand_generator* generator, rocrand_rng_type rng_type)
 {
+    using namespace rocrand_impl::host;
     try
     {
         // clang-format off
         switch(rng_type)
         {
             case ROCRAND_RNG_PSEUDO_LFSR113:
-                *generator = new rocrand_generator_type<rocrand_lfsr113_host<UseHostFunc>>();
+                *generator = new generator_type<lfsr113_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_PHILOX4_32_10:
-                *generator = new rocrand_generator_type<rocrand_philox4x32_10_host<UseHostFunc>>();
+                *generator = new generator_type<philox4x32_10_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_MRG31K3P:
-                *generator = new rocrand_generator_type<rocrand_mrg31k3p_host<UseHostFunc>>();
+                *generator = new generator_type<mrg31k3p_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_MRG32K3A:
-                *generator = new rocrand_generator_type<rocrand_mrg32k3a_host<UseHostFunc>>();
+                *generator = new generator_type<mrg32k3a_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY2_32_20:
-                *generator = new rocrand_generator_type<rocrand_threefry2x32_20_host<UseHostFunc>>();
+                *generator = new generator_type<threefry2x32_20_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY2_64_20:
-                *generator = new rocrand_generator_type<rocrand_threefry2x64_20_host<UseHostFunc>>();
+                *generator = new generator_type<threefry2x64_20_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY4_32_20:
-                *generator = new rocrand_generator_type<rocrand_threefry4x32_20_host<UseHostFunc>>();
+                *generator = new generator_type<threefry4x32_20_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY4_64_20:
-                *generator = new rocrand_generator_type<rocrand_threefry4x64_20_host<UseHostFunc>>();
+                *generator = new generator_type<threefry4x64_20_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_QUASI_DEFAULT:
             case ROCRAND_RNG_QUASI_SOBOL32:
-                *generator = new rocrand_generator_type<rocrand_sobol32_host<UseHostFunc>>();
+                *generator = new generator_type<sobol32_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32:
-                *generator = new rocrand_generator_type<rocrand_scrambled_sobol32_host<UseHostFunc>>();
+                *generator = new generator_type<scrambled_sobol32_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_QUASI_SOBOL64:
-                *generator = new rocrand_generator_type<rocrand_sobol64_host<UseHostFunc>>();
+                *generator = new generator_type<sobol64_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64:
-                *generator = new rocrand_generator_type<rocrand_scrambled_sobol64_host<UseHostFunc>>();
+                *generator = new generator_type<scrambled_sobol64_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_DEFAULT:
             case ROCRAND_RNG_PSEUDO_XORWOW:
-                *generator = new rocrand_generator_type<rocrand_xorwow_host<UseHostFunc>>();
+                *generator = new generator_type<xorwow_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_MTGP32:
-                *generator = new rocrand_generator_type<rocrand_mtgp32_host<UseHostFunc>>();
+                *generator = new generator_type<mtgp32_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_MT19937:
             default:
@@ -110,57 +111,58 @@ extern "C" {
 rocrand_status ROCRANDAPI rocrand_create_generator(rocrand_generator* generator,
                                                    rocrand_rng_type   rng_type)
 {
+    using namespace rocrand_impl::host;
     try
     {
         // clang-format off
         switch(rng_type)
         {
             case ROCRAND_RNG_PSEUDO_PHILOX4_32_10:
-                *generator = new rocrand_generator_type<rocrand_philox4x32_10>();
+                *generator = new generator_type<philox4x32_10_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_MRG31K3P:
-                *generator = new rocrand_generator_type<rocrand_mrg31k3p>();
+                *generator = new generator_type<mrg31k3p_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_MRG32K3A:
-                *generator = new rocrand_generator_type<rocrand_mrg32k3a>();
+                *generator = new generator_type<mrg32k3a_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_DEFAULT:
             case ROCRAND_RNG_PSEUDO_XORWOW:
-                *generator = new rocrand_generator_type<rocrand_xorwow>();
+                *generator = new generator_type<xorwow_generator>();
                 break;
             case ROCRAND_RNG_QUASI_DEFAULT:
             case ROCRAND_RNG_QUASI_SOBOL32:
-                *generator = new rocrand_generator_type<rocrand_sobol32>();
+                *generator = new generator_type<sobol32_generator>();
                 break;
             case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32:
-                *generator = new rocrand_generator_type<rocrand_scrambled_sobol32>();
+                *generator = new generator_type<scrambled_sobol32_generator>();
                 break;
             case ROCRAND_RNG_QUASI_SOBOL64:
-                *generator = new rocrand_generator_type<rocrand_sobol64>();
+                *generator = new generator_type<sobol64_generator>();
                 break;
             case ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64:
-                *generator = new rocrand_generator_type<rocrand_scrambled_sobol64>();
+                *generator = new generator_type<scrambled_sobol64_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_MTGP32:
-                *generator = new rocrand_generator_type<rocrand_mtgp32>();
+                *generator = new generator_type<mtgp32_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_LFSR113:
-                *generator = new rocrand_generator_type<rocrand_lfsr113>();
+                *generator = new generator_type<lfsr113_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_MT19937:
-                *generator = new rocrand_generator_type<rocrand_mt19937>();
+                *generator = new generator_type<mt19937_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY2_32_20:
-                *generator = new rocrand_generator_type<rocrand_threefry2x32_20>();
+                *generator = new generator_type<threefry2x32_20_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY2_64_20:
-                *generator = new rocrand_generator_type<rocrand_threefry2x64_20>();
+                *generator = new generator_type<threefry2x64_20_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY4_32_20:
-                *generator = new rocrand_generator_type<rocrand_threefry4x32_20>();
+                *generator = new generator_type<threefry4x32_20_generator>();
                 break;
             case ROCRAND_RNG_PSEUDO_THREEFRY4_64_20:
-                *generator = new rocrand_generator_type<rocrand_threefry4x64_20>();
+                *generator = new generator_type<threefry4x64_20_generator>();
                 break;
             default:
                 return ROCRAND_STATUS_TYPE_ERROR;
@@ -457,6 +459,7 @@ rocrand_status ROCRANDAPI rocrand_get_version(int* version)
 rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
     double lambda, rocrand_discrete_distribution* discrete_distribution)
 {
+    using namespace rocrand_impl::host;
     if(discrete_distribution == NULL)
     {
         return ROCRAND_STATUS_OUT_OF_RANGE;
@@ -466,10 +469,10 @@ rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
+    poisson_distribution<DISCRETE_METHOD_UNIVERSAL> h_dis;
     try
     {
-        h_dis = rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_UNIVERSAL>(lambda);
+        h_dis = poisson_distribution<DISCRETE_METHOD_UNIVERSAL>(lambda);
     }
     catch(const std::exception& e)
     {
@@ -504,6 +507,7 @@ rocrand_status ROCRANDAPI
                                          unsigned int                   offset,
                                          rocrand_discrete_distribution* discrete_distribution)
 {
+    using namespace rocrand_impl::host;
     if(discrete_distribution == NULL)
     {
         return ROCRAND_STATUS_OUT_OF_RANGE;
@@ -513,12 +517,10 @@ rocrand_status ROCRANDAPI
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
+    discrete_distribution_base<DISCRETE_METHOD_UNIVERSAL> h_dis;
     try
     {
-        h_dis = rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL>(probabilities,
-                                                                                      size,
-                                                                                      offset);
+        h_dis = discrete_distribution_base<DISCRETE_METHOD_UNIVERSAL>(probabilities, size, offset);
     }
     catch(const std::exception& e)
     {
@@ -550,12 +552,13 @@ rocrand_status ROCRANDAPI
 rocrand_status ROCRANDAPI
     rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_distribution)
 {
+    using namespace rocrand_impl::host;
     if(discrete_distribution == NULL)
     {
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    rocrand_discrete_distribution_base<ROCRAND_DISCRETE_METHOD_UNIVERSAL> h_dis;
+    discrete_distribution_base<DISCRETE_METHOD_UNIVERSAL> h_dis;
 
     hipError_t error;
     error = hipMemcpy(&h_dis,

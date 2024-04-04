@@ -24,48 +24,49 @@
 
 #include <rng/threefry.hpp>
 
-// Generator API tests
-using rocrand_threefry4x32_20_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_threefry4x32_20, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_threefry4x32_20, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+using rocrand_impl::host::threefry4x32_20_generator;
 
-using rocrand_threefry4x32_20_generator_prng_offset_tests_types
+// Generator API tests
+using threefry4x32_20_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<threefry4x32_20_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<threefry4x32_20_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+
+using threefry4x32_20_generator_prng_offset_tests_types
     = ::testing::Types<generator_prng_offset_tests_params<unsigned int,
-                                                          rocrand_threefry4x32_20,
+                                                          threefry4x32_20_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DEFAULT>,
                        generator_prng_offset_tests_params<unsigned int,
-                                                          rocrand_threefry4x32_20,
+                                                          threefry4x32_20_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
                        generator_prng_offset_tests_params<float,
-                                                          rocrand_threefry4x32_20,
+                                                          threefry4x32_20_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DEFAULT>,
                        generator_prng_offset_tests_params<float,
-                                                          rocrand_threefry4x32_20,
+                                                          threefry4x32_20_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x32_20,
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x32_20_generator,
                                generator_prng_tests,
-                               rocrand_threefry4x32_20_generator_prng_tests_types);
+                               threefry4x32_20_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x32_20,
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x32_20_generator,
                                generator_prng_continuity_tests,
-                               rocrand_threefry4x32_20_generator_prng_tests_types);
+                               threefry4x32_20_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x32_20,
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x32_20_generator,
                                generator_prng_offset_tests,
-                               rocrand_threefry4x32_20_generator_prng_offset_tests_types);
+                               threefry4x32_20_generator_prng_offset_tests_types);
 
 // threefry4x32_20-specific generator API tests
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_threefry4x32_20,
+INSTANTIATE_TYPED_TEST_SUITE_P(threefry4x32_20_generator,
                                threefryNx32_20_generator_prng_tests,
-                               rocrand_threefry4x32_20_generator_prng_tests_types);
+                               threefry4x32_20_generator_prng_tests_types);
 
 // Engine API tests
-class rocrand_threefry4x32_engine_type_test : public rocrand_threefry4x32_20::engine_type
+class threefry4x32_engine_type_test : public threefry4x32_20_generator::engine_type
 {
 public:
-    __host__ rocrand_threefry4x32_engine_type_test() : rocrand_threefry4x32_20::engine_type(0, 0, 0)
-    {}
+    __host__ threefry4x32_engine_type_test() : threefry4x32_20_generator::engine_type(0, 0, 0) {}
 
     __host__ state_type& internal_state_ref()
     {
@@ -73,10 +74,10 @@ public:
     }
 };
 
-TEST(rocrand_threefry_prng_state_tests, seed_test)
+TEST(threefry_prng_state_tests, seed_test)
 {
-    rocrand_threefry4x32_engine_type_test              engine;
-    rocrand_threefry4x32_engine_type_test::state_type& state = engine.internal_state_ref();
+    threefry4x32_engine_type_test              engine;
+    threefry4x32_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
@@ -101,10 +102,10 @@ TEST(rocrand_threefry_prng_state_tests, seed_test)
 
 // Check if the threefry state counter is calculated correctly during
 // random number generation.
-TEST(rocrand_threefry_prng_state_tests, discard_test)
+TEST(threefry_prng_state_tests, discard_test)
 {
-    rocrand_threefry4x32_engine_type_test              engine;
-    rocrand_threefry4x32_engine_type_test::state_type& state = engine.internal_state_ref();
+    threefry4x32_engine_type_test              engine;
+    threefry4x32_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
@@ -194,10 +195,10 @@ TEST(rocrand_threefry_prng_state_tests, discard_test)
     EXPECT_EQ(state.substate, 0U);
 }
 
-TEST(rocrand_threefry_prng_state_tests, discard_sequence_test)
+TEST(threefry_prng_state_tests, discard_sequence_test)
 {
-    rocrand_threefry4x32_engine_type_test              engine;
-    rocrand_threefry4x32_engine_type_test::state_type& state = engine.internal_state_ref();
+    threefry4x32_engine_type_test              engine;
+    threefry4x32_engine_type_test::state_type& state = engine.internal_state_ref();
 
     engine.discard_subsequence(UINT_MAX);
     EXPECT_EQ(state.counter.x, 0U);

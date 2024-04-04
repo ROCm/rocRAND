@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 namespace benchmark_tuning
 {
 
-template void add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(
+template void add_all_benchmarks_for_generator<philox4x32_10_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 } // namespace benchmark_tuning

@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ struct distribution_input
 template<template<class> class GeneratorTemplate>
 using distribution_input_t = typename distribution_input<GeneratorTemplate>::type;
 
-using rocrand_host::detail::generator_config;
+using rocrand_impl::host::generator_config;
 
 /// @brief Provides a way to opt out from benchmarking certain configs for certain generators and types
 /// @note See benchmarked_generators.hpp for specializations
@@ -140,14 +140,15 @@ public:
         else if constexpr(std::is_integral_v<T>)
         {
             using uniform_distribution_t
-                = uniform_distribution<T, distribution_input_t<GeneratorTemplate>>;
+                = rocrand_impl::host::uniform_distribution<T,
+                                                           distribution_input_t<GeneratorTemplate>>;
             add_benchmarks_impl<T, uniform_distribution_t>();
 
             if constexpr(std::is_same_v<T, unsigned int>)
             {
                 // The poisson distribution is only supported for unsigned int.
-                using poisson_distribution_t
-                    = rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS>;
+                using poisson_distribution_t = rocrand_impl::host::poisson_distribution<
+                    rocrand_impl::host::DISCRETE_METHOD_ALIAS>;
                 add_benchmarks_impl<T, poisson_distribution_t>();
             }
         }
@@ -155,22 +156,23 @@ public:
         {
             // float, double and half support these distributions only.
             using uniform_distribution_t
-                = uniform_distribution<T, distribution_input_t<GeneratorTemplate>>;
+                = rocrand_impl::host::uniform_distribution<T,
+                                                           distribution_input_t<GeneratorTemplate>>;
             add_benchmarks_impl<T, uniform_distribution_t>();
 
             constexpr rocrand_rng_type rng_type
-                = rocrand_host::detail::gen_template_type_v<GeneratorTemplate>;
+                = rocrand_impl::host::gen_template_type_v<GeneratorTemplate>;
 
-            using normal_distribution_t
-                = normal_distribution<T,
-                                      distribution_input_t<GeneratorTemplate>,
-                                      normal_distribution_max_input_width<rng_type, T>>;
+            using normal_distribution_t = rocrand_impl::host::normal_distribution<
+                T,
+                distribution_input_t<GeneratorTemplate>,
+                rocrand_impl::host::normal_distribution_max_input_width<rng_type, T>>;
             add_benchmarks_impl<T, normal_distribution_t>();
 
-            using log_normal_distribution_t
-                = log_normal_distribution<T,
-                                          distribution_input_t<GeneratorTemplate>,
-                                          log_normal_distribution_max_input_width<rng_type, T>>;
+            using log_normal_distribution_t = rocrand_impl::host::log_normal_distribution<
+                T,
+                distribution_input_t<GeneratorTemplate>,
+                rocrand_impl::host::log_normal_distribution_max_input_width<rng_type, T>>;
             add_benchmarks_impl<T, log_normal_distribution_t>();
         }
     }
@@ -183,7 +185,7 @@ private:
     // The elements of the arrays can be controlled with CMake cache variables
     // BENCHMARK_TUNING_THREAD_OPTIONS and BENCHMARK_TUNING_BLOCK_OPTIONS
     static constexpr inline auto s_param_combinations
-        = cpp_utils::numeric_combinations(thread_options, block_options);
+        = rocrand_impl::cpp_utils::numeric_combinations(thread_options, block_options);
 
     template<class Distribution, class StaticConfigProvider>
     static std::string get_benchmark_name()
@@ -220,8 +222,7 @@ private:
                  if constexpr(grid_size < min_benchmarked_grid_size)
                      return;
 
-                 using ConfigProvider
-                     = rocrand_host::detail::static_config_provider<threads, blocks>;
+                 using ConfigProvider = rocrand_impl::host::static_config_provider<threads, blocks>;
 
                  if constexpr(config_filter<GeneratorTemplate, T>::is_enabled(
                                   ConfigProvider::static_config))

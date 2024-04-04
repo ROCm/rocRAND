@@ -28,7 +28,7 @@
 
 #include <stdint.h>
 
-namespace cpp_utils
+namespace rocrand_impl::cpp_utils
 {
 
 /// \brief A random access iterator that converts linear indices to three-dimensional indexing.
@@ -180,6 +180,6 @@ private:
     size_t m_index;
 };
 
-} // end namespace cpp_utils
+} // end namespace rocrand_impl::cpp_utils
 
 #endif // ROCRAND_RNG_UTILS_THREEDIM_ITERATOR_

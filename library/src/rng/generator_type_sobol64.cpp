@@ -22,6 +22,11 @@
 
 #include "sobol.hpp"
 
-template struct rocrand_generator_type<rocrand_sobol64>;
-template struct rocrand_generator_type<rocrand_sobol64_host<false>>;
-template struct rocrand_generator_type<rocrand_sobol64_host<true>>;
+namespace rocrand_impl::host
+{
+
+template struct rocrand_impl::host::generator_type<sobol64_generator>;
+template struct rocrand_impl::host::generator_type<sobol64_generator_host<false>>;
+template struct rocrand_impl::host::generator_type<sobol64_generator_host<true>>;
+
+} // namespace rocrand_impl::host

@@ -31,36 +31,38 @@
 
 #include <stdexcept>
 
-// Generator API tests
-using rocrand_lfsr113_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+using rocrand_impl::host::lfsr113_generator;
 
-using rocrand_lfsr113_generator_prng_offset_tests_types = ::testing::Types<
+// Generator API tests
+using lfsr113_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<lfsr113_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<lfsr113_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+
+using lfsr113_generator_prng_offset_tests_types = ::testing::Types<
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_lfsr113,
+                                       lfsr113_generator,
                                        ROCRAND_ORDERING_PSEUDO_DEFAULT>,
     generator_prng_offset_tests_params<unsigned int,
-                                       rocrand_lfsr113,
+                                       lfsr113_generator,
                                        ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
-    generator_prng_offset_tests_params<float, rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_offset_tests_params<float, rocrand_lfsr113, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+    generator_prng_offset_tests_params<float, lfsr113_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<float, lfsr113_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
+INSTANTIATE_TYPED_TEST_SUITE_P(lfsr113_generator,
                                generator_prng_tests,
-                               rocrand_lfsr113_generator_prng_tests_types);
+                               lfsr113_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
+INSTANTIATE_TYPED_TEST_SUITE_P(lfsr113_generator,
                                generator_prng_continuity_tests,
-                               rocrand_lfsr113_generator_prng_tests_types);
+                               lfsr113_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_lfsr113,
+INSTANTIATE_TYPED_TEST_SUITE_P(lfsr113_generator,
                                generator_prng_offset_tests,
-                               rocrand_lfsr113_generator_prng_offset_tests_types);
+                               lfsr113_generator_prng_offset_tests_types);
 
 // lfsr113-specific generator API tests
 template<class Params>
-struct rocrand_lfsr113_generator_prng_tests : public testing::Test
+struct lfsr113_generator_prng_tests : public testing::Test
 {
     using generator_t                                 = typename Params::generator_t;
     static inline constexpr rocrand_ordering ordering = Params::ordering;
@@ -76,9 +78,9 @@ struct rocrand_lfsr113_generator_prng_tests : public testing::Test
     }
 };
 
-TYPED_TEST_SUITE(rocrand_lfsr113_generator_prng_tests, rocrand_lfsr113_generator_prng_tests_types);
+TYPED_TEST_SUITE(lfsr113_generator_prng_tests, lfsr113_generator_prng_tests_types);
 
-TYPED_TEST(rocrand_lfsr113_generator_prng_tests, different_seed_test)
+TYPED_TEST(lfsr113_generator_prng_tests, different_seed_test)
 {
     const unsigned long long seed0 = 5ULL;
     const unsigned long long seed1 = 10ULL;
@@ -130,7 +132,7 @@ TYPED_TEST(rocrand_lfsr113_generator_prng_tests, different_seed_test)
 
 // Checks if generators with the same seed and in the same state generate
 // the same numbers
-TYPED_TEST(rocrand_lfsr113_generator_prng_tests, different_seed_uint4_test)
+TYPED_TEST(lfsr113_generator_prng_tests, different_seed_uint4_test)
 {
     const uint4 seeds0[] = {
         { 0,  2,  4,  6},
@@ -200,12 +202,12 @@ TYPED_TEST(rocrand_lfsr113_generator_prng_tests, different_seed_uint4_test)
 }
 
 // Engine API tests
-struct rocrand_lfsr113_engine_api_tests : public rocrand_lfsr113::engine_type
+struct lfsr113_engine_api_tests : public lfsr113_generator::engine_type
 {};
 
-TEST(rocrand_lfsr113_engine_api_tests, discard_test)
+TEST(lfsr113_engine_api_tests, discard_test)
 {
-    using generator_t = rocrand_lfsr113;
+    using generator_t = lfsr113_generator;
     using engine_t    = typename generator_t::engine_type;
 
     const uint4 seed = {1234567U, 12345678U, 123456789U, 1234567890U};
@@ -239,9 +241,9 @@ TEST(rocrand_lfsr113_engine_api_tests, discard_test)
     }
 }
 
-TEST(rocrand_lfsr113_engine_api_tests, discard_sequence_test)
+TEST(lfsr113_engine_api_tests, discard_sequence_test)
 {
-    using generator_t = rocrand_lfsr113;
+    using generator_t = lfsr113_generator;
     using engine_t    = typename generator_t::engine_type;
 
     const uint4 seed = {1234567U, 12345678U, 123456789U, 1234567890U};

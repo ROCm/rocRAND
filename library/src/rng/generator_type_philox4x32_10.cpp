@@ -22,6 +22,11 @@
 
 #include "philox4x32_10.hpp"
 
-template struct rocrand_generator_type<rocrand_philox4x32_10>;
-template struct rocrand_generator_type<rocrand_philox4x32_10_host<false>>;
-template struct rocrand_generator_type<rocrand_philox4x32_10_host<true>>;
+namespace rocrand_impl::host
+{
+
+template struct generator_type<philox4x32_10_generator>;
+template struct generator_type<philox4x32_10_generator_host<false>>;
+template struct generator_type<philox4x32_10_generator_host<true>>;
+
+} // namespace rocrand_impl::host

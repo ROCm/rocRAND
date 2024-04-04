@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -110,7 +110,7 @@ struct distribution_name
 };
 
 template<class T, class U>
-struct distribution_name<uniform_distribution<T, U>>
+struct distribution_name<rocrand_impl::host::uniform_distribution<T, U>>
 {
     std::string operator()()
     {
@@ -119,7 +119,7 @@ struct distribution_name<uniform_distribution<T, U>>
 };
 
 template<class T, class U, unsigned int I>
-struct distribution_name<normal_distribution<T, U, I>>
+struct distribution_name<rocrand_impl::host::normal_distribution<T, U, I>>
 {
     std::string operator()()
     {
@@ -128,7 +128,7 @@ struct distribution_name<normal_distribution<T, U, I>>
 };
 
 template<class T, class U, unsigned int I>
-struct distribution_name<log_normal_distribution<T, U, I>>
+struct distribution_name<rocrand_impl::host::log_normal_distribution<T, U, I>>
 {
     std::string operator()()
     {
@@ -137,7 +137,8 @@ struct distribution_name<log_normal_distribution<T, U, I>>
 };
 
 template<>
-struct distribution_name<rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS>>
+struct distribution_name<
+    rocrand_impl::host::poisson_distribution<rocrand_impl::host::DISCRETE_METHOD_ALIAS>>
 {
     std::string operator()()
     {
@@ -154,42 +155,44 @@ struct default_distribution
 };
 
 template<class T, class U>
-struct default_distribution<uniform_distribution<T, U>>
+struct default_distribution<rocrand_impl::host::uniform_distribution<T, U>>
 {
     auto operator()(const benchmark_config& /*config*/)
     {
-        return uniform_distribution<T, U>{};
+        return rocrand_impl::host::uniform_distribution<T, U>{};
     }
 };
 
 template<class T, class U, unsigned int I>
-struct default_distribution<normal_distribution<T, U, I>>
+struct default_distribution<rocrand_impl::host::normal_distribution<T, U, I>>
 {
     auto operator()(const benchmark_config& /*config*/)
     {
         const T mean   = 0;
         const T stddev = 1;
-        return normal_distribution<T, U, I>(mean, stddev);
+        return rocrand_impl::host::normal_distribution<T, U, I>(mean, stddev);
     }
 };
 
 template<class T, class U, unsigned int I>
-struct default_distribution<log_normal_distribution<T, U, I>>
+struct default_distribution<rocrand_impl::host::log_normal_distribution<T, U, I>>
 {
     auto operator()(const benchmark_config& /*config*/)
     {
         const T mean   = 0;
         const T stddev = 1;
-        return log_normal_distribution<T, U, I>(mean, stddev);
+        return rocrand_impl::host::log_normal_distribution<T, U, I>(mean, stddev);
     }
 };
 
 template<>
-struct default_distribution<rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS>>
+struct default_distribution<
+    rocrand_impl::host::poisson_distribution<rocrand_impl::host::DISCRETE_METHOD_ALIAS>>
 {
     auto operator()(const benchmark_config& config)
     {
-        return rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS>(config.lambda);
+        return rocrand_impl::host::poisson_distribution<rocrand_impl::host::DISCRETE_METHOD_ALIAS>(
+            config.lambda);
     }
 };
 

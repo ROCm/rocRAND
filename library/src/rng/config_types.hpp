@@ -33,7 +33,7 @@
 #include <numeric>
 #include <string>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 /// \brief Represents a device target's processor architecture.
@@ -290,7 +290,7 @@ __host__ __device__ constexpr bool is_ordering_quasi(const rocrand_ordering orde
 template<typename Function>
 auto dynamic_dispatch(rocrand_ordering order, Function&& func)
 {
-    bool is_dynamic = ::rocrand_host::detail::is_ordering_dynamic(order);
+    bool is_dynamic = is_ordering_dynamic(order);
     if(is_dynamic)
     {
         return std::forward<Function>(func)(std::true_type{});
@@ -381,7 +381,7 @@ struct default_config_provider
 };
 
 /// @brief ConfigProvider that always returns a config with the specified \ref Blocks and \ref Threads.
-/// This can be used in place of \ref rocrand_host::detail::default_config_provider, which bases the
+/// This can be used in place of \ref rocrand_impl::host::default_config_provider, which bases the
 /// returned configuration on the current architecture.
 /// @tparam Threads The number of threads in the kernel block.
 /// @tparam Blocks The number of blocks in the kernel grid.
@@ -549,6 +549,6 @@ __host__ __device__ constexpr unsigned int get_block_size(const bool is_dynamic)
 template<template<class> class GeneratorTemplate>
 constexpr inline rocrand_rng_type gen_template_type_v = GeneratorTemplate<void>::type();
 
-} // end namespace rocrand_host::detail
+} // end namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_CONFIG_TYPES_H_

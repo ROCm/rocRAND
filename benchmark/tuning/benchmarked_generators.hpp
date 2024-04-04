@@ -40,23 +40,31 @@
 // mt19937 needs to be included, as access to threads_per_generator is needed
 #include "rng/mt19937.hpp"
 
+namespace rocrand_impl::host
+{
+
 template<class System, class ConfigProvider>
-class rocrand_lfsr113_template;
+class lfsr113_generator_template;
 
 template<class System, class Engine, class ConfigProvider>
-class rocrand_mrg_template;
+class mrg_generator_template;
 
 template<class System, class ConfigProvider>
-class rocrand_mtgp32_template;
+class mtgp32_generator_template;
 
 template<class System, class ConfigProvider>
-class rocrand_philox4x32_10_template;
+class philox4x32_10_generator_template;
 
 template<class System, class Engine, class ConfigProvider>
-class rocrand_threefry_template;
+class threefry_generator_template;
 
 template<class System, class ConfigProvider>
-class rocrand_xorwow_template;
+class xorwow_generator_template;
+
+template<class DeviceEngine>
+struct threefry_device_engine;
+
+} // namespace rocrand_impl::host
 
 // Further forward declarations
 namespace rocrand_device
@@ -69,12 +77,6 @@ class threefry4x32_20_engine;
 class threefry4x64_20_engine;
 } // namespace rocrand_device
 
-namespace rocrand_host::detail
-{
-template<class DeviceEngine>
-struct threefry_device_engine;
-} // namespace rocrand_host::detail
-
 namespace benchmark_tuning
 {
 
@@ -83,96 +85,111 @@ namespace benchmark_tuning
 // both host and device systems
 
 template<class ConfigProvider>
-using rocrand_lfsr113_template = ::rocrand_lfsr113_template<rocrand_system_device, ConfigProvider>;
+using lfsr113_generator_template
+    = rocrand_impl::host::lfsr113_generator_template<rocrand_impl::system::device_system,
+                                                     ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mrg31k3p_template = ::
-    rocrand_mrg_template<rocrand_system_device, rocrand_device::mrg31k3p_engine, ConfigProvider>;
+using mrg31k3p_generator_template
+    = rocrand_impl::host::mrg_generator_template<rocrand_impl::system::device_system,
+                                                 rocrand_device::mrg31k3p_engine,
+                                                 ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mrg32k3a_template = ::
-    rocrand_mrg_template<rocrand_system_device, rocrand_device::mrg32k3a_engine, ConfigProvider>;
+using mrg32k3a_generator_template
+    = rocrand_impl::host::mrg_generator_template<rocrand_impl::system::device_system,
+                                                 rocrand_device::mrg32k3a_engine,
+                                                 ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mtgp32_template = ::rocrand_mtgp32_template<rocrand_system_device, ConfigProvider>;
+using mtgp32_generator_template
+    = rocrand_impl::host::mtgp32_generator_template<rocrand_impl::system::device_system,
+                                                    ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_mt19937_template = ::rocrand_mt19937_template<ConfigProvider>;
+using mt19937_generator_template = rocrand_impl::host::mt19937_generator_template<ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_philox4x32_10_template
-    = ::rocrand_philox4x32_10_template<rocrand_system_device, ConfigProvider>;
+using philox4x32_10_generator_template
+    = rocrand_impl::host::philox4x32_10_generator_template<rocrand_impl::system::device_system,
+                                                           ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry2x32_20_template = ::rocrand_threefry_template<
-    rocrand_system_device,
-    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
+using threefry2x32_20_generator_template = rocrand_impl::host::threefry_generator_template<
+    rocrand_impl::system::device_system,
+    rocrand_impl::host::threefry_device_engine<rocrand_device::threefry2x32_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry2x64_20_template = ::rocrand_threefry_template<
-    rocrand_system_device,
-    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
+using threefry2x64_20_generator_template = rocrand_impl::host::threefry_generator_template<
+    rocrand_impl::system::device_system,
+    rocrand_impl::host::threefry_device_engine<rocrand_device::threefry2x64_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry4x32_20_template = ::rocrand_threefry_template<
-    rocrand_system_device,
-    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
+using threefry4x32_20_generator_template = rocrand_impl::host::threefry_generator_template<
+    rocrand_impl::system::device_system,
+    rocrand_impl::host::threefry_device_engine<rocrand_device::threefry4x32_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_threefry4x64_20_template = ::rocrand_threefry_template<
-    rocrand_system_device,
-    rocrand_host::detail::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
+using threefry4x64_20_generator_template = rocrand_impl::host::threefry_generator_template<
+    rocrand_impl::system::device_system,
+    rocrand_impl::host::threefry_device_engine<rocrand_device::threefry4x64_20_engine>,
     ConfigProvider>;
 
 template<class ConfigProvider>
-using rocrand_xorwow_template = ::rocrand_xorwow_template<rocrand_system_device, ConfigProvider>;
+using xorwow_generator_template
+    = rocrand_impl::host::xorwow_generator_template<rocrand_impl::system::device_system,
+                                                    ConfigProvider>;
 
 template<>
-struct output_type_supported<unsigned long long, rocrand_lfsr113_template> : public std::false_type
-{};
-
-template<>
-struct output_type_supported<unsigned long long, rocrand_mrg31k3p_template> : public std::false_type
-{};
-
-template<>
-struct output_type_supported<unsigned long long, rocrand_mrg32k3a_template> : public std::false_type
-{};
-
-template<>
-struct output_type_supported<unsigned long long, rocrand_mtgp32_template> : public std::false_type
-{};
-
-template<>
-struct output_type_supported<unsigned long long, rocrand_mt19937_template> : public std::false_type
-{};
-
-template<>
-struct output_type_supported<unsigned long long, rocrand_philox4x32_10_template>
+struct output_type_supported<unsigned long long, lfsr113_generator_template>
     : public std::false_type
 {};
 
 template<>
-struct output_type_supported<unsigned long long, rocrand_threefry2x32_20_template>
+struct output_type_supported<unsigned long long, mrg31k3p_generator_template>
     : public std::false_type
 {};
 
 template<>
-struct output_type_supported<unsigned long long, rocrand_threefry4x32_20_template>
+struct output_type_supported<unsigned long long, mrg32k3a_generator_template>
     : public std::false_type
 {};
 
 template<>
-struct output_type_supported<unsigned long long, rocrand_xorwow_template> : public std::false_type
+struct output_type_supported<unsigned long long, mtgp32_generator_template> : public std::false_type
+{};
+
+template<>
+struct output_type_supported<unsigned long long, mt19937_generator_template>
+    : public std::false_type
+{};
+
+template<>
+struct output_type_supported<unsigned long long, philox4x32_10_generator_template>
+    : public std::false_type
+{};
+
+template<>
+struct output_type_supported<unsigned long long, threefry2x32_20_generator_template>
+    : public std::false_type
+{};
+
+template<>
+struct output_type_supported<unsigned long long, threefry4x32_20_generator_template>
+    : public std::false_type
+{};
+
+template<>
+struct output_type_supported<unsigned long long, xorwow_generator_template> : public std::false_type
 {};
 
 template<class T>
-struct config_filter<rocrand_mtgp32_template, T>
+struct config_filter<mtgp32_generator_template, T>
 {
-    static constexpr bool is_enabled(rocrand_host::detail::generator_config config)
+    static constexpr bool is_enabled(rocrand_impl::host::generator_config config)
     {
         // The current implementation of MTGP32 requires a fixed block size,
         // and the grid size is also limited.
@@ -181,58 +198,59 @@ struct config_filter<rocrand_mtgp32_template, T>
 };
 
 template<class T>
-struct config_filter<rocrand_mt19937_template, T>
+struct config_filter<mt19937_generator_template, T>
 {
-    static constexpr bool is_enabled(rocrand_host::detail::generator_config config)
+    static constexpr bool is_enabled(rocrand_impl::host::generator_config config)
     {
-        return (config.blocks * config.threads / rocrand_mt19937::threads_per_generator)
+        return (config.blocks * config.threads
+                / rocrand_impl::host::mt19937_octo_engine::threads_per_generator)
                <= mt19937_jumps_radix * mt19937_jumps_radix;
     }
 };
 
 template<>
-struct distribution_input<rocrand_threefry2x64_20_template>
+struct distribution_input<threefry2x64_20_generator_template>
 {
     using type = unsigned long long;
 };
 
 template<>
-struct distribution_input<rocrand_threefry4x64_20_template>
+struct distribution_input<threefry4x64_20_generator_template>
 {
     using type = unsigned long long;
 };
 
-extern template void add_all_benchmarks_for_generator<rocrand_lfsr113_template>(
+extern template void add_all_benchmarks_for_generator<lfsr113_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_mrg31k3p_template>(
+extern template void add_all_benchmarks_for_generator<mrg31k3p_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_mrg32k3a_template>(
+extern template void add_all_benchmarks_for_generator<mrg32k3a_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_mt19937_template>(
+extern template void add_all_benchmarks_for_generator<mt19937_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_mtgp32_template>(
+extern template void add_all_benchmarks_for_generator<mtgp32_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_philox4x32_10_template>(
+extern template void add_all_benchmarks_for_generator<philox4x32_10_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_threefry2x32_20_template>(
+extern template void add_all_benchmarks_for_generator<threefry2x32_20_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_threefry2x64_20_template>(
+extern template void add_all_benchmarks_for_generator<threefry2x64_20_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_threefry4x32_20_template>(
+extern template void add_all_benchmarks_for_generator<threefry4x32_20_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_threefry4x64_20_template>(
+extern template void add_all_benchmarks_for_generator<threefry4x64_20_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
-extern template void add_all_benchmarks_for_generator<rocrand_xorwow_template>(
+extern template void add_all_benchmarks_for_generator<xorwow_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 } // namespace benchmark_tuning

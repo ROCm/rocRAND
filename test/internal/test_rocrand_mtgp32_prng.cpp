@@ -29,14 +29,16 @@
 
 #include <gtest/gtest.h>
 
-// Generator API tests
-using rocrand_mtgp32_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_mtgp32, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_mtgp32, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+using rocrand_impl::host::mtgp32_generator;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_mtgp32,
+// Generator API tests
+using mtgp32_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<mtgp32_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<mtgp32_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+
+INSTANTIATE_TYPED_TEST_SUITE_P(mtgp32_generator,
                                generator_prng_tests,
-                               rocrand_mtgp32_generator_prng_tests_types);
+                               mtgp32_generator_prng_tests_types);
 
 // Continuity cannot be implemented for MTGP32, as 'offset' is not supported for this
 // generator. Therefore, continuity tests fail.

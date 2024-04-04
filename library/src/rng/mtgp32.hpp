@@ -71,7 +71,7 @@
 
 #include <algorithm>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 struct mtgp32_device_engine : ::rocrand_device::mtgp32_engine
@@ -297,26 +297,24 @@ __host__ __device__ void generate_mtgp(dim3 block_idx,
     engines[engine_id].copy(&engine);
 }
 
-} // end namespace rocrand_host::detail
-
 template<class System, class ConfigProvider>
-class rocrand_mtgp32_template : public rocrand_generator_impl_base
+class mtgp32_generator_template : public generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_impl_base;
-    using engine_type = ::rocrand_host::detail::mtgp32_device_engine;
+    using base_type   = generator_impl_base;
+    using engine_type = mtgp32_device_engine;
     using system_type = System;
 
-    rocrand_mtgp32_template(unsigned long long seed   = 0,
-                            unsigned long long offset = 0,
-                            rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                            hipStream_t        stream = 0)
+    mtgp32_generator_template(unsigned long long seed   = 0,
+                              unsigned long long offset = 0,
+                              rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                              hipStream_t        stream = 0)
         : base_type(order, offset, stream), m_seed(seed)
     {}
 
-    rocrand_mtgp32_template(const rocrand_mtgp32_template&) = delete;
+    mtgp32_generator_template(const mtgp32_generator_template&) = delete;
 
-    rocrand_mtgp32_template(rocrand_mtgp32_template&& other)
+    mtgp32_generator_template(mtgp32_generator_template&& other)
         : base_type(other)
         , m_engines_initialized(other.m_engines_initialized)
         , m_engines(other.m_engines)
@@ -328,9 +326,9 @@ public:
         other.m_engines             = nullptr;
     }
 
-    rocrand_mtgp32_template& operator=(const rocrand_mtgp32_template&) = delete;
+    mtgp32_generator_template& operator=(const mtgp32_generator_template&) = delete;
 
-    rocrand_mtgp32_template& operator=(rocrand_mtgp32_template&& other)
+    mtgp32_generator_template& operator=(mtgp32_generator_template&& other)
     {
         *static_cast<base_type*>(this) = other;
         m_engines_initialized          = other.m_engines_initialized;
@@ -345,7 +343,7 @@ public:
         return *this;
     }
 
-    ~rocrand_mtgp32_template()
+    ~mtgp32_generator_template()
     {
         if(m_engines != nullptr)
         {
@@ -412,7 +410,7 @@ public:
             return ROCRAND_STATUS_SUCCESS;
         }
 
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         // Assuming that the config is the same for every type.
         hipError_t error
             = ConfigProvider::template host_config<unsigned int>(m_stream, m_order, config);
@@ -457,7 +455,7 @@ public:
             return status;
         }
 
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
         {
@@ -466,25 +464,24 @@ public:
 
         // The host generator uses a block of size one to emulate a device generator that uses a shared memory state
         const dim3 threads
-            = std::is_same_v<system_type, rocrand_system_device> ? config.threads : dim3(1);
-        status = rocrand_host::detail::dynamic_dispatch(
-            m_order,
-            [&, this](auto is_dynamic)
-            {
-                return system_type::template launch<
-                    rocrand_host::detail::
-                        generate_mtgp<ConfigProvider, is_dynamic, T, Distribution>,
-                    ConfigProvider,
-                    T,
-                    is_dynamic>(dim3(config.blocks),
-                                dim3(threads),
-                                0,
-                                m_stream,
-                                m_engines,
-                                data,
-                                data_size,
-                                distribution);
-            });
+            = std::is_same_v<system_type, system::device_system> ? config.threads : dim3(1);
+        status
+            = dynamic_dispatch(m_order,
+                               [&, this](auto is_dynamic)
+                               {
+                                   return system_type::template launch<
+                                       generate_mtgp<ConfigProvider, is_dynamic, T, Distribution>,
+                                       ConfigProvider,
+                                       T,
+                                       is_dynamic>(dim3(config.blocks),
+                                                   dim3(threads),
+                                                   0,
+                                                   m_stream,
+                                                   m_engines,
+                                                   data,
+                                                   data_size,
+                                                   distribution);
+                               });
 
         // Check kernel status
         if(status != ROCRAND_STATUS_SUCCESS)
@@ -555,19 +552,20 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
-        m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
 };
 
-using rocrand_mtgp32 = rocrand_mtgp32_template<
-    rocrand_system_device,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MTGP32>>;
+using mtgp32_generator
+    = mtgp32_generator_template<system::device_system,
+                                default_config_provider<ROCRAND_RNG_PSEUDO_MTGP32>>;
 template<bool UseHostFunc>
-using rocrand_mtgp32_host = rocrand_mtgp32_template<
-    rocrand_system_host<UseHostFunc>,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MTGP32>>;
+using mtgp32_generator_host
+    = mtgp32_generator_template<system::host_system<UseHostFunc>,
+                                default_config_provider<ROCRAND_RNG_PSEUDO_MTGP32>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_MTGP32_H_

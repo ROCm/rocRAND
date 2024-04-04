@@ -27,43 +27,44 @@
 
 #include <gtest/gtest.h>
 
-// Generator API tests
-using rocrand_philox_generator_prng_tests_types = ::testing::Types<
-    generator_prng_tests_params<rocrand_philox4x32_10, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    generator_prng_tests_params<rocrand_philox4x32_10, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+using rocrand_impl::host::philox4x32_10_generator;
 
-using rocrand_philox_generator_prng_offset_tests_types
+// Generator API tests
+using philox_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<philox4x32_10_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<philox4x32_10_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
+
+using philox_generator_prng_offset_tests_types
     = ::testing::Types<generator_prng_offset_tests_params<unsigned int,
-                                                          rocrand_philox4x32_10,
+                                                          philox4x32_10_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DEFAULT>,
                        generator_prng_offset_tests_params<unsigned int,
-                                                          rocrand_philox4x32_10,
+                                                          philox4x32_10_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
                        generator_prng_offset_tests_params<float,
-                                                          rocrand_philox4x32_10,
+                                                          philox4x32_10_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DEFAULT>,
                        generator_prng_offset_tests_params<float,
-                                                          rocrand_philox4x32_10,
+                                                          philox4x32_10_generator,
                                                           ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_philox,
+INSTANTIATE_TYPED_TEST_SUITE_P(philox4x32_10_generator,
                                generator_prng_tests,
-                               rocrand_philox_generator_prng_tests_types);
+                               philox_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_philox,
+INSTANTIATE_TYPED_TEST_SUITE_P(philox4x32_10_generator,
                                generator_prng_continuity_tests,
-                               rocrand_philox_generator_prng_tests_types);
+                               philox_generator_prng_tests_types);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_philox,
+INSTANTIATE_TYPED_TEST_SUITE_P(philox4x32_10_generator,
                                generator_prng_offset_tests,
-                               rocrand_philox_generator_prng_offset_tests_types);
+                               philox_generator_prng_offset_tests_types);
 
 // Engine API tests
-class rocrand_philox4x32_10_engine_type_test : public rocrand_philox4x32_10::engine_type
+class philox4x32_10_engine_type_test : public philox4x32_10_generator::engine_type
 {
 public:
-    __host__ rocrand_philox4x32_10_engine_type_test() : rocrand_philox4x32_10::engine_type(0, 0, 0)
-    {}
+    __host__ philox4x32_10_engine_type_test() : philox4x32_10_generator::engine_type(0, 0, 0) {}
 
     __host__ state_type& internal_state_ref()
     {
@@ -71,10 +72,10 @@ public:
     }
 };
 
-TEST(rocrand_philox_prng_state_tests, seed_test)
+TEST(philox_prng_state_tests, seed_test)
 {
-    rocrand_philox4x32_10_engine_type_test              engine;
-    rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
+    philox4x32_10_engine_type_test              engine;
+    philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
@@ -96,10 +97,10 @@ TEST(rocrand_philox_prng_state_tests, seed_test)
 
 // Check if the philox state counter is calculated correctly during
 // random number generation.
-TEST(rocrand_philox_prng_state_tests, discard_test)
+TEST(philox_prng_state_tests, discard_test)
 {
-    rocrand_philox4x32_10_engine_type_test              engine;
-    rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
+    philox4x32_10_engine_type_test              engine;
+    philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
     EXPECT_EQ(state.counter.x, 0U);
     EXPECT_EQ(state.counter.y, 0U);
@@ -173,10 +174,10 @@ TEST(rocrand_philox_prng_state_tests, discard_test)
     EXPECT_EQ(state.counter.w, 4U);
 }
 
-TEST(rocrand_philox_prng_state_tests, discard_sequence_test)
+TEST(philox_prng_state_tests, discard_sequence_test)
 {
-    rocrand_philox4x32_10_engine_type_test              engine;
-    rocrand_philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
+    philox4x32_10_engine_type_test              engine;
+    philox4x32_10_engine_type_test::state_type& state = engine.internal_state_ref();
 
     engine.discard_subsequence(UINT_MAX);
     EXPECT_EQ(state.counter.x, 0U);
