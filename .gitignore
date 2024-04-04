@@ -85,3 +85,6 @@ CMakeLists.txt.user
 
 # Visual Studio / VSCode config folders
 .vs*/**/*
+
+# Python
+__pycache__

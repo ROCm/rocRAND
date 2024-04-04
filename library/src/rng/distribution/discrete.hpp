@@ -27,6 +27,7 @@
 
 #include <rocrand/rocrand.h>
 
+#include "../common.hpp"
 #include "device_distributions.hpp"
 
 // Alias method
@@ -56,6 +57,7 @@ public:
     rocrand_discrete_distribution_base()  // cppcheck-suppress uninitDerivedMemberVar
     {
         size = 0;
+        offset      = 0;
         probability = NULL;
         alias = NULL;
         cdf = NULL;
@@ -98,15 +100,15 @@ public:
         {
             if (probability != NULL)
             {
-                hipFree(probability);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(probability));
             }
             if (alias != NULL)
             {
-                hipFree(alias);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(alias));
             }
             if (cdf != NULL)
             {
-                hipFree(cdf);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(cdf));
             }
         }
         probability = NULL;
@@ -174,12 +176,12 @@ protected:
             hipError_t error;
             if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&probability), sizeof(double) * size);
+                error = hipMalloc(&probability, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
-                error = hipMalloc(reinterpret_cast<void**>(&alias), sizeof(unsigned int) * size);
+                error = hipMalloc(&alias, sizeof(unsigned int) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -187,7 +189,7 @@ protected:
             }
             if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&cdf), sizeof(double) * size);
+                error = hipMalloc(&cdf, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;

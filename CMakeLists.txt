@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +22,17 @@
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-# Install prefix
-if (WIN32)
-  SET( CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE )
-  SET( INSTALL_PREFIX "C:/hipSDK" )
-  SET( CPACK_SET_DESTDIR FALSE )
-  SET( CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK" )
-  SET( CPACK_PACKAGING_INSTALL_PREFIX "" )
-  set( CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF )
-else()
-  set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
-
-  #Adding CMAKE_PREFIX_PATH
-  list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH} )
-  if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
-      set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-  endif()
-endif()
-
 # Build options
-option(USE_HIP_CPU "Prefer HIP-CPU runtime instead of HW acceleration" OFF)
+include(CMakeDependentOption)
+
 option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
+cmake_dependent_option(BUILD_BENCHMARK_TUNING
+  "Build extra benchmarks for kernel configuration tuning" OFF "BUILD_BENCHMARK" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 option(CODE_COVERAGE "Build with code coverage flags (clang only)" OFF)
+option(DEPENDENCIES_FORCE_DOWNLOAD "Don't search the system for dependencies, always download them" OFF)
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -73,8 +59,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker searc
 # Set the default value of BUILD_SHARED_LIBS
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared")
 
-# Include cmake scripts
-include(CMakeDependentOption)
+include(cmake/HaveASMIncbin.cmake)
+
+rocrand_check_have_asm_incbin(ROCRAND_HAVE_ASM_INCBIN)
 
 # Get dependencies
 include(cmake/Dependencies.cmake)
@@ -88,31 +75,32 @@ if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
     string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
 endif()
 
-set( AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
-# Set the AMDGPU_TARGETS
-rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx940;gfx941;gfx942;gfx1030;gfx1100;gfx1101;gfx1102"
-)
-if (AMDGPU_TARGETS)
-    if( AMDGPU_TARGETS STREQUAL "all" )
-      set( gpus "${DEFAULT_AMDGPU_TARGETS}")
-    else()
-      set( gpus "${AMDGPU_TARGETS}")
-    endif()
-    # must FORCE set this AMDGPU_TARGETS before any find_package( hip ...), in this file
-    # to override CACHE var and set --offload-arch flags via hip-config.cmake hip::device dependency
-    set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
-endif()
-
 # Verify that hipcc compiler is used on ROCM platform
 # TODO: Fix VerifyCompiler for Windows
-if(NOT USE_HIP_CPU)
-  if(NOT WIN32)
-    include(cmake/VerifyCompiler.cmake)
-  else()
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
-    find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
-  endif()
+# This will run for NVIDIA too, which is unnecessary, but not harmful, since we use the CUDA cmake
+# language in that case which will ignore GPU_TARGETS.
+# The reason for this is that this has to happen before find_package(hip), because we're providing
+# our own defaults, but because of that we have no reasonable way to detect the platform we're
+# targeting yet.
+if (NOT DEFINED AMDGPU_TARGETS)
+  set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
+else()
+  set(GPU_TARGETS "${AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for")
+endif()
+set_property(CACHE GPU_TARGETS PROPERTY STRINGS "all")
+
+if(GPU_TARGETS STREQUAL "all")
+  rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx940;gfx941;gfx942;gfx1030;gfx1100;gfx1101;gfx1102"
+  )
+  set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
+endif()
+
+if(NOT WIN32)
+  include(cmake/VerifyCompiler.cmake)
+else()
+  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
+  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
 endif()
 
 # Build option to disable -Werror
@@ -133,7 +121,7 @@ endif()
 
 # HIP on Windows: xhip is required with clang++ to get __half defined
 if (WIN32)
-  add_compile_options(-xhip)
+  add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
 endif()
 
 cmake_dependent_option(BUILD_LEGACY_BENCHMARK "Build the legacy benchmarks" ON "BUILD_BENCHMARK" OFF)
@@ -160,7 +148,7 @@ if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
 endif()
 
 # Set version variables
-rocm_setup_version( VERSION "3.0.0" )
+rocm_setup_version( VERSION "3.1.0" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
 math(EXPR rocrand_VERSION_NUMBER "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")
@@ -199,13 +187,16 @@ set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 if(WIN32)
     set(CPACK_SOURCE_GENERATOR "ZIP")
     set(CPACK_GENERATOR "ZIP")
-    set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path" FORCE)
-    set(INSTALL_PREFIX "C:/hipSDK")
+    set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path")
+    set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     set(CPACK_SET_DESTDIR OFF)
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "C:/hipSDK")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
     set(CPACK_PACKAGING_INSTALL_PREFIX "")
     set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 else()
+    set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
+    #Adding CMAKE_PREFIX_PATH
+    list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH} )
     if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
         set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()

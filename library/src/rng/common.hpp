@@ -21,8 +21,14 @@
 #ifndef ROCRAND_RNG_COMMON_H_
 #define ROCRAND_RNG_COMMON_H_
 
+#include <hip/hip_runtime.h>
+
 #ifndef FQUALIFIERS
 #define FQUALIFIERS __forceinline__ __device__ __host__
+#endif
+
+#if !defined(USE_DEVICE_DISPATCH) && !defined(_WIN32) && defined(__HIP_PLATFORM_AMD__)
+    #define USE_DEVICE_DISPATCH
 #endif
 
 #include <rocrand/rocrand_common.h>

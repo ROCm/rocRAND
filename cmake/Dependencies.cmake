@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+cmake_minimum_required(VERSION 3.16)
+
+# find_package() uses upper-case <PACKAGENAME>_ROOT variables.
+# altough we use GTEST_ROOT for our purposes, it is actually even benefecial for
+# find_package() to look for it there (that's where we are going to put it anyway)
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 # Dependencies
 
 # HIP dependency is handled earlier in the project cmake file
@@ -27,74 +36,6 @@
 
 # For downloading, building, and installing required dependencies
 include(cmake/DownloadProject.cmake)
-
-if(USE_HIP_CPU)
-  find_package(Threads REQUIRED)
-
-  set(CMAKE_REQUIRED_FLAGS "-std=c++17")
-  include(CheckCXXSymbolExists)
-  check_cxx_symbol_exists(__GLIBCXX__ "cstddef" STL_IS_GLIBCXX)
-  set(STL_DEPENDS_ON_TBB ${STL_IS_GLIBCXX})
-  if(STL_DEPENDS_ON_TBB)
-    if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-      # TBB (https://github.com/oneapi-src/oneTBB)
-      find_package(TBB QUIET)
-    endif()
-
-    if(NOT TBB_FOUND)
-      message(STATUS "TBB not found or force download TBB on. Downloading and building TBB.")
-      if(CMAKE_CONFIGURATION_TYPES)
-        message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
-      endif()
-      set(TBB_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/tbb CACHE PATH "")
-      download_project(
-        PROJ                tbb
-        GIT_REPOSITORY      https://github.com/oneapi-src/oneTBB.git
-        GIT_TAG             v2020.3
-        CONFIGURE_COMMAND "${CMAKE_COMMAND} -E true"
-        BUILD_COMMAND "${CMAKE_COMMAND} -E true"
-        INSTALL_COMMAND "${CMAKE_COMMAND} -E true"
-        UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
-      )
-      find_program(CLANG_EXE
-        clang
-        PATH_SUFFIXES bin llvm/bin
-        REQUIRED
-      )
-      get_filename_component(CLANG_DIR "${CLANG_EXE}" DIRECTORY)
-      set(TBB_SOURCE_DIR "${CMAKE_BINARY_DIR}/tbb-src")
-      list(APPEND CMAKE_MODULE_PATH "${TBB_SOURCE_DIR}/cmake")
-      include(TBBBuild)
-      set(ENV{PATH} "$ENV{PATH}:${CLANG_DIR}")
-      tbb_build(TBB_ROOT "${TBB_SOURCE_DIR}" CONFIG_DIR TBB_CONFIG_DIR MAKE_ARGS tbb_build_dir=${TBB_ROOT})
-    endif()
-    find_package(TBB REQUIRED CONFIG PATHS ${TBB_CONFIG_DIR} NO_DEFAULT_PATH)
-  endif(STL_DEPENDS_ON_TBB)
-
-  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-    # HIP CPU Runtime (https://github.com/ROCm-Developer-Tools/HIP-CPU)
-    find_package(hip_cpu_rt QUIET)
-  endif()
-
-  if(NOT hip_cpu_rt_FOUND)
-    message(STATUS "Downloading and building HIP CPU Runtime.")
-    set(HIP_CPU_ROOT "${CMAKE_CURRENT_BINARY_DIR}/deps/hip-cpu" CACHE PATH "")
-    download_project(
-      PROJ                hip-cpu
-      GIT_REPOSITORY      https://github.com/ROCm-Developer-Tools/HIP-CPU.git
-      GIT_TAG             master
-      INSTALL_DIR         "${HIP_CPU_ROOT}"
-      CMAKE_ARGS          -Dhip_cpu_rt_BUILD_EXAMPLES=OFF -Dhip_cpu_rt_BUILD_TESTING=OFF -DTBB_DIR=${TBB_CONFIG_DIR} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-      LOG_DOWNLOAD        TRUE
-      LOG_CONFIGURE       TRUE
-      LOG_BUILD           TRUE
-      LOG_INSTALL         TRUE
-      BUILD_PROJECT       TRUE
-      UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
-    )
-  endif()
-  find_package(hip_cpu_rt REQUIRED CONFIG PATHS ${HIP_CPU_ROOT})
-endif()
 
 # Fortran Wrapper
 if(BUILD_FORTRAN_WRAPPER)
@@ -119,12 +60,18 @@ if(BUILD_TEST)
   if(NOT TARGET GTest::GTest AND NOT TARGET GTest::gtest)
     message(STATUS "GTest not found or force download GTest on. Downloading and building GTest.")
     set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/gtest CACHE PATH "")
+    if(DEFINED CMAKE_CXX_COMPILER)
+      set(CXX_COMPILER_OPTION "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+    endif()
+    if(DEFINED CMAKE_C_COMPILER)
+      set(C_COMPILER_OPTION "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+    endif()
     download_project(
       PROJ                googletest
       GIT_REPOSITORY      https://github.com/google/googletest.git
       GIT_TAG             release-1.11.0
       INSTALL_DIR         ${GTEST_ROOT}
-      CMAKE_ARGS          -DBUILD_GTEST=ON -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+      CMAKE_ARGS          -DBUILD_GTEST=ON -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${CXX_COMPILER_OPTION} ${C_COMPILER_OPTION} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
       LOG_DOWNLOAD        TRUE
       LOG_CONFIGURE       TRUE
       LOG_BUILD           TRUE
@@ -132,8 +79,7 @@ if(BUILD_TEST)
       BUILD_PROJECT       TRUE
       UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
     )
-    list( APPEND CMAKE_PREFIX_PATH ${GTEST_ROOT} )
-    find_package(GTest CONFIG REQUIRED PATHS ${GTEST_ROOT})
+    find_package(GTest CONFIG REQUIRED PATHS ${GTEST_ROOT} NO_DEFAULT_PATH)
   endif()
 endif()
 
@@ -174,7 +120,7 @@ if(BUILD_BENCHMARK)
       UPDATE_DISCONNECTED TRUE
     )
   endif()
-  find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT})
+  find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT} NO_DEFAULT_PATH)
 endif()
 
 set(PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern)
@@ -213,7 +159,7 @@ if(NOT ROCM_FOUND)
   if(rocm_cmake_unpack_error_code)
       message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag}.zip failed")
   endif()
-  find_package(ROCM 0.7.3 REQUIRED CONFIG PATHS ${PROJECT_EXTERN_DIR})
+  find_package(ROCM 0.7.3 REQUIRED CONFIG PATHS ${PROJECT_EXTERN_DIR} NO_DEFAULT_PATH)
 endif()
 
 include(ROCMSetupVersion)

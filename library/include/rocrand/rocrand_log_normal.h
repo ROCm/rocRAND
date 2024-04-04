@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -858,7 +858,7 @@ double rocrand_log_normal_double(rocrand_state_lfsr113* state, double mean, doub
  * \brief Returns two log-normally distributed \p double values.
  *
  * Generates and returns two log-normally distributed \p double values using LFSR113
- * generator in \p state, and increments position of the generator by two.
+ * generator in \p state, and increments position of the generator by four.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
  *
@@ -884,7 +884,7 @@ double2 rocrand_log_normal_double2(rocrand_state_lfsr113* state, double mean, do
 /**
  * \brief Returns a log-normally distributed \p float value.
  *
- * Generates and returns a log-normally distributed \p float value using ThreeFry
+ * Generates and returns a log-normally distributed \p float value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -918,17 +918,14 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry2x32_20* state,
                                        float                          mean,
                                        float                          stddev)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-
-    float2 r = rocrand_device::detail::normal_distribution2(state1, state2);
+    float2 r = rocrand_device::detail::normal_distribution2(rocrand2(state));
     return float2{expf(mean + (stddev * r.x)), expf(mean + (stddev * r.y))};
 }
 
 /**
  * \brief Returns a log-normally distributed \p double value.
  *
- * Generates and returns a log-normally distributed \p double value using ThreeFry
+ * Generates and returns a log-normally distributed \p double value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -948,7 +945,7 @@ FQUALIFIERS double
  * \brief Returns two log-normally distributed \p double values.
  *
  * Generates and returns two log-normally distributed \p double values using Threefry
- * generator in \p state, and increments position of the generator by two.
+ * generator in \p state, and increments position of the generator by four.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
  *
@@ -975,7 +972,7 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry2x32_20* st
 /**
  * \brief Returns a log-normally distributed \p float value.
  *
- * Generates and returns a log-normally distributed \p float value using ThreeFry
+ * Generates and returns a log-normally distributed \p float value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -1019,7 +1016,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry2x64_20* state,
 /**
  * \brief Returns a log-normally distributed \p double value.
  *
- * Generates and returns a log-normally distributed \p double value using ThreeFry
+ * Generates and returns a log-normally distributed \p double value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -1053,20 +1050,14 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry2x64_20* st
                                                double                         mean,
                                                double                         stddev)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-    auto state3 = rocrand(state);
-    auto state4 = rocrand(state);
-
-    double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4{state1, state2, state3, state4});
+    double2 r = rocrand_device::detail::normal_distribution_double2(rocrand2(state));
     return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
 /**
  * \brief Returns a log-normally distributed \p float value.
  *
- * Generates and returns a log-normally distributed \p float value using ThreeFry
+ * Generates and returns a log-normally distributed \p float value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -1085,7 +1076,7 @@ FQUALIFIERS float
 /**
  * \brief Returns two log-normally distributed \p float values.
  *
- * Generates and returns two log-normally distributed \p float values using THREEFRY
+ * Generates and returns two log-normally distributed \p float values using Threefry
  * generator in \p state, and increments position of the generator by two.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
@@ -1110,7 +1101,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry4x32_20* state,
 /**
  * \brief Returns a log-normally distributed \p double value.
  *
- * Generates and returns a log-normally distributed \p double value using ThreeFry
+ * Generates and returns a log-normally distributed \p double value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -1130,7 +1121,7 @@ FQUALIFIERS double
  * \brief Returns two log-normally distributed \p double values.
  *
  * Generates and returns two log-normally distributed \p double values using Threefry
- * generator in \p state, and increments position of the generator by two.
+ * generator in \p state, and increments position of the generator by four.
  * The function uses the Box-Muller transform method to generate two normally distributed
  * values, transforms them to log-normally distributed values, and returns both.
  *
@@ -1144,20 +1135,14 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry4x32_20* st
                                                double                         mean,
                                                double                         stddev)
 {
-    auto state1 = rocrand(state);
-    auto state2 = rocrand(state);
-    auto state3 = rocrand(state);
-    auto state4 = rocrand(state);
-
-    double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4{state1, state2, state3, state4});
+    double2 r = rocrand_device::detail::normal_distribution_double2(rocrand4(state));
     return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
 /**
  * \brief Returns a log-normally distributed \p float value.
  *
- * Generates and returns a log-normally distributed \p float value using ThreeFry
+ * Generates and returns a log-normally distributed \p float value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -1201,7 +1186,7 @@ FQUALIFIERS float2 rocrand_log_normal2(rocrand_state_threefry4x64_20* state,
 /**
  * \brief Returns a log-normally distributed \p double value.
  *
- * Generates and returns a log-normally distributed \p double value using ThreeFry
+ * Generates and returns a log-normally distributed \p double value using Threefry
  * generator in \p state, and increments position of the generator by one.
  *
  * \param state  - Pointer to a state to use
@@ -1237,11 +1222,8 @@ FQUALIFIERS double2 rocrand_log_normal_double2(rocrand_state_threefry4x64_20* st
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
-    auto state3 = rocrand(state);
-    auto state4 = rocrand(state);
 
-    double2 r = rocrand_device::detail::normal_distribution_double2(
-        uint4{state1, state2, state3, state4});
+    double2 r = rocrand_device::detail::normal_distribution_double2(ulonglong2{state1, state2});
     return double2{exp(mean + (stddev * r.x)), exp(mean + (stddev * r.y))};
 }
 
