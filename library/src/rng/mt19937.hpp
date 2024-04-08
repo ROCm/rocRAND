@@ -344,13 +344,15 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
     const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
 #endif
 
+    // clang-format off
 #if defined(__HIP_DEVICE_COMPILE__)
     unsigned int input[input_width];
     T            output[output_width];
 #else
-    unsigned int        inputs[8][input_width];
-    T                   outputs[8][output_width];
+    unsigned int inputs[8][input_width];
+    T            outputs[8][output_width];
 #endif
+    // clang-format on
 
     // Generate one extra VecT if data is not aligned by sizeof(VecT) or
     // size % output_width != 0
@@ -469,30 +471,34 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     constexpr unsigned int stride           = block_size * grid_size;
     constexpr unsigned int full_stride      = stride * inputs_per_state;
 
+    // clang-format off
 #if defined(__HIP_DEVICE_COMPILE__)
     const unsigned int thread_id = block_idx.x * block_size + thread_idx.x;
     unsigned int input[input_width];
     T            output[output_width];
 #else
-    unsigned int        inputs[8][input_width];
-    T                   outputs[8][output_width];
+    unsigned int inputs[8][input_width];
+    T            outputs[8][output_width];
 #endif
+    // clang-format on
 
     // Workaround: since load() and store() use the same indices, the compiler decides to keep
     // computed addresses alive wasting 78 * 2 VGPRs. block_dim.x equals to block_size but it is
     // a runtime value so save() will compute new addresses.
     mt19937_octo_engine_accessor<stride> accessor(engines);
 
+    // clang-format off
 #if defined(__HIP_DEVICE_COMPILE__)
     mt19937_octo_engine engine = accessor.load(block_idx.x * block_dim.x + thread_idx.x);
 #else
     mt19937_octo_engine thread_engines[8];
-    #pragma unroll
+#pragma unroll
     for(size_t i = 0; i < 8; ++i)
     {
                     thread_engines[i] = accessor.load(block_idx.x * block_dim.x + thread_idx.x + i);
     }
 #endif
+    // clang-format on
 
     size_t base_index = 0;
 
@@ -540,7 +546,10 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     // clang-format off
     for(; base_index + full_stride <= vec_size; base_index += full_stride)
     {
-#if !defined(__HIP_DEVICE_COMPILE__)
+#if defined(__HIP_DEVICE_COMPILE__)
+        engine.gen_next_n();
+#else
+        mt19937_octo_engine::gen_next_n(thread_engines);
 #pragma unroll
         for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
         {
@@ -577,11 +586,11 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     if(base_index < vec_size + extra)
     {
         bool is_extra_thread = false;
-        // #if defined(__HIP_DEVICE_COMPILE__)
-        //         engine.gen_next_n();
-        // #else
-        //         mt19937_octo_engine::gen_next_n(thread_engines);
-        // #endif
+#if defined(__HIP_DEVICE_COMPILE__)
+        engine.gen_next_n();
+#else
+        mt19937_octo_engine::gen_next_n(thread_engines);
+#endif
 
         // clang-format off
 #if !defined(__HIP_DEVICE_COMPILE__)

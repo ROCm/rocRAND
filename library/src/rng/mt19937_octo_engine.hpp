@@ -462,8 +462,9 @@ struct mt19937_octo_engine
             for(int i = 0; i < 8; ++i)
             {
                 // communicate the dependency for the first and last value
-                unsigned int last_dep  = i == 7 ? v283 : last_deps[i];
-                unsigned int first_dep = i == 0 ? thread_engines[0].m_state.mt[i000_0] : first_deps[i];
+                unsigned int last_dep = i == 7 ? v283 : last_deps[i];
+                unsigned int first_dep
+                    = i == 0 ? thread_engines[0].m_state.mt[i000_0] : first_deps[i];
 
                 // extract the first and last iterations from the loop
                 unsigned int j = 0;
