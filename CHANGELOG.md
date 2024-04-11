@@ -8,7 +8,7 @@ Documentation for rocRAND is available at
 ### Fixes
 
 * Implemented workaround for regressions in XORWOW and LFSR on MI200
-  
+
 ## rocRAND-3.0.0 for ROCm 6.0.0
 
 ### Changes
