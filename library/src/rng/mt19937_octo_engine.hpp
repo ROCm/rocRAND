@@ -136,7 +136,7 @@ struct mt19937_octo_engine
     static constexpr inline unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
-    __forceinline__ __device__ void gather(const unsigned int engine[mt19937_constants::n],
+    __forceinline__ __device__ __host__ void gather(const unsigned int engine[mt19937_constants::n],
                                            dim3               thread_idx)
     {
         constexpr unsigned int off_cnt = 11;
@@ -548,13 +548,13 @@ struct mt19937_octo_engine
     }
 
     /// Return \p i state value without tempering
-    __forceinline__ __device__ unsigned int get(unsigned int i) const
+    __forceinline__ __device__ __host__ unsigned int get(unsigned int i) const
     {
         return m_state.mt[i];
     }
 
     /// Perform tempering on y
-    static __forceinline__ __device__ unsigned int temper(unsigned int y)
+    static __forceinline__ __device__ __host__ unsigned int temper(unsigned int y)
     {
         constexpr unsigned int TEMPERING_MASK_B = 0x9D2C5680U;
         constexpr unsigned int TEMPERING_MASK_C = 0xEFC60000U;
@@ -574,19 +574,19 @@ private:
 template<unsigned int stride>
 struct mt19937_octo_engine_accessor
 {
-    __forceinline__ __device__ explicit mt19937_octo_engine_accessor(unsigned int* _engines)
+    __forceinline__ __device__ __host__ explicit mt19937_octo_engine_accessor(unsigned int* _engines)
         : engines(_engines)
     {}
 
     /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
     /// access
-    __forceinline__ __device__ unsigned int load_value(unsigned int engine_id, unsigned int i) const
+    __forceinline__ __device__ __host__ unsigned int load_value(unsigned int engine_id, unsigned int i) const
     {
         return engines[i * stride + engine_id];
     }
 
     /// Load the octo engine from global memory with coalesced access
-    __forceinline__ __device__ mt19937_octo_engine load(unsigned int engine_id) const
+    __forceinline__ __device__ __host__ mt19937_octo_engine load(unsigned int engine_id) const
     {
         mt19937_octo_engine engine;
 #pragma unroll
@@ -598,7 +598,7 @@ struct mt19937_octo_engine_accessor
     }
 
     /// Save the octo engine to global memory with coalesced access
-    __forceinline__ __device__ void save(unsigned int               engine_id,
+    __forceinline__ __device__ __host__ void save(unsigned int               engine_id,
                                          const mt19937_octo_engine& engine) const
     {
 #pragma unroll

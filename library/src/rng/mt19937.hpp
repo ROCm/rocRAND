@@ -586,13 +586,13 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     if(base_index < vec_size + extra)
     {
         bool is_extra_thread = false;
+        // clang-format off
 #if defined(__HIP_DEVICE_COMPILE__)
         engine.gen_next_n();
 #else
         mt19937_octo_engine::gen_next_n(thread_engines);
 #endif
 
-        // clang-format off
 #if !defined(__HIP_DEVICE_COMPILE__)
 #pragma unroll
         for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
@@ -653,6 +653,7 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     }
 
     // save state
+    // clang-format off
 #if defined(__HIP_DEVICE_COMPILE__)
     accessor.save(thread_id, engine);
 #else
@@ -661,6 +662,7 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
         accessor.save(block_idx.x * block_dim.x + thread_idx.x + i, thread_engines[i]);
     }
 #endif
+    // clang-format on
 }
 
 } // end namespace rocrand_host::detail

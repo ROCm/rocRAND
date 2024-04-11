@@ -1174,8 +1174,8 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
                 d_mt19937_jump);
             if(status != ROCRAND_STATUS_SUCCESS)
             {
-                std::cout << "rocRAND error code: " << status << " while calling: jump_ahead_mt19937"
-                          << std::endl;
+                std::cout << "rocRAND error code: " << status
+                          << " while calling: jump_ahead_mt19937" << std::endl;
                 exit(status);
             }
         });
