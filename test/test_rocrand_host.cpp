@@ -49,8 +49,10 @@ std::vector<unsigned long long> get_seeds()
 
 constexpr rocrand_rng_type host_rng_types[] = {
     ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
+    ROCRAND_RNG_PSEUDO_LFSR113,
     ROCRAND_RNG_PSEUDO_MRG31K3P,
     ROCRAND_RNG_PSEUDO_MRG32K3A,
+    ROCRAND_RNG_PSEUDO_MTGP32,
     ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
     ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
     ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,
@@ -319,13 +321,6 @@ TEST_P(rocrand_generate_host_test, poisson_parity_test)
     ROCRAND_CHECK(rocrand_destroy_generator(host_generator));
     ROCRAND_CHECK(rocrand_destroy_generator(device_generator));
     HIP_CHECK(hipFree(output));
-}
-
-// Since it is extremely expensive to initialize the LFSR113
-// engine vector, only a single test is performed
-TEST(rocrand_generate_host_test, lfsr113_int_parity)
-{
-    test_int_parity<unsigned int>(ROCRAND_RNG_PSEUDO_LFSR113, rocrand_generate, {seeds[0]});
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_host_test,

@@ -43,7 +43,7 @@ rocRAND generators can be configured to change how results are ordered in global
 
 `ROCRAND_ORDERING_PSEUDO_DEFAULT` and `ROCRAND_ORDERING_QUASI_DEFAULT` are the default ordering for pseudo- and quasi-random number generators respectively. `ROCRAND_ORDERING_PSEUDO_DEFAULT` is currently the same as `ROCRAND_ORDERING_PSEUDO_BEST` and `ROCRAND_ORDERING_PSEUDO_LEGACY`.
 
-`ROCRAND_ORDERING_PSEUDO_DYNAMIC` indicates that rocRAND may change the output ordering such that the best performance is obtained for a particular generator on a particular GPU. Using this ordering, the generated sequences can vary between different GPU models and rocRAND versions. More information about generating such configurations can be found at :doc:`dynamic_ordering_configuration`.
+`ROCRAND_ORDERING_PSEUDO_DYNAMIC` indicates that rocRAND may change the output ordering such that the best performance is obtained for a particular generator on a particular GPU. Using this ordering, the generated sequences can vary between different GPU models and rocRAND versions. More information about generating such configurations can be found at :doc:`dynamic_ordering_configuration`. `ROCRAND_ORDERING_PSEUDO_DYNAMIC` is not supported for generators created with `rocrand_create_generator_host`.
 
 `ROCRAND_ORDERING_PSEUDO_LEGACY` indicates that rocRAND should generate values in a way that is backward compatible. When it is set, rocRAND generates exactly the same sequences across releases.
 

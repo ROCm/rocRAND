@@ -35,6 +35,8 @@
 
 #include <stdint.h>
 
+using namespace rocrand_impl;
+
 TEST(rocrand_cpp_utils_tests, visit_tuple)
 {
     std::tuple               t{1, std::size_t(2), (unsigned short)(3)};

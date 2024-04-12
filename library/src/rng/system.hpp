@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,13 @@
 
 #include <stdint.h>
 
-struct rocrand_system_host
+namespace rocrand_impl::system
+{
+
+/// \tparam UseHostFunc If true, launching will enqueue the kernel in the stream. Otherwise,
+///   execute the kernel synchronously.
+template<bool UseHostFunc>
+struct host_system
 {
     static constexpr bool is_device()
     {
@@ -90,15 +96,15 @@ struct rocrand_system_host
     }
 
     template<auto Kernel,
-             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
-                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename ConfigProvider
+             = host::static_block_size_config_provider<ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
-    static rocrand_status launch(dim3         num_blocks,
-                                 dim3         num_threads,
-                                 unsigned int shared_bytes,
-                                 hipStream_t  stream,
+    static rocrand_status launch(dim3                         num_blocks,
+                                 dim3                         num_threads,
+                                 unsigned int                 shared_bytes,
+                                 [[maybe_unused]] hipStream_t stream,
                                  Args... args)
     {
         (void)IsDynamic; // Not relevant on host launches
@@ -144,15 +150,22 @@ struct rocrand_system_host
         auto* kernel_args
             = new KernelArgsType{num_blocks, num_threads, std::tuple<Args...>(args...)};
 
-        hipError_t status = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
-
-        if(status != hipSuccess)
+        if constexpr(UseHostFunc)
         {
-            // At this point, if the callback has not been invoked, there will be a memory
-            // leak. It is unclear whether hipLaunchHostFunc can return an error after the
-            // callback has already been invoked, but in such case there would be a double
-            // free (crash) instead of a memory leak, so we will just leak it.
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+            hipError_t status = hipLaunchHostFunc(stream, kernel_callback, kernel_args);
+
+            if(status != hipSuccess)
+            {
+                // At this point, if the callback has not been invoked, there will be a memory
+                // leak. It is unclear whether hipLaunchHostFunc can return an error after the
+                // callback has already been invoked, but in such case there would be a double
+                // free (crash) instead of a memory leak, so we will just leak it.
+                return ROCRAND_STATUS_LAUNCH_FAILURE;
+            }
+        }
+        else
+        {
+            kernel_callback(kernel_args);
         }
 
         return ROCRAND_STATUS_SUCCESS;
@@ -163,15 +176,15 @@ namespace detail
 {
 
 template<auto Kernel, typename ConfigProvider, typename T, bool IsDynamic, typename... Args>
-__global__ __launch_bounds__((rocrand_host::detail::get_block_size<ConfigProvider, T>(
-    IsDynamic))) void kernel_wrapper(Args... args)
+__global__ __launch_bounds__(
+    (host::get_block_size<ConfigProvider, T>(IsDynamic))) void kernel_wrapper(Args... args)
 {
     Kernel(blockIdx, threadIdx, gridDim, blockDim, args...);
 }
 
 } // namespace detail
 
-struct rocrand_system_device
+struct device_system
 {
     static constexpr bool is_device()
     {
@@ -196,8 +209,8 @@ struct rocrand_system_device
     }
 
     template<auto Kernel,
-             typename ConfigProvider = rocrand_host::detail::static_block_size_config_provider<
-                 ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
+             typename ConfigProvider
+             = host::static_block_size_config_provider<ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
              typename T     = unsigned int,
              bool IsDynamic = false,
              typename... Args>
@@ -234,5 +247,7 @@ struct syncthreads<false>
 {
     void operator()() {}
 };
+
+} // namespace rocrand_impl::system
 
 #endif

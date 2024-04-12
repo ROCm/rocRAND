@@ -26,16 +26,19 @@
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_mrg31k3p.h>
+#include <rocrand/rocrand_mrg32k3a.h>
 
 #include <hip/hip_runtime.h>
 
 #include <type_traits>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 template<class Engine>
@@ -152,20 +155,18 @@ __host__ __device__ void generate_mrg(dim3 block_idx,
     engines[engine_id] = engine;
 }
 
-} // end namespace rocrand_host::detail
-
 template<typename System, typename Engine, typename ConfigProvider>
-class rocrand_mrg_template : public rocrand_generator_impl_base
+class mrg_generator_template : public generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_impl_base;
+    using base_type   = generator_impl_base;
     using engine_type = Engine;
     using system_type = System;
 
-    rocrand_mrg_template(unsigned long long seed   = 0,
-                         unsigned long long offset = 0,
-                         rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                         hipStream_t        stream = 0)
+    mrg_generator_template(unsigned long long seed   = 0,
+                           unsigned long long offset = 0,
+                           rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                           hipStream_t        stream = 0)
         : base_type(order, offset, stream), m_seed(seed)
     {
         if(m_seed == 0)
@@ -174,9 +175,9 @@ public:
         }
     }
 
-    rocrand_mrg_template(const rocrand_mrg_template&) = delete;
+    mrg_generator_template(const mrg_generator_template&) = delete;
 
-    rocrand_mrg_template(rocrand_mrg_template&& other)
+    mrg_generator_template(mrg_generator_template&& other)
         : base_type(other)
         , m_engines_initialized(std::exchange(other.m_engines_initialized, false))
         , m_engines(std::exchange(other.m_engines, nullptr))
@@ -186,9 +187,9 @@ public:
         , m_poisson(std::move(other.m_poisson))
     {}
 
-    rocrand_mrg_template& operator=(const rocrand_mrg_template&) = delete;
+    mrg_generator_template& operator=(const mrg_generator_template&) = delete;
 
-    rocrand_mrg_template& operator=(rocrand_mrg_template&& other)
+    mrg_generator_template& operator=(mrg_generator_template&& other)
     {
         *static_cast<base_type*>(this) = other;
         m_engines_initialized          = std::exchange(other.m_engines_initialized, false);
@@ -201,7 +202,7 @@ public:
         return *this;
     }
 
-    ~rocrand_mrg_template()
+    ~mrg_generator_template()
     {
         if(m_engines != nullptr)
         {
@@ -243,6 +244,10 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
@@ -267,9 +272,7 @@ public:
         }
 
         hipError_t error
-            = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(m_stream,
-                                                                               m_order,
-                                                                               m_engines_size);
+            = get_least_common_grid_size<ConfigProvider>(m_stream, m_order, m_engines_size);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
@@ -290,9 +293,8 @@ public:
         constexpr unsigned int init_threads = ROCRAND_DEFAULT_MAX_BLOCK_SIZE;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
 
-        status = system_type::template launch<
-            rocrand_host::detail::init_engines_mrg<engine_type>,
-            rocrand_host::detail::static_block_size_config_provider<init_threads>>(
+        status = system_type::template launch<init_engines_mrg<engine_type>,
+                                              static_block_size_config_provider<init_threads>>(
             dim3(init_blocks),
             dim3(init_threads),
             0,
@@ -320,20 +322,19 @@ public:
             return status;
         }
 
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        status = rocrand_host::detail::dynamic_dispatch(
+        status = dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)
             {
                 return system_type::template launch<
-                    rocrand_host::detail::
-                        generate_mrg<ConfigProvider, is_dynamic, engine_type, T, Distribution>,
+                    generate_mrg<ConfigProvider, is_dynamic, engine_type, T, Distribution>,
                     ConfigProvider,
                     T,
                     is_dynamic>(dim3(config.blocks),
@@ -437,31 +438,34 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
-        m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
 };
 
-using rocrand_mrg31k3p = rocrand_mrg_template<
-    rocrand_system_device,
-    rocrand_device::mrg31k3p_engine,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
+using mrg31k3p_generator
+    = mrg_generator_template<system::device_system,
+                             rocrand_device::mrg31k3p_engine,
+                             default_config_provider<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
 
-using rocrand_mrg31k3p_host = rocrand_mrg_template<
-    rocrand_system_host,
-    rocrand_device::mrg31k3p_engine,
-    rocrand_host::detail::static_default_config_provider_t<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
+template<bool UseHostFunc>
+using mrg31k3p_generator_host
+    = mrg_generator_template<system::host_system<UseHostFunc>,
+                             rocrand_device::mrg31k3p_engine,
+                             static_default_config_provider_t<ROCRAND_RNG_PSEUDO_MRG31K3P>>;
 
-using rocrand_mrg32k3a = rocrand_mrg_template<
-    rocrand_system_device,
-    rocrand_device::mrg32k3a_engine,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
+using mrg32k3a_generator
+    = mrg_generator_template<system::device_system,
+                             rocrand_device::mrg32k3a_engine,
+                             default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
 
-using rocrand_mrg32k3a_host = rocrand_mrg_template<
-    rocrand_system_host,
-    rocrand_device::mrg32k3a_engine,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
+template<bool UseHostFunc>
+using mrg32k3a_generator_host
+    = mrg_generator_template<system::host_system<UseHostFunc>,
+                             rocrand_device::mrg32k3a_engine,
+                             default_config_provider<ROCRAND_RNG_PSEUDO_MRG32K3A>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_MRG_H_

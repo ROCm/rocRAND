@@ -32,6 +32,15 @@ Documentation for rocRAND is available at
 * C++ wrapper:
   * `lfsr113_engine` now also supports being constructed with a seed of type `unsigned long long`, not only `uint4`.
   * added optional order parameter to constructor of `mt19937_engine`
+* Added the following functions for the `ROCRAND_RNG_PSEUDO_MTGP32` generator:
+  * `rocrand_normal2`
+  * `rocrand_normal_double2`
+  * `rocrand_log_normal2`
+  * `rocrand_log_normal_double2`
+* Added `rocrand_create_generator_host_blocking` which dispatches without stream semantics.
+* Added host-side generator for `ROCRAND_RNG_PSEUDO_MTGP32`.
+* Added offset and skipahead functionality to LFSR113 generator.
+* Added dynamic ordering for architecture `gfx1102`.
 
 ### Changes
 
@@ -39,6 +48,8 @@ Documentation for rocRAND is available at
 * Building rocRAND should be faster on machines with multiple CPU cores as the library has been
   split to multiple compilation units.
 * C++ wrapper: the `min()` and `max()` member functions of the generators and distributions are now `static constexpr`.
+* Rename and unify the existing ROCRAND_DETAIL_.*_BM_NOT_IN_STATE to ROCRAND_DETAIL_BM_NOT_IN_STATE
+* Static & dynamic library: moved all internal symbols to namespaces to avoid potential symbol name collisions when linking.
 
 ### Deprecations
 
@@ -47,11 +58,16 @@ Documentation for rocRAND is available at
   * `rocrand_device::threefry2x64_20_engine::threefry2x64_20_state`
   * `rocrand_device::threefry4x32_20_engine::threefry4x32_20_state`
   * `rocrand_device::threefry4x64_20_engine::threefry4x64_20_state`
+* Deprecated internal header: src/rng/distribution/distributions.hpp
+* Deprecated internal header: src/rng/device_engines.hpp
 
 ### Removals
 
 * Removed references to and workarounds for deprecated hcc.
 * Support for HIP-CPU
+
+### Known issues
+- SOBOL64 and SCRAMBLED_SOBOL64 generate poisson-distributed `unsigned long long int` numbers instead of `unsigned int`. This will be fixed in the next major release.
 
 ## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
 

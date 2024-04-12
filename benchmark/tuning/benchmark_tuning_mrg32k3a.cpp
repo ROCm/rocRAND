@@ -24,7 +24,7 @@
 namespace benchmark_tuning
 {
 
-template void add_all_benchmarks_for_generator<rocrand_mrg32k3a_template>(
+template void add_all_benchmarks_for_generator<mrg32k3a_generator_template>(
     std::vector<benchmark::internal::Benchmark*>& benchmarks, const benchmark_config& config);
 
 } // namespace benchmark_tuning

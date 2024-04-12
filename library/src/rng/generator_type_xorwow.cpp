@@ -22,5 +22,11 @@
 
 #include "xorwow.hpp"
 
-template struct rocrand_generator_type<rocrand_xorwow>;
-template struct rocrand_generator_type<rocrand_xorwow_host>;
+namespace rocrand_impl::host
+{
+
+template struct generator_type<xorwow_generator>;
+template struct generator_type<xorwow_generator_host<false>>;
+template struct generator_type<xorwow_generator_host<true>>;
+
+} // namespace rocrand_impl::host

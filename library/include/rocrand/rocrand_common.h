@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,13 +35,11 @@
 #define ROCRAND_SQRT2 (1.4142135f)
 #define ROCRAND_SQRT2_DOUBLE (1.4142135623730951)
 
+#include <hip/hip_runtime.h>
+
 #include <math.h>
 
 #define ROCRAND_KERNEL __global__ static
-
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
 
 #if __HIP_DEVICE_COMPILE__            \
     && (defined(__HIP_PLATFORM_AMD__) \
@@ -115,8 +113,8 @@ namespace detail {
   #endif
 #endif
 
-FQUALIFIERS
-unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
+__forceinline__ __device__ __host__ unsigned long long
+    mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
 {
 #if defined(__HIP_PLATFORM_AMD__) && defined(__HIP_DEVICE_COMPILE__) \
     && defined(ROCRAND_ENABLE_INLINE_ASM)
@@ -158,41 +156,35 @@ unsigned long long mad_u64_u32(const unsigned int x, const unsigned int y, const
 template<typename Engine>
 struct engine_boxmuller_helper
 {
-    static FQUALIFIERS
-    bool has_float(const Engine * engine)
+    static __forceinline__ __device__ __host__ bool has_float(const Engine* engine)
     {
         return engine->m_state.boxmuller_float_state != 0;
     }
 
-    static FQUALIFIERS
-    float get_float(Engine * engine)
+    static __forceinline__ __device__ __host__ float get_float(Engine* engine)
     {
         engine->m_state.boxmuller_float_state = 0;
         return engine->m_state.boxmuller_float;
     }
 
-    static FQUALIFIERS
-    void save_float(Engine * engine, float f)
+    static __forceinline__ __device__ __host__ void save_float(Engine* engine, float f)
     {
         engine->m_state.boxmuller_float_state = 1;
         engine->m_state.boxmuller_float = f;
     }
 
-    static FQUALIFIERS
-    bool has_double(const Engine * engine)
+    static __forceinline__ __device__ __host__ bool has_double(const Engine* engine)
     {
         return engine->m_state.boxmuller_double_state != 0;
     }
 
-    static FQUALIFIERS
-    float get_double(Engine * engine)
+    static __forceinline__ __device__ __host__ float get_double(Engine* engine)
     {
         engine->m_state.boxmuller_double_state = 0;
         return engine->m_state.boxmuller_double;
     }
 
-    static FQUALIFIERS
-    void save_double(Engine * engine, double d)
+    static __forceinline__ __device__ __host__ void save_double(Engine* engine, double d)
     {
         engine->m_state.boxmuller_double_state = 1;
         engine->m_state.boxmuller_double = d;
@@ -200,17 +192,18 @@ struct engine_boxmuller_helper
 };
 
 template<typename T>
-FQUALIFIERS void split_ull(T& lo, T& hi, unsigned long long int val);
+__forceinline__ __device__ __host__ void split_ull(T& lo, T& hi, unsigned long long int val);
 
 template<>
-FQUALIFIERS void split_ull(unsigned int& lo, unsigned int& hi, unsigned long long int val)
+__forceinline__ __device__ __host__ void
+    split_ull(unsigned int& lo, unsigned int& hi, unsigned long long int val)
 {
     lo = val & 0xFFFFFFFF;
     hi = (val >> 32) & 0xFFFFFFFF;
 }
 
 template<>
-FQUALIFIERS void
+__forceinline__ __device__ __host__ void
     split_ull(unsigned long long int& lo, unsigned long long int& hi, unsigned long long int val)
 {
     lo = val;
