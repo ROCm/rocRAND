@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,258 +18,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <cstdint>
-#include <gtest/gtest.h>
-#include <numeric>
-#include <stdio.h>
-
-#include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
-
-#include <rng/generator_type.hpp>
-#include <rng/xorwow.hpp>
-
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
+#include "test_rocrand_prng.hpp"
+#include <rocrand/rocrand.h>
 
-struct xorwow_prng_tests : public testing::TestWithParam<rocrand_ordering>
-{
-    rocrand_xorwow get_generator() const
-    {
-        rocrand_xorwow g;
-        if(g.set_order(GetParam()) != ROCRAND_STATUS_SUCCESS)
-        {
-            throw std::runtime_error("Could not set ordering for generator");
-        }
-        return g;
-    }
-};
+#include <rng/xorwow.hpp>
 
-INSTANTIATE_TEST_SUITE_P(rocrand,
-                         xorwow_prng_tests,
-                         testing::Values(ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                                         ROCRAND_ORDERING_PSEUDO_DYNAMIC));
+#include <gtest/gtest.h>
 
-TEST_P(xorwow_prng_tests, init_test)
-{
-    rocrand_xorwow generator = get_generator(); // offset = 0
-    ROCRAND_CHECK(generator.init());
-    HIP_CHECK(hipDeviceSynchronize());
+using rocrand_impl::host::xorwow_generator;
 
-    generator.set_offset(1);
-    ROCRAND_CHECK(generator.init());
-    HIP_CHECK(hipDeviceSynchronize());
+// Generator API tests
+using xorwow_generator_prng_tests_types = ::testing::Types<
+    generator_prng_tests_params<xorwow_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_tests_params<xorwow_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-    generator.set_offset(1337);
-    ROCRAND_CHECK(generator.init());
-    HIP_CHECK(hipDeviceSynchronize());
+using xorwow_generator_prng_offset_tests_types = ::testing::Types<
+    generator_prng_offset_tests_params<unsigned int,
+                                       xorwow_generator,
+                                       ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<unsigned int,
+                                       xorwow_generator,
+                                       ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
+    generator_prng_offset_tests_params<float, xorwow_generator, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
+    generator_prng_offset_tests_params<float, xorwow_generator, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
 
-    generator.set_offset(1048576);
-    ROCRAND_CHECK(generator.init());
-    HIP_CHECK(hipDeviceSynchronize());
+INSTANTIATE_TYPED_TEST_SUITE_P(xorwow_generator,
+                               generator_prng_tests,
+                               xorwow_generator_prng_tests_types);
 
-    generator.set_offset(1 << 24);
-    ROCRAND_CHECK(generator.init());
-    HIP_CHECK(hipDeviceSynchronize());
+INSTANTIATE_TYPED_TEST_SUITE_P(xorwow_generator,
+                               generator_prng_continuity_tests,
+                               xorwow_generator_prng_tests_types);
 
-    generator.set_offset(1 << 28);
-    ROCRAND_CHECK(generator.init());
-    HIP_CHECK(hipDeviceSynchronize());
+INSTANTIATE_TYPED_TEST_SUITE_P(xorwow_generator,
+                               generator_prng_offset_tests,
+                               xorwow_generator_prng_offset_tests_types);
 
-    generator.set_offset((1ULL << 36) + 1234567ULL);
-    ROCRAND_CHECK(generator.init());
-    HIP_CHECK(hipDeviceSynchronize());
-}
+// Engine API tests
+class xorwow_engine_type_test : public xorwow_generator::engine_type
+{};
 
-TEST_P(xorwow_prng_tests, uniform_uint_test)
-{
-    const size_t  size = 1313;
-    unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
-
-    rocrand_xorwow g = get_generator();
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned int host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned long long sum = 0;
-    for(size_t i = 0; i < size; i++)
-    {
-        sum += host_data[i];
-    }
-    const unsigned int mean = sum / size;
-    ASSERT_NEAR(mean, UINT_MAX / 2, UINT_MAX / 20);
-
-    HIP_CHECK(hipFree(data));
-}
-
-TEST_P(xorwow_prng_tests, uniform_float_test)
-{
-    const size_t size = 1313;
-    float*       data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(float) * size));
-
-    rocrand_xorwow g = get_generator();
-    ROCRAND_CHECK(g.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    float host_data[size];
-    HIP_CHECK(hipMemcpy(host_data, data, sizeof(float) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    double sum = 0;
-    for(size_t i = 0; i < size; i++)
-    {
-        ASSERT_GT(host_data[i], 0.0f);
-        ASSERT_LE(host_data[i], 1.0f);
-        sum += host_data[i];
-    }
-    const float mean = sum / size;
-    ASSERT_NEAR(mean, 0.5f, 0.05f);
-
-    HIP_CHECK(hipFree(data));
-}
-
-// Check if the numbers generated by first generate() call are different from
-// the numbers generated by the 2nd call (same generator)
-TEST_P(xorwow_prng_tests, state_progress_test)
-{
-    // Device data
-    const size_t  size = 1025;
-    unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
-
-    // Generator
-    rocrand_xorwow g0 = get_generator();
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned int host_data1[size];
-    HIP_CHECK(hipMemcpy(host_data1, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned int host_data2[size];
-    HIP_CHECK(hipMemcpy(host_data2, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    size_t same = 0;
-    for(size_t i = 0; i < size; i++)
-    {
-        if(host_data1[i] == host_data2[i])
-            same++;
-    }
-    // It may happen that numbers are the same, so we
-    // just make sure that most of them are different.
-    EXPECT_LT(same, static_cast<size_t>(0.01f * size));
-
-    HIP_CHECK(hipFree(data));
-}
-
-// Checks if generators with the same seed and in the same state
-// generate the same numbers
-TEST_P(xorwow_prng_tests, same_seed_test)
-{
-    const unsigned long long seed = 0xdeadbeefdeadbeefULL;
-
-    // Device side data
-    const size_t  size = 1024;
-    unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
-
-    // Generators
-    rocrand_xorwow g0 = get_generator(), g1 = get_generator();
-    // Set same seeds
-    g0.set_seed(seed);
-    g1.set_seed(seed);
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned int g0_host_data[size];
-    HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g1 and copy to host
-    ROCRAND_CHECK(g1.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned int g1_host_data[size];
-    HIP_CHECK(hipMemcpy(g1_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Numbers generated using same generator with same
-    // seed should be the same
-    for(size_t i = 0; i < size; i++)
-    {
-        ASSERT_EQ(g0_host_data[i], g1_host_data[i]);
-    }
-
-    HIP_CHECK(hipFree(data));
-}
-
-// Checks if generators with the same seed and in the same state generate
-// the same numbers
-TEST_P(xorwow_prng_tests, different_seed_test)
-{
-    const unsigned long long seed0 = 0xdeadbeefdeadbeefULL;
-    const unsigned long long seed1 = 0xbeefdeadbeefdeadULL;
-
-    // Device side data
-    const size_t  size = 1024;
-    unsigned int* data;
-    HIP_CHECK(hipMallocHelper(&data, sizeof(unsigned int) * size));
-
-    // Generators
-    rocrand_xorwow g0 = get_generator(), g1 = get_generator();
-    // Set different seeds
-    g0.set_seed(seed0);
-    g1.set_seed(seed1);
-    ASSERT_NE(g0.get_seed(), g1.get_seed());
-
-    // Generate using g0 and copy to host
-    ROCRAND_CHECK(g0.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned int g0_host_data[size];
-    HIP_CHECK(hipMemcpy(g0_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Generate using g1 and copy to host
-    ROCRAND_CHECK(g1.generate(data, size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    unsigned int g1_host_data[size];
-    HIP_CHECK(hipMemcpy(g1_host_data, data, sizeof(unsigned int) * size, hipMemcpyDeviceToHost));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    size_t same = 0;
-    for(size_t i = 0; i < size; i++)
-    {
-        if(g1_host_data[i] == g0_host_data[i])
-            same++;
-    }
-    // It may happen that numbers are the same, so we
-    // just make sure that most of them are different.
-    EXPECT_LT(same, static_cast<size_t>(0.01f * size));
-
-    HIP_CHECK(hipFree(data));
-}
-
-TEST_P(xorwow_prng_tests, discard_test)
+TEST(xorwow_engine_type_test, discard_test)
 {
     const unsigned long long    seed = 1234567890123ULL;
-    rocrand_xorwow::engine_type engine1(seed, 0, 678ULL);
-    rocrand_xorwow::engine_type engine2(seed, 0, 677ULL);
+    xorwow_generator::engine_type engine1(seed, 0, 678ULL);
+    xorwow_generator::engine_type engine2(seed, 0, 677ULL);
 
     (void)engine2.next();
 
@@ -298,11 +93,11 @@ TEST_P(xorwow_prng_tests, discard_test)
     }
 }
 
-TEST_P(xorwow_prng_tests, discard_sequence_test)
+TEST(xorwow_engine_type_test, discard_sequence_test)
 {
     const unsigned long long    seed = ~1234567890123ULL;
-    rocrand_xorwow::engine_type engine1(seed, 0, 444ULL);
-    rocrand_xorwow::engine_type engine2(seed, 123ULL, 444ULL);
+    xorwow_generator::engine_type engine1(seed, 0, 444ULL);
+    xorwow_generator::engine_type engine2(seed, 123ULL, 444ULL);
 
     engine1.discard_subsequence(123ULL);
 
@@ -324,199 +119,4 @@ TEST_P(xorwow_prng_tests, discard_sequence_test)
     engine2.discard_subsequence(4456005ULL);
 
     EXPECT_EQ(engine1(), engine2());
-}
-
-template<typename T>
-struct rocrand_xorwow_prng_offset : public ::testing::Test
-{
-    using type = T;
-    rocrand_xorwow get_generator() const
-    {
-        rocrand_xorwow g;
-        if(g.set_order(T::ordering) != ROCRAND_STATUS_SUCCESS)
-        {
-            throw std::runtime_error("Could not set ordering for generator");
-        }
-        return g;
-    }
-};
-
-template<class T, rocrand_ordering Ordering>
-struct rocrand_xorwow_prng_offset_params
-{
-    using output_type = T;
-    static constexpr rocrand_ordering ordering = Ordering;
-};
-
-using RocrandXorwowPrngOffsetTypes = ::testing::Types<
-    rocrand_xorwow_prng_offset_params<unsigned int, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    rocrand_xorwow_prng_offset_params<unsigned int, ROCRAND_ORDERING_PSEUDO_DYNAMIC>,
-    rocrand_xorwow_prng_offset_params<float, ROCRAND_ORDERING_PSEUDO_DEFAULT>,
-    rocrand_xorwow_prng_offset_params<float, ROCRAND_ORDERING_PSEUDO_DYNAMIC>>;
-TYPED_TEST_SUITE(rocrand_xorwow_prng_offset, RocrandXorwowPrngOffsetTypes);
-
-TYPED_TEST(rocrand_xorwow_prng_offset, offsets_test)
-{
-    using params                               = typename TestFixture::type;
-    using T                                    = typename params::output_type;
-
-    const size_t size = 131313;
-
-    constexpr size_t offsets[] = {0, 1, 11, 112233};
-
-    for(const auto offset : offsets)
-    {
-        const size_t size0 = size;
-        const size_t size1 = (size + offset);
-        T*           data0;
-        T*           data1;
-        HIP_CHECK(hipMalloc(&data0, sizeof(T) * size0));
-        HIP_CHECK(hipMalloc(&data1, sizeof(T) * size1));
-
-        rocrand_xorwow g0 = TestFixture::get_generator();
-        g0.set_offset(offset);
-        g0.generate(data0, size0);
-
-        rocrand_xorwow g1 = TestFixture::get_generator();
-        g1.generate(data1, size1);
-
-        std::vector<T> host_data0(size0);
-        std::vector<T> host_data1(size1);
-        HIP_CHECK(hipMemcpy(host_data0.data(), data0, sizeof(T) * size0, hipMemcpyDeviceToHost));
-        HIP_CHECK(hipMemcpy(host_data1.data(), data1, sizeof(T) * size1, hipMemcpyDeviceToHost));
-        HIP_CHECK(hipDeviceSynchronize());
-
-        for(size_t i = 0; i < size; ++i)
-        {
-            ASSERT_EQ(host_data0[i], host_data1[i + offset]);
-        }
-
-        HIP_CHECK(hipFree(data0));
-        HIP_CHECK(hipFree(data1));
-    }
-}
-
-// Check that subsequent generations of different sizes produce one
-// sequence without gaps, no matter how many values are generated per call.
-template<typename T, typename GenerateFunc>
-void continuity_test(GenerateFunc     generate_func,
-                     rocrand_ordering ordering,
-                     unsigned int     divisor = 1)
-{
-    std::vector<size_t> sizes0({100, 1, 24783, 3, 2, 776543});
-    std::vector<size_t> sizes1({1024, 55, 65536, 623456, 30, 111331});
-    if(divisor > 1)
-    {
-        for(size_t& s : sizes0)
-            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
-        for(size_t& s : sizes1)
-            s = (s + divisor - 1) & ~static_cast<size_t>(divisor - 1);
-    }
-
-    const auto size0 = std::accumulate(sizes0.cbegin(), sizes0.cend(), std::size_t{0});
-    const auto size1 = std::accumulate(sizes1.cbegin(), sizes1.cend(), std::size_t{0});
-
-    T* data0;
-    T* data1;
-    HIP_CHECK(hipMalloc(&data0, sizeof(T) * size0));
-    HIP_CHECK(hipMalloc(&data1, sizeof(T) * size1));
-
-    rocrand_xorwow g0;
-    g0.set_order(ordering);
-    rocrand_xorwow g1;
-    g1.set_order(ordering);
-
-    std::vector<T> host_data0(size0);
-    std::vector<T> host_data1(size1);
-
-    size_t current0 = 0;
-    for(size_t s : sizes0)
-    {
-        generate_func(g0, data0, s);
-        HIP_CHECK(hipMemcpy(host_data0.data() + current0, data0, sizeof(T) * s, hipMemcpyDefault));
-        current0 += s;
-    }
-    size_t current1 = 0;
-    for(size_t s : sizes1)
-    {
-        generate_func(g1, data1, s);
-        HIP_CHECK(hipMemcpy(host_data1.data() + current1, data1, sizeof(T) * s, hipMemcpyDefault));
-        current1 += s;
-    }
-
-    for(size_t i = 0; i < std::min(size0, size1); i++)
-    {
-        ASSERT_EQ(host_data0[i], host_data1[i]);
-    }
-
-    HIP_CHECK(hipFree(data0));
-    HIP_CHECK(hipFree(data1));
-}
-
-TEST_P(xorwow_prng_tests, continuity_uniform_uint_test)
-{
-    continuity_test<unsigned int>([](rocrand_xorwow& g, unsigned int* data, size_t s)
-                                  { g.generate(data, s); },
-                                  GetParam());
-}
-
-TEST_P(xorwow_prng_tests, continuity_uniform_char_test)
-{
-    continuity_test<unsigned char>([](rocrand_xorwow& g, unsigned char* data, size_t s)
-                                   { g.generate(data, s); },
-                                   GetParam(),
-                                   4);
-}
-
-TEST_P(xorwow_prng_tests, continuity_uniform_float_test)
-{
-    continuity_test<float>([](rocrand_xorwow& g, float* data, size_t s)
-                           { g.generate_uniform(data, s); },
-                           GetParam());
-}
-
-TEST_P(xorwow_prng_tests, continuity_uniform_double_test)
-{
-    continuity_test<double>([](rocrand_xorwow& g, double* data, size_t s)
-                            { g.generate_uniform(data, s); },
-                            GetParam());
-}
-
-TEST_P(xorwow_prng_tests, continuity_normal_float_test)
-{
-    continuity_test<float>([](rocrand_xorwow& g, float* data, size_t s)
-                           { g.generate_normal(data, s, 0.0f, 1.0f); },
-                           GetParam(),
-                           2);
-}
-
-TEST_P(xorwow_prng_tests, continuity_normal_double_test)
-{
-    continuity_test<double>([](rocrand_xorwow& g, double* data, size_t s)
-                            { g.generate_normal(data, s, 0.0, 1.0); },
-                            GetParam(),
-                            2);
-}
-
-TEST_P(xorwow_prng_tests, continuity_log_normal_float_test)
-{
-    continuity_test<float>([](rocrand_xorwow& g, float* data, size_t s)
-                           { g.generate_log_normal(data, s, 0.0f, 1.0f); },
-                           GetParam(),
-                           2);
-}
-
-TEST_P(xorwow_prng_tests, continuity_log_normal_double_test)
-{
-    continuity_test<double>([](rocrand_xorwow& g, double* data, size_t s)
-                            { g.generate_log_normal(data, s, 0.0, 1.0); },
-                            GetParam(),
-                            2);
-}
-
-TEST_P(xorwow_prng_tests, continuity_poisson_test)
-{
-    continuity_test<unsigned int>([](rocrand_xorwow& g, unsigned int* data, size_t s)
-                                  { g.generate_poisson(data, s, 100.0); },
-                                  GetParam());
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,9 @@
 #include "rocrand/rocrand.h"
 #include "test_rocrand_sobol_qrng.hpp"
 
-using test_rocrand_sobol64_qrng_types
-    = ::testing::Types<rocrand_sobol_qrng_tests_params<rocrand_sobol64>>;
+using rocrand_impl::host::sobol64_generator;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(rocrand_sobol_qrng_tests,
-                               rocrand_sobol_qrng_tests,
-                               test_rocrand_sobol64_qrng_types);
+using test_sobol64_qrng_types
+    = ::testing::Types<sobol_qrng_tests_params<sobol64_generator, ROCRAND_ORDERING_QUASI_DEFAULT>>;
+
+INSTANTIATE_TYPED_TEST_SUITE_P(sobol_qrng_tests, sobol_qrng_tests, test_sobol64_qrng_types);

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,9 +31,11 @@
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
 
-struct dummy_generator : rocrand_generator_impl_base
+using namespace rocrand_impl::host;
+
+struct dummy_generator : generator_impl_base
 {
-    dummy_generator() : rocrand_generator_impl_base(ROCRAND_ORDERING_PSEUDO_DEFAULT, 0, 0) {}
+    dummy_generator() : generator_impl_base(ROCRAND_ORDERING_PSEUDO_DEFAULT, 0, 0) {}
 
     static constexpr rocrand_rng_type type()
     {
@@ -115,7 +117,7 @@ TEST(rocrand_generator_type_tests, rocrand_generator)
     rocrand_generator g = NULL;
     EXPECT_EQ(g, static_cast<rocrand_generator>(0));
 
-    g       = new rocrand_generator_type<dummy_generator>;
+    g       = new generator_type<dummy_generator>;
     auto gg = static_cast<rocrand_generator_base_type*>(g);
     EXPECT_NE(gg, static_cast<rocrand_generator>(0));
     EXPECT_EQ(gg->get_offset(), 0ULL);
@@ -130,7 +132,7 @@ TEST(rocrand_generator_type_tests, rocrand_generator)
 
 TEST(rocrand_generator_type_tests, set_stream_test)
 {
-    rocrand_generator_type<dummy_generator> g;
+    generator_type<dummy_generator> g;
     EXPECT_EQ(g.get_stream(), (hipStream_t)(0));
     hipStream_t stream;
     HIP_CHECK(hipStreamCreate(&stream));
@@ -143,7 +145,7 @@ TEST(rocrand_generator_type_tests, set_stream_test)
 
 TEST(rocrand_generator_type_tests, generate_test)
 {
-    rocrand_generator_type<dummy_generator> g;
+    generator_type<dummy_generator> g;
 
     std::vector<unsigned short> output(123);
     g.generate_short(output.data(), output.size());

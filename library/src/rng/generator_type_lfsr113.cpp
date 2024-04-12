@@ -22,5 +22,11 @@
 
 #include "lfsr113.hpp"
 
-template struct rocrand_generator_type<rocrand_lfsr113>;
-template struct rocrand_generator_type<rocrand_lfsr113_host>;
+namespace rocrand_impl::host
+{
+
+template struct generator_type<lfsr113_generator>;
+template struct generator_type<lfsr113_generator_host<false>>;
+template struct generator_type<lfsr113_generator_host<true>>;
+
+} // namespace rocrand_impl::host

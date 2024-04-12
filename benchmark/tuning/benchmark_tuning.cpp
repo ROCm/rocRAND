@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -51,32 +51,28 @@ int main(int argc, char** argv)
     add_common_benchmark_rocrand_info();
 
     std::vector<benchmark::internal::Benchmark*> benchmarks;
-    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_lfsr113_template>(
-        benchmarks,
-        config);
-    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mrg31k3p_template>(
-        benchmarks,
-        config);
-    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mrg32k3a_template>(
-        benchmarks,
-        config);
-    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mt19937_template>(
-        benchmarks,
-        config);
-    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_mtgp32_template>(
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::lfsr113_generator_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::mrg31k3p_generator_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::mrg32k3a_generator_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<
+        benchmark_tuning::mt19937_generator_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::mtgp32_generator_template>(
         benchmarks,
         config);
     benchmark_tuning::add_all_benchmarks_for_generator<
-        benchmark_tuning::rocrand_philox4x32_10_template>(benchmarks, config);
+        benchmark_tuning::philox4x32_10_generator_template>(benchmarks, config);
     benchmark_tuning::add_all_benchmarks_for_generator<
-        benchmark_tuning::rocrand_threefry2x32_20_template>(benchmarks, config);
+        benchmark_tuning::threefry2x32_20_generator_template>(benchmarks, config);
     benchmark_tuning::add_all_benchmarks_for_generator<
-        benchmark_tuning::rocrand_threefry2x64_20_template>(benchmarks, config);
+        benchmark_tuning::threefry2x64_20_generator_template>(benchmarks, config);
     benchmark_tuning::add_all_benchmarks_for_generator<
-        benchmark_tuning::rocrand_threefry4x32_20_template>(benchmarks, config);
+        benchmark_tuning::threefry4x32_20_generator_template>(benchmarks, config);
     benchmark_tuning::add_all_benchmarks_for_generator<
-        benchmark_tuning::rocrand_threefry4x64_20_template>(benchmarks, config);
-    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::rocrand_xorwow_template>(
+        benchmark_tuning::threefry4x64_20_generator_template>(benchmarks, config);
+    benchmark_tuning::add_all_benchmarks_for_generator<benchmark_tuning::xorwow_generator_template>(
         benchmarks,
         config);
 

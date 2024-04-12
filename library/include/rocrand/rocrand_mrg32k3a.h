@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +20,6 @@
 
 #ifndef ROCRAND_MRG32K3A_H_
 #define ROCRAND_MRG32K3A_H_
-
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS_
 
 #include "rocrand/rocrand_common.h"
 #include "rocrand/rocrand_mrg32k3a_precomputed.h"
@@ -63,7 +59,7 @@ public:
         unsigned int g1[3];
         unsigned int g2[3];
 
-        #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -73,11 +69,10 @@ public:
         unsigned int boxmuller_double_state; // is there a double in boxmuller_double
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
-        #endif
+    #endif
     };
 
-    FQUALIFIERS
-    mrg32k3a_engine()
+    __forceinline__ __device__ __host__ mrg32k3a_engine()
     {
         this->seed(ROCRAND_MRG32K3A_DEFAULT_SEED, 0, 0);
     }
@@ -90,10 +85,9 @@ public:
     /// zero, value \p ROCRAND_MRG32K3A_DEFAULT_SEED is used instead.
     ///
     /// A subsequence is 2^76 numbers long.
-    FQUALIFIERS
-    mrg32k3a_engine(const unsigned long long seed,
-                    const unsigned long long subsequence,
-                    const unsigned long long offset)
+    __forceinline__ __device__ __host__ mrg32k3a_engine(const unsigned long long seed,
+                                                        const unsigned long long subsequence,
+                                                        const unsigned long long offset)
     {
         this->seed(seed, subsequence, offset);
     }
@@ -106,10 +100,9 @@ public:
     /// zero, value \p ROCRAND_MRG32K3A_DEFAULT_SEED is used instead.
     ///
     /// A subsequence is 2^76 numbers long.
-    FQUALIFIERS
-    void seed(unsigned long long seed_value,
-              const unsigned long long subsequence,
-              const unsigned long long offset)
+    __forceinline__ __device__ __host__ void seed(unsigned long long       seed_value,
+                                                  const unsigned long long subsequence,
+                                                  const unsigned long long offset)
     {
         if(seed_value == 0)
         {
@@ -127,50 +120,44 @@ public:
     }
 
     /// Advances the internal state to skip \p offset numbers.
-    FQUALIFIERS
-    void discard(unsigned long long offset)
+    __forceinline__ __device__ __host__ void discard(unsigned long long offset)
     {
         this->discard_impl(offset);
     }
 
     /// Advances the internal state to skip \p subsequence subsequences.
     /// A subsequence is 2^76 numbers long.
-    FQUALIFIERS
-    void discard_subsequence(unsigned long long subsequence)
+    __forceinline__ __device__ __host__ void discard_subsequence(unsigned long long subsequence)
     {
         this->discard_subsequence_impl(subsequence);
     }
 
     /// Advances the internal state to skip \p sequence sequences.
     /// A sequence is 2^127 numbers long.
-    FQUALIFIERS
-    void discard_sequence(unsigned long long sequence)
+    __forceinline__ __device__ __host__ void discard_sequence(unsigned long long sequence)
     {
         this->discard_sequence_impl(sequence);
     }
 
-    FQUALIFIERS
-    void restart(const unsigned long long subsequence,
-                 const unsigned long long offset)
+    __forceinline__ __device__ __host__ void restart(const unsigned long long subsequence,
+                                                     const unsigned long long offset)
     {
-        #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
-        #endif
+    #endif
         this->discard_subsequence_impl(subsequence);
         this->discard_impl(offset);
     }
 
-    FQUALIFIERS
-    unsigned int operator()()
+    __forceinline__ __device__ __host__ unsigned int operator()()
     {
         return this->next();
     }
 
     // Returned value is in range [1, ROCRAND_MRG32K3A_M1],
     // where ROCRAND_MRG32K3A_M1 < UINT_MAX
-    FQUALIFIERS
-    unsigned int next()
+    __forceinline__ __device__ __host__ unsigned int next()
     {
         const unsigned int p1 = mod_m1(
             detail::mad_u64_u32(
@@ -208,15 +195,14 @@ public:
 protected:
     // Advances the internal state to skip \p offset numbers.
     // DOES NOT CALCULATE NEW ULONGLONG
-    FQUALIFIERS
-    void discard_impl(unsigned long long offset)
+    __forceinline__ __device__ __host__ void discard_impl(unsigned long long offset)
     {
         discard_state(offset);
     }
 
     // DOES NOT CALCULATE NEW ULONGLONG
-    FQUALIFIERS
-    void discard_subsequence_impl(unsigned long long subsequence)
+    __forceinline__ __device__ __host__ void
+        discard_subsequence_impl(unsigned long long subsequence)
     {
         int i = 0;
 
@@ -236,8 +222,7 @@ protected:
     }
 
     // DOES NOT CALCULATE NEW ULONGLONG
-    FQUALIFIERS
-    void discard_sequence_impl(unsigned long long sequence)
+    __forceinline__ __device__ __host__ void discard_sequence_impl(unsigned long long sequence)
     {
         int i = 0;
 
@@ -258,8 +243,7 @@ protected:
 
     // Advances the internal state by offset times.
     // DOES NOT CALCULATE NEW ULONGLONG
-    FQUALIFIERS
-    void discard_state(unsigned long long offset)
+    __forceinline__ __device__ __host__ void discard_state(unsigned long long offset)
     {
         int i = 0;
 
@@ -280,16 +264,14 @@ protected:
 
     // Advances the internal state to the next state
     // DOES NOT CALCULATE NEW ULONGLONG
-    FQUALIFIERS
-    void discard_state()
+    __forceinline__ __device__ __host__ void discard_state()
     {
         discard_state(1);
     }
 
 private:
-    FQUALIFIERS
-    static void mod_mat_vec_m1(const unsigned long long * A,
-                        unsigned int * s)
+    __forceinline__ __device__ __host__ static void mod_mat_vec_m1(const unsigned long long* A,
+                                                                   unsigned int*             s)
     {
         unsigned long long x[3];
 
@@ -310,9 +292,8 @@ private:
         s[2] = x[2];
     }
 
-    FQUALIFIERS
-    static void mod_mat_vec_m2(const unsigned long long * A,
-                        unsigned int * s)
+    __forceinline__ __device__ __host__ static void mod_mat_vec_m2(const unsigned long long* A,
+                                                                   unsigned int*             s)
     {
         unsigned long long x[3];
 
@@ -333,9 +314,8 @@ private:
         s[2] = x[2];
     }
 
-    FQUALIFIERS
-    static unsigned long long mod_mul_m1(unsigned int i,
-                                  unsigned long long j)
+    __forceinline__ __device__ __host__ static unsigned long long mod_mul_m1(unsigned int       i,
+                                                                             unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
 
@@ -350,8 +330,7 @@ private:
         return lo;
     }
 
-    FQUALIFIERS
-    static unsigned long long mod_m1(unsigned long long p)
+    __forceinline__ __device__ __host__ static unsigned long long mod_m1(unsigned long long p)
     {
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M1C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         if (p >= ROCRAND_MRG32K3A_M1)
@@ -360,9 +339,8 @@ private:
         return p;
     }
 
-    FQUALIFIERS
-    static unsigned long long mod_mul_m2(unsigned int i,
-                                  unsigned long long j)
+    __forceinline__ __device__ __host__ static unsigned long long mod_mul_m2(unsigned int       i,
+                                                                             unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
 
@@ -377,8 +355,7 @@ private:
         return lo;
     }
 
-    FQUALIFIERS
-    static unsigned long long mod_m2(unsigned long long p)
+    __forceinline__ __device__ __host__ static unsigned long long mod_m2(unsigned long long p)
     {
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
         p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
@@ -392,7 +369,7 @@ protected:
     // State
     mrg32k3a_state m_state;
 
-    #ifndef ROCRAND_DETAIL_MRG32K3A_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
     friend struct detail::engine_boxmuller_helper<mrg32k3a_engine>;
     #endif
 
@@ -420,11 +397,10 @@ typedef rocrand_device::mrg32k3a_engine rocrand_state_mrg32k3a;
  * \param offset - Absolute offset into subsequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const unsigned long long seed,
-                  const unsigned long long subsequence,
-                  const unsigned long long offset,
-                  rocrand_state_mrg32k3a * state)
+__forceinline__ __device__ __host__ void rocrand_init(const unsigned long long seed,
+                                                      const unsigned long long subsequence,
+                                                      const unsigned long long offset,
+                                                      rocrand_state_mrg32k3a*  state)
 {
     *state = rocrand_state_mrg32k3a(seed, subsequence, offset);
 }
@@ -441,8 +417,7 @@ void rocrand_init(const unsigned long long seed,
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand(rocrand_state_mrg32k3a * state)
+__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_mrg32k3a* state)
 {
     // next() in [1, ROCRAND_MRG32K3A_M1]
     return static_cast<unsigned int>((state->next() - 1) * ROCRAND_MRG32K3A_UINT_NORM);
@@ -456,8 +431,8 @@ unsigned int rocrand(rocrand_state_mrg32k3a * state)
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead(unsigned long long offset, rocrand_state_mrg32k3a * state)
+__forceinline__ __device__ __host__ void skipahead(unsigned long long      offset,
+                                                   rocrand_state_mrg32k3a* state)
 {
     return state->discard(offset);
 }
@@ -471,8 +446,8 @@ void skipahead(unsigned long long offset, rocrand_state_mrg32k3a * state)
  * \param subsequence - Number of subsequences to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead_subsequence(unsigned long long subsequence, rocrand_state_mrg32k3a * state)
+__forceinline__ __device__ __host__ void skipahead_subsequence(unsigned long long      subsequence,
+                                                               rocrand_state_mrg32k3a* state)
 {
     return state->discard_subsequence(subsequence);
 }
@@ -486,8 +461,8 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_mrg32k3
  * \param sequence - Number of sequences to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead_sequence(unsigned long long sequence, rocrand_state_mrg32k3a * state)
+__forceinline__ __device__ __host__ void skipahead_sequence(unsigned long long      sequence,
+                                                            rocrand_state_mrg32k3a* state)
 {
     return state->discard_sequence(sequence);
 }

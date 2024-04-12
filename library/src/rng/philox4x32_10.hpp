@@ -57,18 +57,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_philox4x32_10.h>
 
 #include <hip/hip_runtime.h>
 
 #include <algorithm>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 struct philox4x32_10_device_engine : public ::rocrand_device::philox4x32_10_engine
 {
@@ -212,20 +212,18 @@ __host__ __device__ void generate_philox(dim3                        block_idx,
     }
 }
 
-} // end namespace rocrand_host::detail
-
 template<typename System, typename ConfigProvider>
-class rocrand_philox4x32_10_template : public rocrand_generator_impl_base
+class philox4x32_10_generator_template : public generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_impl_base;
-    using engine_type = ::rocrand_host::detail::philox4x32_10_device_engine;
+    using base_type   = generator_impl_base;
+    using engine_type = philox4x32_10_device_engine;
     using system_type = System;
 
-    rocrand_philox4x32_10_template(unsigned long long seed   = 0,
-                                   unsigned long long offset = 0,
-                                   rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                                   hipStream_t        stream = 0)
+    philox4x32_10_generator_template(unsigned long long seed   = 0,
+                                     unsigned long long offset = 0,
+                                     rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                                     hipStream_t        stream = 0)
         : base_type(order, offset, stream), m_seed(seed)
     {}
 
@@ -253,6 +251,10 @@ public:
 
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
@@ -288,29 +290,28 @@ public:
         {
             return status;
         }
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        status = rocrand_host::detail::dynamic_dispatch(
+        status = dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)
             {
-                return system_type::template launch<
-                    rocrand_host::detail::generate_philox<T, Distribution>,
-                    ConfigProvider,
-                    T,
-                    is_dynamic>(dim3(config.blocks),
-                                dim3(config.threads),
-                                0,
-                                m_stream,
-                                m_engine,
-                                data,
-                                data_size,
-                                distribution);
+                return system_type::template launch<generate_philox<T, Distribution>,
+                                                    ConfigProvider,
+                                                    T,
+                                                    is_dynamic>(dim3(config.blocks),
+                                                                dim3(config.threads),
+                                                                0,
+                                                                m_stream,
+                                                                m_engine,
+                                                                data,
+                                                                data_size,
+                                                                distribution);
             });
         if(status != ROCRAND_STATUS_SUCCESS)
         {
@@ -386,19 +387,21 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !system_type::is_device()>
-        m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
 };
 
-using rocrand_philox4x32_10 = rocrand_philox4x32_10_template<
-    rocrand_system_device,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
+using philox4x32_10_generator
+    = philox4x32_10_generator_template<system::device_system,
+                                       default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
 
-using rocrand_philox4x32_10_host = rocrand_philox4x32_10_template<
-    rocrand_system_host,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
+template<bool UseHostFunc>
+using philox4x32_10_generator_host
+    = philox4x32_10_generator_template<system::host_system<UseHostFunc>,
+                                       default_config_provider<ROCRAND_RNG_PSEUDO_PHILOX4_32_10>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_PHILOX4X32_10_H_

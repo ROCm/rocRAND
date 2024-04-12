@@ -21,21 +21,22 @@
 #ifndef ROCRAND_RNG_LFSR113_H_
 #define ROCRAND_RNG_LFSR113_H_
 
-#include <algorithm>
-#include <hip/hip_runtime.h>
-
-#include <rocrand/rocrand.h>
-
 #include "config/lfsr113_config.hpp"
 
 #include "common.hpp"
 #include "config_types.hpp"
-#include "device_engines.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
 
-namespace rocrand_host::detail
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_lfsr113.h>
+
+#include <hip/hip_runtime.h>
+
+#include <algorithm>
+
+namespace rocrand_impl::host
 {
 
 typedef ::rocrand_device::lfsr113_engine lfsr113_device_engine;
@@ -45,13 +46,17 @@ __host__ __device__ inline void init_lfsr113_engines(dim3 block_idx,
                                                      dim3 /*grid_dim*/,
                                                      dim3                   block_dim,
                                                      lfsr113_device_engine* engines,
+                                                     const unsigned int     start_engine_id,
                                                      const unsigned int     engines_size,
-                                                     const uint4            seeds)
+                                                     const uint4            seeds,
+                                                     const unsigned int     offset)
 {
     const unsigned int engine_id = block_idx.x * block_dim.x + thread_idx.x;
     if(engine_id < engines_size)
     {
-        engines[engine_id] = lfsr113_device_engine(seeds, engine_id);
+        engines[engine_id] = lfsr113_device_engine(seeds,
+                                                   engine_id,
+                                                   offset + (engine_id < start_engine_id ? 1 : 0));
     }
 }
 
@@ -74,10 +79,10 @@ __host__ __device__ void generate_lfsr113(dim3 block_idx,
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = block_idx.x * BlockSize + thread_idx.x;
-    const unsigned int stride = grid_dim.x * BlockSize;
+    const unsigned int id          = block_idx.x * BlockSize + thread_idx.x;
+    const unsigned int num_engines = grid_dim.x * BlockSize;
 
-    const unsigned int    engine_id = (id + start_engine_id) & (stride - 1);
+    const unsigned int    engine_id = (id + start_engine_id) & (num_engines - 1);
     lfsr113_device_engine engine    = engines[engine_id];
 
     unsigned int input[input_width];
@@ -109,7 +114,7 @@ __host__ __device__ void generate_lfsr113(dim3 block_idx,
         __builtin_amdgcn_s_waitcnt(/*vmcnt*/ 0 | (/*exp_cnt*/ 0x7 << 4) | (/*lgkmcnt*/ 0xf << 8));
 #endif
         vec_data[index] = *reinterpret_cast<vec_type*>(output);
-        index += stride;
+        index += num_engines;
     }
 
     if(output_width > 1 && index == vec_n)
@@ -151,32 +156,31 @@ __host__ __device__ void generate_lfsr113(dim3 block_idx,
         }
     }
 
+    // Save engine with its state
     engines[engine_id] = engine;
 }
 
-} // namespace rocrand_host::detail
-
 template<class System, class ConfigProvider>
-class rocrand_lfsr113_template : public rocrand_generator_impl_base
+class lfsr113_generator_template : public generator_impl_base
 {
 public:
     using system_type = System;
-    using base_type   = rocrand_generator_impl_base;
-    using engine_type = ::rocrand_host::detail::lfsr113_device_engine;
+    using base_type   = generator_impl_base;
+    using engine_type = lfsr113_device_engine;
 
-    rocrand_lfsr113_template(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
-                                                          ROCRAND_LFSR113_DEFAULT_SEED_Y,
-                                                          ROCRAND_LFSR113_DEFAULT_SEED_Z,
-                                                          ROCRAND_LFSR113_DEFAULT_SEED_W},
-                             unsigned long long offset = 0,
-                             rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                             hipStream_t        stream = 0)
+    lfsr113_generator_template(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_W},
+                               unsigned long long offset = 0,
+                               rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                               hipStream_t        stream = 0)
         : base_type(order, offset, stream), m_seed(seeds)
     {}
 
-    rocrand_lfsr113_template(const rocrand_lfsr113_template&) = delete;
+    lfsr113_generator_template(const lfsr113_generator_template&) = delete;
 
-    rocrand_lfsr113_template(rocrand_lfsr113_template&& other)
+    lfsr113_generator_template(lfsr113_generator_template&& other)
         : base_type(other)
         , m_engines_initialized(other.m_engines_initialized)
         , m_engines(other.m_engines)
@@ -189,9 +193,9 @@ public:
         other.m_engines             = nullptr;
     }
 
-    rocrand_lfsr113_template& operator=(const rocrand_lfsr113_template&) = delete;
+    lfsr113_generator_template& operator=(const lfsr113_generator_template&) = delete;
 
-    rocrand_lfsr113_template& operator=(rocrand_lfsr113_template&& other)
+    lfsr113_generator_template& operator=(lfsr113_generator_template&& other)
     {
         *static_cast<base_type*>(this) = std::move(other);
         m_engines_initialized          = other.m_engines_initialized;
@@ -207,7 +211,7 @@ public:
         return *this;
     }
 
-    ~rocrand_lfsr113_template()
+    ~lfsr113_generator_template()
     {
         if(m_engines != nullptr)
         {
@@ -272,15 +276,12 @@ public:
         return m_seed;
     }
 
-    rocrand_status set_offset(unsigned long long offset)
-    {
-        (void)offset;
-        // Can't set offset for LFSR113
-        return ROCRAND_STATUS_TYPE_ERROR;
-    }
-
     rocrand_status set_order(rocrand_ordering order)
     {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
         static constexpr std::array supported_orderings{
             ROCRAND_ORDERING_PSEUDO_DEFAULT,
             ROCRAND_ORDERING_PSEUDO_DYNAMIC,
@@ -305,16 +306,13 @@ public:
         }
 
         hipError_t error
-            = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(m_stream,
-                                                                               m_order,
-                                                                               m_engines_size);
+            = get_least_common_grid_size<ConfigProvider>(m_stream, m_order, m_engines_size);
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        // offset is always 0
-        m_start_engine_id = 0;
+        m_start_engine_id = m_offset % m_engines_size;
 
         if(m_engines != nullptr)
         {
@@ -329,16 +327,17 @@ public:
         constexpr unsigned int init_threads = 256;
         const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
 
-        status = system_type::template launch<
-            rocrand_host::detail::init_lfsr113_engines,
-            rocrand_host::detail::static_block_size_config_provider<init_threads>>(
+        status = system_type::template launch<init_lfsr113_engines,
+                                              static_block_size_config_provider<init_threads>>(
             dim3(init_blocks),
             dim3(init_threads),
             0,
             m_stream,
             m_engines,
+            m_start_engine_id,
             m_engines_size,
-            m_seed);
+            m_seed,
+            m_offset / m_engines_size);
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
@@ -357,18 +356,17 @@ public:
             return status;
         }
 
-        rocrand_host::detail::generator_config config;
+        generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
             return ROCRAND_STATUS_INTERNAL_ERROR;
 
-        status = rocrand_host::detail::dynamic_dispatch(
+        status = dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)
             {
                 return system_type::template launch<
-                    rocrand_host::detail::
-                        generate_lfsr113<ConfigProvider, is_dynamic, T, Distribution>,
+                    generate_lfsr113<ConfigProvider, is_dynamic, T, Distribution>,
                     ConfigProvider,
                     T,
                     is_dynamic>(dim3(config.blocks),
@@ -454,15 +452,22 @@ private:
     unsigned int m_engines_size        = 0;
     uint4        m_seed;
 
-    poisson_distribution_manager<> m_poisson;
+    // For caching of Poisson for consecutive generations with the same lambda
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
+
+    // m_seed from base_type
+    // m_offset from base_type
 };
 
-using rocrand_lfsr113 = rocrand_lfsr113_template<
-    rocrand_system_device,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+using lfsr113_generator
+    = lfsr113_generator_template<system::device_system,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
 
-using rocrand_lfsr113_host = rocrand_lfsr113_template<
-    rocrand_system_host,
-    rocrand_host::detail::default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+template<bool UseHostFunc>
+using lfsr113_generator_host
+    = lfsr113_generator_template<system::host_system<UseHostFunc>,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_LFSR113_H_

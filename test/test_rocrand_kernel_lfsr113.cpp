@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
 
 #include <hip/hip_runtime.h>
 
-#define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_kernel.h>
 
@@ -63,6 +62,7 @@ __global__ __launch_bounds__(32) void rocrand_kernel(unsigned int* output, const
                        ROCRAND_LFSR113_DEFAULT_SEED_Z,
                        ROCRAND_LFSR113_DEFAULT_SEED_W},
                  subsequence,
+                 123ULL,
                  &state);
 
     unsigned int index = state_id;
@@ -86,6 +86,7 @@ __global__ __launch_bounds__(32) void rocrand_uniform_kernel(float* output, cons
                        ROCRAND_LFSR113_DEFAULT_SEED_Z,
                        ROCRAND_LFSR113_DEFAULT_SEED_W},
                  subsequence,
+                 234ULL,
                  &state);
 
     unsigned int index = state_id;
@@ -110,6 +111,7 @@ __global__ __launch_bounds__(32) void rocrand_uniform_double_kernel(double*     
                        ROCRAND_LFSR113_DEFAULT_SEED_Z,
                        ROCRAND_LFSR113_DEFAULT_SEED_W},
                  subsequence,
+                 234ULL,
                  &state);
 
     unsigned int index = state_id;
@@ -128,7 +130,7 @@ __global__ __launch_bounds__(32) void rocrand_normal_kernel(float* output, const
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
-    rocrand_init(uint4{12345, 67890, 23456, 78901}, subsequence, &state);
+    rocrand_init(uint4{12345, 67890, 23456, 78901}, subsequence, 345ULL, &state);
 
     unsigned int index = state_id;
     while(index < size)
@@ -149,7 +151,7 @@ __global__ __launch_bounds__(32) void rocrand_log_normal_kernel(float* output, c
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
-    rocrand_init(uint4{12345, 67890, 23456, 78901}, subsequence, &state);
+    rocrand_init(uint4{12345, 67890, 23456, 78901}, subsequence, 456ULL, &state);
 
     unsigned int index = state_id;
     while(index < size)
@@ -172,7 +174,7 @@ __global__ __launch_bounds__(64) void rocrand_poisson_kernel(unsigned int* outpu
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
-    rocrand_init(uint4{23456, 78901, 34567, 89012}, subsequence, &state);
+    rocrand_init(uint4{23456, 78901, 34567, 89012}, subsequence, 234ULL, &state);
 
     unsigned int index = state_id;
     while(index < size)
@@ -191,7 +193,7 @@ __global__ __launch_bounds__(64) void rocrand_discrete_kernel(
 
     GeneratorState     state;
     const unsigned int subsequence = state_id;
-    rocrand_init(uint4{23456, 78901, 34567, 89012}, subsequence, &state);
+    rocrand_init(uint4{23456, 78901, 34567, 89012}, subsequence, 234ULL, &state);
 
     unsigned int index = state_id;
     while(index < size)

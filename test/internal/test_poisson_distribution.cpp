@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,8 @@
 #include <vector>
 
 #include <rng/distribution/poisson.hpp>
+
+using namespace rocrand_impl::host;
 
 template<typename T>
 double get_mean(std::vector<T> values)
@@ -59,7 +61,7 @@ TEST_P(poisson_distribution_tests, mean_var)
     std::random_device rd;
     std::mt19937       gen(rd());
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis;
+    poisson_distribution<DISCRETE_METHOD_ALIAS, true> dis;
     dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
@@ -88,7 +90,7 @@ TEST_P(poisson_distribution_tests, histogram_compare)
     std::mt19937                            gen(rd());
     std::poisson_distribution<unsigned int> host_dis(lambda);
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS, true> dis;
+    poisson_distribution<DISCRETE_METHOD_ALIAS, true> dis;
     dis.set_lambda(lambda);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;

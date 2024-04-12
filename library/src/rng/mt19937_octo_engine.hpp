@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -51,13 +51,11 @@
 #ifndef ROCRAND_RNG_MT19937_OCTO_ENGINE_H_
 #define ROCRAND_RNG_MT19937_OCTO_ENGINE_H_
 
-#define MT_FQUALIFIERS __forceinline__ __device__
-
 #include <rocrand/rocrand_mt19937_precomputed.h>
 
 #include <hip/hip_runtime.h>
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 namespace mt19937_constants
 {
@@ -138,7 +136,7 @@ struct mt19937_octo_engine
     static constexpr inline unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
-    MT_FQUALIFIERS void gather(const unsigned int engine[mt19937_constants::n])
+    __forceinline__ __device__ void gather(const unsigned int engine[mt19937_constants::n])
     {
         constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
@@ -167,24 +165,24 @@ struct mt19937_octo_engine
     }
 
     /// Returns \p val from thread <tt>tid mod 8</tt>.
-    static MT_FQUALIFIERS unsigned int shuffle(unsigned int val, unsigned int tid)
+    static __forceinline__ __device__ unsigned int shuffle(unsigned int val, unsigned int tid)
     {
         return __shfl(val, tid, 8);
     }
 
     /// For thread i, returns \p val from thread <tt>(i + 1) mod 8</tt>
-    static MT_FQUALIFIERS unsigned int shuffle_down(unsigned int val)
+    static __forceinline__ __device__ unsigned int shuffle_down(unsigned int val)
     {
         return __shfl_down(val, 1, 8);
     }
 
     /// For thread i, returns \p val from thread <tt>(i - 1) mod 8</tt>
-    static MT_FQUALIFIERS unsigned int shuffle_up(unsigned int val)
+    static __forceinline__ __device__ unsigned int shuffle_up(unsigned int val)
     {
         return __shfl_up(val, 1, 8);
     }
     /// Calculates value of index \p i using values <tt>i</tt>, <tt>(i + 1) % n</tt>, and <tt>(i + m) % n</tt>.
-    static MT_FQUALIFIERS unsigned int
+    static __forceinline__ __device__ unsigned int
         comp(unsigned int mt_i, unsigned int mt_i_1, unsigned int mt_i_m)
     {
         const unsigned int y
@@ -200,10 +198,10 @@ struct mt19937_octo_engine
     /// \p idx_m is the local address of <tt>m</tt>: <tt>i + ipt * tid + m</tt>.
     /// \p last_dep_tid_7 is the value of <tt>i + ipt * (tid + 1)</tt>, which is
     /// required as it is the only value not owned by thread <tt>pid</tt>.
-    MT_FQUALIFIERS void comp_vector(unsigned int tid,
-                                    unsigned int idx_i,
-                                    unsigned int idx_m,
-                                    unsigned int last_dep_tid_7)
+    __forceinline__ __device__ void comp_vector(unsigned int tid,
+                                                unsigned int idx_i,
+                                                unsigned int idx_m,
+                                                unsigned int last_dep_tid_7)
     {
         // communicate the dependency for the last value
         unsigned int last_dep = shuffle_down(m_state.mt[idx_i]);
@@ -222,7 +220,7 @@ struct mt19937_octo_engine
     }
 
     /// Eights threads collaborate in computing the n next values.
-    MT_FQUALIFIERS void gen_next_n()
+    __forceinline__ __device__ void gen_next_n()
     {
         const unsigned int tid = threadIdx.x & 7U;
 
@@ -370,13 +368,13 @@ struct mt19937_octo_engine
     }
 
     /// Return \p i state value without tempering
-    MT_FQUALIFIERS unsigned int get(unsigned int i) const
+    __forceinline__ __device__ unsigned int get(unsigned int i) const
     {
         return m_state.mt[i];
     }
 
     /// Perform tempering on y
-    static MT_FQUALIFIERS unsigned int temper(unsigned int y)
+    static __forceinline__ __device__ unsigned int temper(unsigned int y)
     {
         constexpr unsigned int TEMPERING_MASK_B = 0x9D2C5680U;
         constexpr unsigned int TEMPERING_MASK_C = 0xEFC60000U;
@@ -396,18 +394,19 @@ private:
 template<unsigned int stride>
 struct mt19937_octo_engine_accessor
 {
-    MT_FQUALIFIERS explicit mt19937_octo_engine_accessor(unsigned int* _engines) : engines(_engines)
+    __forceinline__ __device__ explicit mt19937_octo_engine_accessor(unsigned int* _engines)
+        : engines(_engines)
     {}
 
     /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
     /// access
-    MT_FQUALIFIERS unsigned int load_value(unsigned int engine_id, unsigned int i) const
+    __forceinline__ __device__ unsigned int load_value(unsigned int engine_id, unsigned int i) const
     {
         return engines[i * stride + engine_id];
     }
 
     /// Load the octo engine from global memory with coalesced access
-    MT_FQUALIFIERS mt19937_octo_engine load(unsigned int engine_id) const
+    __forceinline__ __device__ mt19937_octo_engine load(unsigned int engine_id) const
     {
         mt19937_octo_engine engine;
 #pragma unroll
@@ -419,7 +418,8 @@ struct mt19937_octo_engine_accessor
     }
 
     /// Save the octo engine to global memory with coalesced access
-    MT_FQUALIFIERS void save(unsigned int engine_id, const mt19937_octo_engine& engine) const
+    __forceinline__ __device__ void save(unsigned int               engine_id,
+                                         const mt19937_octo_engine& engine) const
     {
 #pragma unroll
         for(unsigned int i = 0; i < mt19937_constants::n / threads_per_generator; i++)
@@ -435,6 +435,6 @@ private:
     unsigned int* engines;
 };
 
-} // end namespace rocrand_host::detail
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_MT19937_OCTO_ENGINE_H_

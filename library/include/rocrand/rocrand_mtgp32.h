@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,10 +56,6 @@
 #define ROCRAND_MTGP32_H_
 
 #include <stdlib.h>
-
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS_
 
 #include "rocrand/rocrand.h"
 #include "rocrand/rocrand_common.h"
@@ -152,17 +148,16 @@ void rocrand_mtgp32_init_state(unsigned int array[],
 class mtgp32_engine
 {
 public:
-    FQUALIFIERS
-    // Initialization is not supported for __shared__ variables
-    mtgp32_engine() // cppcheck-suppress uninitMemberVar
+    __forceinline__ __device__ __host__
+        // Initialization is not supported for __shared__ variables
+        mtgp32_engine() // cppcheck-suppress uninitMemberVar
     {
 
     }
 
-    FQUALIFIERS
-    mtgp32_engine(const mtgp32_state &m_state,
-                  const mtgp32_params * params,
-                  int bid)
+    __forceinline__ __device__ __host__ mtgp32_engine(const mtgp32_state&  m_state,
+                                                      const mtgp32_params* params,
+                                                      int                  bid)
     {
         this->m_state = m_state;
         pos_tbl = params->pos_tbl[bid];
@@ -176,8 +171,7 @@ public:
         }
     }
 
-    FQUALIFIERS
-    void copy(const mtgp32_engine * m_engine)
+    __forceinline__ __device__ __host__ void copy(const mtgp32_engine* m_engine)
     {
 #if defined(__HIP_DEVICE_COMPILE__)
         const unsigned int thread_id = threadIdx.x;
@@ -214,8 +208,7 @@ public:
 #endif
     }
 
-    FQUALIFIERS
-    void set_params(mtgp32_params * params)
+    __forceinline__ __device__ __host__ void set_params(mtgp32_params* params)
     {
         pos_tbl = params->pos_tbl[m_state.id];
         sh1_tbl = params->sh1_tbl[m_state.id];
@@ -228,31 +221,20 @@ public:
         }
     }
 
-    FQUALIFIERS
-    unsigned int operator()()
+    __forceinline__ __device__ __host__ unsigned int operator()()
     {
         return this->next();
     }
 
-    FQUALIFIERS
-    unsigned int next()
+    __forceinline__ __device__ __host__ unsigned int next()
     {
-#if defined(__HIP_DEVICE_COMPILE__)
-        unsigned int t   = threadIdx.x;
-        unsigned int d   = blockDim.x;
-        int pos = pos_tbl;
-        unsigned int r;
-        unsigned int o;
-
-        r = para_rec(m_state.status[(t + m_state.offset) & MTGP_MASK],
-                     m_state.status[(t + m_state.offset + 1) & MTGP_MASK],
-                     m_state.status[(t + m_state.offset + pos) & MTGP_MASK]);
-        m_state.status[(t + m_state.offset + MTGP_N) & MTGP_MASK] = r;
-
-        o = temper(r, m_state.status[(t + m_state.offset + pos - 1) & MTGP_MASK]);
+#ifdef __HIP_DEVICE_COMPILE__
+        unsigned int o = next_thread(threadIdx.x);
         __syncthreads();
-        if (t == 0)
-            m_state.offset = (m_state.offset + d) & MTGP_MASK;
+        if(threadIdx.x == 0)
+        {
+            m_state.offset = (m_state.offset + blockDim.x) & MTGP_MASK;
+        }
         __syncthreads();
         return o;
 #else
@@ -260,8 +242,7 @@ public:
 #endif
     }
 
-    FQUALIFIERS
-    unsigned int next_single()
+    __forceinline__ __device__ __host__ unsigned int next_single()
     {
 #if defined(__HIP_DEVICE_COMPILE__)
         unsigned int t   = threadIdx.x;
@@ -287,8 +268,8 @@ public:
     }
 
 private:
-    FQUALIFIERS
-    unsigned int para_rec(unsigned int X1, unsigned int X2, unsigned int Y) const
+    __forceinline__ __device__ __host__ unsigned int
+        para_rec(unsigned int X1, unsigned int X2, unsigned int Y) const
     {
         unsigned int X = (X1 & mask) ^ X2;
         unsigned int MAT;
@@ -299,8 +280,7 @@ private:
         return Y ^ MAT;
     }
 
-    FQUALIFIERS
-    unsigned int temper(unsigned int V, unsigned int T) const
+    __forceinline__ __device__ __host__ unsigned int temper(unsigned int V, unsigned int T) const
     {
         unsigned int MAT;
 
@@ -310,8 +290,8 @@ private:
         return V ^ MAT;
     }
 
-    FQUALIFIERS
-    unsigned int temper_single(unsigned int V, unsigned int T) const 
+    __forceinline__ __device__ __host__ unsigned int temper_single(unsigned int V,
+                                                                   unsigned int T) const
     {
         unsigned int MAT;
         unsigned int r;
@@ -321,6 +301,19 @@ private:
         MAT = single_temper_tbl[T & 0x0f];
         r = (V >> 9) ^ MAT;
         return r;
+    }
+
+protected:
+    /// \brief Generate the next value for thread `thread_idx` and modify state in the process,
+    ///   do not update offset.
+    __forceinline__ __device__ __host__ unsigned int next_thread(unsigned int thread_idx)
+    {
+        const unsigned int r
+            = para_rec(m_state.status[(thread_idx + m_state.offset) & MTGP_MASK],
+                       m_state.status[(thread_idx + m_state.offset + 1) & MTGP_MASK],
+                       m_state.status[(thread_idx + m_state.offset + pos_tbl) & MTGP_MASK]);
+        m_state.status[(thread_idx + m_state.offset + MTGP_N) & MTGP_MASK] = r;
+        return temper(r, m_state.status[(thread_idx + m_state.offset + pos_tbl - 1) & MTGP_MASK]);
     }
 
 public:
@@ -355,9 +348,9 @@ typedef rocrand_device::mtgp32_params mtgp32_params;
  * \brief Initializes MTGP32 states
  *
  * Initializes MTGP32 states on the host-side by allocating a state array in host
- * memory, initializes that array, and copies the result to device memory.
+ * memory, initializes that array, and copies the result to device or host memory.
  *
- * \param d_state - Pointer to an array of states in device memory
+ * \param state - Pointer to an array of states in device or host memory
  * \param params - Pointer to an array of type mtgp32_fast_params in host memory
  * \param n - Number of states to initialize
  * \param seed - Seed value
@@ -366,11 +359,10 @@ typedef rocrand_device::mtgp32_params mtgp32_params;
  * - ROCRAND_STATUS_ALLOCATION_FAILED if states could not be initialized
  * - ROCRAND_STATUS_SUCCESS if states are initialized
  */
-__host__ inline
-rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
-                                         mtgp32_fast_params params[],
-                                         int n,
-                                         unsigned long long seed)
+__host__ inline rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32* state,
+                                                         mtgp32_fast_params    params[],
+                                                         int                   n,
+                                                         unsigned long long    seed)
 {
     int i;
     rocrand_state_mtgp32 * h_state = (rocrand_state_mtgp32 *) malloc(sizeof(rocrand_state_mtgp32) * n);
@@ -395,7 +387,7 @@ rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32 * d_state,
     }
 
     const hipError_t error
-        = hipMemcpy(d_state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyHostToDevice);
+        = hipMemcpy(state, h_state, sizeof(rocrand_state_mtgp32) * n, hipMemcpyDefault);
     free(h_state);
 
     if(error != hipSuccess)
@@ -500,8 +492,7 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_p
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand(rocrand_state_mtgp32 * state)
+__forceinline__ __device__ unsigned int rocrand(rocrand_state_mtgp32* state)
 {
     return state->next();
 }
@@ -537,8 +528,8 @@ unsigned int rocrand(rocrand_state_mtgp32 * state)
  * \param dest - Pointer to a state to copy to
  *
  */
-FQUALIFIERS
-void rocrand_mtgp32_block_copy(rocrand_state_mtgp32 * src, rocrand_state_mtgp32 * dest)
+__forceinline__ __device__ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* src,
+                                                          rocrand_state_mtgp32* dest)
 {
     dest->copy(src);
 }
@@ -549,8 +540,8 @@ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32 * src, rocrand_state_mtgp32 
  * \param state - Pointer to a MTGP32 state
  * \param params - Pointer to new parameters
  */
-FQUALIFIERS
-void rocrand_mtgp32_set_params(rocrand_state_mtgp32 * state, mtgp32_params * params)
+__forceinline__ __device__ void rocrand_mtgp32_set_params(rocrand_state_mtgp32* state,
+                                                          mtgp32_params*        params)
 {
     state->set_params(params);
 }

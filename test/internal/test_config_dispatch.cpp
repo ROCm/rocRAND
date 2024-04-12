@@ -23,15 +23,15 @@
 #include "test_common.hpp"
 #include <gtest/gtest.h>
 
-__global__ void write_target_arch(rocrand_host::detail::target_arch* dest_arch)
+__global__ void write_target_arch(rocrand_impl::host::target_arch* dest_arch)
 {
-    constexpr auto arch = rocrand_host::detail::get_device_arch();
+    constexpr auto arch = rocrand_impl::host::get_device_arch();
     *dest_arch          = arch;
 }
 
 static constexpr rocrand_rng_type dummy_rng_type = rocrand_rng_type(0);
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 template<class T>
@@ -55,10 +55,10 @@ struct generator_config_defaults<dummy_rng_type, half>
     static constexpr inline unsigned int blocks  = 7;
 };
 
-} // end namespace rocrand_host::detail
+} // namespace rocrand_impl::host
 
 template<class T,
-         unsigned int BlockSize = rocrand_host::detail::default_config_provider<
+         unsigned int BlockSize = rocrand_impl::host::default_config_provider<
                                       dummy_rng_type>::template device_config<T>(true)
                                       .threads>
 __global__ __launch_bounds__(BlockSize) void write_config(unsigned int* block_size,
@@ -75,26 +75,26 @@ TEST(rocrand_config_dispatch_tests, host_matches_device)
 {
     const hipStream_t stream = 0;
 
-    rocrand_host::detail::target_arch host_arch;
-    HIP_CHECK(rocrand_host::detail::get_device_arch(stream, host_arch));
+    rocrand_impl::host::target_arch host_arch;
+    HIP_CHECK(rocrand_impl::host::get_device_arch(stream, host_arch));
 
-    rocrand_host::detail::target_arch* device_arch_ptr;
+    rocrand_impl::host::target_arch* device_arch_ptr;
     HIP_CHECK(hipMallocHelper(&device_arch_ptr, sizeof(*device_arch_ptr)));
 
     hipLaunchKernelGGL(write_target_arch, dim3(1), dim3(1), 0, stream, device_arch_ptr);
     HIP_CHECK(hipGetLastError());
 
-    rocrand_host::detail::target_arch device_arch;
+    rocrand_impl::host::target_arch device_arch;
     HIP_CHECK(hipMemcpy(&device_arch, device_arch_ptr, sizeof(device_arch), hipMemcpyDeviceToHost));
 
-    ASSERT_NE(host_arch, rocrand_host::detail::target_arch::invalid);
+    ASSERT_NE(host_arch, rocrand_impl::host::target_arch::invalid);
     ASSERT_EQ(host_arch, device_arch);
 }
 
 TEST(rocrand_config_dispatch_tests, parse_common_architectures)
 {
-    using rocrand_host::detail::parse_gcn_arch;
-    using rocrand_host::detail::target_arch;
+    using rocrand_impl::host::parse_gcn_arch;
+    using rocrand_impl::host::target_arch;
 
     ASSERT_EQ(parse_gcn_arch(""), target_arch::unknown);
     ASSERT_EQ(parse_gcn_arch("not a gfx arch"), target_arch::unknown);
@@ -117,8 +117,8 @@ TEST(rocrand_config_dispatch_tests, get_config_on_host_and_device)
     HIP_CHECK(hipMallocHelper(&d_block_size, sizeof(*d_block_size)));
     HIP_CHECK(hipMallocHelper(&d_grid_size, sizeof(*d_grid_size)));
 
-    rocrand_host::detail::generator_config config{};
-    const hipError_t error = rocrand_host::detail::get_generator_config<dummy_rng_type, T>(
+    rocrand_impl::host::generator_config config{};
+    const hipError_t error = rocrand_impl::host::get_generator_config<dummy_rng_type, T>(
         stream,
         ROCRAND_ORDERING_PSEUDO_DEFAULT,
         config);
@@ -147,7 +147,7 @@ TEST(rocrand_config_dispatch_tests, get_config_on_host_and_device)
 #ifdef USE_DEVICE_DISPATCH
 TEST(rocrand_config_dispatch_tests, device_id_from_stream)
 {
-    using rocrand_host::detail::get_device_from_stream;
+    using rocrand_impl::host::get_device_from_stream;
     hipDevice_t device_id;
     HIP_CHECK(hipGetDevice(&device_id));
 
@@ -175,17 +175,17 @@ template<class ConfigProvider>
 __global__ void least_common_grid_size_kernel(unsigned int*    least_common_grid_size,
                                               rocrand_ordering order)
 {
-    *least_common_grid_size = rocrand_host::detail::get_least_common_grid_size<ConfigProvider>(
-        rocrand_host::detail::is_ordering_dynamic(order));
+    *least_common_grid_size = rocrand_impl::host::get_least_common_grid_size<ConfigProvider>(
+        rocrand_impl::host::is_ordering_dynamic(order));
 }
 
 TEST(rocrand_config_dispatch_tests, default_config_provider)
 {
-    using config_provider = rocrand_host::detail::default_config_provider<dummy_rng_type>;
+    using config_provider = rocrand_impl::host::default_config_provider<dummy_rng_type>;
     static constexpr hipStream_t      default_stream = 0;
     static constexpr rocrand_ordering ordering       = ROCRAND_ORDERING_PSEUDO_DEFAULT;
 
-    rocrand_host::detail::generator_config config{};
+    rocrand_impl::host::generator_config config{};
     ASSERT_EQ(config_provider::host_config<unsigned int>(default_stream, ordering, config),
               hipSuccess);
     ASSERT_EQ(config.blocks, 1);
@@ -198,9 +198,9 @@ TEST(rocrand_config_dispatch_tests, default_config_provider)
 
     unsigned int least_common_grid_size{};
     ASSERT_EQ(
-        rocrand_host::detail::get_least_common_grid_size<config_provider>(default_stream,
-                                                                          ordering,
-                                                                          least_common_grid_size),
+        rocrand_impl::host::get_least_common_grid_size<config_provider>(default_stream,
+                                                                        ordering,
+                                                                        least_common_grid_size),
         hipSuccess);
     ASSERT_EQ(least_common_grid_size, 512 * 2 * 7);
 
@@ -233,7 +233,7 @@ __global__ void config_selector_kernel(unsigned int* output)
     }
 }
 
-namespace rocrand_host::detail
+namespace rocrand_impl::host
 {
 
 template<>
@@ -252,7 +252,7 @@ struct generator_config_selector<dummy_rng_type, unsigned short>
     }
 };
 
-} // namespace rocrand_host::detail
+} // namespace rocrand_impl::host
 
 TEST(rocrand_config_dispatch_tests, config_selection)
 {
@@ -260,9 +260,9 @@ TEST(rocrand_config_dispatch_tests, config_selection)
     constexpr std::size_t size = 2;
     HIP_CHECK(hipMallocHelper(&d_output, size * sizeof(*d_output)));
 
-    using config_provider_t = rocrand_host::detail::default_config_provider<dummy_rng_type>;
+    using config_provider_t = rocrand_impl::host::default_config_provider<dummy_rng_type>;
     config_provider_t                      config_provider{};
-    rocrand_host::detail::generator_config config{};
+    rocrand_impl::host::generator_config   config{};
 
     static constexpr hipStream_t      default_stream = 0;
     static constexpr rocrand_ordering ordering       = ROCRAND_ORDERING_PSEUDO_DYNAMIC;

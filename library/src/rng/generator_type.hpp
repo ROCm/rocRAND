@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -72,13 +72,16 @@ struct rocrand_generator_base_type
     // clang-format on
 };
 
+namespace rocrand_impl::host
+{
+
 /// This wrapper provides support for the different types of generator functions,
 /// while calling into a generic function in the actual generator implementation.
 /// This saves us to write the same code for the distributions every time.
 template<typename Generator>
-struct rocrand_generator_type : rocrand_generator_base_type
+struct generator_type : rocrand_generator_base_type
 {
-    rocrand_generator_type() : m_generator() {}
+    generator_type() : m_generator() {}
 
     rocrand_rng_type type() const override final
     {
@@ -229,15 +232,13 @@ private:
 /// \brief This type provides some default implementations for the methods
 /// that are required by the `Generator` parameter of `rocrand_generator`.
 /// It can be used, but it is not required. It only exists as utility.
-struct rocrand_generator_impl_base
+struct generator_impl_base
 {
-    rocrand_generator_impl_base(rocrand_ordering   order,
-                                unsigned long long offset,
-                                hipStream_t        stream)
+    generator_impl_base(rocrand_ordering order, unsigned long long offset, hipStream_t stream)
         : m_order(order), m_offset(offset), m_stream(stream)
     {}
 
-    virtual ~rocrand_generator_impl_base() = default;
+    virtual ~generator_impl_base() = default;
 
     virtual void reset() = 0;
 
@@ -288,5 +289,7 @@ protected:
     unsigned long long m_offset;
     hipStream_t        m_stream;
 };
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_GENERATOR_TYPE_H_

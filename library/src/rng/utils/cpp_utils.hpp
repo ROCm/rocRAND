@@ -37,7 +37,7 @@
 #include <cassert>
 #include <cstddef>
 
-namespace cpp_utils
+namespace rocrand_impl::cpp_utils
 {
 
 /// \brief Invoke a function on each element of a \c std::tuple separately.
@@ -249,6 +249,6 @@ struct vec_wrapper
 template<class V>
 __host__ __device__ vec_wrapper(V) -> vec_wrapper<V>;
 
-} // end namespace cpp_utils
+} // end namespace rocrand_impl::cpp_utils
 
 #endif // ROCRAND_RNG_CPP_UTILS_HPP_
