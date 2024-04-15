@@ -39,7 +39,7 @@
 
 #include <algorithm>
 #if defined(ROCRAND_PARALLEL_STL) && __has_include(<execution>)
-#define ROCRAND_USE_PARALLEL_STL
+    #define ROCRAND_USE_PARALLEL_STL
     #include <execution>
 #endif
 #include <new>
