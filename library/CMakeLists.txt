@@ -120,6 +120,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 else()
     target_link_libraries(rocrand PRIVATE hip::device)
+    target_link_libraries(rocrand PUBLIC hip::host)
 endif()
 
 if(NOT WIN32)
