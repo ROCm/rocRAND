@@ -1087,7 +1087,7 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<> m_poisson;
+    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !std::is_same<System, rocrand_system_device>::value> m_poisson;
 
     /// Number of independent generators. Value changes generated number stream.
     unsigned int m_generator_count = 0;
