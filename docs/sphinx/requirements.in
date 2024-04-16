@@ -1,6 +1,2 @@
-<<<<<<< HEAD
-rocm-docs-core==0.38.1
-=======
 rocm-docs-core[api_reference]==0.38.1
->>>>>>> 604f27f (Bump rocm-docs-core[api_reference] from 0.38.0 to 0.38.1 in /docs/sphinx (#475))
 numpy

@@ -100,11 +100,7 @@ requests==2.31.0
     # via
     #   pygithub
     #   sphinx
-<<<<<<< HEAD
-rocm-docs-core==0.38.1
-=======
 rocm-docs-core[api-reference]==0.38.1
->>>>>>> 604f27f (Bump rocm-docs-core[api_reference] from 0.38.0 to 0.38.1 in /docs/sphinx (#475))
     # via -r requirements.in
 smmap==5.0.1
     # via gitdb
