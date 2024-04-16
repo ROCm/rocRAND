@@ -3,10 +3,17 @@
 root: index
 subtrees:
   - entries:
+    - file: what-is-rocrand
     - file: installing
-    - file: programmers_guide
-    - file: cpp_api
-    - file: python_api
+    - file: programmers-guide
+    - file: api-reference-home
+      title: API reference
+      subtrees:
+      - entries:
+        - file: cpp-api
+        - file: python-api
+        - file: curand-compatibility
+        - file: doxygen/html/index
   - caption: About
     entries:
     - file: license
