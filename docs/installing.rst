@@ -16,7 +16,7 @@ This chapter describes how to obtain rocRAND. There are two main methods: the ea
 Prebuilt packages
 -----------------
 
-Installing the prebuilt rocRAND packages requires a ROCm-enabled platform. See the `ROCm documentation <https://docs.amd.com/>`_ for more information. After installing ROCm or enabling the ROCm repositories, rocRAND can be obtained using the system package manager.
+Installing the prebuilt rocRAND packages requires a ROCm-enabled platform. See the `ROCm documentation <https://rocm.docs.amd.com/>`_ for more information. After installing ROCm or enabling the ROCm repositories, rocRAND can be obtained using the system package manager.
 
 For Ubuntu and Debian::
 
@@ -38,7 +38,7 @@ Building rocRAND from source
 Obtaining sources
 ^^^^^^^^^^^^^^^^^
 
-The rocRAND sources are available from the `rocRAND GitHub Repository <https://github.com/ROCmSoftwarePlatform/rocRAND>`_. Use the branch that matches the system-installed version of ROCm. For example on a system that has ROCm 5.3 installed, use the following command to obtain rocRAND sources::
+The rocRAND sources are available from the `rocRAND GitHub Repository <https://github.com/ROCm/rocRAND>`_. Use the branch that matches the system-installed version of ROCm. For example on a system that has ROCm 5.3 installed, use the following command to obtain rocRAND sources::
 
     git checkout -b rocm-5.3 https://github.com/ROCmSoftwarePlatform/rocRAND.git
 
