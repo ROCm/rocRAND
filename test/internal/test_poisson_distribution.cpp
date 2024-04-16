@@ -86,9 +86,9 @@ TEST_P(poisson_distribution_tests, histogram_compare)
 {
     const double lambda = GetParam();
 
-    std::random_device                      rd;
-    std::mt19937                            gen(rd());
-    std::poisson_distribution<unsigned int> host_dis(lambda);
+    const unsigned int seed = std::random_device{}();
+    SCOPED_TRACE(testing::Message() << "with seed = " << seed);
+    std::mt19937 gen(seed);
 
     poisson_distribution<DISCRETE_METHOD_ALIAS, true> dis;
     dis.set_lambda(lambda);
@@ -96,18 +96,7 @@ TEST_P(poisson_distribution_tests, histogram_compare)
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
     const size_t bin_size      = static_cast<size_t>(std::max(2.0, sqrt(lambda)));
     const size_t bins_count    = static_cast<size_t>((2.0 * lambda + 10.0) / bin_size);
-    std::vector<unsigned int> historgram0(bins_count);
-    std::vector<unsigned int> historgram1(bins_count);
-
-    for(size_t si = 0; si < samples_count; si++)
-    {
-        const unsigned int v   = host_dis(gen);
-        const size_t       bin = v / bin_size;
-        if(bin < bins_count)
-        {
-            historgram0[bin]++;
-        }
-    }
+    std::vector<unsigned int> histogram_rocrand(bins_count);
 
     for(size_t si = 0; si < samples_count; si++)
     {
@@ -115,18 +104,52 @@ TEST_P(poisson_distribution_tests, histogram_compare)
         const size_t       bin = v / bin_size;
         if(bin < bins_count)
         {
-            historgram1[bin]++;
+            histogram_rocrand[bin]++;
         }
     }
 
     dis.deallocate();
 
-    // Very loose comparison
-    for(size_t bi = 0; bi < bins_count; bi++)
+    // for small lambda, histogram test is inaccurate due to relatively large bins
+    // for large lambda, expected value calculation is inaccurate due to non-finite terms
+    if(lambda <= 50.0)
     {
-        const unsigned int h0 = historgram0[bi];
-        const unsigned int h1 = historgram1[bi];
-        EXPECT_NEAR(h0, h1, std::max(samples_count * 1e-3, std::max(h0, h1) * 1e-1));
+        for(size_t bi = 0; bi < bins_count; bi++)
+        {
+            const unsigned int h   = histogram_rocrand[bi];
+            double             tmp = 0.0;
+            for(size_t i = 0; i < bin_size; ++i)
+            {
+                const int k = bi * bin_size + i;
+                tmp += std::pow(lambda, k) * std::exp(-lambda) / std::tgamma(k + 1.0);
+            }
+            const unsigned int actual = std::roundl(samples_count * tmp);
+
+            // Very loose comparison
+            EXPECT_NEAR(h, actual, std::max(samples_count * 1e-3, actual * 1e-1));
+        }
+    }
+    else
+    {
+        std::poisson_distribution<unsigned int> host_dis(lambda);
+        std::vector<unsigned int>               histogram_stl(bins_count);
+        for(size_t si = 0; si < samples_count; si++)
+        {
+            const unsigned int v   = host_dis(gen);
+            const size_t       bin = v / bin_size;
+            if(bin < bins_count)
+            {
+                histogram_stl[bin]++;
+            }
+        }
+
+        // Very loose comparison
+        for(size_t bi = 0; bi < bins_count; bi++)
+        {
+            const unsigned int h0 = histogram_rocrand[bi];
+            const unsigned int h1 = histogram_stl[bi];
+            EXPECT_NEAR(h0, h1, std::max(samples_count * 1e-3, std::max(h0, h1) * 1e-1));
+        }
     }
 }
 
