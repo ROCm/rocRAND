@@ -738,10 +738,10 @@ TYPED_TEST(mt19937_generator_engine_tests, subsequence_test)
     // dummy config provider, kernel just needs to verify the amount of generators for the actual call
     using ConfigProvider = default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
 
-    rocrand_status status = rocrand_system_device::template launch<
-        rocrand_host::detail::
+    rocrand_status status = rocrand_impl::system::device_system::template launch<
+        rocrand_impl::host::
             jump_ahead_mt19937<generator_t::jump_ahead_thread_count, ConfigProvider, false>,
-        rocrand_host::detail::static_block_size_config_provider<
+        rocrand_impl::host::static_block_size_config_provider<
             generator_t::jump_ahead_thread_count>>(dim3(generator_count),
                                                    dim3(generator_t::jump_ahead_thread_count),
                                                    0,
@@ -1155,15 +1155,15 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
     unsigned int* d_engines1{};
     HIP_CHECK(hipMalloc(&d_engines1, generator_count * n * sizeof(unsigned int)));
 
-    rocrand_host::detail::dynamic_dispatch(
+    rocrand_impl::host::dynamic_dispatch(
         ROCRAND_ORDERING_PSEUDO_DEFAULT,
         [&](auto is_dynamic)
         {
-            rocrand_status status = rocrand_system_device::template launch<
-                rocrand_host::detail::jump_ahead_mt19937<generator_t::jump_ahead_thread_count,
+            rocrand_status status = rocrand_impl::system::device_system::template launch<
+                rocrand_impl::host::jump_ahead_mt19937<generator_t::jump_ahead_thread_count,
                                                          ConfigProvider,
                                                          is_dynamic>,
-                rocrand_host::detail::static_block_size_config_provider<
+                rocrand_impl::host::static_block_size_config_provider<
                     generator_t::jump_ahead_thread_count>>(
                 dim3(generator_count),
                 dim3(generator_t::jump_ahead_thread_count),

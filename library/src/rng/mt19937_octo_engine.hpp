@@ -137,7 +137,7 @@ struct mt19937_octo_engine
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
     __forceinline__ __device__ __host__ void gather(const unsigned int engine[mt19937_constants::n],
-                                           dim3               thread_idx)
+                                                    dim3               thread_idx)
     {
         constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
@@ -574,13 +574,15 @@ private:
 template<unsigned int stride>
 struct mt19937_octo_engine_accessor
 {
-    __forceinline__ __device__ __host__ explicit mt19937_octo_engine_accessor(unsigned int* _engines)
+    __forceinline__
+        __device__ __host__ explicit mt19937_octo_engine_accessor(unsigned int* _engines)
         : engines(_engines)
     {}
 
     /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
     /// access
-    __forceinline__ __device__ __host__ unsigned int load_value(unsigned int engine_id, unsigned int i) const
+    __forceinline__ __device__ __host__ unsigned int load_value(unsigned int engine_id,
+                                                                unsigned int i) const
     {
         return engines[i * stride + engine_id];
     }
@@ -599,7 +601,7 @@ struct mt19937_octo_engine_accessor
 
     /// Save the octo engine to global memory with coalesced access
     __forceinline__ __device__ __host__ void save(unsigned int               engine_id,
-                                         const mt19937_octo_engine& engine) const
+                                                  const mt19937_octo_engine& engine) const
     {
 #pragma unroll
         for(unsigned int i = 0; i < mt19937_constants::n / threads_per_generator; i++)

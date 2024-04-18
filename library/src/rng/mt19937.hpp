@@ -665,13 +665,11 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     // clang-format on
 }
 
-} // end namespace rocrand_host::detail
-
 template<class System, class ConfigProvider>
-class rocrand_mt19937_template : public rocrand_generator_impl_base
+class mt19937_generator_template : public generator_impl_base
 {
 public:
-    using base_type        = rocrand_generator_impl_base;
+    using base_type        = generator_impl_base;
     using octo_engine_type = mt19937_octo_engine;
     using system_type      = System;
 
@@ -804,7 +802,7 @@ public:
         // Allocate device random number engines
         rocrand_status status = system_type::alloc(
             &m_engines,
-            m_generator_count * rocrand_host::detail::mt19937_constants::n * sizeof(unsigned int));
+            m_generator_count * mt19937_constants::n * sizeof(unsigned int));
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
@@ -812,7 +810,7 @@ public:
 
         unsigned int* d_engines{};
         status = system_type::alloc(&d_engines,
-                                    m_generator_count * rocrand_host::detail::mt19937_constants::n
+                                    m_generator_count * mt19937_constants::n
                                         * sizeof(unsigned int));
         if(status != ROCRAND_STATUS_SUCCESS)
         {
@@ -843,9 +841,9 @@ public:
             [&, this](auto is_dynamic)
             {
                 status = system_type::template launch<
-                    rocrand_host::detail::
+                    
                         jump_ahead_mt19937<jump_ahead_thread_count, ConfigProvider, is_dynamic>,
-                    rocrand_host::detail::static_block_size_config_provider<
+                    static_block_size_config_provider<
                         jump_ahead_thread_count>>(dim3(m_generator_count),
                                                   dim3(jump_ahead_thread_count),
                                                   0,
@@ -864,12 +862,12 @@ public:
         system_type::free(d_mt19937_jump);
 
         // This kernel is not actually tuned for ordering, but config is needed for device-side compile time check of the generator count
-        rocrand_host::detail::dynamic_dispatch(
+        dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)
             {
                 status = system_type::template launch<
-                    rocrand_host::detail::init_engines_mt19937<ConfigProvider, is_dynamic>>(
+                    init_engines_mt19937<ConfigProvider, is_dynamic>>(
                     dim3(config.blocks),
                     dim3(config.threads),
                     0,
@@ -915,7 +913,7 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
-        using vec_type = aligned_vec_type<T, output_width>;
+        using vec_type = rocrand_impl::aligned_vec_type<T, output_width>;
 
         const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
         const size_t    misalignment
@@ -960,7 +958,7 @@ public:
                 [&, this](auto is_dynamic)
                 {
                     status = system_type::template launch<
-                        rocrand_host::detail::generate_short_mt19937<ConfigProvider,
+                        generate_short_mt19937<ConfigProvider,
                                                                      is_dynamic,
                                                                      T,
                                                                      vec_type,
@@ -992,7 +990,7 @@ public:
                 [&, this](auto is_dynamic)
                 {
                     status = system_type::template launch<
-                        rocrand_host::detail::generate_long_mt19937<ConfigProvider,
+                        generate_long_mt19937<ConfigProvider,
                                                                     is_dynamic,
                                                                     T,
                                                                     vec_type,
@@ -1087,17 +1085,20 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<ROCRAND_DISCRETE_METHOD_ALIAS, !std::is_same<System, rocrand_system_device>::value> m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS,
+                                 !std::is_same<System, rocrand_impl::system::device_system>::value>
+        m_poisson;
 
     /// Number of independent generators. Value changes generated number stream.
     unsigned int m_generator_count = 0;
 };
 
-using rocrand_mt19937 = rocrand_mt19937_template<
-    rocrand_system_device,
+using mt19937_generator = mt19937_generator_template<
+    rocrand_impl::system::device_system,
     default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
-using rocrand_mt19937_host = rocrand_mt19937_template<
-    rocrand_system_host,
+template<bool UseHostFunc>
+using mt19937_generator_host = mt19937_generator_template<
+    rocrand_impl::system::host_system<UseHostFunc>,
     default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
 
 } // namespace rocrand_impl::host
