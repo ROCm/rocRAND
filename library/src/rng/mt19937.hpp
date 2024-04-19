@@ -800,18 +800,18 @@ public:
             system_type::free(m_engines);
         }
         // Allocate device random number engines
-        rocrand_status status = system_type::alloc(
-            &m_engines,
-            m_generator_count * mt19937_constants::n * sizeof(unsigned int));
+        rocrand_status status
+            = system_type::alloc(&m_engines,
+                                 m_generator_count * mt19937_constants::n * sizeof(unsigned int));
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
         }
 
         unsigned int* d_engines{};
-        status = system_type::alloc(&d_engines,
-                                    m_generator_count * mt19937_constants::n
-                                        * sizeof(unsigned int));
+        status
+            = system_type::alloc(&d_engines,
+                                 m_generator_count * mt19937_constants::n * sizeof(unsigned int));
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
@@ -841,16 +841,16 @@ public:
             [&, this](auto is_dynamic)
             {
                 status = system_type::template launch<
-                    
-                        jump_ahead_mt19937<jump_ahead_thread_count, ConfigProvider, is_dynamic>,
-                    static_block_size_config_provider<
-                        jump_ahead_thread_count>>(dim3(m_generator_count),
-                                                  dim3(jump_ahead_thread_count),
-                                                  0,
-                                                  m_stream,
-                                                  d_engines,
-                                                  m_seed,
-                                                  d_mt19937_jump);
+
+                    jump_ahead_mt19937<jump_ahead_thread_count, ConfigProvider, is_dynamic>,
+                    static_block_size_config_provider<jump_ahead_thread_count>>(
+                    dim3(m_generator_count),
+                    dim3(jump_ahead_thread_count),
+                    0,
+                    m_stream,
+                    d_engines,
+                    m_seed,
+                    d_mt19937_jump);
             });
         if(status != ROCRAND_STATUS_SUCCESS)
         {
@@ -862,19 +862,18 @@ public:
         system_type::free(d_mt19937_jump);
 
         // This kernel is not actually tuned for ordering, but config is needed for device-side compile time check of the generator count
-        dynamic_dispatch(
-            m_order,
-            [&, this](auto is_dynamic)
-            {
-                status = system_type::template launch<
-                    init_engines_mt19937<ConfigProvider, is_dynamic>>(
-                    dim3(config.blocks),
-                    dim3(config.threads),
-                    0,
-                    m_stream,
-                    m_engines,
-                    d_engines);
-            });
+        dynamic_dispatch(m_order,
+                         [&, this](auto is_dynamic)
+                         {
+                             status = system_type::template launch<
+                                 init_engines_mt19937<ConfigProvider, is_dynamic>>(
+                                 dim3(config.blocks),
+                                 dim3(config.threads),
+                                 0,
+                                 m_stream,
+                                 m_engines,
+                                 d_engines);
+                         });
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             system_type::free(d_engines);
@@ -957,12 +956,11 @@ public:
                 m_order,
                 [&, this](auto is_dynamic)
                 {
-                    status = system_type::template launch<
-                        generate_short_mt19937<ConfigProvider,
-                                                                     is_dynamic,
-                                                                     T,
-                                                                     vec_type,
-                                                                     Distribution>>(
+                    status = system_type::template launch<generate_short_mt19937<ConfigProvider,
+                                                                                 is_dynamic,
+                                                                                 T,
+                                                                                 vec_type,
+                                                                                 Distribution>>(
                         dim3(config.blocks),
                         dim3(config.threads),
                         0,
@@ -989,12 +987,11 @@ public:
                 m_order,
                 [&, this](auto is_dynamic)
                 {
-                    status = system_type::template launch<
-                        generate_long_mt19937<ConfigProvider,
-                                                                    is_dynamic,
-                                                                    T,
-                                                                    vec_type,
-                                                                    Distribution>>(
+                    status = system_type::template launch<generate_long_mt19937<ConfigProvider,
+                                                                                is_dynamic,
+                                                                                T,
+                                                                                vec_type,
+                                                                                Distribution>>(
                         dim3(config.blocks),
                         dim3(config.threads),
                         0,
@@ -1093,13 +1090,13 @@ private:
     unsigned int m_generator_count = 0;
 };
 
-using mt19937_generator = mt19937_generator_template<
-    rocrand_impl::system::device_system,
-    default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
+using mt19937_generator
+    = mt19937_generator_template<rocrand_impl::system::device_system,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
 template<bool UseHostFunc>
-using mt19937_generator_host = mt19937_generator_template<
-    rocrand_impl::system::host_system<UseHostFunc>,
-    default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
+using mt19937_generator_host
+    = mt19937_generator_template<rocrand_impl::system::host_system<UseHostFunc>,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>>;
 
 } // namespace rocrand_impl::host
 

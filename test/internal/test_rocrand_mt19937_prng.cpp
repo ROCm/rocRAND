@@ -1161,8 +1161,8 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
         {
             rocrand_status status = rocrand_impl::system::device_system::template launch<
                 rocrand_impl::host::jump_ahead_mt19937<generator_t::jump_ahead_thread_count,
-                                                         ConfigProvider,
-                                                         is_dynamic>,
+                                                       ConfigProvider,
+                                                       is_dynamic>,
                 rocrand_impl::host::static_block_size_config_provider<
                     generator_t::jump_ahead_thread_count>>(
                 dim3(generator_count),
