@@ -44,6 +44,14 @@ Documentation for rocRAND is available at
 
 ### Changes
 
+* For device-side generators, you can now wrap calls to rocrand_generate_* inside of a hipGraph. There are a few 
+  things to be aware of:
+  - Generator creation (rocrand_create_generator), initialization (rocrand_initialize_generator), and destruction (rocrand_destroy_generator) must still happen outside the hipGraph.
+  - After the generator is created, you may call API functions to set its seed, offset, and order.
+  - After the generator is initialized (but before stream capture or manual graph creation begins), use rocrand_set_stream to set the stream the generator will use within the graph.
+  - A generator's seed, offset, and stream may not be changed from within the hipGraph. Attempting to do so may result in unpredicable behaviour.
+  - API calls for the poisson distribution (eg. rocrand_generate_poisson) are not yet supported inside of hipGraphs.
+  - For sample usage, see the unit tests in test/test_rocrand_hipgraphs.cpp
 * Building rocRAND now requires a C++17 capable compiler, as the internal library sources now require it. However consuming rocRAND is still possible from C++11 as public headers don't make use of the new features.
 * Building rocRAND should be faster on machines with multiple CPU cores as the library has been
   split to multiple compilation units.
