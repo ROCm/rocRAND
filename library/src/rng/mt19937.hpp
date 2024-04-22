@@ -56,6 +56,7 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "mt19937_octo_engine.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include "config/config_defaults.hpp"
 #include "config_types.hpp"
@@ -712,7 +713,7 @@ public:
         const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
         const size_t    misalignment
             = (output_width - uintptr / sizeof(T) % output_width) % output_width;
-        const unsigned int head_size = min(size, misalignment);
+        const unsigned int head_size = cpp_utils::min(size, misalignment);
         const unsigned int tail_size = (size - head_size) % output_width;
         const size_t       vec_size  = (size - head_size) / output_width;
 

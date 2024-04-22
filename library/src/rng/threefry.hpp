@@ -114,7 +114,7 @@ __host__ __device__ __forceinline__ void generate_threefry(dim3         block_id
     const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
     const size_t    misalignment
         = (full_output_width - uintptr / sizeof(T) % full_output_width) % full_output_width;
-    const unsigned int head_size = min(n, misalignment);
+    const unsigned int head_size = cpp_utils::min(n, misalignment);
     const unsigned int tail_size = (n - head_size) % full_output_width;
     const size_t       vec_n     = (n - head_size) / full_output_width;
 

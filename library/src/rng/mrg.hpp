@@ -29,6 +29,7 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_mrg31k3p.h>
@@ -91,7 +92,7 @@ __host__ __device__ __forceinline__ void generate_mrg(dim3 block_idx,
 
     const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
     const size_t misalignment = (output_width - uintptr / sizeof(T) % output_width) % output_width;
-    const unsigned int head_size = min(n, misalignment);
+    const unsigned int head_size    = cpp_utils::min(n, misalignment);
     const unsigned int tail_size = (n - head_size) % output_width;
     const size_t       vec_n     = (n - head_size) / output_width;
 

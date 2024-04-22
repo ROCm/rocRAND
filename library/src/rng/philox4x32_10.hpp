@@ -60,6 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_philox4x32_10.h>
@@ -130,7 +131,7 @@ __host__ __device__ __forceinline__ void generate_philox(dim3                   
     const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
     const size_t    misalignment
         = (full_output_width - uintptr / sizeof(T) % full_output_width) % full_output_width;
-    const unsigned int head_size = min(n, misalignment);
+    const unsigned int head_size = cpp_utils::min(n, misalignment);
     const unsigned int tail_size = (n - head_size) % full_output_width;
     const size_t       vec_n     = (n - head_size) / full_output_width;
 

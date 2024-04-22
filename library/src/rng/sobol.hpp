@@ -26,6 +26,7 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand_scrambled_sobol32.h>
 #include <rocrand/rocrand_scrambled_sobol64.h>
@@ -205,7 +206,7 @@ void generate_sobol_host(dim3               block_idx,
     {
         const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
         const size_t misalignment = (output_per_thread - uintptr / sizeof(T)) % output_per_thread;
-        const unsigned int head_size = min(n, misalignment);
+        const unsigned int head_size    = cpp_utils::min(n, misalignment);
         const unsigned int tail_size = (n - head_size) % output_per_thread;
         const size_t       vec_n     = (n - head_size) / output_per_thread;
 
