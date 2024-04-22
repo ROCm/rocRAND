@@ -48,6 +48,7 @@ enum class target_arch : unsigned int
     gfx908  = 908,
     gfx909  = 909,
     gfx90a  = 910,
+    gfx942  = 942,
     gfx1030 = 1030,
     gfx1100 = 1100,
     gfx1101 = 1101,
@@ -74,6 +75,8 @@ __host__ __device__ constexpr target_arch get_device_arch()
     return target_arch::gfx909;
 #elif defined(__gfx90a__)
     return target_arch::gfx90a;
+#elif defined(__gfx942__)
+    return target_arch::gfx942;
 #elif defined(__gfx1030__)
     return target_arch::gfx1030;
 #elif defined(__gfx1100__)
@@ -99,6 +102,7 @@ inline target_arch parse_gcn_arch(const std::string& arch_name)
                                                 "gfx908",
                                                 "gfx909",
                                                 "gfx90a",
+                                                "gfx942",
                                                 "gfx1030",
                                                 "gfx1100",
                                                 "gfx1101",
@@ -111,6 +115,7 @@ inline target_arch parse_gcn_arch(const std::string& arch_name)
         target_arch::gfx908,
         target_arch::gfx909,
         target_arch::gfx90a,
+        target_arch::gfx942,
         target_arch::gfx1030,
         target_arch::gfx1100,
         target_arch::gfx1101,
