@@ -69,10 +69,8 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake
 
-    - name: Configure environment variables for ROCm
+    - name: Check ROCm
       run: |
-        export ROCM_PATH=/opt/rocm
-        export CMAKE_PREFIX_PATH=/opt/rocm:/opt/rocm/bin:/opt/rocm/include:/opt/rocm/lib
         ls /opt/rocm -R
 
     # Initializes the CodeQL tools for scanning.
@@ -96,7 +94,9 @@ jobs:
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
     - if: matrix.build-mode == 'manual'
       run: |
-        echo 'Using "manual" build mode'
+        echo 'Using manual build mode'
+        export ROCM_PATH=/opt/rocm
+        export CMAKE_PREFIX_PATH=/opt/rocm:/opt/rocm/bin:/opt/rocm/include:/opt/rocm/lib
         echo 'Building library with install script'
         ./install --install
         exit 1
