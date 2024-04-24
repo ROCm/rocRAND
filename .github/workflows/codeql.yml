@@ -58,7 +58,7 @@ jobs:
         # your codebase is analyzed, see https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/codeql-code-scanning-for-compiled-languages
 
     container:
-      image: rocm/dev-ubuntu-22.04:6.1
+      image: rocm/dev-ubuntu-22.04:6.1-complete
 
     steps:
     - name: Checkout repository
