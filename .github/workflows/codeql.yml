@@ -72,7 +72,7 @@ jobs:
     - name: Configure environment variables for ROCm
       run: |
         export ROCM_PATH=/opt/rocm
-        export CMAKE_PREFIX_PATH=/opt/rocm
+        export CMAKE_PREFIX_PATH=/opt/rocm/bin
         ls /opt/rocm -R
 
     # Initializes the CodeQL tools for scanning.
