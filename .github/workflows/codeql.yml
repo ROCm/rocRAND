@@ -83,7 +83,6 @@ jobs:
       run: |
         echo 'Using "manual" build mode'
         echo 'Building library with install script'
-        cd rocRAND
         ./install --install
 
         exit 1
