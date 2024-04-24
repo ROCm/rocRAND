@@ -64,13 +64,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Check LD_PRELOAD file existence
-      run: |
-        if [ ! -f "/__t/CodeQL/2.17.0/x64/codeql/tools/linux64/${LIB}_${PLATFORM}_trace.so" ]; then
-          echo "Error: LD_PRELOAD file not found"
-          exit 1
-        fi
-
     - name: Install CMake
       run: sudo apt-get install cmake  # Adjust based on your package manager
 
