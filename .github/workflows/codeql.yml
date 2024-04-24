@@ -69,6 +69,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake
 
+    - name: Configure environment variables for ROCm
+      run: |
+        export ROCM_PATH=/opt/rocm
+        export CMAKE_PREFIX_PATH=/opt/rocm
+        ls /opt/rocm -R
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
