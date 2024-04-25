@@ -3,6 +3,12 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
+## rocRAND-3.0.1 for ROCm 6.1.0
+
+### Fixes
+
+* Implemented workaround for regressions in XORWOW and LFSR on MI200
+
 ## rocRAND-3.0.0 for ROCm 6.0.0
 
 ### Changes
