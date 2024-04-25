@@ -98,8 +98,12 @@ jobs:
         echo 'Configure environment variables for ROCm'
         export ROCM_PATH=/opt/rocm
         export CMAKE_PREFIX_PATH=/opt/rocm:/opt/rocm/bin:/opt/rocm/include:/opt/rocm/lib
-        echo 'Building library with install script'
-        ./install --install
+        echo 'Building library with CMake'
+        mkdir build
+        cd build
+        cmake -DCMAKE_CXX_COMPILER=hipcc -DCMAKE_PREFIX_PATH=/opt/rocm ..
+        cmake --build .
+        cmake --build . --target install
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
