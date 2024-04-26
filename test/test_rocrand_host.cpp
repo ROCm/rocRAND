@@ -69,14 +69,12 @@ constexpr rocrand_rng_type host_rng_types[] = {
 class rocrand_generate_host_test : public ::testing::TestWithParam<rocrand_rng_type>
 {};
 
-TEST_P(rocrand_generate_host_test, int_test)
+void test_int(const rocrand_rng_type rng_type, const size_t test_size)
 {
-    const rocrand_rng_type rng_type = GetParam();
-
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator_host(&generator, rng_type));
 
-    std::vector<unsigned int> results(11111);
+    std::vector<unsigned int> results(test_size);
     for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
     {
         const auto seed = i < seeds_count ? seeds[i] : rand();
@@ -101,6 +99,18 @@ TEST_P(rocrand_generate_host_test, int_test)
     }
 
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
+}
+
+TEST_P(rocrand_generate_host_test, int_test)
+{
+    test_int(GetParam(), 11111);
+}
+
+TEST_P(rocrand_generate_host_test, int_test_large)
+{
+    ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+    constexpr size_t large_test_size = size_t(INT_MAX) + 1;
+    test_int(GetParam(), large_test_size);
 }
 
 template<typename Type, typename F>
