@@ -56,8 +56,8 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "mt19937_octo_engine.hpp"
-#include "utils/cpp_utils.hpp"
 #include "system.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include "config/config_defaults.hpp"
 #include "config_types.hpp"
@@ -326,7 +326,7 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
 #if !defined(__HIP_DEVICE_COMPILE__)
     if(thread_idx.x % 8 != 0)
     {
-        return;
+            return;
     }
 #endif
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
@@ -453,7 +453,7 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
 #if !defined(__HIP_DEVICE_COMPILE__)
     if(thread_idx.x % 8 != 0)
     {
-        return;
+            return;
     }
 #endif
     constexpr generator_config config     = ConfigProvider::template device_config<T>(IsDynamic);
