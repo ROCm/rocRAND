@@ -1,3 +1,31 @@
+// BAD: using gmtime
+int is_morning_bad() {
+    const time_t now_seconds = time(NULL);
+    struct tm *now = gmtime(&now_seconds);
+    return (now->tm_hour < 12);
+}
+
+// GOOD: using gmtime_r
+int is_morning_good() {
+    const time_t now_seconds = time(NULL);
+    struct tm now;
+    gmtime_r(&now_seconds, &now);
+    return (now.tm_hour < 12);
+}
+
+void f() {
+	float i = 0.0f;
+	//wrong: float used as loop counter
+	for (i = 0; i < 1000000.0f; i++) { //may execute 1000000 +x/-x times
+		//...
+	}
+	for (i = 0; i < 100000000.0f; i++) { //may never terminate, as rounding errors 
+	                                     //cancel out the addition of 1.0 once 
+	                                     //i becomes large enough
+		//...
+	}
+}
+
 // Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
