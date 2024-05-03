@@ -22,14 +22,14 @@ Building the tuning benchmarks
 
 The principle of the tuning is very simple: the random number generation kernel is run for a list of kernel block size / kernel grid size combinations, and the fastest combination is selected as the dynamic ordering configuration for the particular device. rocRAND provides an executable target that runs the benchmarks with all these combinations: `benchmark_rocrand_tuning`. This target is disabled by default, and can be enabled and built by the following snippet.
 
-Use the `AMDGPU_TARGET` variable to specify the comma-separated list of GPU architectures to build the benchmarks for. To acquire the architecture of the GPU(s) installed, run `rocminfo`, and look for `gfx` in the "ISA Info" section. ::
+Use the `GPU_TARGETS` variable to specify the comma-separated list of GPU architectures to build the benchmarks for. To acquire the architecture of the GPU(s) installed, run `rocminfo`, and look for `gfx` in the "ISA Info" section. ::
 
     $ cd rocRAND
     $ cmake -S . -B ./build
         -D BUILD_BENCHMARK=ON
         -D BUILD_BENCHMARK_TUNING=ON
         -D CMAKE_CXX_COMPILER=/opt/rocm/bin/amdclang++
-        -D AMDGPU_TARGETS=gfx908
+        -D GPU_TARGETS=gfx908
     $ cmake --build build --target benchmark_rocrand_tuning
 
 Additionally, the following CMake cache variables control the generation of the benchmarked matrix:
