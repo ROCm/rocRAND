@@ -66,23 +66,76 @@ __host__ __device__ Engine create_engine(const Constant*           vectors,
     }
 };
 
+// Use compiler-defined macro to only define the kernel once, for host and device compilation.
+#ifdef __HIP_DEVICE_COMPILE__
 template<unsigned int OutputPerThread,
          bool         Scrambled,
          class Engine,
          class Constant,
          class T,
          class Distribution>
-__host__ __device__ void generate_sobol(dim3               block_idx,
-                                        dim3               thread_idx,
-                                        dim3               grid_dim,
-                                        dim3               block_dim,
-                                        T*                 data,
-                                        const size_t       n,
-                                        const Constant*    direction_vectors,
-                                        const Constant*    scramble_constants,
-                                        const unsigned int offset,
-                                        Distribution       distribution)
+void generate_sobol_host(dim3,
+                         dim3,
+                         dim3,
+                         dim3,
+                         T*,
+                         const size_t,
+                         const Constant*,
+                         const Constant*,
+                         const unsigned int,
+                         Distribution)
+{}
+
+template<unsigned int OutputPerThread,
+         bool         Scrambled,
+         class Engine,
+         class Constant,
+         class T,
+         class Distribution,
+         int block_size>
+__global__
+    __launch_bounds__(block_size) void generate_sobol_kernel(T*                 data,
+                                                             const size_t       n,
+                                                             const Constant*    direction_vectors,
+                                                             const Constant*    scramble_constants,
+                                                             const unsigned int offset,
+                                                             Distribution       distribution)
+#else
+template<unsigned int OutputPerThread,
+         bool         Scrambled,
+         class Engine,
+         class Constant,
+         class T,
+         class Distribution,
+         int block_size>
+__global__ __launch_bounds__(block_size) void generate_sobol_kernel(
+    T*, const size_t, const Constant*, const Constant*, const unsigned int, Distribution)
+{}
+
+template<unsigned int OutputPerThread,
+         bool         Scrambled,
+         class Engine,
+         class Constant,
+         class T,
+         class Distribution>
+void generate_sobol_host(dim3               block_idx,
+                         dim3               thread_idx,
+                         dim3               grid_dim,
+                         dim3               block_dim,
+                         T*                 data,
+                         const size_t       n,
+                         const Constant*    direction_vectors,
+                         const Constant*    scramble_constants,
+                         const unsigned int offset,
+                         Distribution       distribution)
+#endif
 {
+#ifdef __HIP_DEVICE_COMPILE__
+    dim3 block_idx  = blockIdx;
+    dim3 thread_idx = threadIdx;
+    dim3 grid_dim   = gridDim;
+    dim3 block_dim  = blockDim;
+#endif
     constexpr unsigned int output_per_thread  = OutputPerThread;
     constexpr bool         use_shared_vectors = Engine::uses_shared_vectors();
     using vec_type                            = aligned_vec_type<T, output_per_thread>;
@@ -580,28 +633,54 @@ public:
         const uint32_t blocks_x = next_power2((blocks + m_dimensions - 1) / m_dimensions);
         const uint32_t blocks_y = m_dimensions;
 
-        using block_size_provider = static_block_size_config_provider<threads>;
-
-        status = system_type::template launch<generate_sobol<output_per_thread,
-                                                             Scrambled,
-                                                             engine_type,
-                                                             constant_type,
-                                                             T,
-                                                             Distribution>,
-                                              block_size_provider>(dim3(blocks_x, blocks_y),
-                                                                   dim3(threads),
-                                                                   shared_mem_bytes,
-                                                                   m_stream,
-                                                                   data,
-                                                                   size,
-                                                                   m_direction_vectors,
-                                                                   m_scramble_constants,
-                                                                   m_current_offset,
-                                                                   distribution);
-        // Check kernel status
-        if(status != ROCRAND_STATUS_SUCCESS)
+        // Bypass the generalized launching mechanism for host and device, as it would introduce a level of
+        //   indirection for the device (the __global__ function calls a __device__ function). This causes
+        //   a difference in the generated assembly, in turn causing a regression for the scrambled generators
+        //   on specific data types (e.g. uchar) and architectures (e.g. gfx908).
+        if constexpr(system_type::is_device())
         {
-            return status;
+            generate_sobol_kernel<output_per_thread,
+                                  Scrambled,
+                                  engine_type,
+                                  constant_type,
+                                  T,
+                                  Distribution,
+                                  threads>
+                <<<dim3(blocks_x, blocks_y), dim3(threads), shared_mem_bytes, m_stream>>>(
+                    data,
+                    size,
+                    m_direction_vectors,
+                    m_scramble_constants,
+                    m_current_offset,
+                    distribution);
+            if(hipGetLastError() != hipSuccess)
+            {
+                return ROCRAND_STATUS_LAUNCH_FAILURE;
+            }
+        }
+        else
+        {
+            using block_size_provider = static_block_size_config_provider<threads>;
+            status = system_type::template launch<generate_sobol_host<output_per_thread,
+                                                                      Scrambled,
+                                                                      engine_type,
+                                                                      constant_type,
+                                                                      T,
+                                                                      Distribution>,
+                                                  block_size_provider>(dim3(blocks_x, blocks_y),
+                                                                       dim3(threads),
+                                                                       shared_mem_bytes,
+                                                                       m_stream,
+                                                                       data,
+                                                                       size,
+                                                                       m_direction_vectors,
+                                                                       m_scramble_constants,
+                                                                       m_current_offset,
+                                                                       distribution);
+            if(status != ROCRAND_STATUS_SUCCESS)
+            {
+                return status;
+            }
         }
 
         m_current_offset += size;
