@@ -34,6 +34,9 @@ option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 option(CODE_COVERAGE "Build with code coverage flags (clang only)" OFF)
 option(DEPENDENCIES_FORCE_DOWNLOAD "Don't search the system for dependencies, always download them" OFF)
 
+# Install prefix
+set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
+
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
