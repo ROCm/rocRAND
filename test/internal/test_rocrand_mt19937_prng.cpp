@@ -749,12 +749,7 @@ TYPED_TEST(mt19937_generator_engine_tests, subsequence_test)
                                                    d_engines,
                                                    seed,
                                                    d_mt19937_jump);
-    if(status != ROCRAND_STATUS_SUCCESS)
-    {
-        std::cout << "rocRAND error code: " << status << " while calling: jump_ahead_mt19937"
-                  << std::endl;
-        exit(status);
-    }
+    ASSERT_EQ(status, ROCRAND_STATUS_SUCCESS);
 
     octo_engine_type* d_octo_engines{};
     HIP_CHECK(hipMalloc(&d_octo_engines,
@@ -1172,12 +1167,7 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
                 d_engines1,
                 seed,
                 d_mt19937_jump);
-            if(status != ROCRAND_STATUS_SUCCESS)
-            {
-                std::cout << "rocRAND error code: " << status
-                          << " while calling: jump_ahead_mt19937" << std::endl;
-                exit(status);
-            }
+            ASSERT_EQ(status, ROCRAND_STATUS_SUCCESS);
         });
 
     std::vector<unsigned int> h_engines1(generator_count * n);

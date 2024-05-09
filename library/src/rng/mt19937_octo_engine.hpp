@@ -220,19 +220,20 @@ struct mt19937_octo_engine
         m_state.mt[idx_i + j] = comp(m_state.mt[idx_i + j], last_dep, m_state.mt[idx_m + j]);
     }
 
-    static void comp_vector(unsigned int        idx_i,
-                            unsigned int        idx_m,
-                            unsigned int        last_dep_tid_7,
-                            mt19937_octo_engine thread_engines[8])
+    __host__ static void comp_vector(unsigned int idx_i,
+                                     unsigned int idx_m,
+                                     unsigned int last_dep_tid_7,
+                                     mt19937_octo_engine (&thread_engines)[8])
     {
+        static constexpr unsigned int numberOfLanes = 8;
         // communicate the dependency for the last value
-        unsigned int last_deps[8];
-        for(int i = 0; i < 8; ++i)
+        unsigned int last_deps[numberOfLanes];
+        for(unsigned int i = 0; i < numberOfLanes; ++i)
         {
             last_deps[i] = thread_engines[(i + 1) % 8].m_state.mt[idx_i];
         }
 
-        for(int i = 0; i < 8; ++i)
+        for(unsigned int i = 0; i < numberOfLanes; ++i)
         {
             // thread 7 needs a special value that does not fit the pattern
             unsigned int last_dep = i == 7 ? last_dep_tid_7 : last_deps[i];
@@ -401,7 +402,7 @@ struct mt19937_octo_engine
         comp_vector(tid, i568, i341, v000);
     }
 
-    static void gen_next_n(mt19937_octo_engine thread_engines[8])
+    static void gen_next_n(mt19937_octo_engine (&thread_engines)[8])
     {
         // compute eleven vectors that follow a regular pattern and compute
         // eight special values for a total of n new elements.

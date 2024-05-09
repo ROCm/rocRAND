@@ -89,7 +89,10 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                                                    unsigned long long seed,
                                                    const unsigned int* __restrict__ jump)
 {
-#if !defined(__HIP_DEVICE_COMPILE__)
+#if defined(__HIP_DEVICE_COMPILE__)
+    static constexpr bool isDevice = true;
+#else
+    static constexpr bool isDevice = false;
     if(thread_idx.x > 0)
     {
         return;
@@ -130,9 +133,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         }
     }
 
-#if defined(__HIP_DEVICE_COMPILE__)
-    __syncthreads();
-#endif
+    system::syncthreads<isDevice>{}();
 
     // clang-format off
     for(unsigned int i = 0; i < items_per_thread; i++)
@@ -154,9 +155,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
     }
     // clang-format on
 
-#if defined(__HIP_DEVICE_COMPILE__)
-    __syncthreads();
-#endif
+    system::syncthreads<isDevice>{}();
 
     const unsigned int engine_id = block_idx.x;
 
@@ -185,9 +184,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
         {
             temp[i] = 0;
         }
-#if defined(__HIP_DEVICE_COMPILE__)
-        __syncthreads();
-#endif
+        system::syncthreads<isDevice>{}();
 
         const unsigned int* pf
             = jump + (r * (mt19937_jumps_radix - 1) + radix - 1) * mt19937_p_size;
@@ -205,9 +202,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                     = (t0 & mt19937_constants::upper_mask) | (t1 & mt19937_constants::lower_mask);
                 temp[ptr] = tm ^ (y >> 1) ^ ((y & 0x1U) ? mt19937_constants::matrix_a : 0);
             }
-#if defined(__HIP_DEVICE_COMPILE__)
-            __syncthreads();
-#endif
+            system::syncthreads<isDevice>{}();
             ptr = wrap_n(ptr + 1);
 
             if((pf[pfi / 32] >> (pfi % 32)) & 1)
@@ -230,9 +225,7 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
                     }
 #endif
                 }
-#if defined(__HIP_DEVICE_COMPILE__)
-                __syncthreads();
-#endif
+                system::syncthreads<isDevice>{}();
             }
         }
 
@@ -253,9 +246,8 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
             }
 #if !defined(__HIP_DEVICE_COMPILE__)
         }
-#else
-        __syncthreads();
 #endif
+        system::syncthreads<isDevice>{}();
     }
 
     // Save state
@@ -495,7 +487,7 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
 #pragma unroll
     for(size_t i = 0; i < 8; ++i)
     {
-                    thread_engines[i] = accessor.load(block_idx.x * block_dim.x + thread_idx.x + i);
+        thread_engines[i] = accessor.load(block_idx.x * block_dim.x + thread_idx.x + i);
     }
 #endif
     // clang-format on
@@ -508,7 +500,6 @@ __host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
     if(start_input > 0)
     {
 #if !defined(__HIP_DEVICE_COMPILE__)
-#pragma unroll
         for(unsigned int warp_lane = 0; warp_lane < 8; warp_lane++)
         {
             auto&                input     = inputs[warp_lane];
