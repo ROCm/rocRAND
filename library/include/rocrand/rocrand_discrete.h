@@ -281,7 +281,7 @@ __forceinline__ __device__ unsigned int
     rocrand_discrete(rocrand_state_mtgp32*               state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -376,7 +376,7 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_lfsr113*              state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -395,7 +395,7 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry2x32_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -414,7 +414,7 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry2x64_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -433,7 +433,7 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry4x32_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /**
@@ -452,7 +452,7 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry4x64_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
-    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+    return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
 
 /** @} */ // end of group rocranddevice
