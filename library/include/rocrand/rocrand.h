@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
  */
 
 #include "rocrand/rocrand_discrete_types.h"
-#include "rocrand/rocrand_hip_cpu.h"
 
 #include <hip/hip_fp16.h>
 #include <hip/hip_runtime.h>
@@ -110,8 +109,9 @@ typedef enum rocrand_ordering
     ROCRAND_ORDERING_PSEUDO_DEFAULT = 101, ///< Default ordering for pseudorandom results
     ROCRAND_ORDERING_PSEUDO_SEEDED  = 102, ///< Fast lower quality pseudorandom results
     ROCRAND_ORDERING_PSEUDO_LEGACY  = 103, ///< Legacy ordering for pseudorandom results
-    ROCRAND_ORDERING_PSEUDO_DYNAMIC = 104, ///< Adjust to the device executing the generator
-    ROCRAND_ORDERING_QUASI_DEFAULT  = 201 ///< n-dimensional ordering for quasirandom results
+    ROCRAND_ORDERING_PSEUDO_DYNAMIC
+    = 104, ///< Adjust to the device executing the generator. The global memory usage may be higher than with the other orderings.
+    ROCRAND_ORDERING_QUASI_DEFAULT = 201 ///< n-dimensional ordering for quasirandom results
 } rocrand_ordering;
 
 /**
@@ -162,6 +162,50 @@ typedef enum rocrand_direction_vector_set
  */
 rocrand_status ROCRANDAPI
 rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_type);
+
+/**
+ * \brief Creates a new host random number generator.
+ *
+ * Creates a new pseudo random number generator of type \p rng_type
+ * and returns it in \p generator. This generator is executed on the host rather than
+ * on a device, and it is enqueued on the stream associated with the generator.
+ *
+ * Values for \p rng_type are:
+ * - ROCRAND_RNG_PSEUDO_XORWOW
+ * - ROCRAND_RNG_PSEUDO_MRG31K3P
+ * - ROCRAND_RNG_PSEUDO_MRG32K3A
+ * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
+ * - ROCRAND_RNG_PSEUDO_LFSR113
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
+ * - ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
+ * - ROCRAND_RNG_QUASI_SOBOL32
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
+ * - ROCRAND_RNG_QUASI_SOBOL64
+ * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
+ *
+ * \param generator - Pointer to generator
+ * \param rng_type - Type of generator to create
+ *
+ * \return
+ * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
+ * - ROCRAND_STATUS_VERSION_MISMATCH if the header file version does not match the
+ *   dynamically linked library version \n
+ * - ROCRAND_STATUS_TYPE_ERROR if the value for \p rng_type is invalid \n
+ * - ROCRAND_STATUS_SUCCESS if generator was created successfully \n
+ *
+ */
+rocrand_status ROCRANDAPI rocrand_create_generator_host(rocrand_generator* generator,
+                                                        rocrand_rng_type   rng_type);
+
+/**
+ * \brief Creates a new host random number generator, similar to `rocrand_create_generator_host`.
+ *   The exception is that, instead of enqueuing the host function in the stream,
+ *   execution happens synchronously with respect to the calling thread and the stream is ignored.
+ */
+rocrand_status ROCRANDAPI rocrand_create_generator_host_blocking(rocrand_generator* generator,
+                                                                 rocrand_rng_type   rng_type);
 
 /**
  * \brief Destroys random number generator.
@@ -636,11 +680,14 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  * \param generator - Random number generator
  * \param order - New ordering of results
  *
- * The ordering choices for pseudorandom sequences are
- * ROCRAND_ORDERING_PSEUDO_DEFAULT and
- * ROCRAND_ORDERING_PSEUDO_LEGACY.
- * The default ordering is ROCRAND_ORDERING_PSEUDO_DEFAULT, which is equal to
- * ROCRAND_ORDERING_PSEUDO_LEGACY for now.
+ * The ordering choices for pseudorandom sequences are the following.
+ * Note that not all generators support all orderings. For details, see
+ * the Programmer's Guide in the documentation.
+ * - ROCRAND_ORDERING_PSEUDO_DEFAULT
+ * - ROCRAND_ORDERING_PSEUDO_LEGACY
+ * - ROCRAND_ORDERING_PSEUDO_BEST
+ * - ROCRAND_ORDERING_PSEUDO_SEEDED
+ * - ROCRAND_ORDERING_PSEUDO_DYNAMIC
  *
  * For quasirandom sequences there is only one ordering, ROCRAND_ORDERING_QUASI_DEFAULT.
  *

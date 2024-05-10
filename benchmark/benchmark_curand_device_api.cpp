@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -96,7 +96,7 @@ struct runner
            const unsigned long long offset)
     {
         const size_t states_size = blocks * threads;
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(EngineState)));
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(EngineState)));
 
         init_kernel<<<blocks, threads>>>(states, seed, offset);
 
@@ -164,9 +164,9 @@ struct runner<curandStateMtgp32_t>
            const unsigned long long /* offset */)
     {
         const size_t states_size = std::min((size_t)200, blocks);
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateMtgp32_t)));
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateMtgp32_t)));
 
-        CUDA_CALL(cudaMalloc((void**)&d_param, sizeof(mtgp32_kernel_params)));
+        CUDA_CALL(cudaMalloc(&d_param, sizeof(mtgp32_kernel_params)));
         CURAND_CALL(curandMakeMTGP32Constants(mtgp32dc_params_fast_11213, d_param));
         CURAND_CALL(curandMakeMTGP32KernelState(states,
                                                 mtgp32dc_params_fast_11213,
@@ -259,14 +259,14 @@ struct runner<curandStateSobol32_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateSobol32_t)));
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateSobol32_t)));
 
         curandDirectionVectors32_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
         const size_t  size = dimensions * sizeof(unsigned int) * 32;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(&directions, size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -317,21 +317,21 @@ struct runner<curandStateScrambledSobol32_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateScrambledSobol32_t)));
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateScrambledSobol32_t)));
 
         curandDirectionVectors32_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
         const size_t  size = dimensions * sizeof(unsigned int) * 32;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(&directions, size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         unsigned int* h_scramble_constants;
         CURAND_CALL(curandGetScrambleConstants32(&h_scramble_constants));
         unsigned int* scramble_constants;
         const size_t  constants_size = dimensions * sizeof(unsigned int);
-        CUDA_CALL(cudaMalloc((void**)&scramble_constants, constants_size));
+        CUDA_CALL(cudaMalloc(&scramble_constants, constants_size));
         CUDA_CALL(cudaMemcpy(scramble_constants,
                              h_scramble_constants,
                              constants_size,
@@ -387,14 +387,14 @@ struct runner<curandStateSobol64_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateSobol64_t)));
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateSobol64_t)));
 
         curandDirectionVectors64_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
         unsigned long long int* directions;
         const size_t            size = dimensions * sizeof(unsigned long long) * 64;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(&directions, size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -442,21 +442,21 @@ struct runner<curandStateScrambledSobol64_t>
         this->dimensions = dimensions;
 
         const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc((void**)&states, states_size * sizeof(curandStateScrambledSobol64_t)));
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateScrambledSobol64_t)));
 
         curandDirectionVectors64_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
         unsigned long long* directions;
         const size_t        size = dimensions * sizeof(unsigned long long) * 64;
-        CUDA_CALL(cudaMalloc((void**)&directions, size));
+        CUDA_CALL(cudaMalloc(&directions, size));
         CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
 
         unsigned long long* h_scramble_constants;
         CURAND_CALL(curandGetScrambleConstants64(&h_scramble_constants));
         unsigned long long* scramble_constants;
         const size_t        constants_size = dimensions * sizeof(unsigned long long);
-        CUDA_CALL(cudaMalloc((void**)&scramble_constants, constants_size));
+        CUDA_CALL(cudaMalloc(&scramble_constants, constants_size));
         CUDA_CALL(cudaMemcpy(scramble_constants,
                              h_scramble_constants,
                              constants_size,
@@ -711,7 +711,7 @@ void run_benchmark(benchmark::State&        state,
     generator.create();
 
     data_type* data;
-    CUDA_CALL(cudaMalloc((void**)&data, size * sizeof(data_type)));
+    CUDA_CALL(cudaMalloc(&data, size * sizeof(data_type)));
 
     constexpr unsigned long long int seed   = 12345ULL;
     constexpr unsigned long long int offset = 6789ULL;
@@ -779,10 +779,12 @@ template<typename Engine>
 void add_benchmarks(const benchmark_context&                      ctx,
                     const cudaStream_t                            stream,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
-                    const std::string&                            name)
+                    const curandRngType                           engine_type)
 {
     constexpr bool is_64_bits = std::is_same<Engine, curandStateSobol64_t>::value
                                 || std::is_same<Engine, curandStateScrambledSobol64_t>::value;
+
+    const std::string name = engine_name(engine_type);
 
     if(is_64_bits)
     {
@@ -857,14 +859,23 @@ int main(int argc, char* argv[])
 
     std::vector<benchmark::internal::Benchmark*> benchmarks = {};
 
-    add_benchmarks<curandStateMRG32k3a_t>(ctx, stream, benchmarks, "mrg32k3a");
-    add_benchmarks<curandStateMtgp32_t>(ctx, stream, benchmarks, "mtgp32");
-    add_benchmarks<curandStatePhilox4_32_10_t>(ctx, stream, benchmarks, "philox4x32_10");
-    add_benchmarks<curandStateScrambledSobol32_t>(ctx, stream, benchmarks, "scrambled_sobol32");
-    add_benchmarks<curandStateScrambledSobol64_t>(ctx, stream, benchmarks, "scrambled_sobol64");
-    add_benchmarks<curandStateSobol32_t>(ctx, stream, benchmarks, "sobol32");
-    add_benchmarks<curandStateSobol64_t>(ctx, stream, benchmarks, "sobol64");
-    add_benchmarks<curandStateXORWOW_t>(ctx, stream, benchmarks, "xorwow");
+    add_benchmarks<curandStateMRG32k3a_t>(ctx, stream, benchmarks, CURAND_RNG_PSEUDO_MRG32K3A);
+    add_benchmarks<curandStateMtgp32_t>(ctx, stream, benchmarks, CURAND_RNG_PSEUDO_MTGP32);
+    add_benchmarks<curandStatePhilox4_32_10_t>(ctx,
+                                               stream,
+                                               benchmarks,
+                                               CURAND_RNG_PSEUDO_PHILOX4_32_10);
+    add_benchmarks<curandStateScrambledSobol32_t>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  CURAND_RNG_QUASI_SCRAMBLED_SOBOL32);
+    add_benchmarks<curandStateScrambledSobol64_t>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  CURAND_RNG_QUASI_SCRAMBLED_SOBOL64);
+    add_benchmarks<curandStateSobol32_t>(ctx, stream, benchmarks, CURAND_RNG_QUASI_SOBOL32);
+    add_benchmarks<curandStateSobol64_t>(ctx, stream, benchmarks, CURAND_RNG_QUASI_SOBOL64);
+    add_benchmarks<curandStateXORWOW_t>(ctx, stream, benchmarks, CURAND_RNG_PSEUDO_XORWOW);
 
     // Use manual timing
     for(auto& b : benchmarks)

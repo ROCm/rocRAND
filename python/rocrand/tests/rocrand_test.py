@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,7 @@ class TestCtorPRNG(TestRNGBase):
         PRNG(self.rngtype, seed=2345678, offset=7654)
 
 make_test(TestCtorPRNG, "DEFAULT",         rngtype=PRNG.DEFAULT)
+make_test(TestCtorPRNG, "LFSR113",         rngtype=PRNG.LFSR113)
 make_test(TestCtorPRNG, "XORWOW",          rngtype=PRNG.XORWOW)
 make_test(TestCtorPRNG, "MRG31K3P",        rngtype=PRNG.MRG31K3P)
 make_test(TestCtorPRNG, "MRG32K3A",        rngtype=PRNG.MRG32K3A)
@@ -79,17 +80,6 @@ class TestCtorPRNGMT(TestRNGBase):
 
 make_test(TestCtorPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
 make_test(TestCtorPRNGMT, "MT19937", rngtype=PRNG.MT19937)
-
-class TestCtorPRNGLFSR113(TestRNGBase):
-    rngtype = PRNG.LFSR113
-
-    def test_ctor(self):
-        PRNG(self.rngtype)
-        PRNG(self.rngtype, seed=123456)
-        with self.assertRaises(RocRandError):
-            PRNG(self.rngtype, offset=987654)
-        with self.assertRaises(RocRandError):
-            PRNG(self.rngtype, seed=2345678, offset=7654)
 
 class TestCtorQRNG(TestRNGBase):
     def test_ctor(self):
@@ -127,6 +117,7 @@ class TestParamsPRNG(TestRNGBase):
         self.assertEqual(self.rng.offset, 2323423)
 
 make_test(TestParamsPRNG, "DEFAULT",         rngtype=PRNG.DEFAULT)
+make_test(TestParamsPRNG, "LFSR113",         rngtype=PRNG.LFSR113)
 make_test(TestParamsPRNG, "XORWOW",          rngtype=PRNG.XORWOW)
 make_test(TestParamsPRNG, "MRG31K3P",        rngtype=PRNG.MRG31K3P)
 make_test(TestParamsPRNG, "MRG32K3A",        rngtype=PRNG.MRG32K3A)
@@ -158,28 +149,6 @@ class TestParamsPRNGMT(TestRNGBase):
 
 make_test(TestParamsPRNGMT, "MTGP32",  rngtype=PRNG.MTGP32)
 make_test(TestParamsPRNGMT, "MT19937", rngtype=PRNG.MT19937)
-
-class TestParamsPRNGLFSR113(TestRNGBase):
-    rngtype = PRNG.LFSR113
-
-    def setUp(self):
-        super(TestParamsPRNGLFSR113, self).setUp()
-        self.rng = PRNG(self.rngtype)
-
-    def tearDown(self):
-        del self.rng
-
-    def test_seed(self):
-        self.assertIsNone(self.rng.seed)
-        self.rng.seed = 0
-        self.assertEqual(self.rng.seed, 0)
-        self.rng.seed = 54654634456365
-        self.assertEqual(self.rng.seed, 54654634456365)
-
-    def test_offset(self):
-        self.assertEqual(self.rng.offset, 0)
-        with self.assertRaises(RocRandError):
-            self.rng.offset = 2323423
 
 class TestParamsQRNG(TestRNGBase):
     def setUp(self):
@@ -220,7 +189,7 @@ OUTPUT_SIZE = 8192
 class TestGenerate(TestRNGBase):
     def setUp(self):
         super(TestGenerate, self).setUp()
-        self.rng = self.klass(self.rngtype)
+        self.rng = self.klass(self.rngtype, is_host=self.is_host)
 
     def tearDown(self):
         del self.rng
@@ -238,8 +207,9 @@ class TestGenerate(TestRNGBase):
         self.rng.generate(np.empty(100, np.uint32))
         self.rng.generate(np.empty((10, 100), np.uint32))
 
-        self.rng.uniform(empty(100, np.float32))
-        self.rng.uniform(empty((10, 100), np.float32))
+        this_empty = np.empty if self.is_host else empty
+        self.rng.uniform(this_empty(100, np.float32))
+        self.rng.uniform(this_empty((10, 100), np.float32))
 
     def test_generate_uint32(self):
         output = np.empty(OUTPUT_SIZE, np.uint32)
@@ -322,23 +292,29 @@ class TestGenerate(TestRNGBase):
         self.assertTrue((output[:OUTPUT_SIZE] <= 1.0).all())
         self.assertTrue((output[OUTPUT_SIZE:] == 10.0).all())
 
-make_test(TestGenerate, "PRNG" + "DEFAULT",           klass=PRNG, rngtype=PRNG.DEFAULT)
-make_test(TestGenerate, "PRNG" + "XORWOW",            klass=PRNG, rngtype=PRNG.XORWOW)
-make_test(TestGenerate, "PRNG" + "MRG31K3P",          klass=PRNG, rngtype=PRNG.MRG31K3P)
-make_test(TestGenerate, "PRNG" + "MRG32K3A",          klass=PRNG, rngtype=PRNG.MRG32K3A)
-make_test(TestGenerate, "PRNG" + "MTGP32",            klass=PRNG, rngtype=PRNG.MTGP32)
-make_test(TestGenerate, "PRNG" + "MT19937",           klass=PRNG, rngtype=PRNG.MT19937)
-make_test(TestGenerate, "PRNG" + "PHILOX4_32_10",     klass=PRNG, rngtype=PRNG.PHILOX4_32_10)
-make_test(TestGenerate, "QRNG" + "DEFAULT",           klass=QRNG, rngtype=QRNG.DEFAULT)
-make_test(TestGenerate, "QRNG" + "SOBOL32",           klass=QRNG, rngtype=QRNG.SOBOL32)
-make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL32", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL32)
-make_test(TestGenerate, "QRNG" + "SOBOL64",           klass=QRNG, rngtype=QRNG.SOBOL64)
-make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64)
-make_test(TestGenerate, "PRNG" + "LFSR113",           klass=PRNG, rngtype=PRNG.LFSR113)
-make_test(TestGenerate, "PRNG" + "THREEFRY2_32_20",   klass=PRNG, rngtype=PRNG.THREEFRY2_32_20)
-make_test(TestGenerate, "PRNG" + "THREEFRY2_64_20",   klass=PRNG, rngtype=PRNG.THREEFRY2_64_20)
-make_test(TestGenerate, "PRNG" + "THREEFRY4_32_20",   klass=PRNG, rngtype=PRNG.THREEFRY4_32_20)
-make_test(TestGenerate, "PRNG" + "THREEFRY4_64_20",   klass=PRNG, rngtype=PRNG.THREEFRY4_64_20)
+make_test(TestGenerate, "PRNG" + "DEFAULT",                klass=PRNG, rngtype=PRNG.DEFAULT,            is_host=False)
+make_test(TestGenerate, "PRNG" + "XORWOW",                 klass=PRNG, rngtype=PRNG.XORWOW,             is_host=False)
+make_test(TestGenerate, "PRNG" + "MRG31K3P",               klass=PRNG, rngtype=PRNG.MRG31K3P,           is_host=False)
+make_test(TestGenerate, "PRNG" + "MRG31K3P_host",          klass=PRNG, rngtype=PRNG.MRG31K3P,           is_host=True)
+make_test(TestGenerate, "PRNG" + "MRG32K3A",               klass=PRNG, rngtype=PRNG.MRG32K3A,           is_host=False)
+make_test(TestGenerate, "PRNG" + "MTGP32",                 klass=PRNG, rngtype=PRNG.MTGP32,             is_host=False)
+make_test(TestGenerate, "PRNG" + "MT19937",                klass=PRNG, rngtype=PRNG.MT19937,            is_host=False)
+make_test(TestGenerate, "PRNG" + "PHILOX4_32_10",          klass=PRNG, rngtype=PRNG.PHILOX4_32_10,      is_host=False)
+make_test(TestGenerate, "PRNG" + "PHILOX4_32_10_host",     klass=PRNG, rngtype=PRNG.PHILOX4_32_10,      is_host=True)
+make_test(TestGenerate, "QRNG" + "DEFAULT",                klass=QRNG, rngtype=QRNG.DEFAULT,            is_host=False)
+make_test(TestGenerate, "QRNG" + "SOBOL32",                klass=QRNG, rngtype=QRNG.SOBOL32,            is_host=False)
+make_test(TestGenerate, "QRNG" + "SOBOL32_host",           klass=QRNG, rngtype=QRNG.SOBOL32,            is_host=True)
+make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL32",      klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL32,  is_host=False)
+make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL32_host", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL32,  is_host=True)
+make_test(TestGenerate, "QRNG" + "SOBOL64",                klass=QRNG, rngtype=QRNG.SOBOL64,            is_host=False)
+make_test(TestGenerate, "QRNG" + "SOBOL64_host",           klass=QRNG, rngtype=QRNG.SOBOL64,            is_host=True)
+make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64",      klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64,  is_host=False)
+make_test(TestGenerate, "QRNG" + "SCRAMBLED_SOBOL64_host", klass=QRNG, rngtype=QRNG.SCRAMBLED_SOBOL64,  is_host=True)
+make_test(TestGenerate, "PRNG" + "LFSR113",                klass=PRNG, rngtype=PRNG.LFSR113,            is_host=False)
+make_test(TestGenerate, "PRNG" + "THREEFRY2_32_20",        klass=PRNG, rngtype=PRNG.THREEFRY2_32_20,    is_host=False)
+make_test(TestGenerate, "PRNG" + "THREEFRY2_64_20",        klass=PRNG, rngtype=PRNG.THREEFRY2_64_20,    is_host=False)
+make_test(TestGenerate, "PRNG" + "THREEFRY4_32_20",        klass=PRNG, rngtype=PRNG.THREEFRY4_32_20,    is_host=False)
+make_test(TestGenerate, "PRNG" + "THREEFRY4_64_20",        klass=PRNG, rngtype=PRNG.THREEFRY4_64_20,    is_host=False)
 
 
 if __name__ == "__main__":

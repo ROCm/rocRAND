@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -86,6 +86,7 @@ def load_hip():
             hip.hipMalloc = cuda.cudaMalloc
             hip.hipFree = cuda.cudaFree
             hip.hipMemcpy = cuda.cudaMemcpy
+            hip.hipStreamSynchronize = cuda.cudaStreamSynchronize
 
     if hip is None:
         raise ImportError("both libcudart.so and libamdhip64.so cannot be loaded: " +
@@ -185,3 +186,10 @@ def empty(shape, dtype):
     :param dtype: Type of the array (see :attr:`numpy.ndarray.dtype`)
     """
     return DeviceNDArray(shape, dtype)
+
+def stream_synchronize(stream):
+    """Blocks until all previously queued operations on the provided stream complete.
+
+    :param stream: The HIP stream to synchronize.
+    """
+    check_hip(hip.hipStreamSynchronize(stream))

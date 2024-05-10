@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -55,207 +55,390 @@
 #ifndef ROCRAND_RNG_MTGP32_H_
 #define ROCRAND_RNG_MTGP32_H_
 
-#include <algorithm>
-#include <hip/hip_runtime.h>
+#include "common.hpp"
+#include "config/config_defaults.hpp"
+#include "config/mtgp32_config.hpp"
+#include "config_types.hpp"
+#include "distributions.hpp"
+#include "generator_type.hpp"
+#include "system.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_mtgp32.h>
 #include <rocrand/rocrand_mtgp32_11213.h>
 
-#include "common.hpp"
-#include "generator_type.hpp"
-#include "device_engines.hpp"
-#include "distributions.hpp"
+#include <hip/hip_runtime.h>
 
-namespace rocrand_host {
-namespace detail {
+#include <algorithm>
 
-    typedef ::rocrand_device::mtgp32_engine mtgp32_device_engine;
+namespace rocrand_impl::host
+{
 
-    template<unsigned int BlockSize, class T, class Distribution>
-    ROCRAND_KERNEL
-    __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
-    void generate_kernel(mtgp32_device_engine * engines,
-                         T * data,
-                         const size_t n,
-                         Distribution distribution)
+struct mtgp32_device_engine : ::rocrand_device::mtgp32_engine
+{
+    // suppress warning about no initialization for __shared__ variables
+    __host__ __device__ mtgp32_device_engine(){};
+
+    __host__ __device__ unsigned int next()
     {
-        constexpr unsigned int input_width = Distribution::input_width;
-        constexpr unsigned int output_width = Distribution::output_width;
+#ifdef __HIP_DEVICE_COMPILE__
+        // all threads in block produce one value and advance the state by that many values
+        return ::rocrand_device::mtgp32_engine::next();
+#else
+        // produce one value and advance the state by one value
+        const unsigned int o = next_thread(0);
+        m_state.offset       = (++m_state.offset) & MTGP_MASK;
+        return o;
+#endif
+    }
+};
 
-        using vec_type = aligned_vec_type<T, output_width>;
-
-        const unsigned int engine_id = blockIdx.x;
-        const unsigned int stride    = gridDim.x * BlockSize;
-        size_t             index     = blockIdx.x * BlockSize + threadIdx.x;
-
-        // Load device engine
-        __shared__ mtgp32_device_engine engine;
-        engine.copy(&engines[engine_id]);
-
-        unsigned int input[input_width];
-        T output[output_width];
-
-        const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);
-        const size_t misalignment =
-            (
-                output_width - uintptr / sizeof(T) % output_width
-            ) % output_width;
-        const unsigned int head_size = min(n, misalignment);
-        const unsigned int tail_size = (n - head_size) % output_width;
-        const size_t vec_n = (n - head_size) / output_width;
-
-        // vec_n rounded up and down to the nearest multiple of BlockSize
-        const size_t remainder_value = vec_n % BlockSize;
-        const size_t vec_n_down = vec_n - remainder_value;
-        const size_t vec_n_up = remainder_value == 0 ? vec_n_down : (vec_n_down + BlockSize);
-
-        vec_type * vec_data = reinterpret_cast<vec_type *>(data + misalignment);
-        while(index < vec_n_down)
+template<class T, class Distribution, unsigned int BlockSize>
+__host__ void generate(unsigned int (&input)[BlockSize][Distribution::input_width],
+                       T (&output)[BlockSize][Distribution::output_width],
+                       Distribution&         distribution,
+                       mtgp32_device_engine& engine)
+{
+    for(unsigned int i = 0; i < Distribution::input_width; i++)
+    {
+        for(unsigned int j = 0; j < BlockSize; j++)
         {
-            for(unsigned int i = 0; i < input_width; i++)
-            {
-                input[i] = engine();
-            }
-            distribution(input, output);
-
-            vec_data[index] = *reinterpret_cast<vec_type *>(output);
-            // Next position
-            index += stride;
+            input[j][i] = engine.next();
         }
-        if(index < vec_n_up)
+    }
+    for(unsigned int j = 0; j < BlockSize; j++)
+    {
+        distribution(input[j], output[j]);
+    }
+}
+
+template<class T, class Distribution>
+__device__ void generate(unsigned int (&input)[Distribution::input_width],
+                         T (&output)[Distribution::output_width],
+                         Distribution&         distribution,
+                         mtgp32_device_engine& engine)
+{
+    for(unsigned int i = 0; i < Distribution::input_width; i++)
+    {
+        input[i] = engine.next();
+    }
+    distribution(input, output);
+}
+
+template<class vec_type, class T, unsigned int output_width, unsigned int BlockSize>
+__host__ void save_vec_n(vec_type* vec_data, T (&output)[BlockSize][output_width], size_t index)
+{
+    for(unsigned int j = 0; j < BlockSize; j++)
+    {
+        vec_data[index + j] = *reinterpret_cast<vec_type*>(output[j]);
+    }
+}
+
+template<class vec_type, class T, unsigned int output_width>
+__device__ void save_vec_n(vec_type* vec_data, T (&output)[output_width], size_t index)
+{
+    vec_data[index] = *reinterpret_cast<vec_type*>(output);
+}
+
+template<class vec_type, class T, unsigned int output_width, unsigned int BlockSize>
+__host__ void
+    save_n(vec_type* vec_data, T (&output)[BlockSize][output_width], size_t index, size_t vec_n)
+{
+    for(unsigned int j = 0; j < BlockSize; j++)
+    {
+        if(index + j < vec_n)
         {
-            for(unsigned int i = 0; i < input_width; i++)
-            {
-                input[i] = engine();
-            }
-            distribution(input, output);
-
-            // All threads generate (hence call __syncthreads) but not all write
-            if(index < vec_n)
-            {
-                vec_data[index] = *reinterpret_cast<vec_type *>(output);
-            }
-            // Next position
-            index += stride;
+            vec_data[index + j] = *reinterpret_cast<vec_type*>(output[j]);
         }
+    }
+}
 
-        // Check if we need to save head and tail.
-        if(output_width > 1 && (head_size > 0 || tail_size > 0))
+template<class vec_type, class T, unsigned int output_width>
+__device__ void save_n(vec_type* vec_data, T (&output)[output_width], size_t index, size_t vec_n)
+{
+    if(index < vec_n)
+    {
+        vec_data[index] = *reinterpret_cast<vec_type*>(output);
+    }
+}
+
+template<class T, unsigned int output_width>
+__host__ __device__ void save_head_tail_impl(T (&output)[output_width],
+                                             size_t index,
+                                             T*     data,
+                                             size_t n,
+                                             size_t head_size,
+                                             size_t tail_size,
+                                             size_t vec_n_up)
+{
+    if(index == vec_n_up)
+    {
+        for(unsigned int o = 0; o < output_width; o++)
         {
-            for(unsigned int i = 0; i < input_width; i++)
+            if(o < head_size)
             {
-                input[i] = engine();
-            }
-            distribution(input, output);
-
-            // If data is not aligned by sizeof(vec_type)
-            if(index == vec_n_up)
-            {
-                for(unsigned int o = 0; o < output_width; o++)
-                {
-                    if(o < head_size)
-                    {
-                        data[o] = output[o];
-                    }
-                }
-            }
-
-            if(index == vec_n_up + 1)
-            {
-                for(unsigned int o = 0; o < output_width; o++)
-                {
-                    if(o < tail_size)
-                    {
-                        data[n - tail_size + o] = output[o];
-                    }
-                }
+                data[o] = output[o];
             }
         }
-
-        // Save engine with its state
-        engines[engine_id].copy(&engine);
     }
 
-} // end namespace detail
-} // end namespace rocrand_host
+    if(index == vec_n_up + 1)
+    {
+        for(unsigned int o = 0; o < output_width; o++)
+        {
+            if(o < tail_size)
+            {
+                data[n - tail_size + o] = output[o];
+            }
+        }
+    }
+}
 
-class rocrand_mtgp32 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_MTGP32>
+template<class T, unsigned int output_width, unsigned int BlockSize>
+__host__ void save_head_tail(T (&output)[BlockSize][output_width],
+                             size_t index,
+                             T*     data,
+                             size_t n,
+                             size_t head_size,
+                             size_t tail_size,
+                             size_t vec_n_up)
+{
+    for(unsigned int j = 0; j < BlockSize; j++)
+    {
+        save_head_tail_impl(output[j], index + j, data, n, head_size, tail_size, vec_n_up);
+    }
+}
+
+template<class T, unsigned int output_width>
+__device__ void save_head_tail(T (&output)[output_width],
+                               size_t index,
+                               T*     data,
+                               size_t n,
+                               size_t head_size,
+                               size_t tail_size,
+                               size_t vec_n_up)
+{
+    save_head_tail_impl(output, index, data, n, head_size, tail_size, vec_n_up);
+}
+
+template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
+__host__ __device__ void generate_mtgp(dim3 block_idx,
+                                       dim3 thread_idx,
+                                       dim3 grid_dim,
+                                       dim3 /*block_dim*/,
+                                       mtgp32_device_engine* engines,
+                                       T*                    data,
+                                       const size_t          n,
+                                       Distribution          distribution)
+{
+    static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
+                  "This kernel should only be used with single tile configs");
+    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
+    constexpr unsigned int input_width  = Distribution::input_width;
+    constexpr unsigned int output_width = Distribution::output_width;
+
+    using vec_type = aligned_vec_type<T, output_width>;
+
+    const unsigned int engine_id = block_idx.x;
+    const unsigned int stride    = grid_dim.x * BlockSize;
+    size_t             index     = block_idx.x * BlockSize + thread_idx.x;
+
+// Load device engine
+#ifdef __HIP_DEVICE_COMPILE__
+    __shared__
+#endif
+        mtgp32_device_engine engine;
+    engine.copy(&engines[engine_id]);
+
+#ifdef __HIP_DEVICE_COMPILE__
+    unsigned int input[input_width];
+    T            output[output_width];
+#else
+    // Due to the lock-step-like behavior of the device generator, the first value of a distribution
+    //   for thread i is i, the next value is i + BlockSize, etc. Hence, all values must be cached for the host generator.
+    unsigned int input[BlockSize][input_width];
+    T            output[BlockSize][output_width];
+#endif
+
+    const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
+    const size_t misalignment = (output_width - uintptr / sizeof(T) % output_width) % output_width;
+    const unsigned int head_size = min(n, misalignment);
+    const unsigned int tail_size = (n - head_size) % output_width;
+    const size_t       vec_n     = (n - head_size) / output_width;
+
+    // vec_n rounded up and down to the nearest multiple of BlockSize
+    const size_t remainder_value = vec_n % BlockSize;
+    const size_t vec_n_down      = vec_n - remainder_value;
+    const size_t vec_n_up        = remainder_value == 0 ? vec_n_down : (vec_n_down + BlockSize);
+
+    vec_type* vec_data = reinterpret_cast<vec_type*>(data + misalignment);
+    // Generate and store all aligned vector multiples
+    while(index < vec_n_down)
+    {
+        generate(input, output, distribution, engine);
+        save_vec_n(vec_data, output, index);
+        index += stride;
+    }
+    // Generate and store all aligned vector multiples for which not all threads participate in storing
+    if(index < vec_n_up)
+    {
+        generate(input, output, distribution, engine);
+        save_n(vec_data, output, index, vec_n);
+        index += stride;
+    }
+    // Generate and store the remaining T that are not aligned to vec_type
+    if(output_width > 1 && (head_size > 0 || tail_size > 0))
+    {
+        generate(input, output, distribution, engine);
+        save_head_tail(output, index, data, n, head_size, tail_size, vec_n_up);
+    }
+
+    // Save engine with its state
+    engines[engine_id].copy(&engine);
+}
+
+template<class System, class ConfigProvider>
+class mtgp32_generator_template : public generator_impl_base
 {
 public:
-    using base_type = rocrand_generator_type<ROCRAND_RNG_PSEUDO_MTGP32>;
-    using engine_type = ::rocrand_host::detail::mtgp32_device_engine;
+    using base_type   = generator_impl_base;
+    using engine_type = mtgp32_device_engine;
+    using system_type = System;
 
-    rocrand_mtgp32(unsigned long long seed   = 0,
-                   unsigned long long offset = 0,
-                   rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                   hipStream_t        stream = 0)
-        : base_type(order, seed, offset, stream)
-        , m_engines_initialized(false)
-        , m_engines(NULL)
-        , m_engines_size(s_blocks)
+    mtgp32_generator_template(unsigned long long seed   = 0,
+                              unsigned long long offset = 0,
+                              rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                              hipStream_t        stream = 0)
+        : base_type(order, offset, stream), m_seed(seed)
+    {}
+
+    mtgp32_generator_template(const mtgp32_generator_template&) = delete;
+
+    mtgp32_generator_template(mtgp32_generator_template&& other)
+        : base_type(other)
+        , m_engines_initialized(other.m_engines_initialized)
+        , m_engines(other.m_engines)
+        , m_engines_size(other.m_engines_size)
+        , m_seed(other.m_seed)
+        , m_poisson(std::move(other.m_poisson))
     {
-        // Allocate device random number engines
-        hipError_t error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+    }
+
+    mtgp32_generator_template& operator=(const mtgp32_generator_template&) = delete;
+
+    mtgp32_generator_template& operator=(mtgp32_generator_template&& other)
+    {
+        *static_cast<base_type*>(this) = other;
+        m_engines_initialized          = other.m_engines_initialized;
+        m_engines                      = other.m_engines;
+        m_engines_size                 = other.m_engines_size;
+        m_seed                         = other.m_seed;
+        m_poisson                      = std::move(other.m_poisson);
+
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+
+        return *this;
+    }
+
+    ~mtgp32_generator_template()
+    {
+        if(m_engines != nullptr)
         {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
+            system_type::free(m_engines);
+            m_engines = nullptr;
         }
     }
 
-    rocrand_mtgp32(const rocrand_mtgp32&) = delete;
-
-    rocrand_mtgp32(rocrand_mtgp32&&) = delete;
-
-    rocrand_mtgp32& operator=(const rocrand_mtgp32&&) = delete;
-
-    rocrand_mtgp32& operator=(rocrand_mtgp32&&) = delete;
-
-    ~rocrand_mtgp32()
+    static constexpr rocrand_rng_type type()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        return ROCRAND_RNG_PSEUDO_MTGP32;
     }
 
-    void reset()
+    void reset() override final
     {
         m_engines_initialized = false;
     }
 
     /// Changes seed to \p seed and resets generator state.
-    ///
-    /// New seed value should not be zero. If \p seed_value is equal
-    /// zero, value \p rocrand_mtgp32_DEFAULT_SEED is used instead.
     void set_seed(unsigned long long seed)
     {
         m_seed = seed;
-        m_engines_initialized = false;
+        reset();
     }
 
-    void set_offset(unsigned long long offset)
+    unsigned long long get_seed() const
     {
-        m_offset = offset;
-        m_engines_initialized = false;
+        return m_seed;
     }
 
-    void set_order(rocrand_ordering order)
+    rocrand_status set_offset(unsigned long long offset)
     {
-        m_order               = order;
-        m_engines_initialized = false;
+        // Can't set offset for MTGP32
+        (void)offset;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    rocrand_status set_order(rocrand_ordering order)
+    {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        static constexpr std::array supported_orderings{
+            ROCRAND_ORDERING_PSEUDO_DEFAULT,
+            ROCRAND_ORDERING_PSEUDO_DYNAMIC,
+            ROCRAND_ORDERING_PSEUDO_BEST,
+            ROCRAND_ORDERING_PSEUDO_LEGACY,
+        };
+        if(std::find(supported_orderings.begin(), supported_orderings.end(), order)
+           == supported_orderings.end())
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
     {
         if (m_engines_initialized)
+        {
             return ROCRAND_STATUS_SUCCESS;
+        }
 
-        rocrand_status status;
+        generator_config config;
+        // Assuming that the config is the same for every type.
+        hipError_t error
+            = ConfigProvider::template host_config<unsigned int>(m_stream, m_order, config);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        m_engines_size = config.blocks;
 
         if (m_engines_size > mtgpdc_params_11213_num)
+        {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
 
-        status = rocrand_make_state_mtgp32(m_engines, mtgp32dc_params_fast_11213, m_engines_size, m_seed);
+        rocrand_status status = system_type::alloc(&m_engines, m_engines_size);
         if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+
+        status = rocrand_make_state_mtgp32(m_engines,
+                                           mtgp32dc_params_fast_11213,
+                                           m_engines_size,
+                                           m_seed);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
             return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
 
         m_engines_initialized = true;
 
@@ -268,18 +451,63 @@ public:
     {
         rocrand_status status = init();
         if (status != ROCRAND_STATUS_SUCCESS)
+        {
             return status;
+        }
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel<s_threads>),
-            dim3(s_blocks), dim3(s_threads), 0, m_stream,
-            m_engines, data, data_size, distribution
-        );
+        generator_config config;
+        const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+
+        // The host generator uses a block of size one to emulate a device generator that uses a shared memory state
+        const dim3 threads
+            = std::is_same_v<system_type, system::device_system> ? config.threads : dim3(1);
+        status
+            = dynamic_dispatch(m_order,
+                               [&, this](auto is_dynamic)
+                               {
+                                   return system_type::template launch<
+                                       generate_mtgp<ConfigProvider, is_dynamic, T, Distribution>,
+                                       ConfigProvider,
+                                       T,
+                                       is_dynamic>(dim3(config.blocks),
+                                                   dim3(threads),
+                                                   0,
+                                                   m_stream,
+                                                   m_engines,
+                                                   data,
+                                                   data_size,
+                                                   distribution);
+                               });
+
         // Check kernel status
-        if(hipGetLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
 
         return ROCRAND_STATUS_SUCCESS;
+    }
+
+    rocrand_status generate(unsigned long long* data, size_t data_size)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    template<typename Distribution>
+    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        (void)distribution;
+        return ROCRAND_STATUS_TYPE_ERROR;
     }
 
     template<class T>
@@ -317,18 +545,27 @@ public:
     }
 
 private:
-    bool m_engines_initialized;
-    engine_type * m_engines;
-    size_t m_engines_size;
+    bool         m_engines_initialized = false;
+    engine_type* m_engines             = nullptr;
+    unsigned int m_engines_size        = false;
 
-    static constexpr uint32_t s_threads = 256;
-    static constexpr uint32_t s_blocks = 512;
+    unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<> m_poisson;
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type
 };
+
+using mtgp32_generator
+    = mtgp32_generator_template<system::device_system,
+                                default_config_provider<ROCRAND_RNG_PSEUDO_MTGP32>>;
+template<bool UseHostFunc>
+using mtgp32_generator_host
+    = mtgp32_generator_template<system::host_system<UseHostFunc>,
+                                default_config_provider<ROCRAND_RNG_PSEUDO_MTGP32>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_MTGP32_H_

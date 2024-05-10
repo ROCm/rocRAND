@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,47 +21,68 @@
 #ifndef ROCRAND_RNG_LFSR113_H_
 #define ROCRAND_RNG_LFSR113_H_
 
-#include <algorithm>
-#include <hip/hip_runtime.h>
-
-#include <rocrand/rocrand.h>
+#include "config/lfsr113_config.hpp"
 
 #include "common.hpp"
-#include "device_engines.hpp"
+#include "config_types.hpp"
 #include "distributions.hpp"
 #include "generator_type.hpp"
+#include "system.hpp"
 
-namespace rocrand_host
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_lfsr113.h>
+
+#include <hip/hip_runtime.h>
+
+#include <algorithm>
+
+namespace rocrand_impl::host
 {
-namespace detail
-{
+
 typedef ::rocrand_device::lfsr113_engine lfsr113_device_engine;
 
-ROCRAND_KERNEL
-__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_kernel(
-    lfsr113_device_engine* engines, uint4 seeds)
+__host__ __device__ inline void init_lfsr113_engines(dim3 block_idx,
+                                                     dim3 thread_idx,
+                                                     dim3 /*grid_dim*/,
+                                                     dim3                   block_dim,
+                                                     lfsr113_device_engine* engines,
+                                                     const unsigned int     start_engine_id,
+                                                     const unsigned int     engines_size,
+                                                     const uint4            seeds,
+                                                     const unsigned int     offset)
 {
-    const unsigned int engine_id = blockIdx.x * blockDim.x + threadIdx.x;
-    engines[engine_id]           = lfsr113_device_engine(seeds, engine_id);
+    const unsigned int engine_id = block_idx.x * block_dim.x + thread_idx.x;
+    if(engine_id < engines_size)
+    {
+        engines[engine_id] = lfsr113_device_engine(seeds,
+                                                   engine_id,
+                                                   offset + (engine_id < start_engine_id ? 1 : 0));
+    }
 }
 
-template<class T, class Distribution>
-ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    lfsr113_device_engine* engines,
-    const unsigned int     start_engine_id,
-    T*                     data,
-    const size_t           n,
-    Distribution           distribution)
+template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
+__host__ __device__ void generate_lfsr113(dim3 block_idx,
+                                          dim3 thread_idx,
+                                          dim3 grid_dim,
+                                          dim3 /*block_dim*/,
+                                          lfsr113_device_engine* engines,
+                                          const unsigned int     start_engine_id,
+                                          T*                     data,
+                                          const size_t           n,
+                                          Distribution           distribution)
 {
+    static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
+                  "This kernel should only be used with single tile configs");
+    constexpr unsigned int BlockSize    = get_block_size<ConfigProvider, T>(IsDynamic);
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
 
     using vec_type = aligned_vec_type<T, output_width>;
 
-    const unsigned int id     = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned int stride = gridDim.x * blockDim.x;
+    const unsigned int id          = block_idx.x * BlockSize + thread_idx.x;
+    const unsigned int num_engines = grid_dim.x * BlockSize;
 
-    const unsigned int    engine_id = (id + start_engine_id) & (stride - 1);
+    const unsigned int    engine_id = (id + start_engine_id) & (num_engines - 1);
     lfsr113_device_engine engine    = engines[engine_id];
 
     unsigned int input[input_width];
@@ -85,8 +106,15 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
 
         distribution(input, output);
 
+#if defined(__gfx90a__)
+        // Workaround: The compiler hoists s_waitcnt vmcnt(..) out of the loops.
+        // For some reason this optimization decreases performance of uniform distributions
+        // on MI200. MI100 and MI300 are not affected.
+        // Here we add s_waitcnt vmcnt(0)
+        __builtin_amdgcn_s_waitcnt(/*vmcnt*/ 0 | (/*exp_cnt*/ 0x7 << 4) | (/*lgkmcnt*/ 0xf << 8));
+#endif
         vec_data[index] = *reinterpret_cast<vec_type*>(output);
-        index += stride;
+        index += num_engines;
     }
 
     if(output_width > 1 && index == vec_n)
@@ -128,50 +156,78 @@ ROCRAND_KERNEL __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_k
         }
     }
 
+    // Save engine with its state
     engines[engine_id] = engine;
 }
-} // end namespace detail
-} // namespace rocrand_host
 
-class rocrand_lfsr113 : public rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113, uint4>
+template<class System, class ConfigProvider>
+class lfsr113_generator_template : public generator_impl_base
 {
 public:
-    using base_type   = rocrand_generator_type<ROCRAND_RNG_PSEUDO_LFSR113, uint4>;
-    using engine_type = ::rocrand_host::detail::lfsr113_device_engine;
+    using system_type = System;
+    using base_type   = generator_impl_base;
+    using engine_type = lfsr113_device_engine;
 
-    rocrand_lfsr113(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
-                                                 ROCRAND_LFSR113_DEFAULT_SEED_Y,
-                                                 ROCRAND_LFSR113_DEFAULT_SEED_Z,
-                                                 ROCRAND_LFSR113_DEFAULT_SEED_W},
-                    unsigned long long offset = 0,
-                    rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                    hipStream_t        stream = 0)
-        : base_type(order, seeds, offset, stream)
-        , m_engines_initialized(false)
-        , m_engines(NULL)
-        , m_engines_size(s_threads * s_blocks)
-        , m_start_engine_id()
+    lfsr113_generator_template(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                            ROCRAND_LFSR113_DEFAULT_SEED_W},
+                               unsigned long long offset = 0,
+                               rocrand_ordering   order  = ROCRAND_ORDERING_PSEUDO_DEFAULT,
+                               hipStream_t        stream = 0)
+        : base_type(order, offset, stream), m_seed(seeds)
+    {}
+
+    lfsr113_generator_template(const lfsr113_generator_template&) = delete;
+
+    lfsr113_generator_template(lfsr113_generator_template&& other)
+        : base_type(other)
+        , m_engines_initialized(other.m_engines_initialized)
+        , m_engines(other.m_engines)
+        , m_start_engine_id(other.m_start_engine_id)
+        , m_engines_size(other.m_engines_size)
+        , m_seed(other.m_seed)
+        , m_poisson(std::move(other.m_poisson))
     {
-        // Allocate device random number engines
-        hipError_t error
-            = hipMalloc(reinterpret_cast<void**>(&m_engines), sizeof(engine_type) * m_engines_size);
-        if(error != hipSuccess)
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+    }
+
+    lfsr113_generator_template& operator=(const lfsr113_generator_template&) = delete;
+
+    lfsr113_generator_template& operator=(lfsr113_generator_template&& other)
+    {
+        *static_cast<base_type*>(this) = std::move(other);
+        m_engines_initialized          = other.m_engines_initialized;
+        m_engines                      = other.m_engines;
+        m_start_engine_id              = other.m_start_engine_id;
+        m_engines_size                 = other.m_engines_size;
+        m_seed                         = other.m_seed;
+        m_poisson                      = std::move(other.m_poisson);
+
+        other.m_engines_initialized = false;
+        other.m_engines             = nullptr;
+
+        return *this;
+    }
+
+    ~lfsr113_generator_template()
+    {
+        if(m_engines != nullptr)
         {
-            throw ROCRAND_STATUS_ALLOCATION_FAILED;
+            system_type::free(m_engines);
+            m_engines = nullptr;
         }
     }
 
-    rocrand_lfsr113(const rocrand_lfsr113&) = delete;
-
-    rocrand_lfsr113(rocrand_lfsr113&&) = delete;
-
-    rocrand_lfsr113& operator=(const rocrand_lfsr113&&) = delete;
-
-    rocrand_lfsr113& operator=(rocrand_lfsr113&&) = delete;
-
-    ~rocrand_lfsr113()
+    static constexpr rocrand_rng_type type()
     {
-        ROCRAND_HIP_FATAL_ASSERT(hipFree(m_engines));
+        return ROCRAND_RNG_PSEUDO_LFSR113;
+    }
+
+    void reset() override final
+    {
+        m_engines_initialized = false;
     }
 
     void set_seed(unsigned long long seed)
@@ -188,10 +244,10 @@ public:
             seeds.y += ROCRAND_LFSR113_DEFAULT_SEED_Y;
 
         m_seed                = seeds;
-        m_engines_initialized = false;
+        reset();
     }
 
-    void set_seed(uint4 seed)
+    rocrand_status set_seed_uint4(uint4 seed) override final
     {
         if(seed.x < ROCRAND_LFSR113_DEFAULT_SEED_X)
             seed.x += ROCRAND_LFSR113_DEFAULT_SEED_X;
@@ -206,41 +262,88 @@ public:
             seed.w += ROCRAND_LFSR113_DEFAULT_SEED_W;
 
         m_seed                = seed;
-        m_engines_initialized = false;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
-    void set_offset(unsigned long long offset)
+    unsigned long long get_seed() const
     {
-        m_offset              = offset;
-        m_engines_initialized = false;
+        return 0; // Not supported for this generator
     }
 
-    void set_order(rocrand_ordering order)
+    uint4 get_seed_uint4() const
     {
-        m_order               = order;
-        m_engines_initialized = false;
+        return m_seed;
+    }
+
+    rocrand_status set_order(rocrand_ordering order)
+    {
+        if(!system_type::is_device() && order == ROCRAND_ORDERING_PSEUDO_DYNAMIC)
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        static constexpr std::array supported_orderings{
+            ROCRAND_ORDERING_PSEUDO_DEFAULT,
+            ROCRAND_ORDERING_PSEUDO_DYNAMIC,
+            ROCRAND_ORDERING_PSEUDO_BEST,
+            ROCRAND_ORDERING_PSEUDO_LEGACY,
+        };
+        if(std::find(supported_orderings.begin(), supported_orderings.end(), order)
+           == supported_orderings.end())
+        {
+            return ROCRAND_STATUS_OUT_OF_RANGE;
+        }
+        m_order = order;
+        reset();
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     rocrand_status init()
     {
         if(m_engines_initialized)
+        {
             return ROCRAND_STATUS_SUCCESS;
+        }
+
+        hipError_t error
+            = get_least_common_grid_size<ConfigProvider>(m_stream, m_order, m_engines_size);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
 
         m_start_engine_id = m_offset % m_engines_size;
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::init_engines_kernel),
-                           dim3(s_blocks),
-                           dim3(s_threads),
-                           0,
-                           m_stream,
-                           m_engines,
-                           m_seed);
-        // Check kernel status
-        if(hipGetLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        if(m_engines != nullptr)
+        {
+            system_type::free(m_engines);
+        }
+        rocrand_status status = system_type::alloc(&m_engines, m_engines_size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+
+        constexpr unsigned int init_threads = 256;
+        const unsigned int     init_blocks  = (m_engines_size + init_threads - 1) / init_threads;
+
+        status = system_type::template launch<init_lfsr113_engines,
+                                              static_block_size_config_provider<init_threads>>(
+            dim3(init_blocks),
+            dim3(init_threads),
+            0,
+            m_stream,
+            m_engines,
+            m_start_engine_id,
+            m_engines_size,
+            m_seed,
+            m_offset / m_engines_size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
 
         m_engines_initialized = true;
-
         return ROCRAND_STATUS_SUCCESS;
     }
 
@@ -249,21 +352,38 @@ public:
     {
         rocrand_status status = init();
         if(status != ROCRAND_STATUS_SUCCESS)
+        {
             return status;
+        }
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_host::detail::generate_kernel),
-                           dim3(s_blocks),
-                           dim3(s_threads),
-                           0,
-                           m_stream,
-                           m_engines,
-                           m_start_engine_id,
-                           data,
-                           data_size,
-                           distribution);
+        generator_config config;
+        const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
+        if(error != hipSuccess)
+            return ROCRAND_STATUS_INTERNAL_ERROR;
 
-        if(hipGetLastError() != hipSuccess)
-            return ROCRAND_STATUS_LAUNCH_FAILURE;
+        status = dynamic_dispatch(
+            m_order,
+            [&, this](auto is_dynamic)
+            {
+                return system_type::template launch<
+                    generate_lfsr113<ConfigProvider, is_dynamic, T, Distribution>,
+                    ConfigProvider,
+                    T,
+                    is_dynamic>(dim3(config.blocks),
+                                dim3(config.threads),
+                                0,
+                                m_stream,
+                                m_engines,
+                                m_start_engine_id,
+                                data,
+                                data_size,
+                                distribution);
+            });
+
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
 
         const auto touched_engines
             = (data_size + Distribution::output_width - 1) / Distribution::output_width;
@@ -271,6 +391,24 @@ public:
         m_start_engine_id = (m_start_engine_id + touched_engines) % m_engines_size;
 
         return ROCRAND_STATUS_SUCCESS;
+    }
+
+    rocrand_status generate(unsigned long long* data, size_t data_size)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        return ROCRAND_STATUS_TYPE_ERROR;
+    }
+
+    template<typename Distribution>
+    rocrand_status generate(unsigned long long* data, size_t data_size, Distribution distribution)
+    {
+        // Cannot generate 64-bit values with this generator.
+        (void)data;
+        (void)data_size;
+        (void)distribution;
+        return ROCRAND_STATUS_TYPE_ERROR;
     }
 
     template<class T>
@@ -308,16 +446,28 @@ public:
     }
 
 private:
-    bool         m_engines_initialized;
-    engine_type* m_engines;
-    size_t       m_engines_size;
+    bool         m_engines_initialized = false;
+    engine_type* m_engines             = nullptr;
+    unsigned int m_start_engine_id     = 0;
+    unsigned int m_engines_size        = 0;
+    uint4        m_seed;
 
-    static const uint32_t s_threads = 256;
-    static const uint32_t s_blocks  = 512;
+    // For caching of Poisson for consecutive generations with the same lambda
+    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
 
-    poisson_distribution_manager<> m_poisson;
-
-    unsigned int m_start_engine_id;
+    // m_seed from base_type
+    // m_offset from base_type
 };
+
+using lfsr113_generator
+    = lfsr113_generator_template<system::device_system,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+
+template<bool UseHostFunc>
+using lfsr113_generator_host
+    = lfsr113_generator_template<system::host_system<UseHostFunc>,
+                                 default_config_provider<ROCRAND_RNG_PSEUDO_LFSR113>>;
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_LFSR113_H_

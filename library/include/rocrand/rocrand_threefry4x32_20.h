@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -53,10 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROCRAND_THREEFRY4X32_20_H_
 #define ROCRAND_THREEFRY4X32_20_H_
 
-#ifndef FQUALIFIERS
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
-
 #include "rocrand/rocrand_threefry4_impl.h"
 
 namespace rocrand_device
@@ -65,6 +61,7 @@ namespace rocrand_device
 class threefry4x32_20_engine : public threefry_engine4_base<uint4, unsigned int, 20>
 {
 public:
+    ROCRAND_DEPRECATED("Alias \"threefry4x32_20_state\" is deprecated. Use \"state_type\" instead.")
     typedef threefry_engine4_base<uint4, unsigned int, 20>::threefry_state_4 threefry4x32_20_state;
 
     /// Initializes the internal state of the PRNG using
@@ -72,9 +69,10 @@ public:
     /// and skips \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 66 random numbers.
-    FQUALIFIERS threefry4x32_20_engine(const unsigned long long seed        = 0,
-                                       const unsigned long long subsequence = 0,
-                                       const unsigned long long offset      = 0)
+    __forceinline__ __device__ __host__ threefry4x32_20_engine(const unsigned long long seed = 0,
+                                                               const unsigned long long subsequence
+                                                               = 0,
+                                                               const unsigned long long offset = 0)
     {
         this->seed(seed, subsequence, offset);
     }
@@ -84,9 +82,9 @@ public:
     /// and \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 66 random numbers.
-    FQUALIFIERS void seed(const unsigned long long seed        = 0,
-                          const unsigned long long subsequence = 0,
-                          const unsigned long long offset      = 0)
+    __forceinline__ __device__ __host__ void seed(const unsigned long long seed        = 0,
+                                                  const unsigned long long subsequence = 0,
+                                                  const unsigned long long offset      = 0)
     {
         m_state.counter  = {0U, 0U, 0U, 0U};
         m_state.result   = {0U, 0U, 0U, 0U};
@@ -118,10 +116,10 @@ typedef rocrand_device::threefry4x32_20_engine rocrand_state_threefry4x32_20;
  * \param offset - Absolute offset into subsequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS void rocrand_init(const unsigned long long       seed,
-                              const unsigned long long       subsequence,
-                              const unsigned long long       offset,
-                              rocrand_state_threefry4x32_20* state)
+__forceinline__ __device__ __host__ void rocrand_init(const unsigned long long       seed,
+                                                      const unsigned long long       subsequence,
+                                                      const unsigned long long       offset,
+                                                      rocrand_state_threefry4x32_20* state)
 {
     *state = rocrand_state_threefry4x32_20(seed, subsequence, offset);
 }
@@ -140,7 +138,7 @@ FQUALIFIERS void rocrand_init(const unsigned long long       seed,
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS unsigned int rocrand(rocrand_state_threefry4x32_20* state)
+__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_threefry4x32_20* state)
 {
     return state->next();
 }
@@ -157,7 +155,7 @@ FQUALIFIERS unsigned int rocrand(rocrand_state_threefry4x32_20* state)
  *
  * \return Four pseudorandom values (32-bit) as an <tt>uint2</tt>
  */
-FQUALIFIERS uint4 rocrand4(rocrand_state_threefry4x32_20* state)
+__forceinline__ __device__ __host__ uint4 rocrand4(rocrand_state_threefry4x32_20* state)
 {
     return state->next4();
 }

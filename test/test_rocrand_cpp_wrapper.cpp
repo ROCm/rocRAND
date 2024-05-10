@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,14 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <stdio.h>
+#include "test_common.hpp"
+#include "test_rocrand_common.hpp"
+#include "test_utils/rocrand_cpp_wrapper_traits.hpp"
+#include "test_utils/test_matrix.hpp"
+
 #include <gtest/gtest.h>
 
 #include <hip/hip_runtime.h>
 #include <rocrand/rocrand.hpp>
 
-#include "test_common.hpp"
-#include "test_rocrand_common.hpp"
+#include <cstddef>
+#include <cstdio>
+#include <numeric>
+#include <type_traits>
 
 TEST(rocrand_cpp_wrapper, rocrand_error)
 {
@@ -33,18 +39,104 @@ TEST(rocrand_cpp_wrapper, rocrand_error)
     EXPECT_EQ(e.error_code(), ROCRAND_STATUS_SUCCESS);
 }
 
-template<class T>
-void rocrand_rng_ctor_template()
+TEST(rocrand_cpp_wrapper, rocrand_prng_default_seed)
 {
-    rocrand_generator generator = NULL;
-    ASSERT_EQ(rocrand_create_generator(&generator, T::type()), ROCRAND_STATUS_SUCCESS);
-    ASSERT_NE(generator, (rocrand_generator)NULL);
-    T x(generator);
-    ASSERT_EQ(generator, (rocrand_generator)NULL);
+    EXPECT_EQ(rocrand_cpp::lfsr113::default_seed.x, ROCRAND_LFSR113_DEFAULT_SEED_X);
+    EXPECT_EQ(rocrand_cpp::lfsr113::default_seed.y, ROCRAND_LFSR113_DEFAULT_SEED_Y);
+    EXPECT_EQ(rocrand_cpp::lfsr113::default_seed.z, ROCRAND_LFSR113_DEFAULT_SEED_Z);
+    EXPECT_EQ(rocrand_cpp::lfsr113::default_seed.w, ROCRAND_LFSR113_DEFAULT_SEED_W);
+    EXPECT_EQ(rocrand_cpp::mrg31k3p::default_seed, ROCRAND_MRG31K3P_DEFAULT_SEED);
+    EXPECT_EQ(rocrand_cpp::mrg32k3a::default_seed, ROCRAND_MRG32K3A_DEFAULT_SEED);
+    EXPECT_EQ(rocrand_cpp::mt19937::default_seed, 0);
+    EXPECT_EQ(rocrand_cpp::mtgp32::default_seed, 0);
+    EXPECT_EQ(rocrand_cpp::philox4x32_10::default_seed, ROCRAND_PHILOX4x32_DEFAULT_SEED);
+    // sobol generators don't support seeding
+    EXPECT_EQ(rocrand_cpp::threefry2x32::default_seed, 0);
+    EXPECT_EQ(rocrand_cpp::threefry2x64::default_seed, 0);
+    EXPECT_EQ(rocrand_cpp::threefry4x32::default_seed, 0);
+    EXPECT_EQ(rocrand_cpp::threefry4x64::default_seed, 0);
+    EXPECT_EQ(rocrand_cpp::xorwow::default_seed, ROCRAND_XORWOW_DEFAULT_SEED);
+}
+
+using Generators = testing::Types<rocrand_cpp::lfsr113,
+                                  rocrand_cpp::mrg31k3p,
+                                  rocrand_cpp::mrg32k3a,
+                                  rocrand_cpp::mt19937,
+                                  rocrand_cpp::mtgp32,
+                                  rocrand_cpp::philox4x32_10,
+                                  rocrand_cpp::threefry2x32,
+                                  rocrand_cpp::threefry2x64,
+                                  rocrand_cpp::threefry4x32,
+                                  rocrand_cpp::threefry4x64,
+                                  rocrand_cpp::scrambled_sobol32,
+                                  rocrand_cpp::scrambled_sobol64,
+                                  rocrand_cpp::sobol32,
+                                  rocrand_cpp::sobol64,
+                                  rocrand_cpp::xorwow>;
+
+using rocrand_cpp_distributions = test_utils::test_matrix<
+    // Generators
+    std::tuple<rocrand_cpp::lfsr113,
+               rocrand_cpp::mrg31k3p,
+               rocrand_cpp::mrg32k3a,
+               rocrand_cpp::mt19937,
+               rocrand_cpp::mtgp32,
+               rocrand_cpp::philox4x32_10,
+               rocrand_cpp::threefry2x32,
+               rocrand_cpp::threefry2x64,
+               rocrand_cpp::threefry4x32,
+               rocrand_cpp::threefry4x64,
+               rocrand_cpp::scrambled_sobol32,
+               rocrand_cpp::scrambled_sobol64,
+               rocrand_cpp::sobol32,
+               rocrand_cpp::sobol64,
+               rocrand_cpp::xorwow>,
+    // Distributions
+    std::tuple<rocrand_cpp::uniform_int_distribution<unsigned char>,
+               rocrand_cpp::uniform_int_distribution<unsigned short>,
+               rocrand_cpp::uniform_int_distribution<unsigned int>,
+               rocrand_cpp::uniform_int_distribution<unsigned long long int>,
+               rocrand_cpp::uniform_real_distribution<half>,
+               rocrand_cpp::uniform_real_distribution<float>,
+               rocrand_cpp::uniform_real_distribution<double>,
+               rocrand_cpp::normal_distribution<half>,
+               rocrand_cpp::normal_distribution<float>,
+               rocrand_cpp::normal_distribution<double>,
+               rocrand_cpp::lognormal_distribution<half>,
+               rocrand_cpp::lognormal_distribution<float>,
+               rocrand_cpp::lognormal_distribution<double>,
+               rocrand_cpp::poisson_distribution<unsigned int>>>::test_types;
+
+template<typename test_tuple>
+struct rocrand_cpp_wrapper_distributions : public ::testing::Test
+{
+    using generator_t    = typename std::tuple_element<0, test_tuple>::type;
+    using distribution_t = typename std::tuple_element<1, test_tuple>::type;
+};
+
+template<typename GeneratorType>
+struct rocrand_cpp_wrapper : public ::testing::Test
+{
+    using generator_t = GeneratorType;
+};
+
+TYPED_TEST_SUITE(rocrand_cpp_wrapper, Generators);
+
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_rng_ctor)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    rocrand_generator generator1 = nullptr;
+    ASSERT_EQ(rocrand_create_generator(&generator1, generator_t::type()), ROCRAND_STATUS_SUCCESS);
+
+    // generator1 should be set to null after having been moved to generator2
+    generator_t generator2(generator1);
+    ASSERT_EQ(generator1, nullptr);
 
     try {
-        T y(generator);
-        FAIL() << "Expected rocrand_cpp::error";
+        generator_t generator3(generator1);
+        FAIL() << "Move-constructing generator from an already moved generator. Expected "
+                  "constructor to throw rocrand_cpp::error";
     }
     catch(const rocrand_cpp::error& err) {
         EXPECT_EQ(err.error_code(), ROCRAND_STATUS_NOT_CREATED);
@@ -54,35 +146,74 @@ void rocrand_rng_ctor_template()
     }
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_ctor)
+// testing constructor of PRNGs that support offset
+template<class generator_t>
+auto test_ctor() -> typename std::enable_if<!is_qrng<generator_t>::value
+                                            && supports_offset<generator_t>::value>::type
 {
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::mtgp32>());
-    ASSERT_NO_THROW(rocrand_rng_ctor_template<rocrand_cpp::sobol32>());
-}
-
-template<class T>
-void rocrand_prng_ctor_template()
-{
-    T();
-    T(11ULL); // seed
-    T(11ULL, 2ULL); // seed, offset
+    generator_t g1;
+    generator_t g2(11ULL); // seed
+    generator_t g3(11ULL, ROCRAND_ORDERING_PSEUDO_DEFAULT); // seed, ordering
+    generator_t g4(11ULL, 2ULL); // seed, offset
+    generator_t g5(11ULL, 2ULL, ROCRAND_ORDERING_PSEUDO_DEFAULT); // seed, offset, ordering
 
     rocrand_cpp::random_device rd;
-    T(rd(), 2ULL); // seed, offset
+    generator_t                g6(rd()); // seed from random device
+    generator_t                g7(rd(), 2ULL); // seed from random device, offset
+    generator_t                g8(rd(),
+                   2ULL,
+                   ROCRAND_ORDERING_PSEUDO_DEFAULT); // seed from random device, offset, ordering
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_prng_ctor)
+// testing constructor of PRNGs that don't support offset
+template<class generator_t>
+auto test_ctor() -> typename std::enable_if<!is_qrng<generator_t>::value
+                                            && !supports_offset<generator_t>::value>::type
 {
-    ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_prng_ctor_template<rocrand_cpp::mrg32k3a>());
+    using seed_type = typename generator_t::seed_type;
+    generator_t g1;
+    generator_t g2(11ULL);
+    generator_t g3(11ULL, ROCRAND_ORDERING_PSEUDO_DEFAULT);
 
-    // mtgp32 does not have ctor with offset
-    rocrand_cpp::mtgp32();
-    rocrand_cpp::mtgp32(11ULL);
+    // some generators have a different seed type than unsigned long long and
+    // just support constructing with unsigned long long for compatibility
+    generator_t g4(seed_type{});
+    generator_t g5(seed_type{}, ROCRAND_ORDERING_PSEUDO_DEFAULT);
+
+    // seed from random device
+    rocrand_cpp::random_device rd;
+    generator_t                g6(rd(), ROCRAND_ORDERING_PSEUDO_DEFAULT);
+}
+
+// testing constructor of QRNGs
+template<class generator_t>
+auto test_ctor() -> typename std::enable_if<is_qrng<generator_t>::value>::type
+{
+    generator_t g1;
+    generator_t g2(11U); // dimensions
+    generator_t g3(11U, ROCRAND_ORDERING_QUASI_DEFAULT); // dimensions, ordering
+    generator_t g4(11U, 2ULL); // dimensions, offset
+    generator_t g5(2000, 2ULL, ROCRAND_ORDERING_QUASI_DEFAULT); // dimensions, offset, ordering
+
+    try
+    {
+        generator_t g6(20001, 2ULL);
+        FAIL() << "Expected rocrand_cpp::error for QRNG dimension being out of range";
+    }
+    catch(const rocrand_cpp::error& err)
+    {
+        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_OUT_OF_RANGE);
+    }
+    catch(...)
+    {
+        FAIL() << "Expected rocrand_cpp::error for QRNG dimension being out of range";
+    }
+}
+
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_prng_ctor)
+{
+    using generator_t = typename TestFixture::generator_t;
+    ASSERT_NO_THROW(test_ctor<generator_t>());
 }
 
 template<class T1, class T2>
@@ -91,346 +222,309 @@ void assert_same_types()
     ::testing::StaticAssertTypeEq<T1, T2>();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_result_type)
+template<class generator_t>
+auto test_result_type() -> typename std::enable_if<is_64bit<generator_t>::value>::type
 {
-    assert_same_types<unsigned int, rocrand_cpp::philox4x32_10::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::xorwow::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::mrg32k3a::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::mtgp32::result_type>();
-    assert_same_types<unsigned int, rocrand_cpp::sobol32::result_type>();
+    assert_same_types<typename generator_t::result_type, unsigned long long int>();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_offset_type)
+template<class generator_t>
+auto test_result_type() -> typename std::enable_if<!is_64bit<generator_t>::value>::type
 {
-    assert_same_types<unsigned long long, rocrand_cpp::philox4x32_10::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::xorwow::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::mrg32k3a::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::mtgp32::offset_type>();
-    assert_same_types<unsigned long long, rocrand_cpp::sobol32::offset_type>();
+    assert_same_types<typename generator_t::result_type, unsigned int>();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_prng_default_seed)
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_rng_result_type)
 {
-    EXPECT_EQ(rocrand_cpp::philox4x32_10::default_seed, ROCRAND_PHILOX4x32_DEFAULT_SEED);
-    EXPECT_EQ(rocrand_cpp::xorwow::default_seed, ROCRAND_XORWOW_DEFAULT_SEED);
-    EXPECT_EQ(rocrand_cpp::mrg32k3a::default_seed, ROCRAND_MRG32K3A_DEFAULT_SEED);
+    using generator_t = typename TestFixture::generator_t;
+    test_result_type<generator_t>();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_qrng_default_num_dimensions)
+template<class generator_t>
+auto test_offset() -> typename std::enable_if<supports_offset<generator_t>::value>::type
 {
-    EXPECT_EQ(rocrand_cpp::sobol32::default_num_dimensions, 1U);
-    EXPECT_EQ(rocrand_cpp::sobol64::default_num_dimensions, 1U);
-    EXPECT_EQ(rocrand_cpp::scrambled_sobol32::default_num_dimensions, 1U);
-    EXPECT_EQ(rocrand_cpp::scrambled_sobol64::default_num_dimensions, 1U);
+    assert_same_types<unsigned long long, typename generator_t::offset_type>();
 }
 
-template<class T>
-void rocrand_qrng_ctor_template()
+template<class generator_t>
+auto test_offset() -> typename std::enable_if<!supports_offset<generator_t>::value>::type
 {
-    T();
-    T(11U); // dimensions
-    T(11U, 2ULL); // dimensions, offset
-    T(20000, 2ULL); // dimensions, offset
-
-    try {
-        T(20001, 2ULL);
-        FAIL() << "Expected rocrand_cpp::error";
-    }
-    catch(const rocrand_cpp::error& err) {
-        EXPECT_EQ(err.error_code(), ROCRAND_STATUS_OUT_OF_RANGE);
-    }
-    catch(...) {
-        FAIL() << "Expected rocrand_cpp::error";
-    }
+    GTEST_SKIP();
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_qrng_ctor)
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_rng_offset_type)
 {
-    ASSERT_NO_THROW(rocrand_qrng_ctor_template<rocrand_cpp::sobol32>());
+    using generator_t = typename TestFixture::generator_t;
+    test_offset<generator_t>();
 }
 
-template<class T>
-void rocrand_prng_seed_template()
+template<class generator_t>
+auto qrng_default_dimensions() -> typename std::enable_if<!is_qrng<generator_t>::value>::type
 {
-    T engine;
+    GTEST_SKIP();
+}
+
+template<class generator_t>
+auto qrng_default_dimensions() -> typename std::enable_if<is_qrng<generator_t>::value>::type
+{
+    EXPECT_EQ(generator_t::default_num_dimensions, 1U);
+}
+
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_qrng_default_num_dimensions)
+{
+    using generator_t = typename TestFixture::generator_t;
+    qrng_default_dimensions<generator_t>();
+}
+
+template<class generator_t>
+auto rocrand_prng_seed_template() -> typename std::enable_if<is_qrng<generator_t>::value>::type
+{
+    GTEST_SKIP();
+}
+
+template<class generator_t>
+auto rocrand_prng_seed_template() -> typename std::enable_if<!is_qrng<generator_t>::value>::type
+{
+    generator_t engine;
     engine.seed(11ULL);
     engine.seed(12ULL);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_prng_seed)
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_prng_seed)
 {
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_prng_seed_template<rocrand_cpp::mtgp32>());
+    using generator_t = typename TestFixture::generator_t;
+    ASSERT_NO_THROW(rocrand_prng_seed_template<generator_t>());
 }
 
-template<class T>
-void rocrand_qrng_dims_template()
+template<class generator_t>
+auto rocrand_qrng_dims_template() -> typename std::enable_if<!is_qrng<generator_t>::value>::type
 {
-    T engine;
+    GTEST_SKIP();
+}
+
+template<class generator_t>
+auto rocrand_qrng_dims_template() -> typename std::enable_if<is_qrng<generator_t>::value>::type
+{
+    generator_t engine;
     engine.dimensions(11U);
     engine.dimensions(20000U);
 
     try {
         engine.dimensions(20001U);
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected rocrand_cpp::error for QRNG dimension being out of range";
     }
     catch(const rocrand_cpp::error& err) {
         EXPECT_EQ(err.error_code(), ROCRAND_STATUS_OUT_OF_RANGE);
     }
     catch(...) {
-        FAIL() << "Expected rocrand_cpp::error";
+        FAIL() << "Expected rocrand_cpp::error for QRNG dimension being out of range";
     }
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_qrng_dims)
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_qrng_dims)
 {
-    ASSERT_NO_THROW(rocrand_qrng_dims_template<rocrand_cpp::sobol32>());
+    using generator_t = typename TestFixture::generator_t;
+    ASSERT_NO_THROW(rocrand_qrng_dims_template<generator_t>());
 }
 
-template<class T>
-void rocrand_rng_offset_template()
+template<class generator_t>
+auto rocrand_rng_offset_template() ->
+    typename std::enable_if<supports_offset<generator_t>::value>::type
 {
-    T engine;
+    generator_t engine;
     engine.offset(11ULL);
     engine.offset(12ULL);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_offset)
+template<class generator_t>
+auto rocrand_rng_offset_template() ->
+    typename std::enable_if<!supports_offset<generator_t>::value>::type
 {
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_rng_offset_template<rocrand_cpp::sobol32>());
+    GTEST_SKIP();
 }
 
-template<class T>
-void rocrand_rng_stream_template()
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_rng_offset)
 {
-    T engine;
+    using generator_t = typename TestFixture::generator_t;
+    ASSERT_NO_THROW(rocrand_rng_offset_template<generator_t>());
+}
+
+TYPED_TEST(rocrand_cpp_wrapper, rocrand_rng_stream)
+{
+    using generator_t = typename TestFixture::generator_t;
+
+    generator_t engine;
     hipStream_t stream;
     HIP_CHECK(hipStreamCreate(&stream));
-    engine.stream(stream);
-    engine.stream(NULL);
+    ASSERT_NO_THROW(engine.stream(stream));
+    ASSERT_NO_THROW(engine.stream(0));
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_rng_stream)
+namespace test_utils
 {
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::philox4x32_10>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::xorwow>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::mrg32k3a>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::mtgp32>());
-    ASSERT_NO_THROW(rocrand_rng_stream_template<rocrand_cpp::sobol32>());
+
+template<typename T>
+double mean(std::vector<T>& results)
+{
+    // half type needs to be explicitly cast to double in std::accumulate
+    double mean = std::accumulate(results.begin(),
+                                  results.end(),
+                                  0.0,
+                                  [](double partial_sum, T val)
+                                  { return partial_sum + static_cast<double>(val); });
+    return mean / results.size();
 }
 
-template<class T, class IntType>
-void rocrand_uniform_int_dist_template()
+template<typename T>
+double variance(double mean, std::vector<T>& results)
 {
-    T engine;
-    rocrand_cpp::uniform_int_distribution<IntType> d;
+    // half type needs to be explicitly cast to double  in std::accumulate
+    double variance = std::accumulate(results.begin(),
+                                      results.end(),
+                                      0.0,
+                                      [mean](double partial_sum, T val)
+                                      {
+                                          double deviation = static_cast<double>(val) - mean;
+                                          return (partial_sum + deviation * deviation);
+                                      });
+    return variance / results.size();
+}
 
-    const size_t output_size = 8192;
-    IntType * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(IntType)));
-    HIP_CHECK(hipDeviceSynchronize());
+} // namespace test_utils
 
-    // generate
-    EXPECT_NO_THROW(d(engine, output, output_size));
-    HIP_CHECK(hipDeviceSynchronize());
+template<typename distribution_t>
+struct distribution_test;
 
-    std::vector<unsigned int> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-
-    double mean = 0;
-    for(auto v : output_host)
+template<typename T>
+struct distribution_test<rocrand_cpp::uniform_int_distribution<T>>
+{
+    static void verify(std::vector<T>& results, rocrand_cpp::uniform_int_distribution<T>& /*dist*/)
     {
-        mean += static_cast<double>(v) / UINT_MAX;
+        double mean = test_utils::mean(results);
+        mean /= static_cast<double>(rocrand_cpp::uniform_int_distribution<T>::max());
+        EXPECT_NEAR(mean, 0.5, 0.01);
     }
-    mean = mean / output_size;
-    EXPECT_NEAR(mean, 0.5, 0.1);
-}
+};
 
-TEST(rocrand_cpp_wrapper, rocrand_uniform_int_dist)
+template<typename T>
+struct distribution_test<rocrand_cpp::uniform_real_distribution<T>>
 {
-    ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::philox4x32_10, unsigned int>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::xorwow, unsigned int>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::mrg32k3a, unsigned int>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::mtgp32, unsigned int>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_int_dist_template<rocrand_cpp::sobol32, unsigned int>()
-    ));
-}
-
-template<class T, class RealType>
-void rocrand_uniform_real_dist_template()
-{
-    T engine;
-    rocrand_cpp::uniform_real_distribution<RealType> d;
-
-    const size_t output_size = 8192;
-    RealType * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // generate
-    EXPECT_NO_THROW(d(engine, output, output_size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    std::vector<RealType> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(RealType),
-            hipMemcpyDeviceToHost
-        )
-    );
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-
-    double mean = 0;
-    for(auto v : output_host)
+    static void verify(std::vector<T>& results, rocrand_cpp::uniform_real_distribution<T>& /*dist*/)
     {
-        mean += static_cast<double>(v);
+        double mean = test_utils::mean(results);
+        EXPECT_NEAR(mean, 0.5, 0.01);
     }
-    mean = mean / output_size;
-    EXPECT_NEAR(mean, 0.5, 0.1);
-}
+};
 
-TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_float)
+template<typename T>
+struct distribution_test<rocrand_cpp::normal_distribution<T>>
 {
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::philox4x32_10, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::xorwow, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mrg32k3a, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mtgp32, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::sobol32, float>()
-    ));
-}
-
-TEST(rocrand_cpp_wrapper, rocrand_uniform_real_dist_double)
-{
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::philox4x32_10, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::xorwow, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mrg32k3a, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::mtgp32, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_uniform_real_dist_template<rocrand_cpp::sobol32, double>()
-    ));
-}
-
-template<class T, class RealType>
-void rocrand_normal_dist_template()
-{
-    T engine;
-    rocrand_cpp::normal_distribution<RealType> d;
-
-    const size_t output_size = 8192;
-    RealType * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // generate
-    EXPECT_NO_THROW(d(engine, output, output_size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    std::vector<RealType> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(RealType),
-            hipMemcpyDeviceToHost
-        )
-    );
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-
-    double mean = 0;
-    for(auto v : output_host)
+    static void verify(std::vector<T>& results, rocrand_cpp::normal_distribution<T>& dist)
     {
-        mean += static_cast<double>(v);
+        double expected_mean   = dist.mean();
+        double expected_stddev = dist.stddev();
+        double mean            = test_utils::mean(results);
+        double variance        = test_utils::variance(mean, results);
+        EXPECT_NEAR(mean, expected_mean, 0.01);
+        EXPECT_NEAR(variance, expected_stddev, 0.05);
     }
-    mean = mean / output_size;
-    EXPECT_NEAR(mean, 0.0, 0.2);
+};
 
-    double stddev = 0;
-    for(auto v : output_host)
+template<typename T>
+struct distribution_test<rocrand_cpp::lognormal_distribution<T>>
+{
+    static void verify(std::vector<T>& results, rocrand_cpp::lognormal_distribution<T>& dist)
     {
-        stddev += std::pow(static_cast<double>(v) - mean, 2);
+        double mu              = dist.m();
+        double sigma           = dist.s();
+        double expected_mean   = std::exp(mu + sigma * sigma / 2.0);
+        double expected_stddev = std::sqrt(std::exp(sigma * sigma) - 1.0) * expected_mean;
+        double mean            = test_utils::mean(results);
+        double stddev          = std::sqrt(test_utils::variance(mean, results));
+        EXPECT_NEAR(mean, expected_mean, 0.01);
+        EXPECT_NEAR(stddev, expected_stddev, 0.1);
     }
-    stddev = stddev / output_size;
-    EXPECT_NEAR(stddev, 1.0, 0.2);
+};
+
+template<>
+struct distribution_test<rocrand_cpp::poisson_distribution<unsigned int>>
+{
+    static void verify(std::vector<unsigned int>&                       results,
+                       rocrand_cpp::poisson_distribution<unsigned int>& dist)
+    {
+        double lambda   = dist.mean();
+        double mean     = test_utils::mean(results);
+        double variance = test_utils::variance(mean, results);
+        EXPECT_NEAR(mean, lambda, lambda * 0.1);
+        EXPECT_NEAR(variance, lambda, lambda * 0.1);
+    }
+};
+
+template<class generator_t, class distribution_t>
+auto rocrand_dist_test() -> typename std::enable_if<
+    is_64bit<generator_t>::value
+    || (!is_64bit<generator_t>::value
+        && !std::is_same<distribution_t,
+                         rocrand_cpp::uniform_int_distribution<unsigned long long int>>::value)>::
+    type
+{
+    generator_t    engine;
+    distribution_t distribution;
+    using result_t = typename distribution_t::result_type;
+
+    constexpr size_t output_size       = 1e6;
+    constexpr size_t output_size_bytes = output_size * sizeof(result_t);
+    result_t*        d_output;
+    HIP_CHECK(hipMallocHelper(&d_output, output_size_bytes));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    ASSERT_NO_THROW(distribution(engine, d_output, output_size));
+
+    std::vector<result_t> h_output(output_size);
+    HIP_CHECK(hipMemcpy(h_output.data(), d_output, output_size_bytes, hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(d_output));
+
+    distribution_test<distribution_t>::verify(h_output, distribution);
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_normal_dist_float)
+template<class generator_t, class distribution_t>
+auto rocrand_dist_test() -> typename std::enable_if<
+    !is_64bit<generator_t>::value
+    && std::is_same<distribution_t,
+                    rocrand_cpp::uniform_int_distribution<unsigned long long int>>::value>::type
 {
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::philox4x32_10, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::xorwow, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mrg32k3a, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mtgp32, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::sobol32, float>()
-    ));
+    // 64 bit generation is not supported for these generators
+    generator_t    engine;
+    distribution_t distribution;
+    using result_t = typename distribution_t::result_type;
+
+    try
+    {
+        result_t* output_dummy = nullptr;
+        distribution(engine, output_dummy, 0);
+        GTEST_FAIL() << "Expected rocrand_cpp::error of type ROCRAND_STATUS_TYPE_ERROR";
+    }
+    catch(const rocrand_cpp::error& error)
+    {
+        EXPECT_EQ(error.error_code(), ROCRAND_STATUS_TYPE_ERROR)
+            << "Expected rocrand_cpp::error of type ROCRAND_STATUS_TYPE_ERROR";
+    }
+    catch(...)
+    {
+        GTEST_FAIL() << "Expected rocrand_cpp::error of type ROCRAND_STATUS_TYPE_ERROR";
+    }
 }
 
-TEST(rocrand_cpp_wrapper, rocrand_normal_dist_double)
+TYPED_TEST_SUITE(rocrand_cpp_wrapper_distributions, rocrand_cpp_distributions);
+
+TYPED_TEST(rocrand_cpp_wrapper_distributions, rocrand_dist)
 {
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::philox4x32_10, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::xorwow, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mrg32k3a, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::mtgp32, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_normal_dist_template<rocrand_cpp::sobol32, double>()
-    ));
+    using generator_t    = typename TestFixture::generator_t;
+    using distribution_t = typename TestFixture::distribution_t;
+
+    rocrand_dist_test<generator_t, distribution_t>();
 }
 
 TEST(rocrand_cpp_wrapper, rocrand_normal_dist_param)
@@ -445,91 +539,6 @@ TEST(rocrand_cpp_wrapper, rocrand_normal_dist_param)
 
     d3.param(d1.param());
     ASSERT_TRUE(d1.param() == d3.param());
-}
-
-template<class T, class RealType>
-void rocrand_lognormal_dist_template()
-{
-    T engine;
-    rocrand_cpp::lognormal_distribution<RealType> d(1.6, 0.25);
-
-    const size_t output_size = 8192;
-    RealType * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(RealType)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // generate
-    EXPECT_NO_THROW(d(engine, output, output_size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    std::vector<RealType> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(RealType),
-            hipMemcpyDeviceToHost
-        )
-    );
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-
-    double mean = 0;
-    for(auto v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
-
-    double stddev = 0;
-    for(auto v : output_host)
-    {
-        stddev += std::pow(v - mean, 2);
-    }
-    stddev = std::sqrt(stddev / output_size);
-
-    double logmean = std::log(mean * mean / std::sqrt(stddev + mean * mean));
-    double logstd = std::sqrt(std::log(1.0f + stddev/(mean * mean)));
-
-    EXPECT_NEAR(1.6, logmean, 1.6 * 0.2);
-    EXPECT_NEAR(0.25, logstd, 0.25 * 0.2);
-}
-
-TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_float)
-{
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::philox4x32_10, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::xorwow, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mrg32k3a, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mtgp32, float>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::sobol32, float>()
-    ));
-}
-
-TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_double)
-{
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::philox4x32_10, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::xorwow, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mrg32k3a, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::mtgp32, double>()
-    ));
-    ASSERT_NO_THROW((
-        rocrand_lognormal_dist_template<rocrand_cpp::sobol32, double>()
-    ));
 }
 
 TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_param)
@@ -550,78 +559,6 @@ TEST(rocrand_cpp_wrapper, rocrand_lognormal_dist_param)
     d3.param(d1.param());
     ASSERT_TRUE(d1.param() == d3.param());
 }
-
-template<class T, class IntType>
-void rocrand_poisson_dist_template(const double lambda)
-{
-    T engine;
-    rocrand_cpp::poisson_distribution<IntType> d(lambda);
-
-    const size_t output_size = 8192;
-    IntType * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(IntType)));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // generate
-    EXPECT_NO_THROW(d(engine, output, output_size));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    std::vector<IntType> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(IntType),
-            hipMemcpyDeviceToHost
-        )
-    );
-    HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(hipFree(output));
-
-    double mean = 0;
-    for(auto v : output_host)
-    {
-        mean += static_cast<double>(v);
-    }
-    mean = mean / output_size;
-
-    double variance = 0;
-    for(auto v : output_host)
-    {
-        variance += std::pow(v - mean, 2);
-    }
-    variance = variance / output_size;
-
-    EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
-    EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
-}
-
-class poisson_dist : public ::testing::TestWithParam<double> { };
-
-TEST_P(poisson_dist, rocrand_poisson_dist)
-{
-    const double lambda = GetParam();
-    ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::philox4x32_10, unsigned int>(lambda)
-    ));
-    ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::xorwow, unsigned int>(lambda)
-    ));
-    ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::mrg32k3a, unsigned int>(lambda)
-    ));
-    ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::mtgp32, unsigned int>(lambda)
-    ));
-    ASSERT_NO_THROW((
-        rocrand_poisson_dist_template<rocrand_cpp::sobol32, unsigned int>(lambda)
-    ));
-}
-
-const double lambdas[] = { 1.0, 5.5, 20.0, 100.0, 1234.5, 5000.0 };
-
-INSTANTIATE_TEST_SUITE_P(rocrand_cpp_wrapper,
-                        poisson_dist,
-                        ::testing::ValuesIn(lambdas));
 
 TEST(rocrand_cpp_wrapper, rocrand_poisson_dist_param)
 {

@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ include:
       - /deps-docs.yaml
       - /deps-rocm.yaml
       - /deps-nvcc.yaml
+      - /deps-windows.yaml
       - /gpus-rocm.yaml
       - /gpus-nvcc.yaml
       - /rules.yaml
@@ -49,7 +50,7 @@ clang-format:
   stage: lint
   needs: []
   tags:
-    - rocm-build
+    - build
   variables:
     CLANG_FORMAT: "/opt/rocm/llvm/bin/clang-format"
     GIT_CLANG_FORMAT: "/opt/rocm/llvm/bin/git-clang-format"
@@ -66,7 +67,7 @@ copyright-date:
   stage: lint
   needs: []
   tags:
-    - rocm-build
+    - build
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
@@ -76,7 +77,7 @@ copyright-date:
 
 .rocm:cmake-minimum:
   variables:
-    COMPILER: hipcc
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
@@ -86,7 +87,7 @@ copyright-date:
 
 .rocm:cmake-latest:
   variables:
-    COMPILER: hipcc
+    COMPILER: /opt/rocm/bin/amdclang++
   extends:
     - .deps:rocm
     - .deps:cmake-latest
@@ -94,9 +95,19 @@ copyright-date:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-latest", before_script]
 
+.rocm-hipcc:cmake-minimum:
+  variables:
+    COMPILER: /opt/rocm/bin/hipcc
+  extends:
+    - .deps:rocm
+    - .deps:cmake-minimum
+  before_script:
+    - !reference [".deps:rocm", before_script]
+    - !reference [".deps:cmake-minimum", before_script]
+
 .nvcc:cmake-minimum:
   variables:
-    COMPILER: c++
+    COMPILER: /usr/bin/g++
   extends:
     - .deps:nvcc
     - .deps:cmake-minimum
@@ -106,7 +117,7 @@ copyright-date:
 
 .nvcc:cmake-latest:
   variables:
-    COMPILER: c++
+    COMPILER: /usr/bin/g++
   extends:
     - .deps:nvcc
     - .deps:cmake-latest
@@ -114,61 +125,44 @@ copyright-date:
     - !reference [".deps:nvcc", before_script]
     - !reference [".deps:cmake-latest", before_script]
 
-.deps:hip-cpu-extend:
-  before_script:
-    # C++20 standard library headers are required for HIP-CPU
-    # Clang-15 is required to build hip-cpu, as rocm clang 5.4 and gcc all crash.
-    - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y -qq software-properties-common
-    - $SUDO_CMD apt-add-repository -y ppa:ubuntu-toolchain-r/test
-    - wget -q -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add -
-    - echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main' | $SUDO_CMD tee /etc/apt/sources.list.d/llvm.list
-    - $SUDO_CMD apt-get update -qq
-    - $SUDO_CMD apt-get install -y -qq g++-11 clang-15
-
-.hip-cpu:cmake-minimum:
+.nvcc-clang:cmake-minimum:
   variables:
-    COMPILER: clang++-15
+    COMPILER: /usr/local/bin/clang++
   extends:
-    - .deps:rocm
-    - .deps:cmake-minimum
-    - .deps:hip-cpu-extend
-  before_script:
-    - !reference [".deps:rocm", before_script]
-    - !reference [".deps:cmake-minimum", before_script]
-    - !reference [".deps:hip-cpu-extend", before_script]
-
-.hip-cpu:cmake-latest:
-  variables:
-    COMPILER: clang++-15
-  extends:
-    - .deps:rocm
+    - .deps:nvcc
     - .deps:cmake-latest
-    - .deps:hip-cpu-extend
   before_script:
-    - !reference [".deps:rocm", before_script]
+    - !reference [".deps:nvcc", before_script]
     - !reference [".deps:cmake-latest", before_script]
-    - !reference [".deps:hip-cpu-extend", before_script]
 
 .rocm:build:
+  variables:
+    BUILD_BENCHMARK_TUNING: "OFF"
   stage: build
   extends:
     - .gpus:rocm-gpus
     - .rules:build
   needs: []
   script:
+    - $SUDO_CMD apt-get install -y flang
     - cmake
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
+      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
-      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_BENCHMARK_TUNING=${BUILD_BENCHMARK_TUNING}
+      -D BENCHMARK_TUNING_MIN_GRID_SIZE=32768
+      -D BENCHMARK_TUNING_THREAD_OPTIONS="128, 256"
+      -D BENCHMARK_TUNING_BLOCK_OPTIONS="128, 256"
+      -D BUILD_FORTRAN_WRAPPER=ON
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-      -D GPU_TARGETS=${GPU_TARGETS}
+      -D AMDGPU_TARGETS=${GPU_TARGETS}
+      -D DISABLE_WERROR=OFF
     - cmake --build $CI_PROJECT_DIR/build
     - cmake --build $CI_PROJECT_DIR/build --target package
 
@@ -179,40 +173,21 @@ copyright-date:
     - .rules:build
   needs: []
   script:
+    - $SUDO_CMD apt-get install -y flang
     - cmake
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
+      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
+      -D CMAKE_CUDA_HOST_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
-      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_FORTRAN_WRAPPER=ON
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
       -D NVGPU_TARGETS=${GPU_TARGETS}
-    - cmake --build $CI_PROJECT_DIR/build
-    - cmake --build $CI_PROJECT_DIR/build --target package
-
-.hip-cpu:build:
-  stage: build
-  extends:
-    - .rules:build
-  needs: []
-  script:
-    - cmake
-      -S $CI_PROJECT_DIR
-      -B $CI_PROJECT_DIR/build
-      -G Ninja
-      -D CMAKE_CXX_COMPILER=${COMPILER}
-      -D BUILD_TEST=ON
-      -D BUILD_BENCHMARK=ON
-      -D BUILD_FORTRAN_WRAPPER=OFF
-      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
-      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
-      -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-      -D USE_HIP_CPU=ON
-      -D CMAKE_INSTALL_PREFIX=${ROCRAND_DIR}
     - cmake --build $CI_PROJECT_DIR/build
     - cmake --build $CI_PROJECT_DIR/build --target package
 
@@ -222,22 +197,17 @@ copyright-date:
     paths:
       - $CI_PROJECT_DIR/build/library/
       - $CI_PROJECT_DIR/build/test/test_*
-      - $CI_PROJECT_DIR/build/test/CTestTestfile.cmake
-      - $CI_PROJECT_DIR/build/test/linkage/CTestTestfile.cmake
+      - $CI_PROJECT_DIR/build/**/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/benchmark/benchmark_*
       - $CI_PROJECT_DIR/build/deps/googlebenchmark/
-      - $CI_PROJECT_DIR/build/deps/hip-cpu/
-      - $CI_PROJECT_DIR/build/deps/tbb/
-      - $CI_PROJECT_DIR/build/tbb-src/
       - $CI_PROJECT_DIR/build/CMakeCache.txt
-      - $CI_PROJECT_DIR/build/CTestTestfile.cmake
       - $CI_PROJECT_DIR/build/*.deb
       - $CI_PROJECT_DIR/build/*.zip
     expire_in: 2 weeks
 
 build:rocm-cmake-minimum:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm:cmake-minimum
@@ -245,10 +215,22 @@ build:rocm-cmake-minimum:
     - .save-artifacts
   variables:
     BUILD_SHARED_LIBS: "ON"
+    BUILD_BENCHMARK_TUNING: "ON"
+
+build:rocm-hipcc-cmake-minimum:
+  tags:
+    - build
+  needs: []
+  extends:
+    - .rocm-hipcc:cmake-minimum
+    - .rocm:build
+    - .save-artifacts
+  variables:
+    BUILD_SHARED_LIBS: "ON"
 
 build:rocm-static-cmake-minimum:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm:cmake-minimum
@@ -258,7 +240,7 @@ build:rocm-static-cmake-minimum:
 
 build:rocm-cmake-latest:
   tags:
-    - rocm-build
+    - build
   needs: []
   extends:
     - .rocm:cmake-latest
@@ -266,19 +248,9 @@ build:rocm-cmake-latest:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
-build:rocm-static-cmake-latest:
-  tags:
-    - rocm-build
-  needs: []
-  extends:
-    - .rocm:cmake-latest
-    - .rocm:build
-  variables:
-    BUILD_SHARED_LIBS: "OFF"
-
 build:nvcc-cmake-minimum:
   tags:
-    - nvcc-build
+    - build
   needs: []
   extends:
     - .nvcc:cmake-minimum
@@ -287,9 +259,20 @@ build:nvcc-cmake-minimum:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
+build:nvcc-clang-cmake-minimum:
+  tags:
+    - build
+  needs: []
+  extends:
+    - .nvcc-clang:cmake-minimum
+    - .nvcc:build
+    - .save-artifacts
+  variables:
+    BUILD_SHARED_LIBS: "ON"
+
 build:nvcc-static-cmake-minimum:
   tags:
-    - nvcc-build
+    - build
   needs: []
   extends:
     - .nvcc:cmake-minimum
@@ -299,7 +282,7 @@ build:nvcc-static-cmake-minimum:
 
 build:nvcc-cmake-latest:
   tags:
-    - nvcc-build
+    - build
   needs: []
   extends:
     - .nvcc:cmake-latest
@@ -307,43 +290,70 @@ build:nvcc-cmake-latest:
   variables:
     BUILD_SHARED_LIBS: "ON"
 
-build:nvcc-static-cmake-latest:
-  tags:
-    - nvcc-build
-  needs: []
+benchmark:benchmark-tuning:
   extends:
-    - .nvcc:cmake-latest
-    - .nvcc:build
+    - .rules:manual
+    - .rocm:cmake-latest
+    - .gpus:rocm
+  stage: benchmark
+  needs: []
+  timeout: 12h
   variables:
-    BUILD_SHARED_LIBS: "OFF"
+    BENCHMARK_TUNING_MIN_GRID_SIZE: 32768
+    BENCHMARK_TUNING_THREAD_OPTIONS: "64, 128, 256, 512, 1024"
+  script:
+    # Build the appropriate benchmarks
+    - export BENCHMARK_TUNING_BLOCK_OPTIONS=`$CI_PROJECT_DIR/scripts/config-tuning/get_tuned_grid_sizes.py`
+    - cmake
+      -S $CI_PROJECT_DIR
+      -B $CI_PROJECT_DIR/build
+      -G Ninja
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+      -D BUILD_TEST=OFF
+      -D BUILD_BENCHMARK=ON
+      -D BUILD_BENCHMARK_TUNING=ON
+      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
+      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
+      -D BUILD_SHARED_LIBS=ON
+      -D AMDGPU_TARGETS=${GPU_TARGET}
+      -D DISABLE_WERROR=OFF
+      -D BENCHMARK_TUNING_MIN_GRID_SIZE=${BENCHMARK_TUNING_MIN_GRID_SIZE}
+      -D BENCHMARK_TUNING_THREAD_OPTIONS="${BENCHMARK_TUNING_THREAD_OPTIONS}"
+      -D BENCHMARK_TUNING_BLOCK_OPTIONS="${BENCHMARK_TUNING_BLOCK_OPTIONS}"
+    - cmake --build $CI_PROJECT_DIR/build --target benchmark_rocrand_tuning
+    - $CI_PROJECT_DIR/build/benchmark/tuning/benchmark_rocrand_tuning --benchmark_out_format=json --benchmark_out=$CI_PROJECT_DIR/build/rocrand_config_tuning_${GPU_TARGET}_${CI_JOB_ID}.json
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/build/library/
+      - $CI_PROJECT_DIR/build/benchmark/
+      - $CI_PROJECT_DIR/build/deps/googlebenchmark/
+      - $CI_PROJECT_DIR/build/CMakeCache.txt
+      - $CI_PROJECT_DIR/build/*.json
+    expire_in: 2 weeks
 
-build-cpu:cmake-minimum:
-  tags:
-    - rocm-build
-  needs: []
+benchmark:benchmark-tuning-generate-results:
+  image: python:3.11
+  stage: benchmark
   extends:
-    - .hip-cpu:cmake-minimum
-    - .hip-cpu:build
-    - .save-artifacts
-  variables:
-    BUILD_SHARED_LIBS: "ON"
-
-build-cpu:cmake-latest:
-  tags:
-    - rocm-build
-  needs: []
-  extends:
-    - .hip-cpu:cmake-latest
-    - .hip-cpu:build
-    - .save-artifacts
-  variables:
-    BUILD_SHARED_LIBS: "ON"
+    - .rules:manual
+  needs:
+    - benchmark:benchmark-tuning
+  script:
+    - mkdir $CI_PROJECT_DIR/config-tuning-out
+    - python -m pip install -r $CI_PROJECT_DIR/scripts/config-tuning/requirements.txt
+    - python $CI_PROJECT_DIR/scripts/config-tuning/select_best_config.py --out-dir $CI_PROJECT_DIR/config-tuning-out --plot-out $CI_PROJECT_DIR/config-tuning-out/rocrand-config-tuning.svg $CI_PROJECT_DIR/build/rocrand_config_tuning_*.json
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/config-tuning-out
+    expire_in: 2 weeks
 
 .test:ctest:
   extends:
     - .rules:test
   stage: test
   script:
+    - $SUDO_CMD apt-get install -y flang
     - cd $CI_PROJECT_DIR/build
     # Parallel execution (with other AMDGPU processes) can oversubscribe the SDMA queue.
     # This causes the hipMemcpy to fail, which is not reported as an error by HIP.
@@ -369,24 +379,22 @@ test:nvcc:
     # This is only needed because of the legacy before_script in .gpus:nvcc
     - !reference [".nvcc:cmake-minimum", before_script]
 
-test:hip-cpu:
-  needs:
-    - build-cpu:cmake-minimum
-  extends:
-    - .hip-cpu:cmake-minimum
-    - .test:ctest
-  tags:
-    - rocm-build
-
 .benchmark:
   extends:
-    # rocRAND benchmarks are short, we can afford to run them automatically
-    - .rules:test
+    - .rules:manual
   stage: benchmark
   script:
     - cd $CI_PROJECT_DIR/build
-    - ./benchmark/benchmark_rocrand_host_api --trials 5
+    - ./benchmark/benchmark_rocrand_host_api
+      --size $[ 512*1024*1024 ]
+      --byte-size
+      --trials 5
+      --benchmark_out_format=json
+      --benchmark_out=rocrand_benchmarks_${GPU_TARGET}_${CI_JOB_ID}.json
     - ./benchmark/benchmark_rocrand_kernel --dis all --engine all --trials 5
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/build/rocrand_benchmarks_*.json
 
 benchmark:rocm:
   needs:
@@ -404,27 +412,16 @@ benchmark:nvcc:
     - .benchmark
     - .gpus:nvcc
 
-benchmark:hip-cpu:
-  needs:
-    - build-cpu:cmake-minimum
-  extends:
-    - .hip-cpu:cmake-minimum
-    - .benchmark
-  tags:
-    - rocm-build
-  timeout: 8h
-
 .test:python:
   stage: test
   extends:
     - .rules:test
-  before_script:
+  script:
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y -qq python3 python3-pip python3-numpy
     - $SUDO_CMD apt-get install -y -qq wget
     - pip3 install setuptools
     - export ROCRAND_PATH=$CI_PROJECT_DIR/build/library/
-  script:
     # rocRAND Wrapper with Python 3
     - pip3 --version
     - cd $CI_PROJECT_DIR/python/rocrand
@@ -467,26 +464,6 @@ test:nvcc-python:
     - ctest --output-on-failure
     - $SUDO_CMD dpkg -r rocrand-benchmarks rocrand-clients rocrand-dev rocrand-tests rocrand
 
-.test-cpu:package:
-  stage: test
-  extends:
-    - .rules:test
-  script:
-    - cd $CI_PROJECT_DIR/build
-    - $SUDO_CMD dpkg -i rocrand*.deb
-    - cmake
-      -S $CI_PROJECT_DIR/test/package/
-      -B $CI_PROJECT_DIR/build_package_test
-      -D CMAKE_CXX_COMPILER=${COMPILER}
-      -D USE_HIP_CPU=ON
-      -D TBB_DIR=$CI_PROJECT_DIR/build/tbb-src/cmake
-      -D hip_cpu_rt_DIR=$CI_PROJECT_DIR/build/deps/hip-cpu/share/hip_cpu_rt/cmake
-      -D rocrand_DIR=${ROCRAND_DIR}
-    - cmake --build $CI_PROJECT_DIR/build_package_test
-    - cd $CI_PROJECT_DIR/build_package_test
-    - ctest --output-on-failure
-    - $SUDO_CMD dpkg -r rocrand-benchmarks rocrand-clients rocrand-dev rocrand-tests rocrand
-
 test:rocm-package:
   tags:
     - rocm
@@ -505,14 +482,23 @@ test:nvcc-package:
   needs:
     - build:nvcc-cmake-minimum
 
-test:hip-cpu-package:
-  tags:
-    - rocm
+test:cpp-wrapper:
+  stage: test
   extends:
-    - .hip-cpu:cmake-minimum
-    - .test-cpu:package
+    - .rocm:cmake-minimum
+    - .rules:test
   needs:
-    - build-cpu:cmake-minimum
+    - build:rocm-cmake-minimum
+  script:
+    - cd $CI_PROJECT_DIR/build
+    - $SUDO_CMD dpkg -i rocrand*.deb
+    - cmake
+      -S $CI_PROJECT_DIR/test/cpp_wrapper/
+      -B $CI_PROJECT_DIR/build_cpp_wrapper_test
+    - cmake --build $CI_PROJECT_DIR/build_cpp_wrapper_test
+    - cd $CI_PROJECT_DIR/build_cpp_wrapper_test
+    - ctest --output-on-failure
+    - $SUDO_CMD dpkg -r rocrand-benchmarks rocrand-clients rocrand-dev rocrand-tests rocrand
 
 .test:install:
   stage: test
@@ -535,34 +521,6 @@ test:hip-cpu-package:
     - cd $CI_PROJECT_DIR/install_test
     - ctest --output-on-failure
 
-.test-cpu:install:
-  stage: test
-  extends:
-    - .rules:test
-  script:
-    - cmake
-      -S $CI_PROJECT_DIR
-      -B $CI_PROJECT_DIR/build_only_install
-      -D BUILD_TEST=OFF
-      -D BUILD_FORTRAN_WRAPPER=OFF
-      -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
-      -D CMAKE_CXX_COMPILER=${COMPILER}
-      -D USE_HIP_CPU=ON
-      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
-      -D CMAKE_INSTALL_PREFIX=${ROCRAND_DIR}
-    - $SUDO_CMD cmake --build $CI_PROJECT_DIR/build_only_install --target install
-    - cmake
-      -S $CI_PROJECT_DIR/test/package/
-      -B $CI_PROJECT_DIR/install_test
-      -D CMAKE_CXX_COMPILER=${COMPILER}
-      -D USE_HIP_CPU=ON
-      -D TBB_DIR=$CI_PROJECT_DIR/build_only_install/tbb-src/cmake
-      -D hip_cpu_rt_DIR=$CI_PROJECT_DIR/build_only_install/deps/hip-cpu/share/hip_cpu_rt/cmake
-      -D rocrand_DIR=${ROCRAND_DIR}
-    - cmake --build $CI_PROJECT_DIR/install_test
-    - cd $CI_PROJECT_DIR/install_test
-    - ctest --output-on-failure
-
 test:rocm-install:
   tags:
     - rocm
@@ -579,18 +537,10 @@ test:nvcc-install:
     - .test:install
   needs: []
 
-test:hip-cpu-install:
-  variables:
-    ROCRAND_DIR: $CI_PROJECT_DIR/rocRAND
-  tags:
-    - rocm
-  extends:
-    - .hip-cpu:cmake-minimum
-    - .test-cpu:install
-  needs: []
-
 test:doc:
   stage: test
+  variables:
+    SPHINX_DIR: $DOCS_DIR/sphinx
   extends:
     - .rules:test
     - .build:docs
@@ -625,3 +575,66 @@ test:nvcc-parity:
     - build:nvcc-cmake-minimum
   before_script:
     - !reference [".nvcc:cmake-minimum", before_script]
+
+.build:windows:
+  extends:
+    - .rules:test
+    - .gpus:rocm-windows
+    - .deps:rocm-windows
+    - .deps:visual-studio-devshell
+  variables:
+    BUILD_SHARED_LIBS: "ON"
+  script:
+    # *>&1 redirects all streams to standard output
+    # otherwise the runner won't capture e.g. the compiler errors
+    # Configure rocRAND
+    - cmake
+      -S "$CI_PROJECT_DIR"
+      -B "$CI_PROJECT_DIR/build"
+      -G Ninja
+      -D AMDGPU_TARGETS=$GPU_TARGET
+      -D BUILD_BENCHMARK=ON
+      -D BUILD_FORTRAN_WRAPPER=OFF
+      -D BUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
+      -D BUILD_TEST=ON
+      -D CMAKE_BUILD_TYPE=Release
+      -D CMAKE_C_COMPILER:FILEPATH="$ROCM_PATH/bin/clang.exe"
+      -D CMAKE_CXX_COMPILER:FILEPATH="$ROCM_PATH/bin/clang++.exe"
+      -D CMAKE_INSTALL_PREFIX:PATH="$CI_PROJECT_DIR/build/install"
+      -D CMAKE_PREFIX_PATH:PATH="$ROCM_PATH/lib/cmake"
+      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
+      -D DISABLE_WERROR=OFF *>&1
+    # Building
+    - cmake --build "$CI_PROJECT_DIR/build" *>&1
+
+build:windows-static:
+  stage: build
+  needs: []
+  extends: .build:windows
+  variables:
+    BUILD_SHARED_LIBS: "OFF"
+
+test:windows:
+  stage: test
+  needs: []
+  extends: .build:windows
+  script:
+    - !reference [".build:windows", script]
+    # Running test suite
+    - ctest --test-dir "$CI_PROJECT_DIR/build" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1
+    # Installing
+    - cmake --build "$CI_PROJECT_DIR/build" --target install *>&1
+    # Configure package test
+    - cmake
+      -S "$CI_PROJECT_DIR/test/package/"
+      -B "$CI_PROJECT_DIR/build_install_test"
+      -G Ninja
+      -D CMAKE_BUILD_TYPE=Release
+      -D CMAKE_CXX_COMPILER="$ROCM_PATH/bin/clang++.exe"
+      -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
+    # Build package test
+    - cmake --build "$CI_PROJECT_DIR/build_install_test"
+    # Copy rocRAND.dll to the package test build directory
+    - cmake -E copy "$CI_PROJECT_DIR/build/install/bin/rocRAND.dll" "$CI_PROJECT_DIR/build_install_test" *>&1
+    # Run package test
+    - ctest --test-dir "$CI_PROJECT_DIR/build_install_test" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1

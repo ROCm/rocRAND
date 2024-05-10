@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 #define XORWOW_JUMP_MATRICES 32
 #define XORWOW_JUMP_LOG2 2
 
+// clang-format off
 static const __device__ unsigned int d_xorwow_jump_matrices[XORWOW_JUMP_MATRICES][XORWOW_SIZE] = {
     {
         0, 0, 0, 0, 3, 0, 0, 0, 0, 6, 0, 0, 0, 0, 15, 0, 0, 0, 0, 30, 0, 0, 0, 0, 60, 
@@ -1121,6 +1122,8 @@ static const __device__ unsigned int d_xorwow_jump_matrices[XORWOW_JUMP_MATRICES
     },
 };
 
+// clang-format on
+// clang-format off
 static const unsigned int h_xorwow_jump_matrices[XORWOW_JUMP_MATRICES][XORWOW_SIZE] = {
     {
         0, 0, 0, 0, 3, 0, 0, 0, 0, 6, 0, 0, 0, 0, 15, 0, 0, 0, 0, 30, 0, 0, 0, 0, 60, 
@@ -2212,6 +2215,8 @@ static const unsigned int h_xorwow_jump_matrices[XORWOW_JUMP_MATRICES][XORWOW_SI
     },
 };
 
+// clang-format on
+// clang-format off
 static const __device__ unsigned int d_xorwow_sequence_jump_matrices[XORWOW_JUMP_MATRICES][XORWOW_SIZE] = {
     {
         850664906, 2293210629, 1517805917, 1215500405, 1612415445, 645388200, 824349799, 3517232886, 4075591755, 3089899292, 4249786064, 3811424903, 1100783479, 53649761, 2817264826, 3159462529, 1654848550, 950025444, 3095510002, 4080567211, 4111078399, 3241719305, 2788212779, 4256963770, 2426893717, 
@@ -3303,6 +3308,8 @@ static const __device__ unsigned int d_xorwow_sequence_jump_matrices[XORWOW_JUMP
     },
 };
 
+// clang-format on
+// clang-format off
 static const unsigned int h_xorwow_sequence_jump_matrices[XORWOW_JUMP_MATRICES][XORWOW_SIZE] = {
     {
         850664906, 2293210629, 1517805917, 1215500405, 1612415445, 645388200, 824349799, 3517232886, 4075591755, 3089899292, 4249786064, 3811424903, 1100783479, 53649761, 2817264826, 3159462529, 1654848550, 950025444, 3095510002, 4080567211, 4111078399, 3241719305, 2788212779, 4256963770, 2426893717, 
@@ -4394,5 +4401,6 @@ static const unsigned int h_xorwow_sequence_jump_matrices[XORWOW_JUMP_MATRICES][
     },
 };
 
+// clang-format on
 
 #endif // ROCRAND_XORWOW_PRECOMPUTED_H_
