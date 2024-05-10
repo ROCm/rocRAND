@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ void run_benchmark(const cli::Parser&    parser,
     const size_t offset = parser.get<size_t>("offset");
 
     T * data;
-    CUDA_CALL(cudaMalloc(reinterpret_cast<void**>(&data), size * sizeof(T)));
+    CUDA_CALL(cudaMalloc(&data, size * sizeof(T)));
 
     curandGenerator_t generator;
     CURAND_CALL(curandCreateGenerator(&generator, rng_type));

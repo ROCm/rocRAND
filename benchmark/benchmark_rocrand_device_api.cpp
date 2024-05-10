@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -78,7 +78,7 @@ struct runner
            const unsigned long long offset)
     {
         const size_t states_size = blocks * threads;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states), states_size * sizeof(EngineState)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(EngineState)));
 
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
                            dim3(blocks),
@@ -160,8 +160,7 @@ struct runner<rocrand_state_mtgp32>
            const unsigned long long /* offset */)
     {
         const size_t states_size = std::min((size_t)200, blocks);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_mtgp32)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_mtgp32)));
 
         ROCRAND_CHECK(
             rocrand_make_state_mtgp32(states, mtgp32dc_params_fast_11213, states_size, seed));
@@ -213,8 +212,7 @@ struct runner<rocrand_state_lfsr113>
            const unsigned long long /* offset */)
     {
         const size_t states_size = blocks * threads;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_lfsr113)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_lfsr113)));
 
         hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
                            dim3(blocks),
@@ -323,12 +321,11 @@ struct runner<rocrand_state_sobol32>
             rocrand_get_direction_vectors32(&h_directions, ROCRAND_DIRECTION_VECTORS_32_JOEKUO6));
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_sobol32)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_sobol32)));
 
         unsigned int* directions;
         const size_t  size = dimensions * 32 * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
+        HIP_CHECK(hipMalloc(&directions, size));
         HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -396,17 +393,16 @@ struct runner<rocrand_state_scrambled_sobol32>
         ROCRAND_CHECK(rocrand_get_scramble_constants32(&h_constants));
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_scrambled_sobol32)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_scrambled_sobol32)));
 
         unsigned int* directions;
         const size_t  directions_size = dimensions * 32 * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
+        HIP_CHECK(hipMalloc(&directions, directions_size));
         HIP_CHECK(hipMemcpy(directions, h_directions, directions_size, hipMemcpyHostToDevice));
 
         unsigned int* scramble_constants;
         const size_t  constants_size = dimensions * sizeof(unsigned int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
+        HIP_CHECK(hipMalloc(&scramble_constants, constants_size));
         HIP_CHECK(
             hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
@@ -472,12 +468,11 @@ struct runner<rocrand_state_sobol64>
         rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_sobol64)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_sobol64)));
 
         unsigned long long int* directions;
         const size_t            size = dimensions * 64 * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), size));
+        HIP_CHECK(hipMalloc(&directions, size));
         HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
@@ -544,17 +539,16 @@ struct runner<rocrand_state_scrambled_sobol64>
         rocrand_get_scramble_constants64(&h_constants);
 
         const size_t states_size = blocks * threads * dimensions;
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&states),
-                            states_size * sizeof(rocrand_state_scrambled_sobol64)));
+        HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_scrambled_sobol64)));
 
         unsigned long long int* directions;
         const size_t            directions_size = dimensions * 64 * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&directions), directions_size));
+        HIP_CHECK(hipMalloc(&directions, directions_size));
         HIP_CHECK(hipMemcpy(directions, h_directions, directions_size, hipMemcpyHostToDevice));
 
         unsigned long long int* scramble_constants;
         const size_t            constants_size = dimensions * sizeof(unsigned long long int);
-        HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&scramble_constants), constants_size));
+        HIP_CHECK(hipMalloc(&scramble_constants, constants_size));
         HIP_CHECK(
             hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
@@ -856,7 +850,7 @@ void run_benchmark(benchmark::State&        state,
     generator.create();
 
     data_type* data;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&data), size * sizeof(data_type)));
+    HIP_CHECK(hipMalloc(&data, size * sizeof(data_type)));
 
     constexpr unsigned long long int seed   = 12345ULL;
     constexpr unsigned long long int offset = 6789ULL;
@@ -905,14 +899,13 @@ template<typename Engine, typename Generator>
 void add_benchmark(const benchmark_context&                      context,
                    const hipStream_t                             stream,
                    std::vector<benchmark::internal::Benchmark*>& benchmarks,
-                   const std::string&                            engine_name,
+                   const std::string&                            name,
                    Generator                                     generator)
 {
     static_assert(std::is_trivially_copyable<Generator>::value
                       && std::is_trivially_destructible<Generator>::value,
                   "Generator gets copied to device at kernel launch.");
-    const std::string benchmark_name
-        = "device_kernel<" + engine_name + "," + generator.name() + ">";
+    const std::string benchmark_name = "device_kernel<" + name + "," + generator.name() + ">";
     benchmarks.emplace_back(benchmark::RegisterBenchmark(benchmark_name.c_str(),
                                                          &run_benchmark<Engine, Generator>,
                                                          stream,
@@ -924,12 +917,14 @@ template<typename Engine>
 void add_benchmarks(const benchmark_context&                      ctx,
                     const hipStream_t                             stream,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
-                    const std::string&                            name)
+                    const rocrand_rng_type                        engine_type)
 {
     constexpr bool is_64_bits = std::is_same<Engine, rocrand_state_scrambled_sobol64>::value
                                 || std::is_same<Engine, rocrand_state_sobol64>::value
                                 || std::is_same<Engine, rocrand_state_threefry2x64_20>::value
                                 || std::is_same<Engine, rocrand_state_threefry4x64_20>::value;
+
+    const std::string name = engine_name(engine_type);
 
     if(is_64_bits)
     {
@@ -1007,20 +1002,41 @@ int main(int argc, char* argv[])
     std::vector<benchmark::internal::Benchmark*> benchmarks = {};
 
     // MT19937 has no kernel implementation
-    add_benchmarks<rocrand_state_lfsr113>(ctx, stream, benchmarks, "lfsr113");
-    add_benchmarks<rocrand_state_mrg31k3p>(ctx, stream, benchmarks, "mrg31k3p");
-    add_benchmarks<rocrand_state_mrg32k3a>(ctx, stream, benchmarks, "mrg32k3a");
-    add_benchmarks<rocrand_state_mtgp32>(ctx, stream, benchmarks, "mtgp32");
-    add_benchmarks<rocrand_state_philox4x32_10>(ctx, stream, benchmarks, "philox4x32_10");
-    add_benchmarks<rocrand_state_scrambled_sobol32>(ctx, stream, benchmarks, "scrambled_sobol32");
-    add_benchmarks<rocrand_state_scrambled_sobol64>(ctx, stream, benchmarks, "scrambled_sobol64");
-    add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, "sobol32");
-    add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, "sobol64");
-    add_benchmarks<rocrand_state_threefry2x32_20>(ctx, stream, benchmarks, "threefry2x32_20");
-    add_benchmarks<rocrand_state_threefry4x32_20>(ctx, stream, benchmarks, "threefry4x32_20");
-    add_benchmarks<rocrand_state_threefry2x64_20>(ctx, stream, benchmarks, "threefry2x64_20");
-    add_benchmarks<rocrand_state_threefry4x64_20>(ctx, stream, benchmarks, "threefry4x64_20");
-    add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, "xorwow");
+    add_benchmarks<rocrand_state_lfsr113>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_LFSR113);
+    add_benchmarks<rocrand_state_mrg31k3p>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_MRG31K3P);
+    add_benchmarks<rocrand_state_mrg32k3a>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_MRG32K3A);
+    add_benchmarks<rocrand_state_mtgp32>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_MTGP32);
+    add_benchmarks<rocrand_state_philox4x32_10>(ctx,
+                                                stream,
+                                                benchmarks,
+                                                ROCRAND_RNG_PSEUDO_PHILOX4_32_10);
+    add_benchmarks<rocrand_state_scrambled_sobol32>(ctx,
+                                                    stream,
+                                                    benchmarks,
+                                                    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32);
+    add_benchmarks<rocrand_state_scrambled_sobol64>(ctx,
+                                                    stream,
+                                                    benchmarks,
+                                                    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64);
+    add_benchmarks<rocrand_state_sobol32>(ctx, stream, benchmarks, ROCRAND_RNG_QUASI_SOBOL32);
+    add_benchmarks<rocrand_state_sobol64>(ctx, stream, benchmarks, ROCRAND_RNG_QUASI_SOBOL64);
+    add_benchmarks<rocrand_state_threefry2x32_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY2_32_20);
+    add_benchmarks<rocrand_state_threefry4x32_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY4_32_20);
+    add_benchmarks<rocrand_state_threefry2x64_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY2_64_20);
+    add_benchmarks<rocrand_state_threefry4x64_20>(ctx,
+                                                  stream,
+                                                  benchmarks,
+                                                  ROCRAND_RNG_PSEUDO_THREEFRY4_64_20);
+    add_benchmarks<rocrand_state_xorwow>(ctx, stream, benchmarks, ROCRAND_RNG_PSEUDO_XORWOW);
 
     // Use manual timing
     for(auto& b : benchmarks)

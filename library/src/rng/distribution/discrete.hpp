@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,13 +21,14 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_DISCRETE_H_
 #define ROCRAND_RNG_DISTRIBUTION_DISCRETE_H_
 
-#include <climits>
-#include <algorithm>
-#include <vector>
+#include "../common.hpp"
 
 #include <rocrand/rocrand.h>
+#include <rocrand/rocrand_discrete.h>
 
-#include "device_distributions.hpp"
+#include <algorithm>
+#include <climits>
+#include <vector>
 
 // Alias method
 //
@@ -37,42 +38,43 @@
 // Vose M. D.
 // A Linear Algorithm For Generating Random Numbers With a Given Distribution, 1991
 
-enum rocrand_discrete_method
+namespace rocrand_impl::host
 {
-    ROCRAND_DISCRETE_METHOD_ALIAS = 1,
-    ROCRAND_DISCRETE_METHOD_CDF = 2,
-    ROCRAND_DISCRETE_METHOD_UNIVERSAL = ROCRAND_DISCRETE_METHOD_ALIAS | ROCRAND_DISCRETE_METHOD_CDF
+
+enum discrete_method
+{
+    DISCRETE_METHOD_ALIAS     = 1,
+    DISCRETE_METHOD_CDF       = 2,
+    DISCRETE_METHOD_UNIVERSAL = DISCRETE_METHOD_ALIAS | DISCRETE_METHOD_CDF
 };
 
-template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
-class rocrand_discrete_distribution_base : public rocrand_discrete_distribution_st
+template<discrete_method Method = DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
+class discrete_distribution_base : public rocrand_discrete_distribution_st
 {
 public:
 
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
-    // rocrand_discrete_distribution_st is a struct 
-    rocrand_discrete_distribution_base()  // cppcheck-suppress uninitDerivedMemberVar
+    // rocrand_discrete_distribution_st is a struct
+    discrete_distribution_base() // cppcheck-suppress uninitDerivedMemberVar
     {
         size = 0;
+        offset      = 0;
         probability = NULL;
         alias = NULL;
         cdf = NULL;
     }
 
-    rocrand_discrete_distribution_base(const double * probabilities,
-                                       unsigned int size,
-                                       unsigned int offset)
-        : rocrand_discrete_distribution_base()
+    discrete_distribution_base(const double* probabilities, unsigned int size, unsigned int offset)
+        : discrete_distribution_base()
     {
         std::vector<double> p(probabilities, probabilities + size);
 
         init(p, size, offset);
     }
 
-    __host__ __device__
-    ~rocrand_discrete_distribution_base() { }
+    __host__ __device__ ~discrete_distribution_base() {}
 
     void deallocate()
     {
@@ -98,15 +100,15 @@ public:
         {
             if (probability != NULL)
             {
-                hipFree(probability);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(probability));
             }
             if (alias != NULL)
             {
-                hipFree(alias);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(alias));
             }
             if (cdf != NULL)
             {
-                hipFree(cdf);
+                ROCRAND_HIP_FATAL_ASSERT(hipFree(cdf));
             }
         }
         probability = NULL;
@@ -117,7 +119,7 @@ public:
     template<class T>
     __forceinline__ __host__ __device__ unsigned int operator()(T x) const
     {
-        if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
+        if((Method & DISCRETE_METHOD_ALIAS) != 0)
         {
             return rocrand_device::detail::discrete_alias(x, *this);
         }
@@ -145,11 +147,11 @@ protected:
         deallocate();
         allocate();
         normalize(p);
-        if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
+        if((Method & DISCRETE_METHOD_ALIAS) != 0)
         {
             create_alias_table(p);
         }
-        if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
+        if((Method & DISCRETE_METHOD_CDF) != 0)
         {
             create_cdf(p);
         }
@@ -159,12 +161,12 @@ protected:
     {
         if (IsHostSide)
         {
-            if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
+            if((Method & DISCRETE_METHOD_ALIAS) != 0)
             {
                 probability = new double[size];
                 alias = new unsigned int[size];
             }
-            if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
+            if((Method & DISCRETE_METHOD_CDF) != 0)
             {
                 cdf = new double[size];
             }
@@ -172,22 +174,22 @@ protected:
         else
         {
             hipError_t error;
-            if ((Method & ROCRAND_DISCRETE_METHOD_ALIAS) != 0)
+            if((Method & DISCRETE_METHOD_ALIAS) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&probability), sizeof(double) * size);
+                error = hipMalloc(&probability, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
-                error = hipMalloc(reinterpret_cast<void**>(&alias), sizeof(unsigned int) * size);
+                error = hipMalloc(&alias, sizeof(unsigned int) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
                 }
             }
-            if ((Method & ROCRAND_DISCRETE_METHOD_CDF) != 0)
+            if((Method & DISCRETE_METHOD_CDF) != 0)
             {
-                error = hipMalloc(reinterpret_cast<void**>(&cdf), sizeof(double) * size);
+                error = hipMalloc(&cdf, sizeof(double) * size);
                 if (error != hipSuccess)
                 {
                     throw ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -305,5 +307,7 @@ protected:
         }
     }
 };
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_DISTRIBUTION_DISCRETE_H_

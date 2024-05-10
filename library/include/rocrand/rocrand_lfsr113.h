@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,8 @@
 #ifndef ROCRAND_LFSR113_H_
 #define ROCRAND_LFSR113_H_
 
-#ifndef FQUALIFIERS
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
-
 #include "rocrand/rocrand_common.h"
+#include "rocrand/rocrand_lfsr113_precomputed.h"
 
 /** \rocrand_internal \addtogroup rocranddevice
  *
@@ -47,6 +44,30 @@
 
 namespace rocrand_device
 {
+namespace detail
+{
+
+__forceinline__ __device__ __host__ void mul_mat_vec_inplace(const unsigned int* m, uint4* z)
+{
+    unsigned int v[4]         = {z->x, z->y, z->z, z->w};
+    unsigned int r[LFSR113_N] = {0};
+    for(int ij = 0; ij < LFSR113_N * LFSR113_M; ij++)
+    {
+        const int          i = ij / LFSR113_M;
+        const int          j = ij % LFSR113_M;
+        const unsigned int b = (v[i] & (1U << j)) ? 0xffffffff : 0x0;
+        for(int k = 0; k < LFSR113_N; k++)
+        {
+            r[k] ^= b & m[i * LFSR113_M * LFSR113_N + j * LFSR113_N + k];
+        }
+    }
+    // Copy result into z
+    z->x = r[0];
+    z->y = r[1];
+    z->z = r[2];
+    z->w = r[3];
+}
+} // end namespace detail
 
 class lfsr113_engine
 {
@@ -58,58 +79,71 @@ public:
     };
 
     /// Initializes the internal state of the PRNG using
-    /// seed value \p seed, goes to \p subsequence -th subsequence
+    /// seed value \p seed, goes to \p subsequence -th subsequence,
+    /// and skips \p offset random numbers.
     ///
     /// A subsequence is 2^55 numbers long.
-    FQUALIFIERS
-    lfsr113_engine(const uint4        seed        = {ROCRAND_LFSR113_DEFAULT_SEED_X,
-                                                     ROCRAND_LFSR113_DEFAULT_SEED_Y,
-                                                     ROCRAND_LFSR113_DEFAULT_SEED_Z,
-                                                     ROCRAND_LFSR113_DEFAULT_SEED_W},
-                   const unsigned int subsequence = 0)
+    __forceinline__ __device__ __host__ lfsr113_engine(const uint4 seed
+                                                       = {ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                          ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                          ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                          ROCRAND_LFSR113_DEFAULT_SEED_W},
+                                                       const unsigned int       subsequence = 0,
+                                                       const unsigned long long offset      = 0)
     {
-        this->seed(seed, subsequence);
+        this->seed(seed, subsequence, offset);
     }
 
     /// Reinitializes the internal state of the PRNG using new
-    /// seed value \p seed_value, skips \p subsequence subsequences.
+    /// seed value \p seed_value, skips \p subsequence subsequences
+    /// and skips \p offset random numbers.
     ///
     /// A subsequence is 2^55 numbers long.
-    FQUALIFIERS
-    void seed(uint4 seed_value, const unsigned long long subsequence)
+    __forceinline__ __device__ __host__ void seed(uint4                    seed_value,
+                                                  const unsigned long long subsequence,
+                                                  const unsigned long long offset = 0)
     {
         m_state.subsequence = seed_value;
 
         reset_start_subsequence();
         discard_subsequence(subsequence);
+        discard(offset);
     }
 
     /// Advances the internal state to skip one number.
-    FQUALIFIERS
-    void discard()
+    __forceinline__ __device__ __host__ void discard()
     {
         discard_state();
     }
 
-    /// Advances the internal state to skip \p subsequence subsequences.
-    /// A subsequence is 2^55 numbers long.
-    FQUALIFIERS
-    void discard_subsequence(unsigned int subsequence)
+    /// Advances the internal state to skip \p offset numbers.
+    __forceinline__ __device__ __host__ void discard(unsigned long long offset)
     {
-        for(unsigned int i = 0; i < subsequence; i++)
-        {
-            reset_next_subsequence();
-        }
+#ifdef __HIP_DEVICE_COMPILE__
+        jump(offset, d_lfsr113_jump_matrices);
+#else
+        jump(offset, h_lfsr113_jump_matrices);
+#endif
     }
 
-    FQUALIFIERS
-    unsigned int operator()()
+    /// Advances the internal state to skip \p subsequence subsequences.
+    /// A subsequence is 2^55 numbers long.
+    __forceinline__ __device__ __host__ void discard_subsequence(unsigned int subsequence)
+    {
+// Discard n * 2^55 samples
+#ifdef __HIP_DEVICE_COMPILE__
+        jump(subsequence, d_lfsr113_sequence_jump_matrices);
+#else
+        jump(subsequence, h_lfsr113_sequence_jump_matrices);
+#endif
+    }
+
+    __forceinline__ __device__ __host__ unsigned int operator()()
     {
         return next();
     }
 
-    FQUALIFIERS
-    unsigned int next()
+    __forceinline__ __device__ __host__ unsigned int next()
     {
         unsigned int b;
 
@@ -130,8 +164,7 @@ public:
 
 protected:
     /// Resets the state to the start of the current subsequence.
-    FQUALIFIERS
-    void reset_start_subsequence()
+    __forceinline__ __device__ __host__ void reset_start_subsequence()
     {
         m_state.z.x = m_state.subsequence.x;
         m_state.z.y = m_state.subsequence.y;
@@ -139,70 +172,40 @@ protected:
         m_state.z.w = m_state.subsequence.w;
     }
 
-    /// Advances the subsequence by one and sets the state to the start of that subsequence.
-    FQUALIFIERS
-    void reset_next_subsequence()
-    {
-        /* The following operations make the jump ahead with
-    	2 ^ 55 iterations for every component of the generator.
-    	The internal state after the jump, however, is slightly different
-    	from 2 ^ 55 iterations since it ignores the state in
-    	which are found the first bits of each components,
-    	since they are ignored in the recurrence.The state becomes
-    	identical to what one would with normal iterations
-    	after a call nextValue().*/
-        int z, b;
-
-        z = m_state.subsequence.x & 0xFFFFFFFE;
-        b = (z << 6) ^ z;
-
-        z = (z) ^ (z << 3) ^ (z << 4) ^ (z << 6) ^ (z << 7) ^ (z << 8) ^ (z << 10) ^ (z << 11)
-            ^ (z << 13) ^ (z << 14) ^ (z << 16) ^ (z << 17) ^ (z << 18) ^ (z << 22) ^ (z << 24)
-            ^ (z << 25) ^ (z << 26) ^ (z << 28) ^ (z << 30);
-
-        z ^= ((b >> 1) & 0x7FFFFFFF) ^ ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 5) & 0x07FFFFFF)
-             ^ ((b >> 6) & 0x03FFFFFF) ^ ((b >> 7) & 0x01FFFFFF) ^ ((b >> 9) & 0x007FFFFF)
-             ^ ((b >> 13) & 0x0007FFFF) ^ ((b >> 14) & 0x0003FFFF) ^ ((b >> 15) & 0x0001FFFF)
-             ^ ((b >> 17) & 0x00007FFF) ^ ((b >> 18) & 0x00003FFF) ^ ((b >> 20) & 0x00000FFF)
-             ^ ((b >> 21) & 0x000007FF) ^ ((b >> 23) & 0x000001FF) ^ ((b >> 24) & 0x000000FF)
-             ^ ((b >> 25) & 0x0000007F) ^ ((b >> 26) & 0x0000003F) ^ ((b >> 27) & 0x0000001F)
-             ^ ((b >> 30) & 0x00000003);
-        m_state.subsequence.x = z;
-
-        z = m_state.subsequence.y & 0xFFFFFFF8;
-        b = z ^ (z << 1);
-        b ^= (b << 2);
-        b ^= (b << 4);
-        b ^= (b << 8);
-
-        b <<= 8;
-        b ^= (z << 22) ^ (z << 25) ^ (z << 27);
-        if((z & 0x80000000) != 0)
-            b ^= 0xABFFF000;
-        if((z & 0x40000000) != 0)
-            b ^= 0x55FFF800;
-        z = b ^ ((z >> 7) & 0x01FFFFFF) ^ ((z >> 20) & 0x00000FFF) ^ ((z >> 21) & 0x000007FF);
-        m_state.subsequence.y = z;
-
-        z = m_state.subsequence.z & 0xFFFFFFF0;
-        b = (z << 13) ^ z;
-        z = ((b >> 3) & 0x1FFFFFFF) ^ ((b >> 17) & 0x00007FFF) ^ (z << 10) ^ (z << 11) ^ (z << 25);
-        m_state.subsequence.z = z;
-
-        z = m_state.subsequence.w & 0xFFFFFF80;
-        b = (z << 3) ^ z;
-        z = (z << 14) ^ (z << 16) ^ (z << 20) ^ ((b >> 5) & 0x07FFFFFF) ^ ((b >> 9) & 0x007FFFFF)
-            ^ ((b >> 11) & 0x001FFFFF);
-        m_state.subsequence.w = z;
-
-        reset_start_subsequence();
-    }
-
     // Advances the internal state to the next state.
-    FQUALIFIERS
-    void discard_state()
+    __forceinline__ __device__ __host__ void discard_state()
     {
         this->next();
+    }
+
+    __forceinline__ __device__ __host__ void
+        jump(unsigned long long v,
+             const unsigned int (&jump_matrices)[LFSR113_JUMP_MATRICES][LFSR113_SIZE])
+    {
+        // x~(n + v) = (A^v mod m)x~n mod m
+        // The matrix (A^v mod m) can be precomputed for selected values of v.
+        //
+        // For LFSR113_JUMP_LOG2 = 2
+        // lfsr113_jump_matrices contains precomputed matrices:
+        //   A^1, A^4, A^16...
+        //
+        // For LFSR113_JUMP_LOG2 = 2 and LFSR113_SEQUENCE_JUMP_LOG2 = 55
+        // lfsr113_sequence_jump_matrices contains precomputed matrices:
+        //   A^(1 * 2^55), A^(4 * 2^55), A^(16 * 2^55)...
+        //
+        // Intermediate powers can be calculated as multiplication of the powers above.
+
+        unsigned int mi = 0;
+        while(v > 0)
+        {
+            const unsigned int is = static_cast<unsigned int>(v) & ((1 << LFSR113_JUMP_LOG2) - 1);
+            for(unsigned int i = 0; i < is; i++)
+            {
+                detail::mul_mat_vec_inplace(jump_matrices[mi], &m_state.z);
+            }
+            mi++;
+            v >>= LFSR113_JUMP_LOG2;
+        }
     }
 
 protected:
@@ -231,10 +234,29 @@ typedef rocrand_device::lfsr113_engine rocrand_state_lfsr113;
  * \param subsequence - Subsequence to start at
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const uint4 seed, const unsigned int subsequence, rocrand_state_lfsr113* state)
+__forceinline__ __device__ __host__ void
+    rocrand_init(const uint4 seed, const unsigned int subsequence, rocrand_state_lfsr113* state)
 {
     *state = rocrand_state_lfsr113(seed, subsequence);
+}
+
+/**
+ * \brief Initializes LFSR113 state.
+ *
+ * Initializes the LFSR113 generator \p state with the given
+ * \p seed, \p subsequence, and \p offset.
+ *
+ * \param seed - Value to use as a seed
+ * \param subsequence - Subsequence to start at
+ * \param offset - Absolute offset into subsequence
+ * \param state - Pointer to state to initialize
+ */
+__forceinline__ __device__ __host__ void rocrand_init(const uint4              seed,
+                                                      const unsigned int       subsequence,
+                                                      const unsigned long long offset,
+                                                      rocrand_state_lfsr113*   state)
+{
+    *state = rocrand_state_lfsr113(seed, subsequence, offset);
 }
 
 /**
@@ -249,10 +271,53 @@ void rocrand_init(const uint4 seed, const unsigned int subsequence, rocrand_stat
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand(rocrand_state_lfsr113* state)
+__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_lfsr113* state)
 {
     return state->next();
+}
+
+/**
+ * \brief Updates LFSR113 state to skip ahead by \p offset elements.
+ *
+ * Updates the LFSR113 state in \p state to skip ahead by \p offset elements.
+ *
+ * \param offset - Number of elements to skip
+ * \param state - Pointer to state to update
+ */
+__forceinline__ __device__ __host__ void skipahead(unsigned long long     offset,
+                                                   rocrand_state_lfsr113* state)
+{
+    return state->discard(offset);
+}
+
+/**
+ * \brief Updates LFSR113 state to skip ahead by \p subsequence subsequences.
+ *
+ * Updates the LFSR113 \p state to skip ahead by \p subsequence subsequences.
+ * Each subsequence is 2^55 numbers long.
+ *
+ * \param subsequence - Number of subsequences to skip
+ * \param state - Pointer to state to update
+ */
+__forceinline__ __device__ __host__ void skipahead_subsequence(unsigned int           subsequence,
+                                                               rocrand_state_lfsr113* state)
+{
+    return state->discard_subsequence(subsequence);
+}
+
+/**
+ * \brief Updates LFSR113 state to skip ahead by \p sequence sequences.
+ *
+ * Updates the LFSR113 \p state to skip ahead by \p sequence sequences.
+ * For LFSR113 each sequence is 2^55 numbers long (equal to the size of a subsequence).
+ *
+ * \param sequence - Number of sequences to skip
+ * \param state - Pointer to state to update
+ */
+__forceinline__ __device__ __host__ void skipahead_sequence(unsigned int           sequence,
+                                                            rocrand_state_lfsr113* state)
+{
+    return state->discard_subsequence(sequence);
 }
 
 /** @} */ // end of group rocranddevice

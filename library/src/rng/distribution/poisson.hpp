@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,26 +21,27 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_POISSON_H_
 #define ROCRAND_RNG_DISTRIBUTION_POISSON_H_
 
-#include <climits>
-#include <algorithm>
-#include <vector>
-
-#include <rocrand/rocrand.h>
-
 #include "discrete.hpp"
 
-template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
-class rocrand_poisson_distribution : public rocrand_discrete_distribution_base<Method, IsHostSide>
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_uniform.h>
+
+#include <algorithm>
+#include <climits>
+#include <vector>
+
+namespace rocrand_impl::host
+{
+
+template<discrete_method Method = DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
+class poisson_distribution : public discrete_distribution_base<Method, IsHostSide>
 {
 public:
+    typedef discrete_distribution_base<Method, IsHostSide> base;
 
-    typedef rocrand_discrete_distribution_base<Method, IsHostSide> base;
+    poisson_distribution() : base() {}
 
-    rocrand_poisson_distribution()
-        : base() { }
-
-    explicit rocrand_poisson_distribution(double lambda)
-        : rocrand_poisson_distribution()
+    explicit poisson_distribution(double lambda) : poisson_distribution()
     {
         set_lambda(lambda);
     }
@@ -109,24 +110,37 @@ protected:
 // Handles caching of precomputed tables for the distribution and recomputes
 // them only when lambda is changed (as these computations, device memory
 // allocations and copying take time).
-template<rocrand_discrete_method Method = ROCRAND_DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
+template<discrete_method Method = DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
 class poisson_distribution_manager
 {
 public:
+    poisson_distribution<Method, IsHostSide> dis;
 
-    rocrand_poisson_distribution<Method, IsHostSide> dis;
-
-    poisson_distribution_manager()
-        : lambda(0.0)
-    { }
+    poisson_distribution_manager() = default;
 
     poisson_distribution_manager(const poisson_distribution_manager&) = delete;
 
-    poisson_distribution_manager(poisson_distribution_manager&&) = delete;
+    poisson_distribution_manager(poisson_distribution_manager&& other)
+        : dis(other.dis), lambda(other.lambda)
+    {
+        // For now, we didn't make poisson_distribution move-only
+        // We copied the pointers of dis. Prevent deallocation by the destructor of other
+        other.dis = {};
+    }
 
     poisson_distribution_manager& operator=(const poisson_distribution_manager&) = delete;
 
-    poisson_distribution_manager& operator=(poisson_distribution_manager&&) = delete;
+    poisson_distribution_manager& operator=(poisson_distribution_manager&& other)
+    {
+        dis    = other.dis;
+        lambda = other.lambda;
+
+        // For now, we didn't make poisson_distribution move-only
+        // We copied the pointers of dis. Prevent deallocation by the destructor of other
+        other.dis = {};
+
+        return *this;
+    }
 
     ~poisson_distribution_manager()
     {
@@ -144,23 +158,21 @@ public:
     }
 
 private:
-
-    double lambda;
+    double lambda = 0.0;
 };
 
 // Mrg32k3a and Mrg31k3p
 
-template<typename state_type>
+template<typename state_type, bool IsHostSide = false>
 struct mrg_engine_poisson_distribution
 {
+    using distribution_type = poisson_distribution<DISCRETE_METHOD_ALIAS, IsHostSide>;
     static constexpr unsigned int input_width = 1;
     static constexpr unsigned int output_width = 1;
 
-    rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis;
+    distribution_type dis;
 
-    explicit mrg_engine_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
-        : dis(dis)
-    { }
+    mrg_engine_poisson_distribution(distribution_type dis) : dis(dis) {}
 
     __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
@@ -180,9 +192,11 @@ struct mrg_engine_poisson_distribution
 
 struct mrg_poisson_distribution : mrg_engine_poisson_distribution<rocrand_state_mrg32k3a>
 {
-    explicit mrg_poisson_distribution(rocrand_poisson_distribution<ROCRAND_DISCRETE_METHOD_ALIAS> dis)
+    explicit mrg_poisson_distribution(poisson_distribution<DISCRETE_METHOD_ALIAS> dis)
         : mrg_engine_poisson_distribution(dis)
     {}
 };
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_DISTRIBUTION_POISSON_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
 
 #include <hip/hip_runtime.h>
 
-#define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand/rocrand_kernel.h>
 
 #define HIP_CHECK(state) ASSERT_EQ(state, hipSuccess)
@@ -122,10 +121,11 @@ void rocrand_log_normal_kernel(double * output, unsigned long long int * vectors
     }
 }
 
-template <class GeneratorState>
-__global__
-__launch_bounds__(32)
-void rocrand_poisson_kernel(unsigned int * output, unsigned long long int * vectors, const size_t size, double lambda)
+template<class GeneratorState>
+__global__ __launch_bounds__(32) void rocrand_poisson_kernel(unsigned long long int* output,
+                                                             unsigned long long int* vectors,
+                                                             const size_t            size,
+                                                             double                  lambda)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -156,14 +156,14 @@ TEST(rocrand_kernel_sobol64, rocrand)
 
     const size_t output_size = 8192;
     Type * output;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&output), output_size * sizeof(Type)));
+    HIP_CHECK(hipMalloc(&output, output_size * sizeof(Type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     const unsigned long long* h_directions;
     rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
 
     Type * m_vector;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(Type) * 8 * 64));
+    HIP_CHECK(hipMalloc(&m_vector, sizeof(Type) * 8 * 64));
     HIP_CHECK(hipMemcpy(m_vector, h_directions, sizeof(Type) * 8 * 64, hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -202,7 +202,7 @@ TEST(rocrand_kernel_sobol64, rocrand_uniform)
 
     const size_t output_size = 256;
     Type * output;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&output), output_size * sizeof(Type)));
+    HIP_CHECK(hipMalloc(&output, output_size * sizeof(Type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     typedef unsigned long long int DirectionVectorType;
@@ -210,7 +210,7 @@ TEST(rocrand_kernel_sobol64, rocrand_uniform)
     rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
 
     DirectionVectorType * m_vector;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
+    HIP_CHECK(hipMalloc(&m_vector, sizeof(DirectionVectorType) * 8 * 64));
     HIP_CHECK(hipMemcpy(m_vector,
                         h_directions,
                         sizeof(DirectionVectorType) * 8 * 64,
@@ -252,7 +252,7 @@ TEST(rocrand_kernel_sobol64, rocrand_normal)
 
     const size_t output_size = 8192;
     Type * output;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&output), output_size * sizeof(Type)));
+    HIP_CHECK(hipMalloc(&output, output_size * sizeof(Type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     typedef unsigned long long int DirectionVectorType;
@@ -260,7 +260,7 @@ TEST(rocrand_kernel_sobol64, rocrand_normal)
     rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
 
     DirectionVectorType * m_vector;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
+    HIP_CHECK(hipMalloc(&m_vector, sizeof(DirectionVectorType) * 8 * 64));
     HIP_CHECK(hipMemcpy(m_vector,
                         h_directions,
                         sizeof(DirectionVectorType) * 8 * 64,
@@ -310,7 +310,7 @@ TEST(rocrand_kernel_sobol64, rocrand_log_normal)
 
     const size_t output_size = 8192;
     Type * output;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&output), output_size * sizeof(Type)));
+    HIP_CHECK(hipMalloc(&output, output_size * sizeof(Type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     typedef unsigned long long int DirectionVectorType;
@@ -318,7 +318,7 @@ TEST(rocrand_kernel_sobol64, rocrand_log_normal)
     rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
 
     DirectionVectorType * m_vector;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
+    HIP_CHECK(hipMalloc(&m_vector, sizeof(DirectionVectorType) * 8 * 64));
     HIP_CHECK(hipMemcpy(m_vector,
                         h_directions,
                         sizeof(DirectionVectorType) * 8 * 64,
@@ -371,6 +371,7 @@ TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
 {
     typedef rocrand_state_sobol64 state_type;
     typedef double Type;
+    typedef unsigned long long int ResultType;
 
     const Type lambda = GetParam();
 
@@ -379,7 +380,7 @@ TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
     rocrand_get_direction_vectors64(&h_directions, ROCRAND_DIRECTION_VECTORS_64_JOEKUO6);
 
     DirectionVectorType * m_vector;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&m_vector), sizeof(DirectionVectorType) * 8 * 64));
+    HIP_CHECK(hipMalloc(&m_vector, sizeof(DirectionVectorType) * 8 * 64));
     HIP_CHECK(hipMemcpy(m_vector,
                         h_directions,
                         sizeof(DirectionVectorType) * 8 * 64,
@@ -387,8 +388,8 @@ TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
     HIP_CHECK(hipDeviceSynchronize());
 
     const size_t output_size = 8192;
-    unsigned int * output;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
+    ResultType*  output;
+    HIP_CHECK(hipMalloc(&output, output_size * sizeof(ResultType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -398,14 +399,11 @@ TEST_P(rocrand_kernel_sobol64_poisson, rocrand_poisson)
     );
     HIP_CHECK(hipGetLastError());
 
-    std::vector<unsigned int> output_host(output_size);
-    HIP_CHECK(
-        hipMemcpy(
-            output_host.data(), output,
-            output_size * sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
+    std::vector<ResultType> output_host(output_size);
+    HIP_CHECK(hipMemcpy(output_host.data(),
+                        output,
+                        output_size * sizeof(ResultType),
+                        hipMemcpyDeviceToHost));
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(m_vector));

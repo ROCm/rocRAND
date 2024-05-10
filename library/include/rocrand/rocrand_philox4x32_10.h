@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -53,10 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROCRAND_PHILOX4X32_10_H_
 #define ROCRAND_PHILOX4X32_10_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS_
-
 #include "rocrand/rocrand_common.h"
 
 // Constants from Random123
@@ -80,8 +76,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace rocrand_device {
 namespace detail {
 
-FQUALIFIERS
-unsigned int mulhilo32(unsigned int x, unsigned int y, unsigned int& z)
+__forceinline__ __device__ __host__ unsigned int
+    mulhilo32(unsigned int x, unsigned int y, unsigned int& z)
 {
     unsigned long long xy = mad_u64_u32(x, y, 0);
     z = static_cast<unsigned int>(xy >> 32);
@@ -100,7 +96,7 @@ public:
         uint2 key;
         unsigned int substate;
 
-        #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         // The Box–Muller transform requires two inputs to convert uniformly
         // distributed real values [0; 1] to normally distributed real values
         // (with mean = 0, and stddev = 1). Often user wants only one
@@ -110,11 +106,10 @@ public:
         unsigned int boxmuller_double_state; // is there a double in boxmuller_double
         float boxmuller_float; // normally distributed float
         double boxmuller_double; // normally distributed double
-        #endif
+    #endif
     };
 
-    FQUALIFIERS
-    philox4x32_10_engine()
+    __forceinline__ __device__ __host__ philox4x32_10_engine()
     {
         this->seed(ROCRAND_PHILOX4x32_DEFAULT_SEED, 0, 0);
     }
@@ -124,10 +119,9 @@ public:
     /// and skips \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 66 random numbers.
-    FQUALIFIERS
-    philox4x32_10_engine(const unsigned long long seed,
-                         const unsigned long long subsequence,
-                         const unsigned long long offset)
+    __forceinline__ __device__ __host__ philox4x32_10_engine(const unsigned long long seed,
+                                                             const unsigned long long subsequence,
+                                                             const unsigned long long offset)
     {
         this->seed(seed, subsequence, offset);
     }
@@ -137,10 +131,9 @@ public:
     /// and \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 66 random numbers.
-    FQUALIFIERS
-    void seed(unsigned long long seed_value,
-              const unsigned long long subsequence,
-              const unsigned long long offset)
+    __forceinline__ __device__ __host__ void seed(unsigned long long       seed_value,
+                                                  const unsigned long long subsequence,
+                                                  const unsigned long long offset)
     {
         m_state.key.x = static_cast<unsigned int>(seed_value);
         m_state.key.y = static_cast<unsigned int>(seed_value >> 32);
@@ -148,8 +141,7 @@ public:
     }
 
     /// Advances the internal state to skip \p offset numbers.
-    FQUALIFIERS
-    void discard(unsigned long long offset)
+    __forceinline__ __device__ __host__ void discard(unsigned long long offset)
     {
         this->discard_impl(offset);
         this->m_state.result = this->ten_rounds(m_state.counter, m_state.key);
@@ -159,37 +151,33 @@ public:
     /// a subsequence consisting of 2 ^ 66 random numbers.
     /// In other words, this function is equivalent to calling \p discard
     /// 2 ^ 66 times without using the return value, but is much faster.
-    FQUALIFIERS
-    void discard_subsequence(unsigned long long subsequence)
+    __forceinline__ __device__ __host__ void discard_subsequence(unsigned long long subsequence)
     {
         this->discard_subsequence_impl(subsequence);
         m_state.result = this->ten_rounds(m_state.counter, m_state.key);
     }
 
-    FQUALIFIERS
-    void restart(const unsigned long long subsequence,
-                 const unsigned long long offset)
+    __forceinline__ __device__ __host__ void restart(const unsigned long long subsequence,
+                                                     const unsigned long long offset)
     {
         m_state.counter = {0, 0, 0, 0};
         m_state.result  = {0, 0, 0, 0};
         m_state.substate = 0;
-        #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
         m_state.boxmuller_float_state = 0;
         m_state.boxmuller_double_state = 0;
-        #endif
+    #endif
         this->discard_subsequence_impl(subsequence);
         this->discard_impl(offset);
         m_state.result = this->ten_rounds(m_state.counter, m_state.key);
     }
 
-    FQUALIFIERS
-    unsigned int operator()()
+    __forceinline__ __device__ __host__ unsigned int operator()()
     {
         return this->next();
     }
 
-    FQUALIFIERS
-    unsigned int next()
+    __forceinline__ __device__ __host__ unsigned int next()
     {
     #if defined(__HIP_PLATFORM_AMD__)
         unsigned int ret = m_state.result.data[m_state.substate];
@@ -206,8 +194,7 @@ public:
         return ret;
     }
 
-    FQUALIFIERS
-    uint4 next4()
+    __forceinline__ __device__ __host__ uint4 next4()
     {
         uint4 ret = m_state.result;
         this->discard_state();
@@ -218,8 +205,7 @@ public:
 protected:
     // Advances the internal state to skip \p offset numbers.
     // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
-    FQUALIFIERS
-    void discard_impl(unsigned long long offset)
+    __forceinline__ __device__ __host__ void discard_impl(unsigned long long offset)
     {
         // Adjust offset for subset
         m_state.substate += offset & 3;
@@ -231,8 +217,8 @@ protected:
     }
 
     // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
-    FQUALIFIERS
-    void discard_subsequence_impl(unsigned long long subsequence)
+    __forceinline__ __device__ __host__ void
+        discard_subsequence_impl(unsigned long long subsequence)
     {
         unsigned int lo = static_cast<unsigned int>(subsequence);
         unsigned int hi = static_cast<unsigned int>(subsequence >> 32);
@@ -244,8 +230,7 @@ protected:
 
     // Advances the internal state by offset times.
     // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
-    FQUALIFIERS
-    void discard_state(unsigned long long offset)
+    __forceinline__ __device__ __host__ void discard_state(unsigned long long offset)
     {
         unsigned int lo = static_cast<unsigned int>(offset);
         unsigned int hi = static_cast<unsigned int>(offset >> 32);
@@ -259,14 +244,12 @@ protected:
 
     // Advances the internal state to the next state
     // DOES NOT CALCULATE NEW 4 UINTs (m_state.result)
-    FQUALIFIERS
-    void discard_state()
+    __forceinline__ __device__ __host__ void discard_state()
     {
         m_state.counter = this->bump_counter(m_state.counter);
     }
 
-    FQUALIFIERS
-    static uint4 bump_counter(uint4 counter)
+    __forceinline__ __device__ __host__ static uint4 bump_counter(uint4 counter)
     {
         counter.x++;
         unsigned int add      = counter.x == 0 ? 1 : 0;
@@ -276,8 +259,7 @@ protected:
         return counter;
     }
 
-    FQUALIFIERS
-    uint4 interleave(const uint4 prev, const uint4 next) const
+    __forceinline__ __device__ __host__ uint4 interleave(const uint4 prev, const uint4 next) const
     {
         switch(m_state.substate)
         {
@@ -294,8 +276,7 @@ protected:
     }
 
     // 10 Philox4x32 rounds
-    FQUALIFIERS
-    uint4 ten_rounds(uint4 counter, uint2 key)
+    __forceinline__ __device__ __host__ uint4 ten_rounds(uint4 counter, uint2 key)
     {
         counter = this->single_round(counter, key); key = this->bumpkey(key); // 1
         counter = this->single_round(counter, key); key = this->bumpkey(key); // 2
@@ -311,8 +292,7 @@ protected:
 
 private:
     // Single Philox4x32 round
-    FQUALIFIERS
-    static uint4 single_round(uint4 counter, uint2 key)
+    __forceinline__ __device__ __host__ static uint4 single_round(uint4 counter, uint2 key)
     {
         // Source: Random123
         unsigned int hi0;
@@ -327,8 +307,7 @@ private:
         };
     }
 
-    FQUALIFIERS
-    static uint2 bumpkey(uint2 key)
+    __forceinline__ __device__ __host__ static uint2 bumpkey(uint2 key)
     {
         key.x += ROCRAND_PHILOX_W32_0;
         key.y += ROCRAND_PHILOX_W32_1;
@@ -339,7 +318,7 @@ protected:
     // State
     philox4x32_10_state m_state;
 
-    #ifndef ROCRAND_DETAIL_PHILOX_BM_NOT_IN_STATE
+    #ifndef ROCRAND_DETAIL_BM_NOT_IN_STATE
     friend struct detail::engine_boxmuller_helper<philox4x32_10_engine>;
     #endif
 
@@ -367,11 +346,10 @@ typedef rocrand_device::philox4x32_10_engine rocrand_state_philox4x32_10;
  * \param offset - Absolute offset into subsequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const unsigned long long seed,
-                  const unsigned long long subsequence,
-                  const unsigned long long offset,
-                  rocrand_state_philox4x32_10 * state)
+__forceinline__ __device__ __host__ void rocrand_init(const unsigned long long     seed,
+                                                      const unsigned long long     subsequence,
+                                                      const unsigned long long     offset,
+                                                      rocrand_state_philox4x32_10* state)
 {
     *state = rocrand_state_philox4x32_10(seed, subsequence, offset);
 }
@@ -388,8 +366,7 @@ void rocrand_init(const unsigned long long seed,
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand(rocrand_state_philox4x32_10 * state)
+__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_philox4x32_10* state)
 {
     return state->next();
 }
@@ -406,8 +383,7 @@ unsigned int rocrand(rocrand_state_philox4x32_10 * state)
  *
  * \return Four pseudorandom values (32-bit) as an <tt>uint4</tt>
  */
-FQUALIFIERS
-uint4 rocrand4(rocrand_state_philox4x32_10 * state)
+__forceinline__ __device__ __host__ uint4 rocrand4(rocrand_state_philox4x32_10* state)
 {
     return state->next4();
 }
@@ -420,8 +396,8 @@ uint4 rocrand4(rocrand_state_philox4x32_10 * state)
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead(unsigned long long offset, rocrand_state_philox4x32_10 * state)
+__forceinline__ __device__ __host__ void skipahead(unsigned long long           offset,
+                                                   rocrand_state_philox4x32_10* state)
 {
     return state->discard(offset);
 }
@@ -435,8 +411,8 @@ void skipahead(unsigned long long offset, rocrand_state_philox4x32_10 * state)
  * \param subsequence - Number of subsequences to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4x32_10 * state)
+__forceinline__ __device__ __host__ void skipahead_subsequence(unsigned long long subsequence,
+                                                               rocrand_state_philox4x32_10* state)
 {
     return state->discard_subsequence(subsequence);
 }
@@ -450,11 +426,11 @@ void skipahead_subsequence(unsigned long long subsequence, rocrand_state_philox4
  * \param sequence - Number of sequences to skip
  * \param state - Pointer to state to update
  */
- FQUALIFIERS
- void skipahead_sequence(unsigned long long sequence, rocrand_state_philox4x32_10 * state)
- {
-     return state->discard_subsequence(sequence);
- }
+__forceinline__ __device__ __host__ void skipahead_sequence(unsigned long long           sequence,
+                                                            rocrand_state_philox4x32_10* state)
+{
+    return state->discard_subsequence(sequence);
+}
 
 #endif // ROCRAND_PHILOX4X32_10_H_
 

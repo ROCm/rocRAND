@@ -1,0 +1,20 @@
+# Anywhere {branch} is used, the branch name will be substituted.
+# These comments will also be removed.
+root: index
+subtrees:
+  - entries:
+    - file: what-is-rocrand
+    - file: installing
+    - file: programmers-guide
+    - file: dynamic_ordering_configuration
+    - file: api-reference-home
+      title: API reference
+      subtrees:
+      - entries:
+        - file: cpp-api
+        - file: python-api
+        - file: curand-compatibility
+        - file: doxygen/html/index
+  - caption: About
+    entries:
+    - file: license
