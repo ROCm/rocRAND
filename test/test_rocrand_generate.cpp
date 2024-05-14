@@ -117,8 +117,7 @@ TEST_P(rocrand_generate_tests, short_test)
 
     const rocrand_rng_type rng_type = GetParam();
 
-    rocrand_generator generator;
-    ROCRAND_CHECK(
+      ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
             rng_type
@@ -180,7 +179,6 @@ TEST_P(rocrand_generate_long_long_tests, long_long_test)
 
     const rocrand_rng_type rng_type = GetParam();
 
-    rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator(&generator, rng_type));
 
     HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned long long int)));
