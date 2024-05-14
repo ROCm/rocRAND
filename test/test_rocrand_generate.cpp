@@ -111,7 +111,7 @@ TEST_P(rocrand_generate_tests, short_test)
     unsigned short * data = NULL;
     rocrand_generator generator = NULL;
     EXPECT_EQ(
-        rocrand_generate(generator, (unsigned short *) data, size),
+        rocrand_generate_short(generator, (unsigned short *) data, size),
         ROCRAND_STATUS_NOT_CREATED
     );
 
@@ -174,7 +174,7 @@ TEST_P(rocrand_generate_long_long_tests, long_long_test)
     unsigned long long int* data = NULL;
     rocrand_generator generator = NULL;
     EXPECT_EQ(
-        rocrand_generate(generator, (unsigned short *) data, size),
+        rocrand_generate_long_long(generator, (unsigned short *) data, size),
         ROCRAND_STATUS_NOT_CREATED
     );
 
