@@ -69,9 +69,16 @@ TEST_P(rocrand_generate_tests, int_test)
 
 TEST_P(rocrand_generate_tests, char_test)
 {
+    const size_t size = 12563;
+    unsigned char * data = NULL;
+    rocrand_generator generator = NULL;
+
+    EXPECT_EQ(
+        rocrand_generate_char(generator, (unsigned char *) data, size),
+        ROCRAND_STATUS_NOT_CREATED
+    );
     const rocrand_rng_type rng_type = GetParam();
 
-    rocrand_generator generator;
     ROCRAND_CHECK(
         rocrand_create_generator(
             &generator,
@@ -79,8 +86,6 @@ TEST_P(rocrand_generate_tests, char_test)
         )
     );
 
-    const size_t size = 12563;
-    unsigned char * data;
     HIP_CHECK(hipMallocHelper(&data, size * sizeof(unsigned char)));
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -110,6 +115,7 @@ TEST_P(rocrand_generate_tests, short_test)
     const size_t size = 12563;
     unsigned short * data = NULL;
     rocrand_generator generator = NULL;
+
     EXPECT_EQ(
         rocrand_generate_short(generator, (unsigned short *) data, size),
         ROCRAND_STATUS_NOT_CREATED
@@ -173,7 +179,7 @@ TEST_P(rocrand_generate_long_long_tests, long_long_test)
     unsigned long long int* data = NULL;
     rocrand_generator generator = NULL;
     EXPECT_EQ(
-        rocrand_generate_long_long(generator, (unsigned short *) data, size),
+        rocrand_generate_long_long(generator, (unsigned long long *) data, size),
         ROCRAND_STATUS_NOT_CREATED
     );
 
