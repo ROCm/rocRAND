@@ -80,11 +80,7 @@ struct host_system
     template<typename T>
     static void free(T* ptr)
     {
-        hipError_t status = hipDeviceSynchronize();
-        if(status != hipSuccess)
-        {
-            return;
-        }
+        ROCRAND_HIP_FATAL_ASSERT(hipDeviceSynchronize());
         delete[] ptr;
     }
 
