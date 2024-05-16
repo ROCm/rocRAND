@@ -230,7 +230,7 @@ struct mt19937_octo_engine
         unsigned int last_deps[numberOfLanes];
         for(unsigned int i = 0; i < numberOfLanes; ++i)
         {
-            last_deps[i] = thread_engines[(i + 1) % 8].m_state.mt[idx_i];
+            last_deps[i] = thread_engines[(i + 1) % numberOfLanes].m_state.mt[idx_i];
         }
 
         for(unsigned int i = 0; i < numberOfLanes; ++i)
