@@ -83,14 +83,14 @@ struct threefry_device_engine : public BaseType
 };
 
 template<class Engine, class T, class Distribution>
-__host__ __device__ void generate_threefry(dim3         block_idx,
-                                           dim3         thread_idx,
-                                           dim3         grid_dim,
-                                           dim3         block_dim,
-                                           Engine       engine,
-                                           T*           data,
-                                           const size_t n,
-                                           Distribution distribution)
+__host__ __device__ __forceinline__ void generate_threefry(dim3         block_idx,
+                                                           dim3         thread_idx,
+                                                           dim3         grid_dim,
+                                                           dim3         block_dim,
+                                                           Engine       engine,
+                                                           T*           data,
+                                                           const size_t n,
+                                                           Distribution distribution)
 {
     using engine_scalar_type = typename Engine::scalar_type;
 
