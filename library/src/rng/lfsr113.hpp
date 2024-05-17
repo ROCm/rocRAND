@@ -61,15 +61,15 @@ __host__ __device__ inline void init_lfsr113_engines(dim3 block_idx,
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
-__host__ __device__ void generate_lfsr113(dim3 block_idx,
-                                          dim3 thread_idx,
-                                          dim3 grid_dim,
-                                          dim3 /*block_dim*/,
-                                          lfsr113_device_engine* engines,
-                                          const unsigned int     start_engine_id,
-                                          T*                     data,
-                                          const size_t           n,
-                                          Distribution           distribution)
+__host__ __device__ __forceinline__ void generate_lfsr113(dim3 block_idx,
+                                                          dim3 thread_idx,
+                                                          dim3 grid_dim,
+                                                          dim3 /*block_dim*/,
+                                                          lfsr113_device_engine* engines,
+                                                          const unsigned int     start_engine_id,
+                                                          T*                     data,
+                                                          const size_t           n,
+                                                          Distribution           distribution)
 {
     static_assert(is_single_tile_config<ConfigProvider, T>(IsDynamic),
                   "This kernel should only be used with single tile configs");
