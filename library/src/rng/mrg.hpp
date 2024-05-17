@@ -30,6 +30,7 @@
 #include "generator_type.hpp"
 #include "system.hpp"
 
+#include <hip/amd_detail/host_defines.h>
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_mrg31k3p.h>
 #include <rocrand/rocrand_mrg32k3a.h>
@@ -62,7 +63,7 @@ __host__ __device__ void init_engines_mrg(dim3               block_idx,
 }
 
 template<class ConfigProvider, bool IsDynamic, class Engine, class T, class Distribution>
-__host__ __device__ void generate_mrg(dim3 block_idx,
+__host__ __device__ __forceinline__ void generate_mrg(dim3 block_idx,
                                       dim3 thread_idx,
                                       dim3 grid_dim,
                                       dim3 /*block_dim*/,

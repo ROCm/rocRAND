@@ -103,14 +103,14 @@ struct philox4x32_10_device_engine : public ::rocrand_device::philox4x32_10_engi
 };
 
 template<typename T, typename Distribution>
-__host__ __device__ void generate_philox(dim3                        block_idx,
-                                         dim3                        thread_idx,
-                                         dim3                        grid_dim,
-                                         dim3                        block_dim,
-                                         philox4x32_10_device_engine engine,
-                                         T*                          data,
-                                         const size_t                n,
-                                         Distribution                distribution)
+__host__ __device__ __forceinline__ void generate_philox(dim3                        block_idx,
+                                                         dim3                        thread_idx,
+                                                         dim3                        grid_dim,
+                                                         dim3                        block_dim,
+                                                         philox4x32_10_device_engine engine,
+                                                         T*                          data,
+                                                         const size_t                n,
+                                                         Distribution                distribution)
 {
     constexpr unsigned int input_width  = Distribution::input_width;
     constexpr unsigned int output_width = Distribution::output_width;
