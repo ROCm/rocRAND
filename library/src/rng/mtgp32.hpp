@@ -63,6 +63,7 @@
 #include "generator_type.hpp"
 #include "system.hpp"
 
+#include <hip/amd_detail/host_defines.h>
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_mtgp32.h>
 #include <rocrand/rocrand_mtgp32_11213.h>
@@ -222,7 +223,7 @@ __device__ void save_head_tail(T (&output)[output_width],
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class Distribution>
-__host__ __device__ void generate_mtgp(dim3 block_idx,
+__host__ __device__ __forceinline__ void generate_mtgp(dim3 block_idx,
                                        dim3 thread_idx,
                                        dim3 grid_dim,
                                        dim3 /*block_dim*/,
