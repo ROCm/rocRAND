@@ -5,6 +5,10 @@ Documentation for rocRAND is available at
 
 ## (Unreleased) rocRAND-3.2.0 for ROCm 6.3.0
 
+### Additions
+
+* Added host generator for MT19937
+
 ### Changes
 
 * `rocrand_discrete` for MTGP32, LFSR113 and ThreeFry generators now uses the alias method, which is faster than binary search in CDF.

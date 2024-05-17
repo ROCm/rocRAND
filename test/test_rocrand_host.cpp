@@ -52,6 +52,7 @@ constexpr rocrand_rng_type host_rng_types[] = {
     ROCRAND_RNG_PSEUDO_LFSR113,
     ROCRAND_RNG_PSEUDO_MRG31K3P,
     ROCRAND_RNG_PSEUDO_MRG32K3A,
+    ROCRAND_RNG_PSEUDO_MT19937,
     ROCRAND_RNG_PSEUDO_MTGP32,
     ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
     ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
@@ -71,6 +72,11 @@ class rocrand_generate_host_test : public ::testing::TestWithParam<rocrand_rng_t
 
 void test_int(const rocrand_rng_type rng_type, const size_t test_size)
 {
+    if(rng_type == ROCRAND_RNG_PSEUDO_MT19937)
+    {
+        ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+    }
+
     rocrand_generator generator;
     ROCRAND_CHECK(rocrand_create_generator_host(&generator, rng_type));
 
@@ -118,6 +124,11 @@ void test_int_parity(rocrand_rng_type                       rng_type,
                      F                                      generate,
                      const std::vector<unsigned long long>& seeds = get_seeds())
 {
+    if(rng_type == ROCRAND_RNG_PSEUDO_MT19937)
+    {
+        ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+    }
+
     rocrand_generator device_generator, host_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
     ROCRAND_CHECK(rocrand_create_generator_host(&host_generator, rng_type));
@@ -170,6 +181,11 @@ void test_uniform_parity(rocrand_rng_type                       rng_type,
                          F                                      generate,
                          const std::vector<unsigned long long>& seeds = get_seeds())
 {
+    if(rng_type == ROCRAND_RNG_PSEUDO_MT19937)
+    {
+        ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+    }
+
     rocrand_generator device_generator, host_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
     ROCRAND_CHECK(rocrand_create_generator_host(&host_generator, rng_type));
@@ -223,6 +239,11 @@ void test_normal_parity(rocrand_rng_type                       rng_type,
                         double                                 eps,
                         const std::vector<unsigned long long>& seeds = get_seeds())
 {
+    if(rng_type == ROCRAND_RNG_PSEUDO_MT19937)
+    {
+        ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+    }
+
     Type mean   = static_cast<Type>(-12.0);
     Type stddev = static_cast<Type>(2.4);
 

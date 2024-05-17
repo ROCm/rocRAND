@@ -42,6 +42,7 @@
     #define ROCRAND_USE_PARALLEL_STL
     #include <execution>
 #endif
+#include <cstring>
 #include <new>
 
 #include <stdint.h>
@@ -62,6 +63,12 @@ struct host_system
     template<typename T>
     static rocrand_status alloc(T** ptr, size_t n)
     {
+        hipError_t status = hipDeviceSynchronize();
+        if(status != hipSuccess)
+        {
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
+
         *ptr = new(std::nothrow) T[n];
         if(!*ptr)
         {
@@ -73,7 +80,19 @@ struct host_system
     template<typename T>
     static void free(T* ptr)
     {
+        ROCRAND_HIP_FATAL_ASSERT(hipDeviceSynchronize());
         delete[] ptr;
+    }
+
+    static rocrand_status memcpy(void* dst, const void* src, size_t size, hipMemcpyKind /*kind*/)
+    {
+        hipError_t status = hipDeviceSynchronize();
+        if(status != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        std::memcpy(dst, src, size);
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     template<typename... UserArgs>
@@ -206,6 +225,16 @@ struct device_system
     static void free(T* ptr)
     {
         ROCRAND_HIP_FATAL_ASSERT(hipFree(ptr));
+    }
+
+    static rocrand_status memcpy(void* dst, const void* src, size_t size, hipMemcpyKind kind)
+    {
+        hipError_t error = hipMemcpy(dst, src, size, kind);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     template<auto Kernel,
