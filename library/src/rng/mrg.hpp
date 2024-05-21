@@ -30,7 +30,6 @@
 #include "generator_type.hpp"
 #include "system.hpp"
 
-#include <hip/amd_detail/host_defines.h>
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_mrg31k3p.h>
 #include <rocrand/rocrand_mrg32k3a.h>
