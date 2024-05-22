@@ -1,26 +1,19 @@
-name: clang-format Check
+name: Check Clang-Format on Diff
+
 on: [push, pull_request]
+
 jobs:
-  formatting-check:
-    name: Formatting Check
+  clang-format:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        path:
-          - check: 'benchmark'
-            exclude: '' # Nothing to exclude
-          - check: 'library'
-            exclude: '' # Nothing to exclude
-          - check: 'test'
-            exclude: '' # Nothing to exclude
-          - check: 'tools'
-            exclude: '' # Nothing to exclude
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Run clang-format style check for C/C++/Protobuf programs.
-      uses: jidicula/clang-format-action@v4.11.0
-      with:
-        clang-format-version: '17'
-        check-path: ${{ matrix.path['check'] }}
-        exclude-regex: ${{ matrix.path['exclude'] }}
-        fallback-style: 'LLVM' # optional
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install clang-format
+      run: sudo apt-get install -y clang-format
+
+    - name: Check Clang-Format on Diff
+      run: |
+        chmod +x clang-format-diff.sh
+        ./clang-format-diff.sh
