@@ -170,6 +170,9 @@ public:
     using base_type   = generator_impl_base;
     using engine_type = xorwow_device_engine;
     using system_type = System;
+    using poisson_distribution_manager_t
+        = poisson_distribution_manager<DISCRETE_METHOD_ALIAS, system_type>;
+    using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
 
     xorwow_generator_template(unsigned long long seed   = 0,
                               unsigned long long offset = 0,
@@ -265,6 +268,17 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status set_stream(hipStream_t stream)
+    {
+        const rocrand_status status = m_poisson.set_stream(stream);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        base_type::set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     rocrand_status init()
     {
         if (m_engines_initialized)
@@ -305,6 +319,12 @@ public:
             m_engines_size,
             m_seed,
             m_offset / m_engines_size);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+
+        status = m_poisson.init();
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
@@ -408,15 +428,12 @@ public:
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        try
+        auto dis = m_poisson.get_distribution(lambda);
+        if(auto* error_status = std::get_if<rocrand_status>(&dis))
         {
-            m_poisson.set_lambda(lambda);
+            return *error_status;
         }
-        catch(rocrand_status status)
-        {
-            return status;
-        }
-        return generate(data, data_size, m_poisson.dis);
+        return generate(data, data_size, std::get<poisson_distribution_t>(dis));
     }
 
 private:
@@ -428,7 +445,7 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
+    poisson_distribution_manager_t m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type

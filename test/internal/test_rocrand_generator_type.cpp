@@ -63,6 +63,12 @@ struct dummy_generator : generator_impl_base
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status set_stream(hipStream_t stream)
+    {
+        generator_impl_base::set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     rocrand_status init()
     {
         return ROCRAND_STATUS_SUCCESS;

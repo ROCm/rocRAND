@@ -663,6 +663,9 @@ public:
     using base_type        = generator_impl_base;
     using octo_engine_type = mt19937_octo_engine;
     using system_type      = System;
+    using poisson_distribution_manager_t
+        = poisson_distribution_manager<DISCRETE_METHOD_ALIAS, system_type>;
+    using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
 
     static constexpr inline unsigned int threads_per_generator
         = octo_engine_type::threads_per_generator;
@@ -769,6 +772,17 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status set_stream(hipStream_t stream)
+    {
+        const rocrand_status status = m_poisson.set_stream(stream);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        base_type::set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     rocrand_status init()
     {
         if(m_engines_initialized)
@@ -872,6 +886,12 @@ public:
         }
 
         system_type::free(d_engines);
+
+        status = m_poisson.init();
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
 
         m_engines_initialized = true;
         m_start_input         = 0;
@@ -1050,15 +1070,12 @@ public:
 
     rocrand_status generate_poisson(unsigned int* data, size_t data_size, double lambda)
     {
-        try
+        auto dis = m_poisson.get_distribution(lambda);
+        if(auto* error_status = std::get_if<rocrand_status>(&dis))
         {
-            m_poisson.set_lambda(lambda);
+            return *error_status;
         }
-        catch(rocrand_status status)
-        {
-            return status;
-        }
-        return generate(data, data_size, m_poisson.dis);
+        return generate(data, data_size, std::get<poisson_distribution_t>(dis));
     }
 
 private:
@@ -1073,9 +1090,7 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<DISCRETE_METHOD_ALIAS,
-                                 !std::is_same<System, rocrand_impl::system::device_system>::value>
-        m_poisson;
+    poisson_distribution_manager_t m_poisson;
 
     /// Number of independent generators. Value changes generated number stream.
     unsigned int m_generator_count = 0;

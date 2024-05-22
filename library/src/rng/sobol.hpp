@@ -494,6 +494,9 @@ public:
     using engine_type       = sobol_device_engine_t<Is64, Scrambled, system_type::is_device()>;
     using constant_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
     using constant_accessor = sobol_constant_accessor<system_type, Is64, Scrambled>;
+    using poisson_distribution_manager_t
+        = poisson_distribution_manager<DISCRETE_METHOD_CDF, system_type>;
+    using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
 
     sobol_generator_template(unsigned long long offset = 0,
                              rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
@@ -578,11 +581,28 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status set_stream(hipStream_t stream)
+    {
+        const rocrand_status status = m_poisson.set_stream(stream);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        base_type::set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     rocrand_status init()
     {
         if(m_initialized)
         {
             return ROCRAND_STATUS_SUCCESS;
+        }
+
+        rocrand_status status = m_poisson.init();
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
         }
 
         m_current_offset = static_cast<unsigned int>(m_offset);
@@ -715,15 +735,12 @@ public:
     {
         static_assert(Is64 || std::is_same_v<T, uint32_t>,
                       "The 32 bit sobol generator can only generate 32bit poisson");
-        try
+        auto dis = m_poisson.get_distribution(lambda);
+        if(auto* error_status = std::get_if<rocrand_status>(&dis))
         {
-            m_poisson.set_lambda(lambda);
+            return *error_status;
         }
-        catch(rocrand_status status)
-        {
-            return status;
-        }
-        return generate(data, data_size, m_poisson.dis);
+        return generate(data, data_size, std::get<poisson_distribution_t>(dis));
     }
 
 private:
@@ -742,7 +759,7 @@ private:
     const constant_type* m_scramble_constants = nullptr;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<DISCRETE_METHOD_CDF, !system_type::is_device()> m_poisson;
+    poisson_distribution_manager_t m_poisson;
 
     // m_offset from base_type
 
