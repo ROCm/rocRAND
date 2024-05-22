@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Save unified diff with 0 context
-DIFF=$(git diff -U0 HEAD)
-echo "$DIFF" > changes.diff
+git diff -U0 HEAD > changes.diff
 
 # Apply clang-format on diff
 FORMAT_DIFF=$(clang-format -style=file changes.diff)
