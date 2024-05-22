@@ -10,6 +10,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Import LLVM GPG Key
+      run: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
+
     - name: Add LLVM Repository
       run: |
         sudo add-apt-repository "deb http://apt.llvm.org/jammy llvm-toolchain-jammy-17 main"
