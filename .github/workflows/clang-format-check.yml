@@ -25,4 +25,4 @@ jobs:
 
     - name: Check Clang-Format on Diff
       run: |
-        ./clang-format-diff.sh
+        ./clang-format-diff.sh ${{ github.base_ref }} ${{ github.ref }}
