@@ -15,5 +15,4 @@ jobs:
 
     - name: Check Clang-Format on Diff
       run: |
-        chmod +x clang-format-diff.sh
         ./clang-format-diff.sh
