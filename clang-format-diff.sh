@@ -7,7 +7,7 @@ echo "$DIFF" > changes.diff
 # Apply clang-format on diff
 curl -LO https://raw.githubusercontent.com/llvm/llvm-project/main/clang/tools/clang-format/clang-format-diff.py
 chmod +x clang-format-diff.py
-FORMAT_DIFF=$(./clang-format-diff.py -p1 changes.diff)
+FORMAT_DIFF=$(./clang-format-diff.py changes.diff)
 
 if [ ! -z "$FORMAT_DIFF" ]; then
     echo "The following formatting errors were found:"
