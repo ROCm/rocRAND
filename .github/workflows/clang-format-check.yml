@@ -1,0 +1,28 @@
+name: Check Clang-Format on Diff
+
+on: [push, pull_request]
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Import LLVM GPG Key
+      run: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
+
+    - name: Add LLVM Repository
+      run: |
+        sudo add-apt-repository "deb http://apt.llvm.org/jammy llvm-toolchain-jammy-17 main"
+        sudo apt-get update
+
+    - name: Install clang-format 17
+      run: |
+        sudo apt-get install clang-format-17
+
+    - name: Check Clang-Format on Diff
+      run: |
+        ./clang-format-diff.sh ${{ github.base_ref }} ${{ github.ref }}
