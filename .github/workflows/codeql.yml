@@ -102,8 +102,9 @@ jobs:
         mkdir build
         cd build
         cmake -DCMAKE_CXX_COMPILER=hipcc -DCMAKE_PREFIX_PATH=/opt/rocm ..
-        cmake --build .
-        cmake --build . --target install
+        cmake --build . || { echo 'CMake build failed'; exit 1; }
+        cmake --build . --target install || { echo 'CMake install failed'; exit 1; }
+        echo 'Build and install completed successfully'
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
