@@ -23,6 +23,12 @@ jobs:
       run: |
         sudo apt-get install clang-format-17
 
-    - name: Check Clang-Format on Diff
+    - name: Check clang-format on Diff
       run: |
         ./clang-format-diff.sh ${{ github.base_ref }} ${{ github.ref }}
+
+    - name: Suggest changes from clang-format
+      if: github.event_name == 'pull_request'
+      uses: parkerbxyz/suggest-changes@v1
+      with:
+        comment: 'Please commit the suggested changes from clang-format.'
