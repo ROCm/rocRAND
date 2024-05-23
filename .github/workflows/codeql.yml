@@ -13,9 +13,15 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "develop", "master", "release**/rocm-rel*" ]
+    branches: 
+      - "develop"
+      - "master"
+      - "release**/rocm-rel*"
   pull_request:
-    branches: [ "develop", "master", "release**/rocm-rel*" ]
+    branches: 
+      - "develop"
+      - "master"
+      - "release**/rocm-rel*"
   schedule:
     - cron: '26 6 * * 0'
 
