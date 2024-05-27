@@ -26,3 +26,12 @@ jobs:
     - name: Check Clang-Format on Diff
       run: |
         ./clang-format-diff.sh ${{ github.base_ref }} ${{ github.ref }}
+
+    - name: Apply Clang-Format locally
+      run: |
+        ./clang-format-apply.sh ${{ github.base_ref }} ${{ github.ref }}
+
+    - name: Suggest changes
+      uses: parkerbxyz/suggest-changes@v1
+      with:
+        comment: 'Please make the changes suggested by clang-format'
