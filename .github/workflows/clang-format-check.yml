@@ -26,7 +26,14 @@ jobs:
     - name: Fetch branches to check
       run: |
         git fetch origin ${{ github.base_ref }}
-        git fetch origin ${{ github.head_ref }}
+        if [ "${{ github.repository_owner }}" != "${{ github.event.pull_request.head.repo.owner.login }}" ]; then
+          fork_owner="${{ github.event.pull_request.head.repo.owner.login }}"
+          fork_url=$(git remote get-url origin)
+          git remote add fork "$fork_url"
+          git fetch fork ${{ github.head_ref }}
+        else
+          git fetch origin ${{ github.head_ref }}
+        fi
 
     - name: Check Clang-Format on Diff
       run: |
