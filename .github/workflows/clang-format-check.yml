@@ -28,10 +28,12 @@ jobs:
         ./clang-format-diff.sh ${{ github.base_ref }} ${{ github.ref }}
 
     - name: Apply Clang-Format locally
+      if: github.event_name == 'pull_request'
       run: |
         ./clang-format-apply.sh ${{ github.base_ref }} ${{ github.ref }}
 
     - name: Suggest changes
       uses: parkerbxyz/suggest-changes@v1
+      if: github.event_name == 'pull_request'
       with:
         comment: 'Please make the changes suggested by clang-format'
