@@ -24,8 +24,8 @@
 #include <iostream>
 #include <string>
 
-const int XORWOW_N = 5;  // 5 values
-const int XORWOW_M = 32; // 32-bit each
+  const int XORWOW_N = 5;  // 5 values
+  const int XORWOW_M = 32; // 32-bit each
 
 const int XORWOW_SIZE = XORWOW_M * XORWOW_N * XORWOW_N;
 
