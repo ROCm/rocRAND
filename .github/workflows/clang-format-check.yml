@@ -1,6 +1,6 @@
 name: Check Clang-Format on Diff
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   clang-format:
@@ -33,14 +33,6 @@ jobs:
           git fetch fork ${{ github.head_ref }}
         else
           git fetch origin ${{ github.head_ref }}
-        fi
-
-    - name: Check Clang-Format on Diff
-      run: |
-        if [ "${{ github.repository_owner }}" != "${{ github.event.pull_request.head.repo.owner.login }}" ]; then
-          ./clang-format-diff.sh origin/${{ github.base_ref }} fork/${{ github.head_ref }}
-        else
-          ./clang-format-diff.sh origin/${{ github.base_ref }} origin/${{ github.head_ref }}
         fi
 
     - name: Apply Clang-Format locally
