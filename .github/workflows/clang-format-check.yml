@@ -37,12 +37,20 @@ jobs:
 
     - name: Check Clang-Format on Diff
       run: |
-        ./clang-format-diff.sh ${{ github.base_ref }} ${{ github.head_ref }}
+        if [ "${{ github.repository_owner }}" != "${{ github.event.pull_request.head.repo.owner.login }}" ]; then
+          ./clang-format-diff.sh origin/${{ github.base_ref }} fork/${{ github.head_ref }}
+        else
+          ./clang-format-diff.sh origin/${{ github.base_ref }} origin/${{ github.head_ref }}
+        fi
 
     - name: Apply Clang-Format locally
       if: github.event_name == 'pull_request'
       run: |
-        ./clang-format-apply.sh ${{ github.base_ref }} ${{ github.head_ref }}
+        if [ "${{ github.repository_owner }}" != "${{ github.event.pull_request.head.repo.owner.login }}" ]; then
+          ./clang-format-apply.sh origin/${{ github.base_ref }} fork/${{ github.head_ref }}
+        else
+          ./clang-format-apply.sh origin/${{ github.base_ref }} origin/${{ github.head_ref }}
+        fi
 
     - name: Suggest changes
       uses: parkerbxyz/suggest-changes@v1
