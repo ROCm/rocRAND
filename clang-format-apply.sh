@@ -16,3 +16,5 @@ while IFS= read -r line; do
     fi
   fi
 done < changes.diff
+
+rm changes.diff
