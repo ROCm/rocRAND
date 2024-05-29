@@ -64,7 +64,7 @@ jobs:
       if: steps.check_patch.outputs.patch_not_empty == 'true'
       uses: actions/github-script@v4
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN_CLANG }}
+        github-token: ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}
         script: |
           const fs = require('fs');
           const { context, GitHub } = require('@actions/github');
@@ -72,7 +72,7 @@ jobs:
           const patchFile = 'clang_format.patch';
           const patchContent = fs.readFileSync(patchFile, 'utf8');
 
-          const octokit = new GitHub(process.env.GITHUB_TOKEN_CLANG);
+          const octokit = new GitHub(process.env.GH_ACTION_TOKEN_CLANG_FORMAT);
           octokit.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
