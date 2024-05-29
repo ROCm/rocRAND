@@ -70,5 +70,5 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: token ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          -d "{\"body\":\"$COMMENT_BODY\",\"commit_id\":\"${{ github.event.pull_request.head.sha }}\"}"
+          -d "{\"body\":\"$COMMENT_BODY\",\"commit_id\":\"${{ github.event.pull_request.head.sha }}\"}" \
           $API_URL
