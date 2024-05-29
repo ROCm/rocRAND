@@ -51,16 +51,26 @@ jobs:
     - name: Generate suggestions
       run: |
         echo "[]" > comments.json
+        echo "Created comments.json"
+
         while IFS= read -r line; do
+          echo "Processing line: $line"
+          
           if [[ "$line" =~ ^@@ ]]; then
-            # Get file name
+            echo "Line matches diff hunk header"
+            
             file=$(echo "$line" | grep -oP '(?<= b/).*?(?= @@)')
-            # Get line number
+            echo "Got file name: $file"
+            
             position=$(echo "$line" | grep -oP '(?<=@@ -).*?(?= @@)' | awk '{split($0, a, " "); print a[2]}')
-            # Generate comment
+            echo "Got line number: $position"
+            
             comment=$(jq -n --arg file "$file" --arg pos "$position" '{path: $file, position: ($pos|tonumber), body: "Please apply the suggested clang-format changes."}')
+            echo "Generated comment: $comment"
+            
             tmp=$(mktemp)
             jq ". += [$comment]" comments.json > "$tmp" && mv "$tmp" comments.json
+            echo "Appended comment to comments.json"
           fi
         done < clang_format.patch
 
