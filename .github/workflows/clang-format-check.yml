@@ -66,4 +66,8 @@ jobs:
         PATCH_CONTENT=$(cat clang_format.patch)
         COMMENT_BODY=$(printf "Here is the clang-format patch:\n\`\`\`diff\n%s\n\`\`\`" "$PATCH_CONTENT")
         API_URL="https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
-        curl -X POST -H "Authorization: token ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}" -d "{\"body\":\"$COMMENT_BODY\"}" $API_URL
+        curl -X POST \
+          -H "Authorization: token ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}" \
+          -H "Content-Type: application/json" \
+          -d "{\"body\":\"$COMMENT_BODY\"}" \
+          $API_URL
