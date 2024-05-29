@@ -12,7 +12,7 @@ cat changes.diff
 FORMAT_DIFF=$(clang-format -style=file changes.diff)
 
 if [ ! -z "$FORMAT_DIFF" ]; then
-    echo "The following formatting errors were found:"
+    echo "Please apply clang-format to the following files:"
     echo "$FORMAT_DIFF"
     exit 1
 else

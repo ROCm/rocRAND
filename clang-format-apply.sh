@@ -4,9 +4,9 @@ BASE_BRANCH=$1
 CURRENT_BRANCH=$2
 
 # Save unified diff with 0 context
-git diff -U0 --name-only $BASE_BRANCH...$CURRENT_BRANCH > changes.diff
+git diff -U0 --name-only $BASE_BRANCH...$CURRENT_BRANCH > filestochange.diff
 
-cat changes.diff
+cat filestochange.diff
 
 # Run clang-format in-place on .h and .cpp files
 while IFS= read -r line; do
@@ -15,6 +15,6 @@ while IFS= read -r line; do
       clang-format -i "$line"
     fi
   fi
-done < changes.diff
+done < filestochange.diff
 
-rm changes.diff
+rm filestochange.diff
