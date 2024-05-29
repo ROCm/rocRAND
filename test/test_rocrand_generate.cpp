@@ -70,7 +70,7 @@ TEST_P(rocrand_generate_tests, int_test)
 TEST_P(rocrand_generate_tests, char_test)
 {
     const size_t size = 12563;
-    unsigned char * data = NULL;
+    unsigned char * data = nullptr;
     rocrand_generator generator = NULL;
 
     EXPECT_EQ(
