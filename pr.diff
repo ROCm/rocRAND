@@ -1,0 +1,109 @@
+diff --git a/tools/xorwow_precomputed_generator.cpp b/tools/xorwow_precomputed_generator.cpp
+index 34a96bf..be66f53 100644
+--- a/tools/xorwow_precomputed_generator.cpp
++++ b/tools/xorwow_precomputed_generator.cpp
+@@ -24,13 +24,13 @@
+ #include <iostream>
+ #include <string>
+ 
+-    const int XORWOW_N = 5;  // 5 values
+-    const int XORWOW_M = 32; // 32-bit each
++const int XORWOW_N = 5; // 5 values
++const int XORWOW_M = 32; // 32-bit each
+ 
+ const int XORWOW_SIZE = XORWOW_M * XORWOW_N * XORWOW_N;
+ 
+ const int XORWOW_JUMP_MATRICES = 32;
+-const int XORWOW_JUMP_LOG2 = 2;
++const int XORWOW_JUMP_LOG2     = 2;
+ 
+ const int XORWOW_SEQUENCE_JUMP_LOG2 = 67;
+ 
+@@ -47,11 +47,11 @@ struct rocrand_xorwow_state
+     void discard()
+     {
+         const unsigned int t = x[0] ^ (x[0] >> 2);
+-        x[0] = x[1];
+-        x[1] = x[2];
+-        x[2] = x[3];
+-        x[3] = x[4];
+-        x[4] = (x[4] ^ (x[4] << 4)) ^ (t ^ (t << 1));
++        x[0]                 = x[1];
++        x[1]                 = x[2];
++        x[2]                 = x[3];
++        x[3]                 = x[4];
++        x[4]                 = (x[4] ^ (x[4] << 4)) ^ (t ^ (t << 1));
+ 
+         d += 362437;
+     }
+@@ -61,13 +61,13 @@ void generate_matrices()
+ {
+     unsigned int one_step[XORWOW_SIZE];
+ 
+-    for (int i = 0; i < XORWOW_N; i++)
++    for(int i = 0; i < XORWOW_N; i++)
+     {
+-        for (int j = 0; j < XORWOW_M; j++)
++        for(int j = 0; j < XORWOW_M; j++)
+         {
+             rocrand_xorwow_state state;
+-            const unsigned int b = 1U << j;
+-            for (int k = 0; k < XORWOW_N; k++)
++            const unsigned int   b = 1U << j;
++            for(int k = 0; k < XORWOW_N; k++)
+             {
+                 state.x[k] = (i == k ? b : 0);
+             }
+@@ -75,7 +75,7 @@ void generate_matrices()
+ 
+             state.discard();
+ 
+-            for (int k = 0; k < XORWOW_N; k++)
++            for(int k = 0; k < XORWOW_N; k++)
+             {
+                 one_step[(i * XORWOW_M + j) * XORWOW_N + k] = state.x[k];
+             }
+@@ -88,7 +88,7 @@ void generate_matrices()
+         copy_arr<XORWOW_SIZE>(a, one_step);
+ 
+         copy_arr<XORWOW_SIZE>(jump_matrices[0], a);
+-        for (int k = 1; k < XORWOW_JUMP_MATRICES; k++)
++        for(int k = 1; k < XORWOW_JUMP_MATRICES; k++)
+         {
+             copy_arr<XORWOW_SIZE>(b, a);
+             mat_pow<XORWOW_SIZE, XORWOW_N, XORWOW_M>(a, b, (1 << XORWOW_JUMP_LOG2));
+@@ -110,7 +110,7 @@ void generate_matrices()
+             1ULL << (XORWOW_SEQUENCE_JUMP_LOG2 - XORWOW_SEQUENCE_JUMP_LOG2 / 2));
+ 
+         copy_arr<XORWOW_SIZE>(sequence_jump_matrices[0], a);
+-        for (int k = 1; k < XORWOW_JUMP_MATRICES; k++)
++        for(int k = 1; k < XORWOW_JUMP_MATRICES; k++)
+         {
+             copy_arr<XORWOW_SIZE>(b, a);
+             mat_pow<XORWOW_SIZE, XORWOW_N, XORWOW_M>(a, b, (1 << XORWOW_JUMP_LOG2));
+@@ -119,18 +119,21 @@ void generate_matrices()
+     }
+ }
+ 
+-int main(int argc, char const *argv[]) {
+-    if (argc != 2 || std::string(argv[1]) == "--help")
++int main(int argc, char const* argv[])
++{
++    if(argc != 2 || std::string(argv[1]) == "--help")
+     {
+         std::cout << "Usage:" << std::endl;
+-        std::cout << "  ./xorwow_precomputed_generator ../../library/include/rocrand/rocrand_xorwow_precomputed.h" << std::endl;
++        std::cout << "  ./xorwow_precomputed_generator "
++                     "../../library/include/rocrand/rocrand_xorwow_precomputed.h"
++                  << std::endl;
+         return -1;
+     }
+ 
+     generate_matrices();
+ 
+     const std::string file_path(argv[1]);
+-    std::ofstream fout(file_path, std::ios_base::out | std::ios_base::trunc);
++    std::ofstream     fout(file_path, std::ios_base::out | std::ios_base::trunc);
+     fout << R"(// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+ //
+ // Permission is hereby granted, free of charge, to any person obtaining a copy
