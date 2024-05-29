@@ -70,7 +70,7 @@ jobs:
                 echo "Got line number: $position"
 
                 # Construct JSON manually
-                comment="{\"path\":\"$changed_file\",\"position\":$position,\"body\":\"Please apply the suggested clang-format changes.\"}"
+                comment="{\"path\":\"$changed_file\",\"position\":$position,\"body\":Please apply the suggested clang-format changes.}"
                 echo "Generated comment: $comment"
                 comments+=("$comment")
             fi
