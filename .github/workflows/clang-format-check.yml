@@ -46,6 +46,7 @@ jobs:
 
     - name: Save clang-format changes as patch
       run: |
+        git diff -U0
         git diff -U0 > clang_format.patch
 
     - name: Generate suggestions
@@ -59,7 +60,7 @@ jobs:
           if [[ "$line" =~ ^@@ ]]; then
             echo "Line matches diff hunk header"
             
-            file=$(echo "$line" | grep -oP '(?<= b/).*?(?= @@)')
+            file=$(echo "$line" | sed -n 's|^--- a/\(.*\)|\1|p')
             echo "Got file name: $file"
             
             position=$(echo "$line" | grep -oP '(?<=@@ -).*?(?= @@)' | awk '{split($0, a, " "); print a[2]}')
