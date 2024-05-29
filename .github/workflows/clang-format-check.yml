@@ -58,13 +58,13 @@ jobs:
             echo "Processing line: $line"
             
             if [[ "$line" =~ ^diff ]]; then
-                echo "Processing diff header line: $line"
+                echo "diff header line"
 
-                # Extract file names from the diff header
                 changed_file=$(echo "$line" | awk '{print $3}' | sed 's/^a\///')
                 echo "File: $changed_file"
+
             elif [[ "$line" =~ ^@@ ]]; then
-                echo "Line matches diff hunk header"
+                echo "diff hunk header"
 
                 position=$(echo "$line" | grep -oP '(?<=@@ -).*?(?= @@)' | awk '{split($0, a, " "); print a[2]}')
                 echo "Got line number: $position"
@@ -72,16 +72,15 @@ jobs:
                 # Construct JSON manually
                 comment="{\"path\":\"$changed_file\",\"position\":$position,\"body\":\"Please apply the suggested clang-format changes.\"}"
                 echo "Generated comment: $comment"
-
-                # Read existing comments.json and append new comment
-                existing_comments=$(cat comments.json)
-                new_comments=$(echo "$existing_comments" | sed -e 's/]//')
-                new_comments+="$comment,]"
-                echo "$new_comments" > comments.json
-                echo "Appended comment to comments.json"
+                comments+=("$comment")
             fi
 
         done < clang_format.patch
+
+        comments_json=$(printf ",%s" "${comments[@]}")
+        comments_json="[${comments_json:1}]"
+        echo "$comments_json" > comments.json
+        echo "Final comments.json: $comments_json"
 
     - name: Suggest changes via GitHub API
       run: |
