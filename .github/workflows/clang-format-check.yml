@@ -67,7 +67,7 @@ jobs:
         github-token: GH_ACTION_TOKEN_CLANG_FORMAT
         script: |
           const fs = require('fs');
-          const { context, GitHub } = require('@actions/github');
+          const { GitHub } = require('@actions/github');
 
           const patchFile = 'clang_format.patch';
           const patchContent = fs.readFileSync(patchFile, 'utf8');
