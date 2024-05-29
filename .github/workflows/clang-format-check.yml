@@ -62,20 +62,8 @@ jobs:
 
     - name: Post patch as comment
       if: steps.check_patch.outputs.patch_not_empty == 'true'
-      uses: actions/github-script@v4
-      with:
-        github-token: ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}
-        script: |
-          const fs = require('fs');
-          const { GitHub } = require('@actions/github');
-
-          const patchFile = 'clang_format.patch';
-          const patchContent = fs.readFileSync(patchFile, 'utf8');
-
-          const octokit = new GitHub(process.env.GH_ACTION_TOKEN_CLANG_FORMAT);
-          octokit.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: 'Here is the clang-format patch:\n```diff\n' + patchContent + '\n```'
-          });
+      run: |
+        PATCH_CONTENT=$(cat clang_format.patch)
+        COMMENT_BODY=$(printf "Here is the clang-format patch:\n\`\`\`diff\n%s\n\`\`\`" "$PATCH_CONTENT")
+        API_URL="https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+        curl -X POST -H "Authorization: token ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}" -d "{\"body\":\"$COMMENT_BODY\"}" $API_URL
