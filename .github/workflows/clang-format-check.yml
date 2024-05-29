@@ -84,7 +84,6 @@ jobs:
         done < clang_format.patch
 
     - name: Suggest changes via GitHub API
-      if: failure()
       run: |
         echo "Post review comments via GitHub API"
         PR_NUMBER="${{ github.event.pull_request.number }}"
