@@ -67,15 +67,15 @@ jobs:
         github-token: ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}
         script: |
           const fs = require('fs');
-          const { prContext, GitHub } = require('@actions/github');
+          const { context, GitHub } = require('@actions/github');
 
           const patchFile = 'clang_format.patch';
           const patchContent = fs.readFileSync(patchFile, 'utf8');
 
           const octokit = new GitHub(process.env.GH_ACTION_TOKEN_CLANG_FORMAT);
           octokit.rest.issues.createComment({
-            owner: prContext.repo.owner,
-            repo: prContext.repo.repo,
-            issue_number: prContext.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
             body: 'Here is the clang-format patch:\n```diff\n' + patchContent + '\n```'
           });
