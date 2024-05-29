@@ -64,7 +64,7 @@ jobs:
       if: steps.check_patch.outputs.patch_not_empty == 'true'
       uses: actions/github-script@v4
       with:
-        github-token: GH_ACTION_TOKEN_CLANG_FORMAT
+        github-token: ${{ secrets.GH_ACTION_TOKEN_CLANG_FORMAT }}
         script: |
           const fs = require('fs');
           const { GitHub } = require('@actions/github');
