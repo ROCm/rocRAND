@@ -3,6 +3,12 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
+## (Unreleased) rocRAND-3.1.1 for ROCm 6.2.0
+
+## Fixes
+  * Fixed " unknown extension ?>" issue in scripts/config-tuning/select_best_config.py 
+    when using python version thats older than 3.11
+
 ## (Unreleased) rocRAND-3.1.0 for ROCm 6.2.0
 
 ### Additions
