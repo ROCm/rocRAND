@@ -11,6 +11,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 import argparse
 from jinja2 import Environment, PackageLoader
+from sys import version_info
 
 env = Environment(
     loader=PackageLoader("select_best_config"),
@@ -51,7 +52,14 @@ def load_benchmark_result_json(path: str) -> DataFrame:
     gb_per_s_series.name = 'gb_per_s'
 
     # Extract the groups of the regex match to a DataFrame
-    name_regex = r'^(?P<generator>\S+?)_(?P<distribution>uniform|normal|log_normal|poisson)_(?P<value_type>(?>unsigned_)?(?>int|short|char|long_long|float|half|double))_t(?P<block_size>\d+)_b(?P<grid_size>\d+)'
+    
+    # need at least python 3.11 to have possesive quantifier and atomic grouping
+    if version_info.major >= 3 and version_info.minor >= 11:
+        name_regex = r'^(?P<generator>\S+?)_(?P<distribution>uniform|normal|log_normal|poisson)_(?P<value_type>(?>unsigned_)?(?>int|short|char|long_long|float|half|double))_t(?P<block_size>\d+)_b(?P<grid_size>\d+)'
+    else:
+        name_regex = r'^(?P<generator>\S+?)_(?P<distribution>uniform|normal|log_normal|poisson)_(?P<value_type>(unsigned_)?(int|short|char|long_long|float|half|double))_t(?P<block_size>\d+)_b(?P<grid_size>\d+)'
+
+
     extracted_data = benchmark_data['name'].str.extract(name_regex)
     extracted_data['block_size'] = extracted_data['block_size'].astype(int)
     extracted_data['grid_size']  = extracted_data['grid_size'].astype(int)
