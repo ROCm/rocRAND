@@ -137,4 +137,27 @@ void assert_near(const std::vector<T>& a, const std::vector<T>& b, double eps)
     }
 }
 
+template<typename T>
+double get_mean(const std::vector<T>& values)
+{
+    double mean = 0.0f;
+    for(auto v : values)
+    {
+        mean += static_cast<double>(v);
+    }
+    return mean / values.size();
+}
+
+template<typename T>
+double get_variance(const std::vector<T>& values, double mean)
+{
+    double variance = 0.0f;
+    for(auto v : values)
+    {
+        const double x = static_cast<double>(v) - mean;
+        variance += x * x;
+    }
+    return variance / values.size();
+}
+
 #endif // TEST_COMMON_HPP_

@@ -88,7 +88,10 @@ void run_benchmark(benchmark::State& state, const benchmark_config& config)
     generator.set_stream(stream);
 
     const auto generate_func = [&]
-    { return generator.generate(data, size, default_distribution<Distribution>{}(config)); };
+    {
+        default_distribution<Distribution> default_distribution_provider;
+        return generator.generate(data, size, default_distribution_provider(config));
+    };
 
     // Warm-up
     ROCRAND_CHECK(generate_func());
@@ -147,9 +150,7 @@ public:
             if constexpr(std::is_same_v<T, unsigned int>)
             {
                 // The poisson distribution is only supported for unsigned int.
-                using poisson_distribution_t = rocrand_impl::host::poisson_distribution<
-                    rocrand_impl::host::DISCRETE_METHOD_ALIAS>;
-                add_benchmarks_impl<T, poisson_distribution_t>();
+                add_benchmarks_impl<T, select_poisson_distribution_t<GeneratorTemplate>>();
             }
         }
         else if constexpr(std::is_floating_point_v<T> || std::is_same_v<T, half>)

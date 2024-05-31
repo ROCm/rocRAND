@@ -8,6 +8,7 @@ Documentation for rocRAND is available at
 ### Additions
 
 * Added host generator for MT19937
+* Support for `rocrand_generate_poisson` in hipGraphs
 
 ### Changes
 
