@@ -45,3 +45,5 @@ Utilities
 .. autofunction:: rocrand.empty
 
 .. autofunction:: rocrand.get_version
+
+To search an API, refer to the :ref:`genindex` for all rocRAND APIs.
