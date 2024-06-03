@@ -8,30 +8,31 @@
 rocRAND documentation
 ********************************************************************
 
-Welcome to the rocRAND docs home page! To learn more, see :ref:`what-is-rocrand`
+rocRAND provides functions that generate pseudo-random and quasi-random numbers. To learn more, see :ref:`what-is-rocrand`
 
-Our documentation is structured as follows:
+You can access rocRAND code on our `GitHub repository <https://github.com/ROCm/rocRAND>`_.
+
+The documentation is structured as follows:
 
 .. grid:: 2
   :gutter: 3
+
+  .. grid-item-card:: Install
+
+    * :ref:`installing`
+
+  .. grid-item-card:: Conceptual
+
+    * :ref:`programmers-guide`
+    * :ref:`curand-compatibility`
 
   .. grid-item-card:: API reference
 
     * :ref:`cpp-api`
     * :ref:`python-api`
-    * :ref:`curand-compatibility`
     * :doc:`API library <doxygen/html/index>`
 
-  .. grid-item-card:: Conceptual
+To contribute to the documentation, refer to
+`Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_.
 
-    * :ref:`programmers-guide`    
-
-  .. grid-item-card:: Tutorial
-
-    * :ref:`installing`
-
-Contributing to this documentation
-=======================================================
-
-We welcome collaboration! If you'd like to contribute to our documentation, you can find instructions on our `Contribute to ROCm docs <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_ page. Known issues are listed on `GitHub <https://github.com/ROCm/ROCm/labels/Verified%20Issue>`_.
-Licensing information for all ROCm components is listed on our `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_ page.
+You can find licensing information on the `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_ page.

@@ -21,3 +21,5 @@ C host API
 C++ host API wrapper
 ====================
 .. doxygengroup:: rocrandhostcpp
+
+To search an API, refer to the :ref:`genindex` for all rocRAND APIs.
