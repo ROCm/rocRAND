@@ -1,5 +1,11 @@
+.. meta::
+   :description: rocRAND documentation and API reference library
+   :keywords: rocRAND, ROCm, API, documentation
+
+.. _dynamic-ordering-configuration:
+
 =============================================================
-Generating optimal kernel configurations for dynamic ordering
+Kernel configurations for dynamic ordering
 =============================================================
 
 Overview
