@@ -153,3 +153,11 @@ All supported orderings for all generators are detailed below:
     ==================================  ====================================================================================================================
     `ROCRAND_ORDERING_QUASI_DEFAULT`    The (scrambled) 32- and 64-bit sobol quasi-random number generators generated the result from :math:`d` dimensions by flattening them into the output. The result at offset :math:`n` in memory is generated from offset :math:`n\;\mathrm{mod}\; d` in dimension :math:`\lfloor n / d \rfloor`, where :math:`d` is the generator's number of dimensions.
     ==================================  ====================================================================================================================
+
+Using rocRAND in HIP Graphs
+===========================
+
+rocRAND supports the capturing of the random number generation with HIP Graphs. However, the construction, initialization and cleanup of the generator objects must take place outside of the recorded section. See the following example (error handling omitted for brevity):
+
+.. literalinclude:: ../../test/hipgraphs_doc_sample.hpp
+    :language: c++
