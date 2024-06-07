@@ -598,7 +598,6 @@ test:nvcc-parity:
       -D BUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
       -D BUILD_TEST=ON
       -D CMAKE_BUILD_TYPE=Release
-      -D CMAKE_C_COMPILER:FILEPATH="$ROCM_PATH/bin/clang.exe"
       -D CMAKE_CXX_COMPILER:FILEPATH="$ROCM_PATH/bin/clang++.exe"
       -D CMAKE_INSTALL_PREFIX:PATH="$CI_PROJECT_DIR/build/install"
       -D CMAKE_PREFIX_PATH:PATH="$ROCM_PATH/lib/cmake"
