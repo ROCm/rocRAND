@@ -63,7 +63,6 @@ jobs:
     - name: Post patch as comment
       if: steps.check_patch.outputs.patch_not_empty == 'true'
       run: |
-        PATCH_CONTENT=$(cat clang_format.patch)
         COMMENT_BODY="{\"body\": \"clang-format has detected some changes that need formatting."}"
         API_URL="https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
         curl -X POST \
