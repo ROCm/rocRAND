@@ -69,9 +69,9 @@ TEST_P(rocrand_generate_tests, int_test)
 
 TEST_P(rocrand_generate_tests, char_test)
 {
-    const size_t size = 12563;
-    unsigned char * data = nullptr;
-    rocrand_generator generator = NULL;
+    const size_t      size      = 12563;
+    unsigned char*    data      = nullptr;
+    rocrand_generator generator = nullptr;
 
     EXPECT_EQ(
         rocrand_generate_char(generator, (unsigned char *) data, size),
@@ -112,9 +112,9 @@ TEST_P(rocrand_generate_tests, char_test)
 
 TEST_P(rocrand_generate_tests, short_test)
 {
-    const size_t size = 12563;
-    unsigned short * data = nullptr;
-    rocrand_generator generator = NULL;
+    const size_t      size      = 12563;
+    unsigned short*   data      = nullptr;
+    rocrand_generator generator = nullptr;
 
     EXPECT_EQ(
         rocrand_generate_short(generator, (unsigned short *) data, size),
@@ -156,10 +156,9 @@ TEST_P(rocrand_generate_tests, short_test)
 
 TEST(rocrand_generate_tests, neg_test)
 {
-    const size_t size = 256;
-    unsigned int * data = NULL;
-
-    rocrand_generator generator = NULL;
+    const size_t      size      = 256;
+    unsigned int*     data      = nullptr;
+    rocrand_generator generator = nullptr;
     EXPECT_EQ(
         rocrand_generate(generator, (unsigned int *) data, size),
         ROCRAND_STATUS_NOT_CREATED
@@ -175,9 +174,9 @@ class rocrand_generate_long_long_tests : public ::testing::TestWithParam<rocrand
 
 TEST_P(rocrand_generate_long_long_tests, long_long_test)
 {
-    const size_t           size = 12563;
-    unsigned long long int* data = nullptr;
-    rocrand_generator generator = NULL;
+    const size_t            size      = 12563;
+    unsigned long long int* data      = nullptr;
+    rocrand_generator       generator = nullptr;
     EXPECT_EQ(
         rocrand_generate_long_long(generator, (unsigned long long *) data, size),
         ROCRAND_STATUS_NOT_CREATED
