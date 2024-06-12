@@ -50,18 +50,17 @@ jobs:
         git diff -U0 > clang_format.patch
 
     - name: Check if patch is not empty
-      id: check_patch
       run: |
         if [ -s clang_format.patch ]; then
           echo "Patch is not empty"
-          echo "::set-output name=patch_not_empty::true"
+          echo "patch_not_empty=true" >> $GITHUB_STATE
         else
           echo "Patch is empty"
-          echo "::set-output name=patch_not_empty::false"
+          echo "patch_not_empty=false" >> $GITHUB_STATE
         fi
 
     - name: Post patch as comment
-      if: steps.check_patch.outputs.patch_not_empty == 'true'
+      if: env.GITHUB_STATE.patch_not_empty == 'true'
       run: |
         API_URL="https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
         curl -X POST \
