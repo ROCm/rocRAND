@@ -39,9 +39,9 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         if [ "${{ github.repository_owner }}" != "${{ github.event.pull_request.head.repo.owner.login }}" ]; then
-          ./clang-format-apply.sh origin/${{ github.base_ref }} fork/${{ github.head_ref }}
+          ./scripts/clang-format/clang-format-apply.sh origin/${{ github.base_ref }} fork/${{ github.head_ref }}
         else
-          ./clang-format-apply.sh origin/${{ github.base_ref }} origin/${{ github.head_ref }}
+          ./scripts/clang-format/clang-format-apply.sh origin/${{ github.base_ref }} origin/${{ github.head_ref }}
         fi
 
     - name: Save clang-format changes as patch
