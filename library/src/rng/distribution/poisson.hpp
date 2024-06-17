@@ -41,6 +41,11 @@
 namespace rocrand_impl::host
 {
 
+// Precise calculation of Poisson distribution using table methods:
+//  * the alias method (for PRNGs only as it does not preserve quasi-randomness);
+//  * the binary search in the CDF (cumulative distribution function) table (suitable for both
+//    QRNGs and PRNGs but not preferred for PRNGs because the alias method is faster);
+
 template<discrete_method Method = DISCRETE_METHOD_ALIAS>
 class poisson_distribution : private discrete_distribution_base<Method>
 {
@@ -50,22 +55,40 @@ public:
 
     using base_t = discrete_distribution_base<Method>;
 
-    poisson_distribution(const rocrand_discrete_distribution_st& distribution, const double lambda)
-        : base_t(distribution), m_lambda(lambda)
+    poisson_distribution(const rocrand_discrete_distribution_st& distribution)
+        : base_t(distribution)
     {}
 
     template<class T>
     __forceinline__ __host__ __device__ unsigned int operator()(T x) const
     {
-        if(m_lambda > rocrand_device::detail::lambda_threshold_huge)
-        {
-            const double normal_d = rocrand_device::detail::normal_distribution_double(x);
-            return static_cast<unsigned int>(round(sqrt(m_lambda) * normal_d + m_lambda));
-        }
-        else
-        {
-            return base_t::operator()(x);
-        }
+        return base_t::operator()(x);
+    }
+
+    template<class T>
+    __forceinline__ __host__ __device__ void operator()(const T (&input)[1],
+                                                        unsigned int (&output)[1]) const
+    {
+        output[0] = (*this)(input[0]);
+    }
+};
+
+// Approximation of Poisson distribution with normal distribution when lambda is large
+
+class poisson_distribution_huge
+{
+public:
+    static constexpr unsigned int input_width  = 1;
+    static constexpr unsigned int output_width = 1;
+
+    poisson_distribution_huge(const double lambda) : m_lambda(lambda), m_sqrt_lambda(sqrt(lambda))
+    {}
+
+    template<class T>
+    __forceinline__ __host__ __device__ unsigned int operator()(T x) const
+    {
+        const double normal_d = rocrand_device::detail::normal_distribution_double(x);
+        return static_cast<unsigned int>(round(m_sqrt_lambda * normal_d + m_lambda));
     }
 
     template<class T>
@@ -77,6 +100,7 @@ public:
 
 private:
     double m_lambda;
+    double m_sqrt_lambda;
 };
 
 [[nodiscard]] inline std::vector<double>
@@ -143,8 +167,9 @@ template<discrete_method Method = DISCRETE_METHOD_ALIAS, class System = system::
 class poisson_distribution_manager
 {
 public:
-    using factory_t      = discrete_distribution_factory<Method, !System::is_device()>;
-    using distribution_t = poisson_distribution<Method>;
+    using factory_t             = discrete_distribution_factory<Method, !System::is_device()>;
+    using distribution_t        = poisson_distribution<Method>;
+    using approx_distribution_t = poisson_distribution_huge;
 
     poisson_distribution_manager() = default;
 
@@ -244,7 +269,8 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
-    std::variant<rocrand_status, distribution_t> get_distribution(const double lambda)
+    std::variant<rocrand_status, distribution_t, approx_distribution_t>
+        get_distribution(const double lambda)
     {
         if(!m_initialized)
         {
@@ -255,6 +281,11 @@ public:
             }
         }
 
+        if(lambda > rocrand_device::detail::lambda_threshold_huge)
+        {
+            return approx_distribution_t(lambda);
+        }
+
         std::unique_lock lock(m_mutex, std::defer_lock_t{});
         if(!m_is_host_func_blocking)
         {
@@ -262,7 +293,7 @@ public:
         }
 
         const bool changed = lambda != m_lambda;
-        if(changed && lambda <= rocrand_device::detail::lambda_threshold_huge)
+        if(changed)
         {
             auto arg = std::make_unique<update_discrete_distribution_arg>(
                 update_discrete_distribution_arg{lambda, this});
@@ -311,7 +342,7 @@ public:
 
         rocrand_discrete_distribution_st distribution_copy = m_distribution;
         calculate_poisson_size(lambda, distribution_copy.size, distribution_copy.offset);
-        return distribution_t(distribution_copy, lambda);
+        return distribution_t(distribution_copy);
     }
 
 private:
@@ -377,28 +408,30 @@ private:
 
 // Mrg32k3a and Mrg31k3p
 
-template<typename state_type, bool IsHostSide = false>
+template<typename StateType,
+         typename DistributionType = poisson_distribution<DISCRETE_METHOD_ALIAS>>
 struct mrg_engine_poisson_distribution
 {
-    using distribution_type                    = poisson_distribution<DISCRETE_METHOD_ALIAS>;
-    static constexpr unsigned int input_width = 1;
+    using distribution_type = DistributionType;
+
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
     distribution_type dis;
 
     explicit mrg_engine_poisson_distribution(distribution_type dis) : dis(dis) {}
 
-    __host__ __device__
-    void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
+    __forceinline__ __host__ __device__ void operator()(const unsigned int (&input)[1],
+                                                        unsigned int (&output)[1]) const
     {
         // Alias method requires x in [0, 1), uint must be in [0, UINT_MAX],
         // but MRG-based engine's "raw" output is in [1, MRG_M1],
         // so probabilities are slightly different than expected,
         // some values can not be generated at all.
         // Hence the "raw" value is remapped to [0, UINT_MAX]:
-        unsigned int v
-            = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
-        output[0] = dis(v);
+        unsigned int input2[1];
+        input2[0] = rocrand_device::detail::mrg_uniform_distribution_uint<StateType>(input[0]);
+        dis(input2, output);
     }
 };
 
