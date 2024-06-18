@@ -184,6 +184,12 @@ TEST_P(rocrand_hipgraph_generate_tests, poisson_test)
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
+TEST(rocrand_hipgraph_generate_tests, hipgraphs_doc_sample){
+
+#include "hipgraphs_doc_sample.hpp"
+
+}
+
 INSTANTIATE_TEST_SUITE_P(rocrand_hipgraph_generate_tests,
-                        rocrand_hipgraph_generate_tests,
-                        ::testing::ValuesIn(rng_types));
+                         rocrand_hipgraph_generate_tests,
+                         ::testing::ValuesIn(rng_types));
