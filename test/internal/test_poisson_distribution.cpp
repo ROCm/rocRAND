@@ -50,7 +50,7 @@ TEST_P(poisson_distribution_tests, mean_var)
     ROCRAND_CHECK(
         distribution_factory_t::create(poisson_probabilities, size, offset, discrete_dist));
 
-    poisson_distribution<DISCRETE_METHOD_ALIAS> dis(discrete_dist, lambda);
+    poisson_distribution<DISCRETE_METHOD_ALIAS> dis(discrete_dist);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
     std::vector<unsigned int> values(samples_count);
@@ -87,7 +87,7 @@ TEST_P(poisson_distribution_tests, histogram_compare)
     ROCRAND_CHECK(
         distribution_factory_t::create(poisson_probabilities, size, offset, discrete_dist));
 
-    poisson_distribution<DISCRETE_METHOD_ALIAS> dis(discrete_dist, lambda);
+    poisson_distribution<DISCRETE_METHOD_ALIAS> dis(discrete_dist);
 
     const size_t samples_count = static_cast<size_t>(std::max(2.0, sqrt(lambda))) * 100000;
     const size_t bin_size      = static_cast<size_t>(std::max(2.0, sqrt(lambda)));

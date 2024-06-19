@@ -166,6 +166,8 @@ public:
     using poisson_distribution_manager_t
         = poisson_distribution_manager<DISCRETE_METHOD_ALIAS, system_type>;
     using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
+    using poisson_approx_distribution_t =
+        typename poisson_distribution_manager_t::approx_distribution_t;
 
     mrg_generator_template(unsigned long long seed   = 0,
                            unsigned long long offset = 0,
@@ -425,13 +427,19 @@ public:
 
     rocrand_status generate_poisson(unsigned int* data, size_t data_size, double lambda)
     {
-        auto dis = m_poisson.get_distribution(lambda);
-        if(auto* error_status = std::get_if<rocrand_status>(&dis))
+        auto result = m_poisson.get_distribution(lambda);
+        if(auto* dis = std::get_if<poisson_distribution_t>(&result))
         {
-            return *error_status;
+            mrg_engine_poisson_distribution<engine_type, poisson_distribution_t> mrg_dis(*dis);
+            return generate(data, data_size, mrg_dis);
         }
-        mrg_engine_poisson_distribution<engine_type> mrg_dis(std::get<poisson_distribution_t>(dis));
-        return generate(data, data_size, mrg_dis);
+        if(auto* dis = std::get_if<poisson_approx_distribution_t>(&result))
+        {
+            mrg_engine_poisson_distribution<engine_type, poisson_approx_distribution_t> mrg_dis(
+                *dis);
+            return generate(data, data_size, mrg_dis);
+        }
+        return std::get<rocrand_status>(result);
     }
 
 private:

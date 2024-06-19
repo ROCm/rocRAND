@@ -497,6 +497,8 @@ public:
     using poisson_distribution_manager_t
         = poisson_distribution_manager<DISCRETE_METHOD_CDF, system_type>;
     using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
+    using poisson_approx_distribution_t =
+        typename poisson_distribution_manager_t::approx_distribution_t;
 
     sobol_generator_template(unsigned long long offset = 0,
                              rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
@@ -735,12 +737,16 @@ public:
     {
         static_assert(Is64 || std::is_same_v<T, uint32_t>,
                       "The 32 bit sobol generator can only generate 32bit poisson");
-        auto dis = m_poisson.get_distribution(lambda);
-        if(auto* error_status = std::get_if<rocrand_status>(&dis))
+        auto result = m_poisson.get_distribution(lambda);
+        if(auto* dis = std::get_if<poisson_distribution_t>(&result))
         {
-            return *error_status;
+            return generate(data, data_size, *dis);
         }
-        return generate(data, data_size, std::get<poisson_distribution_t>(dis));
+        if(auto* dis = std::get_if<poisson_approx_distribution_t>(&result))
+        {
+            return generate(data, data_size, *dis);
+        }
+        return std::get<rocrand_status>(result);
     }
 
 private:
