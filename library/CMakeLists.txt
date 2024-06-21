@@ -130,6 +130,10 @@ if(NOT WIN32 AND ROCRAND_USE_TBB)
         message(WARNING "TBB is not found. Building without parallel STL support")
     else()
         target_link_libraries(rocrand PRIVATE TBB::tbb)
+        rocm_package_add_deb_dependencies("libtbb-dev")
+        set(CPACK_DEB_PACKAGE_REQUIRES "${CPACK_DEB_PACKAGE_REQUIRES}" PARENT_SCOPE)
+        rocm_package_add_rpm_dependencies("libtbb-devel")
+        set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES}" PARENT_SCOPE)
 
         # Older libstdc++ headers require TBB to be installed to be able to #include <execution>
         target_compile_definitions(rocrand PRIVATE ROCRAND_PARALLEL_STL)
