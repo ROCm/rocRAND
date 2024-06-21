@@ -80,7 +80,8 @@ struct mtgp32_device_engine : ::rocrand_device::mtgp32_engine
     // suppress warning about no initialization for __shared__ variables
     __host__ __device__ mtgp32_device_engine(){};
 
-    __host__ __device__ unsigned int next()
+    __forceinline__ __host__ __device__
+    unsigned int next()
     {
 #ifdef __HIP_DEVICE_COMPILE__
         // all threads in block produce one value and advance the state by that many values
@@ -114,10 +115,11 @@ __host__ void generate(unsigned int (&input)[BlockSize][Distribution::input_widt
 }
 
 template<class T, class Distribution>
-__device__ void generate(unsigned int (&input)[Distribution::input_width],
-                         T (&output)[Distribution::output_width],
-                         Distribution&         distribution,
-                         mtgp32_device_engine& engine)
+__forceinline__ __device__
+void generate(unsigned int (&input)[Distribution::input_width],
+              T (&output)[Distribution::output_width],
+              Distribution&         distribution,
+              mtgp32_device_engine& engine)
 {
     for(unsigned int i = 0; i < Distribution::input_width; i++)
     {
@@ -136,7 +138,8 @@ __host__ void save_vec_n(vec_type* vec_data, T (&output)[BlockSize][output_width
 }
 
 template<class vec_type, class T, unsigned int output_width>
-__device__ void save_vec_n(vec_type* vec_data, T (&output)[output_width], size_t index)
+__forceinline__ __device__
+void save_vec_n(vec_type* vec_data, T (&output)[output_width], size_t index)
 {
     vec_data[index] = *reinterpret_cast<vec_type*>(output);
 }
@@ -155,7 +158,8 @@ __host__ void
 }
 
 template<class vec_type, class T, unsigned int output_width>
-__device__ void save_n(vec_type* vec_data, T (&output)[output_width], size_t index, size_t vec_n)
+__forceinline__ __device__
+void save_n(vec_type* vec_data, T (&output)[output_width], size_t index, size_t vec_n)
 {
     if(index < vec_n)
     {
@@ -164,13 +168,14 @@ __device__ void save_n(vec_type* vec_data, T (&output)[output_width], size_t ind
 }
 
 template<class T, unsigned int output_width>
-__host__ __device__ void save_head_tail_impl(T (&output)[output_width],
-                                             size_t index,
-                                             T*     data,
-                                             size_t n,
-                                             size_t head_size,
-                                             size_t tail_size,
-                                             size_t vec_n_up)
+__forceinline__ __host__ __device__
+void save_head_tail_impl(T (&output)[output_width],
+                         size_t index,
+                         T*     data,
+                         size_t n,
+                         size_t head_size,
+                         size_t tail_size,
+                         size_t vec_n_up)
 {
     if(index == vec_n_up)
     {
@@ -211,13 +216,14 @@ __host__ void save_head_tail(T (&output)[BlockSize][output_width],
 }
 
 template<class T, unsigned int output_width>
-__device__ void save_head_tail(T (&output)[output_width],
-                               size_t index,
-                               T*     data,
-                               size_t n,
-                               size_t head_size,
-                               size_t tail_size,
-                               size_t vec_n_up)
+__forceinline__ __device__
+void save_head_tail(T (&output)[output_width],
+                    size_t index,
+                    T*     data,
+                    size_t n,
+                    size_t head_size,
+                    size_t tail_size,
+                    size_t vec_n_up)
 {
     save_head_tail_impl(output, index, data, n, head_size, tail_size, vec_n_up);
 }
