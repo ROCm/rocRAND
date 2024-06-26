@@ -40,52 +40,52 @@ struct uniform_distribution;
 template<>
 struct uniform_distribution<unsigned int, unsigned int>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
         unsigned int v = input[0];
-        output[0] = v;
+        output[0]      = v;
     }
 };
 
 template<>
 struct uniform_distribution<unsigned char, unsigned int>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 4;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
     {
-        unsigned int v = input[0];
-        *reinterpret_cast<unsigned int *>(output) = v;
+        unsigned int v                           = input[0];
+        *reinterpret_cast<unsigned int*>(output) = v;
     }
 };
 
 template<>
 struct uniform_distribution<unsigned short, unsigned int>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 2;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
     {
-        unsigned int v = input[0];
-        *reinterpret_cast<unsigned int *>(output) = v;
+        unsigned int v                           = input[0];
+        *reinterpret_cast<unsigned int*>(output) = v;
     }
 };
 
 template<>
 struct uniform_distribution<float, unsigned int>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], float (&output)[1]) const
     {
         output[0] = rocrand_device::detail::uniform_distribution(input[0]);
@@ -95,10 +95,10 @@ struct uniform_distribution<float, unsigned int>
 template<>
 struct uniform_distribution<double, unsigned int>
 {
-    static constexpr unsigned int input_width = 2;
+    static constexpr unsigned int input_width  = 2;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[2], double (&output)[1]) const
     {
         output[0] = rocrand_device::detail::uniform_distribution_double(input[0], input[1]);
@@ -108,14 +108,14 @@ struct uniform_distribution<double, unsigned int>
 template<>
 struct uniform_distribution<__half, unsigned int>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 2;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
         unsigned int v = input[0];
-        output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
+        output[0]      = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
         output[1] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v >> 16));
     }
 };
@@ -128,8 +128,8 @@ struct uniform_distribution<unsigned long long, unsigned long long>
     static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__ void operator()(const unsigned long long (&input)[1],
-                                        unsigned long long (&output)[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned long long (&output)[1]) const
     {
         unsigned long long v = input[0];
         output[0]            = v;
@@ -142,8 +142,8 @@ struct uniform_distribution<unsigned char, unsigned long long>
     static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 8;
 
-    __host__ __device__ void operator()(const unsigned long long (&input)[1],
-                                        unsigned char (&output)[8]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned char (&output)[8]) const
     {
         unsigned long long v                           = input[0];
         *reinterpret_cast<unsigned long long*>(output) = v;
@@ -156,8 +156,8 @@ struct uniform_distribution<unsigned short, unsigned long long>
     static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 4;
 
-    __host__ __device__ void operator()(const unsigned long long (&input)[1],
-                                        unsigned short (&output)[4]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned short (&output)[4]) const
     {
         unsigned long long v                           = input[0];
         *reinterpret_cast<unsigned long long*>(output) = v;
@@ -170,8 +170,8 @@ struct uniform_distribution<unsigned int, unsigned long long>
     static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 2;
 
-    __host__ __device__ void operator()(const unsigned long long (&input)[1],
-                                        unsigned int (&output)[2]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned long long (&input)[1], unsigned int (&output)[2]) const
     {
         unsigned long long v                           = input[0];
         *reinterpret_cast<unsigned long long*>(output) = v;
@@ -184,8 +184,8 @@ struct uniform_distribution<float, unsigned long long>
     static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__ void operator()(const unsigned long long (&input)[1],
-                                        float (&output)[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned long long (&input)[1], float (&output)[1]) const
     {
         output[0] = rocrand_device::detail::uniform_distribution(input[0]);
     }
@@ -197,8 +197,8 @@ struct uniform_distribution<double, unsigned long long>
     static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__ void operator()(const unsigned long long (&input)[1],
-                                        double (&output)[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned long long (&input)[1], double (&output)[1]) const
     {
         output[0] = rocrand_device::detail::uniform_distribution_double(input[0]);
     }
@@ -210,8 +210,8 @@ struct uniform_distribution<__half, unsigned long long>
     static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 4;
 
-    __host__ __device__ void operator()(const unsigned long long (&input)[1],
-                                        __half (&output)[4]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned long long (&input)[1], __half (&output)[4]) const
     {
         unsigned long long v = input[0];
         output[0] = rocrand_device::detail::uniform_distribution_half(static_cast<short>(v));
@@ -229,10 +229,10 @@ struct mrg_engine_uniform_distribution;
 template<typename state_type>
 struct mrg_engine_uniform_distribution<unsigned int, state_type>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
         unsigned int v
@@ -244,40 +244,40 @@ struct mrg_engine_uniform_distribution<unsigned int, state_type>
 template<typename state_type>
 struct mrg_engine_uniform_distribution<unsigned char, state_type>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 4;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned char (&output)[4]) const
     {
         unsigned int v
             = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
-        *reinterpret_cast<unsigned int *>(output) = v;
+        *reinterpret_cast<unsigned int*>(output) = v;
     }
 };
 
 template<typename state_type>
 struct mrg_engine_uniform_distribution<unsigned short, state_type>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 2;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], unsigned short (&output)[2]) const
     {
         unsigned int v
             = rocrand_device::detail::mrg_uniform_distribution_uint<state_type>(input[0]);
-        *reinterpret_cast<unsigned int *>(output) = v;
+        *reinterpret_cast<unsigned int*>(output) = v;
     }
 };
 
 template<typename state_type>
 struct mrg_engine_uniform_distribution<float, state_type>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], float (&output)[1]) const
     {
         output[0] = rocrand_device::detail::mrg_uniform_distribution<state_type>(input[0]);
@@ -287,10 +287,10 @@ struct mrg_engine_uniform_distribution<float, state_type>
 template<typename state_type>
 struct mrg_engine_uniform_distribution<double, state_type>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 1;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], double (&output)[1]) const
     {
         output[0] = rocrand_device::detail::mrg_uniform_distribution_double<state_type>(input[0]);
@@ -300,10 +300,10 @@ struct mrg_engine_uniform_distribution<double, state_type>
 template<typename state_type>
 struct mrg_engine_uniform_distribution<__half, state_type>
 {
-    static constexpr unsigned int input_width = 1;
+    static constexpr unsigned int input_width  = 1;
     static constexpr unsigned int output_width = 2;
 
-    __host__ __device__
+    __forceinline__ __host__ __device__
     void operator()(const unsigned int (&input)[1], __half (&output)[2]) const
     {
         unsigned int v
@@ -356,8 +356,9 @@ struct sobol_uniform_distribution;
 template<>
 struct sobol_uniform_distribution<unsigned long long int>
 {
-    __host__ __device__
-    unsigned long long int operator()(const unsigned long long int v) const
+    __forceinline__ __host__ __device__
+    unsigned long long int
+        operator()(const unsigned long long int v) const
     {
         return v;
     }
@@ -367,8 +368,9 @@ template<>
 struct sobol_uniform_distribution<unsigned int>
 {
     template<class DirectionVectorType>
-    __host__ __device__
-    unsigned int operator()(const DirectionVectorType v) const
+    __forceinline__ __host__ __device__
+    unsigned int
+        operator()(const DirectionVectorType v) const
     {
         constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned int)) * 8);
         return v >> bit_shift;
@@ -379,8 +381,9 @@ template<>
 struct sobol_uniform_distribution<unsigned char>
 {
     template<class DirectionVectorType>
-    __host__ __device__
-    unsigned char operator()(const DirectionVectorType v) const
+    __forceinline__ __host__ __device__
+    unsigned char
+        operator()(const DirectionVectorType v) const
     {
         constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned char)) * 8);
         return static_cast<unsigned char>(v >> bit_shift);
@@ -391,8 +394,9 @@ template<>
 struct sobol_uniform_distribution<unsigned short>
 {
     template<class DirectionVectorType>
-    __host__ __device__
-    unsigned short operator()(const DirectionVectorType v) const
+    __forceinline__ __host__ __device__
+    unsigned short
+        operator()(const DirectionVectorType v) const
     {
         constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned short)) * 8);
         return static_cast<unsigned short>(v >> bit_shift);
@@ -403,8 +407,9 @@ template<>
 struct sobol_uniform_distribution<float>
 {
     template<class DirectionVectorType>
-    __host__ __device__
-    float operator()(const DirectionVectorType v) const
+    __forceinline__ __host__ __device__
+    float
+        operator()(const DirectionVectorType v) const
     {
         return rocrand_device::detail::uniform_distribution(v);
     }
@@ -414,8 +419,9 @@ template<>
 struct sobol_uniform_distribution<double>
 {
     template<class DirectionVectorType>
-    __host__ __device__
-    double operator()(const DirectionVectorType v) const
+    __forceinline__ __host__ __device__
+    double
+        operator()(const DirectionVectorType v) const
     {
         return rocrand_device::detail::uniform_distribution_double(v);
     }
@@ -425,11 +431,13 @@ template<>
 struct sobol_uniform_distribution<__half>
 {
     template<class DirectionVectorType>
-    __host__ __device__
-    __half operator()(const DirectionVectorType v) const
+    __forceinline__ __host__ __device__
+    __half
+        operator()(const DirectionVectorType v) const
     {
         constexpr int bit_shift = ((sizeof(DirectionVectorType) - sizeof(unsigned short)) * 8);
-        return rocrand_device::detail::uniform_distribution_half(static_cast<unsigned short>(v >> bit_shift));
+        return rocrand_device::detail::uniform_distribution_half(
+            static_cast<unsigned short>(v >> bit_shift));
     }
 };
 

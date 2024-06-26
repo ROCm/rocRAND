@@ -81,13 +81,14 @@ __forceinline__ __device__ __host__ unsigned int wrap_n(unsigned int i)
 // Config is not actually used for kernel launch here, but is needed to check the number of generators
 // As this kernel is not dependent on any type just use void for the config, as mt19937 is not tuned for types independently, so all configs are the same for different types.
 template<unsigned int jump_ahead_thread_count, class ConfigProvider, bool IsDynamic>
-__host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
-                                                   dim3 thread_idx,
-                                                   dim3 /*grid_dim*/,
-                                                   [[maybe_unused]] dim3 block_dim,
-                                                   unsigned int* __restrict__ engines,
-                                                   unsigned long long seed,
-                                                   const unsigned int* __restrict__ jump)
+__forceinline__ __host__ __device__
+void jump_ahead_mt19937(dim3 block_idx,
+                        dim3 thread_idx,
+                        dim3 /*grid_dim*/,
+                        [[maybe_unused]] dim3 block_dim,
+                        unsigned int* __restrict__ engines,
+                        unsigned long long seed,
+                        const unsigned int* __restrict__ jump)
 {
 #if defined(__HIP_DEVICE_COMPILE__)
     static constexpr bool isDevice = true;
@@ -274,12 +275,13 @@ __host__ __device__ inline void jump_ahead_mt19937(dim3 block_idx,
 // This kernel is not explicitly tuned, but uses the same configs as the generate-kernels.
 // As this kernel is not dependent on any type just use void for the config, as mt19937 is not tuned for types independently, so all configs are the same for different types.
 template<class ConfigProvider, bool IsDynamic>
-__host__ __device__ inline void init_engines_mt19937(dim3 block_idx,
-                                                     dim3 thread_idx,
-                                                     dim3 /*grid_dim*/,
-                                                     dim3 /*block_dim*/,
-                                                     unsigned int* __restrict__ octo_engines,
-                                                     const unsigned int* __restrict__ engines)
+__forceinline__ __host__ __device__
+void init_engines_mt19937(dim3 block_idx,
+                          dim3 thread_idx,
+                          dim3 /*grid_dim*/,
+                          dim3 /*block_dim*/,
+                          unsigned int* __restrict__ octo_engines,
+                          const unsigned int* __restrict__ engines)
 {
     constexpr generator_config config     = ConfigProvider::template device_config<void>(IsDynamic);
     constexpr unsigned int     block_size = config.threads;
@@ -301,19 +303,20 @@ __host__ __device__ inline void init_engines_mt19937(dim3 block_idx,
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class VecT, class Distribution>
-__host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
-                                                       dim3 thread_idx,
-                                                       dim3 /*grid_dim*/,
-                                                       dim3 /*block_dim*/,
-                                                       unsigned int* __restrict__ engines,
-                                                       const unsigned int start_input,
-                                                       T* __restrict__ data,
-                                                       const size_t size,
-                                                       VecT* __restrict__ vec_data,
-                                                       const size_t       vec_size,
-                                                       const unsigned int head_size,
-                                                       const unsigned int tail_size,
-                                                       Distribution       distribution)
+__forceinline__ __host__ __device__
+void generate_short_mt19937(dim3 block_idx,
+                            dim3 thread_idx,
+                            dim3 /*grid_dim*/,
+                            dim3 /*block_dim*/,
+                            unsigned int* __restrict__ engines,
+                            const unsigned int start_input,
+                            T* __restrict__ data,
+                            const size_t size,
+                            VecT* __restrict__ vec_data,
+                            const size_t       vec_size,
+                            const unsigned int head_size,
+                            const unsigned int tail_size,
+                            Distribution       distribution)
 {
 #if !defined(__HIP_DEVICE_COMPILE__)
     if(thread_idx.x % 8 != 0)
@@ -428,19 +431,20 @@ __host__ __device__ inline void generate_short_mt19937(dim3 block_idx,
 }
 
 template<class ConfigProvider, bool IsDynamic, class T, class VecT, class Distribution>
-__host__ __device__ inline void generate_long_mt19937(dim3 block_idx,
-                                                      dim3 thread_idx,
-                                                      dim3 /*grid_dim*/,
-                                                      dim3 block_dim,
-                                                      unsigned int* __restrict__ engines,
-                                                      const unsigned int start_input,
-                                                      T* __restrict__ data,
-                                                      const size_t size,
-                                                      VecT* __restrict__ vec_data,
-                                                      const size_t       vec_size,
-                                                      const unsigned int head_size,
-                                                      const unsigned int tail_size,
-                                                      Distribution       distribution)
+__forceinline__ __host__ __device__
+void generate_long_mt19937(dim3 block_idx,
+                           dim3 thread_idx,
+                           dim3 /*grid_dim*/,
+                           dim3 block_dim,
+                           unsigned int* __restrict__ engines,
+                           const unsigned int start_input,
+                           T* __restrict__ data,
+                           const size_t size,
+                           VecT* __restrict__ vec_data,
+                           const size_t       vec_size,
+                           const unsigned int head_size,
+                           const unsigned int tail_size,
+                           Distribution       distribution)
 {
 #if !defined(__HIP_DEVICE_COMPILE__)
     if(thread_idx.x % 8 != 0)

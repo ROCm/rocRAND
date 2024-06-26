@@ -53,9 +53,10 @@ namespace rocrand_impl::host
 {
 
 template<bool Scrambled, class Engine, class Constant>
-__host__ __device__ Engine create_engine(const Constant*           vectors,
-                                         [[maybe_unused]] Constant scramble_constant,
-                                         const unsigned int        offset)
+__forceinline__ __host__ __device__
+Engine create_engine(const Constant*           vectors,
+                     [[maybe_unused]] Constant scramble_constant,
+                     const unsigned int        offset)
 {
     if constexpr(Scrambled)
     {

@@ -129,9 +129,6 @@ __host__ __device__ __forceinline__ void generate_xorwow(dim3 block_idx,
             }
             distribution(input, output);
 
-            vec_data[index] = *reinterpret_cast<vec_type*>(output);
-            // Next position
-            index += num_engines;
             for(unsigned int o = 0; o < output_width; o++)
             {
                 if(o < head_size)
