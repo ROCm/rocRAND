@@ -10,6 +10,11 @@ C/C++ API reference
 
 This chapter describes the rocRAND C and C++ API.
 
+API index
+===========
+
+To search an API, refer to the API :ref:`genindex`.
+
 Device functions
 ================
 .. doxygengroup:: rocranddevice
