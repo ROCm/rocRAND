@@ -60,14 +60,16 @@ public:
     {}
 
     template<class T>
-    __forceinline__ __host__ __device__ unsigned int operator()(T x) const
+    __forceinline__ __host__ __device__
+    unsigned int
+        operator()(T x) const
     {
         return base_t::operator()(x);
     }
 
     template<class T>
-    __forceinline__ __host__ __device__ void operator()(const T (&input)[1],
-                                                        unsigned int (&output)[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const T (&input)[1], unsigned int (&output)[1]) const
     {
         output[0] = (*this)(input[0]);
     }
@@ -85,15 +87,17 @@ public:
     {}
 
     template<class T>
-    __forceinline__ __host__ __device__ unsigned int operator()(T x) const
+    __forceinline__ __host__ __device__
+    unsigned int
+        operator()(T x) const
     {
         const double normal_d = rocrand_device::detail::normal_distribution_double(x);
         return static_cast<unsigned int>(round(m_sqrt_lambda * normal_d + m_lambda));
     }
 
     template<class T>
-    __forceinline__ __host__ __device__ void operator()(const T (&input)[1],
-                                                        unsigned int (&output)[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const T (&input)[1], unsigned int (&output)[1]) const
     {
         output[0] = (*this)(input[0]);
     }
@@ -103,7 +107,8 @@ private:
     double m_sqrt_lambda;
 };
 
-[[nodiscard]] inline std::vector<double>
+[[nodiscard]]
+inline std::vector<double>
     calculate_poisson_probabilities(const double lambda, unsigned int& size, unsigned int& offset)
 {
     const size_t        capacity = 2 * static_cast<size_t>(16.0 * (2.0 + std::sqrt(lambda)));
@@ -421,8 +426,8 @@ struct mrg_engine_poisson_distribution
 
     explicit mrg_engine_poisson_distribution(distribution_type dis) : dis(dis) {}
 
-    __forceinline__ __host__ __device__ void operator()(const unsigned int (&input)[1],
-                                                        unsigned int (&output)[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const unsigned int (&input)[1], unsigned int (&output)[1]) const
     {
         // Alias method requires x in [0, 1), uint must be in [0, UINT_MAX],
         // but MRG-based engine's "raw" output is in [1, MRG_M1],

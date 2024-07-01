@@ -136,8 +136,8 @@ struct mt19937_octo_engine
     static constexpr inline unsigned int i568 = 1 + items_per_thread * 10;
 
     /// Initialize the octo engine from the engine it shares with seven other threads.
-    __forceinline__ __device__ __host__ void gather(const unsigned int engine[mt19937_constants::n],
-                                                    dim3               thread_idx)
+    __forceinline__ __device__ __host__
+    void gather(const unsigned int engine[mt19937_constants::n], dim3 thread_idx)
     {
         constexpr unsigned int off_cnt = 11;
         /// Used to map the \p mt19937_octo_state.mt indices to \p mt19937_state.mt indices.
@@ -183,8 +183,8 @@ struct mt19937_octo_engine
         return __shfl_up(val, 1, 8);
     }
     /// Calculates value of index \p i using values <tt>i</tt>, <tt>(i + 1) % n</tt>, and <tt>(i + m) % n</tt>.
-    static __forceinline__ __device__ __host__ unsigned int
-        comp(unsigned int mt_i, unsigned int mt_i_1, unsigned int mt_i_m)
+    static __forceinline__ __device__ __host__
+    unsigned int comp(unsigned int mt_i, unsigned int mt_i_1, unsigned int mt_i_m)
     {
         const unsigned int y
             = (mt_i & mt19937_constants::upper_mask) | (mt_i_1 & mt19937_constants::lower_mask);
@@ -220,10 +220,11 @@ struct mt19937_octo_engine
         m_state.mt[idx_i + j] = comp(m_state.mt[idx_i + j], last_dep, m_state.mt[idx_m + j]);
     }
 
-    __host__ static void comp_vector(unsigned int idx_i,
-                                     unsigned int idx_m,
-                                     unsigned int last_dep_tid_7,
-                                     mt19937_octo_engine (&thread_engines)[8])
+    __host__
+    static void comp_vector(unsigned int idx_i,
+                            unsigned int idx_m,
+                            unsigned int last_dep_tid_7,
+                            mt19937_octo_engine (&thread_engines)[8])
     {
         static constexpr unsigned int numberOfLanes = 8;
         // communicate the dependency for the last value
@@ -549,13 +550,15 @@ struct mt19937_octo_engine
     }
 
     /// Return \p i state value without tempering
-    __forceinline__ __device__ __host__ unsigned int get(unsigned int i) const
+    __forceinline__ __device__ __host__
+    unsigned int get(unsigned int i) const
     {
         return m_state.mt[i];
     }
 
     /// Perform tempering on y
-    static __forceinline__ __device__ __host__ unsigned int temper(unsigned int y)
+    static __forceinline__ __device__ __host__
+    unsigned int temper(unsigned int y)
     {
         constexpr unsigned int TEMPERING_MASK_B = 0x9D2C5680U;
         constexpr unsigned int TEMPERING_MASK_C = 0xEFC60000U;
@@ -575,21 +578,21 @@ private:
 template<unsigned int stride>
 struct mt19937_octo_engine_accessor
 {
-    __forceinline__
-        __device__ __host__ explicit mt19937_octo_engine_accessor(unsigned int* _engines)
+    __forceinline__ __device__ __host__ explicit mt19937_octo_engine_accessor(unsigned int* _engines)
         : engines(_engines)
     {}
 
     /// Load one value \p i of the octo engine \p engine_id from global memory with coalesced
     /// access
-    __forceinline__ __device__ __host__ unsigned int load_value(unsigned int engine_id,
-                                                                unsigned int i) const
+    __forceinline__ __device__ __host__
+    unsigned int load_value(unsigned int engine_id, unsigned int i) const
     {
         return engines[i * stride + engine_id];
     }
 
     /// Load the octo engine from global memory with coalesced access
-    __forceinline__ __device__ __host__ mt19937_octo_engine load(unsigned int engine_id) const
+    __forceinline__ __device__ __host__
+    mt19937_octo_engine load(unsigned int engine_id) const
     {
         mt19937_octo_engine engine;
 #pragma unroll
@@ -601,8 +604,8 @@ struct mt19937_octo_engine_accessor
     }
 
     /// Save the octo engine to global memory with coalesced access
-    __forceinline__ __device__ __host__ void save(unsigned int               engine_id,
-                                                  const mt19937_octo_engine& engine) const
+    __forceinline__ __device__ __host__
+    void save(unsigned int engine_id, const mt19937_octo_engine& engine) const
     {
 #pragma unroll
         for(unsigned int i = 0; i < mt19937_constants::n / threads_per_generator; i++)

@@ -73,7 +73,8 @@ namespace rocrand_impl::host
 {
 
 /// Computes i % n, i must be in range [0, 2 * n)
-__forceinline__ __device__ __host__ unsigned int wrap_n(unsigned int i)
+__forceinline__ __device__ __host__
+unsigned int wrap_n(unsigned int i)
 {
     return i - (i < mt19937_constants::n ? 0 : mt19937_constants::n);
 }

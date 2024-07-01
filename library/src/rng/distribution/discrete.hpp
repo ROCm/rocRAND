@@ -78,8 +78,8 @@ public:
     }
 
     template<class T>
-    __forceinline__ __host__ __device__ void operator()(const T (&input)[1],
-                                                        unsigned int output[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const T (&input)[1], unsigned int output[1]) const
     {
         output[0] = (*this)(input[0]);
     }
