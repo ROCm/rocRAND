@@ -610,8 +610,8 @@ test:windows:
       -B "$CI_PROJECT_DIR/build_install_test"
       -G Ninja
       -D CMAKE_BUILD_TYPE=Release
-      -D CMAKE_CXX_COMPILER="${env:HIP_PATH}/bin/clang++.exe"
-      -D CMAKE_PREFIX_PATH="${env:HIP_PATH}/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
+      -D CMAKE_CXX_COMPILER:FILEPATH="${env:HIP_PATH}/bin/clang++.exe"
+      -D CMAKE_PREFIX_PATH:FILEPATH="${env:HIP_PATH}/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
     # Build package test
     - cmake --build "$CI_PROJECT_DIR/build_install_test"
     # Copy rocRAND.dll to the package test build directory
