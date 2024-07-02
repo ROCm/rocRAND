@@ -583,7 +583,6 @@ test:nvcc-parity:
       -D CMAKE_CXX_COMPILER:FILEPATH="${env:HIP_PATH}/bin/clang++.exe"
       -D CMAKE_INSTALL_PREFIX:PATH="$CI_PROJECT_DIR/build/install"
       -D CMAKE_PREFIX_PATH:PATH="${env:HIP_PATH}/lib/cmake"
-      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D DISABLE_WERROR=OFF *>&1
     # Building
     - cmake --build "$CI_PROJECT_DIR/build" *>&1
