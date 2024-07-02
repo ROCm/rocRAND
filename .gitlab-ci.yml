@@ -22,7 +22,6 @@
 
 variables:
   GIT_SUBMODULE_STRATEGY: normal # Fetch submodules before job start (non-recursively)
-  ROCM_PATH: /opt/rocm
 
 include:
   - project: amd/ci-templates
@@ -581,9 +580,9 @@ test:nvcc-parity:
       -D BUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
       -D BUILD_TEST=ON
       -D CMAKE_BUILD_TYPE=Release
-      -D CMAKE_CXX_COMPILER:FILEPATH="$ROCM_PATH/bin/clang++.exe"
+      -D CMAKE_CXX_COMPILER:FILEPATH="${env:HIP_PATH}/bin/clang++.exe"
       -D CMAKE_INSTALL_PREFIX:PATH="$CI_PROJECT_DIR/build/install"
-      -D CMAKE_PREFIX_PATH:PATH="$ROCM_PATH/lib/cmake"
+      -D CMAKE_PREFIX_PATH:PATH="${env:HIP_PATH}/lib/cmake"
       -D DEPENDENCIES_FORCE_DOWNLOAD=ON
       -D DISABLE_WERROR=OFF *>&1
     # Building
@@ -612,8 +611,8 @@ test:windows:
       -B "$CI_PROJECT_DIR/build_install_test"
       -G Ninja
       -D CMAKE_BUILD_TYPE=Release
-      -D CMAKE_CXX_COMPILER="$ROCM_PATH/bin/clang++.exe"
-      -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
+      -D CMAKE_CXX_COMPILER="${env:HIP_PATH}/bin/clang++.exe"
+      -D CMAKE_PREFIX_PATH="${env:HIP_PATH}/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
     # Build package test
     - cmake --build "$CI_PROJECT_DIR/build_install_test"
     # Copy rocRAND.dll to the package test build directory
