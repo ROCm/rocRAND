@@ -28,7 +28,10 @@ jobs:
         git fetch origin ${{ github.base_ref }}
         if [ "${{ github.repository_owner }}" != "${{ github.event.pull_request.head.repo.owner.login }}" ]; then
           fork_owner="${{ github.event.pull_request.head.repo.owner.login }}"
-          fork_url=$(git remote get-url origin)
+          fork_repo="${{ github.event.pull_request.head.repo.full_name }}"
+          echo "Fork repo: ${fork_repo}"
+          fork_url="https://github.com/${fork_repo}.git"
+          echo "Fork URL: ${fork_url}"
           git remote add fork "${fork_url}"
           git fetch fork ${{ github.head_ref }}
         else
