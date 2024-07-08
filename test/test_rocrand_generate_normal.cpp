@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -151,16 +151,22 @@ TEST_P(rocrand_generate_normal_tests, half_test)
 
 TEST(rocrand_generate_normal_tests, neg_test)
 {
-    const size_t size = 256;
-    float mean = 5.0;
-    float stddev = 2.0;
-    float * data = NULL;
+    const size_t size   = 256;
+    float        mean   = 5.0;
+    float        stddev = 2.0;
+    void*        data   = nullptr;
 
-    rocrand_generator generator = NULL;
+    rocrand_generator generator = nullptr;
+
+    EXPECT_EQ(rocrand_generate_normal(generator, static_cast<float*>(data), size, mean, stddev),
+              ROCRAND_STATUS_NOT_CREATED);
+
     EXPECT_EQ(
-        rocrand_generate_normal(generator, (float *) data, size, mean, stddev),
-        ROCRAND_STATUS_NOT_CREATED
-    );
+        rocrand_generate_normal_double(generator, static_cast<double*>(data), size, mean, stddev),
+        ROCRAND_STATUS_NOT_CREATED);
+
+    EXPECT_EQ(rocrand_generate_normal_half(generator, static_cast<half*>(data), size, mean, stddev),
+              ROCRAND_STATUS_NOT_CREATED);
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_normal_tests,

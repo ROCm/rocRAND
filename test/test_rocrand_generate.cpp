@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -146,13 +146,21 @@ TEST_P(rocrand_generate_tests, short_test)
 TEST(rocrand_generate_tests, neg_test)
 {
     const size_t size = 256;
-    unsigned int * data = NULL;
+    void*        data = nullptr;
 
-    rocrand_generator generator = NULL;
-    EXPECT_EQ(
-        rocrand_generate(generator, (unsigned int *) data, size),
-        ROCRAND_STATUS_NOT_CREATED
-    );
+    rocrand_generator generator = nullptr;
+
+    EXPECT_EQ(rocrand_generate(generator, static_cast<unsigned int*>(data), size),
+              ROCRAND_STATUS_NOT_CREATED);
+
+    EXPECT_EQ(rocrand_generate_char(generator, static_cast<unsigned char*>(data), size),
+              ROCRAND_STATUS_NOT_CREATED);
+
+    EXPECT_EQ(rocrand_generate_short(generator, static_cast<unsigned short*>(data), size),
+              ROCRAND_STATUS_NOT_CREATED);
+
+    EXPECT_EQ(rocrand_generate_long_long(generator, static_cast<unsigned long long*>(data), size),
+              ROCRAND_STATUS_NOT_CREATED);
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_tests,
