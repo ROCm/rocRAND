@@ -2,18 +2,18 @@
 # These comments will also be removed.
 root: index
 subtrees:
-  - entries:
-    - file: what-is-rocrand
-    - file: installing
-    - file: programmers-guide
-    - file: api-reference-home
-      title: API reference
-      subtrees:
-      - entries:
-        - file: cpp-api
-        - file: python-api
-        - file: curand-compatibility
-        - file: doxygen/html/index
+  - caption: Install
+    entries:
+    - file: install/installing
+  - caption: Conceptual
+    entries:
+    - file: conceptual/programmers-guide
+    - file: conceptual/curand-compatibility
+  - caption: API reference
+    entries:
+    - file: api-reference/cpp-api
+    - file: api-reference/python-api
+    - file: doxygen/html/index
   - caption: About
     entries:
     - file: license
