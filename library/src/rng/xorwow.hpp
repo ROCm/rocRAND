@@ -201,7 +201,7 @@ public:
         m_engines_initialized          = other.m_engines_initialized;
         m_engines                      = other.m_engines;
         m_start_engine_id              = other.m_start_engine_id;
-        m_engines_size                 = other.m_engine_size;
+        m_engines_size                 = other.m_engines_size;
         m_seed                         = other.m_seed;
         m_poisson                      = std::move(other.m_poisson);
 
