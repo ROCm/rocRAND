@@ -10,6 +10,11 @@ Python API reference
 
 This chapter describes the rocRAND Python module API.
 
+API index
+------------
+
+To search an API, refer to the API :ref:`genindex`.
+
 .. default-domain:: py
 .. py:currentmodule:: rocrand
 
@@ -45,3 +50,5 @@ Utilities
 .. autofunction:: rocrand.empty
 
 .. autofunction:: rocrand.get_version
+
+To search an API, refer to the :ref:`genindex` for all rocRAND APIs.
