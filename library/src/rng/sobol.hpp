@@ -636,6 +636,11 @@ public:
             return status;
         }
 
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
+        }
+
         constexpr uint32_t threads    = 256;
         constexpr uint32_t max_blocks = 4096;
         constexpr uint32_t shared_mem_bytes

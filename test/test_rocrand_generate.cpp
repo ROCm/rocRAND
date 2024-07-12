@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -47,20 +47,18 @@ TEST_P(rocrand_generate_tests, int_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
-    ROCRAND_CHECK(
-        rocrand_generate(generator, data, 1)
-    );
+    ROCRAND_CHECK(rocrand_generate(generator, data, 1));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
-    ROCRAND_CHECK(
-        rocrand_generate(generator, data+1, 2)
-    );
+    ROCRAND_CHECK(rocrand_generate(generator, data + 1, 2));
     HIP_CHECK(hipDeviceSynchronize());
 
-    ROCRAND_CHECK(
-        rocrand_generate(generator, data, size)
-    );
+    ROCRAND_CHECK(rocrand_generate(generator, data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // No output pointer
+    ROCRAND_CHECK(rocrand_generate(generator, nullptr, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
@@ -85,20 +83,18 @@ TEST_P(rocrand_generate_tests, char_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
-    ROCRAND_CHECK(
-        rocrand_generate_char(generator, data, 1)
-    );
+    ROCRAND_CHECK(rocrand_generate_char(generator, data, 1));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
-    ROCRAND_CHECK(
-        rocrand_generate_char(generator, data+1, 2)
-    );
+    ROCRAND_CHECK(rocrand_generate_char(generator, data + 1, 2));
     HIP_CHECK(hipDeviceSynchronize());
 
-    ROCRAND_CHECK(
-        rocrand_generate_char(generator, data, size)
-    );
+    ROCRAND_CHECK(rocrand_generate_char(generator, data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // No output pointer
+    ROCRAND_CHECK(rocrand_generate_char(generator, nullptr, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
@@ -123,20 +119,18 @@ TEST_P(rocrand_generate_tests, short_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any sizes
-    ROCRAND_CHECK(
-        rocrand_generate_short(generator, data, 1)
-    );
+    ROCRAND_CHECK(rocrand_generate_short(generator, data, 1));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Any alignment
-    ROCRAND_CHECK(
-        rocrand_generate_short(generator, data+1, 2)
-    );
+    ROCRAND_CHECK(rocrand_generate_short(generator, data + 1, 2));
     HIP_CHECK(hipDeviceSynchronize());
 
-    ROCRAND_CHECK(
-        rocrand_generate_short(generator, data, size)
-    );
+    ROCRAND_CHECK(rocrand_generate_short(generator, data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // No output pointer
+    ROCRAND_CHECK(rocrand_generate_short(generator, nullptr, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));
@@ -183,6 +177,10 @@ TEST_P(rocrand_generate_long_long_tests, long_long_test)
     HIP_CHECK(hipDeviceSynchronize());
 
     ROCRAND_CHECK(rocrand_generate_long_long(generator, data, size));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // No output pointer
+    ROCRAND_CHECK(rocrand_generate_long_long(generator, nullptr, size));
     HIP_CHECK(hipDeviceSynchronize());
 
     HIP_CHECK(hipFree(data));

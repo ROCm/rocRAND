@@ -930,6 +930,11 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
+        }
+
         using vec_type = rocrand_impl::aligned_vec_type<T, output_width>;
 
         const uintptr_t uintptr = reinterpret_cast<uintptr_t>(data);

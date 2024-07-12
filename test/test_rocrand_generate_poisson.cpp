@@ -132,6 +132,9 @@ void test_multiple_lambdas(const rocrand_rng_type rng_type, const hipStream_t st
         HIP_CHECK(hipFree(d_ptr));
     }
 
+    // No output pointer
+    ROCRAND_CHECK(rocrand_generate_poisson(generator, nullptr, size, lambdas[0]));
+
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
