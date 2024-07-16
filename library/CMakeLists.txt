@@ -87,7 +87,7 @@ if (ROCRAND_HAVE_ASM_INCBIN)
     enable_language(ASM)
     list(TRANSFORM SOBOL_PRECOMPUTED_SOURCES APPEND ".S")
     set_source_files_properties(${SOBOL_PRECOMPUTED_SOURCES} PROPERTIES
-                                INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src) 
+                                INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src)
 else()
     list(TRANSFORM SOBOL_PRECOMPUTED_SOURCES APPEND ".cpp")
 endif()
@@ -123,12 +123,17 @@ else()
     target_link_libraries(rocrand PUBLIC hip::host)
 endif()
 
-if(NOT WIN32)
+option(ROCRAND_USE_TBB "Use TBB for host-side generators if available." ON)
+if(NOT WIN32 AND ROCRAND_USE_TBB)
     find_package(TBB QUIET)
     if(NOT TARGET TBB::tbb)
         message(WARNING "TBB is not found. Building without parallel STL support")
     else()
         target_link_libraries(rocrand PRIVATE TBB::tbb)
+        rocm_package_add_deb_dependencies("libtbb-dev")
+        set(CPACK_DEB_PACKAGE_REQUIRES "${CPACK_DEB_PACKAGE_REQUIRES}" PARENT_SCOPE)
+        rocm_package_add_rpm_dependencies("(tbb-devel or tbb)")
+        set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES}" PARENT_SCOPE)
 
         # Older libstdc++ headers require TBB to be installed to be able to #include <execution>
         target_compile_definitions(rocrand PRIVATE ROCRAND_PARALLEL_STL)
@@ -187,7 +192,7 @@ if (WIN32)
     install (TARGETS rocrand DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
     if (BUILD_TEST)
 	    add_custom_command(
-		    TARGET rocrand 
+		    TARGET rocrand
 		    POST_BUILD
 		    COMMAND ${CMAKE_COMMAND} -E copy
 			    $<TARGET_FILE:rocrand>
@@ -196,13 +201,13 @@ if (WIN32)
     endif()
     if (BUILD_BENCHMARK)
 	    add_custom_command(
-		    TARGET rocrand 
+		    TARGET rocrand
 		    POST_BUILD
 		    COMMAND ${CMAKE_COMMAND} -E copy
 			    $<TARGET_FILE:rocrand>
 			    ${PROJECT_BINARY_DIR}/benchmark/$<TARGET_FILE_NAME:rocrand>
 	    )
-    endif()	
+    endif()
 endif()
 
 # Fortran wrappers for rocRAND
