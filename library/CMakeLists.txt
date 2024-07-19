@@ -131,7 +131,7 @@ if(NOT WIN32 AND ROCRAND_USE_TBB)
     else()
         target_link_libraries(rocrand PRIVATE TBB::tbb)
         rocm_package_add_deb_dependencies(DEPENDS "libtbb-dev")
-        set(CPACK_DEBIAN_PACKAGE_DEPENDSS "${CPACK_DEBIAN_PACKAGE_DEPENDSS}" PARENT_SCOPE)
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}" PARENT_SCOPE)
         rocm_package_add_rpm_dependencies(DEPENDS "(tbb-devel or tbb)")
         set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES}" PARENT_SCOPE)
 
