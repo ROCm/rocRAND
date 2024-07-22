@@ -350,6 +350,11 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
+        }
+
         status
             = dynamic_dispatch(m_order,
                                [&, this](auto is_dynamic)

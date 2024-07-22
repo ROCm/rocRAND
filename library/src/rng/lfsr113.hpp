@@ -383,7 +383,14 @@ public:
         generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
+        }
 
         status = dynamic_dispatch(
             m_order,

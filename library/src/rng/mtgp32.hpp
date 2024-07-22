@@ -491,6 +491,11 @@ public:
             return ROCRAND_STATUS_INTERNAL_ERROR;
         }
 
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
+        }
+
         // The host generator uses a block of size one to emulate a device generator that uses a shared memory state
         const dim3 threads
             = std::is_same_v<system_type, system::device_system> ? config.threads : dim3(1);
