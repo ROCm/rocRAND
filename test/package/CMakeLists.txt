@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,54 +21,46 @@
 # SOFTWARE.
 
 # Package test
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(rocrand_package_test CXX)
 
-if(NOT USE_HIP_CPU)
-    # CMake modules
-    list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
-    list(APPEND CMAKE_MODULE_PATH
-        $ENV{ROCM_PATH}/lib/cmake/hip
-        ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
-    )
-    # Find HIP
-    if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
-        if(NOT hip_FOUND)
-            find_package(HIP REQUIRED)
-            if((HIP_COMPILER STREQUAL "hipcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
-            # TODO: The HIP package on NVIDIA platform is incorrect at few versions
-            set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
-            endif()
+# CMake modules
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH} $ENV{ROCM_PATH}/hip)
+list(APPEND CMAKE_MODULE_PATH
+    $ENV{ROCM_PATH}/lib/cmake/hip
+    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+)
+# Find HIP
+if(CMAKE_CXX_COMPILER MATCHES ".*/nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    find_package(hip QUIET CONFIG PATHS $ENV{ROCM_PATH})
+    if(NOT hip_FOUND)
+        find_package(HIP REQUIRED)
+        if((HIP_COMPILER STREQUAL "hipcc") AND (HIP_PLATFORM STREQUAL "nvcc"))
+        # TODO: The HIP package on NVIDIA platform is incorrect at few versions
+        set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
         endif()
-    else()
-    find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
     endif()
-
-    # Get HIP options
-    execute_process(
-        COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
-        OUTPUT_VARIABLE HIP_CPP_CONFIG
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_STRIP_TRAILING_WHITESPACE
-    )
-endif()
-
-if(HIP_COMPILER STREQUAL "nvcc")
-    enable_language(CUDA)
-    set(LANG CUDA)
 else()
-    set(LANG CXX)
+find_package(hip REQUIRED CONFIG PATHS $ENV{ROCM_PATH})
 endif()
 
-set(CMAKE_${LANG}_STANDARD 11)
-set(CMAKE_${LANG}_STANDARD_REQUIRED ON)
-set(CMAKE_${LANG}_EXTENSIONS OFF)
-set(CMAKE_${LANG}_FLAGS "${CMAKE_${LANG}_FLAGS} ${HIP_CPP_CONFIG}")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find rocRAND
 find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")
+
+if(HIP_COMPILER STREQUAL "nvcc")
+    if(CMAKE_VERSION VERSION_LESS 3.17)
+        find_package(CUDA REQUIRED)
+    else()
+        find_package(CUDAToolkit)
+        set(CUDA_LIBRARIES CUDA::cudart)
+        set(CUDA_INCLUDE_DIRS ${CUDAToolkit_INCLUDE_DIRS})
+    endif()
+endif()
 
 # TODO: Fix fortran wrapper
 # Check if Fortran wrapper is installed
@@ -106,30 +98,26 @@ endfunction()
 foreach(test_src ${rocrand_pkg_TEST_SRCS})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} "${test_src}")
-    if(USE_HIP_CPU)
-        target_link_libraries(${test_name}
-            PRIVATE
-                roc::rocrand
-                hip_cpu_rt::hip_cpu_rt
+    target_link_libraries(${test_name} PRIVATE roc::rocrand)
+    if(HIP_COMPILER STREQUAL "nvcc")
+        # Get HIP options
+        execute_process(
+            COMMAND ${HIP_HIPCONFIG_EXECUTABLE} --cpp_config
+            OUTPUT_VARIABLE HIP_CPP_CONFIG
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_STRIP_TRAILING_WHITESPACE
         )
-    elseif(HIP_COMPILER STREQUAL "nvcc")
-        target_link_libraries(${test_name} 
-            PRIVATE
-                roc::rocrand
-        )
+        separate_arguments(HIP_CPP_CONFIG UNIX_COMMAND "${HIP_CPP_CONFIG}")
+        target_compile_options(${test_name} PRIVATE ${HIP_CPP_CONFIG})
 
-        # Set the source as a cuda file, to work around a bug in nvidia hip headers including
-        # device code to the host compiler
-        # Can be removed once the fix in hipamd
-        # https://github.com/ROCm-Developer-Tools/hipamd/commit/60357b1e9512328a9b54d449df6f3e725734ec3d
-        # is included in the release
-        set_source_files_properties(${test_src} PROPERTIES LANGUAGE CUDA)
+        target_include_directories(${test_name} PRIVATE ${CUDA_INCLUDE_DIRS})
+        target_link_libraries(${test_name} PRIVATE ${CUDA_LIBRARIES})
     else()
-        target_link_libraries(${test_name}
-            PRIVATE
-                roc::rocrand
-                "-L${HIP_ROOT_DIR}/lib -Wl,-rpath,${HIP_ROOT_DIR}/lib"
-        )
+        target_link_libraries(${test_name} PRIVATE hip::host)
+        # HIP on Windows: xhip is required with clang++ to get __half defined
+        if (WIN32)
+            target_compile_options(${test_name} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:-xhip>")
+        endif()
     endif()
     add_relative_test(${test_name} ${test_name})
     if (WIN32 AND NOT DEFINED DLLS_COPIED)

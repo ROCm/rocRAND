@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
 
 #include <hip/hip_runtime.h>
 
-#define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand/rocrand_kernel.h>
 #include <rocrand/rocrand.h>
 
@@ -216,7 +215,7 @@ TEST(rocrand_kernel_xorwow, rocrand_init)
 
     const size_t states_size = 256;
     state_type * states;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&states), states_size * sizeof(state_type)));
+    HIP_CHECK(hipMallocHelper(&states, states_size * sizeof(state_type)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -259,8 +258,7 @@ TEST(rocrand_kernel_xorwow, rocrand)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -296,7 +294,7 @@ TEST(rocrand_kernel_xorwow, rocrand_uniform)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -332,7 +330,7 @@ TEST(rocrand_kernel_xorwow, rocrand_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -376,7 +374,7 @@ TEST(rocrand_kernel_xorwow, rocrand_log_normal)
 
     const size_t output_size = 8192;
     float * output;
-    HIP_CHECK(hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -428,8 +426,7 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_poisson)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(
@@ -476,8 +473,7 @@ TEST_P(rocrand_kernel_xorwow_poisson, rocrand_discrete)
 
     const size_t output_size = 8192;
     unsigned int * output;
-    HIP_CHECK(
-        hipMallocHelper(reinterpret_cast<void**>(&output), output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     rocrand_discrete_distribution discrete_distribution;

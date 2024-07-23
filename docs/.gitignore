@@ -1,5 +1,6 @@
 /_build/
 /_doxygen/
-/.doxygen/docBin/
-/.doxygen/*.tag
-/.sphinx/_toc.yml
+/doxygen/html/
+/doxygen/xml/
+/doxygen/*.tag
+/sphinx/_toc.yml

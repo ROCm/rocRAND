@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,29 @@
 #ifndef ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
 #define ROCRAND_RNG_DISTRIBUTION_NORMAL_H_
 
-#include <math.h>
+#include "../common.hpp"
+
+#include <rocrand/rocrand.h>
+#include <rocrand/rocrand_normal.h>
+
 #include <hip/hip_runtime.h>
 
-#include "device_distributions.hpp"
+#include <math.h>
 
+namespace rocrand_impl::host
+{
+
+inline constexpr unsigned int normal_distribution_max_input_width_default = 4;
+
+template<rocrand_rng_type, class T>
+inline constexpr unsigned int normal_distribution_max_input_width
+    = normal_distribution_max_input_width_default;
 
 // Universal
 
-template<class Output, class Input = unsigned int, unsigned int MaxInputWidth = 4>
+template<class Output,
+         class Input                = unsigned int,
+         unsigned int MaxInputWidth = normal_distribution_max_input_width_default>
 struct normal_distribution;
 
 template<>
@@ -367,5 +381,7 @@ struct sobol_normal_distribution<__half>
         #endif
     }
 };
+
+} // namespace rocrand_impl::host
 
 #endif // ROCRAND_RNG_DISTRIBUTION_NORMAL_H_

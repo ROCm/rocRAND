@@ -40,7 +40,16 @@ ci: {
     String urlJobName = auxiliary.getTopJobName(env.BUILD_URL)
 
     properties(auxiliary.addCommonProperties([pipelineTriggers([cron('0 1 * * 6')])]))
-    stage(urlJobName) {
-        runCI([ubuntu20:['cpu']], urlJobName)
+    
+    def jobNameList = ["main":([ubuntu22:['any']])]
+    jobNameList = auxiliary.appendJobNameList(jobNameList, 'rocBLAS')
+
+    jobNameList.each
+    {
+        jobName, nodeDetails->
+        if (urlJobName == jobName)
+            stage(jobName) {
+                runCI(nodeDetails, jobName)
+            }
     }
 }

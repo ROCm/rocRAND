@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
 
 #include <hip/hip_runtime.h>
 
-#define FQUALIFIERS __forceinline__ __host__ __device__
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_kernel.h>
 
@@ -202,7 +201,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand)
 
     const size_t        output_size = 8192;
     unsigned long long* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(unsigned long long)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned long long)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<state_type>),
@@ -237,7 +236,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand_uniform)
 
     const size_t output_size = 8192;
     float*       output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
@@ -270,7 +269,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand_uniform_double)
 
     const size_t output_size = 8192;
     double*      output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(double)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_uniform_double_kernel<state_type>),
@@ -303,7 +302,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand_uniform_range)
 
     const size_t output_size = 1 << 26;
     float*       output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_uniform_kernel<state_type>),
@@ -334,7 +333,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand_uniform_double_range)
 
     const size_t output_size = 1 << 26;
     double*      output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(double)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(double)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_uniform_double_kernel<state_type>),
@@ -365,7 +364,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand_normal)
 
     const size_t output_size = 8192;
     float*       output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_normal_kernel<state_type>),
@@ -406,7 +405,7 @@ TEST(rocrand_kernel_threefry2x64_20, rocrand_log_normal)
 
     const size_t output_size = 8192;
     float*       output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(float)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(float)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_log_normal_kernel<state_type>),
@@ -456,7 +455,7 @@ TEST_P(rocrand_kernel_threefry2x64_20_poisson, rocrand_poisson)
 
     const size_t  output_size = 8192;
     unsigned int* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
@@ -503,7 +502,7 @@ TEST_P(rocrand_kernel_threefry2x64_20_poisson, rocrand_discrete)
 
     const size_t  output_size = 8192;
     unsigned int* output;
-    HIP_CHECK(hipMallocHelper((void**)&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
     HIP_CHECK(hipDeviceSynchronize());
 
     rocrand_discrete_distribution discrete_distribution;

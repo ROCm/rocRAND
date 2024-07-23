@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -53,10 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROCRAND_THREEFRY2X64_20_H_
 #define ROCRAND_THREEFRY2X64_20_H_
 
-#ifndef FQUALIFIERS
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
-
 #include "rocrand/rocrand_threefry2_impl.h"
 
 namespace rocrand_device
@@ -65,6 +61,7 @@ namespace rocrand_device
 class threefry2x64_20_engine : public threefry_engine2_base<ulonglong2, unsigned long long, 20>
 {
 public:
+    ROCRAND_DEPRECATED("Alias \"threefry2x64_20_state\" is deprecated. Use \"state_type\" instead.")
     typedef threefry_engine2_base<ulonglong2, unsigned long long, 20>::threefry_state_2
         threefry2x64_20_state;
 
@@ -73,9 +70,10 @@ public:
     /// and skips \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 65 random numbers.
-    FQUALIFIERS threefry2x64_20_engine(const unsigned long long seed        = 0,
-                                       const unsigned long long subsequence = 0,
-                                       const unsigned long long offset      = 0)
+    __forceinline__ __device__ __host__ threefry2x64_20_engine(const unsigned long long seed = 0,
+                                                               const unsigned long long subsequence
+                                                               = 0,
+                                                               const unsigned long long offset = 0)
     {
         this->seed(seed, subsequence, offset);
     }
@@ -85,9 +83,9 @@ public:
     /// and \p offset random numbers.
     ///
     /// A subsequence consists of 2 ^ 65 random numbers.
-    FQUALIFIERS void seed(const unsigned long long seed        = 0,
-                          const unsigned long long subsequence = 0,
-                          const unsigned long long offset      = 0)
+    __forceinline__ __device__ __host__ void seed(const unsigned long long seed        = 0,
+                                                  const unsigned long long subsequence = 0,
+                                                  const unsigned long long offset      = 0)
     {
         m_state.counter  = {0ULL, 0ULL};
         m_state.key      = {seed, seed >> 32};
@@ -116,19 +114,19 @@ typedef rocrand_device::threefry2x64_20_engine rocrand_state_threefry2x64_20;
  * \param offset - Absolute offset into subsequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS void rocrand_init(const unsigned long long       seed,
-                              const unsigned long long       subsequence,
-                              const unsigned long long       offset,
-                              rocrand_state_threefry2x64_20* state)
+__forceinline__ __device__ __host__ void rocrand_init(const unsigned long long       seed,
+                                                      const unsigned long long       subsequence,
+                                                      const unsigned long long       offset,
+                                                      rocrand_state_threefry2x64_20* state)
 {
     *state = rocrand_state_threefry2x64_20(seed, subsequence, offset);
 }
 
 /**
- * \brief Returns uniformly distributed random <tt>unsigned int</tt> value
+ * \brief Returns uniformly distributed random <tt>unsigned long long</tt> value
  * from [0; 2^64 - 1] range.
  *
- * Generates and returns uniformly distributed random <tt>unsigned int</tt>
+ * Generates and returns uniformly distributed random <tt>unsigned long long</tt>
  * value from [0; 2^64 - 1] range using Threefry generator in \p state.
  * State is incremented by one position.
  *
@@ -136,18 +134,18 @@ FQUALIFIERS void rocrand_init(const unsigned long long       seed,
  *
  * \param state - Pointer to a state to use
  *
- * \return Pseudorandom value (64-bit) as an <tt>unsigned int</tt>
+ * \return Pseudorandom value (64-bit) as an <tt>unsigned long long</tt>
  */
-FQUALIFIERS unsigned long long rocrand(rocrand_state_threefry2x64_20* state)
+__forceinline__ __device__ __host__ unsigned long long rocrand(rocrand_state_threefry2x64_20* state)
 {
     return state->next();
 }
 
 /**
- * \brief Returns two uniformly distributed random <tt>unsigned int</tt> values
+ * \brief Returns two uniformly distributed random <tt>unsigned long long</tt> values
  * from [0; 2^64 - 1] range.
  *
- * Generates and returns two uniformly distributed random <tt>unsigned int</tt>
+ * Generates and returns two uniformly distributed random <tt>unsigned long long</tt>
  * values from [0; 2^64 - 1] range using Threefry generator in \p state.
  * State is incremented by two positions.
  *
@@ -155,7 +153,7 @@ FQUALIFIERS unsigned long long rocrand(rocrand_state_threefry2x64_20* state)
  *
  * \return Two pseudorandom values (64-bit) as an <tt>ulonglong2</tt>
  */
-FQUALIFIERS ulonglong2 rocrand2(rocrand_state_threefry2x64_20* state)
+__forceinline__ __device__ __host__ ulonglong2 rocrand2(rocrand_state_threefry2x64_20* state)
 {
     return state->next2();
 }

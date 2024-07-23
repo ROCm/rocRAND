@@ -1,23 +1,46 @@
-==================
-rocRAND User Guide
-==================
+.. meta::
+  :description: rocRAND documentation and API reference library
+  :keywords: rocRAND, ROCm, API, documentation
 
-Overview
-========
+.. _rocrand-docs-home:
 
-The rocRAND project provides functions that generate pseudo-random and quasi-random numbers.
+********************************************************************
+rocRAND documentation
+********************************************************************
 
-The rocRAND library is implemented in the `HIP <https://github.com/ROCm-Developer-Tools/HIP>`_
-programming language and optimised for AMD's latest discrete GPUs. It is designed to run on top
-of AMD's Radeon Open Compute `ROCm <https://rocm.github.io/>`_ runtime, but it also works on
-CUDA enabled GPUs.
-Additionally, the project includes a wrapper library called hipRAND which allows users to easily port
-CUDA applications that use cuRAND library to the `HIP <https://github.com/ROCm-Developer-Tools/HIP>`_
-layer. In `ROCm <https://rocm.github.io/>`_ environment hipRAND uses rocRAND, however in CUDA
-environment cuRAND is used instead.
+rocRAND provides functions that generate pseudo-random and quasi-random numbers. The rocRAND library is implemented in the `HIP <https://rocm.docs.amd.com/projects/HIP/en/latest/index.html>`_
+programming language and optimized for AMD's latest discrete GPUs. It is designed to run on top
+of AMD's `ROCm <https://rocm.docs.amd.com/en/latest/>`_, but it also works on CUDA-enabled GPUs.
 
-Indices and tables
-------------------
+rocRAND includes a wrapper library called hipRAND, which you can use to easily port
+CUDA applications using the cuRAND library to the
+`HIP <https://rocm.docs.amd.com/projects/HIP/en/latest/index.html>`_ layer. In the
+`ROCm <https://rocm.docs.amd.com/en/latest/>`_ environment, hipRAND uses rocRAND.
 
-* :ref:`genindex`
-* :ref:`search`
+You can access rocRAND code on our `GitHub repository <https://github.com/ROCm/rocRAND>`_.
+
+The documentation is structured as follows:
+
+.. grid:: 2
+  :gutter: 3
+
+  .. grid-item-card:: Install
+
+    * :ref:`installing`
+
+  .. grid-item-card:: Conceptual
+
+    * :ref:`programmers-guide`
+    * :ref:`curand-compatibility`
+    * :ref:`dynamic-ordering-configuration`
+
+  .. grid-item-card:: API reference
+
+    * :ref:`cpp-api`
+    * :ref:`python-api`
+    * :doc:`API library <doxygen/html/index>`
+
+To contribute to the documentation, refer to
+`Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_.
+
+You can find licensing information on the `Licensing <https://rocm.docs.amd.com/en/latest/about/license.html>`_ page.

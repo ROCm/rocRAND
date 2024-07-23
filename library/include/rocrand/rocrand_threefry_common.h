@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -53,10 +53,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROCRAND_THREEFRY_COMMON_H_
 #define ROCRAND_THREEFRY_COMMON_H_
 
-#ifndef FQUALIFIERS
-    #define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS
-
 #include "rocrand/rocrand_common.h"
 
 // C240 constant for Skein Hash function Threefish
@@ -68,31 +64,32 @@ namespace rocrand_device
 {
 
 template<typename value>
-FQUALIFIERS value rotl(value x, int d);
+__forceinline__ __device__ __host__ value rotl(value x, int d);
 
 template<>
-FQUALIFIERS unsigned long long rotl<unsigned long long>(unsigned long long x, int d)
+__forceinline__ __device__ __host__ unsigned long long
+    rotl<unsigned long long>(unsigned long long x, int d)
 {
     return ((x << d) | (x >> (64 - d) & 63));
 };
 
 template<>
-FQUALIFIERS unsigned int rotl<unsigned int>(unsigned int x, int d)
+__forceinline__ __device__ __host__ unsigned int rotl<unsigned int>(unsigned int x, int d)
 {
     return (x << (d & 31)) | (x >> ((32 - d) & 31));
 };
 
 template<typename value>
-FQUALIFIERS value skein_ks_parity();
+__forceinline__ __device__ __host__ value skein_ks_parity();
 
 template<>
-FQUALIFIERS unsigned int skein_ks_parity<unsigned int>()
+__forceinline__ __device__ __host__ unsigned int skein_ks_parity<unsigned int>()
 {
     return SKEIN_KS_PARITY32;
 }
 
 template<>
-FQUALIFIERS unsigned long long skein_ks_parity<unsigned long long>()
+__forceinline__ __device__ __host__ unsigned long long skein_ks_parity<unsigned long long>()
 {
     return SKEIN_KS_PARITY64;
 }

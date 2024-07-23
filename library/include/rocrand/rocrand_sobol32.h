@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,6 @@
 #ifndef ROCRAND_SOBOL32_H_
 #define ROCRAND_SOBOL32_H_
 
-#ifndef FQUALIFIERS
-#define FQUALIFIERS __forceinline__ __device__
-#endif // FQUALIFIERS_
-
 #include "rocrand/rocrand_common.h"
 
 namespace rocrand_device {
@@ -36,13 +32,11 @@ struct sobol32_state
     unsigned int i;
     unsigned int vectors[32];
 
-    FQUALIFIERS
-    sobol32_state() : d(), i(), vectors() { }
+    __forceinline__ __device__ __host__ sobol32_state() : d(), i(), vectors() {}
 
-    FQUALIFIERS
-    sobol32_state(const unsigned int d,
-                  const unsigned int i,
-                  const unsigned int * vectors)
+    __forceinline__ __device__ __host__ sobol32_state(const unsigned int  d,
+                                                      const unsigned int  i,
+                                                      const unsigned int* vectors)
         : d(d), i(i)
     {
         for(int k = 0; k < 32; k++)
@@ -59,14 +53,13 @@ struct sobol32_state<true>
     unsigned int i;
     const unsigned int * vectors;
 
-    FQUALIFIERS
-    sobol32_state() : d(), i(), vectors() { }
+    __forceinline__ __device__ __host__ sobol32_state() : d(), i(), vectors() {}
 
-    FQUALIFIERS
-    sobol32_state(const unsigned int d,
-                  const unsigned int i,
-                  const unsigned int * vectors)
-        : d(d), i(i), vectors(vectors) { }
+    __forceinline__ __device__ __host__ sobol32_state(const unsigned int  d,
+                                                      const unsigned int  i,
+                                                      const unsigned int* vectors)
+        : d(d), i(i), vectors(vectors)
+    {}
 };
 
 template<bool UseSharedVectors>
@@ -76,61 +69,57 @@ public:
 
     typedef struct sobol32_state<UseSharedVectors> sobol32_state;
 
-    FQUALIFIERS
-    sobol32_engine() { }
+    __forceinline__ __device__ __host__ sobol32_engine() {}
 
-    FQUALIFIERS
-    sobol32_engine(const unsigned int * vectors,
-                   const unsigned int offset)
+    __forceinline__ __device__ __host__ sobol32_engine(const unsigned int* vectors,
+                                                       const unsigned int  offset)
         : m_state(0, 0, vectors)
     {
         discard_state(offset);
     }
 
     /// Advances the internal state to skip \p offset numbers.
-    FQUALIFIERS
-    void discard(unsigned int offset)
+    __forceinline__ __device__ __host__ void discard(unsigned int offset)
     {
         discard_state(offset);
     }
 
-    FQUALIFIERS
-    void discard()
+    __forceinline__ __device__ __host__ void discard()
     {
         discard_state();
     }
 
     /// Advances the internal state by stride times, where stride is power of 2
-    FQUALIFIERS
-    void discard_stride(unsigned int stride)
+    __forceinline__ __device__ __host__ void discard_stride(unsigned int stride)
     {
         discard_state_power2(stride);
     }
 
-    FQUALIFIERS
-    unsigned int operator()()
+    __forceinline__ __device__ __host__ unsigned int operator()()
     {
         return this->next();
     }
 
-    FQUALIFIERS
-    unsigned int next()
+    __forceinline__ __device__ __host__ unsigned int next()
     {
         unsigned int p = m_state.d;
         discard_state();
         return p;
     }
 
-    FQUALIFIERS
-    unsigned int current() const
+    __forceinline__ __device__ __host__ unsigned int current() const
     {
         return m_state.d;
     }
 
+    __forceinline__ __device__ __host__ static constexpr bool uses_shared_vectors()
+    {
+        return UseSharedVectors;
+    }
+
 protected:
     // Advances the internal state by offset times.
-    FQUALIFIERS
-    void discard_state(unsigned int offset)
+    __forceinline__ __device__ __host__ void discard_state(unsigned int offset)
     {
         m_state.i += offset;
         const unsigned int g = m_state.i ^ (m_state.i >> 1);
@@ -142,15 +131,13 @@ protected:
     }
 
     // Advances the internal state to the next state
-    FQUALIFIERS
-    void discard_state()
+    __forceinline__ __device__ __host__ void discard_state()
     {
         m_state.d ^= m_state.vectors[rightmost_zero_bit(m_state.i)];
         m_state.i++;
     }
 
-    FQUALIFIERS
-    void discard_state_power2(unsigned int stride)
+    __forceinline__ __device__ __host__ void discard_state_power2(unsigned int stride)
     {
         // Leap frog
         //
@@ -171,8 +158,7 @@ protected:
 
     // Returns the index of the rightmost zero bit in the binary expansion of
     // x (Gray code of the current element's index)
-    FQUALIFIERS
-    unsigned int rightmost_zero_bit(unsigned int x)
+    __forceinline__ __device__ __host__ unsigned int rightmost_zero_bit(unsigned int x)
     {
         #if defined(__HIP_DEVICE_COMPILE__)
         unsigned int z = __ffs(~x);
@@ -218,10 +204,9 @@ typedef rocrand_device::sobol32_engine<false> rocrand_state_sobol32;
  * \param offset - Absolute offset into sequence
  * \param state - Pointer to state to initialize
  */
-FQUALIFIERS
-void rocrand_init(const unsigned int * vectors,
-                  const unsigned int offset,
-                  rocrand_state_sobol32 * state)
+__forceinline__ __device__ __host__ void rocrand_init(const unsigned int*    vectors,
+                                                      const unsigned int     offset,
+                                                      rocrand_state_sobol32* state)
 {
     *state = rocrand_state_sobol32(vectors, offset);
 }
@@ -238,8 +223,7 @@ void rocrand_init(const unsigned int * vectors,
  *
  * \return Quasirandom value (32-bit) as an <tt>unsigned int</tt>
  */
-FQUALIFIERS
-unsigned int rocrand(rocrand_state_sobol32 * state)
+__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_sobol32* state)
 {
     return state->next();
 }
@@ -252,8 +236,8 @@ unsigned int rocrand(rocrand_state_sobol32 * state)
  * \param offset - Number of elements to skip
  * \param state - Pointer to state to update
  */
-FQUALIFIERS
-void skipahead(unsigned long long offset, rocrand_state_sobol32 * state)
+__forceinline__ __device__ __host__ void skipahead(unsigned long long     offset,
+                                                   rocrand_state_sobol32* state)
 {
     return state->discard(offset);
 }
