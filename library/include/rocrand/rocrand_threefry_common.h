@@ -70,7 +70,7 @@ template<>
 __forceinline__ __device__ __host__ unsigned long long
     rotl<unsigned long long>(unsigned long long x, int d)
 {
-    return ((x << d) | (x >> (64 - d) & 63));
+    return (x << (d & 63)) | (x >> ((64 - d) & 63));
 };
 
 template<>

@@ -26,5 +26,7 @@ namespace rocrand_impl::host
 {
 
 template struct generator_type<mt19937_generator>;
+template struct generator_type<mt19937_generator_host<true>>;
+template struct generator_type<mt19937_generator_host<false>>;
 
 } // namespace rocrand_impl::host

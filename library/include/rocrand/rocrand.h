@@ -170,20 +170,7 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
  * and returns it in \p generator. This generator is executed on the host rather than
  * on a device, and it is enqueued on the stream associated with the generator.
  *
- * Values for \p rng_type are:
- * - ROCRAND_RNG_PSEUDO_XORWOW
- * - ROCRAND_RNG_PSEUDO_MRG31K3P
- * - ROCRAND_RNG_PSEUDO_MRG32K3A
- * - ROCRAND_RNG_PSEUDO_PHILOX4_32_10
- * - ROCRAND_RNG_PSEUDO_LFSR113
- * - ROCRAND_RNG_PSEUDO_THREEFRY2_32_20
- * - ROCRAND_RNG_PSEUDO_THREEFRY2_64_20
- * - ROCRAND_RNG_PSEUDO_THREEFRY4_32_20
- * - ROCRAND_RNG_PSEUDO_THREEFRY4_64_20
- * - ROCRAND_RNG_QUASI_SOBOL32
- * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32
- * - ROCRAND_RNG_QUASI_SOBOL64
- * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
+ * All generators are supported.
  *
  * \param generator - Pointer to generator
  * \param rng_type - Type of generator to create

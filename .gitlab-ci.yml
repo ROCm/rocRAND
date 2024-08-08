@@ -22,7 +22,6 @@
 
 variables:
   GIT_SUBMODULE_STRATEGY: normal # Fetch submodules before job start (non-recursively)
-  ROCM_PATH: /opt/rocm
 
 include:
   - project: amd/ci-templates
@@ -31,6 +30,7 @@ include:
       - /defaults.yaml
       - /deps-cmake.yaml
       - /deps-docs.yaml
+      - /deps-format.yaml
       - /deps-rocm.yaml
       - /deps-nvcc.yaml
       - /deps-windows.yaml
@@ -46,20 +46,7 @@ stages:
 
 clang-format:
   extends:
-    - .deps:rocm
-  stage: lint
-  needs: []
-  tags:
-    - build
-  variables:
-    CLANG_FORMAT: "/opt/rocm/llvm/bin/clang-format"
-    GIT_CLANG_FORMAT: "/opt/rocm/llvm/bin/git-clang-format"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-  script:
-    - cd $CI_PROJECT_DIR
-    - git config --global --add safe.directory $CI_PROJECT_DIR
-    - scripts/code-format/check-format.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA --binary "$CLANG_FORMAT"
+    - .lint:clang-format
 
 copyright-date:
   extends:
@@ -144,12 +131,10 @@ copyright-date:
     - .rules:build
   needs: []
   script:
-    - $SUDO_CMD apt-get install -y flang
     - cmake
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
-      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
       -D BUILD_BENCHMARK=ON
@@ -173,12 +158,10 @@ copyright-date:
     - .rules:build
   needs: []
   script:
-    - $SUDO_CMD apt-get install -y flang
     - cmake
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -G Ninja
-      -D CMAKE_FORTRAN_COMPILER=/usr/bin/flang
       -D CMAKE_CXX_COMPILER=${COMPILER}
       -D CMAKE_CUDA_HOST_COMPILER=${COMPILER}
       -D BUILD_TEST=ON
@@ -353,7 +336,6 @@ benchmark:benchmark-tuning-generate-results:
     - .rules:test
   stage: test
   script:
-    - $SUDO_CMD apt-get install -y flang
     - cd $CI_PROJECT_DIR/build
     # Parallel execution (with other AMDGPU processes) can oversubscribe the SDMA queue.
     # This causes the hipMemcpy to fail, which is not reported as an error by HIP.
@@ -598,10 +580,9 @@ test:nvcc-parity:
       -D BUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
       -D BUILD_TEST=ON
       -D CMAKE_BUILD_TYPE=Release
-      -D CMAKE_CXX_COMPILER:FILEPATH="$ROCM_PATH/bin/clang++.exe"
+      -D CMAKE_CXX_COMPILER:FILEPATH="${env:HIP_PATH}/bin/clang++.exe"
       -D CMAKE_INSTALL_PREFIX:PATH="$CI_PROJECT_DIR/build/install"
-      -D CMAKE_PREFIX_PATH:PATH="$ROCM_PATH/lib/cmake"
-      -D DEPENDENCIES_FORCE_DOWNLOAD=ON
+      -D CMAKE_PREFIX_PATH:PATH="${env:HIP_PATH}/lib/cmake"
       -D DISABLE_WERROR=OFF *>&1
     # Building
     - cmake --build "$CI_PROJECT_DIR/build" *>&1
@@ -629,8 +610,8 @@ test:windows:
       -B "$CI_PROJECT_DIR/build_install_test"
       -G Ninja
       -D CMAKE_BUILD_TYPE=Release
-      -D CMAKE_CXX_COMPILER="$ROCM_PATH/bin/clang++.exe"
-      -D CMAKE_PREFIX_PATH="$ROCM_PATH/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
+      -D CMAKE_CXX_COMPILER:FILEPATH="${env:HIP_PATH}/bin/clang++.exe"
+      -D CMAKE_PREFIX_PATH:FILEPATH="${env:HIP_PATH}/lib/cmake;$CI_PROJECT_DIR/build/install" *>&1
     # Build package test
     - cmake --build "$CI_PROJECT_DIR/build_install_test"
     # Copy rocRAND.dll to the package test build directory

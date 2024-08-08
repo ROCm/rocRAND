@@ -28,6 +28,7 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_lfsr113.h>
@@ -35,6 +36,7 @@
 #include <hip/hip_runtime.h>
 
 #include <algorithm>
+#include <variant>
 
 namespace rocrand_impl::host
 {
@@ -90,7 +92,7 @@ __host__ __device__ __forceinline__ void generate_lfsr113(dim3 block_idx,
 
     const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
     const size_t misalignment = (output_width - uintptr / sizeof(T) % output_width) % output_width;
-    const unsigned int head_size = min(n, misalignment);
+    const unsigned int head_size    = cpp_utils::min(n, misalignment);
     const unsigned int tail_size = (n - head_size) % output_width;
     const size_t       vec_n     = (n - head_size) / output_width;
 
@@ -167,6 +169,11 @@ public:
     using system_type = System;
     using base_type   = generator_impl_base;
     using engine_type = lfsr113_device_engine;
+    using poisson_distribution_manager_t
+        = poisson_distribution_manager<DISCRETE_METHOD_ALIAS, system_type>;
+    using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
+    using poisson_approx_distribution_t =
+        typename poisson_distribution_manager_t::approx_distribution_t;
 
     lfsr113_generator_template(uint4              seeds  = {ROCRAND_LFSR113_DEFAULT_SEED_X,
                                                             ROCRAND_LFSR113_DEFAULT_SEED_Y,
@@ -298,6 +305,17 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status set_stream(hipStream_t stream)
+    {
+        const rocrand_status status = m_poisson.set_stream(stream);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        base_type::set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     rocrand_status init()
     {
         if(m_engines_initialized)
@@ -343,6 +361,12 @@ public:
             return status;
         }
 
+        status = m_poisson.init();
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+
         m_engines_initialized = true;
         return ROCRAND_STATUS_SUCCESS;
     }
@@ -359,7 +383,14 @@ public:
         generator_config config;
         const hipError_t error = ConfigProvider::template host_config<T>(m_stream, m_order, config);
         if(error != hipSuccess)
+        {
             return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
+        }
 
         status = dynamic_dispatch(
             m_order,
@@ -434,15 +465,16 @@ public:
 
     rocrand_status generate_poisson(unsigned int* data, size_t data_size, double lambda)
     {
-        try
+        auto result = m_poisson.get_distribution(lambda);
+        if(auto* dis = std::get_if<poisson_distribution_t>(&result))
         {
-            m_poisson.set_lambda(lambda);
+            return generate(data, data_size, *dis);
         }
-        catch(rocrand_status status)
+        if(auto* dis = std::get_if<poisson_approx_distribution_t>(&result))
         {
-            return status;
+            return generate(data, data_size, *dis);
         }
-        return generate(data, data_size, m_poisson.dis);
+        return std::get<rocrand_status>(result);
     }
 
 private:
@@ -453,7 +485,7 @@ private:
     uint4        m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
+    poisson_distribution_manager_t m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type

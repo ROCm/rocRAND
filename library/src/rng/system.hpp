@@ -39,15 +39,39 @@
 
 #include <algorithm>
 #if defined(ROCRAND_PARALLEL_STL) && __has_include(<execution>)
-#define ROCRAND_USE_PARALLEL_STL
+    #define ROCRAND_USE_PARALLEL_STL
     #include <execution>
 #endif
+#include <cstring>
 #include <new>
 
 #include <stdint.h>
 
 namespace rocrand_impl::system
 {
+namespace detail
+{
+
+inline rocrand_status is_stream_blocking(hipStream_t stream, bool& is_blocking)
+{
+    if(stream)
+    {
+        unsigned int     stream_flags;
+        const hipError_t error = hipStreamGetFlags(stream, &stream_flags);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        is_blocking = (stream_flags & hipStreamNonBlocking) == 0;
+    }
+    else
+    {
+        is_blocking = true;
+    }
+    return ROCRAND_STATUS_SUCCESS;
+}
+
+} // namespace detail
 
 /// \tparam UseHostFunc If true, launching will enqueue the kernel in the stream. Otherwise,
 ///   execute the kernel synchronously.
@@ -62,6 +86,12 @@ struct host_system
     template<typename T>
     static rocrand_status alloc(T** ptr, size_t n)
     {
+        hipError_t status = hipDeviceSynchronize();
+        if(status != hipSuccess)
+        {
+            return ROCRAND_STATUS_ALLOCATION_FAILED;
+        }
+
         *ptr = new(std::nothrow) T[n];
         if(!*ptr)
         {
@@ -73,7 +103,19 @@ struct host_system
     template<typename T>
     static void free(T* ptr)
     {
+        ROCRAND_HIP_FATAL_ASSERT(hipDeviceSynchronize());
         delete[] ptr;
+    }
+
+    static rocrand_status memcpy(void* dst, const void* src, size_t size, hipMemcpyKind /*kind*/)
+    {
+        hipError_t status = hipDeviceSynchronize();
+        if(status != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        std::memcpy(dst, src, size);
+        return ROCRAND_STATUS_SUCCESS;
     }
 
     template<typename... UserArgs>
@@ -170,6 +212,45 @@ struct host_system
 
         return ROCRAND_STATUS_SUCCESS;
     }
+
+    static rocrand_status
+        launch_host_func([[maybe_unused]] hipStream_t stream, hipHostFn_t fn, void* userData)
+    {
+        if constexpr(UseHostFunc)
+        {
+            const hipError_t error = hipLaunchHostFunc(stream, fn, userData);
+            if(error != hipSuccess)
+            {
+                return ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+        }
+        else
+        {
+            try
+            {
+                fn(userData);
+            }
+            catch(...)
+            {
+                return ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    static rocrand_status is_host_func_blocking([[maybe_unused]] hipStream_t stream,
+                                                bool&                        is_blocking)
+    {
+        if constexpr(UseHostFunc)
+        {
+            return detail::is_stream_blocking(stream, is_blocking);
+        }
+        else
+        {
+            is_blocking = true;
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
 };
 
 namespace detail
@@ -208,6 +289,16 @@ struct device_system
         ROCRAND_HIP_FATAL_ASSERT(hipFree(ptr));
     }
 
+    static rocrand_status memcpy(void* dst, const void* src, size_t size, hipMemcpyKind kind)
+    {
+        hipError_t error = hipMemcpy(dst, src, size, kind);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     template<auto Kernel,
              typename ConfigProvider
              = host::static_block_size_config_provider<ROCRAND_DEFAULT_MAX_BLOCK_SIZE>,
@@ -227,6 +318,21 @@ struct device_system
             return ROCRAND_STATUS_LAUNCH_FAILURE;
         }
         return ROCRAND_STATUS_SUCCESS;
+    }
+
+    static rocrand_status launch_host_func(hipStream_t stream, hipHostFn_t fn, void* userData)
+    {
+        const hipError_t error = hipLaunchHostFunc(stream, fn, userData);
+        if(error != hipSuccess)
+        {
+            return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    static rocrand_status is_host_func_blocking(hipStream_t stream, bool& is_blocking)
+    {
+        return detail::is_stream_blocking(stream, is_blocking);
     }
 };
 

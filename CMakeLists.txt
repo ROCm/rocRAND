@@ -33,6 +33,7 @@ cmake_dependent_option(BUILD_BENCHMARK_TUNING
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 option(CODE_COVERAGE "Build with code coverage flags (clang only)" OFF)
 option(DEPENDENCIES_FORCE_DOWNLOAD "Don't search the system for dependencies, always download them" OFF)
+cmake_dependent_option(RUN_SLOW_TESTS "Run extra tests with CTest. These cover niche functionality and take long time" OFF "BUILD_TEST" OFF)
 
 # Install prefix
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
@@ -159,7 +160,7 @@ if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
 endif()
 
 # Set version variables
-rocm_setup_version( VERSION "3.1.0" )
+rocm_setup_version( VERSION "3.2.0" )
 set ( rocrand_VERSION ${rocRAND_VERSION} )
 # Old-style version number used within the library's API. rocrand_get_version should be modified.
 math(EXPR rocrand_VERSION_NUMBER "${rocRAND_VERSION_MAJOR} * 100000 + ${rocRAND_VERSION_MINOR} * 100 + ${rocRAND_VERSION_PATCH}")

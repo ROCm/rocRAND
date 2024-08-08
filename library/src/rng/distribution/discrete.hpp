@@ -25,9 +25,11 @@
 
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_discrete.h>
+#include <rocrand/rocrand_discrete_types.h>
 
 #include <algorithm>
 #include <climits>
+#include <iterator>
 #include <vector>
 
 // Alias method
@@ -48,174 +50,175 @@ enum discrete_method
     DISCRETE_METHOD_UNIVERSAL = DISCRETE_METHOD_ALIAS | DISCRETE_METHOD_CDF
 };
 
-template<discrete_method Method = DISCRETE_METHOD_ALIAS, bool IsHostSide = false>
-class discrete_distribution_base : public rocrand_discrete_distribution_st
+/// \brief Encapsulates a `rocrand_discrete_distribution_st` and makes it possible
+/// to sample the discrete distribution in the host generators.
+template<discrete_method Method>
+class discrete_distribution_base
 {
 public:
-
-    static constexpr unsigned int input_width = 1;
-    static constexpr unsigned int output_width = 1;
+    static constexpr inline unsigned int input_width  = 1;
+    static constexpr inline unsigned int output_width = 1;
 
     // rocrand_discrete_distribution_st is a struct
-    discrete_distribution_base() // cppcheck-suppress uninitDerivedMemberVar
-    {
-        size = 0;
-        offset      = 0;
-        probability = NULL;
-        alias = NULL;
-        cdf = NULL;
-    }
-
-    discrete_distribution_base(const double* probabilities, unsigned int size, unsigned int offset)
-        : discrete_distribution_base()
-    {
-        std::vector<double> p(probabilities, probabilities + size);
-
-        init(p, size, offset);
-    }
-
-    __host__ __device__ ~discrete_distribution_base() {}
-
-    void deallocate()
-    {
-        // Explicit deallocation is used because the object is copied
-        // multiple times inside hipLaunchKernelGGL, and destructor is called
-        // for all copies (we can't use c++ smart pointers for device pointers)
-        if (IsHostSide)
-        {
-            if (probability != NULL)
-            {
-                delete[] probability;
-            }
-            if (alias != NULL)
-            {
-                delete[] alias;
-            }
-            if (cdf != NULL)
-            {
-                delete[] cdf;
-            }
-        }
-        else
-        {
-            if (probability != NULL)
-            {
-                ROCRAND_HIP_FATAL_ASSERT(hipFree(probability));
-            }
-            if (alias != NULL)
-            {
-                ROCRAND_HIP_FATAL_ASSERT(hipFree(alias));
-            }
-            if (cdf != NULL)
-            {
-                ROCRAND_HIP_FATAL_ASSERT(hipFree(cdf));
-            }
-        }
-        probability = NULL;
-        alias = NULL;
-        cdf = NULL;
-    }
+    explicit discrete_distribution_base(const rocrand_discrete_distribution_st& distribution)
+        : m_distribution(distribution)
+    {}
 
     template<class T>
     __forceinline__ __host__ __device__ unsigned int operator()(T x) const
     {
-        if((Method & DISCRETE_METHOD_ALIAS) != 0)
+        if constexpr((Method & DISCRETE_METHOD_ALIAS) != 0)
         {
-            return rocrand_device::detail::discrete_alias(x, *this);
+            return rocrand_device::detail::discrete_alias(x, m_distribution);
         }
         else
         {
-            return rocrand_device::detail::discrete_cdf(x, *this);
+            return rocrand_device::detail::discrete_cdf(x, m_distribution);
         }
     }
 
     template<class T>
-    __host__ __device__ void operator()(const T (&input)[1], unsigned int output[1]) const
+    __forceinline__ __host__ __device__
+    void operator()(const T (&input)[1], unsigned int output[1]) const
     {
         output[0] = (*this)(input[0]);
     }
 
-protected:
+private:
+    rocrand_discrete_distribution_st m_distribution;
+};
 
-    void init(std::vector<double> p,
-              const unsigned int size,
-              const unsigned int offset)
+/// \brief A collection of static methods for constructing and destroying
+/// instances of `rocrand_discrete_distribution_st`.
+/// \tparam Method Controls which members of the produced `rocrand_discrete_distribution_st`
+/// are populated.
+/// \tparam IsHostSide Controls whether the allocated and filled memory blocks reside
+/// on the host or on the device.
+template<discrete_method Method, bool IsHostSide = false>
+class discrete_distribution_factory
+{
+public:
+    /// \brief Allocates and populates an instance of `rocrand_discrete_distribution_st`.
+    /// \note `allocate` and `normalize` are called by this function, therefore those
+    /// doesn't need to be called separately.
+    /// \note The produced `rocrand_discrete_distribution_st` MUST be deallocated by the matching
+    /// `deallocate` function when it's no longer used.
+    /// \param p The probability array of the discrete distribution.
+    /// \param size The size of the input probability array. This must not exceed the size of `p`.
+    /// \param offset The offset of the input probability array.
+    /// \param distribution [out] The allocated and populated discrete distribution instance.
+    /// \return `ROCRAND_STATUS_SUCCESS` if the operation is successful, otherwise an error code from the
+    /// first failing procedure.
+    static rocrand_status create(std::vector<double>               p,
+                                 const unsigned int                size,
+                                 const unsigned int                offset,
+                                 rocrand_discrete_distribution_st& distribution)
     {
-        this->size = size;
-        this->offset = offset;
-
-        deallocate();
-        allocate();
-        normalize(p);
-        if((Method & DISCRETE_METHOD_ALIAS) != 0)
+        rocrand_status status = allocate(size, offset, distribution);
+        if(status != ROCRAND_STATUS_SUCCESS)
         {
-            create_alias_table(p);
+            return status;
         }
-        if((Method & DISCRETE_METHOD_CDF) != 0)
+        normalize(p, size);
+        if constexpr((Method & DISCRETE_METHOD_ALIAS) != 0)
         {
-            create_cdf(p);
+            std::vector<double>       h_probability(size);
+            std::vector<unsigned int> h_alias(size);
+            create_alias_table(p, size, h_probability.begin(), h_alias.begin());
+            status = copy_alias_table(distribution, h_probability, h_alias);
+            if(status != ROCRAND_STATUS_SUCCESS)
+            {
+                return status;
+            }
         }
+        if constexpr((Method & DISCRETE_METHOD_CDF) != 0)
+        {
+            std::vector<double> h_cdf(size);
+            create_cdf(p, size, h_cdf.begin());
+            status = copy_cdf(distribution, h_cdf);
+            if(status != ROCRAND_STATUS_SUCCESS)
+            {
+                return status;
+            }
+        }
+        return ROCRAND_STATUS_SUCCESS;
     }
 
-    void allocate()
+    /// \brief Frees the allocated memory associated with the passed distribution that was
+    /// previously created by `create` or `allocate`.
+    /// \param [in,out] distribution The distribution to deallocate.
+    /// The fields of the distribution are set to default values.
+    /// \return `ROCRAND_STATUS_SUCCESS` if the operation is successful, otherwise an error code from the
+    /// first failing procedure.
+    static rocrand_status deallocate(rocrand_discrete_distribution_st& distribution)
     {
-        if (IsHostSide)
+        if constexpr(IsHostSide)
         {
-            if((Method & DISCRETE_METHOD_ALIAS) != 0)
-            {
-                probability = new double[size];
-                alias = new unsigned int[size];
-            }
-            if((Method & DISCRETE_METHOD_CDF) != 0)
-            {
-                cdf = new double[size];
-            }
+            delete[] distribution.probability;
+            delete[] distribution.alias;
+            delete[] distribution.cdf;
         }
         else
         {
             hipError_t error;
-            if((Method & DISCRETE_METHOD_ALIAS) != 0)
+            error = hipFree(distribution.probability);
+            if(error != hipSuccess)
             {
-                error = hipMalloc(&probability, sizeof(double) * size);
-                if (error != hipSuccess)
-                {
-                    throw ROCRAND_STATUS_ALLOCATION_FAILED;
-                }
-                error = hipMalloc(&alias, sizeof(unsigned int) * size);
-                if (error != hipSuccess)
-                {
-                    throw ROCRAND_STATUS_ALLOCATION_FAILED;
-                }
+                return ROCRAND_STATUS_INTERNAL_ERROR;
             }
-            if((Method & DISCRETE_METHOD_CDF) != 0)
+            error = hipFree(distribution.alias);
+            if(error != hipSuccess)
             {
-                error = hipMalloc(&cdf, sizeof(double) * size);
-                if (error != hipSuccess)
-                {
-                    throw ROCRAND_STATUS_ALLOCATION_FAILED;
-                }
+                return ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+            error = hipFree(distribution.cdf);
+            if(error != hipSuccess)
+            {
+                return ROCRAND_STATUS_INTERNAL_ERROR;
             }
         }
+
+        distribution = {};
+        return ROCRAND_STATUS_SUCCESS;
     }
 
-    void normalize(std::vector<double>& p) const
+    /// \brief Normalizes the values in probability vector `p`.
+    /// \param p [in,out] p The probability vector to normalize.
+    /// \param size The size of the probability vector.
+    /// It MUST NOT be larger than the size of `p`.
+    static void normalize(std::vector<double>& p, const unsigned int size)
     {
         double sum = 0.0;
-        for (unsigned int i = 0; i < size; i++)
+        for(unsigned int i = 0; i < size; i++)
         {
             sum += p[i];
         }
-        // Normalize probabilities
-        for (unsigned int i = 0; i < size; i++)
+        for(unsigned int i = 0; i < size; i++)
         {
             p[i] /= sum;
         }
     }
 
-    void create_alias_table(std::vector<double> p)
+    /// \brief Computes the alias table from the probability vector for a discrete distribution.
+    /// \tparam ProbabilityIt The type of the output iterator to which the calculated probabilities are written.
+    /// Must be a RandomAccessIterator.
+    /// \tparam AliasIt The type of the output iterator to which the calculated aliases are written.
+    /// Must be a RandomAccessIterator.
+    /// \param p The normalized probability vector.
+    /// \param size The size of the probability vector.
+    /// It MUST NOT be larger than the size of `p`.
+    /// \param h_probability Probabilities output iterator.
+    /// \param h_alias Aliases output iterator.
+    template<class ProbabilityIt, class AliasIt>
+    static void create_alias_table(std::vector<double> p,
+                                   const unsigned int  size,
+                                   ProbabilityIt       h_probability,
+                                   AliasIt             h_alias)
     {
-        std::vector<double> h_probability(size);
-        std::vector<unsigned int> h_alias(size);
+        static_assert(
+            std::is_same_v<double, typename std::iterator_traits<ProbabilityIt>::value_type>);
+        static_assert(
+            std::is_same_v<unsigned int, typename std::iterator_traits<AliasIt>::value_type>);
 
         const double average = 1.0 / size;
 
@@ -259,52 +262,135 @@ protected:
         {
             h_probability[i] = 1.0;
         }
-
-        if (IsHostSide)
-        {
-            std::copy(h_probability.begin(), h_probability.end(), probability);
-            std::copy(h_alias.begin(), h_alias.end(), alias);
-        }
-        else
-        {
-            hipError_t error;
-            error = hipMemcpy(probability, h_probability.data(), sizeof(double) * size, hipMemcpyDefault);
-            if (error != hipSuccess)
-            {
-                throw ROCRAND_STATUS_INTERNAL_ERROR;
-            }
-            error = hipMemcpy(alias, h_alias.data(), sizeof(unsigned int) * size, hipMemcpyDefault);
-            if (error != hipSuccess)
-            {
-                throw ROCRAND_STATUS_INTERNAL_ERROR;
-            }
-        }
     }
 
-    void create_cdf(std::vector<double> p)
+    /// \brief Computes the CDF (cumulative distribution function) table from the
+    /// probability vector for a discrete distribution.
+    /// \tparam CdfIt The type of the output iterator to which the calculated CDF values are written.
+    /// Must be a RandomAccessIterator.
+    /// \param p The normalized probability vector.
+    /// \param size The size of the probability vector.
+    /// It MUST NOT be larger than the size of `p`.
+    /// \param h_cdf CDF output iterator.
+    template<class CdfIt>
+    static void create_cdf(const std::vector<double>& p, const unsigned int size, CdfIt h_cdf)
     {
-        std::vector<double> h_cdf(size);
+        static_assert(std::is_same_v<double, typename std::iterator_traits<CdfIt>::value_type>);
 
         double sum = 0.0;
-        for (unsigned int i = 0; i < size; i++)
+        for(unsigned int i = 0; i < size; i++)
         {
             sum += p[i];
             h_cdf[i] = sum;
         }
+    }
 
-        if (IsHostSide)
+    /// \brief Allocates the required amount of memory for a `rocrand_discrete_distribution_st`.
+    /// \param size The size of the input probability array.
+    /// \param offset The offset of the input probability array.
+    /// \param [out] distribution The distribution to allocate.
+    /// \return `ROCRAND_STATUS_SUCCESS` if the operation is successful, otherwise an error code from the
+    /// first failing procedure.
+    static rocrand_status allocate(const unsigned int                size,
+                                   const unsigned int                offset,
+                                   rocrand_discrete_distribution_st& distribution)
+    {
+        distribution        = {};
+        distribution.size   = size;
+        distribution.offset = offset;
+        if constexpr(IsHostSide)
         {
-            std::copy(h_cdf.begin(), h_cdf.end(), cdf);
+            if constexpr((Method & DISCRETE_METHOD_ALIAS) != 0)
+            {
+                distribution.probability = new double[distribution.size];
+                distribution.alias       = new unsigned int[distribution.size];
+            }
+            if constexpr((Method & DISCRETE_METHOD_CDF) != 0)
+            {
+                distribution.cdf = new double[distribution.size];
+            }
         }
         else
         {
             hipError_t error;
-            error = hipMemcpy(cdf, h_cdf.data(), sizeof(double) * size, hipMemcpyDefault);
-            if (error != hipSuccess)
+            if constexpr((Method & DISCRETE_METHOD_ALIAS) != 0)
             {
-                throw ROCRAND_STATUS_INTERNAL_ERROR;
+                error = hipMalloc(&distribution.probability, sizeof(double) * distribution.size);
+                if(error != hipSuccess)
+                {
+                    return ROCRAND_STATUS_ALLOCATION_FAILED;
+                }
+                error = hipMalloc(&distribution.alias, sizeof(unsigned int) * distribution.size);
+                if(error != hipSuccess)
+                {
+                    return ROCRAND_STATUS_ALLOCATION_FAILED;
+                }
+            }
+            if constexpr((Method & DISCRETE_METHOD_CDF) != 0)
+            {
+                error = hipMalloc(&distribution.cdf, sizeof(double) * distribution.size);
+                if(error != hipSuccess)
+                {
+                    return ROCRAND_STATUS_ALLOCATION_FAILED;
+                }
             }
         }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+private:
+    static rocrand_status copy_alias_table(const rocrand_discrete_distribution_st& distribution,
+                                           const std::vector<double>&              h_probability,
+                                           const std::vector<unsigned int>&        h_alias)
+    {
+        if constexpr(IsHostSide)
+        {
+            std::copy(h_probability.begin(), h_probability.end(), distribution.probability);
+            std::copy(h_alias.begin(), h_alias.end(), distribution.alias);
+        }
+        else
+        {
+            hipError_t error;
+            error = hipMemcpy(distribution.probability,
+                              h_probability.data(),
+                              sizeof(double) * distribution.size,
+                              hipMemcpyHostToDevice);
+            if(error != hipSuccess)
+            {
+                return ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+            error = hipMemcpy(distribution.alias,
+                              h_alias.data(),
+                              sizeof(unsigned int) * distribution.size,
+                              hipMemcpyHostToDevice);
+            if(error != hipSuccess)
+            {
+                return ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+        }
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
+    static rocrand_status copy_cdf(const rocrand_discrete_distribution_st& distribution,
+                                   const std::vector<double>&              h_cdf)
+    {
+        if constexpr(IsHostSide)
+        {
+            std::copy(h_cdf.begin(), h_cdf.end(), distribution.cdf);
+        }
+        else
+        {
+            hipError_t error;
+            error = hipMemcpy(distribution.cdf,
+                              h_cdf.data(),
+                              sizeof(double) * distribution.size,
+                              hipMemcpyHostToDevice);
+            if (error != hipSuccess)
+            {
+                return ROCRAND_STATUS_INTERNAL_ERROR;
+            }
+        }
+        return ROCRAND_STATUS_SUCCESS;
     }
 };
 

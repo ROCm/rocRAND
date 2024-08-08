@@ -59,7 +59,7 @@ TEST(rocrand_cpp_utils_tests, numeric_combinations)
 
     ASSERT_EQ(combinations.size(), A.size() * B.size() * C.size());
 
-    const std::set<std::array<int,3>> combination_set(combinations.begin(), combinations.end());
+    const std::set<std::array<int, 3>> combination_set(combinations.begin(), combinations.end());
     ASSERT_EQ(combinations.size(), combination_set.size()) << "Not all items are unique";
 
     for(auto [a, b, c] : combinations)

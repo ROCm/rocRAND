@@ -45,7 +45,6 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
-AttributeMacros: ['QUALIFIERS', 'FQUALIFIERS']
 BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: Both
@@ -88,7 +87,7 @@ EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: Always
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
-ForEachMacros: [ foreach, Q_FOREACH, BOOST_FOREACH ]
+ForEachMacros: []
 IfMacros: []
 IncludeBlocks: Preserve
 IndentAccessModifiers: false
@@ -139,4 +138,17 @@ SpacesInConditionalStatement: false
 SpacesInContainerLiterals: true
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
+
+AttributeMacros: ['__host__', '__device__', '__global__', '__forceinline__', '__shared__', '__launch_bounds__']
+# Trick clang into thinking that our C-style attributes are C++-style attributes
+Macros:
+    - __host__=[[host]]
+    - __device__=[[device]]
+    - __global__=[[global]]
+    - __forceinline__=[[forceinline]]
+    - __shared__=[[shared]]
+    - __launch_bounds__(x)=[[launch_bounds(x)]]
+    - __attribute__(x)=[[attribute(x)]]
+BreakAfterAttributes: Always
+
 ---

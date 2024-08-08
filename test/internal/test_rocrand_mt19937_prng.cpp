@@ -543,7 +543,7 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_engines_k
     const unsigned int     thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int           engine_id = thread_id / mt19937_octo_engine::threads_per_generator;
     mt19937_octo_engine    engine    = octo_engines[thread_id];
-    engine.gather(&engines[engine_id * n]);
+    engine.gather(&engines[engine_id * n], threadIdx);
 
     engine.gen_next_n();
     if(engine_id == 0)
@@ -738,17 +738,18 @@ TYPED_TEST(mt19937_generator_engine_tests, subsequence_test)
     // dummy config provider, kernel just needs to verify the amount of generators for the actual call
     using ConfigProvider = default_config_provider<ROCRAND_RNG_PSEUDO_MT19937>;
 
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(
-
-            jump_ahead_kernel<generator_t::jump_ahead_thread_count, ConfigProvider, true>),
-        dim3(generator_count),
-        dim3(generator_t::jump_ahead_thread_count),
-        0,
-        0,
-        d_engines,
-        seed,
-        d_mt19937_jump);
+    rocrand_status status = rocrand_impl::system::device_system::template launch<
+        rocrand_impl::host::
+            jump_ahead_mt19937<generator_t::jump_ahead_thread_count, ConfigProvider, false>,
+        rocrand_impl::host::static_block_size_config_provider<
+            generator_t::jump_ahead_thread_count>>(dim3(generator_count),
+                                                   dim3(generator_t::jump_ahead_thread_count),
+                                                   0,
+                                                   0,
+                                                   d_engines,
+                                                   seed,
+                                                   d_mt19937_jump);
+    ASSERT_EQ(status, ROCRAND_STATUS_SUCCESS);
 
     octo_engine_type* d_octo_engines{};
     HIP_CHECK(hipMalloc(&d_octo_engines,
@@ -1149,21 +1150,25 @@ TYPED_TEST(mt19937_generator_engine_tests, jump_ahead_test)
     unsigned int* d_engines1{};
     HIP_CHECK(hipMalloc(&d_engines1, generator_count * n * sizeof(unsigned int)));
 
-    dynamic_dispatch(ROCRAND_ORDERING_PSEUDO_DEFAULT,
-                     [&](auto is_dynamic)
-                     {
-                         hipLaunchKernelGGL(
-                             HIP_KERNEL_NAME(jump_ahead_kernel<generator_t::jump_ahead_thread_count,
-                                                               ConfigProvider,
-                                                               is_dynamic>),
-                             dim3(generator_count),
-                             dim3(generator_t::jump_ahead_thread_count),
-                             0,
-                             0,
-                             d_engines1,
-                             seed,
-                             d_mt19937_jump);
-                     });
+    rocrand_impl::host::dynamic_dispatch(
+        ROCRAND_ORDERING_PSEUDO_DEFAULT,
+        [&](auto is_dynamic)
+        {
+            rocrand_status status = rocrand_impl::system::device_system::template launch<
+                rocrand_impl::host::jump_ahead_mt19937<generator_t::jump_ahead_thread_count,
+                                                       ConfigProvider,
+                                                       is_dynamic>,
+                rocrand_impl::host::static_block_size_config_provider<
+                    generator_t::jump_ahead_thread_count>>(
+                dim3(generator_count),
+                dim3(generator_t::jump_ahead_thread_count),
+                0,
+                0,
+                d_engines1,
+                seed,
+                d_mt19937_jump);
+            ASSERT_EQ(status, ROCRAND_STATUS_SUCCESS);
+        });
 
     std::vector<unsigned int> h_engines1(generator_count * n);
     HIP_CHECK(hipMemcpy(h_engines1.data(),

@@ -235,6 +235,4 @@ Bugs and feature requests can be reported through the
 Contributions of any kind are most welcome! You can find more information at
 [CONTRIBUTING](./CONTRIBUTING.md).
 
-Licensing information is located at [LICENSE](./LICENSE.txt). Note that [statistical tests](./test/crush) link
-to the TestU01 library distributed under GNU General Public License (GPL) version 3. Therefore, the GPL
-version 3 license applies to that part of the project.
+Licensing information is located at [LICENSE](./LICENSE.txt).

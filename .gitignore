@@ -88,3 +88,4 @@ CMakeLists.txt.user
 
 # Python
 __pycache__
+.venv
