@@ -20,6 +20,8 @@
 
 #include <hip/hip_runtime.h>
 
+#include "rng/distribution/discrete.hpp"
+#include "rng/distribution/poisson.hpp"
 #include "rng/generator_type.hpp"
 #include "rng/generator_types.hpp"
 
@@ -80,6 +82,8 @@ rocrand_status create_generator_host(rocrand_generator* generator, rocrand_rng_t
                 *generator = new generator_type<mtgp32_generator_host<UseHostFunc>>();
                 break;
             case ROCRAND_RNG_PSEUDO_MT19937:
+                *generator = new generator_type<mt19937_generator_host<UseHostFunc>>();
+                break;
             default:
                 return ROCRAND_STATUS_TYPE_ERROR;
         }
@@ -389,8 +393,7 @@ rocrand_status ROCRANDAPI rocrand_set_stream(rocrand_generator generator, hipStr
         return ROCRAND_STATUS_NOT_CREATED;
     }
 
-    generator->set_stream(stream);
-    return ROCRAND_STATUS_SUCCESS;
+    return generator->set_stream(stream);
 }
 
 rocrand_status ROCRANDAPI rocrand_set_seed(rocrand_generator generator, unsigned long long seed)
@@ -469,22 +472,23 @@ rocrand_status ROCRANDAPI rocrand_create_poisson_distribution(
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    poisson_distribution<DISCRETE_METHOD_UNIVERSAL> h_dis;
-    try
-    {
-        h_dis = poisson_distribution<DISCRETE_METHOD_UNIVERSAL>(lambda);
-    }
-    catch(const std::exception& e)
-    {
-        return ROCRAND_STATUS_INTERNAL_ERROR;
-    }
-    catch(rocrand_status status)
+    unsigned int              size;
+    unsigned int              offset;
+    const std::vector<double> poisson_probabilities
+        = calculate_poisson_probabilities(lambda, size, offset);
+
+    rocrand_discrete_distribution_st h_dis;
+    rocrand_status                   status
+        = discrete_distribution_factory<DISCRETE_METHOD_UNIVERSAL>::create(poisson_probabilities,
+                                                                           size,
+                                                                           offset,
+                                                                           h_dis);
+    if(status != ROCRAND_STATUS_SUCCESS)
     {
         return status;
     }
 
-    hipError_t error;
-    error = hipMalloc(discrete_distribution, sizeof(rocrand_discrete_distribution_st));
+    hipError_t error = hipMalloc(discrete_distribution, sizeof(rocrand_discrete_distribution_st));
     if(error != hipSuccess)
     {
         return ROCRAND_STATUS_ALLOCATION_FAILED;
@@ -517,16 +521,13 @@ rocrand_status ROCRANDAPI
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    discrete_distribution_base<DISCRETE_METHOD_UNIVERSAL> h_dis;
-    try
-    {
-        h_dis = discrete_distribution_base<DISCRETE_METHOD_UNIVERSAL>(probabilities, size, offset);
-    }
-    catch(const std::exception& e)
-    {
-        return ROCRAND_STATUS_INTERNAL_ERROR;
-    }
-    catch(rocrand_status status)
+    rocrand_discrete_distribution_st h_dis;
+    rocrand_status status = discrete_distribution_factory<DISCRETE_METHOD_UNIVERSAL>::create(
+        std::vector<double>(probabilities, probabilities + size),
+        size,
+        offset,
+        h_dis);
+    if(status != ROCRAND_STATUS_SUCCESS)
     {
         return status;
     }
@@ -558,7 +559,7 @@ rocrand_status ROCRANDAPI
         return ROCRAND_STATUS_OUT_OF_RANGE;
     }
 
-    discrete_distribution_base<DISCRETE_METHOD_UNIVERSAL> h_dis;
+    rocrand_discrete_distribution_st h_dis;
 
     hipError_t error;
     error = hipMemcpy(&h_dis,
@@ -570,11 +571,9 @@ rocrand_status ROCRANDAPI
         return ROCRAND_STATUS_INTERNAL_ERROR;
     }
 
-    try
-    {
-        h_dis.deallocate();
-    }
-    catch(rocrand_status status)
+    const rocrand_status status
+        = discrete_distribution_factory<DISCRETE_METHOD_UNIVERSAL>::deallocate(h_dis);
+    if(status != ROCRAND_STATUS_SUCCESS)
     {
         return status;
     }

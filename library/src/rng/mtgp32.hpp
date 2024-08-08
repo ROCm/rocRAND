@@ -62,8 +62,8 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+#include "utils/cpp_utils.hpp"
 
-#include <hip/amd_detail/host_defines.h>
 #include <rocrand/rocrand.h>
 #include <rocrand/rocrand_mtgp32.h>
 #include <rocrand/rocrand_mtgp32_11213.h>
@@ -80,7 +80,8 @@ struct mtgp32_device_engine : ::rocrand_device::mtgp32_engine
     // suppress warning about no initialization for __shared__ variables
     __host__ __device__ mtgp32_device_engine(){};
 
-    __host__ __device__ unsigned int next()
+    __forceinline__ __host__ __device__
+    unsigned int next()
     {
 #ifdef __HIP_DEVICE_COMPILE__
         // all threads in block produce one value and advance the state by that many values
@@ -114,10 +115,11 @@ __host__ void generate(unsigned int (&input)[BlockSize][Distribution::input_widt
 }
 
 template<class T, class Distribution>
-__device__ void generate(unsigned int (&input)[Distribution::input_width],
-                         T (&output)[Distribution::output_width],
-                         Distribution&         distribution,
-                         mtgp32_device_engine& engine)
+__forceinline__ __device__
+void generate(unsigned int (&input)[Distribution::input_width],
+              T (&output)[Distribution::output_width],
+              Distribution&         distribution,
+              mtgp32_device_engine& engine)
 {
     for(unsigned int i = 0; i < Distribution::input_width; i++)
     {
@@ -136,7 +138,8 @@ __host__ void save_vec_n(vec_type* vec_data, T (&output)[BlockSize][output_width
 }
 
 template<class vec_type, class T, unsigned int output_width>
-__device__ void save_vec_n(vec_type* vec_data, T (&output)[output_width], size_t index)
+__forceinline__ __device__
+void save_vec_n(vec_type* vec_data, T (&output)[output_width], size_t index)
 {
     vec_data[index] = *reinterpret_cast<vec_type*>(output);
 }
@@ -155,7 +158,8 @@ __host__ void
 }
 
 template<class vec_type, class T, unsigned int output_width>
-__device__ void save_n(vec_type* vec_data, T (&output)[output_width], size_t index, size_t vec_n)
+__forceinline__ __device__
+void save_n(vec_type* vec_data, T (&output)[output_width], size_t index, size_t vec_n)
 {
     if(index < vec_n)
     {
@@ -164,13 +168,14 @@ __device__ void save_n(vec_type* vec_data, T (&output)[output_width], size_t ind
 }
 
 template<class T, unsigned int output_width>
-__host__ __device__ void save_head_tail_impl(T (&output)[output_width],
-                                             size_t index,
-                                             T*     data,
-                                             size_t n,
-                                             size_t head_size,
-                                             size_t tail_size,
-                                             size_t vec_n_up)
+__forceinline__ __host__ __device__
+void save_head_tail_impl(T (&output)[output_width],
+                         size_t index,
+                         T*     data,
+                         size_t n,
+                         size_t head_size,
+                         size_t tail_size,
+                         size_t vec_n_up)
 {
     if(index == vec_n_up)
     {
@@ -211,13 +216,14 @@ __host__ void save_head_tail(T (&output)[BlockSize][output_width],
 }
 
 template<class T, unsigned int output_width>
-__device__ void save_head_tail(T (&output)[output_width],
-                               size_t index,
-                               T*     data,
-                               size_t n,
-                               size_t head_size,
-                               size_t tail_size,
-                               size_t vec_n_up)
+__forceinline__ __device__
+void save_head_tail(T (&output)[output_width],
+                    size_t index,
+                    T*     data,
+                    size_t n,
+                    size_t head_size,
+                    size_t tail_size,
+                    size_t vec_n_up)
 {
     save_head_tail_impl(output, index, data, n, head_size, tail_size, vec_n_up);
 }
@@ -263,7 +269,7 @@ __host__ __device__ __forceinline__ void generate_mtgp(dim3 block_idx,
 
     const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
     const size_t misalignment = (output_width - uintptr / sizeof(T) % output_width) % output_width;
-    const unsigned int head_size = min(n, misalignment);
+    const unsigned int head_size    = cpp_utils::min(n, misalignment);
     const unsigned int tail_size = (n - head_size) % output_width;
     const size_t       vec_n     = (n - head_size) / output_width;
 
@@ -305,6 +311,11 @@ public:
     using base_type   = generator_impl_base;
     using engine_type = mtgp32_device_engine;
     using system_type = System;
+    using poisson_distribution_manager_t
+        = poisson_distribution_manager<DISCRETE_METHOD_ALIAS, system_type>;
+    using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
+    using poisson_approx_distribution_t =
+        typename poisson_distribution_manager_t::approx_distribution_t;
 
     mtgp32_generator_template(unsigned long long seed   = 0,
                               unsigned long long offset = 0,
@@ -404,6 +415,17 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status set_stream(hipStream_t stream)
+    {
+        const rocrand_status status = m_poisson.set_stream(stream);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        base_type::set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     rocrand_status init()
     {
         if (m_engines_initialized)
@@ -441,6 +463,12 @@ public:
             return ROCRAND_STATUS_ALLOCATION_FAILED;
         }
 
+        status = m_poisson.init();
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+
         m_engines_initialized = true;
 
         return ROCRAND_STATUS_SUCCESS;
@@ -461,6 +489,11 @@ public:
         if(error != hipSuccess)
         {
             return ROCRAND_STATUS_INTERNAL_ERROR;
+        }
+
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
         }
 
         // The host generator uses a block of size one to emulate a device generator that uses a shared memory state
@@ -534,15 +567,27 @@ public:
 
     rocrand_status generate_poisson(unsigned int * data, size_t data_size, double lambda)
     {
-        try
+        // For an unknown reason, on CUDA, the initialization of the engines must precede
+        // the initialization of the poisson distribution, otherwise spurious miscalculations
+        // occur
+        if(!m_engines_initialized)
         {
-            m_poisson.set_lambda(lambda);
+            const auto status = init();
+            if(status != ROCRAND_STATUS_SUCCESS)
+            {
+                return status;
+            }
         }
-        catch(rocrand_status status)
+        auto result = m_poisson.get_distribution(lambda);
+        if(auto* dis = std::get_if<poisson_distribution_t>(&result))
         {
-            return status;
+            return generate(data, data_size, *dis);
         }
-        return generate(data, data_size, m_poisson.dis);
+        if(auto* dis = std::get_if<poisson_approx_distribution_t>(&result))
+        {
+            return generate(data, data_size, *dis);
+        }
+        return std::get<rocrand_status>(result);
     }
 
 private:
@@ -553,7 +598,7 @@ private:
     unsigned long long m_seed;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<DISCRETE_METHOD_ALIAS, !system_type::is_device()> m_poisson;
+    poisson_distribution_manager_t m_poisson;
 
     // m_seed from base_type
     // m_offset from base_type

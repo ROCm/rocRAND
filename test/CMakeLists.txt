@@ -46,6 +46,9 @@ function(add_relative_test test_name test_target)
     file(RELATIVE_PATH rel_path "${CMAKE_CURRENT_BINARY_DIR}" "${EXE_PATH}/${EXE_NAME}")
     add_test(NAME "${test_name}" COMMAND "./${rel_path}")
     file(APPEND "${INSTALL_TEST_FILE}" "add_test(${test_name} \"../${EXE_NAME}\")\n")
+    if(RUN_SLOW_TESTS)
+      set_tests_properties("${test_name}" PROPERTIES "ENVIRONMENT" "RUN_SLOW_TESTS=1")
+    endif()
 endfunction()
 
 # Get rocRAND tests source files

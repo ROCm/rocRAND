@@ -45,6 +45,8 @@ extern template struct generator_type<mrg32k3a_generator>;
 extern template struct generator_type<mrg32k3a_generator_host<false>>;
 extern template struct generator_type<mrg32k3a_generator_host<true>>;
 extern template struct generator_type<mt19937_generator>;
+extern template struct generator_type<mt19937_generator_host<true>>;
+extern template struct generator_type<mt19937_generator_host<false>>;
 extern template struct generator_type<mtgp32_generator>;
 extern template struct generator_type<mtgp32_generator_host<false>>;
 extern template struct generator_type<mtgp32_generator_host<true>>;

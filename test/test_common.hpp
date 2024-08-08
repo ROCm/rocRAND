@@ -42,31 +42,51 @@
 }
 
 #ifdef _MSC_VER
-inline bool use_hmm()
+inline bool is_environment_variable_set_to_1(const char* name)
 {
     char   buffer[2]{};
     size_t size;
-    if(getenv_s(&size, buffer, "ROCRAND_USE_HMM") != 0)
+    if(getenv_s(&size, buffer, name) != 0)
     {
         return false;
     }
     return strcmp(buffer, "1") == 0;
 }
 #else
-inline bool use_hmm()
+inline bool is_environment_variable_set_to_1(const char* name)
 {
-    if (getenv("ROCRAND_USE_HMM") == nullptr)
+    if(getenv(name) == nullptr)
     {
         return false;
     }
 
-    if (strcmp(getenv("ROCRAND_USE_HMM"), "1") == 0)
+    if(strcmp(getenv(name), "1") == 0)
     {
         return true;
     }
     return false;
 }
 #endif
+
+inline bool are_slow_tests_enabled()
+{
+    return is_environment_variable_set_to_1("RUN_SLOW_TESTS");
+}
+
+#define ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED()                                                   \
+    do                                                                                            \
+    {                                                                                             \
+        if(!are_slow_tests_enabled())                                                             \
+        {                                                                                         \
+            GTEST_SKIP() << "This test can be enabled via environment variable RUN_SLOW_TESTS=1"; \
+        }                                                                                         \
+    }                                                                                             \
+    while(0)
+
+inline bool use_hmm()
+{
+    return is_environment_variable_set_to_1("ROCRAND_USE_HMM");
+}
 
 // Helper for HMM allocations: if HMM is requested through
 // setting environment variable ROCRAND_USE_HMM=1
@@ -115,6 +135,29 @@ void assert_near(const std::vector<T>& a, const std::vector<T>& b, double eps)
             << "where i = " << i << ", a[i] = " << std::hexfloat << to_host(a[i])
             << ", b[i] = " << to_host(b[i]);
     }
+}
+
+template<typename T>
+double get_mean(const std::vector<T>& values)
+{
+    double mean = 0.0f;
+    for(auto v : values)
+    {
+        mean += static_cast<double>(v);
+    }
+    return mean / values.size();
+}
+
+template<typename T>
+double get_variance(const std::vector<T>& values, double mean)
+{
+    double variance = 0.0f;
+    for(auto v : values)
+    {
+        const double x = static_cast<double>(v) - mean;
+        variance += x * x;
+    }
+    return variance / values.size();
 }
 
 #endif // TEST_COMMON_HPP_

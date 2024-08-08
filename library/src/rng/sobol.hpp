@@ -26,6 +26,7 @@
 #include "distributions.hpp"
 #include "generator_type.hpp"
 #include "system.hpp"
+#include "utils/cpp_utils.hpp"
 
 #include <rocrand/rocrand_scrambled_sobol32.h>
 #include <rocrand/rocrand_scrambled_sobol64.h>
@@ -52,9 +53,10 @@ namespace rocrand_impl::host
 {
 
 template<bool Scrambled, class Engine, class Constant>
-__host__ __device__ Engine create_engine(const Constant*           vectors,
-                                         [[maybe_unused]] Constant scramble_constant,
-                                         const unsigned int        offset)
+__forceinline__ __host__ __device__
+Engine create_engine(const Constant*           vectors,
+                     [[maybe_unused]] Constant scramble_constant,
+                     const unsigned int        offset)
 {
     if constexpr(Scrambled)
     {
@@ -205,7 +207,7 @@ void generate_sobol_host(dim3               block_idx,
     {
         const uintptr_t uintptr   = reinterpret_cast<uintptr_t>(data);
         const size_t misalignment = (output_per_thread - uintptr / sizeof(T)) % output_per_thread;
-        const unsigned int head_size = min(n, misalignment);
+        const unsigned int head_size    = cpp_utils::min(n, misalignment);
         const unsigned int tail_size = (n - head_size) % output_per_thread;
         const size_t       vec_n     = (n - head_size) / output_per_thread;
 
@@ -493,6 +495,11 @@ public:
     using engine_type       = sobol_device_engine_t<Is64, Scrambled, system_type::is_device()>;
     using constant_type = std::conditional_t<Is64, unsigned long long int, unsigned int>;
     using constant_accessor = sobol_constant_accessor<system_type, Is64, Scrambled>;
+    using poisson_distribution_manager_t
+        = poisson_distribution_manager<DISCRETE_METHOD_CDF, system_type>;
+    using poisson_distribution_t = typename poisson_distribution_manager_t::distribution_t;
+    using poisson_approx_distribution_t =
+        typename poisson_distribution_manager_t::approx_distribution_t;
 
     sobol_generator_template(unsigned long long offset = 0,
                              rocrand_ordering   order  = ROCRAND_ORDERING_QUASI_DEFAULT,
@@ -577,11 +584,28 @@ public:
         return ROCRAND_STATUS_SUCCESS;
     }
 
+    rocrand_status set_stream(hipStream_t stream)
+    {
+        const rocrand_status status = m_poisson.set_stream(stream);
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
+        }
+        base_type::set_stream(stream);
+        return ROCRAND_STATUS_SUCCESS;
+    }
+
     rocrand_status init()
     {
         if(m_initialized)
         {
             return ROCRAND_STATUS_SUCCESS;
+        }
+
+        rocrand_status status = m_poisson.init();
+        if(status != ROCRAND_STATUS_SUCCESS)
+        {
+            return status;
         }
 
         m_current_offset = static_cast<unsigned int>(m_offset);
@@ -610,6 +634,11 @@ public:
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             return status;
+        }
+
+        if(data == nullptr)
+        {
+            return ROCRAND_STATUS_SUCCESS;
         }
 
         constexpr uint32_t threads    = 256;
@@ -714,15 +743,16 @@ public:
     {
         static_assert(Is64 || std::is_same_v<T, uint32_t>,
                       "The 32 bit sobol generator can only generate 32bit poisson");
-        try
+        auto result = m_poisson.get_distribution(lambda);
+        if(auto* dis = std::get_if<poisson_distribution_t>(&result))
         {
-            m_poisson.set_lambda(lambda);
+            return generate(data, data_size, *dis);
         }
-        catch(rocrand_status status)
+        if(auto* dis = std::get_if<poisson_approx_distribution_t>(&result))
         {
-            return status;
+            return generate(data, data_size, *dis);
         }
-        return generate(data, data_size, m_poisson.dis);
+        return std::get<rocrand_status>(result);
     }
 
 private:
@@ -741,7 +771,7 @@ private:
     const constant_type* m_scramble_constants = nullptr;
 
     // For caching of Poisson for consecutive generations with the same lambda
-    poisson_distribution_manager<DISCRETE_METHOD_CDF, !system_type::is_device()> m_poisson;
+    poisson_distribution_manager_t m_poisson;
 
     // m_offset from base_type
 

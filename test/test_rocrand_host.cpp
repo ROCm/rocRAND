@@ -47,36 +47,100 @@ std::vector<unsigned long long> get_seeds()
     return ret;
 }
 
-constexpr rocrand_rng_type host_rng_types[] = {
-    ROCRAND_RNG_PSEUDO_PHILOX4_32_10,
-    ROCRAND_RNG_PSEUDO_LFSR113,
-    ROCRAND_RNG_PSEUDO_MRG31K3P,
-    ROCRAND_RNG_PSEUDO_MRG32K3A,
-    ROCRAND_RNG_PSEUDO_MTGP32,
-    ROCRAND_RNG_PSEUDO_THREEFRY2_32_20,
-    ROCRAND_RNG_PSEUDO_THREEFRY2_64_20,
-    ROCRAND_RNG_PSEUDO_THREEFRY4_32_20,
-    ROCRAND_RNG_PSEUDO_THREEFRY4_64_20,
-    ROCRAND_RNG_PSEUDO_XORWOW,
-    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32,
-    ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64,
-    ROCRAND_RNG_QUASI_SOBOL32,
-    ROCRAND_RNG_QUASI_SOBOL64,
+struct host_test_params
+{
+    rocrand_rng_type rng_type;
+    bool             blocking_host_generator;
+    bool             use_default_stream;
+
+    friend std::ostream& operator<<(std::ostream& os, const host_test_params& params)
+    {
+        os << "{ "
+           << "rng_type: " << params.rng_type << ", blocking: " << params.blocking_host_generator
+           << ", default_stream: " << params.use_default_stream << " }";
+        return os;
+    }
+};
+
+constexpr host_test_params host_test_params_array[] = {
+    {   ROCRAND_RNG_PSEUDO_PHILOX4_32_10, false,  true},
+    {         ROCRAND_RNG_PSEUDO_LFSR113, false,  true},
+    {        ROCRAND_RNG_PSEUDO_MRG31K3P, false,  true},
+    {        ROCRAND_RNG_PSEUDO_MRG32K3A, false,  true},
+    {         ROCRAND_RNG_PSEUDO_MT19937, false,  true},
+    {          ROCRAND_RNG_PSEUDO_MTGP32, false,  true},
+    { ROCRAND_RNG_PSEUDO_THREEFRY2_32_20, false,  true},
+    { ROCRAND_RNG_PSEUDO_THREEFRY2_64_20, false,  true},
+    { ROCRAND_RNG_PSEUDO_THREEFRY4_32_20, false,  true},
+    { ROCRAND_RNG_PSEUDO_THREEFRY4_64_20, false,  true},
+    {          ROCRAND_RNG_PSEUDO_XORWOW, false,  true},
+    {ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32, false,  true},
+    {ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64, false,  true},
+    {          ROCRAND_RNG_QUASI_SOBOL32, false,  true},
+    {          ROCRAND_RNG_QUASI_SOBOL64, false,  true},
+
+    {          ROCRAND_RNG_PSEUDO_XORWOW, false, false},
+    {          ROCRAND_RNG_PSEUDO_XORWOW,  true, false},
+    {          ROCRAND_RNG_PSEUDO_XORWOW,  true,  true},
+
+    {          ROCRAND_RNG_QUASI_SOBOL32, false, false},
+    {          ROCRAND_RNG_QUASI_SOBOL32,  true, false},
+    {          ROCRAND_RNG_QUASI_SOBOL32,  true,  true},
 };
 
 } // namespace
 
-class rocrand_generate_host_test : public ::testing::TestWithParam<rocrand_rng_type>
-{};
-
-TEST_P(rocrand_generate_host_test, int_test)
+class rocrand_generate_host_test : public ::testing::TestWithParam<host_test_params>
 {
-    const rocrand_rng_type rng_type = GetParam();
+protected:
+    void SetUp() override
+    {
+        if(GetParam().rng_type == ROCRAND_RNG_PSEUDO_MT19937)
+        {
+            ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+        }
+        if(!GetParam().use_default_stream)
+        {
+            HIP_CHECK(hipStreamCreateWithFlags(&m_custom_stream, hipStreamNonBlocking));
+        }
+    }
 
-    rocrand_generator generator;
-    ROCRAND_CHECK(rocrand_create_generator_host(&generator, rng_type));
+    void TearDown() override
+    {
+        if(!GetParam().use_default_stream)
+        {
+            HIP_CHECK(hipStreamDestroy(m_custom_stream));
+        }
+    }
 
-    std::vector<unsigned int> results(11111);
+    rocrand_generator get_generator()
+    {
+        const auto        params = GetParam();
+        rocrand_generator generator;
+        if(params.blocking_host_generator)
+        {
+            EXPECT_EQ(ROCRAND_STATUS_SUCCESS,
+                      rocrand_create_generator_host_blocking(&generator, params.rng_type));
+        }
+        else
+        {
+            EXPECT_EQ(ROCRAND_STATUS_SUCCESS,
+                      rocrand_create_generator_host(&generator, params.rng_type));
+        }
+        if(!params.use_default_stream)
+        {
+            EXPECT_EQ(ROCRAND_STATUS_SUCCESS, rocrand_set_stream(generator, m_custom_stream));
+        }
+        return generator;
+    }
+
+private:
+    hipStream_t m_custom_stream;
+};
+
+void test_int(rocrand_generator generator, const size_t test_size)
+{
+    std::vector<unsigned int> results(test_size);
     for(size_t i = 0; i < seeds_count + random_seeds_count; ++i)
     {
         const auto seed = i < seeds_count ? seeds[i] : rand();
@@ -103,14 +167,26 @@ TEST_P(rocrand_generate_host_test, int_test)
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
 }
 
+TEST_P(rocrand_generate_host_test, int_test)
+{
+    test_int(get_generator(), 11111);
+}
+
+TEST_P(rocrand_generate_host_test, int_test_large)
+{
+    ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+    constexpr size_t large_test_size = size_t(INT_MAX) + 1;
+    test_int(get_generator(), large_test_size);
+}
+
 template<typename Type, typename F>
-void test_int_parity(rocrand_rng_type                       rng_type,
+void test_int_parity(rocrand_generator                      host_generator,
+                     rocrand_rng_type                       rng_type,
                      F                                      generate,
                      const std::vector<unsigned long long>& seeds = get_seeds())
 {
-    rocrand_generator device_generator, host_generator;
+    rocrand_generator device_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
-    ROCRAND_CHECK(rocrand_create_generator_host(&host_generator, rng_type));
 
     std::vector<Type> host_results(218192);
     std::vector<Type> device_results(host_results.size());
@@ -131,6 +207,7 @@ void test_int_parity(rocrand_rng_type                       rng_type,
                             output,
                             host_results.size() * sizeof(Type),
                             hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
 
         assert_eq(host_results, device_results);
     }
@@ -142,27 +219,27 @@ void test_int_parity(rocrand_rng_type                       rng_type,
 
 TEST_P(rocrand_generate_host_test, char_parity_test)
 {
-    test_int_parity<unsigned char>(GetParam(), rocrand_generate_char);
+    test_int_parity<unsigned char>(get_generator(), GetParam().rng_type, rocrand_generate_char);
 }
 
 TEST_P(rocrand_generate_host_test, short_parity_test)
 {
-    test_int_parity<unsigned short>(GetParam(), rocrand_generate_short);
+    test_int_parity<unsigned short>(get_generator(), GetParam().rng_type, rocrand_generate_short);
 }
 
 TEST_P(rocrand_generate_host_test, int_parity_test)
 {
-    test_int_parity<unsigned int>(GetParam(), rocrand_generate);
+    test_int_parity<unsigned int>(get_generator(), GetParam().rng_type, rocrand_generate);
 }
 
 template<typename Type, typename F>
-void test_uniform_parity(rocrand_rng_type                       rng_type,
+void test_uniform_parity(rocrand_generator                      host_generator,
+                         rocrand_rng_type                       rng_type,
                          F                                      generate,
                          const std::vector<unsigned long long>& seeds = get_seeds())
 {
-    rocrand_generator device_generator, host_generator;
+    rocrand_generator device_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
-    ROCRAND_CHECK(rocrand_create_generator_host(&host_generator, rng_type));
 
     std::vector<Type> host_results(218192);
     std::vector<Type> device_results(host_results.size());
@@ -183,6 +260,7 @@ void test_uniform_parity(rocrand_rng_type                       rng_type,
                             output,
                             host_results.size() * sizeof(Type),
                             hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
 
         assert_eq(host_results, device_results);
     }
@@ -194,31 +272,38 @@ void test_uniform_parity(rocrand_rng_type                       rng_type,
 
 TEST_P(rocrand_generate_host_test, uniform_half_parity_test)
 {
-    test_uniform_parity<half>(GetParam(), rocrand_generate_uniform_half);
+    test_uniform_parity<half>(get_generator(), GetParam().rng_type, rocrand_generate_uniform_half);
 }
 
 TEST_P(rocrand_generate_host_test, uniform_float_parity_test)
 {
-    test_uniform_parity<float>(GetParam(), rocrand_generate_uniform);
+    test_uniform_parity<float>(get_generator(), GetParam().rng_type, rocrand_generate_uniform);
 }
 
 TEST_P(rocrand_generate_host_test, uniform_double_parity_test)
 {
-    test_uniform_parity<double>(GetParam(), rocrand_generate_uniform_double);
+    test_uniform_parity<double>(get_generator(),
+                                GetParam().rng_type,
+                                rocrand_generate_uniform_double);
 }
 
 template<typename Type, typename F>
-void test_normal_parity(rocrand_rng_type                       rng_type,
+void test_normal_parity(rocrand_generator                      host_generator,
+                        rocrand_rng_type                       rng_type,
                         F                                      generate,
                         double                                 eps,
                         const std::vector<unsigned long long>& seeds = get_seeds())
 {
+    if(rng_type == ROCRAND_RNG_PSEUDO_MT19937)
+    {
+        ROCRAND_SKIP_SLOW_TEST_IF_NOT_ENABLED();
+    }
+
     Type mean   = static_cast<Type>(-12.0);
     Type stddev = static_cast<Type>(2.4);
 
-    rocrand_generator device_generator, host_generator;
+    rocrand_generator device_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
-    ROCRAND_CHECK(rocrand_create_generator_host(&host_generator, rng_type));
 
     std::vector<Type> host_results(218192);
     std::vector<Type> device_results(host_results.size());
@@ -240,6 +325,7 @@ void test_normal_parity(rocrand_rng_type                       rng_type,
                             output,
                             host_results.size() * sizeof(Type),
                             hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
 
         // This rounding is required because the sine and cosine used in box-muller used in the normal
         // distribution is slightly different from the one used on the host.
@@ -253,43 +339,58 @@ void test_normal_parity(rocrand_rng_type                       rng_type,
 
 TEST_P(rocrand_generate_host_test, normal_half_parity_test)
 {
-    test_normal_parity<half>(GetParam(), rocrand_generate_normal_half, 0.1);
+    test_normal_parity<half>(get_generator(),
+                             GetParam().rng_type,
+                             rocrand_generate_normal_half,
+                             0.1);
 }
 
 TEST_P(rocrand_generate_host_test, normal_float_parity_test)
 {
-    test_normal_parity<float>(GetParam(), rocrand_generate_normal, 0.005);
+    test_normal_parity<float>(get_generator(), GetParam().rng_type, rocrand_generate_normal, 0.005);
 }
 
 TEST_P(rocrand_generate_host_test, normal_double_parity_test)
 {
-    test_normal_parity<double>(GetParam(), rocrand_generate_normal_double, 0.000001);
+    test_normal_parity<double>(get_generator(),
+                               GetParam().rng_type,
+                               rocrand_generate_normal_double,
+                               0.000001);
 }
 
 TEST_P(rocrand_generate_host_test, log_normal_half_parity_test)
 {
-    test_normal_parity<half>(GetParam(), rocrand_generate_log_normal_half, 0.05);
+    test_normal_parity<half>(get_generator(),
+                             GetParam().rng_type,
+                             rocrand_generate_log_normal_half,
+                             0.05);
 }
 
 TEST_P(rocrand_generate_host_test, log_normal_float_parity_test)
 {
-    test_normal_parity<float>(GetParam(), rocrand_generate_log_normal, 0.0001);
+    test_normal_parity<float>(get_generator(),
+                              GetParam().rng_type,
+                              rocrand_generate_log_normal,
+                              0.0001);
 }
 
 TEST_P(rocrand_generate_host_test, log_normal_double_parity_test)
 {
-    test_normal_parity<double>(GetParam(), rocrand_generate_log_normal_double, 0.0000001);
+    test_normal_parity<double>(get_generator(),
+                               GetParam().rng_type,
+                               rocrand_generate_log_normal_double,
+                               0.0000001);
 }
 
 TEST_P(rocrand_generate_host_test, poisson_parity_test)
 {
-    const rocrand_rng_type rng_type = GetParam();
+    const rocrand_rng_type rng_type = GetParam().rng_type;
     using Type                      = unsigned int;
     double lambda                   = 1.1;
 
-    rocrand_generator device_generator, host_generator;
+    rocrand_generator host_generator = get_generator();
+    rocrand_generator device_generator;
     ROCRAND_CHECK(rocrand_create_generator(&device_generator, rng_type));
-    ROCRAND_CHECK(rocrand_create_generator_host(&host_generator, rng_type));
 
     std::vector<Type> host_results(218192);
     std::vector<Type> device_results(host_results.size());
@@ -314,9 +415,10 @@ TEST_P(rocrand_generate_host_test, poisson_parity_test)
                             output,
                             host_results.size() * sizeof(Type),
                             hipMemcpyDeviceToHost));
-    }
+        HIP_CHECK(hipDeviceSynchronize());
 
-    assert_eq(host_results, device_results);
+        assert_eq(host_results, device_results);
+    }
 
     ROCRAND_CHECK(rocrand_destroy_generator(host_generator));
     ROCRAND_CHECK(rocrand_destroy_generator(device_generator));
@@ -325,4 +427,4 @@ TEST_P(rocrand_generate_host_test, poisson_parity_test)
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_host_test,
                          rocrand_generate_host_test,
-                         ::testing::ValuesIn(host_rng_types));
+                         ::testing::ValuesIn(host_test_params_array));

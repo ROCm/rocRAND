@@ -146,6 +146,15 @@ struct distribution_name<
     }
 };
 
+template<>
+struct distribution_name<rocrand_impl::host::mrg_poisson_distribution>
+{
+    std::string operator()()
+    {
+        return "poisson_unsigned_int";
+    }
+};
+
 template<class Distribution>
 struct default_distribution
 {
@@ -191,10 +200,48 @@ struct default_distribution<
 {
     auto operator()(const benchmark_config& config)
     {
-        return rocrand_impl::host::poisson_distribution<rocrand_impl::host::DISCRETE_METHOD_ALIAS>(
-            config.lambda);
+        return std::get<
+            rocrand_impl::host::poisson_distribution<rocrand_impl::host::DISCRETE_METHOD_ALIAS>>(
+            m_poisson_manager.get_distribution(config.lambda));
     }
+
+private:
+    rocrand_impl::host::poisson_distribution_manager<rocrand_impl::host::DISCRETE_METHOD_ALIAS>
+        m_poisson_manager;
 };
+
+template<>
+struct default_distribution<rocrand_impl::host::mrg_poisson_distribution>
+{
+    auto operator()(const benchmark_config& config)
+    {
+        auto poisson_distribution = std::get<
+            rocrand_impl::host::poisson_distribution<rocrand_impl::host::DISCRETE_METHOD_ALIAS>>(
+            m_poisson_manager.get_distribution(config.lambda));
+        return rocrand_impl::host::mrg_poisson_distribution(poisson_distribution);
+    }
+
+private:
+    rocrand_impl::host::poisson_distribution_manager<rocrand_impl::host::DISCRETE_METHOD_ALIAS>
+        m_poisson_manager;
+};
+
+template<template<class> class GeneratorTemplate>
+struct select_poisson_distribution
+{
+    using dummy_generator_t = GeneratorTemplate<rocrand_impl::host::static_config_provider<0, 0>>;
+    static constexpr inline rocrand_rng_type rng_type = dummy_generator_t::type();
+    static constexpr inline bool             is_mrg
+        = rng_type == ROCRAND_RNG_PSEUDO_MRG31K3P || rng_type == ROCRAND_RNG_PSEUDO_MRG32K3A;
+
+    using type = std::conditional_t<
+        is_mrg,
+        rocrand_impl::host::mrg_poisson_distribution,
+        rocrand_impl::host::poisson_distribution<rocrand_impl::host::DISCRETE_METHOD_ALIAS>>;
+};
+
+template<template<class> class GeneratorTemplate>
+using select_poisson_distribution_t = typename select_poisson_distribution<GeneratorTemplate>::type;
 
 } // namespace benchmark_tuning
 

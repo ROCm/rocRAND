@@ -249,6 +249,34 @@ struct vec_wrapper
 template<class V>
 __host__ __device__ vec_wrapper(V) -> vec_wrapper<V>;
 
+/// \brief Returns the maximum of its arguments.
+/// \note This function must be the choice in `__host__ __device__` and preferably on
+/// `__device__` functions too. In host code, both this and `std::max` is allowed.
+///
+/// The reason for that is that the platform-provided  `__clang_hip_math.h` header provides
+/// different overload sets for `::min` and `::max` between device and host code. That implementation
+/// can result in unwanted implicit conversions to `int` in host code.
+template<class T>
+__host__ __device__
+constexpr T max(const T& a, const T& b)
+{
+    return a < b ? b : a;
+}
+
+/// \brief Returns the minimum of its arguments.
+/// \note This function must be the choice in `__host__ __device__` and preferably on
+/// `__device__` functions too. In host code, both this and `std::min` is allowed.
+///
+/// The reason for that is that the platform-provided  `__clang_hip_math.h` header provides
+/// different overload sets for `::min` and `::max` between device and host code. That implementation
+/// can result in unwanted implicit conversions to `int` in host code.
+template<class T>
+__host__ __device__
+constexpr T min(const T& a, const T& b)
+{
+    return a < b ? a : b;
+}
+
 } // end namespace rocrand_impl::cpp_utils
 
 #endif // ROCRAND_RNG_CPP_UTILS_HPP_
