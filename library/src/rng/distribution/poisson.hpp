@@ -198,7 +198,7 @@ public:
         m_initialized           = other.m_initialized;
         m_is_host_func_blocking = other.m_is_host_func_blocking;
         m_stream                = other.m_stream;
-        m_lambda                = other.lambda;
+        m_lambda                = other.m_lambda;
         std::swap(m_probability, other.m_probability);
         std::swap(m_alias, other.m_alias);
         std::swap(m_cdf, other.m_cdf);
