@@ -31,7 +31,6 @@ The documentation is structured as follows:
   .. grid-item-card:: Conceptual
 
     * :ref:`programmers-guide`
-    * :ref:`data-type-support`
     * :ref:`curand-compatibility`
     * :ref:`dynamic-ordering-configuration`
 
@@ -40,6 +39,7 @@ The documentation is structured as follows:
     * :ref:`cpp-api`
     * :ref:`python-api`
     * :doc:`Fortran API reference <fortran-api-reference>`
+    * :ref:`data-type-support`
     * :doc:`API library <doxygen/html/index>`
 
 To contribute to the documentation, refer to
