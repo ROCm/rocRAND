@@ -140,13 +140,18 @@ TEST_P(rocrand_generate_uniform_tests, half_test)
 TEST(rocrand_generate_uniform_tests, neg_test)
 {
     const size_t size = 256;
-    float * data = NULL;
+    void*        data = nullptr;
 
-    rocrand_generator generator = NULL;
-    EXPECT_EQ(
-        rocrand_generate_uniform(generator, (float *) data, size),
-        ROCRAND_STATUS_NOT_CREATED
-    );
+    rocrand_generator generator = nullptr;
+
+    EXPECT_EQ(rocrand_generate_uniform(generator, static_cast<float*>(data), size),
+              ROCRAND_STATUS_NOT_CREATED);
+
+    EXPECT_EQ(rocrand_generate_uniform_double(generator, static_cast<double*>(data), size),
+              ROCRAND_STATUS_NOT_CREATED);
+
+    EXPECT_EQ(rocrand_generate_uniform_half(generator, static_cast<half*>(data), size),
+              ROCRAND_STATUS_NOT_CREATED);
 }
 
 INSTANTIATE_TEST_SUITE_P(rocrand_generate_uniform_tests,

@@ -147,15 +147,14 @@ TEST_P(rocrand_generate_poisson_tests, generate_test)
 
 TEST(rocrand_generate_poisson_tests, neg_test)
 {
-    const size_t size = 256;
-    double         lambda = 100.0;
-    unsigned int * data = NULL;
+    const size_t size   = 256;
+    double       lambda = 100.0;
+    void*        data   = nullptr;
 
-    rocrand_generator generator = NULL;
-    EXPECT_EQ(
-        rocrand_generate_poisson(generator, (unsigned int *)data, size, lambda),
-        ROCRAND_STATUS_NOT_CREATED
-    );
+    rocrand_generator generator = nullptr;
+
+    EXPECT_EQ(rocrand_generate_poisson(generator, static_cast<unsigned int*>(data), size, lambda),
+              ROCRAND_STATUS_NOT_CREATED);
 }
 
 TEST_P(rocrand_generate_poisson_tests, out_of_range_test)
