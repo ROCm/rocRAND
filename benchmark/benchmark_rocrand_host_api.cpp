@@ -35,7 +35,6 @@
 const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 #endif
 
-typedef std::unique_ptr<benchmark::BenchmarkReporter> PtrType;
 typedef rocrand_rng_type rng_type_t;
 
 template <typename T>
@@ -125,8 +124,11 @@ int main(int argc, char *argv[]) {
   std::string filter = "";
   for (int i = 1; i < argc; i++) {
     std::string input(argv[i]);
-
     int equalPos = input.find("=");
+
+    if(equalPos < 0)
+      continue;
+
     std::string arg = std::string(input.begin() + 2, input.begin() + equalPos);
     std::string argVal = std::string(input.begin() + 1 + equalPos, input.end());
 
