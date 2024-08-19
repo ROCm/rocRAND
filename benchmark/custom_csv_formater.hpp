@@ -28,7 +28,7 @@ private:
   }
 
   // Function to return an string for the calculated complexity
-  std::string GetBigOString(BigO complexity) {
+  std::string GetBigOString(const BigO complexity) {
     switch (complexity) {
     case oN:
       return "N";
@@ -53,7 +53,7 @@ private:
 
   std::ostream *nullLog = nullptr;
 
-  std::vector<std::string> elements = {
+  std::array<std::string, 12> elements = {
       "engine",           "distribution", "name",           "iterations",
       "real_time",        "cpu_time",     "time_unit",      "bytes_per_second",
       "items_per_second", "label",        "error_occurred", "error_message"};
@@ -125,7 +125,6 @@ void customCSVReporter::PrintRunData(const Run &run) {
   temp.erase(0, engineName.size() + 1);
   temp.erase(0, temp.find(",") + 1);
   std::string disName = std::string(temp.begin(), temp.begin() + temp.find(">"));
-
 
   Out << engineName << ",";
   Out << disName << ",";
