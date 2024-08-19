@@ -117,28 +117,13 @@ void run_benchmark(benchmark::State &state, generate_func_type<T> generate_func,
 
 int main(int argc, char *argv[]) {
 
-  // get the out format and out file name thats being passed into
+  // get paramaters before they are passed into
   // benchmark::Initialize()
   std::string outFormat = "";
-  std::string outFile = "";
   std::string filter = "";
-  for (int i = 1; i < argc; i++) {
-    std::string input(argv[i]);
-    int equalPos = input.find("=");
+  std::string consoleFormat = "";
 
-    if(equalPos < 0)
-      continue;
-
-    std::string arg = std::string(input.begin() + 2, input.begin() + equalPos);
-    std::string argVal = std::string(input.begin() + 1 + equalPos, input.end());
-
-    if (arg == "benchmark_out_format")
-      outFormat = argVal;
-    else if (arg == "benchmark_out")
-      outFile = argVal;
-    else if (arg == "benchmark_filter")
-      filter = argVal;
-  }
+  getFormats(argc, argv, outFormat, filter, consoleFormat);
 
   // Parse argv
   benchmark::Initialize(&argc, argv);
@@ -376,27 +361,19 @@ int main(int argc, char *argv[]) {
     b->Unit(benchmark::kMillisecond);
   }
 
-  if (outFormat == "csv") {
-    std::string spec = (filter == "" || filter == "all") ? "." : filter;
-    std::ofstream output_file;
+  benchmark::BenchmarkReporter *console_reporter =
+      getConsoleReporter(consoleFormat);
+  benchmark::BenchmarkReporter *out_file_reporter =
+      getOutFileReporter(outFormat);
 
-    benchmark::ConsoleReporter console_reporter;
-    benchmark::customCSVReporter csv_reporter;
+  std::string spec = (filter == "" || filter == "all") ? "." : filter;
 
-    auto &Err = console_reporter.GetErrorStream();
-
-    csv_reporter.SetOutputStream(&output_file);
-    csv_reporter.SetErrorStream(&Err);
-
-    benchmark::BenchmarkReporter *console_ptr = &console_reporter;
-    benchmark::BenchmarkReporter *csv_ptr = &csv_reporter;
-
-    benchmark::RunSpecifiedBenchmarks(console_ptr, csv_ptr, spec);
-
-  } else {
-    // Run benchmarks
-    benchmark::RunSpecifiedBenchmarks();
-  }
+  // Run benchmarks
+  if (outFormat == "") // default case
+    benchmark::RunSpecifiedBenchmarks(console_reporter, spec);
+  else
+    benchmark::RunSpecifiedBenchmarks(console_reporter, out_file_reporter,
+                                      spec);
 
   HIP_CHECK(hipStreamDestroy(stream));
 
