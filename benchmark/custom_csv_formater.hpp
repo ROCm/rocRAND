@@ -78,7 +78,7 @@ private:
                                             "cpu_time",
                                             "time_unit",
                                             "bytes_per_second",
-                                            "gigabytes_per_second",
+                                            "throughput_gigabytes_per_second",
                                             "lambda",
                                             "items_per_second",
                                             "label",
