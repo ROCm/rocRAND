@@ -9,9 +9,9 @@ Documentation for rocRAND is available at
 
 * Added host generator for MT19937
 * Support for `rocrand_generate_poisson` in hipGraphs
-* Added engine and distribution columns for csv format in benchmark_rocrand_host_api and 
-  benchmark_rocrand_device_api. To see these new columns set --benchmark_format=csv or
-  --benchmark_out_format=csv --benchmark_out="outName.csv"
+* Added engine, distribution, mpde, throughput_gigabytes_per_second, and lambda columns for csv format in 
+  benchmark_rocrand_host_api and benchmark_rocrand_device_api. To see these new columns set --benchmark_format=csv 
+  or --benchmark_out_format=csv --benchmark_out="outName.csv"
 
 ### Changes
 
