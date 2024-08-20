@@ -69,14 +69,17 @@ private:
 
     std::ostream* nullLog = nullptr;
 
-    std::array<std::string, 12> elements = {"engine",
+    std::array<std::string, 15> elements = {"engine",
                                             "distribution",
+                                            "mode",
                                             "name",
                                             "iterations",
                                             "real_time",
                                             "cpu_time",
                                             "time_unit",
                                             "bytes_per_second",
+                                            "gigabytes_per_second",
+                                            "lambda",
                                             "items_per_second",
                                             "label",
                                             "error_occurred",
@@ -154,16 +157,34 @@ void customCSVReporter::PrintRunData(const Run& run)
     //get the name of the engine and distribution:
 
     std::string temp = run.benchmark_name();
+
+    std::string deviceName = std::string(temp.begin(), temp.begin() + temp.find("<"));
+
     temp.erase(0, temp.find("<") + 1);
 
     std::string engineName = std::string(temp.begin(), temp.begin() + temp.find(","));
 
     temp.erase(0, engineName.size() + 1);
-    temp.erase(0, temp.find(",") + 1);
+
+    std::string mode = "default";
+
+    if(deviceName != "device_kernel")
+    {
+        mode = std::string(temp.begin(), temp.begin() + temp.find(','));
+        temp.erase(0, temp.find(",") + 1);
+    }
     std::string disName = std::string(temp.begin(), temp.begin() + temp.find(">"));
 
-    Out << engineName << ",";
-    Out << disName << ",";
+    std::string lambda = "";
+
+    size_t ePos = disName.find("=");
+    if(ePos <= disName.size())
+    {
+        lambda = std::string(disName.begin() + (ePos + 1), disName.end() - 1);
+        disName.erase(disName.begin() + disName.find("("), disName.end());
+    }
+
+    Out << engineName << "," << disName << "," << mode << ",";
     Out << CsvEscape(run.benchmark_name()) << ",";
     if(run.error_occurred)
     {
@@ -199,6 +220,11 @@ void customCSVReporter::PrintRunData(const Run& run)
         Out << run.counters.at("bytes_per_second");
     }
     Out << ",";
+
+    double gbps = run.counters.at("bytes_per_second") / std::pow(1024, 3);
+
+    Out << gbps << "," << lambda << ",";
+
     if(run.counters.find("items_per_second") != run.counters.end())
     {
         Out << run.counters.at("items_per_second");
