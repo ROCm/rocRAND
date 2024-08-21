@@ -23,10 +23,11 @@
 
 #include <benchmark/benchmark.h>
 
+#include "custom_csv_formater.hpp"
+#include <fstream>
 #include <hip/hip_runtime.h>
-#include <rocrand/rocrand.h>
-
 #include <map>
+#include <rocrand/rocrand.h>
 #include <string>
 #include <vector>
 
@@ -35,6 +36,7 @@ const size_t DEFAULT_RAND_N = 1024 * 1024 * 128;
 #endif
 
 typedef rocrand_rng_type rng_type_t;
+
 template<typename T>
 using generate_func_type = std::function<rocrand_status(rocrand_generator, T*, size_t)>;
 
@@ -128,6 +130,14 @@ void run_benchmark(benchmark::State&      state,
 
 int main(int argc, char* argv[])
 {
+
+    // get paramaters before they are passed into
+    // benchmark::Initialize()
+    std::string outFormat     = "";
+    std::string filter        = "";
+    std::string consoleFormat = "";
+
+    getFormats(argc, argv, outFormat, filter, consoleFormat);
 
     // Parse argv
     benchmark::Initialize(&argc, argv);
@@ -455,14 +465,24 @@ int main(int argc, char* argv[])
             }
         }
     }
-    // Use manual timing
+
     for(auto& b : benchmarks)
     {
         b->UseManualTime();
         b->Unit(benchmark::kMillisecond);
     }
+
+    benchmark::BenchmarkReporter* console_reporter  = getConsoleReporter(consoleFormat);
+    benchmark::BenchmarkReporter* out_file_reporter = getOutFileReporter(outFormat);
+
+    std::string spec = (filter == "" || filter == "all") ? "." : filter;
+
     // Run benchmarks
-    benchmark::RunSpecifiedBenchmarks();
+    if(outFormat == "") // default case
+        benchmark::RunSpecifiedBenchmarks(console_reporter, spec);
+    else
+        benchmark::RunSpecifiedBenchmarks(console_reporter, out_file_reporter, spec);
+
     HIP_CHECK(hipStreamDestroy(stream));
 
     return 0;
