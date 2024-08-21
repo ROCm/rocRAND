@@ -28,7 +28,9 @@
 #include <rocrand/rocrand_kernel.h>
 #include <rocrand/rocrand_mtgp32_11213.h>
 
+#include "custom_csv_formater.hpp"
 #include <algorithm>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <numeric>
@@ -40,8 +42,10 @@
 #endif
 
 template<typename EngineState>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
-    EngineState* states, const unsigned long long seed, const unsigned long long offset)
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
+void init_kernel(EngineState*             states,
+                 const unsigned long long seed,
+                 const unsigned long long offset)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
     EngineState        state;
@@ -50,8 +54,9 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
 }
 
 template<typename EngineState, typename T, typename Generator>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    EngineState* states, T* data, const size_t size, Generator generator)
+__global__
+__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
+void generate_kernel(EngineState* states, T* data, const size_t size, Generator generator)
 {
     const unsigned int state_id = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int stride   = gridDim.x * blockDim.x;
@@ -119,12 +124,13 @@ struct runner
 };
 
 template<typename T, typename Generator>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel(
-    rocrand_state_mtgp32* states, T* data, const size_t size, Generator generator)
+__global__
+__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
+void generate_kernel(rocrand_state_mtgp32* states, T* data, const size_t size, Generator generator)
 {
     const unsigned int state_id = blockIdx.x;
     unsigned int       index    = blockIdx.x * blockDim.x + threadIdx.x;
-    unsigned int       stride   = gridDim.x * blockDim.x;
+    unsigned int stride         = gridDim.x * blockDim.x;
 
     __shared__ rocrand_state_mtgp32 state;
     rocrand_mtgp32_block_copy(&states[state_id], &state);
@@ -191,8 +197,8 @@ struct runner<rocrand_state_mtgp32>
     }
 };
 
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_kernel(
-    rocrand_state_lfsr113* states, const uint4 seed)
+__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
+void init_kernel(rocrand_state_lfsr113* states, const uint4 seed)
 {
     const unsigned int    state_id = blockIdx.x * blockDim.x + threadIdx.x;
     rocrand_state_lfsr113 state;
@@ -255,8 +261,9 @@ struct runner<rocrand_state_lfsr113>
 };
 
 template<typename EngineState, typename SobolType>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_kernel(
-    EngineState* states, SobolType* directions, SobolType offset)
+__global__
+__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
+void init_sobol_kernel(EngineState* states, SobolType* directions, SobolType offset)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
@@ -266,8 +273,12 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_sobol_ker
 }
 
 template<typename EngineState, typename SobolType>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled_sobol_kernel(
-    EngineState* states, SobolType* directions, SobolType* scramble_constants, SobolType offset)
+__global__
+__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
+void init_scrambled_sobol_kernel(EngineState* states,
+                                 SobolType*   directions,
+                                 SobolType*   scramble_constants,
+                                 SobolType    offset)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
@@ -281,8 +292,9 @@ __global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void init_scrambled
 
 // generate_kernel for the normal and scrambled sobol generators
 template<typename EngineState, typename T, typename Generator>
-__global__ __launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE) void generate_sobol_kernel(
-    EngineState* states, T* data, const size_t size, Generator generator)
+__global__
+__launch_bounds__(ROCRAND_DEFAULT_MAX_BLOCK_SIZE)
+void generate_sobol_kernel(EngineState* states, T* data, const size_t size, Generator generator)
 {
     const unsigned int dimension = blockIdx.y;
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
@@ -614,7 +626,9 @@ struct generator_uint : public generator_type
         return "uniform-uint";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand(state);
     }
@@ -630,7 +644,9 @@ struct generator_ullong : public generator_type
         return "uniform-ullong";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand(state);
     }
@@ -646,7 +662,9 @@ struct generator_uniform : public generator_type
         return "uniform-float";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand_uniform(state);
     }
@@ -662,7 +680,9 @@ struct generator_uniform_double : public generator_type
         return "uniform-double";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand_uniform_double(state);
     }
@@ -678,7 +698,9 @@ struct generator_normal : public generator_type
         return "normal-float";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand_normal(state);
     }
@@ -694,7 +716,9 @@ struct generator_normal_double : public generator_type
         return "normal-double";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand_normal_double(state);
     }
@@ -710,7 +734,9 @@ struct generator_log_normal : public generator_type
         return "log-normal-float";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand_log_normal(state, 0.f, 1.f);
     }
@@ -726,7 +752,9 @@ struct generator_log_normal_double : public generator_type
         return "log-normal-double";
     }
 
-    __device__ data_type operator()(Engine* state) const
+    __device__
+    data_type
+        operator()(Engine* state) const
     {
         return rocrand_log_normal_double(state, 0., 1.);
     }
@@ -744,7 +772,9 @@ struct generator_poisson : public generator_type
         return "poisson(lambda=" + stream.str() + ")";
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__
+    data_type
+        operator()(Engine* state)
     {
         return rocrand_poisson(state, lambda);
     }
@@ -774,7 +804,9 @@ struct generator_discrete_poisson : public generator_type
         ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__
+    data_type
+        operator()(Engine* state)
     {
         return rocrand_discrete(state, discrete_distribution);
     }
@@ -814,7 +846,9 @@ struct generator_discrete_custom : public generator_type
         ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
     }
 
-    __device__ data_type operator()(Engine* state)
+    __device__
+    data_type
+        operator()(Engine* state)
     {
         return rocrand_discrete(state, discrete_distribution);
     }
@@ -961,6 +995,14 @@ void add_benchmarks(const benchmark_context&                      ctx,
 
 int main(int argc, char* argv[])
 {
+    // get paramaters before they are passed into
+    // benchmark::Initialize()
+    std::string outFormat     = "";
+    std::string filter        = "";
+    std::string consoleFormat = "";
+
+    getFormats(argc, argv, outFormat, filter, consoleFormat);
+
     benchmark::Initialize(&argc, argv);
 
     cli::Parser parser(argc, argv);
@@ -1045,8 +1087,16 @@ int main(int argc, char* argv[])
         b->Unit(benchmark::kMillisecond);
     }
 
+    benchmark::BenchmarkReporter* console_reporter  = getConsoleReporter(consoleFormat);
+    benchmark::BenchmarkReporter* out_file_reporter = getOutFileReporter(outFormat);
+
+    std::string spec = (filter == "" || filter == "all") ? "." : filter;
+
     // Run benchmarks
-    benchmark::RunSpecifiedBenchmarks();
+    if(outFormat == "") // default case
+        benchmark::RunSpecifiedBenchmarks(console_reporter, spec);
+    else
+        benchmark::RunSpecifiedBenchmarks(console_reporter, out_file_reporter, spec);
     HIP_CHECK(hipStreamDestroy(stream));
 
     return 0;

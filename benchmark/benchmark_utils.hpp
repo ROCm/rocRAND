@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,9 @@
 
 #include <iostream>
 #include <string>
+
+#include "custom_csv_formater.hpp"
+#include <fstream>
 
 #define HIP_CHECK(condition)                                                            \
     do                                                                                  \
@@ -157,6 +160,89 @@ inline size_t next_power2(size_t x)
         power *= 2;
     }
     return power;
+}
+
+inline benchmark::BenchmarkReporter* getConsoleReporter(const std::string format)
+{
+    benchmark::BenchmarkReporter* reporter;
+    if(format == "csv")
+    {
+        static benchmark::customCSVReporter csv_reporter;
+        csv_reporter.SetErrorStream(&std::cout);
+        csv_reporter.SetOutputStream(&std::cout);
+        reporter = &csv_reporter;
+    }
+    else if(format == "json")
+    {
+        static benchmark::customCSVReporter json_reporter;
+        json_reporter.SetErrorStream(&std::cout);
+        json_reporter.SetOutputStream(&std::cout);
+        reporter = &json_reporter;
+    }
+    else
+    {
+        static benchmark::ConsoleReporter terminal_reporter;
+        terminal_reporter.SetErrorStream(&std::cout);
+        terminal_reporter.SetOutputStream(&std::cout);
+        reporter = &terminal_reporter;
+    }
+
+    return reporter;
+}
+
+inline benchmark::BenchmarkReporter* getOutFileReporter(const std::string format)
+{
+    benchmark::BenchmarkReporter* reporter = nullptr;
+    std::ofstream                 output_file;
+    if(format == "csv")
+    {
+        static benchmark::customCSVReporter csv_reporter;
+        csv_reporter.SetOutputStream(&output_file);
+        csv_reporter.SetErrorStream(&output_file);
+        reporter = &csv_reporter;
+    }
+    else if(format == "json")
+    {
+        static benchmark::JSONReporter json_reporter;
+        json_reporter.SetOutputStream(&output_file);
+        json_reporter.SetErrorStream(&output_file);
+        reporter = &json_reporter;
+    }
+    else if(format == "console")
+    {
+        static benchmark::ConsoleReporter console_reporter;
+        console_reporter.SetOutputStream(&output_file);
+        console_reporter.SetErrorStream(&output_file);
+        reporter = &console_reporter;
+    }
+
+    return reporter;
+}
+
+inline void getFormats(const int    argc,
+                       char*        argv[],
+                       std::string& outFormat,
+                       std::string& filter,
+                       std::string& consoleFormat)
+{
+    for(int i = 1; i < argc; i++)
+    {
+        std::string input(argv[i]);
+        int         equalPos = input.find("=");
+
+        if(equalPos < 0)
+            continue;
+
+        std::string arg    = std::string(input.begin() + 2, input.begin() + equalPos);
+        std::string argVal = std::string(input.begin() + 1 + equalPos, input.end());
+
+        if(arg == "benchmark_out_format")
+            outFormat = argVal;
+        else if(arg == "benchmark_filter")
+            filter = argVal;
+        else if(arg == "benchmark_format")
+            consoleFormat = argVal;
+    }
 }
 
 #endif // ROCRAND_BENCHMARK_UTILS_HPP_
