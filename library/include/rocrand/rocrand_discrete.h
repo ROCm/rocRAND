@@ -40,6 +40,13 @@
 
 #include "rocrand/rocrand_discrete_types.h"
 
+// On certain architectures such as NAVI2 and NAVI3, double arithmetic is significantly slower.
+// In such cases we want to prefer the CDF method over the alias method.
+// This macro is undefined at the end of the file.
+#if defined(__HIP_DEVICE_COMPILE__) && (defined(__GFX10__) || defined(__GFX11__))
+    #define ROCRAND_PREFER_CDF_OVER_ALIAS
+#endif
+
 // Alias method
 //
 // Walker, A. J.
@@ -281,7 +288,11 @@ __forceinline__ __device__ unsigned int
     rocrand_discrete(rocrand_state_mtgp32*               state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
+#ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+#else
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
+#endif
 }
 
 /**
@@ -376,7 +387,11 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_lfsr113*              state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
+#ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+#else
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
+#endif
 }
 
 /**
@@ -395,7 +410,11 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry2x32_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
+#ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+#else
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
+#endif
 }
 
 /**
@@ -414,7 +433,11 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry2x64_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
+#ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+#else
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
+#endif
 }
 
 /**
@@ -433,7 +456,11 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry4x32_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
+#ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+#else
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
+#endif
 }
 
 /**
@@ -452,9 +479,18 @@ __forceinline__ __device__ __host__ unsigned int
     rocrand_discrete(rocrand_state_threefry4x64_20*      state,
                      const rocrand_discrete_distribution discrete_distribution)
 {
+#ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
+    return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
+#else
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
+#endif
 }
 
 /** @} */ // end of group rocranddevice
+
+// Undefine the macro that may be defined at the top of the file!
+#if defined(ROCRAND_PREFER_CDF_OVER_ALIAS)
+    #undef ROCRAND_PREFER_CDF_OVER_ALIAS
+#endif
 
 #endif // ROCRAND_DISCRETE_H_
