@@ -108,12 +108,8 @@ if(GPU_TARGETS STREQUAL "all")
   set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
 endif()
 
-if(NOT WIN32)
-  include(cmake/VerifyCompiler.cmake)
-else()
-  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} $ENV{ROCM_PATH}/hip $ENV{ROCM_PATH}/llvm)
-  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} $ENV{ROCM_PATH})
-endif()
+# Verify the compiler settings and include the HIP CMake package
+include(cmake/VerifyCompiler.cmake)
 
 # Build option to disable -Werror
 option(DISABLE_WERROR "Disable building with Werror" ON)
