@@ -8,11 +8,11 @@ subtrees:
   - caption: Conceptual
     entries:
     - file: conceptual/programmers-guide
-    - file: conceptual/data-type-support
     - file: conceptual/curand-compatibility
     - file: conceptual/dynamic_ordering_configuration
   - caption: API reference
     entries:
+    - file: api-reference/data-type-support
     - file: api-reference/cpp-api
     - file: api-reference/python-api
     - file: fortran-api-reference
