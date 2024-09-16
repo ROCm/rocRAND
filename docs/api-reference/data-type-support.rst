@@ -4,7 +4,7 @@
 
 .. _data-type-support:
 
-Data type support
+rocRAND data type support
 ******************************************
 
 Host API
