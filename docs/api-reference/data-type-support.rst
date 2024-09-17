@@ -1,4 +1,10 @@
-Data type support
+.. meta::
+   :description: rocRAND documentation and API reference library
+   :keywords: rocRAND, ROCm, API, documentation, cuRAND
+
+.. _data-type-support:
+
+rocRAND data type support
 ******************************************
 
 Host API

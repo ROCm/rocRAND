@@ -36,6 +36,7 @@ The documentation is structured as follows:
 
   .. grid-item-card:: API reference
 
+    * :doc:`rocRAND data type support <api-reference/data-type-support>`
     * :ref:`cpp-api`
     * :ref:`python-api`
     * :doc:`API library <doxygen/html/index>`
