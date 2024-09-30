@@ -15,8 +15,12 @@ def runCompileCommand(platform, project, jobName, settings)
     //Set CI node's gfx arch as target if PR, otherwise use default targets of the library
     String amdgpuTargets = env.BRANCH_NAME.startsWith('PR-') ? '-DAMDGPU_TARGETS=\$gfx_arch' : ''
 
+    String xnackToggle = settings.addressSanitizer ? "export HSA_XNACK=1" : ''
+
     def command = """#!/usr/bin/env bash
                 set -x
+                ${xnackToggle}
+                rocminfo
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
