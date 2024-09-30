@@ -25,7 +25,7 @@ def runCompileCommand(platform, project, jobName, settings)
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
-                ${cmake} --toolchain=toolchain-linux.cmake ${buildTypeArg} ${buildStatic} ${amdgpuTargets} ${codeCovFlag} ${asanFlag} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
+                ${cmake} --toolchain=toolchain-linux.cmake ${buildTypeArg} ${buildStatic} -DAMDGPU_TARGETS=gfx942:xnack+ ${codeCovFlag} ${asanFlag} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
                 make -j\$(nproc)
                 """
 
