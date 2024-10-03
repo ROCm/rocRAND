@@ -44,6 +44,8 @@ namespace test_utils
 
             inline void createAndLaunchGraph(hipStream_t & stream, const bool launchGraph=true, const bool sync=true){
                 
+                endStreamCapture(stream);
+                
                 HIP_CHECK_NON_VOID(hipGraphInstantiate(&graph_instance, graph, nullptr, nullptr, 0));
 
                 // Optionally launch the graph
