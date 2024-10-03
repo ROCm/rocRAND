@@ -33,13 +33,17 @@ namespace test_utils
             hipGraph_t graph;
             hipGraphExec_t graph_instance;
         public:
-            void createGraph(hipStream_t & stream, const bool beginCapture = true, const bool launchGraph=false, const bool sync=false){
-                if (beginCapture)
-                    HIP_CHECK_NON_VOID(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
-                
-                // End the capture
-                HIP_CHECK_NON_VOID(hipStreamEndCapture(stream, &graph));
 
+            inline void startStreamCapture(hipStream_t & stream){
+                HIP_CHECK_NON_VOID(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
+            }
+
+            inline void endStreamCapture(hipStream_t & stream){
+                HIP_CHECK_NON_VOID(hipStreamEndCapture(stream, &graph));
+            }
+
+            inline void createAndLaunchGraph(hipStream_t & stream, const bool launchGraph=false, const bool sync=false){
+                
                 HIP_CHECK_NON_VOID(hipGraphInstantiate(&graph_instance, graph, nullptr, nullptr, 0));
 
                 // Optionally launch the graph
@@ -62,8 +66,10 @@ namespace test_utils
                 // Destroy the old graph and instance
                 cleanupGraphHelper();
 
-                // Create a new graph and optionally begin capture
-                createGraph(stream, beginCapture);
+                if(beginCapture)
+                    startStreamCapture(stream);
+
+                createAndLaunchGraph(stream, true, true);
             }
 
             inline void launchGraphHelper(hipStream_t& stream,const bool sync=false)
