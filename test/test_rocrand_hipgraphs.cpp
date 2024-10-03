@@ -42,7 +42,7 @@ void test_float(std::function<rocrand_status(rocrand_generator, float*, size_t, 
     ROCRAND_CHECK(
         generate_fn(generator, data, 1, mean, stddev)
     );
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
     gHelper.resetGraphHelper(stream);
 
     // Any alignment
@@ -50,14 +50,14 @@ void test_float(std::function<rocrand_status(rocrand_generator, float*, size_t, 
         generate_fn(generator, data+1, 2, mean, stddev)
     );
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
     gHelper.resetGraphHelper(stream);
 
     ROCRAND_CHECK(
         generate_fn(generator, data, size, mean, stddev)
     );
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
@@ -117,7 +117,7 @@ TEST_P(rocrand_hipgraph_generate_tests, uniform_float_test)
         rocrand_generate_uniform(generator, data, 1)
     );
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
     gHelper.resetGraphHelper(stream);
 
     // Any alignment
@@ -125,14 +125,14 @@ TEST_P(rocrand_hipgraph_generate_tests, uniform_float_test)
         rocrand_generate_uniform(generator, data+1, 2)
     );
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
     gHelper.resetGraphHelper(stream);
 
     ROCRAND_CHECK(
         rocrand_generate_uniform(generator, data, size)
     );
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
@@ -165,18 +165,18 @@ TEST_P(rocrand_hipgraph_generate_tests, poisson_test)
     // Any sizes
     ROCRAND_CHECK(rocrand_generate_poisson(generator, data, 1, 10.0));
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
     gHelper.resetGraphHelper(stream);
 
     // Any alignment
     ROCRAND_CHECK(rocrand_generate_poisson(generator, data + 1, 2, 500.0));
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
     gHelper.resetGraphHelper(stream);
 
     ROCRAND_CHECK(rocrand_generate_poisson(generator, data, size, 5000.0));
 
-    gHelper.createAndLaunchGraph(stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));

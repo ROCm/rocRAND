@@ -42,7 +42,7 @@ namespace test_utils
                 HIP_CHECK_NON_VOID(hipStreamEndCapture(stream, &graph));
             }
 
-            inline void createAndLaunchGraph(hipStream_t & stream, const bool launchGraph=false, const bool sync=false){
+            inline void createAndLaunchGraph(hipStream_t & stream, const bool launchGraph=true, const bool sync=true){
                 
                 HIP_CHECK_NON_VOID(hipGraphInstantiate(&graph_instance, graph, nullptr, nullptr, 0));
 
@@ -69,7 +69,7 @@ namespace test_utils
                 if(beginCapture)
                     startStreamCapture(stream);
 
-                createAndLaunchGraph(stream, true, true);
+                createAndLaunchGraph(stream);
             }
 
             inline void launchGraphHelper(hipStream_t& stream,const bool sync=false)
