@@ -47,13 +47,13 @@ def runTestCommand (platform, project, settings)
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
+                make -j4
+                ${LD_PATH}
+                ldd ctest
                 export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi:/opt/rocm/llvm/lib/clang/18/lib/linux:/opt/rocm/lib/asan:/opt/rocm/libexec/rocm_smi
                 export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
                 export PATH=/opt/rocm/:/opt/rocm/llvm/bin/
                 export HSA_XNACK=1
-                make -j4
-                ${LD_PATH}
-                ldd ctest
                 ${sudo} ${testCommand}
             """
 
