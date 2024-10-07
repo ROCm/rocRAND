@@ -24,7 +24,7 @@ def runCompileCommand(platform, project, jobName, settings)
                 cd ${project.paths.project_build_prefix}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
-                ./install -ci --address-sanitizer
+                sudo ./install -ci --address-sanitizer
                 """
 
     platform.runCommand(this, command)
