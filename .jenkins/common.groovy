@@ -23,6 +23,7 @@ def runCompileCommand(platform, project, jobName, settings)
                 export "CMAKE_CXX_COMPILER=/opt/rocm/bin/amdclang++"
                 rocminfo
                 cd ${project.paths.project_build_prefix}
+                mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
                 ${cmake} --toolchain=toolchain-linux.cmake ${buildTypeArg} ${buildStatic} -DAMDGPU_TARGETS=gfx942:xnack+ ${codeCovFlag} ${asanFlag} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
