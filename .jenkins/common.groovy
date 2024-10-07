@@ -50,7 +50,7 @@ def runTestCommand (platform, project, settings)
                 make -j4
                 ${LD_PATH}
                 ldd ctest
-                export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi:/opt/rocm/llvm/lib/clang/18/lib/linux:/opt/rocm/lib/asan:/opt/rocm/libexec/rocm_smi
+                export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi:/opt/rocm/llvm/lib/clang/18/lib/linux:/opt/rocm/lib:/opt/rocm/libexec/rocm_smi
                 export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
                 export PATH=/opt/rocm/:/opt/rocm/llvm/bin/
                 export HSA_XNACK=1
