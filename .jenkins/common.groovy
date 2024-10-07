@@ -20,6 +20,7 @@ def runCompileCommand(platform, project, jobName, settings)
     def command = """#!/usr/bin/env bash
                 set -x
                 ${xnackToggle}
+                export "CMAKE_CXX_COMPILER=/opt/rocm/bin/amdclang++"
                 rocminfo
                 export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi:/opt/rocm/llvm/lib/clang/18/lib/linux:/opt/rocm/lib/asan:/opt/rocm/libexec/rocm_smi
                 export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
@@ -28,7 +29,8 @@ def runCompileCommand(platform, project, jobName, settings)
                 cd ${project.paths.project_build_prefix}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
-                sudo ./install -ci --address-sanitizer
+                ${cmake} --toolchain=toolchain-linux.cmake ${buildTypeArg} ${buildStatic} -DAMDGPU_TARGETS=gfx942:xnack+ ${codeCovFlag} ${asanFlag} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
+                make -j\$(nproc)
                 """
 
     platform.runCommand(this, command)
