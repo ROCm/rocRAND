@@ -22,7 +22,7 @@ def runCompileCommand(platform, project, jobName, settings)
                 ${xnackToggle}
                 rocminfo
                 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/llvm/lib/clang/18/lib/linux
-                export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib/asan
+                export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
                 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/libexec/rocm_smi
                 export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
                 export PATH=/opt/rocm/llvm/bin/:$PATH
@@ -52,7 +52,7 @@ def runTestCommand (platform, project, settings)
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
                 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/llvm/lib/clang/18/lib/linux
-                export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib/asan
+                export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
                 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/libexec/rocm_smi
                 export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
                 export PATH=/opt/rocm/llvm/bin/:$PATH
