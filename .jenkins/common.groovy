@@ -21,6 +21,7 @@ def runCompileCommand(platform, project, jobName, settings)
                 set -x
                 ${xnackToggle}
                 rocminfo
+                cd ${project.paths.project_build_prefix}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
                 ./install -ci --address-sanitizer
@@ -45,6 +46,7 @@ def runTestCommand (platform, project, settings)
                 cd ${project.paths.project_build_prefix}/build/release
                 make -j4
                 ${LD_PATH}
+                ldd ctest
                 ${sudo} ${testCommand}
             """
 
