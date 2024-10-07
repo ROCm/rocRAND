@@ -22,10 +22,6 @@ def runCompileCommand(platform, project, jobName, settings)
                 ${xnackToggle}
                 export "CMAKE_CXX_COMPILER=/opt/rocm/bin/amdclang++"
                 rocminfo
-                export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi:/opt/rocm/llvm/lib/clang/18/lib/linux:/opt/rocm/lib/asan:/opt/rocm/libexec/rocm_smi
-                export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
-                export PATH=/opt/rocm/:/opt/rocm/llvm/bin/
-                export HSA_XNACK=1
                 cd ${project.paths.project_build_prefix}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
                 ${auxiliary.gfxTargetParser()}
