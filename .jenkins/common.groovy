@@ -20,6 +20,7 @@ def runCompileCommand(platform, project, jobName, settings)
     def command = """#!/usr/bin/env bash
                 set -x
                 ${xnackToggle}
+                export "CMAKE_CXX_COMPILER=/opt/rocm/bin/amdclang++"
                 rocminfo
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
@@ -48,6 +49,7 @@ def runTestCommand (platform, project, settings)
                 cd ${project.paths.project_build_prefix}/build/release
                 make -j4
                 ${LD_PATH}
+                ldd rocRAND
                 ${sudo} ${testCommand}
             """
 
