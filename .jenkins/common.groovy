@@ -21,12 +21,9 @@ def runCompileCommand(platform, project, jobName, settings)
                 set -x
                 ${xnackToggle}
                 rocminfo
-                export LD_LIBRARY_PATH=:/opt/rocm/llvm/lib/clang/18/lib/linux
-                export LD_LIBRARY_PATH=:/opt/rocm/lib
-                export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi
+                export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi:/opt/rocm/llvm/lib/clang/18/lib/linux:/opt/rocm/lib/asan:/opt/rocm/libexec/rocm_smi
                 export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
-                export PATH=/opt/rocm/llvm/bin
-                export PATH=/opt/rocm
+                export PATH=/opt/rocm/:/opt/rocm/llvm/bin/
                 export HSA_XNACK=1
                 cd ${project.paths.project_build_prefix}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
@@ -51,12 +48,9 @@ def runTestCommand (platform, project, settings)
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
-                export LD_LIBRARY_PATH=:/opt/rocm/llvm/lib/clang/18/lib/linux
-                export LD_LIBRARY_PATH=:/opt/rocm/lib
-                export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi
+                export LD_LIBRARY_PATH=:/opt/rocm/libexec/rocm_smi:/opt/rocm/llvm/lib/clang/18/lib/linux:/opt/rocm/lib/asan:/opt/rocm/libexec/rocm_smi
                 export ASAN_SYMBOLIZER_PATH=/opt/rocm/llvm/bin/llvm-symbolizer
-                export PATH=/opt/rocm/llvm/bin/:
-                export PATH=/opt/rocm/:
+                export PATH=/opt/rocm/:/opt/rocm/llvm/bin/
                 export HSA_XNACK=1
                 make -j4
                 ${LD_PATH}
