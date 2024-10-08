@@ -14,7 +14,9 @@ def runCI =
 
     def commonGroovy
 
-    def settings = [addressSanitizer: true]
+    def settings = [
+    addressSanitizer: true
+    settings.cmakeDefines["CMAKE_CXX_COMPILER"]="/opt/rocm/bin/amdclang++"]
 
     boolean formatCheck = false
      
