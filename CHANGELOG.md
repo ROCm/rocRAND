@@ -3,13 +3,13 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-## (Unreleased) rocRAND-3.1.1 for ROCm 6.2.4
+## rocRAND-3.1.1 for ROCm 6.2.4
 
 ### Additions
 
 * GFX1151 Support
 
-## (Unreleased) rocRAND-3.1.0 for ROCm 6.2.0
+## rocRAND-3.1.0 for ROCm 6.2.0
 
 ### Additions
 
@@ -83,7 +83,7 @@ Documentation for rocRAND is available at
 ### Known issues
 - SOBOL64 and SCRAMBLED_SOBOL64 generate poisson-distributed `unsigned long long int` numbers instead of `unsigned int`. This will be fixed in the next major release.
 
-## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
+## rocRAND-3.0.0 for ROCm 6.0.0
 
 ### Additions
 
