@@ -57,7 +57,7 @@ def runTestCommand (platform, project, settings)
                 export PATH=/opt/rocm/llvm/bin/:\$PATH
                 export PATH=/opt/rocm/:\$PATH
                 export HSA_XNACK=1
-                ASAN_OPTIONS=detect_leaks=0
+                export ASAN_OPTIONS=detect_leaks=0
                 ${sudo} ${testCommand}
             """
 
