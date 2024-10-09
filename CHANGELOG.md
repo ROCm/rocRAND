@@ -5,9 +5,9 @@ Documentation for rocRAND is available at
 
 ## rocRAND-3.1.1 for ROCm 6.2.4
 
-### Additions
+### Added
 
-* GFX1151 Support
+* Support for the gfx1151 architecture
 
 ## rocRAND-3.1.0 for ROCm 6.2.0
 
