@@ -7,6 +7,7 @@ Documentation for rocRAND is available at
 
 ### Additions
 
+* GFX1034 Support
 * GFX1151 Support
 
 ## rocRAND-3.1.0 for ROCm 6.2.0
