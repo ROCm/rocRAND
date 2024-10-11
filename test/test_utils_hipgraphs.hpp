@@ -34,15 +34,18 @@ namespace test_utils
             hipGraphExec_t graph_instance;
         public:
 
-            inline void startStreamCapture(hipStream_t & stream){
+            inline void startStreamCapture(hipStream_t & stream)
+            {
                 HIP_CHECK_NON_VOID(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
             }
 
-            inline void endStreamCapture(hipStream_t & stream){
+            inline void endStreamCapture(hipStream_t & stream)
+            {
                 HIP_CHECK_NON_VOID(hipStreamEndCapture(stream, &graph));
             }
 
-            inline void createAndLaunchGraph(hipStream_t & stream, const bool launchGraph=true, const bool sync=true){
+            inline void createAndLaunchGraph(hipStream_t & stream, const bool launchGraph=true, const bool sync=true)
+            {
                 
                 endStreamCapture(stream);
                 
