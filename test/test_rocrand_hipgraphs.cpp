@@ -43,7 +43,7 @@ void test_float(std::function<rocrand_status(rocrand_generator, float*, size_t, 
         generate_fn(generator, data, 1, mean, stddev)
     );
     gHelper.createAndLaunchGraph(stream);
-    gHelper.resetGraphHelper(stream);
+    gHelper.resetGraphHelper(stream); 
 
     // Any alignment
     ROCRAND_CHECK(

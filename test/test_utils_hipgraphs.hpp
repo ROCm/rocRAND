@@ -73,8 +73,6 @@ namespace test_utils
 
                 if(beginCapture)
                     startStreamCapture(stream);
-
-                createAndLaunchGraph(stream);
             }
 
             inline void launchGraphHelper(hipStream_t& stream,const bool sync=false)
