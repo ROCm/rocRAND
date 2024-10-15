@@ -5,15 +5,15 @@ Documentation for rocRAND is available at
 
 ## (Unreleased) rocRAND-3.2.0 for ROCm 6.3.0
 
-### Additions
+### Added
 
 * Added host generator for MT19937
 * Support for `rocrand_generate_poisson` in hipGraphs
-* Added engine, distribution, mode, throughput_gigabytes_per_second, and lambda columns for csv format in 
-  benchmark_rocrand_host_api and benchmark_rocrand_device_api. To see these new columns set --benchmark_format=csv 
-  or --benchmark_out_format=csv --benchmark_out="outName.csv"
+* Added engine, distribution, mode, throughput_gigabytes_per_second, and lambda columns for the csv format in 
+  `benchmark_rocrand_host_api` and `benchmark_rocrand_device_api`. To see these new columns, set `--benchmark_format=csv` 
+  or `--benchmark_out_format=csv --benchmark_out="outName.csv"`.
 
-### Changes
+### Changed
 
 * `rocrand_discrete` for MTGP32, LFSR113 and ThreeFry generators now uses the alias method, which is faster than binary search in CDF.
 
