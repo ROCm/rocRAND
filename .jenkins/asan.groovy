@@ -8,14 +8,14 @@ def runCI =
 {
     nodeDetails, jobName->
     
-    def prj = new rocProject('rocRAND', 'PreCheckin')
+    def prj = new rocProject('rocRAND', 'address-sanitizer')
 
     def nodes = new dockerNodes(nodeDetails, jobName, prj)
 
     def commonGroovy
 
-    def settings = [:]
-
+    def settings = [addressSanitizer: true]
+    
     boolean formatCheck = false
      
     def compileCommand =
