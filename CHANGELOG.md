@@ -17,7 +17,7 @@ Documentation for rocRAND is available at
 
 * `rocrand_discrete` for MTGP32, LFSR113 and ThreeFry generators now uses the alias method, which is faster than binary search in CDF.
 
-## rocRAND 3.1.1 for ROCm 6.2.0
+## rocRAND 3.1.1 for ROCm 6.2.4
 
 ## Fixes
 
