@@ -26,8 +26,8 @@ split into a separate library. As of version 6.0, hipRAND can no longer be built
 
 ## Documentation
 
-Documentation for rocRAND is available at
-[https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
+> [!NOTE]
+> The published rocRAND documentation is available at [rocRAND](https://rocm.docs.amd.com/projects/rocRAND/en/latest/) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the rocRAND/docs folder of this repository. As with all ROCm projects, the documentation is open source. For more information, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
 
 To build documentation locally, use the following code:
 
