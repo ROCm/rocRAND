@@ -3,7 +3,7 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-## (Unreleased) rocRAND-3.2.0 for ROCm 6.3.0
+## rocRAND 3.2.0 for ROCm 6.3.0
 
 ### Added
 
@@ -17,7 +17,7 @@ Documentation for rocRAND is available at
 
 * `rocrand_discrete` for MTGP32, LFSR113 and ThreeFry generators now uses the alias method, which is faster than binary search in CDF.
 
-## (Unreleased) rocRAND-3.1.1 for ROCm 6.2.0
+## rocRAND 3.1.1 for ROCm 6.2.0
 
 ## Fixes
 
@@ -25,7 +25,7 @@ Documentation for rocRAND is available at
   when using python version thats older than 3.11
 * Fixed low random sequence quality of `ROCRAND_RNG_PSEUDO_THREEFRY2_64_20` and `ROCRAND_RNG_PSEUDO_THREEFRY4_64_20`.
 
-## (Unreleased) rocRAND-3.1.0 for ROCm 6.2.0
+## rocRAND 3.1.0 for ROCm 6.2.0
 
 ### Additions
 
