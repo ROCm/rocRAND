@@ -34,34 +34,34 @@ void test_float(std::function<rocrand_status(rocrand_generator, float*, size_t, 
     HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     rocrand_set_stream(generator, stream);
 
-    hipGraphExec_t graph_instance;
-    hipGraph_t graph = test_utils::createGraphHelper(stream);
+    test_utils::GraphHelper gHelper;
+
+    gHelper.startStreamCapture(stream);
 
     // Any sizes
     ROCRAND_CHECK(
         generate_fn(generator, data, 1, mean, stddev)
     );
-
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
-    test_utils::resetGraphHelper(graph, graph_instance, stream);
+    gHelper.createAndLaunchGraph(stream);
+    gHelper.resetGraphHelper(stream); 
 
     // Any alignment
     ROCRAND_CHECK(
         generate_fn(generator, data+1, 2, mean, stddev)
     );
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
-    test_utils::resetGraphHelper(graph, graph_instance, stream);
+    gHelper.createAndLaunchGraph(stream);
+    gHelper.resetGraphHelper(stream);
 
     ROCRAND_CHECK(
         generate_fn(generator, data, size, mean, stddev)
     );
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
-    test_utils::cleanupGraphHelper(graph, graph_instance);
+    gHelper.cleanupGraphHelper();
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
@@ -109,34 +109,34 @@ TEST_P(rocrand_hipgraph_generate_tests, uniform_float_test)
     HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     rocrand_set_stream(generator, stream);
     
-    hipGraphExec_t graph_instance;
-    hipGraph_t graph = test_utils::createGraphHelper(stream);
+    test_utils::GraphHelper gHelper;
+    gHelper.startStreamCapture(stream);
 
     // Any sizes
     ROCRAND_CHECK(
         rocrand_generate_uniform(generator, data, 1)
     );
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
-    test_utils::resetGraphHelper(graph, graph_instance, stream);
+    gHelper.createAndLaunchGraph(stream);
+    gHelper.resetGraphHelper(stream);
 
     // Any alignment
     ROCRAND_CHECK(
         rocrand_generate_uniform(generator, data+1, 2)
     );
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
-    test_utils::resetGraphHelper(graph, graph_instance, stream);
+    gHelper.createAndLaunchGraph(stream);
+    gHelper.resetGraphHelper(stream);
 
     ROCRAND_CHECK(
         rocrand_generate_uniform(generator, data, size)
     );
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
-    test_utils::cleanupGraphHelper(graph, graph_instance);
+    gHelper.cleanupGraphHelper();
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
@@ -159,28 +159,28 @@ TEST_P(rocrand_hipgraph_generate_tests, poisson_test)
     HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     rocrand_set_stream(generator, stream);
 
-    hipGraphExec_t graph_instance;
-    hipGraph_t     graph = test_utils::createGraphHelper(stream);
+    test_utils::GraphHelper gHelper;
+    gHelper.startStreamCapture(stream);
 
     // Any sizes
     ROCRAND_CHECK(rocrand_generate_poisson(generator, data, 1, 10.0));
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
-    test_utils::resetGraphHelper(graph, graph_instance, stream);
+    gHelper.createAndLaunchGraph(stream);
+    gHelper.resetGraphHelper(stream);
 
     // Any alignment
     ROCRAND_CHECK(rocrand_generate_poisson(generator, data + 1, 2, 500.0));
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
-    test_utils::resetGraphHelper(graph, graph_instance, stream);
+    gHelper.createAndLaunchGraph(stream);
+    gHelper.resetGraphHelper(stream);
 
     ROCRAND_CHECK(rocrand_generate_poisson(generator, data, size, 5000.0));
 
-    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    gHelper.createAndLaunchGraph(stream);
 
     HIP_CHECK(hipFree(data));
     ROCRAND_CHECK(rocrand_destroy_generator(generator));
-    test_utils::cleanupGraphHelper(graph, graph_instance);
+    gHelper.cleanupGraphHelper();
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
