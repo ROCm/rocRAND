@@ -89,6 +89,8 @@ TEST(rocrand_config_dispatch_tests, host_matches_device)
 
     ASSERT_NE(host_arch, rocrand_impl::host::target_arch::invalid);
     ASSERT_EQ(host_arch, device_arch);
+
+    HIP_CHECK(hipFree(device_arch_ptr));
 }
 
 TEST(rocrand_config_dispatch_tests, parse_common_architectures)
