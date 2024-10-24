@@ -8,7 +8,7 @@ Documentation for rocRAND is available at
 
 ### Added
 * rtest.py, a python script to run unit tests
-  * added a smoke test option. Smoke tests can now be ran with python3 rtest.py -t/--test smoke
+  * added a smoke test option. To run the smoke tests, use `python3 rtest.py -t/--test smoke`.
 
 
 ## rocRAND 3.2.0 for ROCm 6.3.0
