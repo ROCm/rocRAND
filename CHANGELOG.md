@@ -3,6 +3,15 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
+
+## (Unreleased) rocRAND 3.2.0 for ROCm 6.4
+
+### Added
+* rtest.py, a python script to run unit tests
+  * added a smoke test option. To run the smoke tests, use `python3 rtest.py -t/--test smoke`.
+  * added emulation test option. I.e `python3 -e/--emulation=smoke`
+
+
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
 ### Added
