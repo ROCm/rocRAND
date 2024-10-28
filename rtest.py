@@ -31,9 +31,9 @@ def parse_args():
     Checks build arguments
     """)
     parser.add_argument('-e', '--emulation', required=False, default="",
-                        help='Run emulation test sets (optional, eg.smoke). At least one of -e or -t must be set')
+                        help='Test set to run from rtest.xml (optional, eg.smoke). At least one but not both of -e or -t must be set')
     parser.add_argument('-t', '--test', required=False, default="", 
-                        help='Test set to run from rtest.xml (optional, e.g. osdb). At least one of -e or -t must be set')
+                        help='Test set to run from rtest.xml (optional, e.g. osdb). At least one but not both of -e or -t must be set')
     parser.add_argument('-g', '--debug', required=False, default=False,  action='store_true',
                         help='Test Debug build (optional, default: false)')
     parser.add_argument('-o', '--output', type=str, required=False, default="xml", 
@@ -250,7 +250,9 @@ def batch(script, xml):
                 sets = test.getAttribute('sets')
                 runset = sets.split(',')
 
-                assert(args.test != '' or args.emulation != '')
+                A, B = args.test != '', args.emulation != ''
+                if not (A ^ B):
+                    raise ValueError('At least one but not both of -e/--emulation or -t/--test must be set')
 
                 if args.test in runset:
                     for run in test.getElementsByTagName('run'):
