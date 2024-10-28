@@ -3,6 +3,13 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
+## (Unreleased) rocThrust 3.2.0 for ROCm 6.4.0
+
+### Changes
+  * Updated the default value for -a argument from rmake.py to 'gfx906:xnack-,gfx1030,gfx1100,gfx1101,gfx1102,gfx1151,gfx1200,gfx1201'
+### Fixes
+  * Fixed an issue in rmake.py where the list storing cmake options would contain individual characters instead of full string of option
+
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
 ### Added
