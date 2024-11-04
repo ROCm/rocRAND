@@ -13,7 +13,8 @@ Documentation for rocRAND is available at
 * Added `--emulation` option for `rtest.py`
 
 ### Changed
-* `--test|-t` no longer a required flag for `rtest.py`, instead user can use either `--emulation|-e` or `--test|-t` but not both
+
+* `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
 
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
