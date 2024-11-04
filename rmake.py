@@ -114,15 +114,12 @@ def config_cmd():
         else:
           cmake_executable = "cmake"
         toolchain = "toolchain-linux.cmake"
-        cmake_platform_opts = f"-DROCM_DIR:PATH={rocm_path} -DCPACK_PACKAGING_INSTALL_PREFIX={rocm_path}"
+        cmake_platform_opts = [f"-DROCM_DIR:PATH={rocm_path}", f"-DCPACK_PACKAGING_INSTALL_PREFIX={rocm_path}"]
 
     tools = f"-DCMAKE_TOOLCHAIN_FILE={toolchain}"
     cmake_options.append( tools )
 
-    if os.name == 'nt':
-        cmake_options.extend( cmake_platform_opts)
-    else:
-        cmake_options += cmake_platform_opts.split()
+    cmake_options.extend( cmake_platform_opts)
 
 
   # build type
