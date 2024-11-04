@@ -7,9 +7,10 @@ Documentation for rocRAND is available at
 ## (Unreleased) rocRAND 3.2.0 for ROCm 6.4
 
 ### Added
-* Added smoke test options, which runs a subset of the unit tests and ensuring that less than 2gb of VRAM will be used
-  * Smoke tests can be ran with `[--emulation|-e|--test|-t]=smoke`
-* Added `--emulation` option added for `rtest.py`
+
+* Added smoke test options, which runs a subset of the unit tests and ensures that less than 2gb of VRAM will be used
+  * Smoke tests can be run using `[--emulation|-e|--test|-t]=smoke`
+* Added `--emulation` option for `rtest.py`
 
 ### Changed
 * `--test|-t` no longer a required flag for `rtest.py`, instead user can use either `--emulation|-e` or `--test|-t` but not both
