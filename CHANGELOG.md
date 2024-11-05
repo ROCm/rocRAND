@@ -21,7 +21,7 @@ Documentation for rocRAND is available at
 ## rocRAND 3.1.1 for ROCm 6.2.4
 
 ## Fixes
-* Fixed an issue in `rmake.py` where the list storing cmake options would contain individual characters instead of full string of option
+* Fixed an issue in `rmake.py` where the list storing cmake options would contain individual characters instead of a full string of options.
 * Fixed " unknown extension ?>" issue in scripts/config-tuning/select_best_config.py 
   when using python version thats older than 3.11
 * Fixed low random sequence quality of `ROCRAND_RNG_PSEUDO_THREEFRY2_64_20` and `ROCRAND_RNG_PSEUDO_THREEFRY4_64_20`.
