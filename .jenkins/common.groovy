@@ -11,7 +11,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String buildStatic = staticLibrary ? '-DBUILD_SHARED_LIBS=OFF' : '-DBUILD_SHARED_LIBS=ON'
     String codeCovFlag = codeCoverage ? '-DCODE_COVERAGE=ON' : ''
     String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
-    String cmakePrefixPath = '-DCMAKE_PREFIX_PATH=/opt/rocm;/opt/rocm/llvm;/opt/rocm/bin'
+    String cmakePrefixPath = '-DCMAKE_PREFIX_PATH="/opt/rocm;/opt/rocm/llvm;/opt/rocm/bin"'
     //Set CI node's gfx arch as target if PR, otherwise use default targets of the library
     String amdgpuTargets = env.BRANCH_NAME.startsWith('PR-') ? '-DAMDGPU_TARGETS=\$gfx_arch' : ''
 
