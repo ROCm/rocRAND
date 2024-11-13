@@ -3,6 +3,19 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
+
+## (Unreleased) rocRAND 3.2.0 for ROCm 6.4
+
+### Added
+
+* Added smoke test options, which runs a subset of the unit tests and ensures that less than 2gb of VRAM will be used
+  * Smoke tests can be run using `[--emulation|-e|--test|-t]=smoke`
+* Added `--emulation` option for `rtest.py`
+
+### Changed
+
+* `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
+
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
 ### Added
