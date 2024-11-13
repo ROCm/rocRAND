@@ -7,7 +7,8 @@ Documentation for rocRAND is available at
 ## (Unreleased) rocRAND 3.2.0 for ROCm 6.4
 
 ### Added
-
+* Added regression tests to `rtest.py`. Regression tests are a subset of tests that caused hardware problems for past emulation environments.
+  * Can be run with `python rtest.py [--emulation|-e|--test|-t]=regression`
 * Added smoke test options, which runs a subset of the unit tests and ensures that less than 2gb of VRAM will be used
   * Smoke tests can be run using `[--emulation|-e|--test|-t]=smoke`
 * Added `--emulation` option for `rtest.py`
