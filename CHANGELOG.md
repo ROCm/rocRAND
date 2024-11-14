@@ -9,7 +9,7 @@ Documentation for rocRAND is available at
 ### Added
 * Added extended tests to `rtest.py`. These tests are extra tests that did not fit the criteria of smoke and regression tests. These tests will take much longer to run relative to smoke and regression tests. Use `python rtest.py [--emulation|-e|--test|-t]=extended` to run these tests.
 * Added regression tests to `rtest.py`. These tests recreate scenarios that have caused hardware problems in past emulation environments. Use `python rtest.py [--emulation|-e|--test|-t]=regression` to run these tests.
-* Added smoke test options, which runs a subset of the unit tests and ensures that less than 2gb of VRAM will be used. Use `[--emulation|-e|--test|-t]=smoke` to run these tests.
+* Added smoke test options, which runs a subset of the unit tests and ensures that less than 2gb of VRAM will be used. Use `python rtest.py [--emulation|-e|--test|-t]=smoke` to run these tests.
 * Added `--emulation` option for `rtest.py`
 
 ### Changed
