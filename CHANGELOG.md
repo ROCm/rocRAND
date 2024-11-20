@@ -17,7 +17,7 @@ Documentation for rocRAND is available at
 * `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
 * Removed TBB dependency for multi-core processing of host-side generation.
 
-## Fixes
+## Resolved issues
 
 * Fixed an issue where `CMAKE_PREFIX_PATH` was not defined properly in `CMAKELists.txt` and `toolchain-linux.cmake`.
 * Fixed an issue where `cmake_platform_opts` in `rmake.py` was sometimes a string instead of a list.
