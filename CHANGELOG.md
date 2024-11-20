@@ -17,6 +17,10 @@ Documentation for rocRAND is available at
 * `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
 * Removed TBB dependency for multi-core processing of host-side generation.
 
+## Fixes
+
+* Fixed an issue where `CMAKE_PREFIX_PATH` was not defined properly in `CMAKELists.txt` and `toolchain-linux.cmake`.
+
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
 ### Added
