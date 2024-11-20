@@ -34,6 +34,7 @@ include:
       - /deps-rocm.yaml
       - /deps-nvcc.yaml
       - /deps-windows.yaml
+      - /deps-compiler-acceleration.yaml
       - /gpus-rocm.yaml
       - /gpus-nvcc.yaml
       - /rules.yaml
@@ -68,9 +69,11 @@ copyright-date:
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-minimum", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
 
 .rocm:cmake-latest:
   variables:
@@ -78,9 +81,11 @@ copyright-date:
   extends:
     - .deps:rocm
     - .deps:cmake-latest
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-latest", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
 
 .rocm-hipcc:cmake-minimum:
   variables:
@@ -88,9 +93,11 @@ copyright-date:
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-minimum", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
 
 .nvcc:cmake-minimum:
   variables:
@@ -98,9 +105,11 @@ copyright-date:
   extends:
     - .deps:nvcc
     - .deps:cmake-minimum
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:nvcc", before_script]
     - !reference [".deps:cmake-minimum", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
 
 .nvcc:cmake-latest:
   variables:
@@ -108,9 +117,11 @@ copyright-date:
   extends:
     - .deps:nvcc
     - .deps:cmake-latest
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:nvcc", before_script]
     - !reference [".deps:cmake-latest", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
 
 .nvcc-clang:cmake-minimum:
   variables:
@@ -118,9 +129,11 @@ copyright-date:
   extends:
     - .deps:nvcc
     - .deps:cmake-latest
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:nvcc", before_script]
     - !reference [".deps:cmake-latest", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
 
 .rocm:build:
   variables:
@@ -148,8 +161,10 @@ copyright-date:
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
       -D AMDGPU_TARGETS=${GPU_TARGETS}
       -D DISABLE_WERROR=OFF
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
     - cmake --build $CI_PROJECT_DIR/build
-    - cmake --build $CI_PROJECT_DIR/build --target package
+    - if [[ "${BUILD_SHARED_LIBS}" = "ON" ]]; then cmake --build $CI_PROJECT_DIR/build --target package; fi
 
 .nvcc:build:
   stage: build
@@ -171,8 +186,11 @@ copyright-date:
       -D BUILD_FILE_REORG_BACKWARD_COMPATIBILITY=OFF
       -D BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
       -D NVGPU_TARGETS=${GPU_TARGETS}
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
+      -D CMAKE_CUDA_COMPILER_LAUNCHER=phc_sccache_cuda
     - cmake --build $CI_PROJECT_DIR/build
-    - cmake --build $CI_PROJECT_DIR/build --target package
+    - if [[ "${BUILD_SHARED_LIBS}" = "ON" ]]; then cmake --build $CI_PROJECT_DIR/build --target package; fi
 
 # Build output is too big to upload in the case of the static library builds
 .save-artifacts:
@@ -304,6 +322,8 @@ benchmark:benchmark-tuning:
       -D BENCHMARK_TUNING_MIN_GRID_SIZE=${BENCHMARK_TUNING_MIN_GRID_SIZE}
       -D BENCHMARK_TUNING_THREAD_OPTIONS="${BENCHMARK_TUNING_THREAD_OPTIONS}"
       -D BENCHMARK_TUNING_BLOCK_OPTIONS="${BENCHMARK_TUNING_BLOCK_OPTIONS}"
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
     - cmake --build $CI_PROJECT_DIR/build --target benchmark_rocrand_tuning
     - $CI_PROJECT_DIR/build/benchmark/tuning/benchmark_rocrand_tuning --benchmark_out_format=json --benchmark_out=$CI_PROJECT_DIR/build/rocrand_config_tuning_${GPU_TARGET}_${CI_JOB_ID}.json
   artifacts:
@@ -618,3 +638,92 @@ test:windows:
     - cmake -E copy "$CI_PROJECT_DIR/build/install/bin/rocRAND.dll" "$CI_PROJECT_DIR/build_install_test" *>&1
     # Run package test
     - ctest --test-dir "$CI_PROJECT_DIR/build_install_test" -C $CMAKE_BUILD_TYPE --output-on-failure *>&1
+
+.statistical-test:
+  stage: test
+  needs:
+    - build:rocm-cmake-minimum
+  extends:
+    - .rocm:cmake-minimum
+  variables:
+    ROCRAND_STAT_TESTS_GIT_BRANCH: "develop_stream"
+    ROCRAND_STAT_TESTS_DIR: ${CI_PROJECT_DIR}/rocrand-statistical-tests
+    LOGS_DIR: ${CI_PROJECT_DIR}/logs
+  script:
+    - $SUDO_CMD apt-get update -qq
+    - $SUDO_CMD apt-get install -y -qq python3
+    - cd $CI_PROJECT_DIR/build
+    - $SUDO_CMD dpkg -i rocrand_*.deb rocrand-dev*.deb
+    - cd $CI_PROJECT_DIR
+    - git clone -b ${ROCRAND_STAT_TESTS_GIT_BRANCH} https://gitlab-ci-token:${CI_JOB_TOKEN}@${ROCRAND_STAT_TESTS_GIT_URL}
+    - cmake
+      -S ${ROCRAND_STAT_TESTS_DIR}
+      -B ${ROCRAND_STAT_TESTS_DIR}/build
+      -G Ninja
+      -D CMAKE_CXX_COMPILER=${COMPILER}
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
+    - cmake --build ${ROCRAND_STAT_TESTS_DIR}/build
+    - mkdir ${LOGS_DIR}
+    - cd ${ROCRAND_STAT_TESTS_DIR}/build
+    - nproc
+  artifacts:
+    paths:
+      - ${LOGS_DIR}/*
+    expire_in: never
+
+# TestU01 SmallCrush, 10 tests, 15 statistics, takes about 5 seconds
+statistical-test:crush-small:
+  tags:
+    - rocm
+  extends:
+    - .statistical-test
+    - .rules:manual
+  script:
+    - !reference [".statistical-test", script]
+    - python3 -u run_crush.py --logs_dir ${LOGS_DIR} --battery small |& tee ${LOGS_DIR}/summary-crush-small.log
+
+# TestU01 Crush, 96 tests, 144 statistics, takes about 30 minutes
+statistical-test:crush-medium:
+  tags:
+    - rocm
+    - big-parallel
+  extends:
+    - .statistical-test
+    - .rules:manual
+  script:
+    - !reference [".statistical-test", script]
+    - python3 -u run_crush.py --logs_dir ${LOGS_DIR} --battery medium |& tee ${LOGS_DIR}/summary-crush-medium.log
+
+# TestU01 BigCrush, 116 tests, 160 statistics, takes about 3 hours
+statistical-test:crush-big:
+  tags:
+    - rocm
+    - big-parallel
+  extends:
+    - .statistical-test
+    - .rules:manual
+  timeout: 8h
+  script:
+    - !reference [".statistical-test", script]
+    - python3 -u run_crush.py --logs_dir ${LOGS_DIR} --battery big |& tee ${LOGS_DIR}/summary-crush-big.log
+
+# Dieharder, 114 tests, takes about 25 minutes
+statistical-test:dieharder:
+  extends:
+    - .statistical-test
+    - .rules:manual
+  script:
+    - !reference [".statistical-test", script]
+    - $SUDO_CMD apt-get install -y -qq dieharder
+    - python3 -u run_dieharder.py --logs_dir ${LOGS_DIR} |& tee ${LOGS_DIR}/summary-dieharder.log
+
+# Distribution tests: Pearson, Anderson-Darling, Kolmogorov-Smirnov
+statistical-test:distributions:
+  extends:
+    - .statistical-test
+    - .rules:test
+    - .gpus:rocm
+  script:
+    - !reference [".statistical-test", script]
+    - ./test_distributions_generate --engine all --dis all --runs 100 |& tee ${LOGS_DIR}/summary-distributions.log

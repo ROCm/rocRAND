@@ -36,6 +36,8 @@ docutils==0.21.2
     #   myst-parser
     #   pydata-sphinx-theme
     #   sphinx
+doxysphinx==3.3.7
+    # via rocm-docs-core
 fastjsonschema==2.19.1
     # via rocm-docs-core
 gitdb==4.0.11
@@ -50,6 +52,10 @@ jinja2==3.1.4
     # via
     #   myst-parser
     #   sphinx
+libsass==0.22.0
+    # via doxysphinx
+lxml==4.9.4
+    # via doxysphinx
 markdown-it-py==3.0.0
     # via
     #   mdit-py-plugins
@@ -60,6 +66,8 @@ mdit-py-plugins==0.4.1
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
+mpire==2.10.2
+    # via doxysphinx
 myst-parser==3.0.1
     # via rocm-docs-core
 numpy==2.1.3
@@ -79,12 +87,17 @@ pygithub==2.3.0
 pygments==2.18.0
     # via
     #   accessible-pygments
+    #   mpire
     #   pydata-sphinx-theme
     #   sphinx
+pyjson5==1.6.6
+    # via doxysphinx
 pyjwt[crypto]==2.8.0
     # via pygithub
 pynacl==1.5.0
     # via pygithub
+pyparsing==3.1.2
+    # via doxysphinx
 pyyaml==6.0.1
     # via
     #   myst-parser
@@ -137,6 +150,8 @@ sphinxcontrib-serializinghtml==1.1.10
     # via sphinx
 tomli==2.0.1
     # via sphinx
+tqdm==4.66.5
+    # via mpire
 typing-extensions==4.12.2
     # via
     #   pydata-sphinx-theme

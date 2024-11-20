@@ -3,10 +3,10 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-
-## (Unreleased) rocRAND 3.2.0 for ROCm 6.4
+## (Unreleased) rocRAND 3.3.0 for ROCm 6.4
 
 ### Added
+
 * Added extended tests to `rtest.py`. These tests are extra tests that did not fit the criteria of smoke and regression tests. These tests will take much longer to run relative to smoke and regression tests. Use `python rtest.py [--emulation|-e|--test|-t]=extended` to run these tests.
 * Added regression tests to `rtest.py`. These tests recreate scenarios that have caused hardware problems in past emulation environments. Use `python rtest.py [--emulation|-e|--test|-t]=regression` to run these tests.
 * Added smoke test options, which runs a subset of the unit tests and ensures that less than 2gb of VRAM will be used. Use `python rtest.py [--emulation|-e|--test|-t]=smoke` to run these tests.
@@ -15,6 +15,7 @@ Documentation for rocRAND is available at
 ### Changed
 
 * `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
+* Removed TBB dependency for multi-core processing of host-side generation.
 
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
@@ -34,7 +35,7 @@ Documentation for rocRAND is available at
 
 ## Fixes
 
-* Fixed " unknown extension ?>" issue in scripts/config-tuning/select_best_config.py 
+* Fixed " unknown extension ?>" issue in scripts/config-tuning/select_best_config.py
   when using python version thats older than 3.11
 * Fixed low random sequence quality of `ROCRAND_RNG_PSEUDO_THREEFRY2_64_20` and `ROCRAND_RNG_PSEUDO_THREEFRY4_64_20`.
 
@@ -60,7 +61,7 @@ Documentation for rocRAND is available at
     * If TBB is not found when configuring rocRAND, the configuration is still successful, and the host generators are executed on a single CPU thread.
 * Added the option to create a host generator to the Python wrapper
 * Added the option to create a host generator to the Fortran wrapper
-* Added dynamic ordering. This ordering is free to rearrange the produced numbers, 
+* Added dynamic ordering. This ordering is free to rearrange the produced numbers,
   which can be specific to devices and distributions. It is implemented for:
   * XORWOW, MRG32K3A, MTGP32, Philox 4x32-10, MRG31K3P, LFSR113, and ThreeFry
 * For the NVIDIA platform compilation using clang as the host compiler is now supported.
@@ -79,7 +80,7 @@ Documentation for rocRAND is available at
 
 ### Changes
 
-* For device-side generators, you can now wrap calls to rocrand_generate_* inside of a hipGraph. There are a few 
+* For device-side generators, you can now wrap calls to rocrand_generate_* inside of a hipGraph. There are a few
   things to be aware of:
   - Generator creation (rocrand_create_generator), initialization (rocrand_initialize_generator), and destruction (rocrand_destroy_generator) must still happen outside the hipGraph.
   - After the generator is created, you may call API functions to set its seed, offset, and order.

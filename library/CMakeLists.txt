@@ -123,23 +123,6 @@ else()
     target_link_libraries(rocrand PUBLIC hip::host)
 endif()
 
-option(ROCRAND_USE_TBB "Use TBB for host-side generators if available." ON)
-if(NOT WIN32 AND ROCRAND_USE_TBB)
-    find_package(TBB QUIET)
-    if(NOT TARGET TBB::tbb)
-        message(WARNING "TBB is not found. Building without parallel STL support")
-    else()
-        target_link_libraries(rocrand PRIVATE TBB::tbb)
-        rocm_package_add_deb_dependencies(DEPENDS "libtbb-dev")
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}" PARENT_SCOPE)
-        rocm_package_add_rpm_dependencies(DEPENDS "(tbb-devel or tbb)")
-        set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES}" PARENT_SCOPE)
-
-        # Older libstdc++ headers require TBB to be installed to be able to #include <execution>
-        target_compile_definitions(rocrand PRIVATE ROCRAND_PARALLEL_STL)
-    endif()
-endif()
-
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
     PROPERTIES

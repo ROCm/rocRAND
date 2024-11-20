@@ -86,13 +86,13 @@ private:
                                             "error_message"};
 };
 
-bool customCSVReporter::ReportContext(const Context& context)
+inline bool customCSVReporter::ReportContext(const Context& context)
 {
     PrintBasicContext(&GetErrorStream(), context);
     return true;
 }
 
-void customCSVReporter::ReportRuns(const std::vector<Run>& reports)
+inline void customCSVReporter::ReportRuns(const std::vector<Run>& reports)
 {
     std::ostream& Out = GetOutputStream();
 
@@ -149,7 +149,7 @@ void customCSVReporter::ReportRuns(const std::vector<Run>& reports)
     }
 }
 
-void customCSVReporter::PrintRunData(const Run& run)
+inline void customCSVReporter::PrintRunData(const Run& run)
 {
     std::ostream& Out = GetOutputStream();
     std::ostream& Err = GetErrorStream();
