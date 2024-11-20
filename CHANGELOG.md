@@ -3,7 +3,7 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-## (Unreleased) rocRAND 3.3.0 for ROCm 6.4
+## rocRAND 3.3.0 for ROCm 6.4
 
 ### Added
 
@@ -29,14 +29,15 @@ Documentation for rocRAND is available at
 
 ### Changed
 
+* Updated the default value for the `-a` argument from `rmake.py` to `gfx906:xnack-,gfx1030,gfx1100,gfx1101,gfx1102,gfx1151,gfx1200,gfx1201`.
 * `rocrand_discrete` for MTGP32, LFSR113 and ThreeFry generators now uses the alias method, which is faster than binary search in CDF.
 
 ## rocRAND 3.1.1 for ROCm 6.2.4
 
 ## Fixes
 
-* Fixed " unknown extension ?>" issue in scripts/config-tuning/select_best_config.py
-  when using python version thats older than 3.11
+* Fixed an issue in `rmake.py` where the list storing cmake options would contain individual characters instead of a full string of options.
+* Fixed " unknown extension ?>" issue in scripts/config-tuning/select_best_config.py when using python version thats older than 3.11
 * Fixed low random sequence quality of `ROCRAND_RNG_PSEUDO_THREEFRY2_64_20` and `ROCRAND_RNG_PSEUDO_THREEFRY4_64_20`.
 
 ## rocRAND 3.1.0 for ROCm 6.2.0
@@ -113,7 +114,7 @@ Documentation for rocRAND is available at
 ### Known issues
 - SOBOL64 and SCRAMBLED_SOBOL64 generate poisson-distributed `unsigned long long int` numbers instead of `unsigned int`. This will be fixed in the next major release.
 
-## (Unreleased) rocRAND-3.0.0 for ROCm 6.0.0
+## rocRAND-3.0.0 for ROCm 6.0.0
 
 ### Additions
 
