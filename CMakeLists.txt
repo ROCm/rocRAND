@@ -37,13 +37,10 @@ cmake_dependent_option(RUN_SLOW_TESTS "Run extra tests with CTest. These cover n
 
 
 if (NOT DEFINED ENV{ROCM_PATH})
-  set(ENV{ROCM_PATH} "/opt/rocm" CACHE PATH "Path to the ROCm installation.")
-  endif()
-  
-  if (NOT DEFINED ENV{CXX})
-  set(ENV{CXX} "$ENV{ROCM_PATH}/bin/amdclang++" CACHE PATH "Path to the C++ compiler.")
+#Path to ROCm installation
+  set(ENV{ROCM_PATH} "/opt/rocm")
 endif()
-
+  
 # Install prefix
 set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
 
