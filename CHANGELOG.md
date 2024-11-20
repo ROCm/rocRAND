@@ -20,6 +20,7 @@ Documentation for rocRAND is available at
 ## Fixes
 
 * Fixed an issue where `CMAKE_PREFIX_PATH` was not defined properly in `CMAKELists.txt` and `toolchain-linux.cmake`.
+* Fixed an issue where `cmake_platform_opts` in `rmake.py` was sometimes a string instead of a list.
 
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
