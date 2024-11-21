@@ -11,8 +11,6 @@ if (NOT DEFINED ENV{ROCM_PATH})
   set(ENV{ROCM_PATH} "/opt/rocm" CACHE PATH "Path to the ROCm installation.")
 endif()
 
-message("$ENV{ROCM_PATH}")
-
 set(rocm_bin "$ENV{ROCM_PATH}/bin")
 if (NOT DEFINED CMAKE_PREFIX_PATH) 
   list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH})
