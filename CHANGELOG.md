@@ -14,7 +14,7 @@ Documentation for rocRAND is available at
 
 ### Changed
 
-* Removed a section in `cmake/Dependencies.cmake` that was forcing `DCMAKE_CXX_COMPILER` to be either `cl` or `g++` if the compiler was not `GNU`.
+* Removed a section in `cmake/Dependencies.cmake` that was forcing `DCMAKE_CXX_COMPILER` to be set to either `cl` or `g++` if the compiler was not `GNU`.
 * `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
 * Removed TBB dependency for multi-core processing of host-side generation.
 
