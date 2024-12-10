@@ -8,7 +8,7 @@ Documentation for rocRAND is available at
 ### Changed
 * Updated several `gfx942` auto tuning parameters.
 
-### Fixed
+### Resolved issues
 * Fixed an issue where `mt19937.hpp` would cause kernel errors during auto tuning.
 
 ## rocRAND 3.3.0 for ROCm 6.4
