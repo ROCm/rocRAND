@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+cmake_policy(VERSION 3.16...3.25)
 
 # Build options
 include(CMakeDependentOption)
@@ -29,22 +30,48 @@ option(BUILD_FORTRAN_WRAPPER "Build Fortran wrapper" OFF)
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 cmake_dependent_option(BUILD_BENCHMARK_TUNING
-  "Build extra benchmarks for kernel configuration tuning" OFF "BUILD_BENCHMARK" OFF)
+"Build extra benchmarks for kernel configuration tuning" OFF "BUILD_BENCHMARK" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 option(CODE_COVERAGE "Build with code coverage flags (clang only)" OFF)
 option(DEPENDENCIES_FORCE_DOWNLOAD "Don't search the system for dependencies, always download them" OFF)
 cmake_dependent_option(RUN_SLOW_TESTS "Run extra tests with CTest. These cover niche functionality and take long time" OFF "BUILD_TEST" OFF)
 
+
+if (NOT DEFINED ENV{ROCM_PATH})
+#Path to ROCm installation
+  set(ENV{ROCM_PATH} "/opt/rocm")
+endif()
+  
 # Install prefix
-set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
+set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
+
+if(WIN32)
+    set(CPACK_SOURCE_GENERATOR "ZIP")
+    set(CPACK_GENERATOR "ZIP")
+    set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path")
+    set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+    set(CPACK_SET_DESTDIR OFF)
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
+    set(CPACK_PACKAGING_INSTALL_PREFIX "")
+    set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+else()
+    set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
+    #Adding CMAKE_PREFIX_PATH
+    if(NOT DEFINED CMAKE_PREFIX_PATH)
+      list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH})
+    endif()
+    if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
+        set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+    endif()
+endif()
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
-    $ENV{ROCM_PATH}/lib/cmake/hip
-    ${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
-    $ENV{ROCM_PATH}/llvm
+${CMAKE_CURRENT_SOURCE_DIR}/cmake
+${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules
+$ENV{ROCM_PATH}/lib/cmake/hip
+${HIP_PATH}/cmake $ENV{ROCM_PATH}/hip/cmake # FindHIP.cmake
+$ENV{ROCM_PATH}/llvm
 )
 
 #
@@ -192,23 +219,6 @@ endif()
 # Package (make package)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-if(WIN32)
-    set(CPACK_SOURCE_GENERATOR "ZIP")
-    set(CPACK_GENERATOR "ZIP")
-    set(CMAKE_INSTALL_PREFIX "C:/hipSDK" CACHE PATH "Install path")
-    set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-    set(CPACK_SET_DESTDIR OFF)
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
-    set(CPACK_PACKAGING_INSTALL_PREFIX "")
-    set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
-else()
-    set(CMAKE_INSTALL_PREFIX "$ENV{ROCM_PATH}" CACHE PATH "Install path prefix, prepended onto install directories")
-    #Adding CMAKE_PREFIX_PATH
-    list( APPEND CMAKE_PREFIX_PATH $ENV{ROCM_PATH}/llvm $ENV{ROCM_PATH} )
-    if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
-        set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-    endif()
-endif()
 
 if( HIP_RUNTIME_LOWER STREQUAL "rocclr" )
     if(BUILD_ADDRESS_SANITIZER)

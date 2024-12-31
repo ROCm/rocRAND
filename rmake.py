@@ -10,6 +10,7 @@ import argparse
 import ctypes
 import pathlib
 from fnmatch import fnmatchcase
+import shutil
 
 args = {}
 param = {}
@@ -109,10 +110,11 @@ def config_cmd():
         cmake_options.append( generator )
     else:
         rocm_path = os.getenv( 'ROCM_PATH', "/opt/rocm")
-        if (OS_info["ID"] in ['centos', 'rhel']):
-          cmake_executable = "cmake3"
-        else:
-          cmake_executable = "cmake"
+
+        cmake_executable = 'cmake'
+        if shutil.which('cmake3') is not None:
+            cmake_executable = 'cmake3'
+
         toolchain = "toolchain-linux.cmake"
         cmake_platform_opts = [f"-DROCM_DIR:PATH={rocm_path}", f"-DCPACK_PACKAGING_INSTALL_PREFIX={rocm_path}"]
 

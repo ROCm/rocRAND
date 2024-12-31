@@ -152,20 +152,13 @@ inline void customCSVReporter::ReportRuns(const std::vector<Run>& reports)
 inline void customCSVReporter::PrintRunData(const Run& run)
 {
     std::ostream& Out = GetOutputStream();
-    std::ostream& Err = GetErrorStream();
 
     //get the name of the engine and distribution:
-
     std::string temp = run.benchmark_name();
-
     std::string deviceName = std::string(temp.begin(), temp.begin() + temp.find("<"));
-
     temp.erase(0, temp.find("<") + 1);
-
     std::string engineName = std::string(temp.begin(), temp.begin() + temp.find(","));
-
     temp.erase(0, engineName.size() + 1);
-
     std::string mode = "default";
 
     if(deviceName != "device_kernel")
@@ -174,7 +167,6 @@ inline void customCSVReporter::PrintRunData(const Run& run)
         temp.erase(0, temp.find(",") + 1);
     }
     std::string disName = std::string(temp.begin(), temp.begin() + temp.find(">"));
-
     std::string lambda = "";
 
     size_t ePos = disName.find("=");
@@ -186,13 +178,6 @@ inline void customCSVReporter::PrintRunData(const Run& run)
 
     Out << engineName << "," << disName << "," << mode << ",";
     Out << CsvEscape(run.benchmark_name()) << ",";
-    if(run.error_occurred)
-    {
-        Err << std::string(elements.size() - 3, ',');
-        Err << "true,";
-        Err << CsvEscape(run.error_message) << "\n";
-        return;
-    }
 
     // Do not print iteration on bigO and RMS report
     if(!run.report_big_o && !run.report_rms)

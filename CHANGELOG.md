@@ -14,8 +14,14 @@ Documentation for rocRAND is available at
 
 ### Changed
 
+* Removed a section in `cmake/Dependencies.cmake` that was forcing `DCMAKE_CXX_COMPILER` to be set to either `cl` or `g++` if the compiler was not `GNU`.
 * `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
 * Removed TBB dependency for multi-core processing of host-side generation.
+
+## Resolved issues
+
+* Fixed an issue where `CMAKE_PREFIX_PATH` was not defined properly in `CMAKELists.txt` and `toolchain-linux.cmake`.
+* Fixed an issue in `rmake.py` where `cmake_platform_opts` was sometimes a string instead of a list.
 
 ## rocRAND 3.2.0 for ROCm 6.3.0
 
