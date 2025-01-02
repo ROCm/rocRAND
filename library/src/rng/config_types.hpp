@@ -53,6 +53,7 @@ enum class target_arch : unsigned int
     gfx1100 = 1100,
     gfx1101 = 1101,
     gfx1102 = 1102,
+    gfx1201 = 1201,
     unknown = std::numeric_limits<unsigned int>::max(),
 };
 
@@ -85,6 +86,8 @@ __host__ __device__ constexpr target_arch get_device_arch()
     return target_arch::gfx1101;
 #elif defined(__gfx1102__)
     return target_arch::gfx1102;
+#elif defined(__gfx1201__)
+    return target_arch::gfx1201;
 #else
     return target_arch::unknown;
 #endif
@@ -106,7 +109,8 @@ inline target_arch parse_gcn_arch(const std::string& arch_name)
                                                 "gfx1030",
                                                 "gfx1100",
                                                 "gfx1101",
-                                                "gfx1102"};
+                                                "gfx1102",
+                                                "gfx1201"};
     const target_arch target_architectures[] = {
         target_arch::gfx900,
         target_arch::gfx902,
@@ -120,6 +124,7 @@ inline target_arch parse_gcn_arch(const std::string& arch_name)
         target_arch::gfx1100,
         target_arch::gfx1101,
         target_arch::gfx1102,
+        target_arch::gfx1201,
     };
     static_assert(sizeof(target_names) / sizeof(target_names[0])
                       == sizeof(target_architectures) / sizeof(target_architectures[0]),
@@ -320,6 +325,10 @@ hipError_t get_generator_config(const hipStream_t      stream,
     {
         target_arch      current_arch;
         const hipError_t error = get_device_arch(stream, current_arch);
+        printf("%d\n", current_arch);
+        printf("%d\n", current_arch);
+        printf("%d\n", current_arch);
+        printf("%d\n", current_arch);
         if(error != hipSuccess)
         {
             return error;
@@ -329,6 +338,12 @@ hipError_t get_generator_config(const hipStream_t      stream,
     }
     else
     {
+        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
+        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
+        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
+        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
+        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
+
         config.threads = generator_config_defaults<GeneratorType, T>::threads;
         config.blocks  = generator_config_defaults<GeneratorType, T>::blocks;
     }

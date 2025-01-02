@@ -42,10 +42,11 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>
             case target_arch::gfx1101: return 1024;
             case target_arch::gfx1100: return 512;
             case target_arch::gfx1030: return 1024;
-            case target_arch::gfx942: return 1024;
+            case target_arch::gfx942: return 512;
             case target_arch::gfx90a: return 512;
             case target_arch::gfx908: return 512;
             case target_arch::gfx906: return 64;
+            case target_arch::gfx1201: return 1024;
             default:
                 return generator_config_defaults<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>::threads;
         }
@@ -63,6 +64,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>
             case target_arch::gfx90a: return 2048;
             case target_arch::gfx908: return 3840;
             case target_arch::gfx906: return 896;
+            case target_arch::gfx1201: return 1024;
             default:
                 return generator_config_defaults<ROCRAND_RNG_PSEUDO_PHILOX4_32_10, T>::blocks;
         }

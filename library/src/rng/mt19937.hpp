@@ -50,6 +50,7 @@
 
 #ifndef ROCRAND_RNG_MT19937_H_
 #define ROCRAND_RNG_MT19937_H_
+#include "config/mt19937_config.hpp"
 
 #include "common.hpp"
 #include "config_types.hpp"
@@ -874,18 +875,19 @@ public:
         system_type::free(d_mt19937_jump);
 
         // This kernel is not actually tuned for ordering, but config is needed for device-side compile time check of the generator count
-        dynamic_dispatch(m_order,
-                         [&, this](auto is_dynamic)
-                         {
-                             status = system_type::template launch<
-                                 init_engines_mt19937<ConfigProvider, is_dynamic>>(
-                                 dim3(config.blocks),
-                                 dim3(config.threads),
-                                 0,
-                                 m_stream,
-                                 m_engines,
-                                 d_engines);
-                         });
+        dynamic_dispatch(
+            m_order,
+            [&, this](auto is_dynamic)
+            {
+                status
+                    = system_type::template launch<init_engines_mt19937<ConfigProvider, is_dynamic>,
+                                                   ConfigProvider>(dim3(config.blocks),
+                                                                   dim3(config.threads),
+                                                                   0,
+                                                                   m_stream,
+                                                                   m_engines,
+                                                                   d_engines);
+            });
         if(status != ROCRAND_STATUS_SUCCESS)
         {
             system_type::free(d_engines);
@@ -983,20 +985,22 @@ public:
                                                                                  is_dynamic,
                                                                                  T,
                                                                                  vec_type,
-                                                                                 Distribution>>(
-                        dim3(config.blocks),
-                        dim3(config.threads),
-                        0,
-                        m_stream,
-                        m_engines,
-                        m_start_input,
-                        data,
-                        size,
-                        vec_data,
-                        vec_size,
-                        head_size,
-                        tail_size,
-                        distribution);
+                                                                                 Distribution>,
+                                                          ConfigProvider,
+                                                          T,
+                                                          is_dynamic>(dim3(config.blocks),
+                                                                      dim3(config.threads),
+                                                                      0,
+                                                                      m_stream,
+                                                                      m_engines,
+                                                                      m_start_input,
+                                                                      data,
+                                                                      size,
+                                                                      vec_data,
+                                                                      vec_size,
+                                                                      head_size,
+                                                                      tail_size,
+                                                                      distribution);
                 });
             if(status != ROCRAND_STATUS_SUCCESS)
             {
@@ -1014,20 +1018,22 @@ public:
                                                                                 is_dynamic,
                                                                                 T,
                                                                                 vec_type,
-                                                                                Distribution>>(
-                        dim3(config.blocks),
-                        dim3(config.threads),
-                        0,
-                        m_stream,
-                        m_engines,
-                        m_start_input,
-                        data,
-                        size,
-                        vec_data,
-                        vec_size,
-                        head_size,
-                        tail_size,
-                        distribution);
+                                                                                Distribution>,
+                                                          ConfigProvider,
+                                                          T,
+                                                          is_dynamic>(dim3(config.blocks),
+                                                                      dim3(config.threads),
+                                                                      0,
+                                                                      m_stream,
+                                                                      m_engines,
+                                                                      m_start_input,
+                                                                      data,
+                                                                      size,
+                                                                      vec_data,
+                                                                      vec_size,
+                                                                      head_size,
+                                                                      tail_size,
+                                                                      distribution);
                 });
             if(status != ROCRAND_STATUS_SUCCESS)
             {
