@@ -392,7 +392,6 @@ public:
             return ROCRAND_STATUS_SUCCESS;
         }
 
-        printf("Blocks: %d ---- Threads: %d\n", config.blocks, config.threads);
         status = dynamic_dispatch(
             m_order,
             [&, this](auto is_dynamic)

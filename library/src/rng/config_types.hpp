@@ -325,10 +325,6 @@ hipError_t get_generator_config(const hipStream_t      stream,
     {
         target_arch      current_arch;
         const hipError_t error = get_device_arch(stream, current_arch);
-        printf("%d\n", current_arch);
-        printf("%d\n", current_arch);
-        printf("%d\n", current_arch);
-        printf("%d\n", current_arch);
         if(error != hipSuccess)
         {
             return error;
@@ -338,12 +334,6 @@ hipError_t get_generator_config(const hipStream_t      stream,
     }
     else
     {
-        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
-        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
-        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
-        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
-        printf("IN ELSE OF IS_ORDERING_DYNAMIC\n");
-
         config.threads = generator_config_defaults<GeneratorType, T>::threads;
         config.blocks  = generator_config_defaults<GeneratorType, T>::blocks;
     }
