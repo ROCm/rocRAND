@@ -20,6 +20,9 @@ Documentation for rocRAND is available at
   * `rocrand_h_sobol64_direction_vectors`, use `rocrand_get_direction_vectors64` instead.
   * `rocrand_h_scrambled_sobol32_direction_vectors`, use `rocrand_get_direction_vectors32` instead.
   * `rocrand_h_scrambled_sobol64_direction_vectors`, use `rocrand_get_direction_vectors64` instead.
+* Deprecated rocRAND's Fortran API in favor of hipfort.
+
+## (Unreleased) rocRAND-3.x.x for ROCm 6.x.x
 
 ### Upcoming changes
 * C++14 will be removed in the next major release.
