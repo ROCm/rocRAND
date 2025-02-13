@@ -3,12 +3,18 @@
 Documentation for rocRAND is available at
 [https://rocm.docs.amd.com/projects/rocRAND/en/latest/](https://rocm.docs.amd.com/projects/rocRAND/en/latest/)
 
-## (unreleased) rocRAND 3.3.0 for ROCm 6.5
+## (Unreleased) rocRAND 3.4.0 for ROCm 6.5
+
+### Added
+
+* gfx950 support
 
 ### Changed
+
 * Updated several `gfx942` auto tuning parameters.
 
 ### Fixed
+
 * Fixed an issue where `mt19937.hpp` would cause kernel errors during auto tuning.
 
 ## rocRAND 3.3.0 for ROCm 6.4
