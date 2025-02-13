@@ -5,7 +5,7 @@ Documentation for rocRAND is available at
 
 ## (Unreleased) rocRAND 3.4.0 for ROCm 6.5
 
-### added
+### Added
 
 * gfx950 support
 
