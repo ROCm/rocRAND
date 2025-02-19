@@ -150,25 +150,31 @@ void run_benchmarks(const cli::Parser& parser,
     const std::string format = parser.get<std::string>("format");
     if (distribution == "uniform-uint")
     {
-        run_benchmark<unsigned int>(
-            parser,
-            rng_type,
-            stream,
-            [](curandGenerator_t gen, unsigned int* data, size_t size)
-            { return curandGenerate(gen, data, size); },
-            distribution,
-            engine);
+        if(rng_type != CURAND_RNG_QUASI_SOBOL64 && rng_type != CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
+        {
+            run_benchmark<unsigned int>(
+                parser,
+                rng_type,
+                stream,
+                [](curandGenerator_t gen, unsigned int* data, size_t size)
+                { return curandGenerate(gen, data, size); },
+                distribution,
+                engine);
+        }
     }
     if (distribution == "uniform-long-long")
     {
-        run_benchmark<unsigned long long>(
-            parser,
-            rng_type,
-            stream,
-            [](curandGenerator_t gen, unsigned long long* data, size_t size)
-            { return curandGenerateLongLong(gen, data, size); },
-            distribution,
-            engine);
+        if(rng_type == CURAND_RNG_QUASI_SOBOL64 || rng_type == CURAND_RNG_QUASI_SCRAMBLED_SOBOL64)
+        {
+            run_benchmark<unsigned long long>(
+                parser,
+                rng_type,
+                stream,
+                [](curandGenerator_t gen, unsigned long long* data, size_t size)
+                { return curandGenerateLongLong(gen, data, size); },
+                distribution,
+                engine);
+        }
     }
     if (distribution == "uniform-float")
     {
@@ -311,6 +317,10 @@ int main(int argc, char *argv[])
     parser.set_optional<std::vector<std::string>>("dis", "dis", {"uniform-uint"}, distribution_desc.c_str());
     parser.set_optional<std::vector<std::string>>("engine", "engine", {"philox"}, engine_desc.c_str());
     parser.set_optional<std::vector<double>>("lambda", "lambda", {10.0}, "space-separated list of lambdas of Poisson distribution");
+    parser.set_optional<std::string>("format",
+                                     "format",
+                                     {"console"},
+                                     "output format: console or csv");
     parser.run_and_exit_if_error();
 
     std::vector<std::string> engines;
@@ -365,6 +375,17 @@ int main(int argc, char *argv[])
     cudaStream_t stream;
     CUDA_CALL(cudaStreamCreate(&stream));
 
+    std::string format         = parser.get<std::string>("format");
+    bool        console_output = format.compare("console") == 0 ? true : false;
+
+    if(!console_output)
+    {
+        std::cout
+            << "Engine,Distribution,Throughput,Samples,AvgTime (1 Trial),Time(all),Size,Lambda"
+            << std::endl;
+        std::cout << ",,GB/s,GSample/s,ms),ms),values," << std::endl;
+    }
+
     for (auto engine : engines)
     {
         rng_type_t rng_type = CURAND_RNG_PSEUDO_XORWOW;
@@ -392,11 +413,13 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        std::cout << engine << ":" << std::endl;
+        if(console_output)
+            std::cout << engine << ":" << std::endl;
 
         for (auto distribution : distributions)
         {
-            std::cout << "  " << distribution << ":" << std::endl;
+            if(console_output)
+                std::cout << "  " << distribution << ":" << std::endl;
             run_benchmarks(parser, rng_type, distribution, engine, stream);
         }
         std::cout << std::endl;
