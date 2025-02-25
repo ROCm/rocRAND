@@ -121,10 +121,6 @@ compilers) may cause a build failure; if you encounter errors with the existing 
 other dependencies, you can pass the `DEPENDENCIES_FORCE_DOWNLOAD` flag to CMake, which can
 help to solve the problem.
 
-To disable inline assembly optimizations in rocRAND (for both the host library and
-the device functions provided in `rocrand_kernel.h`), set the CMake option `ENABLE_INLINE_ASM`
-to `OFF`.
-
 ## Running unit tests
 
 ```shell

@@ -43,20 +43,6 @@ set(rocRAND_HIP_SRCS
     "src/rocrand_mt19937_precomputed.cpp"
     "src/rocrand.cpp")
 
-# When enabled, it defines ROCRAND_ENABLE_INLINE_ASM in rocrand_version.h, which
-# turns on inline asm in rocRAND (for both compiled library and device functions).
-option(ENABLE_INLINE_ASM "Enable inline asm optimisations in rocRAND" ON)
-if(ENABLE_INLINE_ASM)
-    set(
-        rocrand_ENABLE_INLINE_ASM
-        "\n// Enables inline asm optimisations\n"
-        "#if !defined(ROCRAND_ENABLE_INLINE_ASM) && !defined(ROCRAND_DISABLE_INLINE_ASM)\n"
-        "    #define ROCRAND_ENABLE_INLINE_ASM\n"
-        "#endif"
-    )
-    string(REPLACE ";" "" rocrand_ENABLE_INLINE_ASM "${rocrand_ENABLE_INLINE_ASM}")
-endif()
-
 # Configure a header file to pass the rocRAND version
 configure_file(
     "${PROJECT_SOURCE_DIR}/library/include/rocrand/rocrand_version.h.in"

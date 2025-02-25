@@ -157,36 +157,25 @@ public:
 
     // Returned value is in range [1, ROCRAND_MRG32K3A_M1],
     // where ROCRAND_MRG32K3A_M1 < UINT_MAX
-    __forceinline__ __device__ __host__ unsigned int next()
+    __forceinline__ __device__ __host__
+    unsigned int next()
     {
-        const unsigned int p1 = mod_m1(
-            detail::mad_u64_u32(
-                ROCRAND_MRG32K3A_A12,
-                m_state.g1[1],
-                detail::mad_u64_u32(
-                    ROCRAND_MRG32K3A_A13N,
-                    (ROCRAND_MRG32K3A_M1 - m_state.g1[0]),
-                    0
-                )
-            )
-        );
+        const unsigned int p1 = mod_m1(detail::mad_u64_u32(
+            ROCRAND_MRG32K3A_A12,
+            m_state.g1[1],
+            detail::mul_u64_u32(ROCRAND_MRG32K3A_A13N, (ROCRAND_MRG32K3A_M1 - m_state.g1[0]))));
 
-        m_state.g1[0] = m_state.g1[1]; m_state.g1[1] = m_state.g1[2];
+        m_state.g1[0] = m_state.g1[1];
+        m_state.g1[1] = m_state.g1[2];
         m_state.g1[2] = p1;
 
-        const unsigned int p2 = mod_m2(
-            detail::mad_u64_u32(
-                ROCRAND_MRG32K3A_A21,
-                m_state.g2[2],
-                detail::mad_u64_u32(
-                    ROCRAND_MRG32K3A_A23N,
-                    (ROCRAND_MRG32K3A_M2 - m_state.g2[0]),
-                    0
-                )
-            )
-        );
+        const unsigned int p2 = mod_m2(detail::mad_u64_u32(
+            ROCRAND_MRG32K3A_A21,
+            m_state.g2[2],
+            detail::mul_u64_u32(ROCRAND_MRG32K3A_A23N, (ROCRAND_MRG32K3A_M2 - m_state.g2[0]))));
 
-        m_state.g2[0] = m_state.g2[1]; m_state.g2[1] = m_state.g2[2];
+        m_state.g2[0] = m_state.g2[1];
+        m_state.g2[1] = m_state.g2[2];
         m_state.g2[2] = p2;
 
         return (p1 - p2) + (p1 <= p2 ? ROCRAND_MRG32K3A_M1 : 0);
@@ -330,17 +319,20 @@ private:
         return lo;
     }
 
-    __forceinline__ __device__ __host__ static unsigned long long mod_m1(unsigned long long p)
+    __forceinline__ __device__ __host__
+    static unsigned long long mod_m1(unsigned long long p)
     {
-        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M1C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
-        if (p >= ROCRAND_MRG32K3A_M1)
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M1C,
+                                static_cast<unsigned int>(p >> 32),
+                                static_cast<unsigned int>(p));
+        if(p >= ROCRAND_MRG32K3A_M1)
             p -= ROCRAND_MRG32K3A_M1;
 
         return p;
     }
 
-    __forceinline__ __device__ __host__ static unsigned long long mod_mul_m2(unsigned int       i,
-                                                                             unsigned long long j)
+    __forceinline__ __device__ __host__
+    static unsigned long long mod_mul_m2(unsigned int i, unsigned long long j)
     {
         long long hi, lo, temp1, temp2;
 
@@ -355,11 +347,16 @@ private:
         return lo;
     }
 
-    __forceinline__ __device__ __host__ static unsigned long long mod_m2(unsigned long long p)
+    __forceinline__ __device__ __host__
+    static unsigned long long mod_m2(unsigned long long p)
     {
-        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
-        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C, (p >> 32), p & (ROCRAND_MRG32K3A_POW32 - 1));
-        if (p >= ROCRAND_MRG32K3A_M2)
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C,
+                                static_cast<unsigned int>(p >> 32),
+                                static_cast<unsigned int>(p));
+        p = detail::mad_u64_u32(ROCRAND_MRG32K3A_M2C,
+                                static_cast<unsigned int>(p >> 32),
+                                static_cast<unsigned int>(p));
+        if(p >= ROCRAND_MRG32K3A_M2)
             p -= ROCRAND_MRG32K3A_M2;
 
         return p;

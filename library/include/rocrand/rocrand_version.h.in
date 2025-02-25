@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,5 @@
 /// ROCRAND_VERSION / 100 % 1000 is the minor version,
 /// ROCRAND_VERSION / 100000 is the major version.
 #define ROCRAND_VERSION @rocrand_VERSION_NUMBER@
-@rocrand_ENABLE_INLINE_ASM@
 
 #endif // ROCRAND_VERSION_H_

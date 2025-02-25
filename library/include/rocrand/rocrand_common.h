@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -92,63 +92,17 @@
 namespace rocrand_device {
 namespace detail {
 
-#if ( defined(__HIP_PLATFORM_NVCC__) || \
-      defined(__gfx801__) || \
-      defined(__gfx802__) || \
-      defined(__gfx803__) || \
-      defined(__gfx810__) || \
-      defined(__gfx900__) || \
-      defined(__gfx902__) || \
-      defined(__gfx904__) || \
-      defined(__gfx906__) || \
-      defined(__gfx908__) || \
-      defined(__gfx909__) || \
-      defined(__gfx1030__) )
-  #if !defined(ROCRAND_ENABLE_INLINE_ASM)
-    #define ROCRAND_ENABLE_INLINE_ASM
-  #endif
-#else
-  #if defined(__HIP_DEVICE_COMPILE__) && defined(ROCRAND_ENABLE_INLINE_ASM)
-    #undef ROCRAND_ENABLE_INLINE_ASM
-  #endif
-#endif
-
-__forceinline__ __device__ __host__ unsigned long long
+__forceinline__ __device__ __host__
+unsigned long long
     mad_u64_u32(const unsigned int x, const unsigned int y, const unsigned long long z)
 {
-#if defined(__HIP_PLATFORM_AMD__) && defined(__HIP_DEVICE_COMPILE__) \
-    && defined(ROCRAND_ENABLE_INLINE_ASM)
-
-    #if __AMDGCN_WAVEFRONT_SIZE == 64u
-    using sgpr_t = unsigned long long;
-  #elif __AMDGCN_WAVEFRONT_SIZE == 32u
-    using sgpr_t = unsigned int;
-  #endif
-
-    unsigned long long r;
-    sgpr_t c; // carry bits, SGPR, unused
-    // x has "r" constraint. This allows to use both VGPR and SGPR
-    // (to save VGPR) as input.
-    // y and z have "v" constraints, because only one SGPR or literal
-    // can be read by the instruction.
-    asm volatile("v_mad_u64_u32 %0, %1, %2, %3, %4"
-      : "=v"(r), "=s"(c) : "r"(x), "v"(y), "v"(z)
-    );
-    return r;
-  #elif defined(__HIP_PLATFORM_NVCC__) && defined(__HIP_DEVICE_COMPILE__) \
-        && defined(ROCRAND_ENABLE_INLINE_ASM)
-
-    unsigned long long r;
-    asm("mad.wide.u32 %0, %1, %2, %3;"
-        : "=l"(r) : "r"(x), "r"(y), "l"(z)
-    );
-    return r;
-
-  #else // host code
-
     return static_cast<unsigned long long>(x) * static_cast<unsigned long long>(y) + z;
+}
 
-  #endif
+__forceinline__ __device__ __host__
+unsigned long long mul_u64_u32(const unsigned int x, const unsigned int y)
+{
+    return static_cast<unsigned long long>(x) * static_cast<unsigned long long>(y);
 }
 
 // This helps access fields of engine's internal state which

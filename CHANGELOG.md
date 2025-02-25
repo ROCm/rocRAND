@@ -21,6 +21,8 @@ Documentation for rocRAND is available at
   * `rocrand_h_scrambled_sobol32_direction_vectors`, use `rocrand_get_direction_vectors32` instead.
   * `rocrand_h_scrambled_sobol64_direction_vectors`, use `rocrand_get_direction_vectors64` instead.
 * Deprecated rocRAND's Fortran API in favor of hipfort.
+* Removed inline assembly and the `ENABLE_INLINE_ASM` CMake option. Inline assembly was used for optimization of multiplications in the Mrg32k3a and Philox 4x32-10 generators, it is no longer needed because the current HIP compiler is able to produce code with the same or better performance (rare regressions are smaller than 2%).
+* Removed usages of the deprecated clang definition `__AMDGCN_WAVEFRONT_SIZE`.
 
 ## (Unreleased) rocRAND-3.x.x for ROCm 6.x.x
 
