@@ -41,7 +41,7 @@ struct generator_config_selector<ROCRAND_RNG_PSEUDO_MT19937, T>
             case target_arch::gfx1102: return 128;
             case target_arch::gfx1101: return 128;
             case target_arch::gfx1100: return 64;
-            case target_arch::gfx942: return 256;
+            case target_arch::gfx942: return 128;
             case target_arch::gfx90a: return 1024;
             case target_arch::gfx908: return 512;
             case target_arch::gfx1201: return 64;
