@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -350,19 +350,20 @@ typedef rocrand_device::mtgp32_params mtgp32_params;
  * Initializes MTGP32 states on the host-side by allocating a state array in host
  * memory, initializes that array, and copies the result to device or host memory.
  *
- * \param state - Pointer to an array of states in device or host memory
- * \param params - Pointer to an array of type mtgp32_fast_params in host memory
- * \param n - Number of states to initialize
- * \param seed - Seed value
+ * \param state Pointer to an array of states in device or host memory
+ * \param params Pointer to an array of type mtgp32_fast_params in host memory
+ * \param n Number of states to initialize
+ * \param seed Seed value
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if states could not be initialized
  * - ROCRAND_STATUS_SUCCESS if states are initialized
  */
-__host__ inline rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32* state,
-                                                         mtgp32_fast_params    params[],
-                                                         int                   n,
-                                                         unsigned long long    seed)
+__host__
+inline rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32* state,
+                                                mtgp32_fast_params    params[],
+                                                int                   n,
+                                                unsigned long long    seed)
 {
     int i;
     rocrand_state_mtgp32 * h_state = (rocrand_state_mtgp32 *) malloc(sizeof(rocrand_state_mtgp32) * n);
@@ -405,15 +406,15 @@ __host__ inline rocrand_status rocrand_make_state_mtgp32(rocrand_state_mtgp32* s
  * NOTE: Not used as rocrand_make_state_mtgp32 handles loading parameters into
  * state.
  *
- * \param params - Pointer to an array of type mtgp32_fast_params in host memory
- * \param p - Pointer to a mtgp32_params structure allocated in device memory
+ * \param params Pointer to an array of type mtgp32_fast_params in host memory
+ * \param p Pointer to a mtgp32_params structure allocated in device memory
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if parameters could not be loaded
  * - ROCRAND_STATUS_SUCCESS if parameters are loaded
  */
-__host__ inline
-rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_params * p)
+__host__
+inline rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_params* p)
 {
     const int block_num = MTGP_BN_MAX;
     const int size1 = sizeof(uint32_t) * block_num;
@@ -488,11 +489,12 @@ rocrand_status rocrand_make_constant(const mtgp32_fast_params params[], mtgp32_p
  * value from [0; 2^32 - 1] range using MTGP32 generator in \p state.
  * State is incremented by one position.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-__forceinline__ __device__ unsigned int rocrand(rocrand_state_mtgp32* state)
+__forceinline__ __device__
+unsigned int rocrand(rocrand_state_mtgp32* state)
 {
     return state->next();
 }
@@ -524,12 +526,12 @@ __forceinline__ __device__ unsigned int rocrand(rocrand_state_mtgp32* state)
  * }
  * \endcode
  *
- * \param src - Pointer to a state to copy from
- * \param dest - Pointer to a state to copy to
+ * \param src Pointer to a state to copy from
+ * \param dest Pointer to a state to copy to
  *
  */
-__forceinline__ __device__ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* src,
-                                                          rocrand_state_mtgp32* dest)
+__forceinline__ __device__
+void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* src, rocrand_state_mtgp32* dest)
 {
     dest->copy(src);
 }
@@ -537,11 +539,11 @@ __forceinline__ __device__ void rocrand_mtgp32_block_copy(rocrand_state_mtgp32* 
 /**
  * \brief Changes parameters of a MTGP32 state.
  *
- * \param state - Pointer to a MTGP32 state
- * \param params - Pointer to new parameters
+ * \param state Pointer to a MTGP32 state
+ * \param params Pointer to new parameters
  */
-__forceinline__ __device__ void rocrand_mtgp32_set_params(rocrand_state_mtgp32* state,
-                                                          mtgp32_params*        params)
+__forceinline__ __device__
+void rocrand_mtgp32_set_params(rocrand_state_mtgp32* state, mtgp32_params* params)
 {
     state->set_params(params);
 }

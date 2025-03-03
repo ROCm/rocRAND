@@ -186,7 +186,12 @@ TEST_P(rocrand_hipgraph_generate_tests, poisson_test)
 
 TEST(rocrand_hipgraph_generate_tests, hipgraphs_doc_sample){
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+
 #include "hipgraphs_doc_sample.hpp"
+
+#pragma GCC diagnostic pop
 
 }
 

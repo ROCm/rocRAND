@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -355,6 +355,8 @@ private:
 
     static const constant_type* get_direction_vectors_ptr()
     {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         if constexpr(Is64)
         {
             if constexpr(Scrambled)
@@ -377,6 +379,7 @@ private:
                 return rocrand_h_sobol32_direction_vectors;
             }
         }
+#pragma clang diagnostic pop
     }
 
     // Device
@@ -415,6 +418,8 @@ private:
 
     static const constant_type* get_scramble_constants_ptr()
     {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         if constexpr(Is64)
         {
             return h_scrambled_sobol64_constants;
@@ -423,6 +428,7 @@ private:
         {
             return h_scrambled_sobol32_constants;
         }
+#pragma clang diagnostic pop
     }
 
     // Not scrambled

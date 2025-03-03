@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,10 +44,11 @@ typedef ::testing::Types<rocrand_state_mrg31k3p, rocrand_state_mrg32k3a> rocrand
 TYPED_TEST_SUITE(rocrand_kernel_mrg, rocrand_kernel_mrg_types);
 
 template<class GeneratorState>
-__global__ __launch_bounds__(32) void rocrand_init_kernel(GeneratorState*    states,
-                                                          const size_t       states_size,
-                                                          unsigned long long seed,
-                                                          unsigned long long offset)
+__global__
+void rocrand_init_kernel(GeneratorState*    states,
+                         const size_t       states_size,
+                         unsigned long long seed,
+                         unsigned long long offset)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int subsequence = state_id;
@@ -60,7 +61,8 @@ __global__ __launch_bounds__(32) void rocrand_init_kernel(GeneratorState*    sta
 }
 
 template<class GeneratorState>
-__global__ __launch_bounds__(32) void rocrand_kernel(unsigned int* output, const size_t size)
+__global__
+void rocrand_kernel(unsigned int* output, const size_t size)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -78,7 +80,8 @@ __global__ __launch_bounds__(32) void rocrand_kernel(unsigned int* output, const
 }
 
 template<class GeneratorState>
-__global__ __launch_bounds__(32) void rocrand_uniform_kernel(float* output, const size_t size)
+__global__
+void rocrand_uniform_kernel(float* output, const size_t size)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -96,8 +99,8 @@ __global__ __launch_bounds__(32) void rocrand_uniform_kernel(float* output, cons
 }
 
 template<class GeneratorState>
-__global__ __launch_bounds__(32) void rocrand_uniform_double_kernel(double*      output,
-                                                                    const size_t size)
+__global__
+void rocrand_uniform_double_kernel(double* output, const size_t size)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -115,7 +118,8 @@ __global__ __launch_bounds__(32) void rocrand_uniform_double_kernel(double*     
 }
 
 template<class GeneratorState>
-__global__ __launch_bounds__(32) void rocrand_normal_kernel(float* output, const size_t size)
+__global__
+void rocrand_normal_kernel(float* output, const size_t size)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -136,7 +140,8 @@ __global__ __launch_bounds__(32) void rocrand_normal_kernel(float* output, const
 }
 
 template<class GeneratorState>
-__global__ __launch_bounds__(32) void rocrand_log_normal_kernel(float* output, const size_t size)
+__global__
+void rocrand_log_normal_kernel(float* output, const size_t size)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -157,9 +162,8 @@ __global__ __launch_bounds__(32) void rocrand_log_normal_kernel(float* output, c
 }
 
 template<class GeneratorState>
-__global__ __launch_bounds__(64) void rocrand_poisson_kernel(unsigned int* output,
-                                                             const size_t  size,
-                                                             double        lambda)
+__global__
+void rocrand_poisson_kernel(unsigned int* output, const size_t size, double lambda)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -177,8 +181,10 @@ __global__ __launch_bounds__(64) void rocrand_poisson_kernel(unsigned int* outpu
 }
 
 template<class GeneratorState>
-__global__ __launch_bounds__(32) void rocrand_discrete_kernel(
-    unsigned int* output, const size_t size, rocrand_discrete_distribution discrete_distribution)
+__global__
+void rocrand_discrete_kernel(unsigned int*                 output,
+                             const size_t                  size,
+                             rocrand_discrete_distribution discrete_distribution)
 {
     const unsigned int state_id    = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int global_size = gridDim.x * blockDim.x;
@@ -521,14 +527,14 @@ TYPED_TEST(rocrand_kernel_mrg, rocrand_discrete)
         rocrand_discrete_distribution discrete_distribution;
         ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_poisson_kernel<state_type>),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_discrete_kernel<state_type>),
                            dim3(4),
                            dim3(64),
                            0,
                            0,
                            output,
                            output_size,
-                           lambda);
+                           discrete_distribution);
         HIP_CHECK(hipGetLastError());
 
         std::vector<unsigned int> output_host(output_size);

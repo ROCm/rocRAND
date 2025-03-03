@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -392,15 +392,16 @@ typedef rocrand_device::mrg32k3a_engine rocrand_state_mrg32k3a;
  * Initializes the MRG32K3A generator \p state with the given
  * \p seed, \p subsequence, and \p offset.
  *
- * \param seed - Value to use as a seed
- * \param subsequence - Subsequence to start at
- * \param offset - Absolute offset into subsequence
- * \param state - Pointer to state to initialize
+ * \param seed Value to use as a seed
+ * \param subsequence Subsequence to start at
+ * \param offset Absolute offset into subsequence
+ * \param state Pointer to state to initialize
  */
-__forceinline__ __device__ __host__ void rocrand_init(const unsigned long long seed,
-                                                      const unsigned long long subsequence,
-                                                      const unsigned long long offset,
-                                                      rocrand_state_mrg32k3a*  state)
+__forceinline__ __device__ __host__
+void rocrand_init(const unsigned long long seed,
+                  const unsigned long long subsequence,
+                  const unsigned long long offset,
+                  rocrand_state_mrg32k3a*  state)
 {
     *state = rocrand_state_mrg32k3a(seed, subsequence, offset);
 }
@@ -413,11 +414,12 @@ __forceinline__ __device__ __host__ void rocrand_init(const unsigned long long s
  * value from [0; 2^32 - 1] range using MRG32K3A generator in \p state.
  * State is incremented by one position.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_mrg32k3a* state)
+__forceinline__ __device__ __host__
+unsigned int rocrand(rocrand_state_mrg32k3a* state)
 {
     // next() in [1, ROCRAND_MRG32K3A_M1]
     return static_cast<unsigned int>((state->next() - 1) * ROCRAND_MRG32K3A_UINT_NORM);
@@ -428,11 +430,11 @@ __forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_mrg32k3a*
  *
  * Updates the MRG32K3A state in \p state to skip ahead by \p offset elements.
  *
- * \param offset - Number of elements to skip
- * \param state - Pointer to state to update
+ * \param offset Number of elements to skip
+ * \param state Pointer to state to update
  */
-__forceinline__ __device__ __host__ void skipahead(unsigned long long      offset,
-                                                   rocrand_state_mrg32k3a* state)
+__forceinline__ __device__ __host__
+void skipahead(unsigned long long offset, rocrand_state_mrg32k3a* state)
 {
     return state->discard(offset);
 }
@@ -443,11 +445,11 @@ __forceinline__ __device__ __host__ void skipahead(unsigned long long      offse
  * Updates the MRG32K3A state in \p state to skip ahead by \p subsequence subsequences.
  * Each subsequence is 2^76 numbers long.
  *
- * \param subsequence - Number of subsequences to skip
- * \param state - Pointer to state to update
+ * \param subsequence Number of subsequences to skip
+ * \param state Pointer to state to update
  */
-__forceinline__ __device__ __host__ void skipahead_subsequence(unsigned long long      subsequence,
-                                                               rocrand_state_mrg32k3a* state)
+__forceinline__ __device__ __host__
+void skipahead_subsequence(unsigned long long subsequence, rocrand_state_mrg32k3a* state)
 {
     return state->discard_subsequence(subsequence);
 }
@@ -458,11 +460,11 @@ __forceinline__ __device__ __host__ void skipahead_subsequence(unsigned long lon
  * Updates the MRG32K3A state in \p state to skip ahead by \p sequence sequences.
  * Each sequence is 2^127 numbers long.
  *
- * \param sequence - Number of sequences to skip
- * \param state - Pointer to state to update
+ * \param sequence Number of sequences to skip
+ * \param state Pointer to state to update
  */
-__forceinline__ __device__ __host__ void skipahead_sequence(unsigned long long      sequence,
-                                                            rocrand_state_mrg32k3a* state)
+__forceinline__ __device__ __host__
+void skipahead_sequence(unsigned long long sequence, rocrand_state_mrg32k3a* state)
 {
     return state->discard_sequence(sequence);
 }

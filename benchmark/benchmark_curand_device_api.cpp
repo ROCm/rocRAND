@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -37,19 +37,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#define CUDA_CALL(condition)                                                               \
-    do                                                                                     \
-    {                                                                                      \
-        cudaError_t error_ = condition;                                                    \
-        if(error_ != cudaSuccess)                                                          \
-        {                                                                                  \
-            std::cout << "CUDA error: " << error_ << " at " << __FILE__ << ":" << __LINE__ \
-                      << std::endl;                                                        \
-            exit(error_);                                                                  \
-        }                                                                                  \
-    }                                                                                      \
-    while(0)
 
 #define CURAND_DEFAULT_MAX_BLOCK_SIZE 256
 
@@ -100,7 +87,7 @@ struct runner
 
         init_kernel<<<blocks, threads>>>(states, seed, offset);
 
-        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaGetLastError());
         CUDA_CALL(cudaDeviceSynchronize());
     }
 
@@ -127,7 +114,7 @@ __global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel
 {
     const unsigned int state_id  = blockIdx.x;
     const unsigned int thread_id = threadIdx.x;
-    unsigned int       index     = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int       index     = blockIdx.x * blockDim.x + thread_id;
     unsigned int       stride    = gridDim.x * blockDim.x;
 
     __shared__ curandStateMtgp32_t state;
@@ -137,7 +124,13 @@ __global__ __launch_bounds__(CURAND_DEFAULT_MAX_BLOCK_SIZE) void generate_kernel
     __syncthreads();
 
     const size_t r               = size % blockDim.x;
-    const size_t size_rounded_up = r == 0 ? size : size + (blockDim.x - r);
+    const size_t size_rounded_down = size - r;
+    const size_t size_rounded_up   = r == 0 ? size : size_rounded_down + blockDim.x;
+    while(index < size_rounded_down)
+    {
+        data[index] = generator(&state);
+        index += stride;
+    }
     while(index < size_rounded_up)
     {
         auto value = generator(&state);
@@ -258,12 +251,13 @@ struct runner<curandStateSobol32_t>
     {
         this->dimensions = dimensions;
 
-        const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateSobol32_t)));
-
         curandDirectionVectors32_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
+
+        const size_t states_size = blocks * threads * dimensions;
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateSobol32_t)));
+
         unsigned int* directions;
         const size_t  size = dimensions * sizeof(unsigned int) * 32;
         CUDA_CALL(cudaMalloc(&directions, size));
@@ -275,7 +269,7 @@ struct runner<curandStateSobol32_t>
             directions,
             static_cast<unsigned int>(offset));
 
-        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaGetLastError());
         CUDA_CALL(cudaDeviceSynchronize());
 
         CUDA_CALL(cudaFree(directions));
@@ -316,26 +310,26 @@ struct runner<curandStateScrambledSobol32_t>
     {
         this->dimensions = dimensions;
 
+        curandDirectionVectors32_t* h_directions;
+        unsigned int*               h_constants;
+
+        CURAND_CALL(
+            curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
+        CURAND_CALL(curandGetScrambleConstants32(&h_constants));
+
         const size_t states_size = blocks * threads * dimensions;
         CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateScrambledSobol32_t)));
 
-        curandDirectionVectors32_t* h_directions;
-        CURAND_CALL(
-            curandGetDirectionVectors32(&h_directions, CURAND_DIRECTION_VECTORS_32_JOEKUO6));
         unsigned int* directions;
-        const size_t  size = dimensions * sizeof(unsigned int) * 32;
-        CUDA_CALL(cudaMalloc(&directions, size));
-        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
+        const size_t  directions_size = dimensions * sizeof(unsigned int) * 32;
+        CUDA_CALL(cudaMalloc(&directions, directions_size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, directions_size, cudaMemcpyHostToDevice));
 
-        unsigned int* h_scramble_constants;
-        CURAND_CALL(curandGetScrambleConstants32(&h_scramble_constants));
         unsigned int* scramble_constants;
         const size_t  constants_size = dimensions * sizeof(unsigned int);
         CUDA_CALL(cudaMalloc(&scramble_constants, constants_size));
-        CUDA_CALL(cudaMemcpy(scramble_constants,
-                             h_scramble_constants,
-                             constants_size,
-                             cudaMemcpyHostToDevice));
+        CUDA_CALL(
+            cudaMemcpy(scramble_constants, h_constants, constants_size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(
@@ -344,7 +338,7 @@ struct runner<curandStateScrambledSobol32_t>
             scramble_constants,
             static_cast<unsigned int>(offset));
 
-        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaGetLastError());
         CUDA_CALL(cudaDeviceSynchronize());
 
         CUDA_CALL(cudaFree(directions));
@@ -386,12 +380,13 @@ struct runner<curandStateSobol64_t>
     {
         this->dimensions = dimensions;
 
-        const size_t states_size = blocks * threads * dimensions;
-        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateSobol64_t)));
-
         curandDirectionVectors64_t* h_directions;
         CURAND_CALL(
             curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
+
+        const size_t states_size = blocks * threads * dimensions;
+        CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateSobol64_t)));
+
         unsigned long long int* directions;
         const size_t            size = dimensions * sizeof(unsigned long long) * 64;
         CUDA_CALL(cudaMalloc(&directions, size));
@@ -400,7 +395,7 @@ struct runner<curandStateSobol64_t>
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         init_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states, directions, offset);
 
-        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaGetLastError());
         CUDA_CALL(cudaDeviceSynchronize());
 
         CUDA_CALL(cudaFree(directions));
@@ -441,26 +436,26 @@ struct runner<curandStateScrambledSobol64_t>
     {
         this->dimensions = dimensions;
 
+        curandDirectionVectors64_t* h_directions;
+        unsigned long long*         h_constants;
+
+        CURAND_CALL(
+            curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
+        CURAND_CALL(curandGetScrambleConstants64(&h_constants));
+
         const size_t states_size = blocks * threads * dimensions;
         CUDA_CALL(cudaMalloc(&states, states_size * sizeof(curandStateScrambledSobol64_t)));
 
-        curandDirectionVectors64_t* h_directions;
-        CURAND_CALL(
-            curandGetDirectionVectors64(&h_directions, CURAND_DIRECTION_VECTORS_64_JOEKUO6));
         unsigned long long* directions;
-        const size_t        size = dimensions * sizeof(unsigned long long) * 64;
-        CUDA_CALL(cudaMalloc(&directions, size));
-        CUDA_CALL(cudaMemcpy(directions, h_directions, size, cudaMemcpyHostToDevice));
+        const size_t        directions_size = dimensions * sizeof(unsigned long long) * 64;
+        CUDA_CALL(cudaMalloc(&directions, directions_size));
+        CUDA_CALL(cudaMemcpy(directions, h_directions, directions_size, cudaMemcpyHostToDevice));
 
-        unsigned long long* h_scramble_constants;
-        CURAND_CALL(curandGetScrambleConstants64(&h_scramble_constants));
         unsigned long long* scramble_constants;
         const size_t        constants_size = dimensions * sizeof(unsigned long long);
         CUDA_CALL(cudaMalloc(&scramble_constants, constants_size));
-        CUDA_CALL(cudaMemcpy(scramble_constants,
-                             h_scramble_constants,
-                             constants_size,
-                             cudaMemcpyHostToDevice));
+        CUDA_CALL(
+            cudaMemcpy(scramble_constants, h_constants, constants_size, cudaMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
         init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), threads>>>(states,
@@ -468,7 +463,7 @@ struct runner<curandStateScrambledSobol64_t>
                                                                              scramble_constants,
                                                                              offset);
 
-        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaGetLastError());
         CUDA_CALL(cudaDeviceSynchronize());
 
         CUDA_CALL(cudaFree(directions));
@@ -722,7 +717,7 @@ void run_benchmark(benchmark::State&        state,
     for(size_t i = 0; i < 5; i++)
     {
         r.generate(blocks, threads, stream, data, size, generator);
-        CUDA_CALL(cudaPeekAtLastError());
+        CUDA_CALL(cudaGetLastError());
         CUDA_CALL(cudaDeviceSynchronize());
     }
 
@@ -819,6 +814,14 @@ void add_benchmarks(const benchmark_context&                      ctx,
 
 int main(int argc, char* argv[])
 {
+    // get paramaters before they are passed into
+    // benchmark::Initialize()
+    std::string outFormat     = "";
+    std::string filter        = "";
+    std::string consoleFormat = "";
+
+    getFormats(argc, argv, outFormat, filter, consoleFormat);
+
     benchmark::Initialize(&argc, argv);
 
     cli::Parser parser(argc, argv);
@@ -884,8 +887,20 @@ int main(int argc, char* argv[])
         b->Unit(benchmark::kMillisecond);
     }
 
+    benchmark::BenchmarkReporter* console_reporter  = getConsoleReporter(consoleFormat);
+    benchmark::BenchmarkReporter* out_file_reporter = getOutFileReporter(outFormat);
+
+    std::string spec = (filter == "" || filter == "all") ? "." : filter;
+
     // Run benchmarks
-    benchmark::RunSpecifiedBenchmarks();
+    if(outFormat == "") // default case
+    {
+        benchmark::RunSpecifiedBenchmarks(console_reporter, spec);
+    }
+    else
+    {
+        benchmark::RunSpecifiedBenchmarks(console_reporter, out_file_reporter, spec);
+    }
     CUDA_CALL(cudaStreamDestroy(stream));
 
     return 0;

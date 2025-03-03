@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -152,6 +152,7 @@ inline void customCSVReporter::ReportRuns(const std::vector<Run>& reports)
 inline void customCSVReporter::PrintRunData(const Run& run)
 {
     std::ostream& Out = GetOutputStream();
+    std::ostream& Err = GetErrorStream();
 
     //get the name of the engine and distribution:
     std::string temp = run.benchmark_name();
@@ -178,6 +179,13 @@ inline void customCSVReporter::PrintRunData(const Run& run)
 
     Out << engineName << "," << disName << "," << mode << ",";
     Out << CsvEscape(run.benchmark_name()) << ",";
+    if(run.skipped)
+    {
+        Err << std::string(elements.size() - 3, ',');
+        Err << "true,";
+        Err << CsvEscape(run.skip_message) << "\n";
+        return;
+    }
 
     // Do not print iteration on bigO and RMS report
     if(!run.report_big_o && !run.report_rms)

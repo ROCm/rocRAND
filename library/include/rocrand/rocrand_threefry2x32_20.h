@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -109,15 +109,16 @@ typedef rocrand_device::threefry2x32_20_engine rocrand_state_threefry2x32_20;
  * Initializes the Threefry generator \p state with the given
  * \p seed, \p subsequence, and \p offset.
  *
- * \param seed - Value to use as a seed
- * \param subsequence - Subsequence to start at
- * \param offset - Absolute offset into subsequence
- * \param state - Pointer to state to initialize
+ * \param seed Value to use as a seed
+ * \param subsequence Subsequence to start at
+ * \param offset Absolute offset into subsequence
+ * \param state Pointer to state to initialize
  */
-__forceinline__ __device__ __host__ void rocrand_init(const unsigned long long       seed,
-                                                      const unsigned long long       subsequence,
-                                                      const unsigned long long       offset,
-                                                      rocrand_state_threefry2x32_20* state)
+__forceinline__ __device__ __host__
+void rocrand_init(const unsigned long long       seed,
+                  const unsigned long long       subsequence,
+                  const unsigned long long       offset,
+                  rocrand_state_threefry2x32_20* state)
 {
     *state = rocrand_state_threefry2x32_20(seed, subsequence, offset);
 }
@@ -132,11 +133,12 @@ __forceinline__ __device__ __host__ void rocrand_init(const unsigned long long  
  *
  * Threefry2x32 has a period of 2 ^ 64 numbers.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Pseudorandom value (32-bit) as an <tt>unsigned int</tt>
  */
-__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_threefry2x32_20* state)
+__forceinline__ __device__ __host__
+unsigned int rocrand(rocrand_state_threefry2x32_20* state)
 {
     return state->next();
 }
@@ -149,11 +151,12 @@ __forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_threefry2
  * values from [0; 2^32 - 1] range using Threefry generator in \p state.
  * State is incremented by two positions.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Two pseudorandom values (32-bit) as an <tt>uint2</tt>
  */
-__forceinline__ __device__ __host__ uint2 rocrand2(rocrand_state_threefry2x32_20* state)
+__forceinline__ __device__ __host__
+uint2 rocrand2(rocrand_state_threefry2x32_20* state)
 {
     return state->next2();
 }

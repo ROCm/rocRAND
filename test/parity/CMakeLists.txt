@@ -56,9 +56,17 @@ else()
     set(CUDA_INCLUDE_DIRS ${CUDAToolkit_INCLUDE_DIRS})
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+if (CMAKE_CXX_STANDARD EQUAL 14)
+  message(WARNING "C++14 will be deprecated in the next major release")
+elseif(NOT CMAKE_CXX_STANDARD EQUAL 17)
+  message(FATAL_ERROR "Only C++14 and C++17 are supported")
+endif()
 
 # Find rocRAND
 find_package(rocrand REQUIRED CONFIG HINTS ${rocrand_DIR} PATHS "$ENV{ROCM_PATH}/rocrand")

@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -110,6 +110,13 @@ endif()
 # This will be removed with upcoming packaging changes.
 target_include_directories(rocrand INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/rocrand>)
 
+target_include_directories(
+    rocrand
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/library/include"
+        "${PROJECT_BINARY_DIR}/library/include"
+)
+
 # Build library
 if(HIP_COMPILER STREQUAL "nvcc")
     set_source_files_properties(${rocRAND_HIP_SRCS}
@@ -126,15 +133,15 @@ endif()
 rocm_set_soversion(rocrand ${rocrand_SOVERSION})
 set_target_properties(rocrand
     PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/library"
+        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/library"
         DEBUG_POSTFIX "-d"
 )
 
 rocm_install(
     TARGETS rocrand
     INCLUDE
-        "${CMAKE_SOURCE_DIR}/library/include"
-        "${CMAKE_BINARY_DIR}/library/include"
+        "${PROJECT_SOURCE_DIR}/library/include"
+        "${PROJECT_BINARY_DIR}/library/include"
 )
 
 set(FORTRAN_SRCS_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/rocrand/src/fortran")

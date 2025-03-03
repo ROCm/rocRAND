@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@
 #include "test_common.hpp"
 #include "test_rocrand_common.hpp"
 
+#include <rocrand/rocrand_discrete.h>
 #include <rocrand/rocrand_log_normal.h>
 #include <rocrand/rocrand_normal.h>
 #include <rocrand/rocrand_poisson.h>
@@ -39,7 +40,9 @@
 
 struct rocrand_f
 {
-    __device__ __forceinline__ unsigned int operator()(rocrand_state_scrambled_sobol32* state_ptr)
+    __device__ __forceinline__
+    unsigned int
+        operator()(rocrand_state_scrambled_sobol32* state_ptr)
     {
         return rocrand(state_ptr);
     }
@@ -47,7 +50,9 @@ struct rocrand_f
 
 struct rocrand_uniform_f
 {
-    __device__ __forceinline__ float operator()(rocrand_state_scrambled_sobol32* state_ptr)
+    __device__ __forceinline__
+    float
+        operator()(rocrand_state_scrambled_sobol32* state_ptr)
     {
         return rocrand_uniform(state_ptr);
     }
@@ -55,7 +60,9 @@ struct rocrand_uniform_f
 
 struct rocrand_uniform_double_f
 {
-    __device__ __forceinline__ double operator()(rocrand_state_scrambled_sobol32* state_ptr)
+    __device__ __forceinline__
+    double
+        operator()(rocrand_state_scrambled_sobol32* state_ptr)
     {
         return rocrand_uniform_double(state_ptr);
     }
@@ -63,7 +70,9 @@ struct rocrand_uniform_double_f
 
 struct rocrand_normal_f
 {
-    __device__ __forceinline__ float operator()(rocrand_state_scrambled_sobol32* state_ptr)
+    __device__ __forceinline__
+    float
+        operator()(rocrand_state_scrambled_sobol32* state_ptr)
     {
         return rocrand_normal(state_ptr);
     }
@@ -71,7 +80,9 @@ struct rocrand_normal_f
 
 struct rocrand_normal_double_f
 {
-    __device__ __forceinline__ double operator()(rocrand_state_scrambled_sobol32* state_ptr)
+    __device__ __forceinline__
+    double
+        operator()(rocrand_state_scrambled_sobol32* state_ptr)
     {
         return rocrand_normal_double(state_ptr);
     }
@@ -79,7 +90,8 @@ struct rocrand_normal_double_f
 
 struct rocrand_log_normal_f
 {
-    __device__ __forceinline__ float
+    __device__ __forceinline__
+    float
         operator()(rocrand_state_scrambled_sobol32* state_ptr, float mean, float std)
     {
         return rocrand_log_normal(state_ptr, mean, std);
@@ -88,8 +100,9 @@ struct rocrand_log_normal_f
 
 struct rocrand_log_normal_double_f
 {
-    __device__ __forceinline__ float
-        operator()(rocrand_state_scrambled_sobol32* state_ptr, float mean, float std)
+    __device__ __forceinline__
+    double
+        operator()(rocrand_state_scrambled_sobol32* state_ptr, double mean, double std)
     {
         return rocrand_log_normal_double(state_ptr, mean, std);
     }
@@ -97,19 +110,32 @@ struct rocrand_log_normal_double_f
 
 struct rocrand_poisson_f
 {
-    __device__ __forceinline__ unsigned int operator()(rocrand_state_scrambled_sobol32* state_ptr,
-                                                       double                           lambda)
+    __device__ __forceinline__
+    unsigned int
+        operator()(rocrand_state_scrambled_sobol32* state_ptr, double lambda)
     {
         return rocrand_poisson(state_ptr, lambda);
     }
 };
 
+struct rocrand_discrete_f
+{
+    __device__ __forceinline__
+    unsigned int
+        operator()(rocrand_state_scrambled_sobol32* state_ptr,
+                   rocrand_discrete_distribution    discrete_distribution)
+    {
+        return rocrand_discrete(state_ptr, discrete_distribution);
+    }
+};
+
 template<class Distribution, typename OutputType, typename... Args>
-__global__ __launch_bounds__(32) void rocrand_init_kernel(OutputType*         output,
-                                                          const unsigned int* vectors,
-                                                          const unsigned int* scramble_constants,
-                                                          const size_t        size_per_dimension,
-                                                          Args... args)
+__global__
+void rocrand_kernel(OutputType*         output,
+                    const unsigned int* vectors,
+                    const unsigned int* scramble_constants,
+                    const size_t        size_per_dimension,
+                    Args... args)
 {
     const unsigned int state_id  = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int dimension = blockIdx.y;
@@ -178,7 +204,7 @@ void call_rocrand_kernel(std::vector<ResultType>& output_host,
     unsigned int* m_scramble_constants;
     load_scrambled_sobol32_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_init_kernel<Distribution>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<Distribution>),
                        dim3(8, dimensions),
                        dim3(32),
                        0,
@@ -426,14 +452,14 @@ TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_poisson)
     constexpr size_t output_size = dimensions * size_per_dimension;
 
     ResultType* output;
-    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(unsigned int)));
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(ResultType)));
     HIP_CHECK(hipDeviceSynchronize());
 
     unsigned int* m_vector;
     unsigned int* m_scramble_constants;
     load_scrambled_sobol32_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_init_kernel<rocrand_poisson_f>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<rocrand_poisson_f>),
                        dim3(8, dimensions),
                        dim3(32),
                        0,
@@ -454,6 +480,69 @@ TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_poisson)
     HIP_CHECK(hipFree(output));
     HIP_CHECK(hipFree(m_vector));
     HIP_CHECK(hipFree(m_scramble_constants));
+
+    double mean = 0;
+    for(ResultType v : output_host)
+    {
+        mean += static_cast<double>(v);
+    }
+    mean = mean / output_size;
+
+    double variance = 0;
+    for(ResultType v : output_host)
+    {
+        variance += std::pow(v - mean, 2);
+    }
+    variance = variance / output_size;
+
+    EXPECT_NEAR(mean, lambda, std::max(1.0, lambda * 1e-1));
+    EXPECT_NEAR(variance, lambda, std::max(1.0, lambda * 1e-1));
+}
+
+TEST_P(rocrand_kernel_scrambled_sobol32_poisson, rocrand_discrete)
+{
+    const double lambda = GetParam();
+
+    using ResultType = unsigned int;
+
+    constexpr size_t       size_per_dimension = 8192;
+    constexpr unsigned int dimensions         = 8;
+    // output_size has to be a multiple of the dimensions for sobol
+    constexpr size_t output_size = dimensions * size_per_dimension;
+
+    ResultType* output;
+    HIP_CHECK(hipMallocHelper(&output, output_size * sizeof(ResultType)));
+    HIP_CHECK(hipDeviceSynchronize());
+
+    unsigned int* m_vector;
+    unsigned int* m_scramble_constants;
+    load_scrambled_sobol32_constants_to_gpu(dimensions, &m_vector, &m_scramble_constants);
+
+    rocrand_discrete_distribution discrete_distribution;
+    ROCRAND_CHECK(rocrand_create_poisson_distribution(lambda, &discrete_distribution));
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(rocrand_kernel<rocrand_discrete_f>),
+                       dim3(8, dimensions),
+                       dim3(32),
+                       0,
+                       0,
+                       output,
+                       m_vector,
+                       m_scramble_constants,
+                       size_per_dimension,
+                       discrete_distribution);
+    HIP_CHECK(hipGetLastError());
+
+    std::vector<ResultType> output_host(output_size);
+    HIP_CHECK(hipMemcpy(output_host.data(),
+                        output,
+                        output_size * sizeof(ResultType),
+                        hipMemcpyDeviceToHost));
+    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(output));
+    HIP_CHECK(hipFree(m_vector));
+    HIP_CHECK(hipFree(m_scramble_constants));
+    ROCRAND_CHECK(rocrand_destroy_discrete_distribution(discrete_distribution));
 
     double mean = 0;
     for(ResultType v : output_host)

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,8 @@ struct host_test_params
     }
 };
 
+// Check all combinations of blocking_host_generator and use_default_stream for one PRNG (Philox)
+// and one QRNG (Sobol32), others work the same way
 constexpr host_test_params host_test_params_array[] = {
     {   ROCRAND_RNG_PSEUDO_PHILOX4_32_10, false,  true},
     {         ROCRAND_RNG_PSEUDO_LFSR113, false,  true},
@@ -79,9 +81,9 @@ constexpr host_test_params host_test_params_array[] = {
     {          ROCRAND_RNG_QUASI_SOBOL32, false,  true},
     {          ROCRAND_RNG_QUASI_SOBOL64, false,  true},
 
-    {          ROCRAND_RNG_PSEUDO_XORWOW, false, false},
-    {          ROCRAND_RNG_PSEUDO_XORWOW,  true, false},
-    {          ROCRAND_RNG_PSEUDO_XORWOW,  true,  true},
+    {   ROCRAND_RNG_PSEUDO_PHILOX4_32_10, false, false},
+    {   ROCRAND_RNG_PSEUDO_PHILOX4_32_10,  true, false},
+    {   ROCRAND_RNG_PSEUDO_PHILOX4_32_10,  true,  true},
 
     {          ROCRAND_RNG_QUASI_SOBOL32, false, false},
     {          ROCRAND_RNG_QUASI_SOBOL32,  true, false},

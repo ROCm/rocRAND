@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,19 @@
             exit(status_);                                                                    \
         }                                                                                     \
     }                                                                                         \
+    while(0)
+
+#define CUDA_CALL(condition)                                                               \
+    do                                                                                     \
+    {                                                                                      \
+        cudaError_t error_ = condition;                                                    \
+        if(error_ != cudaSuccess)                                                          \
+        {                                                                                  \
+            std::cout << "CUDA error: " << error_ << " at " << __FILE__ << ":" << __LINE__ \
+                      << std::endl;                                                        \
+            exit(error_);                                                                  \
+        }                                                                                  \
+    }                                                                                      \
     while(0)
 
 inline void add_common_benchmark_curand_info()

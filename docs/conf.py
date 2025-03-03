@@ -44,3 +44,9 @@ external_projects_current_project = "rocrand"
 
 for sphinx_var in ROCmDocs.SPHINX_VARS:
     globals()[sphinx_var] = getattr(docs_core, sphinx_var)
+
+# Suppresses "WARNING: toctree directive not expected with external-toc"
+# Ideally suppression wouldn't be needed; see sphinx-external-toc#36
+suppress_warnings = ["etoc.toctree"]
+
+cpp_id_attributes = ["__forceinline__", "__device__", "__host__", "rocrand_status"]

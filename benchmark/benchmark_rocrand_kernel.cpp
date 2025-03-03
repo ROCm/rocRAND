@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -114,11 +114,7 @@ struct runner
         const size_t states_size = blocks * threads;
         HIP_CHECK(hipMalloc(&states, states_size * sizeof(GeneratorState)));
 
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(init_kernel),
-            dim3(blocks), dim3(threads), 0, 0,
-            states, seed, offset
-        );
+        init_kernel<<<dim3(blocks), dim3(threads)>>>(states, seed, offset);
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -143,11 +139,11 @@ struct runner
                   const GenerateFunc& generate_func,
                   const Extra extra)
     {
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(generate_kernel),
-            dim3(blocks), dim3(threads), 0, stream,
-            states, data, size, generate_func, extra
-        );
+        generate_kernel<<<dim3(blocks), dim3(threads), 0, stream>>>(states,
+                                                                    data,
+                                                                    size,
+                                                                    generate_func,
+                                                                    extra);
     }
 };
 
@@ -222,11 +218,12 @@ struct runner<rocrand_state_mtgp32>
                   const GenerateFunc& generate_func,
                   const Extra extra)
     {
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(generate_kernel),
-            dim3(std::min((size_t)200, blocks)), dim3(256), 0, stream,
-            states, data, size, generate_func, extra
-        );
+        generate_kernel<<<dim3(std::min((size_t)200, blocks)), dim3(256), 0, stream>>>(
+            states,
+            data,
+            size,
+            generate_func,
+            extra);
     }
 };
 
@@ -255,16 +252,11 @@ struct runner<rocrand_state_lfsr113>
         const size_t states_size = blocks * threads;
         HIP_CHECK(hipMalloc(&states, states_size * sizeof(rocrand_state_lfsr113)));
 
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_kernel),
-                           dim3(blocks),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           uint4{ROCRAND_LFSR113_DEFAULT_SEED_X,
-                                 ROCRAND_LFSR113_DEFAULT_SEED_Y,
-                                 ROCRAND_LFSR113_DEFAULT_SEED_Z,
-                                 ROCRAND_LFSR113_DEFAULT_SEED_W});
+        init_kernel<<<dim3(blocks), dim3(threads)>>>(states,
+                                                     uint4{ROCRAND_LFSR113_DEFAULT_SEED_X,
+                                                           ROCRAND_LFSR113_DEFAULT_SEED_Y,
+                                                           ROCRAND_LFSR113_DEFAULT_SEED_Z,
+                                                           ROCRAND_LFSR113_DEFAULT_SEED_W});
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -289,16 +281,11 @@ struct runner<rocrand_state_lfsr113>
                   const GenerateFunc& generate_func,
                   const Extra         extra)
     {
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_kernel),
-                           dim3(blocks),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size,
-                           generate_func,
-                           extra);
+        generate_kernel<<<dim3(blocks), dim3(threads), 0, stream>>>(states,
+                                                                    data,
+                                                                    size,
+                                                                    generate_func,
+                                                                    extra);
     }
 };
 
@@ -381,14 +368,10 @@ struct runner<rocrand_state_sobol32>
         HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           static_cast<unsigned int>(offset));
+        init_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads)>>>(
+            states,
+            directions,
+            static_cast<unsigned int>(offset));
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -416,16 +399,12 @@ struct runner<rocrand_state_sobol32>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(
+            states,
+            data,
+            size / dimensions,
+            generate_func,
+            extra);
     }
 };
 
@@ -466,15 +445,11 @@ struct runner<rocrand_state_scrambled_sobol32>
             hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           scramble_constants,
-                           static_cast<unsigned int>(offset));
+        init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads)>>>(
+            states,
+            directions,
+            scramble_constants,
+            static_cast<unsigned int>(offset));
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -503,16 +478,12 @@ struct runner<rocrand_state_scrambled_sobol32>
                   const Extra         extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(
+            states,
+            data,
+            size / dimensions,
+            generate_func,
+            extra);
     }
 };
 
@@ -542,14 +513,9 @@ struct runner<rocrand_state_sobol64>
         HIP_CHECK(hipMemcpy(directions, h_directions, size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           offset);
+        init_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads)>>>(states,
+                                                                         directions,
+                                                                         offset);
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -577,16 +543,12 @@ struct runner<rocrand_state_sobol64>
                   const Extra extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(
+            states,
+            data,
+            size / dimensions,
+            generate_func,
+            extra);
     }
 };
 
@@ -626,15 +588,11 @@ struct runner<rocrand_state_scrambled_sobol64>
             hipMemcpy(scramble_constants, h_constants, constants_size, hipMemcpyHostToDevice));
 
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(init_scrambled_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           0,
-                           states,
-                           directions,
-                           scramble_constants,
-                           offset);
+        init_scrambled_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads)>>>(
+            states,
+            directions,
+            scramble_constants,
+            offset);
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
@@ -663,16 +621,12 @@ struct runner<rocrand_state_scrambled_sobol64>
                   const Extra         extra)
     {
         const size_t blocks_x = next_power2((blocks + dimensions - 1) / dimensions);
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(generate_sobol_kernel),
-                           dim3(blocks_x, dimensions),
-                           dim3(threads),
-                           0,
-                           stream,
-                           states,
-                           data,
-                           size / dimensions,
-                           generate_func,
-                           extra);
+        generate_sobol_kernel<<<dim3(blocks_x, dimensions), dim3(threads), 0, stream>>>(
+            states,
+            data,
+            size / dimensions,
+            generate_func,
+            extra);
     }
 };
 

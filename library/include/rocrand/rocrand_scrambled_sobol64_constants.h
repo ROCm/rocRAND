@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,8 @@
     #define SCRAMBLED_SOBOL_DIM 20000
 #endif
 
+// clang-format off
+[[deprecated("Use 'rocrand_get_scramble_constants64(...)' instead.")]]
 static const unsigned long long int h_scrambled_sobol64_constants[SCRAMBLED_SOBOL_DIM] = {
     0xd091bb5c22ae9ef6, 0xe7e1faeed5c31f79, 0x2082352cf807b7df, 0xe9d300053895afe1,
     0xa1e24bba4ee4092b, 0x18f868638c16a625, 0x474ba8c43039cd1a, 0x8c006d5ffe2d7810,
@@ -5031,5 +5033,6 @@ static const unsigned long long int h_scrambled_sobol64_constants[SCRAMBLED_SOBO
     0xbd2b0c36a656a3a0, 0x0e00fce8b03b2622, 0x3e45ff730078396e, 0xbaa57b945eb14241,
 
 };
+// clang-format on
 
 #endif // ROCRAND_SCRAMBLED_SOBOL64_CONSTANTS_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -229,11 +229,12 @@ __forceinline__ __device__ __host__ double
  * (excluding \p 0.0f, including \p 1.0f) using Philox generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_philox4x32_10* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_philox4x32_10* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -246,11 +247,12 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_philox4x
  * (excluding \p 0.0f, including \p 1.0f) using Philox generator in \p state, and
  * increments position of the generator by two.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Two uniformly distributed \p float values from (0; 1] range as \p float2.
  */
-__forceinline__ __device__ __host__ float2 rocrand_uniform2(rocrand_state_philox4x32_10* state)
+__forceinline__ __device__ __host__
+float2 rocrand_uniform2(rocrand_state_philox4x32_10* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -269,11 +271,12 @@ __forceinline__ __device__ __host__ float2 rocrand_uniform2(rocrand_state_philox
  * (excluding \p 0.0f, including \p 1.0f) using Philox generator in \p state, and
  * increments position of the generator by four.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Four uniformly distributed \p float values from (0; 1] range as \p float4.
  */
-__forceinline__ __device__ __host__ float4 rocrand_uniform4(rocrand_state_philox4x32_10* state)
+__forceinline__ __device__ __host__
+float4 rocrand_uniform4(rocrand_state_philox4x32_10* state)
 {
     return rocrand_device::detail::uniform_distribution4(rocrand4(state));
 }
@@ -286,12 +289,12 @@ __forceinline__ __device__ __host__ float4 rocrand_uniform4(rocrand_state_philox
  * (excluding \p 0.0, including \p 1.0) using Philox generator in \p state, and
  * increments position of the generator by two.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double
-    rocrand_uniform_double(rocrand_state_philox4x32_10* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_philox4x32_10* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -307,12 +310,12 @@ __forceinline__ __device__ __host__ double
  * (excluding \p 0.0, including \p 1.0) using Philox generator in \p state, and
  * increments position of the generator by four.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Two uniformly distributed \p double values from (0; 1] range as \p double2.
  */
-__forceinline__ __device__ __host__ double2
-    rocrand_uniform_double2(rocrand_state_philox4x32_10* state)
+__forceinline__ __device__ __host__
+double2 rocrand_uniform_double2(rocrand_state_philox4x32_10* state)
 {
     return rocrand_device::detail::uniform_distribution_double2(rocrand4(state));
 }
@@ -325,12 +328,12 @@ __forceinline__ __device__ __host__ double2
  * (excluding \p 0.0, including \p 1.0) using Philox generator in \p state, and
  * increments position of the generator by eight.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Four uniformly distributed \p double values from (0; 1] range as \p double4.
  */
-__forceinline__ __device__ __host__ double4
-    rocrand_uniform_double4(rocrand_state_philox4x32_10* state)
+__forceinline__ __device__ __host__
+double4 rocrand_uniform_double4(rocrand_state_philox4x32_10* state)
 {
     return rocrand_device::detail::uniform_distribution_double4(rocrand4(state), rocrand4(state));
 }
@@ -343,11 +346,12 @@ __forceinline__ __device__ __host__ double4
  * (excluding \p 0.0f, including \p 1.0f) using MRG31K3P generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_mrg31k3p* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_mrg31k3p* state)
 {
     return rocrand_device::detail::mrg_uniform_distribution<rocrand_state_mrg31k3p>(state->next());
 }
@@ -360,20 +364,21 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_mrg31k3p
  * (excluding \p 0.0, including \p 1.0) using MRG31K3P generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_mrg31k3p* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_mrg31k3p* state)
 {
     return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_state_mrg31k3p>(
         state->next());
 }
 
- /**
+/**
  * \brief Returns a uniformly distributed random <tt>float</tt> value
  * from (0; 1] range.
  *
@@ -381,16 +386,17 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
  * (excluding \p 0.0f, including \p 1.0f) using MRG32K3A generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_mrg32k3a* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_mrg32k3a* state)
 {
     return rocrand_device::detail::mrg_uniform_distribution<rocrand_state_mrg32k3a>(state->next());
 }
 
- /**
+/**
  * \brief Returns a uniformly distributed random <tt>double</tt> value
  * from (0; 1] range.
  *
@@ -398,20 +404,21 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_mrg32k3a
  * (excluding \p 0.0, including \p 1.0) using MRG32K3A generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_mrg32k3a* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_mrg32k3a* state)
 {
     return rocrand_device::detail::mrg_uniform_distribution_double<rocrand_state_mrg32k3a>(
         state->next());
 }
 
- /**
+/**
  * \brief Returns a uniformly distributed random <tt>float</tt> value
  * from (0; 1] range.
  *
@@ -419,16 +426,17 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
  * (excluding \p 0.0f, including \p 1.0f) using XORWOW generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_xorwow* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_xorwow* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
 
- /**
+/**
  * \brief Returns a uniformly distributed random <tt>double</tt> value
  * from (0; 1] range.
  *
@@ -436,11 +444,12 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_xorwow* 
  * (excluding \p 0.0, including \p 1.0) using MRG32K3A generator in \p state, and
  * increments position of the generator by two.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_xorwow* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_xorwow* state)
 {
     auto state1 = rocrand(state);
     auto state2 = rocrand(state);
@@ -448,7 +457,7 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
     return rocrand_device::detail::uniform_distribution_double(state1, state2);
 }
 
- /**
+/**
  * \brief Returns a uniformly distributed random <tt>float</tt> value
  * from (0; 1] range.
  *
@@ -456,11 +465,12 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
  * (excluding \p 0.0f, including \p 1.0f) using MTGP32 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ float rocrand_uniform(rocrand_state_mtgp32* state)
+__forceinline__ __device__
+float rocrand_uniform(rocrand_state_mtgp32* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -473,19 +483,20 @@ __forceinline__ __device__ float rocrand_uniform(rocrand_state_mtgp32* state)
  * (excluding \p 0.0, including \p 1.0) using MTGP32 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ double rocrand_uniform_double(rocrand_state_mtgp32* state)
+__forceinline__ __device__
+double rocrand_uniform_double(rocrand_state_mtgp32* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
 
- /**
+/**
  * \brief Returns a uniformly distributed random <tt>float</tt> value
  * from (0; 1] range.
  *
@@ -493,11 +504,12 @@ __forceinline__ __device__ double rocrand_uniform_double(rocrand_state_mtgp32* s
  * (excluding \p 0.0f, including \p 1.0f) using SOBOL32 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_sobol32* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_sobol32* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -510,14 +522,15 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_sobol32*
  * (excluding \p 0.0, including \p 1.0) using SOBOL32 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_sobol32* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_sobol32* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -530,11 +543,12 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
  * (excluding \p 0.0f, including \p 1.0f) using SCRAMBLED_SOBOL32 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_scrambled_sobol32* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_scrambled_sobol32* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -547,15 +561,15 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_scramble
  * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL32 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double
-    rocrand_uniform_double(rocrand_state_scrambled_sobol32* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_scrambled_sobol32* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -568,11 +582,12 @@ __forceinline__ __device__ __host__ double
  * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_sobol64* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_sobol64* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -585,11 +600,12 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_sobol64*
  * (excluding \p 0.0, including \p 1.0) using SOBOL64 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_sobol64* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_sobol64* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -602,11 +618,12 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
  * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL64 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_scrambled_sobol64* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_scrambled_sobol64* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -619,12 +636,12 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_scramble
  * (excluding \p 0.0, including \p 1.0) using SCRAMBLED_SOBOL64 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double
-    rocrand_uniform_double(rocrand_state_scrambled_sobol64* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_scrambled_sobol64* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -637,11 +654,12 @@ __forceinline__ __device__ __host__ double
  * (excluding \p 0.0f, including \p 1.0f) using LFSR113 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_lfsr113* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_lfsr113* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -654,14 +672,15 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_lfsr113*
  * (excluding \p 0.0, including \p 1.0) using LFSR113 generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_lfsr113* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_lfsr113* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -674,11 +693,12 @@ __forceinline__ __device__ __host__ double rocrand_uniform_double(rocrand_state_
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry2x32_20* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_threefry2x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -691,15 +711,15 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double
-    rocrand_uniform_double(rocrand_state_threefry2x32_20* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_threefry2x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -712,11 +732,12 @@ __forceinline__ __device__ __host__ double
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry2x64_20* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -729,15 +750,15 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double
-    rocrand_uniform_double(rocrand_state_threefry2x64_20* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_threefry2x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -750,11 +771,12 @@ __forceinline__ __device__ __host__ double
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry4x32_20* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_threefry4x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -767,15 +789,15 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double
-    rocrand_uniform_double(rocrand_state_threefry4x32_20* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_threefry4x32_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }
@@ -788,11 +810,12 @@ __forceinline__ __device__ __host__ double
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Uniformly distributed \p float value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry4x64_20* state)
+__forceinline__ __device__ __host__
+float rocrand_uniform(rocrand_state_threefry4x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution(rocrand(state));
 }
@@ -805,15 +828,15 @@ __forceinline__ __device__ __host__ float rocrand_uniform(rocrand_state_threefry
  * (excluding \p 0.0, including \p 1.0) using ThreeFry generator in \p state, and
  * increments position of the generator by one.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * Note: In this implementation returned \p double value is generated
  * from only 32 random bits (one <tt>unsigned int</tt> value).
  *
  * \return Uniformly distributed \p double value from (0; 1] range.
  */
-__forceinline__ __device__ __host__ double
-    rocrand_uniform_double(rocrand_state_threefry4x64_20* state)
+__forceinline__ __device__ __host__
+double rocrand_uniform_double(rocrand_state_threefry4x64_20* state)
 {
     return rocrand_device::detail::uniform_distribution_double(rocrand(state));
 }

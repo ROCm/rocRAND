@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -590,6 +590,8 @@ rocrand_status ROCRANDAPI
 rocrand_status ROCRANDAPI rocrand_get_direction_vectors32(const unsigned int**         vectors,
                                                           rocrand_direction_vector_set set)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     switch(set)
     {
         case ROCRAND_DIRECTION_VECTORS_32_JOEKUO6:
@@ -600,11 +602,14 @@ rocrand_status ROCRANDAPI rocrand_get_direction_vectors32(const unsigned int**  
             return ROCRAND_STATUS_SUCCESS;
         default: return ROCRAND_STATUS_OUT_OF_RANGE;
     }
+#pragma clang diagnostic pop
 }
 
 rocrand_status ROCRANDAPI rocrand_get_direction_vectors64(const unsigned long long**   vectors,
                                                           rocrand_direction_vector_set set)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     switch(set)
     {
         case ROCRAND_DIRECTION_VECTORS_64_JOEKUO6:
@@ -615,18 +620,25 @@ rocrand_status ROCRANDAPI rocrand_get_direction_vectors64(const unsigned long lo
             return ROCRAND_STATUS_SUCCESS;
         default: return ROCRAND_STATUS_OUT_OF_RANGE;
     }
+#pragma clang diagnostic pop
 }
 
 rocrand_status ROCRANDAPI rocrand_get_scramble_constants32(const unsigned int** constants)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     *constants = h_scrambled_sobol32_constants;
     return ROCRAND_STATUS_SUCCESS;
+#pragma clang diagnostic pop
 }
 
 rocrand_status ROCRANDAPI rocrand_get_scramble_constants64(const unsigned long long** constants)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     *constants = h_scrambled_sobol64_constants;
     return ROCRAND_STATUS_SUCCESS;
+#pragma clang diagnostic pop
 }
 
 #if defined(__cplusplus)

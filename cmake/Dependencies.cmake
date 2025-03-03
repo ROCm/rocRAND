@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,22 +20,47 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.16)
-
-# find_package() uses upper-case <PACKAGENAME>_ROOT variables.
-# altough we use GTEST_ROOT for our purposes, it is actually even benefecial for
-# find_package() to look for it there (that's where we are going to put it anyway)
-if(POLICY CMP0144)
-  cmake_policy(SET CMP0144 NEW)
-endif()
-
 # Dependencies
+
+# Save global state
+# NOTE1: the reason we don't scope global state meddling using add_subdirectory
+#        is because CMake < 3.24 lacks CMAKE_FIND_PACKAGE_TARGETS_GLOBAL which
+#        would promote IMPORTED targets of find_package(CONFIG) to be visible
+#        by other parts of the build. So we save and restore global state.
+#
+# NOTE2: We disable the ROCMChecks.cmake warning noting that we meddle with
+#        global state. This is consequence of abusing the CMake CXX language
+#        which HIP piggybacks on top of. This kind of HIP support has one chance
+#        at observing the global flags, at the find_package(HIP) invocation.
+#        The device compiler won't be able to pick up changes after that, hence
+#        the warning.
+set(USER_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+if(DEFINED BUILD_SHARED_LIBS)
+  set(USER_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+endif()
+set(USER_ROCM_WARN_TOOLCHAIN_VAR ${ROCM_WARN_TOOLCHAIN_VAR})
+
+# Change variables before configuring dependencies
+set(ROCM_WARN_TOOLCHAIN_VAR OFF CACHE BOOL "")
+# Turn off warnings and errors for all warnings in dependencies
+separate_arguments(CXX_FLAGS_LIST NATIVE_COMMAND ${CMAKE_CXX_FLAGS})
+list(REMOVE_ITEM CXX_FLAGS_LIST /WX -Werror -Werror=pendantic -pedantic-errors)
+if(MSVC)
+  list(FILTER CXX_FLAGS_LIST EXCLUDE REGEX "/[Ww]([0-4]?)(all)?") # Remove MSVC warning flags
+  list(APPEND CXX_FLAGS_LIST /w)
+else()
+  list(FILTER CXX_FLAGS_LIST EXCLUDE REGEX "-W(all|extra|everything)") # Remove GCC/LLVM flags
+  list(APPEND CXX_FLAGS_LIST -w)
+endif()
+list(JOIN CXX_FLAGS_LIST " " CMAKE_CXX_FLAGS)
+# Don't build client dependencies as shared
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Global flag to cause add_library() to create shared libraries if on." FORCE)
 
 # HIP dependency is handled earlier in the project cmake file
 # when VerifyCompiler.cmake is included.
 
-# For downloading, building, and installing required dependencies
-include(cmake/DownloadProject.cmake)
+# For downloading and building required dependencies
+include(FetchContent)
 
 # Fortran Wrapper
 if(BUILD_FORTRAN_WRAPPER)
@@ -44,6 +69,7 @@ endif()
 
 # Test dependencies
 if(BUILD_TEST)
+  # Google Test (https://github.com/google/googletest)
   # NOTE: Google Test has created a mess with legacy FindGTest.cmake and newer GTestConfig.cmake
   #
   # FindGTest.cmake defines:   GTest::GTest, GTest::Main, GTEST_FOUND
@@ -53,65 +79,43 @@ if(BUILD_TEST)
   # NOTE2: Finding GTest in MODULE mode, one cannot invoke find_package in CONFIG mode, because targets
   #        will be duplicately defined.
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-    # Google Test (https://github.com/google/googletest)
     find_package(GTest QUIET)
   endif()
 
   if(NOT TARGET GTest::GTest AND NOT TARGET GTest::gtest)
-    message(STATUS "GTest not found or force download GTest on. Downloading and building GTest.")
-    set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/gtest CACHE PATH "")
-    if(DEFINED CMAKE_CXX_COMPILER)
-      set(CXX_COMPILER_OPTION "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
-    endif()
-    download_project(
-      PROJ                googletest
-      GIT_REPOSITORY      https://github.com/google/googletest.git
-      GIT_TAG             release-1.11.0
-      INSTALL_DIR         ${GTEST_ROOT}
-      CMAKE_ARGS          -DBUILD_GTEST=ON -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${CXX_COMPILER_OPTION} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-      LOG_DOWNLOAD        TRUE
-      LOG_CONFIGURE       TRUE
-      LOG_BUILD           TRUE
-      LOG_INSTALL         TRUE
-      BUILD_PROJECT       TRUE
-      UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
+    message(STATUS "Google Test not found or force download on. Fetching...")
+    option(BUILD_GTEST "Builds the googletest subproject" ON)
+    option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
+    option(INSTALL_GTEST "Enable installation of googletest" OFF)
+    FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG        v1.15.2
     )
-    find_package(GTest CONFIG REQUIRED PATHS ${GTEST_ROOT} NO_DEFAULT_PATH)
+    FetchContent_MakeAvailable(googletest)
   endif()
 endif()
 
 # Benchmark dependencies
 if(BUILD_BENCHMARK)
+  # Google Benchmark (https://github.com/google/benchmark)
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-    # Google Benchmark (https://github.com/google/benchmark.git)
-    find_package(benchmark QUIET)
+    find_package(benchmark 1.9.1 QUIET)
   endif()
 
-  if(NOT benchmark_FOUND)
-    message(STATUS "Google Benchmark not found or force download Google Benchmark on. Downloading and building Google Benchmark.")
-    if(CMAKE_CONFIGURATION_TYPES)
-      message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
-    endif()
-    set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/googlebenchmark CACHE PATH "")
-    option(BENCHMARK_ENABLE_TESTING "Enable testing of the benchmark library." OFF)
-    option(BENCHMARK_ENABLE_INSTALL "Enable installation of benchmark." OFF)
-    download_project(
-      PROJ           googlebenchmark
+  if(NOT TARGET benchmark::benchmark)
+    message(STATUS "Google Benchmark not found or force download on. Fetching...")
+    option(BENCHMARK_ENABLE_TESTING "Enable testing of the benchmark library" OFF)
+    option(BENCHMARK_ENABLE_INSTALL "Enable installation of benchmark" OFF)
+    FetchContent_Declare(
+      googlebenchmark
       GIT_REPOSITORY https://github.com/google/benchmark.git
-      GIT_TAG        v1.8.0
-      INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
-      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS=OFF -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_CXX_STANDARD=14 ${COMPILER_OVERRIDE}
-      LOG_DOWNLOAD   TRUE
-      LOG_CONFIGURE  TRUE
-      LOG_BUILD      TRUE
-      LOG_INSTALL    TRUE
-      BUILD_PROJECT  TRUE
-      UPDATE_DISCONNECTED TRUE
+      GIT_TAG        v1.9.1
     )
     set(HAVE_STD_REGEX ON)
     set(RUN_HAVE_STD_REGEX 1)
+    FetchContent_MakeAvailable(googlebenchmark)
   endif()
-  find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT} NO_DEFAULT_PATH)
 endif()
 
 set(PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern)
@@ -152,6 +156,15 @@ if(NOT ROCM_FOUND)
   endif()
   find_package(ROCM 0.7.3 REQUIRED CONFIG PATHS ${PROJECT_EXTERN_DIR} NO_DEFAULT_PATH)
 endif()
+
+# Restore user global state
+set(CMAKE_CXX_FLAGS ${USER_CXX_FLAGS})
+if(DEFINED USER_BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ${USER_BUILD_SHARED_LIBS})
+else()
+  unset(BUILD_SHARED_LIBS CACHE )
+endif()
+set(ROCM_WARN_TOOLCHAIN_VAR ${USER_ROCM_WARN_TOOLCHAIN_VAR} CACHE BOOL "")
 
 include(ROCMSetupVersion)
 include(ROCMCreatePackage)

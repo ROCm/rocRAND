@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -179,14 +179,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using Philox generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_philox4x32_10*        state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_philox4x32_10*        state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -198,13 +198,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using Philox generator in \p state, and increments
  * the position of the generator by four.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return Four <tt>unsigned int</tt> values distributed according to \p discrete_distribution as \p uint4
  */
-__forceinline__ __device__ __host__ uint4 rocrand_discrete4(
-    rocrand_state_philox4x32_10* state, const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+uint4 rocrand_discrete4(rocrand_state_philox4x32_10*        state,
+                        const rocrand_discrete_distribution discrete_distribution)
 {
     const uint4 u4 = rocrand4(state);
     return uint4 {
@@ -222,14 +223,14 @@ __forceinline__ __device__ __host__ uint4 rocrand_discrete4(
  * \p discrete_distribution using MRG31k3p generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_mrg31k3p*             state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_mrg31k3p*             state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -241,14 +242,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using MRG32k3a generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_mrg32k3a*             state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_mrg32k3a*             state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -260,14 +261,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using XORWOW generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_xorwow*               state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_xorwow*               state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_alias(rocrand(state), *discrete_distribution);
 }
@@ -279,14 +280,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using MTGP32 generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ unsigned int
-    rocrand_discrete(rocrand_state_mtgp32*               state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__
+unsigned int rocrand_discrete(rocrand_state_mtgp32*               state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
 #ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
@@ -302,14 +303,14 @@ __forceinline__ __device__ unsigned int
  * \p discrete_distribution using SOBOL32 generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_sobol32*              state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_sobol32*              state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -321,14 +322,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using SCRAMBLED_SOBOL32 generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_scrambled_sobol32*    state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_scrambled_sobol32*    state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -340,14 +341,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using SOBOL64 generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned long long int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_sobol64*              state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_sobol64*              state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -359,14 +360,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using SCRAMBLED_SOBOL64 generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned long long int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_scrambled_sobol64*    state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_scrambled_sobol64*    state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
 }
@@ -378,14 +379,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using LFSR113 generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_lfsr113*              state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_lfsr113*              state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
 #ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
@@ -401,14 +402,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using ThreeFry generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_threefry2x32_20*      state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_threefry2x32_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
 #ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
@@ -424,14 +425,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using ThreeFry generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_threefry2x64_20*      state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_threefry2x64_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
 #ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
@@ -447,14 +448,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using ThreeFry generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_threefry4x32_20*      state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_threefry4x32_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
 #ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);
@@ -470,14 +471,14 @@ __forceinline__ __device__ __host__ unsigned int
  * \p discrete_distribution using ThreeFry generator in \p state, and increments
  * the position of the generator by one.
  *
- * \param state - Pointer to a state to use
- * \param discrete_distribution - Related discrete distribution
+ * \param state Pointer to a state to use
+ * \param discrete_distribution Related discrete distribution
  *
  * \return <tt>unsigned int</tt> value distributed according to \p discrete_distribution
  */
-__forceinline__ __device__ __host__ unsigned int
-    rocrand_discrete(rocrand_state_threefry4x64_20*      state,
-                     const rocrand_discrete_distribution discrete_distribution)
+__forceinline__ __device__ __host__
+unsigned int rocrand_discrete(rocrand_state_threefry4x64_20*      state,
+                              const rocrand_discrete_distribution discrete_distribution)
 {
 #ifdef ROCRAND_PREFER_CDF_OVER_ALIAS
     return rocrand_device::detail::discrete_cdf(rocrand(state), *discrete_distribution);

@@ -19,12 +19,10 @@ setup(
     description="rocRAND Python Wrapper",
     long_description=readme,
     author="Advanced Micro Devices, Inc.",
-    # author_email="",
     url="https://github.com/ROCmSoftwarePlatform/rocRAND",
     license="MIT",
     packages=["rocrand"],
     install_requires=REQUIRED_PACKAGES,
-    test_suite="tests",
     command_options={
         "build_sphinx": {
             "version": ("setup.py", version),

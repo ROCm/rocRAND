@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -54,7 +54,7 @@ public:
 
     /// Constructs new error object from error code \p error.
     ///
-    /// \param error - error code
+    /// \param error error code
     explicit error(error_type error) noexcept
         : m_error(error),
           m_error_string(to_string(error))
@@ -140,7 +140,7 @@ private:
 ///
 /// \brief Produces random integer values uniformly distributed on the interval [0, 2^(sizeof(IntType)*8) - 1].
 ///
-/// \tparam IntType - type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int and \p unsigned \p long \p long \p int type is supported.
+/// \tparam IntType type of generated values. Only \p unsigned \p char, \p unsigned \p short and \p unsigned \p int and \p unsigned \p long \p long \p int type is supported.
 template<class IntType = unsigned int>
 class uniform_int_distribution
 {
@@ -183,9 +183,9 @@ public:
     /// on the  interval [0, 2^(sizeof(IntType)*8) - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
-    /// \param g - An uniform random number generator object
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param g An uniform random number generator object
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -245,7 +245,7 @@ private:
 ///
 /// \brief Produces random floating-point values uniformly distributed on the interval (0, 1].
 ///
-/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
+/// \tparam RealType type of generated values. Only \p float, \p double and \p half types are supported.
 
 template<class RealType = float>
 class uniform_real_distribution
@@ -289,9 +289,9 @@ public:
     /// on the interval (0, 1], and stores them into the device memory referenced
     /// by \p output pointer.
     ///
-    /// \param g - An uniform random number generator object
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param g An uniform random number generator object
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -345,7 +345,7 @@ private:
 ///
 /// \brief Produces random numbers according to a normal distribution.
 ///
-/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
+/// \tparam RealType type of generated values. Only \p float, \p double and \p half types are supported.
 template<class RealType = float>
 class normal_distribution
 {
@@ -370,8 +370,8 @@ public:
 
         /// \brief Constructs a \p param_type object with the
         /// given distribution parameters.
-        /// \param mean - mean
-        /// \param stddev - standard deviation
+        /// \param mean mean
+        /// \param stddev standard deviation
         param_type(RealType mean = 0.0, RealType stddev = 1.0)
             : m_mean(mean), m_stddev(stddev)
         {
@@ -416,15 +416,15 @@ public:
     };
 
     /// \brief Constructs a new distribution object.
-    /// \param mean - A mean distribution parameter
-    /// \param stddev - A standard deviation distribution parameter
+    /// \param mean A mean distribution parameter
+    /// \param stddev A standard deviation distribution parameter
     normal_distribution(RealType mean = 0.0, RealType stddev = 1.0)
         : m_params(mean, stddev)
     {
     }
 
     /// \brief Constructs a new distribution object.
-    /// \param params - Distribution parameters
+    /// \param params Distribution parameters
     explicit normal_distribution(const param_type& params)
         : m_params(params)
     {
@@ -480,9 +480,9 @@ public:
     /// Generates \p size random floating-point values distributed according to a normal distribution,
     /// and stores them into the device memory referenced by \p output pointer.
     ///
-    /// \param g - An uniform random number generator object
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param g An uniform random number generator object
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -549,7 +549,7 @@ private:
 ///
 /// \brief Produces positive random numbers according to a log-normal distribution.
 ///
-/// \tparam RealType - type of generated values. Only \p float, \p double and \p half types are supported.
+/// \tparam RealType type of generated values. Only \p float, \p double and \p half types are supported.
 template<class RealType = float>
 class lognormal_distribution
 {
@@ -574,8 +574,8 @@ public:
 
         /// \brief Constructs a \p param_type object with the
         /// given distribution parameters.
-        /// \param m - mean
-        /// \param s - standard deviation
+        /// \param m mean
+        /// \param s standard deviation
         param_type(RealType m = 0.0, RealType s = 1.0)
             : m_mean(m), m_stddev(s)
         {
@@ -620,15 +620,15 @@ public:
     };
 
     /// \brief Constructs a new distribution object.
-    /// \param m - A mean distribution parameter
-    /// \param s - A standard deviation distribution parameter
+    /// \param m A mean distribution parameter
+    /// \param s A standard deviation distribution parameter
     lognormal_distribution(RealType m = 0.0, RealType s = 1.0)
         : m_params(m, s)
     {
     }
 
     /// \brief Constructs a new distribution object.
-    /// \param params - Distribution parameters
+    /// \param params Distribution parameters
     explicit lognormal_distribution(const param_type& params)
         : m_params(params)
     {
@@ -685,9 +685,9 @@ public:
     /// to a log-normal distribution, and stores them into the device memory referenced
     /// by \p output pointer.
     ///
-    /// \param g - An uniform random number generator object
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param g An uniform random number generator object
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -754,7 +754,7 @@ private:
 ///
 /// \brief Produces random non-negative integer values distributed according to Poisson distribution.
 ///
-/// \tparam IntType - type of generated values. Only \p unsinged \p int type is supported.
+/// \tparam IntType type of generated values. Only \p unsinged \p int type is supported.
 template<class IntType = unsigned int>
 class poisson_distribution
 {
@@ -777,7 +777,7 @@ public:
 
         /// \brief Constructs a \p param_type object with the
         /// given mean.
-        /// \param mean - mean to use for the distribution
+        /// \param mean mean to use for the distribution
         param_type(double mean = 1.0)
             : m_mean(mean)
         {
@@ -815,14 +815,14 @@ public:
     };
 
     /// \brief Constructs a new distribution object.
-    /// \param mean - A mean distribution parameter.
+    /// \param mean A mean distribution parameter.
     poisson_distribution(double mean = 1.0)
         : m_params(mean)
     {
     }
 
     /// \brief Constructs a new distribution object.
-    /// \param params - Distribution parameters
+    /// \param params Distribution parameters
     explicit poisson_distribution(const param_type& params)
         : m_params(params)
     {
@@ -873,9 +873,9 @@ public:
     /// to Poisson distribution, and stores them into the device memory referenced
     /// by \p output pointer.
     ///
-    /// \param g - An uniform random number generator object
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param g An uniform random number generator object
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -946,9 +946,9 @@ public:
 
     /// \brief Constructs the pseudo-random number engine.
     ///
-    /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
-    /// \param offset_value - number of internal states that should be skipped, see also offset()
-    /// \param order_value - ordering of the sequences generated by the engine, see also order()
+    /// \param seed_value seed value to use in the initialization of the internal state, see also seed()
+    /// \param offset_value number of internal states that should be skipped, see also offset()
+    /// \param order_value ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     philox4x32_10_engine(seed_type   seed_value   = DefaultSeed,
@@ -981,7 +981,7 @@ public:
     /// passed reference to \p NULL. The lifetime of \p generator is now
     /// bound to the lifetime of the engine.
     ///
-    /// \param generator - rocRAND generator
+    /// \param generator rocRAND generator
     explicit philox4x32_10_engine(rocrand_generator& generator)
         : m_generator(generator)
     {
@@ -1035,7 +1035,7 @@ public:
     }
 
     /// \brief Sets the random number engine's \p hipStream for kernel launches.
-    /// \param value - new \p hipStream to use
+    /// \param value new \p hipStream to use
     void stream(hipStream_t value)
     {
         rocrand_status status = rocrand_set_stream(m_generator, value);
@@ -1050,7 +1050,7 @@ public:
     /// - This operation resets the engine's internal state.
     /// - This operation does not change the engine's seed.
     ///
-    /// \param value - New ordering
+    /// \param value New ordering
     ///
     /// See also: rocrand_set_ordering()
     void order(order_type value)
@@ -1068,7 +1068,7 @@ public:
     /// - This operation resets the engine's internal state.
     /// - This operation does not change the engine's seed or the number of dimensions.
     ///
-    /// \param value - New absolute offset
+    /// \param value New absolute offset
     ///
     /// See also: rocrand_set_offset()
     void offset(offset_type value)
@@ -1084,7 +1084,7 @@ public:
     /// - This operation resets the engine's internal state.
     /// - This operation does not change the engine's offset.
     ///
-    /// \param value - New seed value
+    /// \param value New seed value
     ///
     /// See also: rocrand_set_seed()
     void seed(seed_type value)
@@ -1099,8 +1099,8 @@ public:
     /// on the interval [0, 2^32 - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// The device memory pointed by \p output must have been previously allocated
     /// and be large enough to store at least \p size values of \p IntType type.
@@ -1689,8 +1689,8 @@ public:
     ///
     /// MTGP32 engine does not accept offset.
     ///
-    /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
-    /// \param order_value - ordering value from the rocrand_ordering enum
+    /// \param seed_value seed value to use in the initialization of the internal state, see also seed()
+    /// \param order_value ordering value from the rocrand_ordering enum
     ///
     /// See also: rocrand_create_generator()
     mtgp32_engine(seed_type  seed_value  = DefaultSeed,
@@ -1853,8 +1853,8 @@ public:
     ///
     /// LFSR113 does not accept offset.
     ///
-    /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
-    /// \param order_value - ordering of the sequences generated by the engine, see also order()
+    /// \param seed_value seed value to use in the initialization of the internal state, see also seed()
+    /// \param order_value ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     lfsr113_engine(seed_type  seed_value = {DefaultSeedX, DefaultSeedY, DefaultSeedZ, DefaultSeedW},
@@ -2049,8 +2049,8 @@ public:
     ///
     /// MT19937 does not accept offset.
     ///
-    /// \param seed_value - seed value to use in the initialization of the internal state, see also seed()
-    /// \param order_value - ordering of the sequences generated by the engine, see also order()
+    /// \param seed_value seed value to use in the initialization of the internal state, see also seed()
+    /// \param order_value ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     mt19937_engine(seed_type  seed_value  = DefaultSeed,
@@ -2215,9 +2215,9 @@ public:
 
     /// \brief Constructs the pseudo-random number engine.
     ///
-    /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
-    /// \param offset_value - number of internal states that should be skipped, see also offset()
-    /// \param order_value - ordering of the sequences generated by the engine, see also order()
+    /// \param num_of_dimensions number of dimensions to use in the initialization of the internal state, see also dimensions()
+    /// \param offset_value number of internal states that should be skipped, see also offset()
+    /// \param order_value ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
@@ -2313,7 +2313,7 @@ public:
     /// - This operation resets the generator's internal state.
     /// - This operation does not change the generator's offset.
     ///
-    /// \param value - Number of dimensions
+    /// \param value Number of dimensions
     ///
     /// See also: rocrand_set_quasi_random_generator_dimensions()
     void dimensions(dimensions_num_type value)
@@ -2329,8 +2329,8 @@ public:
     /// on the interval [0, 2^32 - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -2416,9 +2416,9 @@ public:
 
     /// \brief Constructs the pseudo-random number engine.
     ///
-    /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
-    /// \param offset_value - number of internal states that should be skipped, see also offset()
-    /// \param order_value - ordering value from the rocrand_ordering enum
+    /// \param num_of_dimensions number of dimensions to use in the initialization of the internal state, see also dimensions()
+    /// \param offset_value number of internal states that should be skipped, see also offset()
+    /// \param order_value ordering value from the rocrand_ordering enum
     ///
     /// See also: rocrand_create_generator()
     scrambled_sobol32_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
@@ -2516,7 +2516,7 @@ public:
     /// - This operation resets the generator's internal state.
     /// - This operation does not change the generator's offset.
     ///
-    /// \param value - Number of dimensions
+    /// \param value Number of dimensions
     ///
     /// See also: rocrand_set_quasi_random_generator_dimensions()
     void dimensions(dimensions_num_type value)
@@ -2533,8 +2533,8 @@ public:
     /// on the interval [0, 2^32 - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -2621,9 +2621,9 @@ public:
 
     /// \brief Constructs the pseudo-random number engine.
     ///
-    /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
-    /// \param offset_value - number of internal states that should be skipped, see also offset()
-    /// \param order_value - ordering of the sequences generated by the engine, see also order()
+    /// \param num_of_dimensions number of dimensions to use in the initialization of the internal state, see also dimensions()
+    /// \param offset_value number of internal states that should be skipped, see also offset()
+    /// \param order_value ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     sobol64_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
@@ -2719,7 +2719,7 @@ public:
     /// - This operation resets the generator's internal state.
     /// - This operation does not change the generator's offset.
     ///
-    /// \param value - Number of dimensions
+    /// \param value Number of dimensions
     ///
     /// See also: rocrand_set_quasi_random_generator_dimensions()
     void dimensions(dimensions_num_type value)
@@ -2735,8 +2735,8 @@ public:
     /// on the interval [0, 2^64 - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated
@@ -2822,9 +2822,9 @@ public:
 
     /// \brief Constructs the pseudo-random number engine.
     ///
-    /// \param num_of_dimensions - number of dimensions to use in the initialization of the internal state, see also dimensions()
-    /// \param offset_value - number of internal states that should be skipped, see also offset()
-    /// \param order_value - ordering of the sequences generated by the engine, see also order()
+    /// \param num_of_dimensions number of dimensions to use in the initialization of the internal state, see also dimensions()
+    /// \param offset_value number of internal states that should be skipped, see also offset()
+    /// \param order_value ordering of the sequences generated by the engine, see also order()
     ///
     /// See also: rocrand_create_generator()
     scrambled_sobol64_engine(dimensions_num_type num_of_dimensions = DefaultNumDimensions,
@@ -2922,7 +2922,7 @@ public:
     /// - This operation resets the generator's internal state.
     /// - This operation does not change the generator's offset.
     ///
-    /// \param value - Number of dimensions
+    /// \param value Number of dimensions
     ///
     /// See also: rocrand_set_quasi_random_generator_dimensions()
     void dimensions(dimensions_num_type value)
@@ -2939,8 +2939,8 @@ public:
     /// on the interval [0, 2^64 - 1], and stores them into the device memory
     /// referenced by \p output pointer.
     ///
-    /// \param output - Pointer to device memory to store results
-    /// \param size - Number of values to generate
+    /// \param output Pointer to device memory to store results
+    /// \param size Number of values to generate
     ///
     /// Requirements:
     /// * The device memory pointed by \p output must have been previously allocated

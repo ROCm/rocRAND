@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -56,25 +56,30 @@ extern "C" {
 /**
  * \brief rocRAND function call status type
  */
-typedef enum rocrand_status {
-    ROCRAND_STATUS_SUCCESS = 0, ///< No errors
+enum rocrand_status
+{
+    ROCRAND_STATUS_SUCCESS          = 0, ///< No errors
     ROCRAND_STATUS_VERSION_MISMATCH = 100, ///< Header file and linked library version do not match
     ROCRAND_STATUS_NOT_CREATED = 101, ///< Generator was not created using rocrand_create_generator
     ROCRAND_STATUS_ALLOCATION_FAILED = 102, ///< Memory allocation failed during execution
-    ROCRAND_STATUS_TYPE_ERROR = 103, ///< Generator type is wrong
-    ROCRAND_STATUS_OUT_OF_RANGE = 104, ///< Argument out of range
-    ROCRAND_STATUS_LENGTH_NOT_MULTIPLE = 105, ///< Requested size is not a multiple of quasirandom generator's dimension,
-                                              ///< or requested size is not even (see rocrand_generate_normal()),
-                                              ///< or pointer is misaligned (see rocrand_generate_normal())
+    ROCRAND_STATUS_TYPE_ERROR        = 103, ///< Generator type is wrong
+    ROCRAND_STATUS_OUT_OF_RANGE      = 104, ///< Argument out of range
+    ROCRAND_STATUS_LENGTH_NOT_MULTIPLE
+    = 105, ///< Requested size is not a multiple of quasirandom generator's dimension,
+    ///< or requested size is not even (see rocrand_generate_normal()),
+    ///< or pointer is misaligned (see rocrand_generate_normal())
     ROCRAND_STATUS_DOUBLE_PRECISION_REQUIRED = 106, ///< GPU does not have double precision
-    ROCRAND_STATUS_LAUNCH_FAILURE = 107, ///< Kernel launch failure
-    ROCRAND_STATUS_INTERNAL_ERROR = 108 ///< Internal library error
-} rocrand_status;
+    ROCRAND_STATUS_LAUNCH_FAILURE            = 107, ///< Kernel launch failure
+    ROCRAND_STATUS_INTERNAL_ERROR            = 108 ///< Internal library error
+};
+/// \cond DO_NOT_DOCUMENT
+typedef enum rocrand_status rocrand_status;
+/// \endcond
 
 /**
  * \brief rocRAND generator type
  */
-typedef enum rocrand_rng_type
+enum rocrand_rng_type
 {
     ROCRAND_RNG_PSEUDO_DEFAULT       = 400, ///< Default pseudorandom generator
     ROCRAND_RNG_PSEUDO_XORWOW        = 401, ///< XORWOW pseudorandom generator
@@ -97,13 +102,15 @@ typedef enum rocrand_rng_type
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL32 = 502, ///< Scrambled Sobol32 quasirandom generator
     ROCRAND_RNG_QUASI_SOBOL64           = 504, ///< Sobol64 quasirandom generator
     ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64 = 505 ///< Scrambled Sobol64 quasirandom generator
-
-} rocrand_rng_type;
+};
+/// \cond DO_NOT_DOCUMENT
+typedef enum rocrand_rng_type rocrand_rng_type;
+/// \endcond
 
 /**
  * \brief rocRAND generator ordering
  */
-typedef enum rocrand_ordering
+enum rocrand_ordering
 {
     ROCRAND_ORDERING_PSEUDO_BEST    = 100, ///< Best ordering for pseudorandom results
     ROCRAND_ORDERING_PSEUDO_DEFAULT = 101, ///< Default ordering for pseudorandom results
@@ -112,18 +119,24 @@ typedef enum rocrand_ordering
     ROCRAND_ORDERING_PSEUDO_DYNAMIC
     = 104, ///< Adjust to the device executing the generator. The global memory usage may be higher than with the other orderings.
     ROCRAND_ORDERING_QUASI_DEFAULT = 201 ///< n-dimensional ordering for quasirandom results
-} rocrand_ordering;
+};
+/// \cond DO_NOT_DOCUMENT
+typedef enum rocrand_ordering rocrand_ordering;
+/// \endcond
 
 /**
  * \brief rocRAND vector set
  */
-typedef enum rocrand_direction_vector_set
+enum rocrand_direction_vector_set
 {
     ROCRAND_DIRECTION_VECTORS_32_JOEKUO6           = 101,
     ROCRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6 = 102,
     ROCRAND_DIRECTION_VECTORS_64_JOEKUO6           = 103,
     ROCRAND_SCRAMBLED_DIRECTION_VECTORS_64_JOEKUO6 = 104,
-} rocrand_direction_vector_set;
+};
+/// \cond DO_NOT_DOCUMENT
+typedef enum rocrand_direction_vector_set rocrand_direction_vector_set;
+/// \endcond
 
 // Host API function
 
@@ -149,8 +162,8 @@ typedef enum rocrand_direction_vector_set
  * - ROCRAND_RNG_QUASI_SOBOL64
  * - ROCRAND_RNG_QUASI_SCRAMBLED_SOBOL64
  *
- * \param generator - Pointer to generator
- * \param rng_type - Type of generator to create
+ * \param generator Pointer to generator
+ * \param rng_type Type of generator to create
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
@@ -172,8 +185,8 @@ rocrand_create_generator(rocrand_generator * generator, rocrand_rng_type rng_typ
  *
  * All generators are supported.
  *
- * \param generator - Pointer to generator
- * \param rng_type - Type of generator to create
+ * \param generator Pointer to generator
+ * \param rng_type Type of generator to create
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED, if memory could not be allocated \n
@@ -199,7 +212,7 @@ rocrand_status ROCRANDAPI rocrand_create_generator_host_blocking(rocrand_generat
  *
  * Destroys random number generator and frees related memory.
  *
- * \param generator - Generator to be destroyed
+ * \param generator Generator to be destroyed
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -217,9 +230,9 @@ rocrand_destroy_generator(rocrand_generator generator);
  * Generated numbers are between \p 0 and \p 2^32, including \p 0 and
  * excluding \p 2^32.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of 32-bit unsigned integers to generate
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of 32-bit unsigned integers to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -241,9 +254,9 @@ rocrand_generate(rocrand_generator generator,
  * Generated numbers are between \p 0 and \p 2^64, including \p 0 and
  * excluding \p 2^64.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of 64-bit unsigned integers to generate
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of 64-bit unsigned integers to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -266,9 +279,9 @@ rocrand_status ROCRANDAPI rocrand_generate_long_long(rocrand_generator       gen
 * Generated numbers are between \p 0 and \p 2^8, including \p 0 and
 * excluding \p 2^8.
 *
-* \param generator - Generator to use
-* \param output_data - Pointer to memory to store generated numbers
-* \param n - Number of 8-bit unsigned integers to generate
+* \param generator Generator to use
+* \param output_data Pointer to memory to store generated numbers
+* \param n Number of 8-bit unsigned integers to generate
 *
 * \return
 * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -290,9 +303,9 @@ rocrand_generate_char(rocrand_generator generator,
 * Generated numbers are between \p 0 and \p 2^16, including \p 0 and
 * excluding \p 2^16.
 *
-* \param generator - Generator to use
-* \param output_data - Pointer to memory to store generated numbers
-* \param n - Number of 16-bit unsigned integers to generate
+* \param generator Generator to use
+* \param output_data Pointer to memory to store generated numbers
+* \param n Number of 16-bit unsigned integers to generate
 *
 * \return
 * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -314,9 +327,9 @@ rocrand_generate_short(rocrand_generator generator,
  * Generated numbers are between \p 0.0f and \p 1.0f, excluding \p 0.0f and
  * including \p 1.0f.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>float</tt>s to generate
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of <tt>float</tt>s to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -338,9 +351,9 @@ rocrand_generate_uniform(rocrand_generator generator,
  * Generated numbers are between \p 0.0 and \p 1.0, excluding \p 0.0 and
  * including \p 1.0.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>double</tt>s to generate
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of <tt>double</tt>s to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -362,9 +375,9 @@ rocrand_generate_uniform_double(rocrand_generator generator,
  * Generated numbers are between \p 0.0 and \p 1.0, excluding \p 0.0 and
  * including \p 1.0.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>half</tt>s to generate
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of <tt>half</tt>s to generate
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -383,11 +396,11 @@ rocrand_generate_uniform_half(rocrand_generator generator,
  * Generates \p n normally distributed distributed 32-bit floating-point
  * values and saves them to \p output_data.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>float</tt>s to generate
- * \param mean - Mean value of normal distribution
- * \param stddev - Standard deviation value of normal distribution
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of <tt>float</tt>s to generate
+ * \param mean Mean value of normal distribution
+ * \param stddev Standard deviation value of normal distribution
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -407,11 +420,11 @@ rocrand_generate_normal(rocrand_generator generator,
  * Generates \p n normally distributed 64-bit double-precision floating-point
  * numbers and saves them to \p output_data.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>double</tt>s to generate
- * \param mean - Mean value of normal distribution
- * \param stddev - Standard deviation value of normal distribution
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of <tt>double</tt>s to generate
+ * \param mean Mean value of normal distribution
+ * \param stddev Standard deviation value of normal distribution
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -431,11 +444,11 @@ rocrand_generate_normal_double(rocrand_generator generator,
 * Generates \p n normally distributed 16-bit half-precision floating-point
 * numbers and saves them to \p output_data.
 *
-* \param generator - Generator to use
-* \param output_data - Pointer to memory to store generated numbers
-* \param n - Number of <tt>half</tt>s to generate
-* \param mean - Mean value of normal distribution
-* \param stddev - Standard deviation value of normal distribution
+* \param generator Generator to use
+* \param output_data Pointer to memory to store generated numbers
+* \param n Number of <tt>half</tt>s to generate
+* \param mean Mean value of normal distribution
+* \param stddev Standard deviation value of normal distribution
 *
 * \return
 * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -455,11 +468,11 @@ rocrand_generate_normal_half(rocrand_generator generator,
  * Generates \p n log-normally distributed 32-bit floating-point values
  * and saves them to \p output_data.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>float</tt>s to generate
- * \param mean - Mean value of log normal distribution
- * \param stddev - Standard deviation value of log normal distribution
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of <tt>float</tt>s to generate
+ * \param mean Mean value of log normal distribution
+ * \param stddev Standard deviation value of log normal distribution
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -479,11 +492,11 @@ rocrand_generate_log_normal(rocrand_generator generator,
  * Generates \p n log-normally distributed 64-bit double-precision floating-point
  * values and saves them to \p output_data.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of <tt>double</tt>s to generate
- * \param mean - Mean value of log normal distribution
- * \param stddev - Standard deviation value of log normal distribution
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of <tt>double</tt>s to generate
+ * \param mean Mean value of log normal distribution
+ * \param stddev Standard deviation value of log normal distribution
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -503,11 +516,11 @@ rocrand_generate_log_normal_double(rocrand_generator generator,
 * Generates \p n log-normally distributed 16-bit half-precision floating-point
 * values and saves them to \p output_data.
 *
-* \param generator - Generator to use
-* \param output_data - Pointer to memory to store generated numbers
-* \param n - Number of <tt>half</tt>s to generate
-* \param mean - Mean value of log normal distribution
-* \param stddev - Standard deviation value of log normal distribution
+* \param generator Generator to use
+* \param output_data Pointer to memory to store generated numbers
+* \param n Number of <tt>half</tt>s to generate
+* \param mean Mean value of log normal distribution
+* \param stddev Standard deviation value of log normal distribution
 *
 * \return
 * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -527,10 +540,10 @@ rocrand_generate_log_normal_half(rocrand_generator generator,
  * Generates \p n Poisson-distributed 32-bit unsigned integers and
  * saves them to \p output_data.
  *
- * \param generator - Generator to use
- * \param output_data - Pointer to memory to store generated numbers
- * \param n - Number of 32-bit unsigned integers to generate
- * \param lambda - lambda for the Poisson distribution
+ * \param generator Generator to use
+ * \param output_data Pointer to memory to store generated numbers
+ * \param n Number of 32-bit unsigned integers to generate
+ * \param lambda lambda for the Poisson distribution
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -555,7 +568,7 @@ rocrand_generate_poisson(rocrand_generator generator,
  * automatically called by functions which generates random numbers like
  * rocrand_generate(), rocrand_generate_uniform() etc.
  *
- * \param generator - Generator to initialize
+ * \param generator Generator to initialize
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -571,8 +584,8 @@ rocrand_initialize_generator(rocrand_generator generator);
  * Sets the current stream for all kernel launches of the generator.
  * All functions will use this stream.
  *
- * \param generator - Generator to modify
- * \param stream - Stream to use or NULL for default stream
+ * \param generator Generator to modify
+ * \param stream Stream to use or NULL for default stream
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -598,8 +611,8 @@ rocrand_set_stream(rocrand_generator generator, hipStream_t stream);
  * second seed value. If those values smaller than 2 and/or 8, those
  * are increased with 1 and/or 7.
  *
- * \param generator - Pseudo-random number generator
- * \param seed - New seed value
+ * \param generator Pseudo-random number generator
+ * \param seed New seed value
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -623,8 +636,8 @@ rocrand_set_seed(rocrand_generator generator, unsigned long long seed);
  * 127. If those values smaller, than the requested minimum values [2, 8, 16, 128], then
  * it will be increased with the minimum values minus 1 [1, 7, 15, 127].
  *
- * \param generator - Pseudo-random number generator
- * \param seed - New seed value
+ * \param generator Pseudo-random number generator
+ * \param seed New seed value
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -644,8 +657,8 @@ rocrand_status ROCRANDAPI rocrand_set_seed_uint4(rocrand_generator generator, ui
  * Absolute offset cannot be set if generator's type is ROCRAND_RNG_PSEUDO_MTGP32 or
  * ROCRAND_RNG_PSEUDO_LFSR113.
  *
- * \param generator - Random number generator
- * \param offset - New absolute offset
+ * \param generator Random number generator
+ * \param offset New absolute offset
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -664,8 +677,8 @@ rocrand_set_offset(rocrand_generator generator, unsigned long long offset);
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's seed.
  *
- * \param generator - Random number generator
- * \param order - New ordering of results
+ * \param generator Random number generator
+ * \param order New ordering of results
  *
  * The ordering choices for pseudorandom sequences are the following.
  * Note that not all generators support all orderings. For details, see
@@ -695,8 +708,8 @@ rocrand_status ROCRANDAPI rocrand_set_ordering(rocrand_generator generator, rocr
  * - This operation resets the generator's internal state.
  * - This operation does not change the generator's offset.
  *
- * \param generator - Quasi-random number generator
- * \param dimensions - Number of dimensions
+ * \param generator Quasi-random number generator
+ * \param dimensions Number of dimensions
  *
  * \return
  * - ROCRAND_STATUS_NOT_CREATED if the generator wasn't created \n
@@ -714,7 +727,7 @@ rocrand_set_quasi_random_generator_dimensions(rocrand_generator generator,
  * Returns in \p version the version number of the dynamically linked
  * rocRAND library.
  *
- * \param version - Version of the library
+ * \param version Version of the library
  *
  * \return
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p version is NULL \n
@@ -728,8 +741,8 @@ rocrand_get_version(int * version);
  *
  * Construct the histogram for the Poisson distribution with lambda \p lambda.
  *
- * \param lambda - lambda for the Poisson distribution
- * \param discrete_distribution - pointer to the histogram in device memory
+ * \param lambda lambda for the Poisson distribution
+ * \param discrete_distribution pointer to the histogram in device memory
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if memory could not be allocated \n
@@ -748,10 +761,10 @@ rocrand_create_poisson_distribution(double lambda,
  * 32-bit unsigned integers from the range [\p offset, \p offset + \p size)
  * using \p probabilities as probabilities.
  *
- * \param probabilities - probabilities of the the distribution in host memory
- * \param size - size of \p probabilities
- * \param offset - offset of values
- * \param discrete_distribution - pointer to the histogram in device memory
+ * \param probabilities probabilities of the the distribution in host memory
+ * \param size size of \p probabilities
+ * \param offset offset of values
+ * \param discrete_distribution pointer to the histogram in device memory
  *
  * \return
  * - ROCRAND_STATUS_ALLOCATION_FAILED if memory could not be allocated \n
@@ -771,7 +784,7 @@ rocrand_create_discrete_distribution(const double * probabilities,
  * Destroy the histogram array for a discrete distribution created by
  * rocrand_create_poisson_distribution.
  *
- * \param discrete_distribution - pointer to the histogram in device memory
+ * \param discrete_distribution pointer to the histogram in device memory
  *
  * \return
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p discrete_distribution was null \n
@@ -783,9 +796,9 @@ rocrand_destroy_discrete_distribution(rocrand_discrete_distribution discrete_dis
 /**
  * \brief Get the vector for 32-bit (scrambled-)sobol generation.
  *
- * \param vectors - location where to write the vector pointer to
+ * \param vectors location where to write the vector pointer to
  *
- * \param set - which direction vector set to use
+ * \param set which direction vector set to use
  *
  * \return
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p set was invalid for this method \n
@@ -797,9 +810,9 @@ rocrand_status ROCRANDAPI rocrand_get_direction_vectors32(const unsigned int**  
 /**
  * \brief Get the vector for 64-bit (scrambled-)sobol generation.
  *
- * \param vectors - location where to write the vector pointer to
+ * \param vectors location where to write the vector pointer to
  *
- * \param set - which direction vector set to use
+ * \param set which direction vector set to use
  *
  * \return
  * - ROCRAND_STATUS_OUT_OF_RANGE if \p set was invalid for this method \n
@@ -811,7 +824,7 @@ rocrand_status ROCRANDAPI rocrand_get_direction_vectors64(const unsigned long lo
 /**
  * \brief Get the scramble constants for 32-bit scrambled sobol generation.
  *
- * \param constants - location where to write the constants pointer to
+ * \param constants location where to write the constants pointer to
  *
  * \return
  * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n
@@ -821,7 +834,7 @@ rocrand_status ROCRANDAPI rocrand_get_scramble_constants32(const unsigned int** 
 /**
  * \brief Get the scramble constants for 64-bit scrambled sobol generation.
  *
- * \param constants - location where to write the constants pointer to
+ * \param constants location where to write the constants pointer to
  *
  * \return
  * - ROCRAND_STATUS_SUCCESS if the pointer was set succesfully \n

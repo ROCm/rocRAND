@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -200,13 +200,14 @@ typedef rocrand_device::sobol32_engine<false> rocrand_state_sobol32;
  * Initializes the SOBOL32 generator \p state with the given
  * direction \p vectors and \p offset.
  *
- * \param vectors - Direction vectors
- * \param offset - Absolute offset into sequence
- * \param state - Pointer to state to initialize
+ * \param vectors Direction vectors
+ * \param offset Absolute offset into sequence
+ * \param state Pointer to state to initialize
  */
-__forceinline__ __device__ __host__ void rocrand_init(const unsigned int*    vectors,
-                                                      const unsigned int     offset,
-                                                      rocrand_state_sobol32* state)
+__forceinline__ __device__ __host__
+void rocrand_init(const unsigned int*    vectors,
+                  const unsigned int     offset,
+                  rocrand_state_sobol32* state)
 {
     *state = rocrand_state_sobol32(vectors, offset);
 }
@@ -219,11 +220,12 @@ __forceinline__ __device__ __host__ void rocrand_init(const unsigned int*    vec
  * value from [0; 2^32 - 1] range using Sobol32 generator in \p state.
  * State is incremented by one position.
  *
- * \param state - Pointer to a state to use
+ * \param state Pointer to a state to use
  *
  * \return Quasirandom value (32-bit) as an <tt>unsigned int</tt>
  */
-__forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_sobol32* state)
+__forceinline__ __device__ __host__
+unsigned int rocrand(rocrand_state_sobol32* state)
 {
     return state->next();
 }
@@ -233,11 +235,11 @@ __forceinline__ __device__ __host__ unsigned int rocrand(rocrand_state_sobol32* 
  *
  * Updates the SOBOL32 state in \p state to skip ahead by \p offset elements.
  *
- * \param offset - Number of elements to skip
- * \param state - Pointer to state to update
+ * \param offset Number of elements to skip
+ * \param state Pointer to state to update
  */
-__forceinline__ __device__ __host__ void skipahead(unsigned long long     offset,
-                                                   rocrand_state_sobol32* state)
+__forceinline__ __device__ __host__
+void skipahead(unsigned long long offset, rocrand_state_sobol32* state)
 {
     return state->discard(offset);
 }
