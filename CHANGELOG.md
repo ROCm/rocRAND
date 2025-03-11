@@ -12,6 +12,7 @@ Documentation for rocRAND is available at
 ### Changed
 
 * Updated several `gfx942` auto tuning parameters.
+* Modified error handling and expanded the error information for the case of double-deallocation of the (scrambled) sobol32 and sobol64 constants and direction vectors.
 
 ### Removed
 
