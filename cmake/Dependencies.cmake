@@ -59,63 +59,9 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Global flag to cause add_library() to crea
 # HIP dependency is handled earlier in the project cmake file
 # when VerifyCompiler.cmake is included.
 
-# For downloading and building required dependencies
-include(FetchContent)
-
 # Fortran Wrapper
 if(BUILD_FORTRAN_WRAPPER)
     enable_language(Fortran)
-endif()
-
-# Test dependencies
-if(BUILD_TEST)
-  # Google Test (https://github.com/google/googletest)
-  # NOTE: Google Test has created a mess with legacy FindGTest.cmake and newer GTestConfig.cmake
-  #
-  # FindGTest.cmake defines:   GTest::GTest, GTest::Main, GTEST_FOUND
-  #
-  # GTestConfig.cmake defines: GTest::gtest, GTest::gtest_main, GTest::gmock, GTest::gmock_main
-  #
-  # NOTE2: Finding GTest in MODULE mode, one cannot invoke find_package in CONFIG mode, because targets
-  #        will be duplicately defined.
-  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-    find_package(GTest QUIET)
-  endif()
-
-  if(NOT TARGET GTest::GTest AND NOT TARGET GTest::gtest)
-    message(STATUS "Google Test not found or force download on. Fetching...")
-    option(BUILD_GTEST "Builds the googletest subproject" ON)
-    option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
-    option(INSTALL_GTEST "Enable installation of googletest" OFF)
-    FetchContent_Declare(
-      googletest
-      GIT_REPOSITORY https://github.com/google/googletest.git
-      GIT_TAG        v1.15.2
-    )
-    FetchContent_MakeAvailable(googletest)
-  endif()
-endif()
-
-# Benchmark dependencies
-if(BUILD_BENCHMARK)
-  # Google Benchmark (https://github.com/google/benchmark)
-  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-    find_package(benchmark 1.9.1 QUIET)
-  endif()
-
-  if(NOT TARGET benchmark::benchmark)
-    message(STATUS "Google Benchmark not found or force download on. Fetching...")
-    option(BENCHMARK_ENABLE_TESTING "Enable testing of the benchmark library" OFF)
-    option(BENCHMARK_ENABLE_INSTALL "Enable installation of benchmark" OFF)
-    FetchContent_Declare(
-      googlebenchmark
-      GIT_REPOSITORY https://github.com/google/benchmark.git
-      GIT_TAG        v1.9.1
-    )
-    set(HAVE_STD_REGEX ON)
-    set(RUN_HAVE_STD_REGEX 1)
-    FetchContent_MakeAvailable(googlebenchmark)
-  endif()
 endif()
 
 set(PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern)
@@ -175,3 +121,56 @@ include(ROCMCheckTargetIds)
 include(ROCMUtilities)
 include(ROCMClients)
 include(ROCMHeaderWrapper)
+
+# For downloading and building required dependencies
+include(FetchContent)
+# Test dependencies
+if(BUILD_TEST)
+  # Google Test (https://github.com/google/googletest)
+  # NOTE: Google Test has created a mess with legacy FindGTest.cmake and newer GTestConfig.cmake
+  #
+  # FindGTest.cmake defines:   GTest::GTest, GTest::Main, GTEST_FOUND
+  #
+  # GTestConfig.cmake defines: GTest::gtest, GTest::gtest_main, GTest::gmock, GTest::gmock_main
+  #
+  # NOTE2: Finding GTest in MODULE mode, one cannot invoke find_package in CONFIG mode, because targets
+  #        will be duplicately defined.
+  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+    find_package(GTest QUIET)
+  endif()
+
+  if(NOT TARGET GTest::GTest AND NOT TARGET GTest::gtest)
+    message(STATUS "Google Test not found or force download on. Fetching...")
+    option(BUILD_GTEST "Builds the googletest subproject" ON)
+    option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
+    option(INSTALL_GTEST "Enable installation of googletest" OFF)
+    FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG        v1.15.2
+    )
+    FetchContent_MakeAvailable(googletest)
+  endif()
+endif()
+
+# Benchmark dependencies
+if(BUILD_BENCHMARK)
+  # Google Benchmark (https://github.com/google/benchmark)
+  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+    find_package(benchmark 1.9.1 QUIET)
+  endif()
+
+  if(NOT TARGET benchmark::benchmark)
+    message(STATUS "Google Benchmark not found or force download on. Fetching...")
+    option(BENCHMARK_ENABLE_TESTING "Enable testing of the benchmark library" OFF)
+    option(BENCHMARK_ENABLE_INSTALL "Enable installation of benchmark" OFF)
+    FetchContent_Declare(
+      googlebenchmark
+      GIT_REPOSITORY https://github.com/google/benchmark.git
+      GIT_TAG        v1.9.1
+    )
+    set(HAVE_STD_REGEX ON)
+    set(RUN_HAVE_STD_REGEX 1)
+    FetchContent_MakeAvailable(googlebenchmark)
+  endif()
+endif()
