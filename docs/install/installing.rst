@@ -155,7 +155,7 @@ To install support for rocRAND and HIP on Windows, use the ``rmake.py`` Python s
    git clone https://github.com/ROCm/rocRAND.git
    cd rocRAND
 
-   # the -i option will install rocPRIM to C:\hipSDK by default
+   # the -i option will install rocRAND to C:\hipSDK by default
    python rmake.py -i
 
    # the -c option will build all clients including unit tests
