@@ -1,6 +1,6 @@
 .. meta::
-   :description: rocRAND documentation and API reference library
-   :keywords: rocRAND, ROCm, API, documentation
+   :description: rocRAND installation guide
+   :keywords: rocRAND, ROCm, API, documentation, installation
 
 .. _installing:
 
