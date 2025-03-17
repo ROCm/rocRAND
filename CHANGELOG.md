@@ -12,19 +12,24 @@ Documentation for rocRAND is available at
 ### Changed
 
 * Updated several `gfx942` auto tuning parameters.
-* Deprecated C++14 and set the default target to C++17.
-* Directly accessing the (scrambled) sobol32 and sobol64 constants and direction vectors is deprecated:
+* Modified error handling and expanded the error information for the case of double-deallocation of the (scrambled) sobol32 and sobol64 constants and direction vectors.
+
+### Removed
+
+* Removed inline assembly and the `ENABLE_INLINE_ASM` CMake option. Inline assembly was used to optimizate of multiplications in the Mrg32k3a and Philox 4x32-10 generators. It is no longer needed because the current HIP compiler is able to produce code with the same or better performance.
+* Removed instances of the deprecated clang definition `__AMDGCN_WAVEFRONT_SIZE`.
+
+### Upcoming changes
+
+* Deprecated the rocRAND Fortran API in favor of hipfort.
+* Deprecated C++14 and set the default target to C++17. C++14 will be removed in the next major release.
+* Directly accessing the (scrambled) sobol32 and sobol64 constants and direction vectors is deprecated and will be removed in the next major release. For:
   * `h_scrambled_sobol32_constants`, use `rocrand_get_scramble_constants32` instead.
   * `h_scrambled_sobol64_constants`, use `rocrand_get_scramble_constants64` instead.
   * `rocrand_h_sobol32_direction_vectors`, use `rocrand_get_direction_vectors32` instead.
   * `rocrand_h_sobol64_direction_vectors`, use `rocrand_get_direction_vectors64` instead.
   * `rocrand_h_scrambled_sobol32_direction_vectors`, use `rocrand_get_direction_vectors32` instead.
   * `rocrand_h_scrambled_sobol64_direction_vectors`, use `rocrand_get_direction_vectors64` instead.
-
-### Upcoming changes
-* C++14 will be removed in the next major release.
-* Directly accessing the (scrambled) sobol32 and sobol64 constants and direction vectors will be removed in the next major release.
-
 
 ### Fixed
 

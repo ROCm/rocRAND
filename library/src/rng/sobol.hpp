@@ -479,15 +479,42 @@ private:
     template<bool IsDevice = system_type::is_device(), bool IsScrambled = Scrambled>
     std::enable_if_t<IsDevice && !IsScrambled> deallocate()
     {
-        system_type::free(m_direction_vectors);
+        hipError_t error = hipFree(m_direction_vectors);
+        if(error != hipErrorInvalidValue)
+        {
+            // hipErrorInvalidValue is thrown when hipFree tries to call an already
+            // deallocated section of memory. This may occur when 'hipDeviceReset()' is
+            // used before the current class' deconstructor is called.
+            return;
+        }
+        ROCRAND_HIP_FATAL_ASSERT(error);
     }
 
     // Device, scrambled
     template<bool IsDevice = system_type::is_device(), bool IsScrambled = Scrambled>
     std::enable_if_t<IsDevice && IsScrambled> deallocate()
     {
-        system_type::free(m_direction_vectors);
-        system_type::free(m_scramble_constants);
+        hipError_t error;
+
+        error = hipFree(m_direction_vectors);
+        if(error != hipErrorInvalidValue)
+        {
+            // hipErrorInvalidValue is thrown when hipFree tries to call an already
+            // deallocated section of memory. This may occur when 'hipDeviceReset()' is
+            // used before the current class' deconstructor is called.
+            return;
+        }
+        ROCRAND_HIP_FATAL_ASSERT(error);
+
+        error = hipFree(m_scramble_constants);
+        if(error != hipErrorInvalidValue)
+        {
+            // hipErrorInvalidValue is thrown when hipFree tries to call an already
+            // deallocated section of memory. This may occur when 'hipDeviceReset()' is
+            // used before the current class' deconstructor is called.
+            return;
+        }
+        ROCRAND_HIP_FATAL_ASSERT(error);
     }
 };
 

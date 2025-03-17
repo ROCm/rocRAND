@@ -1,5 +1,5 @@
 # Fortran Wrapper
-
+message(WARNING "rocRAND's Fortran API is deprecated. hipfort should be used instead.")
 if(HIP_COMPILER STREQUAL "nvcc")
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/hip/hip_nvcc_m.f90"
