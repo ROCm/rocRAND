@@ -29,7 +29,7 @@ def runCI =
     {
         platform, project->
 
-        commonGroovy.runTestCommand(platform, project)
+        commonGroovy.runTestCommand(platform, project, true)
     }
 
     def packageCommand =
