@@ -120,7 +120,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
     set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 else()
     target_compile_options(rocrand PRIVATE -fgpu-rdc)
-    target_link_options(rocrand PRIVATE hip::device -fgpu-rdc -Xoffload-linker --lto-partitions=16)
+    target_link_options(rocrand PRIVATE hip::device -fgpu-rdc)
     target_link_libraries(rocrand PUBLIC hip::host)
 endif()
 
