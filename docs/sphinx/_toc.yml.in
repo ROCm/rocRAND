@@ -5,11 +5,20 @@ subtrees:
   - caption: Install
     entries:
     - file: install/installing
+      title: Installation guide
+
   - caption: Conceptual
     entries:
     - file: conceptual/programmers-guide
+      title: Programming guide
     - file: conceptual/curand-compatibility
     - file: conceptual/dynamic_ordering_configuration
+
+  - caption: Examples
+    entries:
+    - url: https://github.com/ROCm/rocRAND/tree/develop/python/rocrand/examples
+      title: Examples
+
   - caption: API reference
     entries:
     - file: api-reference/data-type-support
@@ -17,6 +26,7 @@ subtrees:
     - file: api-reference/python-api
     - file: fortran-api-reference
     - file: doxygen/html/index
+
   - caption: About
     entries:
     - file: license
