@@ -8,7 +8,7 @@ refer to the C Host API functions documentation.
 
 ## Deprecation notice
 
-This library is currently deprecated in favor of [hipfort](https://github/ROCm/hipfort).
+This library is currently deprecated in favor of [hipfort](https://github.com/ROCm/hipfort).
 
 ## Build and install
 
