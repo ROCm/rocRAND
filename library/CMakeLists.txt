@@ -121,7 +121,7 @@ if(HIP_COMPILER STREQUAL "nvcc")
 else()
     target_link_libraries(rocrand PRIVATE hip::device)
     target_compile_options(rocrand PRIVATE -fgpu-rdc)
-    target_link_options(rocrand PRIVATE -fgpu-rdc)
+    target_link_options(rocrand PRIVATE -fgpu-rdc -Xoffload-linker --lto-partitions=1)
     target_link_libraries(rocrand PUBLIC hip::host)
 endif()
 
