@@ -163,7 +163,7 @@ if(BUILD_BENCHMARK)
   if(NOT TARGET benchmark::benchmark)
     message(STATUS "Google Benchmark not found or force download on. Fetching...")
     option(BENCHMARK_ENABLE_TESTING "Enable testing of the benchmark library" OFF)
-    option(BENCHMARK_ENABLE_INSTALL "Enable installation of benchmark" ON)
+    option(BENCHMARK_ENABLE_INSTALL "Enable installation of benchmark" OFF)
     FetchContent_Declare(
       googlebenchmark
       GIT_REPOSITORY https://github.com/google/benchmark.git
