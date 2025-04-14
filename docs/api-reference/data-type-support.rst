@@ -1,18 +1,23 @@
 .. meta::
-   :description: rocRAND documentation and API reference library
-   :keywords: rocRAND, ROCm, API, documentation, cuRAND
+   :description: Data type support for rocRAND documentation
+   :keywords: rocRAND, ROCm, API, documentation, cuRAND, data types
 
 .. _data-type-support:
 
 rocRAND data type support
 ******************************************
 
+This topic discusses the various data types supported by rocRAND.
+
 Host API
 ========
 
+This section covers the data types supported for the host API.
+
 Generator types
 ---------------
- .. list-table:: Supported generators on the host
+
+.. list-table:: Supported generators on the host
     :header-rows: 1
     :name: host-supported-generators
 
@@ -81,22 +86,24 @@ Generator types
       - ✅
       - ✅
 
-Only Sobol64, Scrambled Sobol64, ThreeFry 2x64-20 and ThreeFry 4x64-20 support generation of 64 bit :code:`unsigned long long int` integers, the other generators generate 32 bit :code:`unsigned int` integers.
+Only Sobol64, Scrambled Sobol64, ThreeFry 2x64-20, and ThreeFry 4x64-20 support generation of 64-bit :code:`unsigned long long int` integers.
+The other generators generate 32-bit :code:`unsigned int` integers.
 
 Seed types
 ----------
 
-All generators can be seeded with :code:`unsigned long long`, however LFSR113 can additionally be seeded using an :code:`uint4`.
+All generators can be seeded with :code:`unsigned long long`, however, LFSR113 can also be seeded using an :code:`uint4`.
 
 Output types
 ------------
 
-The generators produce pseudo-random numbers chosen from a given distribution. The following distributions and corresponding output types are supported for the host API:
+The generators produce pseudo-random numbers chosen from a given distribution.
+The following distributions and corresponding output types are supported for the host API:
 
 Uniform distribution
-""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for uniform distributions on the host
+.. list-table:: Supported types for uniform distributions on the host
     :header-rows: 1
     :name: host-types-uniform-distribution
 
@@ -141,14 +148,14 @@ Uniform distribution
       - ✅
       - ✅
 
-Uniform distributions of integral types return a number between 0 and 2^(size in bits) - 1, whereas floating-point types return a number between 0.0 and 1.0, excluding 1.0.
+Uniform distributions of integral types return a number between 0 and 2^(size in bits) - 1,
+whereas floating-point types return a number between 0.0 and 1.0, excluding 1.0.
 
 Poisson distribution
-"""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for the poisson distribution on the host
+.. list-table:: Supported types for the Poisson distribution on the host
     :header-rows: 1
-    :name: host-types-poisson-distribution
 
     *
       - Type
@@ -162,9 +169,9 @@ Poisson distribution
       - ✅
 
 Normal distribution
-"""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for normal distributions on the host
+.. list-table:: Supported types for normal distributions on the host
     :header-rows: 1
     :name: host-types-normal-distribution
 
@@ -190,9 +197,9 @@ Normal distribution
       - ✅
 
 Log-normal distributions
-""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for log-normal distributions on the host
+.. list-table:: Supported types for log-normal distributions on the host
     :header-rows: 1
     :name: host-types-log-normal-distribution
 
@@ -220,9 +227,13 @@ Log-normal distributions
 Device API
 ==========
 
+This section covers the supported data types for the device API.
+
+
 Generator types
 ---------------
- .. list-table:: Supported generators on the device
+
+.. list-table:: Supported generators on the device
     :header-rows: 1
     :name: device-supported-generators
 
@@ -294,40 +305,42 @@ Generator types
 Seed types
 ----------
 
-All generators can be seeded with :code:`unsigned long long`, however LFSR113 can additionally be seeded using an :code:`uint4`.
+All generators can be seeded with :code:`unsigned long long`, however LFSR113 can also be seeded using an :code:`uint4`.
 
 Output types
 ------------
 
-The generators produce pseudo-random numbers chosen from a given distribution. The following distributions and corresponding output types are supported for the device API, however not all generators support all types:
+The generators produce pseudo-random numbers chosen from a given distribution.
+The following distributions and corresponding output types are supported for the device API,
+however, not all generators support all types:
 
 
 Uniform distribution
-""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for uniform distributions on the device
+.. list-table:: Supported types for uniform distributions on the device
     :header-rows: 1
     :name: device-types-uniform-distribution
 
     *
       - Type
       - rocRAND support
-      - supported rocRAND generators
+      - Supported rocRAND generators
       - cuRAND support
     *
       - :code:`unsigned int`
       - ✅
-      - all native 32-bit generators
+      - All native 32-bit generators
       - ✅
     *
       - :code:`unsigned long long int`
       - ✅
-      - all native 64-bit generators
+      - All native 64-bit generators
       - ✅
     *
       - :code:`float`
       - ✅
-      - all generators
+      - All generators
       - ✅
     *
       - :code:`float2`
@@ -342,7 +355,7 @@ Uniform distribution
     *
       - :code:`double`
       - ✅
-      - all generators
+      - All generators
       - ✅
     *
       - :code:`double2`
@@ -357,21 +370,21 @@ Uniform distribution
 
 
 Normal distribution
-""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for normal distributions on the device
+.. list-table:: Supported types for normal distributions on the device
     :header-rows: 1
     :name: device-types-normal-distribution
 
     *
       - Type
       - rocRAND support
-      - supported rocRAND generators
+      - Supported rocRAND generators
       - cuRAND support
     *
       - :code:`float`
       - ✅
-      - all generators
+      - All generators
       - ✅
     *
       - :code:`float2`
@@ -386,7 +399,7 @@ Normal distribution
     *
       - :code:`double`
       - ✅
-      - all generators
+      - All generators
       - ✅
     *
       - :code:`double2`
@@ -400,21 +413,21 @@ Normal distribution
       - ❌
 
 Log-normal distributions
-""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for log-normal distributions on the device
+.. list-table:: Supported types for log-normal distributions on the device
     :header-rows: 1
     :name: device-types-log-normal-distribution
 
     *
       - Type
       - rocRAND support
-      - supported rocRAND generators
+      - Supported rocRAND generators
       - cuRAND support
     *
       - :code:`float`
       - ✅
-      - all generators
+      - All generators
       - ✅
     *
       - :code:`float2`
@@ -429,7 +442,7 @@ Log-normal distributions
     *
       - :code:`double`
       - ✅
-      - all generators
+      - All generators
       - ✅
     *
       - :code:`double2`
@@ -443,16 +456,16 @@ Log-normal distributions
       - ❌
 
 Poisson distributions
-"""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for poisson distributions on the device
+.. list-table:: Supported types for Poisson distributions on the device
     :header-rows: 1
     :name: device-types-poisson-distribution
 
     *
       - Type
       - rocRAND support
-      - supported rocRAND generators
+      - Supported rocRAND generators
       - cuRAND support
     *
       - :code:`unsigned int`
@@ -462,7 +475,7 @@ Poisson distributions
     *
       - :code:`unsigned long long int`
       - ✅
-      - Sobol64, Scrambled sobol64
+      - Sobol64, Scrambled Sobol64
       - ❌
     *
       - :code:`uint4`
@@ -471,21 +484,21 @@ Poisson distributions
       - ✅
 
 Discrete distributions
-""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^
 
- .. list-table:: Supported types for discrete distributions on the device
+.. list-table:: Supported types for discrete distributions on the device
     :header-rows: 1
     :name: device-types-discrete-distribution
 
     *
       - Type
       - rocRAND support
-      - supported rocRAND generators
+      - Supported rocRAND generators
       - cuRAND support
     *
       - :code:`unsigned int`
       - ✅
-      - all generators
+      - All generators
       - ✅
     *
       - :code:`uint4`
@@ -494,4 +507,4 @@ Discrete distributions
       - ✅ - only Philox - 4x32-10
 
 .. rubric:: Footnotes
-.. [#] Generation of 64 bit :code:`unsigned long long` integers is only supported by 64 bit generators (Scrambled Sobol 64, Sobol64, Threefry 2x64-20 and Threefry 4x64-20).
+.. [#] Generation of 64-bit :code:`unsigned long long` integers is only supported by 64-bit generators (Scrambled Sobol 64, Sobol64, Threefry 2x64-20, and Threefry 4x64-20).
