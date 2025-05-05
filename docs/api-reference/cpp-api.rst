@@ -30,7 +30,7 @@ Follow these steps to use the device functions in the device kernel definition:
 4. Use the results.
 
 The rocRAND device functions are invoked from inside the user kernel.
-This means the generated numbers can be used right away in the kernel without the need to copy them to the host memory.
+This means the generated numbers can be used immediately in the kernel without copying them to the host memory.
 
 In the following example, random number generation uses the XORWOW generator.
 

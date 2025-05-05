@@ -7,7 +7,8 @@
 rocRAND data type support
 ******************************************
 
-This topic discusses the various data types supported by rocRAND.
+This topic discusses the various data types supported by rocRAND and provides a comparison
+with the data type support in NVIDIA CUDA cuRAND.
 
 Host API
 ========
@@ -86,13 +87,13 @@ Generator types
       - ✅
       - ✅
 
-Only Sobol64, Scrambled Sobol64, ThreeFry 2x64-20, and ThreeFry 4x64-20 support generation of 64-bit :code:`unsigned long long int` integers.
+Only Sobol64, Scrambled Sobol64, ThreeFry 2x64-20, and ThreeFry 4x64-20 support the generation of 64-bit :code:`unsigned long long int` integers.
 The other generators generate 32-bit :code:`unsigned int` integers.
 
 Seed types
 ----------
 
-All generators can be seeded with :code:`unsigned long long`, however, LFSR113 can also be seeded using an :code:`uint4`.
+All generators can be seeded with :code:`unsigned long long`. However, LFSR113 can also be seeded using a :code:`uint4`.
 
 Output types
 ------------
@@ -129,7 +130,7 @@ Uniform distribution
       - ✅
     *
       - :code:`unsigned long long`
-      - 64 bit [#]_
+      - 64 bit (see note)
       - ✅
       - ✅
     *
@@ -150,6 +151,11 @@ Uniform distribution
 
 Uniform distributions of integral types return a number between 0 and 2^(size in bits) - 1,
 whereas floating-point types return a number between 0.0 and 1.0, excluding 1.0.
+
+.. note::
+
+   The generation of 64-bit :code:`unsigned long long` integers is only supported by 64-bit generators
+   (Scrambled Sobol 64, Sobol64, Threefry 2x64-20, and Threefry 4x64-20).
 
 Poisson distribution
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -311,8 +317,8 @@ Output types
 ------------
 
 The generators produce pseudo-random numbers chosen from a given distribution.
-The following distributions and corresponding output types are supported for the device API,
-however, not all generators support all types:
+The following distributions and corresponding output types are supported for the device API.
+However, not all generators support all types.
 
 
 Uniform distribution
@@ -505,6 +511,3 @@ Discrete distributions
       - ✅
       - Philox 4x32-10
       - ✅ - only Philox - 4x32-10
-
-.. rubric:: Footnotes
-.. [#] Generation of 64-bit :code:`unsigned long long` integers is only supported by 64-bit generators (Scrambled Sobol 64, Sobol64, Threefry 2x64-20, and Threefry 4x64-20).

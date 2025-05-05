@@ -51,16 +51,16 @@ The following ordering types are available:
 *  ``ROCRAND_ORDERING_QUASI_DEFAULT``
 
 ``ROCRAND_ORDERING_PSEUDO_DEFAULT`` and ``ROCRAND_ORDERING_QUASI_DEFAULT`` are the default ordering types
-for pseudo- and quasi-random number generators respectively. ``ROCRAND_ORDERING_PSEUDO_DEFAULT`` is the
+for pseudo- and quasi-random number generators, respectively. ``ROCRAND_ORDERING_PSEUDO_DEFAULT`` is the
 same as ``ROCRAND_ORDERING_PSEUDO_BEST`` and ``ROCRAND_ORDERING_PSEUDO_LEGACY``.
 
 ``ROCRAND_ORDERING_PSEUDO_DYNAMIC`` indicates that rocRAND can change the output ordering
 to obtain the best performance for a particular generator on a particular GPU.
-Using this ordering, the generated sequences can vary between different GPU models and rocRAND versions.
+Using this ordering, the generated sequences can vary between GPU models and rocRAND versions.
 For more information about generating these configurations, see :doc:`dynamic_ordering_configuration`.
 ``ROCRAND_ORDERING_PSEUDO_DYNAMIC`` is not supported for generators created with ``rocrand_create_generator_host``.
 
-``ROCRAND_ORDERING_PSEUDO_LEGACY`` indicates that rocRAND should generate values in a way that is backward compatible.
+``ROCRAND_ORDERING_PSEUDO_LEGACY`` indicates that rocRAND should generate values in a backward-compatible way.
 When this type is set, rocRAND generates exactly the same sequences across releases.
 
 All supported orderings for all generators are listed below:

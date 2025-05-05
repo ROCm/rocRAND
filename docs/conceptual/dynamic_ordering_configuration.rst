@@ -9,8 +9,8 @@ Kernel configurations for dynamic ordering
 =============================================================
 
 When dynamic ordering (``ROCRAND_ORDERING_PSEUDO_DYNAMIC``) is set, rocRAND selects the number of blocks and threads
-to launch on the GPU to best accommodate the specific GPU model.
-Consequently, the number of allocated generators and thereby the sequence of the generated numbers can also vary.
+to launch on the GPU to accommodate the specific GPU model best.
+Consequently, the number of allocated generators and the sequence of the generated numbers can also vary.
 
 The tuning, which is the selection of the most performant configuration for each GPU architecture,
 can be performed in an automated manner. The necessary tools and benchmarks for the tuning are provided
@@ -21,7 +21,7 @@ in the rocRAND repository. The following sections provide additional details abo
 Building the tuning benchmarks
 ==============================
 
-The principle behind the tuning is very simple. The random number generation kernel is run
+The principle behind the tuning is straightforward. The random number generation kernel is run
 for a list of kernel block size and kernel grid size combinations. The fastest combination
 is then selected as the dynamic ordering configuration for that particular device.
 rocRAND provides an executable target named ``benchmark_rocrand_tuning`` that runs the benchmarks with all these
