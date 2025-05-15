@@ -17,6 +17,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 
     def command = """#!/usr/bin/env bash
                 set -x
+                echo "I LIKE FOR LOOPS"
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
                 # gfxTargetParser reads gfxarch and adds target features such as xnack
