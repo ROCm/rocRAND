@@ -240,20 +240,6 @@ pyenv virtualenv 3.10 venv_rocrand
 pyenv activate venv_rocrand
 ```
 
-### Building
-
-After cloning this repository, and `cd`ing into it:
-
-```shell
-# Install Python dependencies
-python3 -m pip install -r docs/sphinx/requirements.txt
-
-# Build the documentation
-python3 -m sphinx -T -E -b html -d docs/_build/doctrees -D language=en docs docs/_build/html
-```
-
-You can then open `docs/_build/html/index.html` in your browser to view the documentation.
-
 ## Support
 
 Bugs and feature requests can be reported through the
