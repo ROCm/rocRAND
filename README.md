@@ -13,7 +13,7 @@ Prior to ROCm version 5.0, this project included the
 split into a separate library. As of version 6.0, hipRAND can no longer be built from rocRAND.
 
 ## Supported random number generators
-
+random sha
 * XORWOW
 * MRG31k3p
 * MRG32k3a
